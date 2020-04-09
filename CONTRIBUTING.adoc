@@ -1,3 +1,49 @@
-= Contributor License Agreement
+= Contributing to Spring Authorization Server
 
-If you have not previously done so, please fill out and submit the https://cla.pivotal.io/sign/spring[Contributor License Agreement].
+Spring Authorization Server is released under the Apache 2.0 license.
+If you would like to contribute something, or simply want to hack on the code this document should help you get started.
+
+
+
+== Code of Conduct
+This project adheres to the Contributor Covenant link:CODE_OF_CONDUCT.adoc[code of conduct].
+By participating, you are expected to uphold this code.
+Please report unacceptable behavior to spring-code-of-conduct@pivotal.io.
+
+
+
+== Using GitHub Issues
+We use GitHub issues to track bugs and enhancements.
+If you have a general usage question please ask on https://stackoverflow.com[Stack Overflow].
+The Spring Security team and the broader community monitor the https://stackoverflow.com/tags/spring-security[`spring-security`] tag.
+
+If you are reporting a bug, please help to speed up problem diagnosis by providing as much information as possible.
+Ideally, that would include a https://stackoverflow.com/help/minimal-reproducible-example[complete & minimal sample project] that reproduces the problem.
+
+
+
+== Submitting Pull Requests
+This project uses https://help.github.com/en/github/collaborating-with-issues-and-pull-requests/about-pull-requests[pull requests] for the community to suggest changes to the project.
+There are a few imporant things to keep in mind when submitting a pull request:
+
+* Expect feedback and to make changes to your contributions.
+* Unless it is a minor change:
+** It is best to discuss pull requests on an issue before doing work
+** We expect the pull request to start with a https://github.blog/2019-02-14-introducing-draft-pull-requests/[draft pull request].
+*** The pull request should be as small as possible and focus on a single unit of change.
+This ensures that we are collaborating together as soon as possible.
+*** Generally, this means do not introduce any new interfaces and as few classes as possible.
+That may mean using an external library directly in a `Filter`.
+*** We will discuss with you how to iterate once you have submitted the initial draft pull request. 
+
+
+== Reporting Security Vulnerabilities
+If you think you have found a security vulnerability please *DO NOT* disclose it publicly until we've had a chance to fix it.
+Please don't report security vulnerabilities using GitHub issues, instead head over to https://pivotal.io/security and learn how to disclose them responsibly.
+
+
+
+== Sign the Contributor License Agreement
+Before we accept a non-trivial patch or pull request we will need you to https://cla.pivotal.io/sign/spring[sign the Contributor License Agreement].
+Signing the contributor's agreement does not grant anyone commit rights to the main repository, but it does mean that we can accept your contributions, and you will get an author credit if we do.
+Active contributors might be asked to join the core team, and given the ability to merge pull requests.

@@ -4,7 +4,7 @@ plugins {
 	id 'java'
 }
 
-group = 'org.springframework.security.oauth'
+group = 'org.springframework.experimental'
 version = '0.0.1-SNAPSHOT'
 sourceCompatibility = '1.8'
 
@@ -13,11 +13,10 @@ repositories {
 }
 
 dependencies {
-	implementation 'org.springframework.boot:spring-boot-starter-security'
+	implementation 'org.springframework.boot:spring-boot-starter'
 	testImplementation('org.springframework.boot:spring-boot-starter-test') {
 		exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
 	}
-	testImplementation 'org.springframework.security:spring-security-test'
 }
 
 test {

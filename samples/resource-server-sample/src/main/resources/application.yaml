@@ -1,0 +1,8 @@
+# See https://docs.spring.io/spring-security/site/docs/current/reference/html5/#oauth2resourceserver 
+# for more configuration options
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri:  https://accounts.google.com

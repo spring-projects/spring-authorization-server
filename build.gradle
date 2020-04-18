@@ -16,6 +16,8 @@ group = 'org.springframework.security.experimental'
 description = 'Spring Authorization Server'
 version = '0.0.1-SNAPSHOT'
 
+ext['junit-jupiter.version'] = '5.4.0'
+
 repositories {
 	mavenCentral()
 }

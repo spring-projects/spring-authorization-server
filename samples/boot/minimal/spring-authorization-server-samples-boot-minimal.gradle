@@ -1,10 +1,19 @@
 apply plugin: 'io.spring.convention.spring-sample-boot'
 
 dependencies {
-	implementation 'org.springframework.boot:spring-boot-starter'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+
+	implementation 'com.nimbusds:oauth2-oidc-sdk'
+
 	testImplementation('org.springframework.boot:spring-boot-starter-test') {
 		exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
 	}
+
+    testImplementation 'org.springframework.security:spring-security-test'
+
+    testRuntime("org.junit.platform:junit-platform-runner")
+    testRuntime("org.junit.jupiter:junit-jupiter-engine")
 }
 
 test {

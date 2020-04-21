@@ -1,6 +1,6 @@
 image::https://badges.gitter.im/Join%20Chat.svg[Gitter,link=https://gitter.im/spring-projects/spring-security?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge]
 
-image:https://travis-ci.org/spring-projects-experimental/spring-authorization-server.svg?branch=master["Build Status", link="https://travis-ci.org/spring-projects-experimental/spring-authorization-server"]
+image:https://github.com/spring-projects-experimental/spring-authorization-server/workflows/CI/badge.svg?branch=master["Build Status", link="https://github.com/spring-projects-experimental/spring-authorization-server/actions?query=workflow%3ACI"]
 
 = Spring Authorization Server
 

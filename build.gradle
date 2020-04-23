@@ -1,24 +1,28 @@
-plugins {
-	id 'org.springframework.boot' version '2.2.6.RELEASE'
-	id 'io.spring.dependency-management' version '1.0.9.RELEASE'
-	id 'java'
+buildscript {
+	dependencies {
+		classpath 'io.spring.gradle:spring-build-conventions:0.0.31.RELEASE'
+		classpath "org.springframework.boot:spring-boot-gradle-plugin:latest.release"
+
+	}
+	repositories {
+		maven { url 'https://repo.spring.io/plugins-snapshot' }
+		maven { url 'https://plugins.gradle.org/m2/' }
+	}
 }
+
+apply plugin: 'io.spring.convention.root'
 
 group = 'org.springframework.experimental'
 version = '0.0.1-SNAPSHOT'
-sourceCompatibility = '1.8'
 
 repositories {
 	mavenCentral()
 }
 
-dependencies {
-	implementation 'org.springframework.boot:spring-boot-starter'
-	testImplementation('org.springframework.boot:spring-boot-starter-test') {
-		exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
-	}
-}
+dependencyManagementExport.projects = subprojects
 
-test {
-	useJUnitPlatform()
+subprojects {
+	plugins.withType(JavaPlugin) {
+		project.sourceCompatibility = '1.8'
+	}
 }

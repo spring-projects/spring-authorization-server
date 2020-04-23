@@ -1,0 +1,11 @@
+dependencyManagement {
+	imports {
+		mavenBom 'org.springframework:spring-framework-bom:latest.release'
+	}
+
+	dependencies {
+		dependency 'junit:junit:latest.release'
+		dependency 'org.assertj:assertj-core:latest.release'
+		dependency 'org.mockito:mockito-core:latest.release'
+	}
+}

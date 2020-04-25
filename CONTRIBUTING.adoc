@@ -3,6 +3,11 @@
 Spring Authorization Server is released under the Apache 2.0 license.
 If you would like to contribute something, or simply want to hack on the code this document should help you get started.
 
+== Feature Planning
+This project uses https://www.zenhub.com/[ZenHub] to prioritize the feature roadmap and help organize the project plan.
+The project board can be accessed https://app.zenhub.com/workspaces/authorization-server-5e8f3182b5e8f5841bfc4902/board?repos=248032165[here].
+It is recommended to install the ZenHub https://www.zenhub.com/extension[browser extension] as it integrates natively within GitHub's user interface.
+
 == Code of Conduct
 This project adheres to the Contributor Covenant link:CODE_OF_CONDUCT.adoc[code of conduct].
 By participating, you are expected to uphold this code.

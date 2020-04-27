@@ -17,6 +17,22 @@ This project uses https://www.zenhub.com/[ZenHub] to prioritize the feature road
 The project board can be accessed https://app.zenhub.com/workspaces/authorization-server-5e8f3182b5e8f5841bfc4902/board?repos=248032165[here].
 It is recommended to install the ZenHub https://www.zenhub.com/extension[browser extension] as it integrates natively within GitHub's user interface.
 
+== Getting Started
+The first place to start is to read the https://tools.ietf.org/html/rfc6749[OAuth 2.0 Authorization Framework] to gain an in-depth understanding on how to build an Authorization Server.
+It is a critically important first step as the implementation must conform to the specification defined in the OAuth 2.0 Authorization Framework and the https://github.com/spring-projects-experimental/spring-authorization-server/wiki/OAuth-2.0-Specifications[related specifications].
+
+The second place to start is to become very familiar with the codebase in the following Spring Security modules:
+
+- https://github.com/spring-projects/spring-security/tree/master/oauth2/oauth2-core[OAuth 2.0 Core]
+- https://github.com/spring-projects/spring-security/tree/master/oauth2/oauth2-client[OAuth 2.0 Client]
+- https://github.com/spring-projects/spring-security/tree/master/oauth2/oauth2-resource-server[OAuth 2.0 Resource Server]
+- https://github.com/spring-projects/spring-security/tree/master/oauth2/oauth2-jose[OAuth 2.0 JOSE] (Javascript Object Signing and Encryption)
+
+A significant amount of effort was put into developing the https://spring.io/blog/2018/01/30/next-generation-oauth-2-0-support-with-spring-security[Next Generation OAuth 2.0 Support in Spring Security].
+The goal is to leverage all the knowledge learned thus far and apply the same to the development of Spring Authorization Server.
+
+Submitted work via pull requests should follow the same coding style/conventions and adopt the same or similar design patterns that have been established in Spring Security's OAuth 2.0 support.
+
 == Code of Conduct
 This project adheres to the Contributor Covenant link:CODE_OF_CONDUCT.adoc[code of conduct].
 By participating, you are expected to uphold this code. Please report unacceptable behavior to spring-code-of-conduct@pivotal.io.
@@ -28,11 +44,6 @@ See https://github.com/spring-projects/spring-framework/wiki/Downloading-Spring-
 Be sure to read the https://docs.spring.io/spring-security/site/docs/current/reference/html5/[Spring Security Reference], as well as the https://docs.spring.io/spring-security/site/docs/current/reference/html5/#oauth2[OAuth 2.0 Reference], which describes the Client and Resource Server features available.
 
 Extensive JavaDoc for the Spring Security code is also available in the https://docs.spring.io/spring-security/site/docs/current/api/[Spring Security API Documentation].
-
-== Quick Start
-We recommend that you review the https://tools.ietf.org/html/rfc6749[OAuth 2.0 Authorization Framework] to gain a deep understanding of the framework.
-
-The https://oauth.net/2/[OAuth 2.0] website, maintained by Aaron Parecki, provides links to learning resources as well as the various extension specifications.
 
 == Building from Source
 Spring Authorization Server uses a https://gradle.org[Gradle]-based build system.

@@ -18,9 +18,6 @@ package sample;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-/**
- * @author Sauli Ketola
- */
 @SpringBootApplication
 public class ResourceServerApplication {
 

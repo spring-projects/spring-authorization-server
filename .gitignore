@@ -3,6 +3,11 @@ build/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**
 !**/src/test/**
+bin/
+classes/
+target/
+*.log
+*.log.*
 
 ### STS ###
 .apt_generated

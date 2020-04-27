@@ -33,17 +33,17 @@ The goal is to leverage all the knowledge learned thus far and apply the same to
 
 Submitted work via pull requests should follow the same coding style/conventions and adopt the same or similar design patterns that have been established in Spring Security's OAuth 2.0 support.
 
+== Documentation
+Be sure to read the https://docs.spring.io/spring-security/site/docs/current/reference/html5/[Spring Security Reference], as well as the https://docs.spring.io/spring-security/site/docs/current/reference/html5/#oauth2[OAuth 2.0 Reference], which describes the Client and Resource Server features available.
+
+Extensive JavaDoc for the Spring Security code is also available in the https://docs.spring.io/spring-security/site/docs/current/api/[Spring Security API Documentation].
+
 == Code of Conduct
 This project adheres to the Contributor Covenant link:CODE_OF_CONDUCT.adoc[code of conduct].
 By participating, you are expected to uphold this code. Please report unacceptable behavior to spring-code-of-conduct@pivotal.io.
 
 == Downloading Artifacts
 See https://github.com/spring-projects/spring-framework/wiki/Downloading-Spring-artifacts[downloading Spring artifacts] for Maven repository information.
-
-== Documentation
-Be sure to read the https://docs.spring.io/spring-security/site/docs/current/reference/html5/[Spring Security Reference], as well as the https://docs.spring.io/spring-security/site/docs/current/reference/html5/#oauth2[OAuth 2.0 Reference], which describes the Client and Resource Server features available.
-
-Extensive JavaDoc for the Spring Security code is also available in the https://docs.spring.io/spring-security/site/docs/current/api/[Spring Security API Documentation].
 
 == Building from Source
 Spring Authorization Server uses a https://gradle.org[Gradle]-based build system.

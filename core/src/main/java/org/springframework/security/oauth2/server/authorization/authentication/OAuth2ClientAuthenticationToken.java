@@ -18,11 +18,11 @@ package org.springframework.security.oauth2.server.authorization.authentication;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.SpringSecurityCoreVersion;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
-
 import java.util.Collections;
 
 /**
  * @author Joe Grandja
+ * @author Patryk Kostrzewa
  */
 public class OAuth2ClientAuthenticationToken extends AbstractAuthenticationToken {
 	private static final long serialVersionUID = SpringSecurityCoreVersion.SERIAL_VERSION_UID;

@@ -18,17 +18,52 @@ package org.springframework.security.oauth2.server.authorization.authentication;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
+import org.springframework.security.oauth2.core.OAuth2Error;
+import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
+import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
+import org.springframework.util.Assert;
 
 /**
+ * An {@link AuthenticationProvider} implementation that validates {@link OAuth2ClientAuthenticationToken}s.
+ *
  * @author Joe Grandja
+ * @author Patryk Kostrzewa
  */
 public class OAuth2ClientAuthenticationProvider implements AuthenticationProvider {
-	private RegisteredClientRepository registeredClientRepository;
+	private final RegisteredClientRepository registeredClientRepository;
+
+	/**
+	 * @param registeredClientRepository
+	 * 		the bean to lookup the client details from
+	 */
+	public OAuth2ClientAuthenticationProvider(RegisteredClientRepository registeredClientRepository) {
+		Assert.notNull(registeredClientRepository, "registeredClientRepository cannot be null");
+		this.registeredClientRepository = registeredClientRepository;
+	}
 
 	@Override
 	public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-		return authentication;
+		String clientId = authentication.getName();
+		if (authentication.getCredentials() == null) {
+			throw new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_CLIENT));
+		}
+
+		RegisteredClient registeredClient = this.registeredClientRepository.findByClientId(clientId);
+		// https://tools.ietf.org/html/rfc6749#section-2.4
+		if (registeredClient == null) {
+			throw new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_CLIENT));
+		}
+
+		String presentedSecret = authentication.getCredentials()
+				.toString();
+		if (!registeredClient.getClientSecret()
+				.equals(presentedSecret)) {
+			throw new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_CLIENT));
+		}
+
+		return new OAuth2ClientAuthenticationToken(registeredClient);
 	}
 
 	@Override

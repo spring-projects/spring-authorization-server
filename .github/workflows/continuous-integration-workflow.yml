@@ -23,7 +23,7 @@ jobs:
         with:
           java-version: ${{ matrix.jdk }}
       - name: Build with Gradle
-        run: echo Starting build
+        run: ./gradlew clean build
   snapshot_tests:
     name: Test against snapshots
     runs-on: ubuntu-latest

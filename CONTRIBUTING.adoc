@@ -3,14 +3,10 @@
 Spring Authorization Server is released under the Apache 2.0 license.
 If you would like to contribute something, or simply want to hack on the code this document should help you get started.
 
-
-
 == Code of Conduct
 This project adheres to the Contributor Covenant link:CODE_OF_CONDUCT.adoc[code of conduct].
 By participating, you are expected to uphold this code.
 Please report unacceptable behavior to spring-code-of-conduct@pivotal.io.
-
-
 
 == Using GitHub Issues
 We use GitHub issues to track bugs and enhancements.
@@ -19,8 +15,6 @@ The Spring Security team and the broader community monitor the https://stackover
 
 If you are reporting a bug, please help to speed up problem diagnosis by providing as much information as possible.
 Ideally, that would include a https://stackoverflow.com/help/minimal-reproducible-example[complete & minimal sample project] that reproduces the problem.
-
-
 
 == Submitting Pull Requests
 This project uses https://help.github.com/en/github/collaborating-with-issues-and-pull-requests/about-pull-requests[pull requests] for the community to suggest changes to the project.
@@ -34,14 +28,11 @@ There are a few imporant things to keep in mind when submitting a pull request:
 This ensures that we are collaborating together as soon as possible.
 *** Generally, this means do not introduce any new interfaces and as few classes as possible.
 That may mean using an external library directly in a `Filter`.
-*** We will discuss with you how to iterate once you have submitted the initial draft pull request. 
-
+*** We will discuss with you how to iterate once you have submitted the initial draft pull request.
 
 == Reporting Security Vulnerabilities
 If you think you have found a security vulnerability please *DO NOT* disclose it publicly until we've had a chance to fix it.
 Please don't report security vulnerabilities using GitHub issues, instead head over to https://pivotal.io/security and learn how to disclose them responsibly.
-
-
 
 == Sign the Contributor License Agreement
 Before we accept a non-trivial patch or pull request we will need you to https://cla.pivotal.io/sign/spring[sign the Contributor License Agreement].
@@ -69,3 +60,15 @@ Please add the Apache License header to all new classes, for example:
  * limitations under the License.
  */
 ```
+
+== Squash commits
+
+Use git rebase –interactive, git add –patch and other tools to "squash" multiple commits into atomic changes.
+
+== Format commit messages
+
+. Keep the subject line to 50 characters or less if possible.
+. Do not end the subject line with a period.
+. In the body of the commit message, explain how things worked before this commit, what has changed, and how things work now.
+. Include Fixes gh-<issue-number> at the end if this fixes a GitHub issue.
+. Avoid markdown, including back-ticks identifying code.

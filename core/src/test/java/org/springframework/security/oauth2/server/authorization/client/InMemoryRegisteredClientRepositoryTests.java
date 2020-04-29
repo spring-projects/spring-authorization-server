@@ -51,7 +51,7 @@ public class InMemoryRegisteredClientRepositoryTests {
 	}
 
 	@Test
-	public void constructorListClientRegistrationWhenEmptyThenThrowIllegalArgumentException() {
+	public void constructorListRegisteredClientWhenEmptyThenThrowIllegalArgumentException() {
 		assertThatThrownBy(() -> {
 			List<RegisteredClient> registrations = Collections.emptyList();
 			new InMemoryRegisteredClientRepository(registrations);
@@ -82,34 +82,34 @@ public class InMemoryRegisteredClientRepositoryTests {
 	@Test
 	public void findByIdWhenFoundThenFound() {
 		String id = this.registration.getId();
-		assertThat(clients.findById(id)).isEqualTo(this.registration);
+		assertThat(this.clients.findById(id)).isEqualTo(this.registration);
 	}
 
 	@Test
 	public void findByIdWhenNotFoundThenNull() {
 		String missingId = this.registration.getId() + "MISSING";
-		assertThat(clients.findById(missingId)).isNull();
+		assertThat(this.clients.findById(missingId)).isNull();
 	}
 
 	@Test
 	public void findByIdWhenNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> clients.findById(null)).isInstanceOf(IllegalArgumentException.class);
+		assertThatThrownBy(() -> this.clients.findById(null)).isInstanceOf(IllegalArgumentException.class);
 	}
 
 	@Test
 	public void findByClientIdWhenFoundThenFound() {
 		String clientId = this.registration.getClientId();
-		assertThat(clients.findByClientId(clientId)).isEqualTo(this.registration);
+		assertThat(this.clients.findByClientId(clientId)).isEqualTo(this.registration);
 	}
 
 	@Test
 	public void findByClientIdWhenNotFoundThenNull() {
 		String missingClientId = this.registration.getClientId() + "MISSING";
-		assertThat(clients.findByClientId(missingClientId)).isNull();
+		assertThat(this.clients.findByClientId(missingClientId)).isNull();
 	}
 
 	@Test
 	public void findByClientIdWhenNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> clients.findByClientId(null)).isInstanceOf(IllegalArgumentException.class);
+		assertThatThrownBy(() -> this.clients.findByClientId(null)).isInstanceOf(IllegalArgumentException.class);
 	}
 }

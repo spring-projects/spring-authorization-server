@@ -21,6 +21,7 @@ package org.springframework.security.oauth2.server.authorization.client;
  * @author Joe Grandja
  * @author Anoop Garlapati
  * @see RegisteredClient
+ * @since 0.0.1
  */
 public interface RegisteredClientRepository {
 

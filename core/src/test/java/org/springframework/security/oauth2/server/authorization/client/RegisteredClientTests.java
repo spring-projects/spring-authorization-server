@@ -43,7 +43,7 @@ public class RegisteredClientTests {
 			Collections.singleton(ClientAuthenticationMethod.BASIC);
 
 	@Test
-	public void buildWhenAuthorizationGrantTypesIsNotSetThenThrowIllegalArgumentException() {
+	public void buildWhenAuthorizationGrantTypesNotSetThenThrowIllegalArgumentException() {
 		assertThatThrownBy(() ->
 				RegisteredClient.withId(ID)
 						.clientId(CLIENT_ID)
@@ -56,7 +56,7 @@ public class RegisteredClientTests {
 	}
 
 	@Test
-	public void buildWhenAuthorizationCodeGrantAllAttributesProvidedThenAllAttributesAreSet() {
+	public void buildWhenAllAttributesProvidedThenAllAttributesAreSet() {
 		RegisteredClient registration = RegisteredClient.withId(ID)
 				.clientId(CLIENT_ID)
 				.clientSecret(CLIENT_SECRET)
@@ -77,21 +77,13 @@ public class RegisteredClientTests {
 	}
 
 	@Test
-	public void buildWhenAuthorizationCodeGrantIdIsNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() ->
-				RegisteredClient.withId(null)
-						.clientId(CLIENT_ID)
-						.clientSecret(CLIENT_SECRET)
-						.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-						.clientAuthenticationMethod(ClientAuthenticationMethod.BASIC)
-						.redirectUris(redirectUris -> redirectUris.addAll(REDIRECT_URIS))
-						.scopes(scopes -> scopes.addAll(SCOPES))
-						.build()
-		).isInstanceOf(IllegalArgumentException.class);
+	public void buildWhenIdIsNullThenThrowIllegalArgumentException() {
+		assertThatThrownBy(() -> RegisteredClient.withId(null))
+				.isInstanceOf(IllegalArgumentException.class);
 	}
 
 	@Test
-	public void buildWhenAuthorizationCodeGrantClientIdIsNullThenThrowIllegalArgumentException() {
+	public void buildWhenClientIdIsNullThenThrowIllegalArgumentException() {
 		assertThatThrownBy(() ->
 				RegisteredClient.withId(ID)
 						.clientId(null)
@@ -105,21 +97,7 @@ public class RegisteredClientTests {
 	}
 
 	@Test
-	public void buildWhenAuthorizationCodeGrantClientSecretIsNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() ->
-				RegisteredClient.withId(ID)
-						.clientId(null)
-						.clientSecret(CLIENT_SECRET)
-						.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-						.clientAuthenticationMethod(ClientAuthenticationMethod.BASIC)
-						.redirectUris(redirectUris -> redirectUris.addAll(REDIRECT_URIS))
-						.scopes(scopes -> scopes.addAll(SCOPES))
-						.build()
-		).isInstanceOf(IllegalArgumentException.class);
-	}
-
-	@Test
-	public void buildWhenAuthorizationCodeGrantRedirectUrisNotProvidedThenThrowIllegalArgumentException() {
+	public void buildWhenRedirectUrisNotProvidedThenThrowIllegalArgumentException() {
 		assertThatThrownBy(() ->
 				RegisteredClient.withId(ID)
 						.clientId(CLIENT_ID)
@@ -132,7 +110,7 @@ public class RegisteredClientTests {
 	}
 
 	@Test
-	public void buildWhenAuthorizationCodeGrantRedirectUrisConsumerClearsSetThenThrowIllegalArgumentException() {
+	public void buildWhenRedirectUrisConsumerClearsSetThenThrowIllegalArgumentException() {
 		assertThatThrownBy(() ->
 				RegisteredClient.withId(ID)
 						.clientId(CLIENT_ID)
@@ -147,7 +125,7 @@ public class RegisteredClientTests {
 	}
 
 	@Test
-	public void buildWhenAuthorizationCodeGrantClientAuthenticationMethodNotProvidedThenDefaultToBasic() {
+	public void buildWhenClientAuthenticationMethodNotProvidedThenDefaultToBasic() {
 		RegisteredClient registration = RegisteredClient.withId(ID)
 				.clientId(CLIENT_ID)
 				.clientSecret(CLIENT_SECRET)
@@ -161,7 +139,7 @@ public class RegisteredClientTests {
 	}
 
 	@Test
-	public void buildWhenAuthorizationCodeGrantScopeIsEmptyThenScopeNotRequired() {
+	public void buildWhenScopeIsEmptyThenScopeNotRequired() {
 		RegisteredClient.withId(ID)
 				.clientId(CLIENT_ID)
 				.clientSecret(CLIENT_SECRET)
@@ -172,7 +150,7 @@ public class RegisteredClientTests {
 	}
 
 	@Test
-	public void buildWhenAuthorizationCodeGrantScopeConsumerIsProvidedThenConsumerAccepted() {
+	public void buildWhenScopeConsumerIsProvidedThenConsumerAccepted() {
 		RegisteredClient registration = RegisteredClient.withId(ID)
 				.clientId(CLIENT_ID)
 				.clientSecret(CLIENT_SECRET)
@@ -186,11 +164,10 @@ public class RegisteredClientTests {
 	}
 
 	@Test
-	public void buildWhenScopeContainsASpaceThenThrowIllegalArgumentException() {
+	public void buildWhenScopeContainsSpaceThenThrowIllegalArgumentException() {
 		assertThatThrownBy(() ->
 				RegisteredClient.withId(ID)
 						.clientId(CLIENT_ID)
-						.clientSecret(null)
 						.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
 						.clientAuthenticationMethod(ClientAuthenticationMethod.BASIC)
 						.redirectUris(redirectUris -> redirectUris.addAll(REDIRECT_URIS))
@@ -200,7 +177,7 @@ public class RegisteredClientTests {
 	}
 
 	@Test
-	public void buildWhenScopesContainsAnInvalidCharacterThenThrowIllegalArgumentException() {
+	public void buildWhenScopeContainsInvalidCharacterThenThrowIllegalArgumentException() {
 		assertThatThrownBy(() ->
 				RegisteredClient.withId(ID)
 						.clientId(CLIENT_ID)
@@ -214,7 +191,7 @@ public class RegisteredClientTests {
 	}
 
 	@Test
-	public void buildWhenRedirectUrisContainInvalidUriThenThrowIllegalArgumentException() {
+	public void buildWhenRedirectUriInvalidThenThrowIllegalArgumentException() {
 		assertThatThrownBy(() ->
 				RegisteredClient.withId(ID)
 						.clientId(CLIENT_ID)
@@ -228,7 +205,7 @@ public class RegisteredClientTests {
 	}
 
 	@Test
-	public void buildWhenRedirectUrisContainUriWithFragmentThenThrowIllegalArgumentException() {
+	public void buildWhenRedirectUriContainsFragmentThenThrowIllegalArgumentException() {
 		assertThatThrownBy(() ->
 				RegisteredClient.withId(ID)
 						.clientId(CLIENT_ID)
@@ -281,6 +258,7 @@ public class RegisteredClientTests {
 			RegisteredClient.withId(ID)
 					.clientId(CLIENT_ID)
 					.clientSecret(CLIENT_SECRET)
+					.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
 					.authorizationGrantTypes(Set::clear)
 					.clientAuthenticationMethod(ClientAuthenticationMethod.BASIC)
 					.redirectUris(redirectUris -> redirectUris.addAll(REDIRECT_URIS))
@@ -321,20 +299,6 @@ public class RegisteredClientTests {
 
 		assertThat(registration.getClientAuthenticationMethods())
 				.containsExactly(ClientAuthenticationMethod.BASIC, ClientAuthenticationMethod.POST);
-	}
-
-	@Test
-	public void buildWhenClientAuthenticationMethodsConsumerClearsSetThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> {
-			RegisteredClient.withId(ID)
-					.clientId(CLIENT_ID)
-					.clientSecret(CLIENT_SECRET)
-					.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-					.clientAuthenticationMethods(Set::clear)
-					.redirectUris(redirectUris -> redirectUris.addAll(REDIRECT_URIS))
-					.scopes(scopes -> scopes.addAll(SCOPES))
-					.build();
-		}).isInstanceOf(IllegalArgumentException.class);
 	}
 
 	@Test
@@ -383,7 +347,7 @@ public class RegisteredClientTests {
 	}
 
 	@Test
-	public void buildWhenClientRegistrationValuesOverriddenThenPropagated() {
+	public void buildWhenRegisteredClientValuesOverriddenThenPropagated() {
 		RegisteredClient registration = TestRegisteredClients.registeredClient().build();
 		String newSecret = "new-secret";
 		String newScope = "new-scope";

@@ -25,7 +25,6 @@ import java.io.Serializable;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -36,17 +35,17 @@ import java.util.function.Consumer;
  * @author Joe Grandja
  * @author Anoop Garlapati
  * @see <a target="_blank" href="https://tools.ietf.org/html/rfc6749#section-2">Section 2 Client Registration</a>
+ * @since 0.0.1
  */
 public class RegisteredClient implements Serializable {
 	private static final long serialVersionUID = Version.SERIAL_VERSION_UID;
 	private String id;
 	private String clientId;
 	private String clientSecret;
-	private Set<ClientAuthenticationMethod> clientAuthenticationMethods =
-			Collections.singleton(ClientAuthenticationMethod.BASIC);
-	private Set<AuthorizationGrantType> authorizationGrantTypes = Collections.emptySet();
-	private Set<String> redirectUris = Collections.emptySet();
-	private Set<String> scopes = Collections.emptySet();
+	private Set<ClientAuthenticationMethod> clientAuthenticationMethods;
+	private Set<AuthorizationGrantType> authorizationGrantTypes;
+	private Set<String> redirectUris;
+	private Set<String> scopes;
 
 	protected RegisteredClient() {
 	}
@@ -157,8 +156,7 @@ public class RegisteredClient implements Serializable {
 		private String id;
 		private String clientId;
 		private String clientSecret;
-		private Set<ClientAuthenticationMethod> clientAuthenticationMethods =
-				new LinkedHashSet<>(Collections.singletonList(ClientAuthenticationMethod.BASIC));
+		private Set<ClientAuthenticationMethod> clientAuthenticationMethods = new LinkedHashSet<>();
 		private Set<AuthorizationGrantType> authorizationGrantTypes = new LinkedHashSet<>();
 		private Set<String> redirectUris = new LinkedHashSet<>();
 		private Set<String> scopes = new LinkedHashSet<>();
@@ -171,13 +169,18 @@ public class RegisteredClient implements Serializable {
 			this.id = registeredClient.id;
 			this.clientId = registeredClient.clientId;
 			this.clientSecret = registeredClient.clientSecret;
-			this.clientAuthenticationMethods = registeredClient.clientAuthenticationMethods == null ? null :
-					new HashSet<>(registeredClient.clientAuthenticationMethods);
-			this.authorizationGrantTypes = registeredClient.authorizationGrantTypes == null ? null :
-					new HashSet<>(registeredClient.authorizationGrantTypes);
-			this.redirectUris = registeredClient.redirectUris == null ? null :
-					new HashSet<>(registeredClient.redirectUris);
-			this.scopes = registeredClient.scopes == null ? null : new HashSet<>(registeredClient.scopes);
+			if (!CollectionUtils.isEmpty(registeredClient.clientAuthenticationMethods)) {
+				this.clientAuthenticationMethods.addAll(registeredClient.clientAuthenticationMethods);
+			}
+			if (!CollectionUtils.isEmpty(registeredClient.authorizationGrantTypes)) {
+				this.authorizationGrantTypes.addAll(registeredClient.authorizationGrantTypes);
+			}
+			if (!CollectionUtils.isEmpty(registeredClient.redirectUris)) {
+				this.redirectUris.addAll(registeredClient.redirectUris);
+			}
+			if (!CollectionUtils.isEmpty(registeredClient.scopes)) {
+				this.scopes.addAll(registeredClient.scopes);
+			}
 		}
 
 		/**
@@ -214,8 +217,8 @@ public class RegisteredClient implements Serializable {
 		}
 
 		/**
-		 * Adds the {@link ClientAuthenticationMethod authentication method} to the set of
-		 * client authentication methods used when authenticating the client with the authorization server.
+		 * Adds an {@link ClientAuthenticationMethod authentication method}
+		 * the client may use when authenticating with the authorization server.
 		 *
 		 * @param clientAuthenticationMethod the authentication method
 		 * @return the {@link Builder}
@@ -226,10 +229,10 @@ public class RegisteredClient implements Serializable {
 		}
 
 		/**
-		 * Sets the {@link ClientAuthenticationMethod authentication method(s)} used
-		 * when authenticating the client with the authorization server.
+		 * A {@code Consumer} of the {@link ClientAuthenticationMethod authentication method(s)}
+		 * allowing the ability to add, replace, or remove.
 		 *
-		 * @param clientAuthenticationMethodsConsumer the authentication method(s) {@link Consumer}
+		 * @param clientAuthenticationMethodsConsumer a {@code Consumer} of the authentication method(s)
 		 * @return the {@link Builder}
 		 */
 		public Builder clientAuthenticationMethods(
@@ -239,8 +242,7 @@ public class RegisteredClient implements Serializable {
 		}
 
 		/**
-		 * Adds the {@link AuthorizationGrantType authorization grant type} to
-		 * the set of authorization grant types that the client may use.
+		 * Adds an {@link AuthorizationGrantType authorization grant type} the client may use.
 		 *
 		 * @param authorizationGrantType the authorization grant type
 		 * @return the {@link Builder}
@@ -251,9 +253,10 @@ public class RegisteredClient implements Serializable {
 		}
 
 		/**
-		 * Sets the {@link AuthorizationGrantType authorization grant type(s)} that the client may use.
+		 * A {@code Consumer} of the {@link AuthorizationGrantType authorization grant type(s)}
+		 * allowing the ability to add, replace, or remove.
 		 *
-		 * @param authorizationGrantTypesConsumer the authorization grant type(s) {@link Consumer}
+		 * @param authorizationGrantTypesConsumer a {@code Consumer} of the authorization grant type(s)
 		 * @return the {@link Builder}
 		 */
 		public Builder authorizationGrantTypes(Consumer<Set<AuthorizationGrantType>> authorizationGrantTypesConsumer) {
@@ -262,9 +265,9 @@ public class RegisteredClient implements Serializable {
 		}
 
 		/**
-		 * Adds the redirect URI to the set of redirect URIs that the client may use in redirect-based flows.
+		 * Adds a redirect URI the client may use in a redirect-based flow.
 		 *
-		 * @param redirectUri the redirect URI to add
+		 * @param redirectUri the redirect URI
 		 * @return the {@link Builder}
 		 */
 		public Builder redirectUri(String redirectUri) {
@@ -273,9 +276,10 @@ public class RegisteredClient implements Serializable {
 		}
 
 		/**
-		 * Sets the redirect URI(s) that the client may use in redirect-based flows.
+		 * A {@code Consumer} of the redirect URI(s)
+		 * allowing the ability to add, replace, or remove.
 		 *
-		 * @param redirectUrisConsumer the redirect URI(s) {@link Consumer}
+		 * @param redirectUrisConsumer a {@link Consumer} of the redirect URI(s)
 		 * @return the {@link Builder}
 		 */
 		public Builder redirectUris(Consumer<Set<String>> redirectUrisConsumer) {
@@ -284,9 +288,9 @@ public class RegisteredClient implements Serializable {
 		}
 
 		/**
-		 * Adds the scope to the set of scopes used by the client.
+		 * Adds a scope the client may use.
 		 *
-		 * @param scope the scope to add
+		 * @param scope the scope
 		 * @return the {@link Builder}
 		 */
 		public Builder scope(String scope) {
@@ -295,9 +299,10 @@ public class RegisteredClient implements Serializable {
 		}
 
 		/**
-		 * Sets the scope(s) used by the client.
+		 * A {@code Consumer} of the scope(s)
+		 * allowing the ability to add, replace, or remove.
 		 *
-		 * @param scopesConsumer the scope(s) {@link Consumer}
+		 * @param scopesConsumer a {@link Consumer} of the scope(s)
 		 * @return the {@link Builder}
 		 */
 		public Builder scopes(Consumer<Set<String>> scopesConsumer) {
@@ -311,17 +316,18 @@ public class RegisteredClient implements Serializable {
 		 * @return a {@link RegisteredClient}
 		 */
 		public RegisteredClient build() {
-			Assert.notEmpty(this.clientAuthenticationMethods, "clientAuthenticationMethods cannot be empty");
+			Assert.hasText(this.clientId, "clientId cannot be empty");
 			Assert.notEmpty(this.authorizationGrantTypes, "authorizationGrantTypes cannot be empty");
-			if (authorizationGrantTypes.contains(AuthorizationGrantType.AUTHORIZATION_CODE)) {
-				Assert.hasText(this.id, "id cannot be empty");
-				Assert.hasText(this.clientId, "clientId cannot be empty");
+			if (this.authorizationGrantTypes.contains(AuthorizationGrantType.AUTHORIZATION_CODE)) {
 				Assert.hasText(this.clientSecret, "clientSecret cannot be empty");
 				Assert.notEmpty(this.redirectUris, "redirectUris cannot be empty");
 			}
-			this.validateScopes();
-			this.validateRedirectUris();
-			return this.create();
+			if (CollectionUtils.isEmpty(this.clientAuthenticationMethods)) {
+				this.clientAuthenticationMethods.add(ClientAuthenticationMethod.BASIC);
+			}
+			validateScopes();
+			validateRedirectUris();
+			return create();
 		}
 
 		private RegisteredClient create() {
@@ -380,5 +386,4 @@ public class RegisteredClient implements Serializable {
 			}
 		}
 	}
-
 }

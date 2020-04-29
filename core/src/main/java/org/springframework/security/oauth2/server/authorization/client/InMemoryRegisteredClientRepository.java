@@ -28,6 +28,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Anoop Garlapati
  * @see RegisteredClientRepository
  * @see RegisteredClient
+ * @since 0.0.1
  */
 public final class InMemoryRegisteredClientRepository implements RegisteredClientRepository {
 	private final Map<String, RegisteredClient> idRegistrationMap;
@@ -66,8 +67,8 @@ public final class InMemoryRegisteredClientRepository implements RegisteredClien
 			idRegistrationMapResult.put(id, registration);
 			clientIdRegistrationMapResult.put(clientId, registration);
 		}
-		idRegistrationMap = idRegistrationMapResult;
-		clientIdRegistrationMap = clientIdRegistrationMapResult;
+		this.idRegistrationMap = idRegistrationMapResult;
+		this.clientIdRegistrationMap = clientIdRegistrationMapResult;
 	}
 
 	@Override

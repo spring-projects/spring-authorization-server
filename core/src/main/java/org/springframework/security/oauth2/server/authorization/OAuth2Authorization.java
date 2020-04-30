@@ -17,15 +17,73 @@ package org.springframework.security.oauth2.server.authorization;
 
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
  * @author Joe Grandja
+ * @author Paurav Munshi
  */
 public class OAuth2Authorization {
 	private String registeredClientId;
 	private String principalName;
 	private OAuth2AccessToken accessToken;
 	private Map<String, Object> attributes;
+	
+	public String getRegisteredClientId() {
+		return registeredClientId;
+	}
+	public String getPrincipalName() {
+		return principalName;
+	}
+	public OAuth2AccessToken getAccessToken() {
+		return accessToken;
+	}
+	public Object getAttribute(String attributeKey) {
+		return attributes.get(attributeKey);
+	}
+	public static Builder createBuilder() {
+		return new Builder();
+	}
+	
+	public static class Builder {
+		private String registeredClientId;
+		private String principalName;
+		private OAuth2AccessToken accessToken;
+		private Map<String, Object> attributes;
+		
+		private Builder() {
+			this.attributes = new HashMap<String,Object>();
+		}
+		
+		public Builder clientId(String clientId) {
+			this.registeredClientId = clientId;
+			return this;
+		}
+		
+		public Builder principalName(String principalName) {
+			this.principalName = principalName;
+			return this;
+		}
+		
+		public Builder accessToken(OAuth2AccessToken accessToken) {
+			this.accessToken = accessToken;
+			return this;
+		}
+		public Builder addAttribute(String key, Object value) {
+			this.attributes.put(key, value);
+			return this;
+		}
+		
+		public OAuth2Authorization build() {
+			OAuth2Authorization authorization = new OAuth2Authorization();
+			authorization.registeredClientId = this.registeredClientId;
+			authorization.principalName = this.principalName;
+			authorization.accessToken = this.accessToken;
+			authorization.attributes = this.attributes;
+			
+			return authorization;
+		}
+	}
 
 }

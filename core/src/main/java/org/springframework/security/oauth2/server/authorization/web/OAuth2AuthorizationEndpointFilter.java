@@ -77,7 +77,7 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 			authorization = buildOAuth2Authorization(client,authorizationRequest,code);
 			authorizationService.save(authorization);
 			
-			this.authorizationRedirectStrategy.sendRedirect(request, response, authorizationRequest.getRedirectUri());
+			sendCodeOnSuccess(request, response, authorizationRequest, code);
 		}catch(OAuth2AuthorizationException authorizationException) {
 			OAuth2Error authorizationError = authorizationException.getError();
 			
@@ -92,7 +92,7 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 
 	}
 	
-	private RegisteredClient fetchRegisteredClient(HttpServletRequest request) throws OAuth2AuthorizationException {
+	protected RegisteredClient fetchRegisteredClient(HttpServletRequest request) throws OAuth2AuthorizationException {
 		String clientId = request.getParameter(OAuth2ParameterNames.CLIENT_ID);
 		if(StringUtils.isEmpty(clientId))
 			throw new OAuth2AuthorizationException(CLIENT_ID_ABSENT_ERROR);
@@ -110,7 +110,7 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 		
 	}
 	
-	private OAuth2Authorization buildOAuth2Authorization(RegisteredClient client, 
+	protected OAuth2Authorization buildOAuth2Authorization(RegisteredClient client, 
 			OAuth2AuthorizationRequest authorizationRequest, String code) {
 		OAuth2Authorization authorization = OAuth2Authorization.createBuilder()
 					.clientId(authorizationRequest.getClientId())
@@ -121,13 +121,22 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 	}
 	
 	
-	private void validateAuthorizationRequest(OAuth2AuthorizationRequest authzRequest, RegisteredClient client) {
+	protected void validateAuthorizationRequest(OAuth2AuthorizationRequest authzRequest, RegisteredClient client) {
 		OAuth2AuthorizationResponseType responseType = Optional.ofNullable(authzRequest.getResponseType())
 						.orElseThrow(() -> new OAuth2AuthorizationException(RESPONSE_TYPE_NOT_FOUND_ERROR));
 		
 		if(!responseType.equals(OAuth2AuthorizationResponseType.CODE))
 			throw new OAuth2AuthorizationException(RESPONSE_TYPE_NOT_FOUND_ERROR);
 			
+	}
+	
+	private void sendCodeOnSuccess(HttpServletRequest request, HttpServletResponse response,
+			OAuth2AuthorizationRequest authorizationRequest, String code) throws IOException {
+		String redirectUri = new StringBuilder(authorizationRequest.getRedirectUri())
+				.append("?").append("code=").append(code)
+				.toString();
+		
+		this.authorizationRedirectStrategy.sendRedirect(request, response, redirectUri);
 	}
 	
 	private void sendErrorInResponse(HttpServletResponse response, OAuth2Error authorizationError) throws IOException {

@@ -30,6 +30,9 @@ public class OAuth2Authorization {
 	private OAuth2AccessToken accessToken;
 	private Map<String, Object> attributes;
 	
+	public static final String ISSUED_AT = "issuedAt";
+	public static final String CODE_USED = "codeUsed";
+	
 	public String getRegisteredClientId() {
 		return registeredClientId;
 	}

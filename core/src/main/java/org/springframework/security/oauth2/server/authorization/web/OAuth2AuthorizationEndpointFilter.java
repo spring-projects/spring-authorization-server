@@ -16,7 +16,11 @@
 package org.springframework.security.oauth2.server.authorization.web;
 
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 
 import javax.servlet.FilterChain;
@@ -56,7 +60,7 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 	private static final OAuth2Error CLIENT_ID_ABSENT_ERROR = new OAuth2Error(OAuth2ErrorCodes.INVALID_REQUEST,"Request does not contain client id parameter",null);
 	private static final OAuth2Error CLIENT_ID_NOT_FOUND_ERROR = new OAuth2Error(OAuth2ErrorCodes.ACCESS_DENIED,"Can't validate the client id provided with the request",null);
 	private static final OAuth2Error RESPONSE_TYPE_NOT_FOUND_ERROR = new OAuth2Error(OAuth2ErrorCodes.UNSUPPORTED_RESPONSE_TYPE,"Response type should be present and it should be 'code'",null);
-	private static final OAuth2Error AUTHZ_CODE_NOT_SUPPORTED_ERROR = new OAuth2Error(OAuth2ErrorCodes.UNSUPPORTED_GRANT_TYPE,"The provided client does not support Authorization Code grant",null);
+	private static final OAuth2Error AUTHZ_CODE_NOT_SUPPORTED_ERROR = new OAuth2Error(OAuth2ErrorCodes.UNAUTHORIZED_CLIENT,"The provided client is not authorized to request authorization code",null);
 	
 	@Override
 	protected void doFilterInternal(HttpServletRequest request,
@@ -82,12 +86,12 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 			OAuth2Error authorizationError = authorizationException.getError();
 			
 			if(authorizationError.getErrorCode().equals(OAuth2ErrorCodes.INVALID_REQUEST)
-					|| authorizationError.getErrorCode().equals(OAuth2ErrorCodes.ACCESS_DENIED)
-					|| authorizationError.getErrorCode().equals(OAuth2ErrorCodes.UNSUPPORTED_GRANT_TYPE))
+					|| authorizationError.getErrorCode().equals(OAuth2ErrorCodes.ACCESS_DENIED))
 				sendErrorInResponse(response, authorizationError);
 			
-			if(authorizationError.getErrorCode().equals(OAuth2ErrorCodes.UNSUPPORTED_RESPONSE_TYPE))
-				sendErrorInRedirect(request, response, authorizationError, authorizationRequest.getRedirectUri());
+			if(authorizationError.getErrorCode().equals(OAuth2ErrorCodes.UNSUPPORTED_RESPONSE_TYPE)
+					|| authorizationError.getErrorCode().equals(OAuth2ErrorCodes.UNAUTHORIZED_CLIENT))
+				sendErrorInRedirect(request, response, authorizationRequest, authorizationError, authorizationRequest.getRedirectUri());
 		}
 
 	}
@@ -102,7 +106,7 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 			throw new OAuth2AuthorizationException(CLIENT_ID_NOT_FOUND_ERROR);
 		
 		boolean isAuthoirzationGrantAllowed = Stream.of(client.getAuthorizationGrantTypes())
-				.anyMatch(grantType -> grantType.equals(AuthorizationGrantType.AUTHORIZATION_CODE));
+				.anyMatch(grantType -> grantType.contains(AuthorizationGrantType.AUTHORIZATION_CODE));
 			if(!isAuthoirzationGrantAllowed)
 				throw new OAuth2AuthorizationException(AUTHZ_CODE_NOT_SUPPORTED_ERROR);
 			
@@ -115,6 +119,10 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 		OAuth2Authorization authorization = OAuth2Authorization.createBuilder()
 					.clientId(authorizationRequest.getClientId())
 					.addAttribute(OAuth2ParameterNames.CODE, code)
+					.addAttribute(OAuth2Authorization.ISSUED_AT, Instant.now())
+					.addAttribute(OAuth2Authorization.CODE_USED, new AtomicBoolean(false))
+					.addAttribute(OAuth2ParameterNames.SCOPE, Optional.ofNullable(authorizationRequest.getScopes())
+							.filter(scopes -> !scopes.isEmpty()).orElse(client.getScopes()))
 					.build();
 		
 		return authorization;
@@ -132,10 +140,13 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 	
 	private void sendCodeOnSuccess(HttpServletRequest request, HttpServletResponse response,
 			OAuth2AuthorizationRequest authorizationRequest, String code) throws IOException {
-		String redirectUri = new StringBuilder(authorizationRequest.getRedirectUri())
-				.append("?").append("code=").append(code)
-				.toString();
+		StringBuilder urlBuilder = new StringBuilder(authorizationRequest.getRedirectUri())
+				.append(authorizationRequest.getRedirectUri().contains("?") ? "&" : "?")
+				.append(OAuth2ParameterNames.CODE).append("=").append(code);
+		if(!StringUtils.isEmpty(authorizationRequest.getState()))
+				urlBuilder.append("?").append("state=").append(authorizationRequest.getState());
 		
+		String redirectUri = urlBuilder.toString();
 		this.authorizationRedirectStrategy.sendRedirect(request, response, redirectUri);
 	}
 	
@@ -143,12 +154,18 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 		response.sendError(HttpStatus.INTERNAL_SERVER_ERROR.value(), authorizationError.getErrorCode()+":"+authorizationError.getDescription());
 	}
 	
-	private void sendErrorInRedirect(HttpServletRequest request, HttpServletResponse response, OAuth2Error authorizationError, String redirectUri) throws IOException {
-		String finalRedirectURI = new StringBuilder(redirectUri)
-				.append("?").append("error_code=").append(authorizationError.getErrorCode())
-				.append("&").append("error_description=").append(authorizationError.getDescription())
-				.toString();
+	private void sendErrorInRedirect(HttpServletRequest request, HttpServletResponse response,
+			OAuth2AuthorizationRequest authorizationRequest,OAuth2Error authorizationError, 
+			String redirectUri) throws IOException {
+		StringBuilder urlBuilder = new StringBuilder(redirectUri)
+				.append(redirectUri.contains("?") ? "&" : "?")
+				.append("error_code=").append(authorizationError.getErrorCode())
+				.append("&").append("error_description=").append(authorizationError.getDescription());
 		
+		if(!StringUtils.isEmpty(authorizationRequest.getState()))
+			urlBuilder.append("?").append("state=").append(authorizationRequest.getState());
+				
+		String finalRedirectURI = urlBuilder.toString();
 		this.authorizationRedirectStrategy.sendRedirect(request, response, finalRedirectURI);
 	}
 
@@ -189,7 +206,7 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 		return authorizationRedirectStrategy;
 	}
 	
-	public void getAuthorizationRedirectStrategy(RedirectStrategy redirectStrategy) {
+	public void setAuthorizationRedirectStrategy(RedirectStrategy redirectStrategy) {
 		this.authorizationRedirectStrategy = redirectStrategy;
 	}
 	

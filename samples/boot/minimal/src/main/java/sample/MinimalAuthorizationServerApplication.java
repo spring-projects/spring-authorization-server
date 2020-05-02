@@ -21,7 +21,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication
 public class MinimalAuthorizationServerApplication {
 
-    public static void main(String[] args) {
-        SpringApplication.run(MinimalAuthorizationServerApplication.class, args);
-    }
+	public static void main(String[] args) {
+		SpringApplication.run(MinimalAuthorizationServerApplication.class, args);
+	}
+
 }

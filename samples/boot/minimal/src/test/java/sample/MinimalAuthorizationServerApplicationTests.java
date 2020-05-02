@@ -24,8 +24,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest
 public class MinimalAuthorizationServerApplicationTests {
 
-    @Test
-    public void loadContext(ApplicationContext context) {
-        assertThat(context).isNotNull();
-    }
+	@Test
+	public void loadContext(ApplicationContext context) {
+		assertThat(context).isNotNull();
+	}
+
 }

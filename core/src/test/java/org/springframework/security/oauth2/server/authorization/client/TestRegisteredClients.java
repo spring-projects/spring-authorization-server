@@ -58,7 +58,7 @@ public class TestRegisteredClients {
 				.scope("profile")
 				.scope("email");
 	}
-	
+
 	public static RegisteredClient.Builder validAuthorizationGrantClientMultiRedirectUris() {
 		return RegisteredClient.withId("valid_client_multi_uri_id")
 				.clientId("valid_client_multi_uri")
@@ -71,7 +71,7 @@ public class TestRegisteredClients {
 				.scope("profile")
 				.scope("email");
 	}
-	
+
 	public static RegisteredClient.Builder validClientCredentialsGrantRegisteredClient() {
 		return RegisteredClient.withId("valid_cc_client_id")
 				.clientId("valid_cc_client")

@@ -156,7 +156,7 @@ public class OAuth2AuthorizationEndpointFilterTest {
 		assertThat(response.getErrorMessage()).isEqualTo(OAuth2ErrorCodes.INVALID_REQUEST+":"+OAuth2AuthorizationServerMessages.REDIRECT_URI_MANDATORY_FOR_CLIENT);
 
 	}
-	
+
 	@Test
 	public void testErrorWhenRequestedRedirectUriNotConfiguredInClient() throws Exception {
 		MockHttpServletRequest request = getValidMockHttpServletRequest();

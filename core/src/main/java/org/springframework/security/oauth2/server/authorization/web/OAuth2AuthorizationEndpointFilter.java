@@ -70,6 +70,7 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 
 	private static final OAuth2Error CLIENT_ID_ABSENT_ERROR = new OAuth2Error(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2AuthorizationServerMessages.REQUEST_MISSING_CLIENT_ID, null);
 	private static final OAuth2Error REDIRECT_URI_REQUIRED = new OAuth2Error(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2AuthorizationServerMessages.REDIRECT_URI_MANDATORY_FOR_CLIENT, null);
+	private static final OAuth2Error INVALID_REDIRECT_URI_REQUESTED = new OAuth2Error(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2AuthorizationServerMessages.REQUESTED_REDIRECT_URI_INVALID, null);
 	private static final OAuth2Error CLIENT_ID_NOT_FOUND_ERROR = new OAuth2Error(OAuth2ErrorCodes.ACCESS_DENIED, OAuth2AuthorizationServerMessages.CLIENT_ID_NOT_FOUND, null);
 	private static final OAuth2Error USER_NOT_AUTHENTICATED_ERROR = new OAuth2Error(OAuth2ErrorCodes.ACCESS_DENIED, OAuth2AuthorizationServerMessages.USER_NOT_AUTHENTICATED, null);
 	private static final OAuth2Error AUTHZ_CODE_NOT_SUPPORTED_ERROR = new OAuth2Error(OAuth2ErrorCodes.ACCESS_DENIED, OAuth2AuthorizationServerMessages.CLIENT_ID_UNAUTHORIZED_FOR_CODE, null);
@@ -172,6 +173,8 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 		String redirectUri = request.getParameter(OAuth2ParameterNames.REDIRECT_URI);
 		if (StringUtils.isEmpty(redirectUri) && client.getRedirectUris().size() > 1)
 			throw new OAuth2AuthorizationException(REDIRECT_URI_REQUIRED);
+		if (!StringUtils.isEmpty(redirectUri) && !client.getRedirectUris().contains(redirectUri))
+			throw new OAuth2AuthorizationException(INVALID_REDIRECT_URI_REQUESTED);
 	}
 
 	private String getRedirectUri(OAuth2AuthorizationRequest authorizationRequest, RegisteredClient client) {

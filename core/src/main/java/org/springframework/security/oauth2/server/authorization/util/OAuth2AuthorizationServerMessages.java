@@ -27,5 +27,6 @@ public final class OAuth2AuthorizationServerMessages {
 	public static final String CLIENT_ID_NOT_FOUND = "Can't validate the client id provided with the request";
 	public static final String USER_NOT_AUTHENTICATED = "User must be authenticated to perform this action";
 	public static final String REDIRECT_URI_MANDATORY_FOR_CLIENT = "Client is configured with multiple URIs. So a specific redirect uri must be supplied with request";
+	public static final String REQUESTED_REDIRECT_URI_INVALID = "Requested redirect uri is invalid.";
 
 }

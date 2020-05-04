@@ -156,6 +156,30 @@ public class OAuth2AuthorizationEndpointFilterTest {
 		assertThat(response.getErrorMessage()).isEqualTo(OAuth2ErrorCodes.INVALID_REQUEST+":"+OAuth2AuthorizationServerMessages.REDIRECT_URI_MANDATORY_FOR_CLIENT);
 
 	}
+	
+	@Test
+	public void testErrorWhenRequestedRedirectUriNotConfiguredInClient() throws Exception {
+		MockHttpServletRequest request = getValidMockHttpServletRequest();
+		request.setParameter(OAuth2ParameterNames.REDIRECT_URI, "http://localhost:8080/not-configred-app/callback");
+		MockHttpServletResponse response = new MockHttpServletResponse();
+		FilterChain filterChain = mock(FilterChain.class);
+
+		RegisteredClient registeredClient = TestRegisteredClients.validAuthorizationGrantRegisteredClient().build();
+		when(registeredClientRepository.findByClientId(VALID_CLIENT)).thenReturn(registeredClient);
+		when(authentication.isAuthenticated()).thenReturn(true);
+
+
+		filter.doFilterInternal(request, response, filterChain);
+
+		verify(authentication, times(1)).isAuthenticated();
+		verify(registeredClientRepository, times(1)).findByClientId(VALID_CLIENT);
+		verify(authorizationService, times(0)).save(any(OAuth2Authorization.class));
+		verify(codeGenerator, times(0)).generateKey();
+
+		assertThat(response.getStatus()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR.value());
+		assertThat(response.getErrorMessage()).isEqualTo(OAuth2ErrorCodes.INVALID_REQUEST+":"+OAuth2AuthorizationServerMessages.REQUESTED_REDIRECT_URI_INVALID);
+
+	}
 
 	@Test
 	public void testErrorClientIdNotSupportAuthorizationGrantFlow() throws Exception {

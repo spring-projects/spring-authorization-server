@@ -44,11 +44,11 @@ public class OAuth2ClientAuthenticationToken extends AbstractAuthenticationToken
 
 	@Override
 	public Object getCredentials() {
-		return null;
+		return clientSecret;
 	}
 
 	@Override
 	public Object getPrincipal() {
-		return null;
+		return clientId;
 	}
 }

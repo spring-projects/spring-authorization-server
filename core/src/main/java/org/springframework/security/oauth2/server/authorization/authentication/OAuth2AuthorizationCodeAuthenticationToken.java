@@ -24,6 +24,7 @@ import java.util.Collections;
 
 /**
  * @author Joe Grandja
+ * @author Madhu Bhat
  */
 public class OAuth2AuthorizationCodeAuthenticationToken extends AbstractAuthenticationToken {
 	private static final long serialVersionUID = SpringSecurityCoreVersion.SERIAL_VERSION_UID;
@@ -56,5 +57,14 @@ public class OAuth2AuthorizationCodeAuthenticationToken extends AbstractAuthenti
 	@Override
 	public Object getPrincipal() {
 		return null;
+	}
+
+	/**
+	 * Returns the code.
+	 *
+	 * @return the code
+	 */
+	public String getCode() {
+		return this.code;
 	}
 }

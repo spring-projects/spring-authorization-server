@@ -16,22 +16,21 @@
 package org.springframework.security.oauth2.server.authorization.web;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
-
 import javax.servlet.FilterChain;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.springframework.core.convert.converter.Converter;
 import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -39,15 +38,12 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.keygen.StringKeyGenerator;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
-import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
-import org.springframework.security.oauth2.server.authorization.util.OAuth2AuthorizationServerMessages;
-import org.springframework.security.web.RedirectStrategy;
 
 
 /**
@@ -65,8 +61,6 @@ public class OAuth2AuthorizationEndpointFilterTest {
 
 	private OAuth2AuthorizationEndpointFilter filter;
 
-	private RedirectStrategy authorizationRedirectStrategy = mock(RedirectStrategy.class);
-	private Converter<HttpServletRequest, OAuth2AuthorizationRequest> authorizationConverter = mock(Converter.class);
 	private OAuth2AuthorizationService authorizationService = mock(OAuth2AuthorizationService.class);
 	private StringKeyGenerator codeGenerator = mock(StringKeyGenerator.class);
 	private RegisteredClientRepository registeredClientRepository = mock(RegisteredClientRepository.class);
@@ -74,33 +68,67 @@ public class OAuth2AuthorizationEndpointFilterTest {
 
 	@Before
 	public void setUp() {
-		filter = new OAuth2AuthorizationEndpointFilter();
+		this.filter = new OAuth2AuthorizationEndpointFilter(this.registeredClientRepository, this.authorizationService);
+		this.filter.setCodeGenerator(this.codeGenerator);
 
-		filter.setAuthorizationService(authorizationService);
-		filter.setCodeGenerator(codeGenerator);
-		filter.setRegisteredClientRepository(registeredClientRepository);
-
-		SecurityContextHolder.getContext().setAuthentication(authentication);
+		SecurityContextHolder.getContext().setAuthentication(this.authentication);
 	}
 
 	@Test
-	public void testFilterRedirectsWithCodeOnValidReq() throws Exception {
+	public void constructorWhenRegisteredClientRepositoryIsNullThenIllegalArgumentExceptionIsThrows() throws Exception {
+		assertThatThrownBy(() -> new OAuth2AuthorizationEndpointFilter(null, this.authorizationService))
+			.isInstanceOf(IllegalArgumentException.class);
+	}
+
+	@Test
+	public void constructorWhenAuthorizationServiceIsNullThenIllegalArgumentExceptionIsThrows() throws Exception {
+		assertThatThrownBy(() -> new OAuth2AuthorizationEndpointFilter(this.registeredClientRepository, null))
+			.isInstanceOf(IllegalArgumentException.class);
+	}
+
+	@Test
+	public void setAuthorizationEndpointMatcherWhenAuthorizationEndpointMatcherIsNullThenIllegalArgumentExceptionIsThrown() throws Exception {
+		assertThatThrownBy(() ->this.filter.setAuthorizationEndpointMatcher(null))
+			.isInstanceOf(IllegalArgumentException.class);
+	}
+
+	@Test
+	public void setAuthorizationRedirectStrategyWhenAuthorizationRedirectStrategyIsNullThenIllegalArgumentExceptionIsThrown() throws Exception {
+		assertThatThrownBy(() ->this.filter.setAuthorizationRedirectStrategy(null))
+			.isInstanceOf(IllegalArgumentException.class);
+	}
+
+	@Test
+	public void setAuthorizationRequestConverterWhenAuthorizationRequestConverterIsNullThenIllegalArgumentExceptionIsThrown() throws Exception {
+		assertThatThrownBy(() ->this.filter.setAuthorizationRequestConverter(null))
+			.isInstanceOf(IllegalArgumentException.class);
+	}
+
+	@Test
+	public void setCodeGeneratorWhenCodeGeneratorIsNullThenIllegalArgumentExceptionIsThrown() throws Exception {
+		assertThatThrownBy(() ->this.filter.setCodeGenerator(null))
+			.isInstanceOf(IllegalArgumentException.class);
+	}
+
+	@Test
+	public void doFilterWhenValidRequestIsReceivedThenResponseRedirectedToRedirectURIWithCode() throws Exception {
 		MockHttpServletRequest request = getValidMockHttpServletRequest();
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		FilterChain filterChain = mock(FilterChain.class);
 
 		RegisteredClient registeredClient = TestRegisteredClients.validAuthorizationGrantRegisteredClient().build();
-		when(registeredClientRepository.findByClientId(VALID_CLIENT)).thenReturn(registeredClient);
-		when(codeGenerator.generateKey()).thenReturn("sample_code");
-		when(authentication.isAuthenticated()).thenReturn(true);
+		when(this.registeredClientRepository.findByClientId(VALID_CLIENT)).thenReturn(registeredClient);
+		when(this.codeGenerator.generateKey()).thenReturn("sample_code");
+		when(this.authentication.isAuthenticated()).thenReturn(true);
 
 
-		filter.doFilterInternal(request, response, filterChain);
+		this.filter.doFilter(request, response, filterChain);
 
-		verify(authentication).isAuthenticated();
-		verify(registeredClientRepository).findByClientId(VALID_CLIENT);
-		verify(authorizationService).save(any(OAuth2Authorization.class));
-		verify(codeGenerator).generateKey();
+		verify(this.authentication).isAuthenticated();
+		verify(this.registeredClientRepository).findByClientId(VALID_CLIENT);
+		verify(this.authorizationService).save(any(OAuth2Authorization.class));
+		verify(this.codeGenerator).generateKey();
+		verify(filterChain, times(0)).doFilter(any(HttpServletRequest.class), any(HttpServletResponse.class));
 
 		assertThat(response.getStatus()).isEqualTo(HttpStatus.FOUND.value());
 		assertThat(response.getRedirectedUrl()).isEqualTo("http://localhost:8080/test-application/callback?code=sample_code&state=teststate");
@@ -108,24 +136,24 @@ public class OAuth2AuthorizationEndpointFilterTest {
 	}
 
 	@Test
-	public void testFilterRedirectsWithCodeToDefaultRedirectURIWhenNotPresentInRequest() throws Exception {
+	public void doFilterWhenValidRequestWithBlankRedirectURIIsReceivedThenResponseRedirectedToConfiguredRedirectURI() throws Exception {
 		MockHttpServletRequest request = getValidMockHttpServletRequest();
 		request.setParameter(OAuth2ParameterNames.REDIRECT_URI, "");
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		FilterChain filterChain = mock(FilterChain.class);
 
 		RegisteredClient registeredClient = TestRegisteredClients.validAuthorizationGrantRegisteredClient().build();
-		when(registeredClientRepository.findByClientId(VALID_CLIENT)).thenReturn(registeredClient);
-		when(codeGenerator.generateKey()).thenReturn("sample_code");
-		when(authentication.isAuthenticated()).thenReturn(true);
+		when(this.registeredClientRepository.findByClientId(VALID_CLIENT)).thenReturn(registeredClient);
+		when(this.codeGenerator.generateKey()).thenReturn("sample_code");
+		when(this.authentication.isAuthenticated()).thenReturn(true);
 
+		this.filter.doFilter(request, response, filterChain);
 
-		filter.doFilterInternal(request, response, filterChain);
-
-		verify(authentication).isAuthenticated();
-		verify(registeredClientRepository).findByClientId(VALID_CLIENT);
-		verify(authorizationService).save(any(OAuth2Authorization.class));
-		verify(codeGenerator).generateKey();
+		verify(this.authentication).isAuthenticated();
+		verify(this.registeredClientRepository).findByClientId(VALID_CLIENT);
+		verify(this.authorizationService).save(any(OAuth2Authorization.class));
+		verify(this.codeGenerator).generateKey();
+		verify(filterChain, times(0)).doFilter(any(HttpServletRequest.class), any(HttpServletResponse.class));
 
 		assertThat(response.getStatus()).isEqualTo(HttpStatus.FOUND.value());
 		assertThat(response.getRedirectedUrl()).isEqualTo("http://localhost:8080/test-application/callback?code=sample_code&state=teststate");
@@ -133,7 +161,7 @@ public class OAuth2AuthorizationEndpointFilterTest {
 	}
 
 	@Test
-	public void testErrorWhenRedirectURINotPresentAndClientHasMulitipleUris() throws Exception {
+	public void doFilterWhenRedirectURINotPresentAndClientHasMulitipleUrisThenErrorIsSentInResponse() throws Exception {
 		MockHttpServletRequest request = getValidMockHttpServletRequest();
 		request.setParameter(OAuth2ParameterNames.CLIENT_ID, VALID_CLIENT_MULTI_URI);
 		request.setParameter(OAuth2ParameterNames.REDIRECT_URI, "");
@@ -141,226 +169,210 @@ public class OAuth2AuthorizationEndpointFilterTest {
 		FilterChain filterChain = mock(FilterChain.class);
 
 		RegisteredClient registeredClient = TestRegisteredClients.validAuthorizationGrantClientMultiRedirectUris().build();
-		when(registeredClientRepository.findByClientId(VALID_CLIENT_MULTI_URI)).thenReturn(registeredClient);
-		when(authentication.isAuthenticated()).thenReturn(true);
+		when(this.registeredClientRepository.findByClientId(VALID_CLIENT_MULTI_URI)).thenReturn(registeredClient);
+		when(this.authentication.isAuthenticated()).thenReturn(true);
 
 
-		filter.doFilterInternal(request, response, filterChain);
+		this.filter.doFilter(request, response, filterChain);
 
-		verify(authentication, times(1)).isAuthenticated();
-		verify(registeredClientRepository, times(1)).findByClientId(VALID_CLIENT_MULTI_URI);
-		verify(authorizationService, times(0)).save(any(OAuth2Authorization.class));
-		verify(codeGenerator, times(0)).generateKey();
+		verify(this.authentication, times(1)).isAuthenticated();
+		verify(this.registeredClientRepository, times(1)).findByClientId(VALID_CLIENT_MULTI_URI);
+		verify(this.authorizationService, times(0)).save(any(OAuth2Authorization.class));
+		verify(this.codeGenerator, times(0)).generateKey();
+		verify(filterChain, times(0)).doFilter(any(HttpServletRequest.class), any(HttpServletResponse.class));
 
 		assertThat(response.getStatus()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR.value());
-		assertThat(response.getErrorMessage()).isEqualTo(OAuth2ErrorCodes.INVALID_REQUEST+":"+OAuth2AuthorizationServerMessages.REDIRECT_URI_MANDATORY_FOR_CLIENT);
+		assertThat(response.getErrorMessage()).isEqualTo(OAuth2ErrorCodes.INVALID_REQUEST);
 
 	}
 
 	@Test
-	public void testErrorWhenRequestedRedirectUriNotConfiguredInClient() throws Exception {
+	public void doFilterWhenRequestedRedirectUriNotConfiguredInClientThenErrorSentInResponse() throws Exception {
 		MockHttpServletRequest request = getValidMockHttpServletRequest();
 		request.setParameter(OAuth2ParameterNames.REDIRECT_URI, "http://localhost:8080/not-configred-app/callback");
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		FilterChain filterChain = mock(FilterChain.class);
 
 		RegisteredClient registeredClient = TestRegisteredClients.validAuthorizationGrantRegisteredClient().build();
-		when(registeredClientRepository.findByClientId(VALID_CLIENT)).thenReturn(registeredClient);
-		when(authentication.isAuthenticated()).thenReturn(true);
+		when(this.registeredClientRepository.findByClientId(VALID_CLIENT)).thenReturn(registeredClient);
+		when(this.authentication.isAuthenticated()).thenReturn(true);
 
 
-		filter.doFilterInternal(request, response, filterChain);
+		this.filter.doFilter(request, response, filterChain);
 
-		verify(authentication, times(1)).isAuthenticated();
-		verify(registeredClientRepository, times(1)).findByClientId(VALID_CLIENT);
-		verify(authorizationService, times(0)).save(any(OAuth2Authorization.class));
-		verify(codeGenerator, times(0)).generateKey();
+		verify(this.authentication, times(1)).isAuthenticated();
+		verify(this.registeredClientRepository, times(1)).findByClientId(VALID_CLIENT);
+		verify(this.authorizationService, times(0)).save(any(OAuth2Authorization.class));
+		verify(this.codeGenerator, times(0)).generateKey();
+		verify(filterChain, times(0)).doFilter(any(HttpServletRequest.class), any(HttpServletResponse.class));
 
 		assertThat(response.getStatus()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR.value());
-		assertThat(response.getErrorMessage()).isEqualTo(OAuth2ErrorCodes.INVALID_REQUEST+":"+OAuth2AuthorizationServerMessages.REQUESTED_REDIRECT_URI_INVALID);
+		assertThat(response.getErrorMessage()).isEqualTo(OAuth2ErrorCodes.INVALID_REQUEST);
 
 	}
 
 	@Test
-	public void testErrorClientIdNotSupportAuthorizationGrantFlow() throws Exception {
+	public void doFilterWhenClientIdDoesNotSupportAuthorizationGrantFlowThenErrorSentInResponse() throws Exception {
 		MockHttpServletRequest request = getValidMockHttpServletRequest();
 		request.setParameter(OAuth2ParameterNames.CLIENT_ID, VALID_CC_CLIENT);
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		FilterChain filterChain = mock(FilterChain.class);
 
 		RegisteredClient registeredClient = TestRegisteredClients.validClientCredentialsGrantRegisteredClient().build();
-		when(registeredClientRepository.findByClientId(VALID_CC_CLIENT)).thenReturn(registeredClient);
-		when(authentication.isAuthenticated()).thenReturn(true);
+		when(this.registeredClientRepository.findByClientId(VALID_CC_CLIENT)).thenReturn(registeredClient);
+		when(this.authentication.isAuthenticated()).thenReturn(true);
 
 
-		filter.doFilterInternal(request, response, filterChain);
+		this.filter.doFilter(request, response, filterChain);
 
-		verify(authentication, times(1)).isAuthenticated();
-		verify(registeredClientRepository, times(1)).findByClientId(VALID_CC_CLIENT);
-		verify(authorizationService, times(0)).save(any(OAuth2Authorization.class));
-		verify(codeGenerator, times(0)).generateKey();
+		verify(this.authentication, times(1)).isAuthenticated();
+		verify(this.registeredClientRepository, times(1)).findByClientId(VALID_CC_CLIENT);
+		verify(this.authorizationService, times(0)).save(any(OAuth2Authorization.class));
+		verify(this.codeGenerator, times(0)).generateKey();
+		verify(filterChain, times(0)).doFilter(any(HttpServletRequest.class), any(HttpServletResponse.class));
 
 		assertThat(response.getStatus()).isEqualTo(HttpStatus.FORBIDDEN.value());
-		assertThat(response.getErrorMessage()).isEqualTo(OAuth2ErrorCodes.ACCESS_DENIED+":"+OAuth2AuthorizationServerMessages.CLIENT_ID_UNAUTHORIZED_FOR_CODE);
+		assertThat(response.getErrorMessage()).isEqualTo(OAuth2ErrorCodes.ACCESS_DENIED);
 
 	}
 
 	@Test
-	public void testErrorWhenClientIdMissinInRequest() throws Exception {
+	public void doFilterWhenClientIdIsMissinInRequestThenErrorSentInResponse() throws Exception {
 		MockHttpServletRequest request = getValidMockHttpServletRequest();
 		request.setParameter(OAuth2ParameterNames.CLIENT_ID, "");
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		FilterChain filterChain = mock(FilterChain.class);
 
-		when(authentication.isAuthenticated()).thenReturn(true);
+		when(this.authentication.isAuthenticated()).thenReturn(true);
 
-		filter.doFilterInternal(request, response, filterChain);
+		this.filter.doFilter(request, response, filterChain);
 
-		verify(authentication).isAuthenticated();
-		verify(registeredClientRepository, times(0)).findByClientId(anyString());
-		verify(authorizationService, times(0)).save(any(OAuth2Authorization.class));
-		verify(codeGenerator, times(0)).generateKey();
+		verify(this.authentication).isAuthenticated();
+		verify(this.registeredClientRepository, times(0)).findByClientId(anyString());
+		verify(this.authorizationService, times(0)).save(any(OAuth2Authorization.class));
+		verify(this.codeGenerator, times(0)).generateKey();
+		verify(filterChain, times(0)).doFilter(any(HttpServletRequest.class), any(HttpServletResponse.class));
 
 		assertThat(response.getStatus()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR.value());
 		assertThat(response.getContentAsString()).isEmpty();
-		assertThat(response.getErrorMessage()).isEqualTo(OAuth2ErrorCodes.INVALID_REQUEST+":"+OAuth2AuthorizationServerMessages.REQUEST_MISSING_CLIENT_ID);
+		assertThat(response.getErrorMessage()).isEqualTo(OAuth2ErrorCodes.INVALID_REQUEST);
 
 	}
 
 	@Test
-	public void testErrorWhenUnregisteredClientInRequest() throws Exception {
+	public void doFilterWhenUnregisteredClientInRequestThenErrorIsSentInResponse() throws Exception {
 		MockHttpServletRequest request = getValidMockHttpServletRequest();
 		request.setParameter(OAuth2ParameterNames.CLIENT_ID, "unregistered_client");
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		FilterChain filterChain = mock(FilterChain.class);
 
-		RegisteredClient registeredClient = TestRegisteredClients.validAuthorizationGrantRegisteredClient().build();
-		when(registeredClientRepository.findByClientId("unregistered_client")).thenReturn(null);
-		when(codeGenerator.generateKey()).thenReturn("sample_code");
-		when(authentication.isAuthenticated()).thenReturn(true);
+		when(this.registeredClientRepository.findByClientId("unregistered_client")).thenReturn(null);
+		when(this.codeGenerator.generateKey()).thenReturn("sample_code");
+		when(this.authentication.isAuthenticated()).thenReturn(true);
 
-		filter.doFilterInternal(request, response, filterChain);
+		this.filter.doFilter(request, response, filterChain);
 
-		verify(authentication).isAuthenticated();
-		verify(registeredClientRepository, times(1)).findByClientId("unregistered_client");
-		verify(authorizationService, times(0)).save(any(OAuth2Authorization.class));
-		verify(codeGenerator, times(0)).generateKey();
+		verify(this.authentication).isAuthenticated();
+		verify(this.registeredClientRepository, times(1)).findByClientId("unregistered_client");
+		verify(this.authorizationService, times(0)).save(any(OAuth2Authorization.class));
+		verify(this.codeGenerator, times(0)).generateKey();
+		verify(filterChain, times(0)).doFilter(any(HttpServletRequest.class), any(HttpServletResponse.class));
 
 		assertThat(response.getStatus()).isEqualTo(HttpStatus.FORBIDDEN.value());
 		assertThat(response.getContentAsString()).isEmpty();
-		assertThat(response.getErrorMessage()).isEqualTo(OAuth2ErrorCodes.ACCESS_DENIED+":"+OAuth2AuthorizationServerMessages.CLIENT_ID_NOT_FOUND);
+		assertThat(response.getErrorMessage()).isEqualTo(OAuth2ErrorCodes.ACCESS_DENIED);
 
 	}
 
 	@Test
-	public void testErrorWhenUnauthenticatedUserInRequest() throws Exception {
+	public void doFilterWhenUnauthenticatedUserInRequestThenErrorIsSentInResponse() throws Exception {
 		MockHttpServletRequest request = getValidMockHttpServletRequest();
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		FilterChain filterChain = mock(FilterChain.class);
 
 		when(authentication.isAuthenticated()).thenReturn(false);
 
-		filter.doFilterInternal(request, response, filterChain);
+		this.filter.doFilter(request, response, filterChain);
 
-		verify(authentication).isAuthenticated();
-		verify(registeredClientRepository, times(0)).findByClientId(anyString());
-		verify(authorizationService, times(0)).save(any(OAuth2Authorization.class));
-		verify(codeGenerator, times(0)).generateKey();
+		verify(this.authentication).isAuthenticated();
+		verify(this.registeredClientRepository, times(0)).findByClientId(anyString());
+		verify(this.authorizationService, times(0)).save(any(OAuth2Authorization.class));
+		verify(this.codeGenerator, times(0)).generateKey();
+		verify(filterChain, times(0)).doFilter(any(HttpServletRequest.class), any(HttpServletResponse.class));
 
 		assertThat(response.getStatus()).isEqualTo(HttpStatus.FORBIDDEN.value());
 		assertThat(response.getContentAsString()).isEmpty();
-		assertThat(response.getErrorMessage()).isEqualTo(OAuth2ErrorCodes.ACCESS_DENIED+":"+OAuth2AuthorizationServerMessages.USER_NOT_AUTHENTICATED);
+		assertThat(response.getErrorMessage()).isEqualTo(OAuth2ErrorCodes.ACCESS_DENIED);
 
 	}
 
 	@Test
-	public void testShouldNotFilterForUnsupportedEndpoint() throws Exception {
+	public void doFilterWhenRequestEndPointIsNotAuthorizationEndpointThenFilterShouldProceedWithFilterChain() throws Exception {
 		MockHttpServletRequest request = getValidMockHttpServletRequest();
 		request.setServletPath("/custom/authorize");
+		MockHttpServletResponse response = new MockHttpServletResponse();
+		FilterChain filterChain = mock(FilterChain.class);
 
-		boolean willFilterGetInvoked = !filter.shouldNotFilter(request);
+		OAuth2AuthorizationEndpointFilter spyFilter = spy(this.filter);
+		spyFilter.doFilter(request, response, filterChain);
 
-		assertThat(willFilterGetInvoked).isEqualTo(false);
-
+		verify(filterChain, times(1)).doFilter(any(HttpServletRequest.class), any(HttpServletResponse.class));
+		verify(spyFilter, times(1)).shouldNotFilter(any(HttpServletRequest.class));
+		verify(spyFilter, times(0)).doFilterInternal(any(HttpServletRequest.class), any(HttpServletResponse.class), any(FilterChain.class));
 	}
 
 	@Test
-	public void testErrorWhenResponseTypeNotPresent() throws Exception {
+	public void doFilterWhenResponseTypeIsNotPresentInRequestThenErrorIsSentInRedirectURIQueryParameter() throws Exception {
 		MockHttpServletRequest request = getValidMockHttpServletRequest();
 		request.setParameter(OAuth2ParameterNames.RESPONSE_TYPE, "");
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		FilterChain filterChain = mock(FilterChain.class);
 
 		RegisteredClient registeredClient = TestRegisteredClients.validAuthorizationGrantRegisteredClient().build();
-		when(registeredClientRepository.findByClientId(VALID_CLIENT)).thenReturn(registeredClient);
-		when(codeGenerator.generateKey()).thenReturn("sample_code");
-		when(authentication.isAuthenticated()).thenReturn(true);
+		when(this.registeredClientRepository.findByClientId(VALID_CLIENT)).thenReturn(registeredClient);
+		when(this.codeGenerator.generateKey()).thenReturn("sample_code");
+		when(this.authentication.isAuthenticated()).thenReturn(true);
 
 
-		filter.doFilterInternal(request, response, filterChain);
+		this.filter.doFilter(request, response, filterChain);
 
-		verify(authentication).isAuthenticated();
-		verify(registeredClientRepository, times(1)).findByClientId(VALID_CLIENT);
-		verify(authorizationService, times(0)).save(any(OAuth2Authorization.class));
-		verify(codeGenerator, times(0)).generateKey();
+		verify(this.authentication).isAuthenticated();
+		verify(this.registeredClientRepository, times(1)).findByClientId(VALID_CLIENT);
+		verify(this.authorizationService, times(0)).save(any(OAuth2Authorization.class));
+		verify(this.codeGenerator, times(0)).generateKey();
+		verify(filterChain, times(0)).doFilter(any(HttpServletRequest.class), any(HttpServletResponse.class));
 
 		assertThat(response.getStatus()).isEqualTo(HttpStatus.FOUND.value());
 		assertThat(response.getRedirectedUrl()).startsWith(request.getParameter(OAuth2ParameterNames.REDIRECT_URI));
 		assertThat(response.getRedirectedUrl()).contains("error="+OAuth2ErrorCodes.UNSUPPORTED_RESPONSE_TYPE);
-		assertThat(URLDecoder.decode(response.getRedirectedUrl(), StandardCharsets.UTF_8.toString())).contains("error_description="+OAuth2AuthorizationServerMessages.RESPONSE_TYPE_MISSING_OR_INVALID);
 
 	}
 
 	@Test
-	public void testErrorWhenResponseTypeIsUnsupported() throws Exception {
+	public void doFilterWhenResponseTypeInRequestIsUnsupportedThenErrorIsSentInRedirectURIQueryParameter() throws Exception {
 		MockHttpServletRequest request = getValidMockHttpServletRequest();
 		request.setParameter(OAuth2ParameterNames.RESPONSE_TYPE, "token");
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		FilterChain filterChain = mock(FilterChain.class);
 
 		RegisteredClient registeredClient = TestRegisteredClients.validAuthorizationGrantRegisteredClient().build();
-		when(registeredClientRepository.findByClientId(VALID_CLIENT)).thenReturn(registeredClient);
-		when(codeGenerator.generateKey()).thenReturn("sample_code");
-		when(authentication.isAuthenticated()).thenReturn(true);
+		when(this.registeredClientRepository.findByClientId(VALID_CLIENT)).thenReturn(registeredClient);
+		when(this.codeGenerator.generateKey()).thenReturn("sample_code");
+		when(this.authentication.isAuthenticated()).thenReturn(true);
 
 
-		filter.doFilterInternal(request, response, filterChain);
+		this.filter.doFilter(request, response, filterChain);
 
-		verify(authentication).isAuthenticated();
-		verify(registeredClientRepository, times(1)).findByClientId(VALID_CLIENT);
-		verify(authorizationService, times(0)).save(any(OAuth2Authorization.class));
-		verify(codeGenerator, times(0)).generateKey();
+		verify(this.authentication).isAuthenticated();
+		verify(this.registeredClientRepository, times(1)).findByClientId(VALID_CLIENT);
+		verify(this.authorizationService, times(0)).save(any(OAuth2Authorization.class));
+		verify(this.codeGenerator, times(0)).generateKey();
+		verify(filterChain, times(0)).doFilter(any(HttpServletRequest.class), any(HttpServletResponse.class));
 
 		assertThat(response.getStatus()).isEqualTo(HttpStatus.FOUND.value());
 		assertThat(response.getRedirectedUrl()).startsWith(request.getParameter(OAuth2ParameterNames.REDIRECT_URI));
 		assertThat(response.getRedirectedUrl()).contains("error="+OAuth2ErrorCodes.UNSUPPORTED_RESPONSE_TYPE);
-		assertThat(URLDecoder.decode(response.getRedirectedUrl(), StandardCharsets.UTF_8.toString())).contains("error_description="+OAuth2AuthorizationServerMessages.RESPONSE_TYPE_MISSING_OR_INVALID);
-
 	}
-
-	@Test
-	public void testSettersAreSettingProperValue() {
-		OAuth2AuthorizationEndpointFilter blankFilter = new OAuth2AuthorizationEndpointFilter();
-
-		assertThat(blankFilter.getAuthorizationRedirectStrategy()).isNotEqualTo(authorizationRedirectStrategy);
-		assertThat(blankFilter.getAuthorizationRequestConverter()).isNotEqualTo(authorizationConverter);
-		assertThat(blankFilter.getAuthorizationService()).isNull();
-		assertThat(blankFilter.getCodeGenerator()).isNotEqualTo(codeGenerator);
-		assertThat(blankFilter.getRegisteredClientRepository()).isNull();
-
-		blankFilter.setAuthorizationRequestConverter(authorizationConverter);
-		blankFilter.setAuthorizationService(authorizationService);
-		blankFilter.setCodeGenerator(codeGenerator);
-		blankFilter.setRegisteredClientRepository(registeredClientRepository);
-		blankFilter.setAuthorizationRedirectStrategy(authorizationRedirectStrategy);
-
-		assertThat(blankFilter.getAuthorizationRedirectStrategy()).isEqualTo(authorizationRedirectStrategy);
-		assertThat(blankFilter.getAuthorizationRequestConverter()).isEqualTo(authorizationConverter);
-		assertThat(blankFilter.getAuthorizationService()).isEqualTo(authorizationService);
-		assertThat(blankFilter.getCodeGenerator()).isEqualTo(codeGenerator);
-		assertThat(blankFilter.getRegisteredClientRepository()).isEqualTo(registeredClientRepository);
-	}
-
 
 	private MockHttpServletRequest getValidMockHttpServletRequest() {
 

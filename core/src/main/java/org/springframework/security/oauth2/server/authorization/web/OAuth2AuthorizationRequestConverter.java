@@ -32,7 +32,7 @@ import org.springframework.util.StringUtils;
  * @since 0.0.1
  * @see Converter
  */
-public class OAuth2AuthorizationRequestConverter implements Converter<HttpServletRequest, OAuth2AuthorizationRequest>{
+public class OAuth2AuthorizationRequestConverter implements Converter<HttpServletRequest, OAuth2AuthorizationRequest> {
 
 	@Override
 	public OAuth2AuthorizationRequest convert(HttpServletRequest request) {

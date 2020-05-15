@@ -34,7 +34,6 @@ import org.springframework.security.oauth2.core.OAuth2AuthorizationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
-import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationResponseType;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
@@ -96,7 +95,14 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 
 	@Override
 	protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
-		return !this.authorizationEndpointMatcher.matches(request);
+		boolean pathMatch = this.authorizationEndpointMatcher.matches(request);
+		String responseType = request.getParameter(OAuth2ParameterNames.RESPONSE_TYPE);
+		boolean responseTypeMatch = OAuth2ParameterNames.CODE.equals(responseType);
+		if (pathMatch && responseTypeMatch) {
+			return false;
+		}else {
+			return true;
+		}
 	}
 
 	@Override
@@ -113,7 +119,7 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 			client = fetchRegisteredClient(request);
 
 			authorizationRequest = this.authorizationRequestConverter.convert(request);
-			validateAuthorizationRequest(request, client);
+			validateAuthorizationRequest(authorizationRequest, client);
 
 			String code = this.codeGenerator.generateKey();
 			authorization = buildOAuth2Authorization(client, authorizationRequest, code);
@@ -181,14 +187,8 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 	}
 
 
-	private void validateAuthorizationRequest(HttpServletRequest request, RegisteredClient client) {
-		String responseType = request.getParameter(OAuth2ParameterNames.RESPONSE_TYPE);
-		if (StringUtils.isEmpty(responseType)
-				|| !responseType.equals(OAuth2AuthorizationResponseType.CODE.getValue())) {
-			throw new OAuth2AuthorizationException(new OAuth2Error(OAuth2ErrorCodes.UNSUPPORTED_RESPONSE_TYPE));
-		}
-
-		String redirectUri = request.getParameter(OAuth2ParameterNames.REDIRECT_URI);
+	private void validateAuthorizationRequest(OAuth2AuthorizationRequest authorizationRequest, RegisteredClient client) {
+		String redirectUri = authorizationRequest.getRedirectUri();
 		if (StringUtils.isEmpty(redirectUri) && client.getRedirectUris().size() > 1) {
 			throw new OAuth2AuthorizationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_REQUEST));
 		}

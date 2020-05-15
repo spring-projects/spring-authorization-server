@@ -328,24 +328,12 @@ public class OAuth2AuthorizationEndpointFilterTest {
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		FilterChain filterChain = mock(FilterChain.class);
 
-		RegisteredClient registeredClient = TestRegisteredClients.validAuthorizationGrantRegisteredClient().build();
-		when(this.registeredClientRepository.findByClientId(VALID_CLIENT)).thenReturn(registeredClient);
-		when(this.codeGenerator.generateKey()).thenReturn("sample_code");
-		when(this.authentication.isAuthenticated()).thenReturn(true);
+		OAuth2AuthorizationEndpointFilter spyFilter = spy(this.filter);
+		spyFilter.doFilter(request, response, filterChain);
 
-
-		this.filter.doFilter(request, response, filterChain);
-
-		verify(this.authentication).isAuthenticated();
-		verify(this.registeredClientRepository, times(1)).findByClientId(VALID_CLIENT);
-		verify(this.authorizationService, times(0)).save(any(OAuth2Authorization.class));
-		verify(this.codeGenerator, times(0)).generateKey();
-		verify(filterChain, times(0)).doFilter(any(HttpServletRequest.class), any(HttpServletResponse.class));
-
-		assertThat(response.getStatus()).isEqualTo(HttpStatus.FOUND.value());
-		assertThat(response.getRedirectedUrl()).startsWith(request.getParameter(OAuth2ParameterNames.REDIRECT_URI));
-		assertThat(response.getRedirectedUrl()).contains("error="+OAuth2ErrorCodes.UNSUPPORTED_RESPONSE_TYPE);
-
+		verify(spyFilter, times(1)).shouldNotFilter(any(HttpServletRequest.class));
+		verify(spyFilter, times(0)).doFilterInternal(any(HttpServletRequest.class), any(HttpServletResponse.class), any(FilterChain.class));
+		verify(filterChain, times(1)).doFilter(any(HttpServletRequest.class), any(HttpServletResponse.class));
 	}
 
 	@Test
@@ -355,23 +343,12 @@ public class OAuth2AuthorizationEndpointFilterTest {
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		FilterChain filterChain = mock(FilterChain.class);
 
-		RegisteredClient registeredClient = TestRegisteredClients.validAuthorizationGrantRegisteredClient().build();
-		when(this.registeredClientRepository.findByClientId(VALID_CLIENT)).thenReturn(registeredClient);
-		when(this.codeGenerator.generateKey()).thenReturn("sample_code");
-		when(this.authentication.isAuthenticated()).thenReturn(true);
+		OAuth2AuthorizationEndpointFilter spyFilter = spy(this.filter);
+		spyFilter.doFilter(request, response, filterChain);
 
-
-		this.filter.doFilter(request, response, filterChain);
-
-		verify(this.authentication).isAuthenticated();
-		verify(this.registeredClientRepository, times(1)).findByClientId(VALID_CLIENT);
-		verify(this.authorizationService, times(0)).save(any(OAuth2Authorization.class));
-		verify(this.codeGenerator, times(0)).generateKey();
-		verify(filterChain, times(0)).doFilter(any(HttpServletRequest.class), any(HttpServletResponse.class));
-
-		assertThat(response.getStatus()).isEqualTo(HttpStatus.FOUND.value());
-		assertThat(response.getRedirectedUrl()).startsWith(request.getParameter(OAuth2ParameterNames.REDIRECT_URI));
-		assertThat(response.getRedirectedUrl()).contains("error="+OAuth2ErrorCodes.UNSUPPORTED_RESPONSE_TYPE);
+		verify(spyFilter, times(1)).shouldNotFilter(any(HttpServletRequest.class));
+		verify(spyFilter, times(0)).doFilterInternal(any(HttpServletRequest.class), any(HttpServletResponse.class), any(FilterChain.class));
+		verify(filterChain, times(1)).doFilter(any(HttpServletRequest.class), any(HttpServletResponse.class));
 	}
 
 	private MockHttpServletRequest getValidMockHttpServletRequest() {

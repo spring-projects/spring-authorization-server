@@ -17,33 +17,33 @@ package org.springframework.security.oauth2.server.authorization;
 
 import org.springframework.util.Assert;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
- * In-memory implementation of {@link OAuth2AuthorizationService}.
+ * An {@link OAuth2AuthorizationService} that stores {@link OAuth2Authorization}'s in-memory.
  *
  * @author Krisztian Toth
+ * @since 0.0.1
+ * @see OAuth2AuthorizationService
  */
 public final class InMemoryOAuth2AuthorizationService implements OAuth2AuthorizationService {
 	private final List<OAuth2Authorization> authorizations;
 
 	/**
-	 * Creates an {@link InMemoryOAuth2AuthorizationService}.
+	 * Constructs an {@code InMemoryOAuth2AuthorizationService}.
 	 */
 	public InMemoryOAuth2AuthorizationService() {
-		this(Collections.emptyList());
+		this.authorizations = new CopyOnWriteArrayList<>();
 	}
 
 	/**
-	 * Creates an {@link InMemoryOAuth2AuthorizationService} with the provided {@link List}<{@link OAuth2Authorization}>
-	 * as the in-memory store.
+	 * Constructs an {@code InMemoryOAuth2AuthorizationService} using the provided parameters.
 	 *
-	 * @param authorizations a {@link List}<{@link OAuth2Authorization}> object to use as the store
+	 * @param authorizations the initial {@code List} of {@link OAuth2Authorization}(s)
 	 */
 	public InMemoryOAuth2AuthorizationService(List<OAuth2Authorization> authorizations) {
-		Assert.notNull(authorizations, "authorizations cannot be null");
+		Assert.notEmpty(authorizations, "authorizations cannot be empty");
 		this.authorizations = new CopyOnWriteArrayList<>(authorizations);
 	}
 
@@ -58,26 +58,18 @@ public final class InMemoryOAuth2AuthorizationService implements OAuth2Authoriza
 		Assert.hasText(token, "token cannot be empty");
 		Assert.notNull(tokenType, "tokenType cannot be null");
 		return this.authorizations.stream()
-				.filter(authorization -> doesMatch(authorization, token, tokenType))
+				.filter(authorization -> hasToken(authorization, token, tokenType))
 				.findFirst()
 				.orElse(null);
-
 	}
 
-	private boolean doesMatch(OAuth2Authorization authorization, String token, TokenType tokenType) {
-		if (tokenType.equals(TokenType.ACCESS_TOKEN)) {
-			return isAccessTokenEqual(token, authorization);
-		} else if (tokenType.equals(TokenType.AUTHORIZATION_CODE)) {
-			return isAuthorizationCodeEqual(token, authorization);
+	private boolean hasToken(OAuth2Authorization authorization, String token, TokenType tokenType) {
+		if (TokenType.AUTHORIZATION_CODE.equals(tokenType)) {
+			return token.equals(authorization.getAttributes().get(TokenType.AUTHORIZATION_CODE.getValue()));
+		} else if (TokenType.ACCESS_TOKEN.equals(tokenType)) {
+			return authorization.getAccessToken() != null &&
+					authorization.getAccessToken().getTokenValue().equals(token);
 		}
 		return false;
-	}
-
-	private boolean isAccessTokenEqual(String token, OAuth2Authorization authorization) {
-		return authorization.getAccessToken() != null && token.equals(authorization.getAccessToken().getTokenValue());
-	}
-
-	private boolean isAuthorizationCodeEqual(String token, OAuth2Authorization authorization) {
-		return token.equals(authorization.getAttributes().get(TokenType.AUTHORIZATION_CODE.getValue()));
 	}
 }

@@ -17,120 +17,80 @@ package org.springframework.security.oauth2.server.authorization;
 
 import org.junit.Test;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
+import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
+import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
 
 import java.time.Instant;
-import java.util.Collections;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.data.MapEntry.entry;
 
 /**
- * Unit tests For {@link OAuth2Authorization}.
+ * Tests for {@link OAuth2Authorization}.
  *
  * @author Krisztian Toth
  */
 public class OAuth2AuthorizationTests {
-
-	public static final String REGISTERED_CLIENT_ID = "clientId";
-	public static final String PRINCIPAL_NAME = "principal";
-	public static final OAuth2AccessToken ACCESS_TOKEN = new OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER,
-			"token", Instant.now().minusSeconds(60), Instant.now());
-	public static final String AUTHORIZATION_CODE_VALUE = TokenType.AUTHORIZATION_CODE.getValue();
-	public static final String CODE = "code";
-	public static final Map<String, Object> ATTRIBUTES = Collections.singletonMap(AUTHORIZATION_CODE_VALUE, CODE);
+	private static final RegisteredClient REGISTERED_CLIENT = TestRegisteredClients.registeredClient().build();
+	private static final String PRINCIPAL_NAME = "principal";
+	private static final OAuth2AccessToken ACCESS_TOKEN = new OAuth2AccessToken(
+			OAuth2AccessToken.TokenType.BEARER, "access-token", Instant.now().minusSeconds(60), Instant.now());
+	private static final String AUTHORIZATION_CODE = "code";
 
 	@Test
-	public void buildWhenAllAttributesAreProvidedThenAllAttributesAreSet() {
-		OAuth2Authorization authorization = OAuth2Authorization.builder()
-				.registeredClientId(REGISTERED_CLIENT_ID)
-				.principalName(PRINCIPAL_NAME)
-				.accessToken(ACCESS_TOKEN)
-				.attribute(AUTHORIZATION_CODE_VALUE, CODE)
-				.build();
-
-		assertThat(authorization.getRegisteredClientId()).isEqualTo(REGISTERED_CLIENT_ID);
-		assertThat(authorization.getPrincipalName()).isEqualTo(PRINCIPAL_NAME);
-		assertThat(authorization.getAccessToken()).isEqualTo(ACCESS_TOKEN);
-		assertThat(authorization.getAttributes()).isEqualTo(ATTRIBUTES);
-	}
-
-	@Test
-	public void buildWhenBuildThenImmutableMapIsCreated() {
-		OAuth2Authorization authorization = OAuth2Authorization.builder()
-				.registeredClientId(REGISTERED_CLIENT_ID)
-				.principalName(PRINCIPAL_NAME)
-				.accessToken(ACCESS_TOKEN)
-				.attribute("any", "value")
-				.build();
-
-		assertThatThrownBy(() -> authorization.getAttributes().put("any", "value"))
-				.isInstanceOf(UnsupportedOperationException.class);
-	}
-
-	@Test
-	public void buildWhenAccessTokenAndAuthorizationCodeNotProvidedThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() ->
-				OAuth2Authorization.builder()
-						.registeredClientId(REGISTERED_CLIENT_ID)
-						.principalName(PRINCIPAL_NAME)
-						.build()
-		).isInstanceOf(IllegalArgumentException.class);
-	}
-
-	@Test
-	public void buildWhenRegisteredClientIdNotProvidedThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() ->
-				OAuth2Authorization.builder()
-						.principalName(PRINCIPAL_NAME)
-						.accessToken(ACCESS_TOKEN)
-						.attribute(AUTHORIZATION_CODE_VALUE, CODE)
-						.build()
-		).isInstanceOf(IllegalArgumentException.class);
+	public void withRegisteredClientWhenRegisteredClientNullThenThrowIllegalArgumentException() {
+		assertThatThrownBy(() -> OAuth2Authorization.withRegisteredClient(null))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("registeredClient cannot be null");
 	}
 
 	@Test
 	public void buildWhenPrincipalNameNotProvidedThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() ->
-				OAuth2Authorization.builder()
-						.registeredClientId(REGISTERED_CLIENT_ID)
-						.accessToken(ACCESS_TOKEN)
-						.attribute(AUTHORIZATION_CODE_VALUE, CODE)
-						.build()
-		).isInstanceOf(IllegalArgumentException.class);
+		assertThatThrownBy(() -> OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT).build())
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("principalName cannot be empty");
 	}
 
 	@Test
-	public void buildWhenAttributeSetWithNullNameThenThrowIllegalArgumentException() {
+	public void buildWhenAuthorizationCodeNotProvidedThenThrowIllegalArgumentException() {
 		assertThatThrownBy(() ->
-				OAuth2Authorization.builder()
-						.attribute(null, CODE)
-		).isInstanceOf(IllegalArgumentException.class);
+				OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
+						.principalName(PRINCIPAL_NAME).build())
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("authorization code cannot be null");
 	}
 
 	@Test
-	public void buildWhenAttributeSetWithNullValueThenThrowIllegalArgumentException() {
+	public void attributeWhenNameNullThenThrowIllegalArgumentException() {
 		assertThatThrownBy(() ->
-				OAuth2Authorization.builder()
-						.attribute(AUTHORIZATION_CODE_VALUE, null)
-		).isInstanceOf(IllegalArgumentException.class);
+				OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
+						.attribute(null, AUTHORIZATION_CODE))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("name cannot be empty");
 	}
 
 	@Test
-	public void withOAuth2AuthorizationWhenAuthorizationProvidedThenAllAttributesAreCopied() {
-		OAuth2Authorization authorizationToCopy = OAuth2Authorization.builder()
-				.registeredClientId(REGISTERED_CLIENT_ID)
+	public void attributeWhenValueNullThenThrowIllegalArgumentException() {
+		assertThatThrownBy(() ->
+				OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
+						.attribute(TokenType.AUTHORIZATION_CODE.getValue(), null))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("value cannot be null");
+	}
+
+	@Test
+	public void buildWhenAllAttributesAreProvidedThenAllAttributesAreSet() {
+		OAuth2Authorization authorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
 				.principalName(PRINCIPAL_NAME)
-				.attribute(AUTHORIZATION_CODE_VALUE, CODE)
-				.build();
-
-		OAuth2Authorization authorization = OAuth2Authorization.withAuthorization(authorizationToCopy)
 				.accessToken(ACCESS_TOKEN)
+				.attribute(TokenType.AUTHORIZATION_CODE.getValue(), AUTHORIZATION_CODE)
 				.build();
 
-		assertThat(authorization.getRegisteredClientId()).isEqualTo(REGISTERED_CLIENT_ID);
+		assertThat(authorization.getRegisteredClientId()).isEqualTo(REGISTERED_CLIENT.getId());
 		assertThat(authorization.getPrincipalName()).isEqualTo(PRINCIPAL_NAME);
 		assertThat(authorization.getAccessToken()).isEqualTo(ACCESS_TOKEN);
-		assertThat(authorization.getAttributes()).isEqualTo(ATTRIBUTES);
+		assertThat(authorization.getAttributes()).containsExactly(
+				entry(TokenType.AUTHORIZATION_CODE.getValue(), AUTHORIZATION_CODE));
 	}
 }

@@ -15,29 +15,27 @@
  */
 package sample;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.http.HttpStatus.OK;
-
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.boot.web.server.LocalServerPort;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 public class MinimalAuthorizationServerApplicationTests {
-
 	private RestTemplate rest = new RestTemplate();
 
 	@LocalServerPort
 	private int serverPort;
 
 	@Test
-	void verifyJwkSetEndpointFilterAccessibleWithoutAuthentication() {
-		ResponseEntity<String> responseEntity = rest.getForEntity(
-				"http://localhost:" + serverPort + JwkSetEndpointFilter.WELL_KNOWN_JWK_URIS, String.class);
-		assertThat(responseEntity.getStatusCode()).isEqualTo(OK);
+	void requestWhenNotAuthenticatedThenJwkSetEndpointStillAccessible() {
+		ResponseEntity<String> responseEntity = this.rest.getForEntity(
+				"http://localhost:" + this.serverPort + JwkSetEndpointFilter.DEFAULT_JWK_SET_URI, String.class);
+		assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
 	}
-
 }

@@ -119,6 +119,7 @@ public class OAuth2AuthorizationEndpointFilterTest {
 		RegisteredClient registeredClient = TestRegisteredClients.validAuthorizationGrantRegisteredClient().build();
 		when(this.registeredClientRepository.findByClientId(VALID_CLIENT)).thenReturn(registeredClient);
 		when(this.codeGenerator.generateKey()).thenReturn("sample_code");
+		when(this.authentication.getPrincipal()).thenReturn("test-user");
 		when(this.authentication.isAuthenticated()).thenReturn(true);
 
 
@@ -145,6 +146,7 @@ public class OAuth2AuthorizationEndpointFilterTest {
 		RegisteredClient registeredClient = TestRegisteredClients.validAuthorizationGrantRegisteredClient().build();
 		when(this.registeredClientRepository.findByClientId(VALID_CLIENT)).thenReturn(registeredClient);
 		when(this.codeGenerator.generateKey()).thenReturn("sample_code");
+		when(this.authentication.getPrincipal()).thenReturn("test-user");
 		when(this.authentication.isAuthenticated()).thenReturn(true);
 
 		this.filter.doFilter(request, response, filterChain);

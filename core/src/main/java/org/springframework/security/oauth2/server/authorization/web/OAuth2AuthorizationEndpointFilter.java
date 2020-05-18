@@ -37,6 +37,7 @@ import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequ
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
+import org.springframework.security.oauth2.server.authorization.TokenType;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.web.DefaultRedirectStrategy;
@@ -116,13 +117,14 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 
 		try {
 			checkUserAuthenticated();
+			Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 			client = fetchRegisteredClient(request);
 
 			authorizationRequest = this.authorizationRequestConverter.convert(request);
 			validateAuthorizationRequest(authorizationRequest, client);
 
 			String code = this.codeGenerator.generateKey();
-			authorization = buildOAuth2Authorization(client, authorizationRequest, code);
+			authorization = buildOAuth2Authorization(auth, client, authorizationRequest, code);
 			this.authorizationService.save(authorization);
 
 			String redirectUri = getRedirectUri(authorizationRequest, client);
@@ -175,12 +177,12 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 
 	}
 
-	private OAuth2Authorization buildOAuth2Authorization(RegisteredClient client,
+	private OAuth2Authorization buildOAuth2Authorization(Authentication auth, RegisteredClient client,
 			OAuth2AuthorizationRequest authorizationRequest, String code) {
-		OAuth2Authorization authorization = OAuth2Authorization.createBuilder()
-					.clientId(authorizationRequest.getClientId())
-					.addAttribute(OAuth2ParameterNames.CODE, code)
-					.attribures(authorizationRequest.getAttributes())
+		OAuth2Authorization authorization = OAuth2Authorization.withRegisteredClient(client)
+					.principalName(auth.getPrincipal().toString())
+					.attribute(TokenType.AUTHORIZATION_CODE.getValue(), code)
+					.attributes(attirbutesMap -> attirbutesMap.putAll(authorizationRequest.getAttributes()))
 					.build();
 
 		return authorization;

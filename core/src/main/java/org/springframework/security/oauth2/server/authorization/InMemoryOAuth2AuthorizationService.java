@@ -15,6 +15,7 @@
  */
 package org.springframework.security.oauth2.server.authorization;
 
+import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.util.Assert;
 
 import java.util.List;
@@ -65,7 +66,7 @@ public final class InMemoryOAuth2AuthorizationService implements OAuth2Authoriza
 
 	private boolean hasToken(OAuth2Authorization authorization, String token, TokenType tokenType) {
 		if (TokenType.AUTHORIZATION_CODE.equals(tokenType)) {
-			return token.equals(authorization.getAttributes().get(TokenType.AUTHORIZATION_CODE.getValue()));
+			return token.equals(authorization.getAttributes().get(OAuth2ParameterNames.class.getName().concat(".CODE")));
 		} else if (TokenType.ACCESS_TOKEN.equals(tokenType)) {
 			return authorization.getAccessToken() != null &&
 					authorization.getAccessToken().getTokenValue().equals(token);

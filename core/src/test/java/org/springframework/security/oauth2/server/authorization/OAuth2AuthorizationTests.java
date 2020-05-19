@@ -17,6 +17,7 @@ package org.springframework.security.oauth2.server.authorization;
 
 import org.junit.Test;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
+import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
 
@@ -84,13 +85,13 @@ public class OAuth2AuthorizationTests {
 		OAuth2Authorization authorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
 				.principalName(PRINCIPAL_NAME)
 				.accessToken(ACCESS_TOKEN)
-				.attribute(TokenType.AUTHORIZATION_CODE.getValue(), AUTHORIZATION_CODE)
+				.attribute(OAuth2ParameterNames.class.getName().concat(".CODE"), AUTHORIZATION_CODE)
 				.build();
 
 		assertThat(authorization.getRegisteredClientId()).isEqualTo(REGISTERED_CLIENT.getId());
 		assertThat(authorization.getPrincipalName()).isEqualTo(PRINCIPAL_NAME);
 		assertThat(authorization.getAccessToken()).isEqualTo(ACCESS_TOKEN);
 		assertThat(authorization.getAttributes()).containsExactly(
-				entry(TokenType.AUTHORIZATION_CODE.getValue(), AUTHORIZATION_CODE));
+				entry(OAuth2ParameterNames.class.getName().concat(".CODE"), AUTHORIZATION_CODE));
 	}
 }

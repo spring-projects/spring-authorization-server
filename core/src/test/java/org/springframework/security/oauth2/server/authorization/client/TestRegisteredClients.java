@@ -46,40 +46,4 @@ public class TestRegisteredClients {
 				.scope("profile")
 				.scope("email");
 	}
-
-	public static RegisteredClient.Builder validAuthorizationGrantRegisteredClient() {
-		return RegisteredClient.withId("valid_client_id")
-				.clientId("valid_client")
-				.clientSecret("valid_secret")
-				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-				.clientAuthenticationMethod(ClientAuthenticationMethod.BASIC)
-				.redirectUri("http://localhost:8080/test-application/callback")
-				.scope("openid")
-				.scope("profile")
-				.scope("email");
-	}
-
-	public static RegisteredClient.Builder validAuthorizationGrantClientMultiRedirectUris() {
-		return RegisteredClient.withId("valid_client_multi_uri_id")
-				.clientId("valid_client_multi_uri")
-				.clientSecret("valid_secret")
-				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-				.clientAuthenticationMethod(ClientAuthenticationMethod.BASIC)
-				.redirectUri("http://localhost:8080/test-application/callback")
-				.redirectUri("http://localhost:8080/another-test-application/callback")
-				.scope("openid")
-				.scope("profile")
-				.scope("email");
-	}
-
-	public static RegisteredClient.Builder validClientCredentialsGrantRegisteredClient() {
-		return RegisteredClient.withId("valid_cc_client_id")
-				.clientId("valid_cc_client")
-				.clientSecret("valid_secret")
-				.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
-				.clientAuthenticationMethod(ClientAuthenticationMethod.BASIC)
-				.scope("openid")
-				.scope("profile")
-				.scope("email");
-	}
 }

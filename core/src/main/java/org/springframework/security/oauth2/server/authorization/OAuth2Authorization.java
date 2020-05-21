@@ -16,7 +16,6 @@
 package org.springframework.security.oauth2.server.authorization;
 
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
-import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.util.Assert;
 
@@ -197,7 +196,7 @@ public class OAuth2Authorization implements Serializable {
 		 */
 		public OAuth2Authorization build() {
 			Assert.hasText(this.principalName, "principalName cannot be empty");
-			Assert.notNull(this.attributes.get(OAuth2ParameterNames.class.getName().concat(".CODE")), "authorization code cannot be null");
+			Assert.notNull(this.attributes.get(OAuth2AuthorizationAttributeNames.CODE), "authorization code cannot be null");
 
 			OAuth2Authorization authorization = new OAuth2Authorization();
 			authorization.registeredClientId = this.registeredClientId;

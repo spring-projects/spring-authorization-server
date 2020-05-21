@@ -18,7 +18,6 @@ package org.springframework.security.oauth2.server.authorization;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
-import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
 
@@ -62,7 +61,7 @@ public class InMemoryOAuth2AuthorizationServiceTests {
 	public void saveWhenAuthorizationProvidedThenSaved() {
 		OAuth2Authorization expectedAuthorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
 				.principalName(PRINCIPAL_NAME)
-				.attribute(OAuth2ParameterNames.class.getName().concat(".CODE"), AUTHORIZATION_CODE)
+				.attribute(OAuth2AuthorizationAttributeNames.CODE, AUTHORIZATION_CODE)
 				.build();
 		this.authorizationService.save(expectedAuthorization);
 
@@ -89,7 +88,7 @@ public class InMemoryOAuth2AuthorizationServiceTests {
 	public void findByTokenAndTokenTypeWhenTokenTypeAuthorizationCodeThenFound() {
 		OAuth2Authorization authorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
 				.principalName(PRINCIPAL_NAME)
-				.attribute(OAuth2ParameterNames.class.getName().concat(".CODE"), AUTHORIZATION_CODE)
+				.attribute(OAuth2AuthorizationAttributeNames.CODE, AUTHORIZATION_CODE)
 				.build();
 		this.authorizationService = new InMemoryOAuth2AuthorizationService(Collections.singletonList(authorization));
 
@@ -104,7 +103,7 @@ public class InMemoryOAuth2AuthorizationServiceTests {
 				"access-token", Instant.now().minusSeconds(60), Instant.now());
 		OAuth2Authorization authorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
 				.principalName(PRINCIPAL_NAME)
-				.attribute(OAuth2ParameterNames.class.getName().concat(".CODE"), AUTHORIZATION_CODE)
+				.attribute(OAuth2AuthorizationAttributeNames.CODE, AUTHORIZATION_CODE)
 				.accessToken(accessToken)
 				.build();
 		this.authorizationService.save(authorization);

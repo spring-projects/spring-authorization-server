@@ -29,6 +29,7 @@ import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequ
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationResponseType;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
+import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationAttributeNames;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
@@ -184,8 +185,8 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 
 		OAuth2Authorization authorization = OAuth2Authorization.withRegisteredClient(registeredClient)
 				.principalName(principal.getName())
-				.attribute(OAuth2ParameterNames.class.getName().concat(".CODE"), code)
-				.attribute(OAuth2AuthorizationRequest.class.getName(), authorizationRequest)
+				.attribute(OAuth2AuthorizationAttributeNames.CODE, code)
+				.attribute(OAuth2AuthorizationAttributeNames.AUTHORIZATION_REQUEST, authorizationRequest)
 				.build();
 
 		this.authorizationService.save(authorization);

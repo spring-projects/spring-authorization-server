@@ -129,21 +129,6 @@ public class OAuth2AuthorizationEndpointFilterTests {
 	}
 
 	@Test
-	public void doFilterWhenAuthorizationRequestNotAuthenticatedThenNotProcessed() throws Exception {
-		String requestUri = OAuth2AuthorizationEndpointFilter.DEFAULT_AUTHORIZATION_ENDPOINT_URI;
-		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestUri);
-		request.setServletPath(requestUri);
-		MockHttpServletResponse response = new MockHttpServletResponse();
-		FilterChain filterChain = mock(FilterChain.class);
-
-		this.authentication.setAuthenticated(false);
-
-		this.filter.doFilter(request, response, filterChain);
-
-		verify(filterChain).doFilter(any(HttpServletRequest.class), any(HttpServletResponse.class));
-	}
-
-	@Test
 	public void doFilterWhenAuthorizationRequestMissingClientIdThenInvalidRequestError() throws Exception {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 
@@ -339,6 +324,23 @@ public class OAuth2AuthorizationEndpointFilterTests {
 				"error_description=OAuth%202.0%20Parameter:%20response_type&" +
 				"error_uri=https://tools.ietf.org/html/rfc6749%23section-4.1.2.1&" +
 				"state=state");
+	}
+
+	@Test
+	public void doFilterWhenAuthorizationRequestValidNotAuthenticatedThenContinueChainToCommenceAuthentication() throws Exception {
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+		when(this.registeredClientRepository.findByClientId((eq(registeredClient.getClientId()))))
+				.thenReturn(registeredClient);
+
+		MockHttpServletRequest request = createAuthorizationRequest(registeredClient);
+		MockHttpServletResponse response = new MockHttpServletResponse();
+		FilterChain filterChain = mock(FilterChain.class);
+
+		this.authentication.setAuthenticated(false);
+
+		this.filter.doFilter(request, response, filterChain);
+
+		verify(filterChain).doFilter(any(HttpServletRequest.class), any(HttpServletResponse.class));
 	}
 
 	@Test

@@ -17,8 +17,8 @@ package org.springframework.security.oauth2.server.authorization.authentication;
 
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.SpringSecurityCoreVersion;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
+import org.springframework.security.oauth2.server.authorization.Version;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 
 import java.util.Collections;
@@ -28,7 +28,7 @@ import java.util.Collections;
  * @author Madhu Bhat
  */
 public class OAuth2AccessTokenAuthenticationToken extends AbstractAuthenticationToken {
-	private static final long serialVersionUID = SpringSecurityCoreVersion.SERIAL_VERSION_UID;
+	private static final long serialVersionUID = Version.SERIAL_VERSION_UID;
 	private RegisteredClient registeredClient;
 	private Authentication clientPrincipal;
 	private OAuth2AccessToken accessToken;
@@ -52,9 +52,9 @@ public class OAuth2AccessTokenAuthenticationToken extends AbstractAuthentication
 	}
 
 	/**
-	 * Returns the access token {@link OAuth2AccessToken}.
+	 * Returns the {@link OAuth2AccessToken access token}.
 	 *
-	 * @return the access token
+	 * @return the {@link OAuth2AccessToken}
 	 */
 	public OAuth2AccessToken getAccessToken() {
 		return this.accessToken;

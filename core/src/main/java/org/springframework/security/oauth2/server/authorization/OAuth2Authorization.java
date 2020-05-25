@@ -33,7 +33,6 @@ import java.util.function.Consumer;
  *
  * @author Joe Grandja
  * @author Krisztian Toth
- * @author Madhu Bhat
  * @since 0.0.1
  * @see RegisteredClient
  * @see OAuth2AccessToken
@@ -73,15 +72,6 @@ public class OAuth2Authorization implements Serializable {
 	 */
 	public OAuth2AccessToken getAccessToken() {
 		return this.accessToken;
-	}
-
-	/**
-	 * Sets the access token {@link OAuth2AccessToken} in the {@link OAuth2Authorization}.
-	 *
-	 * @param accessToken the access token
-	 */
-	public final void setAccessToken(OAuth2AccessToken accessToken) {
-		this.accessToken = accessToken;
 	}
 
 	/**

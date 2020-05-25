@@ -15,36 +15,47 @@
  */
 package org.springframework.security.oauth2.server.authorization.web;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.springframework.http.HttpHeaders;
+import org.mockito.ArgumentCaptor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.converter.HttpMessageConverter;
+import org.springframework.mock.http.client.MockClientHttpResponse;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
+import org.springframework.security.oauth2.core.OAuth2Error;
+import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
+import org.springframework.security.oauth2.core.endpoint.OAuth2AccessTokenResponse;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
-import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
-import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationAttributeNames;
+import org.springframework.security.oauth2.core.http.converter.OAuth2AccessTokenResponseHttpMessageConverter;
+import org.springframework.security.oauth2.core.http.converter.OAuth2ErrorHttpMessageConverter;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
-import org.springframework.security.oauth2.server.authorization.TokenType;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AccessTokenAuthenticationToken;
+import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeAuthenticationToken;
+import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
 
 import javax.servlet.FilterChain;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.time.Duration;
 import java.time.Instant;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -53,178 +64,222 @@ import static org.mockito.Mockito.when;
  * Tests for {@link OAuth2TokenEndpointFilter}.
  *
  * @author Madhu Bhat
+ * @author Joe Grandja
  */
 public class OAuth2TokenEndpointFilterTests {
-
+	private AuthenticationManager authenticationManager;
+	private OAuth2AuthorizationService authorizationService;
 	private OAuth2TokenEndpointFilter filter;
-	private OAuth2AuthorizationService authorizationService = mock(OAuth2AuthorizationService.class);
-	private AuthenticationManager authenticationManager = mock(AuthenticationManager.class);
-	private FilterChain filterChain = mock(FilterChain.class);
-	private String requestUri;
-	private static final RegisteredClient REGISTERED_CLIENT = TestRegisteredClients.registeredClient().build();
-	private static final String PRINCIPAL_NAME = "principal";
-	private static final String AUTHORIZATION_CODE = "code";
+	private final HttpMessageConverter<OAuth2Error> errorHttpResponseConverter =
+			new OAuth2ErrorHttpMessageConverter();
+	private final HttpMessageConverter<OAuth2AccessTokenResponse> accessTokenHttpResponseConverter =
+			new OAuth2AccessTokenResponseHttpMessageConverter();
 
 	@Before
 	public void setUp() {
-		this.filter = new OAuth2TokenEndpointFilter(this.authorizationService, this.authenticationManager);
-		this.requestUri = "/oauth2/token";
+		this.authenticationManager = mock(AuthenticationManager.class);
+		this.authorizationService = mock(OAuth2AuthorizationService.class);
+		this.filter = new OAuth2TokenEndpointFilter(this.authenticationManager, this.authorizationService);
+	}
+
+	@After
+	public void cleanup() {
+		SecurityContextHolder.clearContext();
 	}
 
 	@Test
-	public void constructorServiceAndManagerWhenNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> {
-			new OAuth2TokenEndpointFilter(null, null);
-		}).isInstanceOf(IllegalArgumentException.class);
+	public void constructorWhenAuthenticationManagerNullThenThrowIllegalArgumentException() {
+		assertThatThrownBy(() -> new OAuth2TokenEndpointFilter(null, this.authorizationService))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("authenticationManager cannot be null");
 	}
 
 	@Test
-	public void constructorServiceAndManagerAndEndpointWhenNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> {
-			new OAuth2TokenEndpointFilter(null, null, null);
-		}).isInstanceOf(IllegalArgumentException.class);
+	public void constructorWhenAuthorizationServiceNullThenThrowIllegalArgumentException() {
+		assertThatThrownBy(() -> new OAuth2TokenEndpointFilter(this.authenticationManager, null))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("authorizationService cannot be null");
 	}
 
 	@Test
-	public void doFilterWhenNotTokenRequestThenNextFilter() throws Exception {
-		this.requestUri = "/path";
-		MockHttpServletRequest request = new MockHttpServletRequest("GET", this.requestUri);
-		request.setServletPath(this.requestUri);
+	public void constructorWhenTokenEndpointUriNullThenThrowIllegalArgumentException() {
+		assertThatThrownBy(() -> new OAuth2TokenEndpointFilter(this.authenticationManager, this.authorizationService, null))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("tokenEndpointUri cannot be empty");
+	}
+
+	@Test
+	public void doFilterWhenNotTokenRequestThenNotProcessed() throws Exception {
+		String requestUri = "/path";
+		MockHttpServletRequest request = new MockHttpServletRequest("POST", requestUri);
+		request.setServletPath(requestUri);
 		MockHttpServletResponse response = new MockHttpServletResponse();
+		FilterChain filterChain = mock(FilterChain.class);
 
-		this.filter.doFilter(request, response, this.filterChain);
+		this.filter.doFilter(request, response, filterChain);
 
-		verify(this.filterChain).doFilter(any(HttpServletRequest.class), any(HttpServletResponse.class));
+		verify(filterChain).doFilter(any(HttpServletRequest.class), any(HttpServletResponse.class));
 	}
 
 	@Test
-	public void doFilterWhenAccessTokenRequestWithoutGrantTypeThenRespondWithBadRequest() throws Exception {
-		MockHttpServletRequest request = new MockHttpServletRequest("POST", this.requestUri);
-		request.addParameter(OAuth2ParameterNames.CODE, "testAuthCode");
-		request.addParameter(OAuth2ParameterNames.REDIRECT_URI, "testRedirectUri");
-		request.setServletPath(this.requestUri);
+	public void doFilterWhenTokenRequestGetThenNotProcessed() throws Exception {
+		String requestUri = OAuth2TokenEndpointFilter.DEFAULT_TOKEN_ENDPOINT_URI;
+		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestUri);
+		request.setServletPath(requestUri);
 		MockHttpServletResponse response = new MockHttpServletResponse();
+		FilterChain filterChain = mock(FilterChain.class);
 
-		this.filter.doFilter(request, response, this.filterChain);
+		this.filter.doFilter(request, response, filterChain);
 
-		verifyNoInteractions(this.filterChain);
-		assertThat(response.getStatus()).isEqualTo(HttpStatus.BAD_REQUEST.value());
-		assertThat(response.getContentAsString()).isEqualTo("{\"errorCode\":\"invalid_request\"}");
+		verify(filterChain).doFilter(any(HttpServletRequest.class), any(HttpServletResponse.class));
 	}
 
 	@Test
-	public void doFilterWhenAccessTokenRequestWithoutCodeThenRespondWithBadRequest() throws Exception {
-		MockHttpServletRequest request = new MockHttpServletRequest("POST", this.requestUri);
-		request.addParameter(OAuth2ParameterNames.GRANT_TYPE, "testGrantType");
-		request.addParameter(OAuth2ParameterNames.REDIRECT_URI, "testRedirectUri");
-		request.setServletPath(this.requestUri);
-		MockHttpServletResponse response = new MockHttpServletResponse();
-
-		this.filter.doFilter(request, response, this.filterChain);
-
-		verifyNoInteractions(this.filterChain);
-		assertThat(response.getStatus()).isEqualTo(HttpStatus.BAD_REQUEST.value());
-		assertThat(response.getContentAsString()).isEqualTo("{\"errorCode\":\"invalid_request\"}");
+	public void doFilterWhenTokenRequestMissingGrantTypeThenInvalidRequestError() throws Exception {
+		doFilterWhenTokenRequestInvalidParameterThenError(
+				OAuth2ParameterNames.GRANT_TYPE, OAuth2ErrorCodes.INVALID_REQUEST,
+				request -> request.removeParameter(OAuth2ParameterNames.GRANT_TYPE));
 	}
 
 	@Test
-	public void doFilterWhenAccessTokenRequestWithoutRedirectUriThenRespondWithBadRequest() throws Exception {
-		MockHttpServletRequest request = new MockHttpServletRequest("POST", this.requestUri);
-		request.addParameter(OAuth2ParameterNames.GRANT_TYPE, "testGrantType");
-		request.addParameter(OAuth2ParameterNames.CODE, "testAuthCode");
-		request.setServletPath(this.requestUri);
-		MockHttpServletResponse response = new MockHttpServletResponse();
-
-		this.filter.doFilter(request, response, this.filterChain);
-
-		verifyNoInteractions(this.filterChain);
-		assertThat(response.getStatus()).isEqualTo(HttpStatus.BAD_REQUEST.value());
-		assertThat(response.getContentAsString()).isEqualTo("{\"errorCode\":\"invalid_request\"}");
+	public void doFilterWhenTokenRequestMultipleGrantTypeThenInvalidRequestError() throws Exception {
+		doFilterWhenTokenRequestInvalidParameterThenError(
+				OAuth2ParameterNames.GRANT_TYPE, OAuth2ErrorCodes.INVALID_REQUEST,
+				request -> request.addParameter(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.AUTHORIZATION_CODE.getValue()));
 	}
 
 	@Test
-	public void doFilterWhenAccessTokenRequestWithoutAuthCodeGrantTypeThenRespondWithBadRequest() throws Exception {
-		MockHttpServletRequest request = new MockHttpServletRequest("POST", this.requestUri);
-		request.addParameter(OAuth2ParameterNames.GRANT_TYPE, "testGrantType");
-		request.addParameter(OAuth2ParameterNames.CODE, "testAuthCode");
-		request.addParameter(OAuth2ParameterNames.REDIRECT_URI, "testRedirectUri");
-		request.setServletPath(this.requestUri);
-		MockHttpServletResponse response = new MockHttpServletResponse();
-
-		this.filter.doFilter(request, response, this.filterChain);
-
-		verifyNoInteractions(this.filterChain);
-		assertThat(response.getStatus()).isEqualTo(HttpStatus.BAD_REQUEST.value());
-		assertThat(response.getContentAsString()).isEqualTo("{\"errorCode\":\"unsupported_grant_type\"}");
+	public void doFilterWhenTokenRequestInvalidGrantTypeThenUnsupportedGrantTypeError() throws Exception {
+		doFilterWhenTokenRequestInvalidParameterThenError(
+				OAuth2ParameterNames.GRANT_TYPE, OAuth2ErrorCodes.UNSUPPORTED_GRANT_TYPE,
+				request -> request.setParameter(OAuth2ParameterNames.GRANT_TYPE, "invalid-grant-type"));
 	}
 
 	@Test
-	public void doFilterWhenAccessTokenRequestIsNotAuthenticatedThenRespondWithUnauthorized() throws Exception {
-		MockHttpServletRequest request = new MockHttpServletRequest("POST", this.requestUri);
-		request.addParameter(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.AUTHORIZATION_CODE.getValue());
-		request.addParameter(OAuth2ParameterNames.CODE, "testAuthCode");
-		request.addParameter(OAuth2ParameterNames.REDIRECT_URI, "testRedirectUri");
-		request.setServletPath(this.requestUri);
-		MockHttpServletResponse response = new MockHttpServletResponse();
-		Authentication clientPrincipal = mock(Authentication.class);
-		RegisteredClient registeredClient = mock(RegisteredClient.class);
+	public void doFilterWhenTokenRequestMultipleClientIdThenInvalidRequestError() throws Exception {
+		doFilterWhenTokenRequestInvalidParameterThenError(
+				OAuth2ParameterNames.CLIENT_ID, OAuth2ErrorCodes.INVALID_REQUEST,
+				request -> {
+					request.addParameter(OAuth2ParameterNames.CLIENT_ID, "client-1");
+					request.addParameter(OAuth2ParameterNames.CLIENT_ID, "client-2");
+				});
+	}
 
+	@Test
+	public void doFilterWhenTokenRequestMissingCodeThenInvalidRequestError() throws Exception {
+		doFilterWhenTokenRequestInvalidParameterThenError(
+				OAuth2ParameterNames.CODE, OAuth2ErrorCodes.INVALID_REQUEST,
+				request -> request.removeParameter(OAuth2ParameterNames.CODE));
+	}
+
+	@Test
+	public void doFilterWhenTokenRequestMultipleCodeThenInvalidRequestError() throws Exception {
+		doFilterWhenTokenRequestInvalidParameterThenError(
+				OAuth2ParameterNames.CODE, OAuth2ErrorCodes.INVALID_REQUEST,
+				request -> request.addParameter(OAuth2ParameterNames.CODE, "code-2"));
+	}
+
+	@Test
+	public void doFilterWhenTokenRequestMultipleRedirectUriThenInvalidRequestError() throws Exception {
+		doFilterWhenTokenRequestInvalidParameterThenError(
+				OAuth2ParameterNames.REDIRECT_URI, OAuth2ErrorCodes.INVALID_REQUEST,
+				request -> request.addParameter(OAuth2ParameterNames.REDIRECT_URI, "https://example2.com"));
+	}
+
+	@Test
+	public void doFilterWhenTokenRequestValidThenAccessTokenResponse() throws Exception {
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+		Authentication clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient);
 		OAuth2AccessToken accessToken = new OAuth2AccessToken(
-				OAuth2AccessToken.TokenType.BEARER,  "testToken", Instant.now().minusSeconds(60), Instant.now());
-		OAuth2Authorization authorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
-				.principalName(PRINCIPAL_NAME)
-				.attribute(OAuth2AuthorizationAttributeNames.CODE, AUTHORIZATION_CODE)
-				.build();
-		OAuth2AccessTokenAuthenticationToken accessTokenAuthenticationToken =
-				new OAuth2AccessTokenAuthenticationToken(registeredClient, clientPrincipal, accessToken);
-		accessTokenAuthenticationToken.setAuthenticated(false);
+				OAuth2AccessToken.TokenType.BEARER, "token",
+				Instant.now(), Instant.now().plus(Duration.ofHours(1)),
+				new HashSet<>(Arrays.asList("scope1", "scope2")));
+		OAuth2AccessTokenAuthenticationToken accessTokenAuthentication =
+				new OAuth2AccessTokenAuthenticationToken(
+						registeredClient, clientPrincipal, accessToken);
 
-		when(this.authorizationService.findByTokenAndTokenType(anyString(), any(TokenType.class))).thenReturn(authorization);
-		when(this.authenticationManager.authenticate(any(Authentication.class))).thenReturn(accessTokenAuthenticationToken);
+		when(this.authenticationManager.authenticate(any())).thenReturn(accessTokenAuthentication);
 
-		this.filter.doFilter(request, response, this.filterChain);
+		SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
+		securityContext.setAuthentication(clientPrincipal);
+		SecurityContextHolder.setContext(securityContext);
 
-		verifyNoInteractions(this.filterChain);
-		verify(this.authorizationService, times(0)).save(authorization);
-		verify(this.authenticationManager, times(1)).authenticate(any(Authentication.class));
-		assertThat(response.getStatus()).isEqualTo(HttpStatus.UNAUTHORIZED.value());
-		assertThat(response.getContentAsString())
-				.isEqualTo("{\"errorCode\":\"invalid_client\"}");
-	}
-
-	@Test
-	public void doFilterWhenValidAccessTokenRequestThenRespondWithAccessToken() throws Exception {
-		MockHttpServletRequest request = new MockHttpServletRequest("POST", this.requestUri);
-		request.addParameter(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.AUTHORIZATION_CODE.getValue());
-		request.addParameter(OAuth2ParameterNames.CODE, "testAuthCode");
-		request.addParameter(OAuth2ParameterNames.REDIRECT_URI, "testRedirectUri");
-		request.setServletPath(this.requestUri);
+		MockHttpServletRequest request = createTokenRequest(registeredClient);
 		MockHttpServletResponse response = new MockHttpServletResponse();
-		Authentication clientPrincipal = mock(Authentication.class);
-		RegisteredClient registeredClient = mock(RegisteredClient.class);
+		FilterChain filterChain = mock(FilterChain.class);
 
-		OAuth2AccessToken accessToken = new OAuth2AccessToken(
-				OAuth2AccessToken.TokenType.BEARER,  "testToken", Instant.now().minusSeconds(60), Instant.now());
-		OAuth2Authorization authorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
-				.principalName(PRINCIPAL_NAME)
-				.attribute(OAuth2AuthorizationAttributeNames.CODE, AUTHORIZATION_CODE)
-				.build();
-		OAuth2AccessTokenAuthenticationToken accessTokenAuthenticationToken =
-				new OAuth2AccessTokenAuthenticationToken(registeredClient, clientPrincipal, accessToken);
-		accessTokenAuthenticationToken.setAuthenticated(true);
+		this.filter.doFilter(request, response, filterChain);
 
-		when(this.authorizationService.findByTokenAndTokenType(anyString(), any(TokenType.class))).thenReturn(authorization);
-		when(this.authenticationManager.authenticate(any(Authentication.class))).thenReturn(accessTokenAuthenticationToken);
+		verifyNoInteractions(filterChain);
 
-		this.filter.doFilter(request, response, this.filterChain);
+		ArgumentCaptor<OAuth2AuthorizationCodeAuthenticationToken> authorizationCodeAuthenticationCaptor =
+				ArgumentCaptor.forClass(OAuth2AuthorizationCodeAuthenticationToken.class);
+		verify(this.authenticationManager).authenticate(authorizationCodeAuthenticationCaptor.capture());
 
-		verifyNoInteractions(this.filterChain);
-		verify(this.authorizationService, times(1)).save(authorization);
-		verify(this.authenticationManager, times(1)).authenticate(any(Authentication.class));
+		OAuth2AuthorizationCodeAuthenticationToken authorizationCodeAuthentication =
+				authorizationCodeAuthenticationCaptor.getValue();
+		assertThat(authorizationCodeAuthentication.getCode()).isEqualTo(
+				request.getParameter(OAuth2ParameterNames.CODE));
+		assertThat(authorizationCodeAuthentication.getPrincipal()).isEqualTo(clientPrincipal);
+		assertThat(authorizationCodeAuthentication.getRedirectUri()).isEqualTo(
+				request.getParameter(OAuth2ParameterNames.REDIRECT_URI));
+
 		assertThat(response.getStatus()).isEqualTo(HttpStatus.OK.value());
-		assertThat(response.getContentAsString()).contains("\"tokenValue\":\"testToken\"");
-		assertThat(response.getContentAsString()).contains("\"tokenType\":{\"value\":\"Bearer\"}");
-		assertThat(response.getHeader(HttpHeaders.CACHE_CONTROL)).isEqualTo("no-store");
-		assertThat(response.getHeader(HttpHeaders.PRAGMA)).isEqualTo("no-cache");
+		OAuth2AccessTokenResponse accessTokenResponse = readAccessTokenResponse(response);
+
+		OAuth2AccessToken accessTokenResult = accessTokenResponse.getAccessToken();
+		assertThat(accessTokenResult.getTokenType()).isEqualTo(accessToken.getTokenType());
+		assertThat(accessTokenResult.getTokenValue()).isEqualTo(accessToken.getTokenValue());
+		assertThat(accessTokenResult.getIssuedAt()).isBetween(
+				accessToken.getIssuedAt().minusSeconds(1), accessToken.getIssuedAt().plusSeconds(1));
+		assertThat(accessTokenResult.getExpiresAt()).isBetween(
+				accessToken.getExpiresAt().minusSeconds(1), accessToken.getExpiresAt().plusSeconds(1));
+		assertThat(accessTokenResult.getScopes()).isEqualTo(accessToken.getScopes());
+	}
+
+	private void doFilterWhenTokenRequestInvalidParameterThenError(String parameterName, String errorCode,
+			Consumer<MockHttpServletRequest> requestConsumer) throws Exception {
+
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+
+		MockHttpServletRequest request = createTokenRequest(registeredClient);
+		requestConsumer.accept(request);
+		MockHttpServletResponse response = new MockHttpServletResponse();
+		FilterChain filterChain = mock(FilterChain.class);
+
+		this.filter.doFilter(request, response, filterChain);
+
+		verifyNoInteractions(filterChain);
+
+		assertThat(response.getStatus()).isEqualTo(HttpStatus.BAD_REQUEST.value());
+		OAuth2Error error = readError(response);
+		assertThat(error.getErrorCode()).isEqualTo(errorCode);
+		assertThat(error.getDescription()).isEqualTo("OAuth 2.0 Parameter: " + parameterName);
+	}
+
+	private OAuth2Error readError(MockHttpServletResponse response) throws Exception {
+		MockClientHttpResponse httpResponse = new MockClientHttpResponse(
+				response.getContentAsByteArray(), HttpStatus.valueOf(response.getStatus()));
+		return this.errorHttpResponseConverter.read(OAuth2Error.class, httpResponse);
+	}
+
+	private OAuth2AccessTokenResponse readAccessTokenResponse(MockHttpServletResponse response) throws Exception {
+		MockClientHttpResponse httpResponse = new MockClientHttpResponse(
+				response.getContentAsByteArray(), HttpStatus.valueOf(response.getStatus()));
+		return this.accessTokenHttpResponseConverter.read(OAuth2AccessTokenResponse.class, httpResponse);
+	}
+
+	private static MockHttpServletRequest createTokenRequest(RegisteredClient registeredClient) {
+		String[] redirectUris = registeredClient.getRedirectUris().toArray(new String[0]);
+
+		String requestUri = OAuth2TokenEndpointFilter.DEFAULT_TOKEN_ENDPOINT_URI;
+		MockHttpServletRequest request = new MockHttpServletRequest("POST", requestUri);
+		request.setServletPath(requestUri);
+
+		request.addParameter(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.AUTHORIZATION_CODE.getValue());
+		request.addParameter(OAuth2ParameterNames.CODE, "code");
+		request.addParameter(OAuth2ParameterNames.REDIRECT_URI, redirectUris[0]);
+
+		return request;
 	}
 }

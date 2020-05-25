@@ -18,7 +18,7 @@ package org.springframework.security.oauth2.server.authorization.authentication;
 import org.springframework.lang.Nullable;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.SpringSecurityCoreVersion;
+import org.springframework.security.oauth2.server.authorization.Version;
 
 import java.util.Collections;
 
@@ -27,7 +27,7 @@ import java.util.Collections;
  * @author Madhu Bhat
  */
 public class OAuth2AuthorizationCodeAuthenticationToken extends AbstractAuthenticationToken {
-	private static final long serialVersionUID = SpringSecurityCoreVersion.SERIAL_VERSION_UID;
+	private static final long serialVersionUID = Version.SERIAL_VERSION_UID;
 	private String code;
 	private Authentication clientPrincipal;
 	private String clientId;
@@ -37,26 +37,26 @@ public class OAuth2AuthorizationCodeAuthenticationToken extends AbstractAuthenti
 			Authentication clientPrincipal, @Nullable String redirectUri) {
 		super(Collections.emptyList());
 		this.code = code;
-		this.redirectUri = redirectUri;
 		this.clientPrincipal = clientPrincipal;
+		this.redirectUri = redirectUri;
 	}
 
 	public OAuth2AuthorizationCodeAuthenticationToken(String code,
 			String clientId, @Nullable String redirectUri) {
 		super(Collections.emptyList());
 		this.code = code;
-		this.redirectUri = redirectUri;
 		this.clientId = clientId;
-	}
-
-	@Override
-	public Object getCredentials() {
-		return null;
+		this.redirectUri = redirectUri;
 	}
 
 	@Override
 	public Object getPrincipal() {
-		return null;
+		return this.clientPrincipal != null ? this.clientPrincipal : this.clientId;
+	}
+
+	@Override
+	public Object getCredentials() {
+		return "";
 	}
 
 	/**
@@ -66,5 +66,14 @@ public class OAuth2AuthorizationCodeAuthenticationToken extends AbstractAuthenti
 	 */
 	public String getCode() {
 		return this.code;
+	}
+
+	/**
+	 * Returns the redirectUri.
+	 *
+	 * @return the redirectUri
+	 */
+	public String getRedirectUri() {
+		return this.redirectUri;
 	}
 }

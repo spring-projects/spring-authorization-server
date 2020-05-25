@@ -15,13 +15,11 @@
  */
 package org.springframework.security.oauth2.server.authorization.web;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.core.convert.converter.Converter;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
+import org.springframework.http.converter.HttpMessageConverter;
+import org.springframework.http.server.ServletServerHttpResponse;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -30,15 +28,17 @@ import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
+import org.springframework.security.oauth2.core.endpoint.OAuth2AccessTokenResponse;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
-import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
+import org.springframework.security.oauth2.core.http.converter.OAuth2AccessTokenResponseHttpMessageConverter;
+import org.springframework.security.oauth2.core.http.converter.OAuth2ErrorHttpMessageConverter;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
-import org.springframework.security.oauth2.server.authorization.TokenType;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AccessTokenAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeAuthenticationToken;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
+import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -47,145 +47,171 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.io.Writer;
+import java.time.temporal.ChronoUnit;
 
 /**
- * This {@code Filter} is used by the client to obtain an access token by presenting
- * its authorization grant.
+ * A {@code Filter} for the OAuth 2.0 Authorization Code Grant,
+ * which handles the processing of the OAuth 2.0 Access Token Request.
  *
  * <p>
- * It converts the OAuth 2.0 Access Token Request to {@link OAuth2AuthorizationCodeAuthenticationToken},
- * which is then authenticated by the {@link AuthenticationManager} and gets back
- * {@link OAuth2AccessTokenAuthenticationToken} which has the {@link OAuth2AccessToken} if the request
- * was successfully authenticated. The {@link OAuth2AccessToken} is then updated in the in-flight {@link OAuth2Authorization}
- * and sent back to the client. In case the authentication fails, an HTTP 401 (Unauthorized) response is returned.
+ * It converts the OAuth 2.0 Access Token Request to an {@link OAuth2AuthorizationCodeAuthenticationToken},
+ * which is then authenticated by the {@link AuthenticationManager}.
+ * If the authentication succeeds, the {@link AuthenticationManager} returns an
+ * {@link OAuth2AccessTokenAuthenticationToken}, which contains
+ * the {@link OAuth2AccessToken} that is returned in the response.
+ * In case of any error, an {@link OAuth2Error} is returned in the response.
  *
  * <p>
  * By default, this {@code Filter} responds to access token requests
- * at the {@code URI} {@code /oauth2/token} and {@code HttpMethod} {@code POST}
- * using the default {@link AntPathRequestMatcher}.
+ * at the {@code URI} {@code /oauth2/token} and {@code HttpMethod} {@code POST}.
  *
  * <p>
- * The default base {@code URI} {@code /oauth2/token} may be overridden
- * via the constructor {@link #OAuth2TokenEndpointFilter(OAuth2AuthorizationService, AuthenticationManager, String)}.
+ * The default endpoint {@code URI} {@code /oauth2/token} may be overridden
+ * via the constructor {@link #OAuth2TokenEndpointFilter(AuthenticationManager, OAuth2AuthorizationService, String)}.
  *
  * @author Joe Grandja
  * @author Madhu Bhat
+ * @since 0.0.1
+ * @see AuthenticationManager
+ * @see OAuth2AuthorizationService
+ * @see <a target="_blank" href="https://tools.ietf.org/html/rfc6749#section-4.1">Section 4.1 Authorization Code Grant</a>
+ * @see <a target="_blank" href="https://tools.ietf.org/html/rfc6749#section-4.1.3">Section 4.1.3 Access Token Request</a>
  */
 public class OAuth2TokenEndpointFilter extends OncePerRequestFilter {
 	/**
 	 * The default endpoint {@code URI} for access token requests.
 	 */
-	private static final String DEFAULT_TOKEN_ENDPOINT_URI = "/oauth2/token";
+	public static final String DEFAULT_TOKEN_ENDPOINT_URI = "/oauth2/token";
 
-	private Converter<HttpServletRequest, Authentication> authorizationGrantConverter = this::convert;
-	private AuthenticationManager authenticationManager;
-	private OAuth2AuthorizationService authorizationService;
-	private RequestMatcher uriMatcher;
-	private ObjectMapper objectMapper = new ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL);
+	private final AuthenticationManager authenticationManager;
+	private final OAuth2AuthorizationService authorizationService;
+	private final RequestMatcher tokenEndpointMatcher;
+	private final Converter<HttpServletRequest, Authentication> authorizationGrantAuthenticationConverter =
+			new AuthorizationCodeAuthenticationConverter();
+	private final HttpMessageConverter<OAuth2AccessTokenResponse> accessTokenHttpResponseConverter =
+			new OAuth2AccessTokenResponseHttpMessageConverter();
+	private final HttpMessageConverter<OAuth2Error> errorHttpResponseConverter =
+			new OAuth2ErrorHttpMessageConverter();
 
 	/**
 	 * Constructs an {@code OAuth2TokenEndpointFilter} using the provided parameters.
 	 *
-	 * @param authorizationService  the authorization service implementation
-	 * @param authenticationManager the authentication manager implementation
+	 * @param authenticationManager the authentication manager
+	 * @param authorizationService the authorization service
 	 */
-	public OAuth2TokenEndpointFilter(OAuth2AuthorizationService authorizationService, AuthenticationManager authenticationManager) {
-		Assert.notNull(authorizationService, "authorizationService cannot be null");
-		Assert.notNull(authenticationManager, "authenticationManager cannot be null");
-		this.authenticationManager = authenticationManager;
-		this.authorizationService = authorizationService;
-		this.uriMatcher = new AntPathRequestMatcher(DEFAULT_TOKEN_ENDPOINT_URI, HttpMethod.POST.name());
+	public OAuth2TokenEndpointFilter(AuthenticationManager authenticationManager,
+			OAuth2AuthorizationService authorizationService) {
+		this(authenticationManager, authorizationService, DEFAULT_TOKEN_ENDPOINT_URI);
 	}
 
 	/**
 	 * Constructs an {@code OAuth2TokenEndpointFilter} using the provided parameters.
 	 *
-	 * @param authorizationService  the authorization service implementation
-	 * @param authenticationManager the authentication manager implementation
-	 * @param tokenEndpointUri      the token endpoint's uri
+	 * @param authenticationManager the authentication manager
+	 * @param authorizationService the authorization service
+	 * @param tokenEndpointUri the endpoint {@code URI} for access token requests
 	 */
-	public OAuth2TokenEndpointFilter(OAuth2AuthorizationService authorizationService, AuthenticationManager authenticationManager,
-			String tokenEndpointUri) {
-		Assert.notNull(authorizationService, "authorizationService cannot be null");
+	public OAuth2TokenEndpointFilter(AuthenticationManager authenticationManager,
+			OAuth2AuthorizationService authorizationService, String tokenEndpointUri) {
 		Assert.notNull(authenticationManager, "authenticationManager cannot be null");
+		Assert.notNull(authorizationService, "authorizationService cannot be null");
 		Assert.hasText(tokenEndpointUri, "tokenEndpointUri cannot be empty");
 		this.authenticationManager = authenticationManager;
 		this.authorizationService = authorizationService;
-		this.uriMatcher = new AntPathRequestMatcher(tokenEndpointUri, HttpMethod.POST.name());
+		this.tokenEndpointMatcher = new AntPathRequestMatcher(tokenEndpointUri, HttpMethod.POST.name());
 	}
 
 	@Override
-	protected void doFilterInternal(HttpServletRequest request,
-			HttpServletResponse response, FilterChain filterChain)
+	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
 			throws ServletException, IOException {
-		if (uriMatcher.matches(request)) {
-			try {
-				if (validateAccessTokenRequest(request)) {
-					OAuth2AuthorizationCodeAuthenticationToken authCodeAuthToken =
-							(OAuth2AuthorizationCodeAuthenticationToken) authorizationGrantConverter.convert(request);
-					OAuth2AccessTokenAuthenticationToken accessTokenAuthenticationToken =
-							(OAuth2AccessTokenAuthenticationToken) authenticationManager.authenticate(authCodeAuthToken);
-					if (accessTokenAuthenticationToken.isAuthenticated()) {
-						OAuth2Authorization authorization = authorizationService
-								.findByTokenAndTokenType(authCodeAuthToken.getCode(), TokenType.AUTHORIZATION_CODE);
-						authorization.setAccessToken(accessTokenAuthenticationToken.getAccessToken());
-						authorizationService.save(authorization);
-						writeSuccessResponse(response, accessTokenAuthenticationToken.getAccessToken());
-					} else {
-						throw new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_CLIENT));
-					}
-				}
-			} catch (OAuth2AuthenticationException exception) {
-				SecurityContextHolder.clearContext();
-				writeFailureResponse(response, exception.getError());
-			}
-		} else {
+
+		if (!this.tokenEndpointMatcher.matches(request)) {
 			filterChain.doFilter(request, response);
+			return;
+		}
+
+		try {
+			Authentication authorizationGrantAuthentication =
+					this.authorizationGrantAuthenticationConverter.convert(request);
+			OAuth2AccessTokenAuthenticationToken accessTokenAuthentication =
+					(OAuth2AccessTokenAuthenticationToken) this.authenticationManager.authenticate(authorizationGrantAuthentication);
+			sendAccessTokenResponse(response, accessTokenAuthentication.getAccessToken());
+		} catch (OAuth2AuthenticationException ex) {
+			SecurityContextHolder.clearContext();
+			sendErrorResponse(response, ex.getError());
 		}
 	}
 
-	private boolean validateAccessTokenRequest(HttpServletRequest request) {
-		if (StringUtils.isEmpty(request.getParameter(OAuth2ParameterNames.CODE))
-				|| StringUtils.isEmpty(request.getParameter(OAuth2ParameterNames.REDIRECT_URI))
-				|| StringUtils.isEmpty(request.getParameter(OAuth2ParameterNames.GRANT_TYPE))) {
-			throw new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_REQUEST));
-		} else if (!AuthorizationGrantType.AUTHORIZATION_CODE.getValue().equals(request.getParameter(OAuth2ParameterNames.GRANT_TYPE))) {
-			throw new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.UNSUPPORTED_GRANT_TYPE));
+	private void sendAccessTokenResponse(HttpServletResponse response, OAuth2AccessToken accessToken) throws IOException {
+		OAuth2AccessTokenResponse.Builder builder =
+				OAuth2AccessTokenResponse.withToken(accessToken.getTokenValue())
+						.tokenType(accessToken.getTokenType())
+						.scopes(accessToken.getScopes());
+		if (accessToken.getIssuedAt() != null && accessToken.getExpiresAt() != null) {
+			builder.expiresIn(ChronoUnit.SECONDS.between(accessToken.getIssuedAt(), accessToken.getExpiresAt()));
 		}
-		return true;
+		OAuth2AccessTokenResponse accessTokenResponse = builder.build();
+		ServletServerHttpResponse httpResponse = new ServletServerHttpResponse(response);
+		this.accessTokenHttpResponseConverter.write(accessTokenResponse, null, httpResponse);
 	}
 
-	private OAuth2AuthorizationCodeAuthenticationToken convert(HttpServletRequest request) {
-		Authentication clientPrincipal = SecurityContextHolder.getContext().getAuthentication();
-		return new OAuth2AuthorizationCodeAuthenticationToken(
-				request.getParameter(OAuth2ParameterNames.CODE),
-				clientPrincipal,
-				request.getParameter(OAuth2ParameterNames.REDIRECT_URI)
-		);
+	private void sendErrorResponse(HttpServletResponse response, OAuth2Error error) throws IOException {
+		ServletServerHttpResponse httpResponse = new ServletServerHttpResponse(response);
+		httpResponse.setStatusCode(HttpStatus.BAD_REQUEST);
+		this.errorHttpResponseConverter.write(error, null, httpResponse);
 	}
 
-	private void writeSuccessResponse(HttpServletResponse response, OAuth2AccessToken body) throws IOException {
-		try (Writer out = response.getWriter()) {
-			response.setStatus(HttpStatus.OK.value());
-			response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-			response.setCharacterEncoding("UTF-8");
-			response.setHeader(HttpHeaders.CACHE_CONTROL, "no-store");
-			response.setHeader(HttpHeaders.PRAGMA, "no-cache");
-			out.write(objectMapper.writeValueAsString(body));
-		}
+	private static OAuth2AuthenticationException throwError(String errorCode, String parameterName) {
+		OAuth2Error error = new OAuth2Error(errorCode, "OAuth 2.0 Parameter: " + parameterName,
+				"https://tools.ietf.org/html/rfc6749#section-5.2");
+		throw new OAuth2AuthenticationException(error);
 	}
 
-	private void writeFailureResponse(HttpServletResponse response, OAuth2Error error) throws IOException {
-		try (Writer out = response.getWriter()) {
-			if (error.getErrorCode().equals(OAuth2ErrorCodes.INVALID_CLIENT)) {
-				response.setStatus(HttpStatus.UNAUTHORIZED.value());
-			} else {
-				response.setStatus(HttpStatus.BAD_REQUEST.value());
+	private static class AuthorizationCodeAuthenticationConverter implements Converter<HttpServletRequest, Authentication> {
+
+		@Override
+		public Authentication convert(HttpServletRequest request) {
+			MultiValueMap<String, String> parameters = OAuth2EndpointUtils.getParameters(request);
+
+			// grant_type (REQUIRED)
+			String grantType = parameters.getFirst(OAuth2ParameterNames.GRANT_TYPE);
+			if (!StringUtils.hasText(grantType) ||
+					parameters.get(OAuth2ParameterNames.GRANT_TYPE).size() != 1) {
+				throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.GRANT_TYPE);
 			}
-			response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-			response.setCharacterEncoding("UTF-8");
-			out.write(objectMapper.writeValueAsString(error));
+			if (!AuthorizationGrantType.AUTHORIZATION_CODE.getValue().equals(grantType)) {
+				throwError(OAuth2ErrorCodes.UNSUPPORTED_GRANT_TYPE, OAuth2ParameterNames.GRANT_TYPE);
+			}
+
+			// client_id (REQUIRED)
+			String clientId = parameters.getFirst(OAuth2ParameterNames.CLIENT_ID);
+			Authentication clientPrincipal = null;
+			if (StringUtils.hasText(clientId)) {
+				if (parameters.get(OAuth2ParameterNames.CLIENT_ID).size() != 1) {
+					throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.CLIENT_ID);
+				}
+			} else {
+				clientPrincipal = SecurityContextHolder.getContext().getAuthentication();
+			}
+
+			// code (REQUIRED)
+			String code = parameters.getFirst(OAuth2ParameterNames.CODE);
+			if (!StringUtils.hasText(code) ||
+					parameters.get(OAuth2ParameterNames.CODE).size() != 1) {
+				throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.CODE);
+			}
+
+			// redirect_uri (REQUIRED)
+			// Required only if the "redirect_uri" parameter was included in the authorization request
+			String redirectUri = parameters.getFirst(OAuth2ParameterNames.REDIRECT_URI);
+			if (StringUtils.hasText(redirectUri) &&
+					parameters.get(OAuth2ParameterNames.REDIRECT_URI).size() != 1) {
+				throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.REDIRECT_URI);
+			}
+
+			return clientPrincipal != null ?
+					new OAuth2AuthorizationCodeAuthenticationToken(code, clientPrincipal, redirectUri) :
+					new OAuth2AuthorizationCodeAuthenticationToken(code, clientId, redirectUri);
 		}
 	}
 }

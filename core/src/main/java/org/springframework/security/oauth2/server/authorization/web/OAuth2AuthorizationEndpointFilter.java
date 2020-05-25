@@ -38,7 +38,6 @@ import org.springframework.security.web.RedirectStrategy;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
-import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -53,7 +52,6 @@ import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -123,7 +121,7 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 		// Validate the request to ensure that all required parameters are present and valid
 		// ---------------
 
-		MultiValueMap<String, String> parameters = getParameters(request);
+		MultiValueMap<String, String> parameters = OAuth2EndpointUtils.getParameters(request);
 		String stateParameter = parameters.getFirst(OAuth2ParameterNames.STATE);
 
 		// client_id (REQUIRED)
@@ -258,7 +256,7 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 	}
 
 	private static OAuth2AuthorizationRequest convertAuthorizationRequest(HttpServletRequest request) {
-		MultiValueMap<String, String> parameters = getParameters(request);
+		MultiValueMap<String, String> parameters = OAuth2EndpointUtils.getParameters(request);
 
 		Set<String> scopes = Collections.emptySet();
 		if (parameters.containsKey(OAuth2ParameterNames.SCOPE)) {
@@ -281,18 +279,5 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 										!e.getKey().equals(OAuth2ParameterNames.STATE))
 								.forEach(e -> additionalParameters.put(e.getKey(), e.getValue().get(0))))
 				.build();
-	}
-
-	private static MultiValueMap<String, String> getParameters(HttpServletRequest request) {
-		Map<String, String[]> parameterMap = request.getParameterMap();
-		MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>(parameterMap.size());
-		parameterMap.forEach((key, values) -> {
-			if (values.length > 0) {
-				for (String value : values) {
-					parameters.add(key, value);
-				}
-			}
-		});
-		return parameters;
 	}
 }

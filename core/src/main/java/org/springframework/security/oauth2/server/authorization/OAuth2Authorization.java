@@ -33,6 +33,7 @@ import java.util.function.Consumer;
  *
  * @author Joe Grandja
  * @author Krisztian Toth
+ * @author Vivek Babu
  * @since 0.0.1
  * @see RegisteredClient
  * @see OAuth2AccessToken
@@ -43,6 +44,7 @@ public class OAuth2Authorization implements Serializable {
 	private String principalName;
 	private OAuth2AccessToken accessToken;
 	private Map<String, Object> attributes;
+	private boolean revoked;
 
 	protected OAuth2Authorization() {
 	}
@@ -72,6 +74,15 @@ public class OAuth2Authorization implements Serializable {
 	 */
 	public OAuth2AccessToken getAccessToken() {
 		return this.accessToken;
+	}
+
+	/**
+	 * Returns whether the authorization has been revoked.
+	 *
+	 * @return the status of the authorization, revoked or not
+	 */
+	public boolean isRevoked() {
+		return this.revoked;
 	}
 
 	/**
@@ -108,7 +119,8 @@ public class OAuth2Authorization implements Serializable {
 		return Objects.equals(this.registeredClientId, that.registeredClientId) &&
 				Objects.equals(this.principalName, that.principalName) &&
 				Objects.equals(this.accessToken, that.accessToken) &&
-				Objects.equals(this.attributes, that.attributes);
+				Objects.equals(this.attributes, that.attributes) &&
+				Objects.equals(this.revoked, that.revoked);
 	}
 
 	@Override
@@ -138,7 +150,8 @@ public class OAuth2Authorization implements Serializable {
 		return new Builder(authorization.getRegisteredClientId())
 				.principalName(authorization.getPrincipalName())
 				.accessToken(authorization.getAccessToken())
-				.attributes(attrs -> attrs.putAll(authorization.getAttributes()));
+				.attributes(attrs -> attrs.putAll(authorization.getAttributes()))
+				.revoked(authorization.isRevoked());
 	}
 
 	/**
@@ -150,6 +163,7 @@ public class OAuth2Authorization implements Serializable {
 		private String principalName;
 		private OAuth2AccessToken accessToken;
 		private Map<String, Object> attributes = new HashMap<>();
+		private boolean revoked;
 
 		protected Builder(String registeredClientId) {
 			this.registeredClientId = registeredClientId;
@@ -204,6 +218,16 @@ public class OAuth2Authorization implements Serializable {
 		}
 
 		/**
+		 * Sets the authorization as revoked.
+		 *
+		 *  @return the {@link Builder}
+		 */
+		public Builder revoked(boolean revoked) {
+			this.revoked = revoked;
+			return this;
+		}
+
+		/**
 		 * Builds a new {@link OAuth2Authorization}.
 		 *
 		 * @return the {@link OAuth2Authorization}
@@ -217,6 +241,7 @@ public class OAuth2Authorization implements Serializable {
 			authorization.principalName = this.principalName;
 			authorization.accessToken = this.accessToken;
 			authorization.attributes = Collections.unmodifiableMap(this.attributes);
+			authorization.revoked = this.revoked;
 			return authorization;
 		}
 	}

@@ -15,31 +15,62 @@
  */
 package org.springframework.security.oauth2.server.authorization.authentication;
 
+import org.springframework.lang.Nullable;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
-import org.springframework.security.core.SpringSecurityCoreVersion;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.server.authorization.Version;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
+import org.springframework.util.Assert;
+
 import java.util.Collections;
 
 /**
+ * An {@link Authentication} implementation used for OAuth 2.0 Client Authentication.
+ *
  * @author Joe Grandja
  * @author Patryk Kostrzewa
+ * @since 0.0.1
+ * @see AbstractAuthenticationToken
+ * @see RegisteredClient
+ * @see OAuth2ClientAuthenticationProvider
  */
 public class OAuth2ClientAuthenticationToken extends AbstractAuthenticationToken {
-	private static final long serialVersionUID = SpringSecurityCoreVersion.SERIAL_VERSION_UID;
+	private static final long serialVersionUID = Version.SERIAL_VERSION_UID;
 	private String clientId;
 	private String clientSecret;
 	private RegisteredClient registeredClient;
 
+	/**
+	 * Constructs an {@code OAuth2ClientAuthenticationToken} using the provided parameters.
+	 *
+	 * @param clientId the client identifier
+	 * @param clientSecret the client secret
+	 */
 	public OAuth2ClientAuthenticationToken(String clientId, String clientSecret) {
 		super(Collections.emptyList());
+		Assert.hasText(clientId, "clientId cannot be empty");
+		Assert.hasText(clientSecret, "clientSecret cannot be empty");
 		this.clientId = clientId;
 		this.clientSecret = clientSecret;
 	}
 
+	/**
+	 * Constructs an {@code OAuth2ClientAuthenticationToken} using the provided parameters.
+	 *
+	 * @param registeredClient the registered client
+	 */
 	public OAuth2ClientAuthenticationToken(RegisteredClient registeredClient) {
 		super(Collections.emptyList());
+		Assert.notNull(registeredClient, "registeredClient cannot be null");
 		this.registeredClient = registeredClient;
 		setAuthenticated(true);
+	}
+
+	@Override
+	public Object getPrincipal() {
+		return this.registeredClient != null ?
+				this.registeredClient.getClientId() :
+				this.clientId;
 	}
 
 	@Override
@@ -47,8 +78,12 @@ public class OAuth2ClientAuthenticationToken extends AbstractAuthenticationToken
 		return this.clientSecret;
 	}
 
-	@Override
-	public Object getPrincipal() {
-		return this.clientId;
+	/**
+	 * Returns the {@link RegisteredClient registered client}.
+	 *
+	 * @return the {@link RegisteredClient}
+	 */
+	public @Nullable RegisteredClient getRegisteredClient() {
+		return this.registeredClient;
 	}
 }

@@ -18,11 +18,12 @@ package org.springframework.security.oauth2.server.authorization.authentication;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
+import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.server.authorization.client.InMemoryRegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
-import java.util.Collections;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -30,25 +31,25 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * Tests for {@link OAuth2ClientAuthenticationProvider}.
  *
  * @author Patryk Kostrzewa
+ * @author Joe Grandja
  */
 public class OAuth2ClientAuthenticationProviderTests {
-
 	private RegisteredClient registeredClient;
 	private RegisteredClientRepository registeredClientRepository;
 	private OAuth2ClientAuthenticationProvider authenticationProvider;
 
 	@Before
 	public void setUp() {
-		this.registeredClient = TestRegisteredClients.registeredClient()
-				.build();
+		this.registeredClient = TestRegisteredClients.registeredClient().build();
 		this.registeredClientRepository = new InMemoryRegisteredClientRepository(this.registeredClient);
 		this.authenticationProvider = new OAuth2ClientAuthenticationProvider(this.registeredClientRepository);
 	}
 
 	@Test
-	public void constructorWhenRegisteredClientRepositoryIsNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> new OAuth2ClientAuthenticationProvider(null)).isInstanceOf(
-				IllegalArgumentException.class);
+	public void constructorWhenRegisteredClientRepositoryNullThenThrowIllegalArgumentException() {
+		assertThatThrownBy(() -> new OAuth2ClientAuthenticationProvider(null))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("registeredClientRepository cannot be null");
 	}
 
 	@Test
@@ -57,34 +58,36 @@ public class OAuth2ClientAuthenticationProviderTests {
 	}
 
 	@Test
-	public void authenticateWhenNullCredentialsThenThrowOAuth2AuthorizationException() {
-		assertThatThrownBy(() -> {
-			this.authenticationProvider.authenticate(new OAuth2ClientAuthenticationToken("id", null));
-		}).isInstanceOf(OAuth2AuthenticationException.class);
+	public void authenticateWhenInvalidClientIdThenThrowOAuth2AuthenticationException() {
+		OAuth2ClientAuthenticationToken authentication = new OAuth2ClientAuthenticationToken(
+				this.registeredClient.getClientId() + "-invalid", this.registeredClient.getClientSecret());
+		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
+				.isInstanceOf(OAuth2AuthenticationException.class)
+				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+				.extracting("errorCode")
+				.isEqualTo(OAuth2ErrorCodes.INVALID_CLIENT);
 	}
 
 	@Test
-	public void authenticateWhenNullRegisteredClientThenThrowOAuth2AuthorizationException() {
-		assertThatThrownBy(() -> {
-			this.authenticationProvider.authenticate(new OAuth2ClientAuthenticationToken("id", "secret"));
-		}).isInstanceOf(OAuth2AuthenticationException.class);
+	public void authenticateWhenInvalidClientSecretThenThrowOAuth2AuthenticationException() {
+		OAuth2ClientAuthenticationToken authentication = new OAuth2ClientAuthenticationToken(
+				this.registeredClient.getClientId(), this.registeredClient.getClientSecret() + "-invalid");
+		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
+				.isInstanceOf(OAuth2AuthenticationException.class)
+				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+				.extracting("errorCode")
+				.isEqualTo(OAuth2ErrorCodes.INVALID_CLIENT);
 	}
 
 	@Test
-	public void authenticateWhenCredentialsNotEqualThenThrowOAuth2AuthorizationException() {
-		assertThatThrownBy(() -> {
-			this.authenticationProvider.authenticate(
-					new OAuth2ClientAuthenticationToken(this.registeredClient.getClientId(),
-							this.registeredClient.getClientSecret() + "_invalid"));
-		}).isInstanceOf(OAuth2AuthenticationException.class);
-	}
-
-	@Test
-	public void authenticateWhenAuthenticationSuccessResponseThenReturnClientAuthenticationToken() {
-		OAuth2ClientAuthenticationToken authenticationResult = (OAuth2ClientAuthenticationToken) this.authenticationProvider.authenticate(
-				new OAuth2ClientAuthenticationToken(this.registeredClient.getClientId(),
-						registeredClient.getClientSecret()));
+	public void authenticateWhenValidCredentialsThenAuthenticated() {
+		OAuth2ClientAuthenticationToken authentication = new OAuth2ClientAuthenticationToken(
+				this.registeredClient.getClientId(), this.registeredClient.getClientSecret());
+		OAuth2ClientAuthenticationToken authenticationResult =
+				(OAuth2ClientAuthenticationToken) this.authenticationProvider.authenticate(authentication);
 		assertThat(authenticationResult.isAuthenticated()).isTrue();
-		assertThat(authenticationResult.getAuthorities()).isEqualTo(Collections.emptyList());
+		assertThat(authenticationResult.getPrincipal().toString()).isEqualTo(this.registeredClient.getClientId());
+		assertThat(authenticationResult.getCredentials()).isNull();
+		assertThat(authenticationResult.getRegisteredClient()).isEqualTo(this.registeredClient);
 	}
 }

@@ -26,17 +26,22 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 import org.springframework.util.Assert;
 
 /**
- * An {@link AuthenticationProvider} implementation that validates {@link OAuth2ClientAuthenticationToken}s.
+ * An {@link AuthenticationProvider} implementation that validates {@link OAuth2ClientAuthenticationToken}'s.
  *
  * @author Joe Grandja
  * @author Patryk Kostrzewa
+ * @since 0.0.1
+ * @see AuthenticationProvider
+ * @see OAuth2ClientAuthenticationToken
+ * @see RegisteredClientRepository
  */
 public class OAuth2ClientAuthenticationProvider implements AuthenticationProvider {
 	private final RegisteredClientRepository registeredClientRepository;
 
 	/**
-	 * @param registeredClientRepository
-	 * 		the bean to lookup the client details from
+	 * Constructs an {@code OAuth2ClientAuthenticationProvider} using the provided parameters.
+	 *
+	 * @param registeredClientRepository the repository of registered clients
 	 */
 	public OAuth2ClientAuthenticationProvider(RegisteredClientRepository registeredClientRepository) {
 		Assert.notNull(registeredClientRepository, "registeredClientRepository cannot be null");
@@ -45,21 +50,14 @@ public class OAuth2ClientAuthenticationProvider implements AuthenticationProvide
 
 	@Override
 	public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-		String clientId = authentication.getName();
-		if (authentication.getCredentials() == null) {
-			throw new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_CLIENT));
-		}
-
+		String clientId = authentication.getPrincipal().toString();
 		RegisteredClient registeredClient = this.registeredClientRepository.findByClientId(clientId);
-		// https://tools.ietf.org/html/rfc6749#section-2.4
 		if (registeredClient == null) {
 			throw new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_CLIENT));
 		}
 
-		String presentedSecret = authentication.getCredentials()
-				.toString();
-		if (!registeredClient.getClientSecret()
-				.equals(presentedSecret)) {
+		String clientSecret = authentication.getCredentials().toString();
+		if (!registeredClient.getClientSecret().equals(clientSecret)) {
 			throw new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_CLIENT));
 		}
 

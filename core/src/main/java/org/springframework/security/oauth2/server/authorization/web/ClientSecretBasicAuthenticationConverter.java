@@ -16,57 +16,72 @@
 package org.springframework.security.oauth2.server.authorization.web;
 
 import org.springframework.http.HttpHeaders;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientAuthenticationToken;
 import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.util.StringUtils;
+
 import javax.servlet.http.HttpServletRequest;
+import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
 /**
- * Converts from {@link HttpServletRequest} to {@link OAuth2ClientAuthenticationToken} that can be authenticated.
+ * Attempts to extract HTTP Basic credentials from {@link HttpServletRequest}
+ * and then converts to an {@link OAuth2ClientAuthenticationToken} used for authenticating the client.
  *
  * @author Patryk Kostrzewa
+ * @author Joe Grandja
+ * @since 0.0.1
+ * @see OAuth2ClientAuthenticationToken
+ * @see OAuth2ClientAuthenticationFilter
  */
-public class DefaultOAuth2ClientAuthenticationConverter implements AuthenticationConverter {
-
-	private static final String AUTHENTICATION_SCHEME_BASIC = "Basic";
+public class ClientSecretBasicAuthenticationConverter implements AuthenticationConverter {
 
 	@Override
-	public OAuth2ClientAuthenticationToken convert(HttpServletRequest request) {
+	public Authentication convert(HttpServletRequest request) {
 		String header = request.getHeader(HttpHeaders.AUTHORIZATION);
-
 		if (header == null) {
 			return null;
 		}
 
-		header = header.trim();
-		if (!StringUtils.startsWithIgnoreCase(header, AUTHENTICATION_SCHEME_BASIC)) {
+		String[] parts = header.split("\\s");
+		if (!parts[0].equalsIgnoreCase("Basic")) {
 			return null;
 		}
 
-		if (header.equalsIgnoreCase(AUTHENTICATION_SCHEME_BASIC)) {
+		if (parts.length != 2) {
 			throw new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_REQUEST));
 		}
 
-		byte[] decoded;
+		byte[] decodedCredentials;
 		try {
-			byte[] base64Token = header.substring(6)
-					.getBytes(StandardCharsets.UTF_8);
-			decoded = Base64.getDecoder()
-					.decode(base64Token);
-		} catch (IllegalArgumentException e) {
+			decodedCredentials = Base64.getDecoder().decode(
+					parts[1].getBytes(StandardCharsets.UTF_8));
+		} catch (IllegalArgumentException ex) {
+			throw new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_REQUEST), ex);
+		}
+
+		String credentialsString = new String(decodedCredentials, StandardCharsets.UTF_8);
+		String[] credentials = credentialsString.split(":", 2);
+		if (credentials.length != 2 ||
+				!StringUtils.hasText(credentials[0]) ||
+				!StringUtils.hasText(credentials[1])) {
 			throw new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_REQUEST));
 		}
 
-		String token = new String(decoded, StandardCharsets.UTF_8);
-		String[] credentials = token.split(":");
-		if (credentials.length != 2) {
-			throw new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_TOKEN));
+		String clientID;
+		String clientSecret;
+		try {
+			clientID = URLDecoder.decode(credentials[0], StandardCharsets.UTF_8.name());
+			clientSecret = URLDecoder.decode(credentials[1], StandardCharsets.UTF_8.name());
+		} catch (Exception ex) {
+			throw new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_REQUEST), ex);
 		}
-		return new OAuth2ClientAuthenticationToken(credentials[0], credentials[1]);
+
+		return new OAuth2ClientAuthenticationToken(clientID, clientSecret);
 	}
 }

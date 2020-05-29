@@ -15,21 +15,27 @@
  */
 package org.springframework.security.oauth2.server.authorization.web;
 
-import org.springframework.http.MediaType;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.server.ServletServerHttpResponse;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
+import org.springframework.security.oauth2.core.OAuth2Error;
+import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.http.converter.OAuth2ErrorHttpMessageConverter;
+import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientAuthenticationProvider;
+import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientAuthenticationToken;
 import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
 import org.springframework.web.filter.OncePerRequestFilter;
+
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -37,54 +43,29 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 /**
+ * A {@code Filter} that processes an authentication request for an OAuth 2.0 Client.
+ *
  * @author Joe Grandja
  * @author Patryk Kostrzewa
+ * @since 0.0.1
+ * @see AuthenticationManager
+ * @see OAuth2ClientAuthenticationProvider
+ * @see <a target="_blank" href="https://tools.ietf.org/html/rfc6749#section-2.3">Section 2.3 Client Authentication</a>
+ * @see <a target="_blank" href="https://tools.ietf.org/html/rfc6749#section-3.2.1">Section 3.2.1 Token Endpoint Client Authentication</a>
  */
 public class OAuth2ClientAuthenticationFilter extends OncePerRequestFilter {
-
-	public static final String DEFAULT_FILTER_PROCESSES_URL = "/oauth2/token";
 	private final AuthenticationManager authenticationManager;
 	private final RequestMatcher requestMatcher;
-	private final OAuth2ErrorHttpMessageConverter errorMessageConverter = new OAuth2ErrorHttpMessageConverter();
+	private final HttpMessageConverter<OAuth2Error> errorHttpResponseConverter = new OAuth2ErrorHttpMessageConverter();
+	private AuthenticationConverter authenticationConverter;
 	private AuthenticationSuccessHandler authenticationSuccessHandler;
 	private AuthenticationFailureHandler authenticationFailureHandler;
-	private AuthenticationConverter authenticationConverter = new DefaultOAuth2ClientAuthenticationConverter();
 
 	/**
-	 * Creates an instance which will authenticate against the supplied
-	 * {@code AuthenticationManager}.
+	 * Constructs an {@code OAuth2ClientAuthenticationFilter} using the provided parameters.
 	 *
-	 * @param authenticationManager
-	 * 		the bean to submit authentication requests to
-	 */
-	public OAuth2ClientAuthenticationFilter(AuthenticationManager authenticationManager) {
-		this(authenticationManager, DEFAULT_FILTER_PROCESSES_URL);
-	}
-
-	/**
-	 * Creates an instance which will authenticate against the supplied
-	 * {@code AuthenticationManager}.
-	 *
-	 * <p>
-	 * Configures default {@link RequestMatcher} verifying the provided endpoint.
-	 *
-	 * @param authenticationManager
-	 * 		the bean to submit authentication requests to
-	 * @param filterProcessesUrl
-	 * 		the filterProcessesUrl to match request URI against
-	 */
-	public OAuth2ClientAuthenticationFilter(AuthenticationManager authenticationManager, String filterProcessesUrl) {
-		this(authenticationManager, new AntPathRequestMatcher(filterProcessesUrl, "POST"));
-	}
-
-	/**
-	 * Creates an instance which will authenticate against the supplied
-	 * {@code AuthenticationManager} and custom {@code RequestMatcher}.
-	 *
-	 * @param authenticationManager
-	 * 		the bean to submit authentication requests to
-	 * @param requestMatcher
-	 * 		the {@code RequestMatcher} to match {@code HttpServletRequest} against
+	 * @param authenticationManager the {@link AuthenticationManager} used for authenticating the client
+	 * @param requestMatcher the {@link RequestMatcher} used for matching against the {@code HttpServletRequest}
 	 */
 	public OAuth2ClientAuthenticationFilter(AuthenticationManager authenticationManager,
 			RequestMatcher requestMatcher) {
@@ -92,8 +73,9 @@ public class OAuth2ClientAuthenticationFilter extends OncePerRequestFilter {
 		Assert.notNull(requestMatcher, "requestMatcher cannot be null");
 		this.authenticationManager = authenticationManager;
 		this.requestMatcher = requestMatcher;
-		this.authenticationSuccessHandler = this::defaultAuthenticationSuccessHandler;
-		this.authenticationFailureHandler = this::defaultAuthenticationFailureHandler;
+		this.authenticationConverter = new ClientSecretBasicAuthenticationConverter();
+		this.authenticationSuccessHandler = this::onAuthenticationSuccess;
+		this.authenticationFailureHandler = this::onAuthenticationFailure;
 	}
 
 	@Override
@@ -101,14 +83,12 @@ public class OAuth2ClientAuthenticationFilter extends OncePerRequestFilter {
 			throws ServletException, IOException {
 
 		if (this.requestMatcher.matches(request)) {
-			Authentication authentication = this.authenticationConverter.convert(request);
-			if (authentication == null) {
-				filterChain.doFilter(request, response);
-				return;
-			}
 			try {
-				final Authentication result = this.authenticationManager.authenticate(authentication);
-				this.authenticationSuccessHandler.onAuthenticationSuccess(request, response, result);
+				Authentication authenticationRequest = this.authenticationConverter.convert(request);
+				if (authenticationRequest != null) {
+					Authentication authenticationResult = this.authenticationManager.authenticate(authenticationRequest);
+					this.authenticationSuccessHandler.onAuthenticationSuccess(request, response, authenticationResult);
+				}
 			} catch (OAuth2AuthenticationException failed) {
 				this.authenticationFailureHandler.onAuthenticationFailure(request, response, failed);
 				return;
@@ -118,10 +98,19 @@ public class OAuth2ClientAuthenticationFilter extends OncePerRequestFilter {
 	}
 
 	/**
-	 * Used to define custom behaviour on a successful authentication.
+	 * Sets the {@link AuthenticationConverter} used for converting a {@link HttpServletRequest} to an {@link OAuth2ClientAuthenticationToken}.
 	 *
-	 * @param authenticationSuccessHandler
-	 * 		the handler to be used
+	 * @param authenticationConverter used for converting a {@link HttpServletRequest} to an {@link OAuth2ClientAuthenticationToken}
+	 */
+	public final void setAuthenticationConverter(AuthenticationConverter authenticationConverter) {
+		Assert.notNull(authenticationConverter, "authenticationConverter cannot be null");
+		this.authenticationConverter = authenticationConverter;
+	}
+
+	/**
+	 * Sets the {@link AuthenticationSuccessHandler} used for handling successful authentications.
+	 *
+	 * @param authenticationSuccessHandler the {@link AuthenticationSuccessHandler} used for handling successful authentications
 	 */
 	public final void setAuthenticationSuccessHandler(AuthenticationSuccessHandler authenticationSuccessHandler) {
 		Assert.notNull(authenticationSuccessHandler, "authenticationSuccessHandler cannot be null");
@@ -129,39 +118,43 @@ public class OAuth2ClientAuthenticationFilter extends OncePerRequestFilter {
 	}
 
 	/**
-	 * Used to define custom behaviour on a failed authentication.
+	 * Sets the {@link AuthenticationFailureHandler} used for handling failed authentications.
 	 *
-	 * @param authenticationFailureHandler
-	 * 		the handler to be used
+	 * @param authenticationFailureHandler the {@link AuthenticationFailureHandler} used for handling failed authentications
 	 */
 	public final void setAuthenticationFailureHandler(AuthenticationFailureHandler authenticationFailureHandler) {
 		Assert.notNull(authenticationFailureHandler, "authenticationFailureHandler cannot be null");
 		this.authenticationFailureHandler = authenticationFailureHandler;
 	}
 
-	/**
-	 * Used to define custom {@link AuthenticationConverter}.
-	 *
-	 * @param authenticationConverter
-	 * 		the converter to be used
-	 */
-	public final void setAuthenticationConverter(AuthenticationConverter authenticationConverter) {
-		Assert.notNull(authenticationConverter, "authenticationConverter cannot be null");
-		this.authenticationConverter = authenticationConverter;
-	}
-
-	private void defaultAuthenticationSuccessHandler(HttpServletRequest request, HttpServletResponse response,
+	private void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
 			Authentication authentication) {
 
-		SecurityContextHolder.getContext()
-				.setAuthentication(authentication);
+		SecurityContext context = SecurityContextHolder.createEmptyContext();
+		context.setAuthentication(authentication);
+		SecurityContextHolder.setContext(context);
 	}
 
-	private void defaultAuthenticationFailureHandler(HttpServletRequest request, HttpServletResponse response,
+	private void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response,
 			AuthenticationException failed) throws IOException {
 
 		SecurityContextHolder.clearContext();
-		this.errorMessageConverter.write(((OAuth2AuthenticationException) failed).getError(),
-				MediaType.APPLICATION_JSON, new ServletServerHttpResponse(response));
+
+		// TODO
+		// The authorization server MAY return an HTTP 401 (Unauthorized) status code
+		// to indicate which HTTP authentication schemes are supported.
+		// If the client attempted to authenticate via the "Authorization" request header field,
+		// the authorization server MUST respond with an HTTP 401 (Unauthorized) status code and
+		// include the "WWW-Authenticate" response header field
+		// matching the authentication scheme used by the client.
+
+		OAuth2Error error = ((OAuth2AuthenticationException) failed).getError();
+		ServletServerHttpResponse httpResponse = new ServletServerHttpResponse(response);
+		if (OAuth2ErrorCodes.INVALID_CLIENT.equals(error.getErrorCode())) {
+			httpResponse.setStatusCode(HttpStatus.UNAUTHORIZED);
+		} else {
+			httpResponse.setStatusCode(HttpStatus.BAD_REQUEST);
+		}
+		this.errorHttpResponseConverter.write(error, null, httpResponse);
 	}
 }

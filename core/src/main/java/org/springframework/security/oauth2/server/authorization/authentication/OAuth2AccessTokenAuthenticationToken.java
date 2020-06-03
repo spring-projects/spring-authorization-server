@@ -20,35 +20,63 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.server.authorization.Version;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
+import org.springframework.util.Assert;
 
 import java.util.Collections;
 
 /**
+ * An {@link Authentication} implementation used when issuing an OAuth 2.0 Access Token.
+ *
  * @author Joe Grandja
  * @author Madhu Bhat
+ * @since 0.0.1
+ * @see AbstractAuthenticationToken
+ * @see OAuth2AuthorizationCodeAuthenticationProvider
+ * @see RegisteredClient
+ * @see OAuth2AccessToken
+ * @see OAuth2ClientAuthenticationToken
  */
 public class OAuth2AccessTokenAuthenticationToken extends AbstractAuthenticationToken {
 	private static final long serialVersionUID = Version.SERIAL_VERSION_UID;
-	private RegisteredClient registeredClient;
-	private Authentication clientPrincipal;
-	private OAuth2AccessToken accessToken;
+	private final RegisteredClient registeredClient;
+	private final Authentication clientPrincipal;
+	private final OAuth2AccessToken accessToken;
 
+	/**
+	 * Constructs an {@code OAuth2AccessTokenAuthenticationToken} using the provided parameters.
+	 *
+	 * @param registeredClient the registered client
+	 * @param clientPrincipal the authenticated client principal
+	 * @param accessToken the access token
+	 */
 	public OAuth2AccessTokenAuthenticationToken(RegisteredClient registeredClient,
 			Authentication clientPrincipal, OAuth2AccessToken accessToken) {
 		super(Collections.emptyList());
+		Assert.notNull(registeredClient, "registeredClient cannot be null");
+		Assert.notNull(clientPrincipal, "clientPrincipal cannot be null");
+		Assert.notNull(accessToken, "accessToken cannot be null");
 		this.registeredClient = registeredClient;
 		this.clientPrincipal = clientPrincipal;
 		this.accessToken = accessToken;
 	}
 
 	@Override
-	public Object getCredentials() {
-		return null;
+	public Object getPrincipal() {
+		return this.clientPrincipal;
 	}
 
 	@Override
-	public Object getPrincipal() {
-		return null;
+	public Object getCredentials() {
+		return "";
+	}
+
+	/**
+	 * Returns the {@link RegisteredClient registered client}.
+	 *
+	 * @return the {@link RegisteredClient}
+	 */
+	public RegisteredClient getRegisteredClient() {
+		return this.registeredClient;
 	}
 
 	/**

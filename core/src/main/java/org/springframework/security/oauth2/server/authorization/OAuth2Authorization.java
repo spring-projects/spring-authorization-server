@@ -128,6 +128,20 @@ public class OAuth2Authorization implements Serializable {
 	}
 
 	/**
+	 * Returns a new {@link Builder}, initialized with the values from the provided {@code authorization}.
+	 *
+	 * @param authorization the authorization used for initializing the {@link Builder}
+	 * @return the {@link Builder}
+	 */
+	public static Builder from(OAuth2Authorization authorization) {
+		Assert.notNull(authorization, "authorization cannot be null");
+		return new Builder(authorization.getRegisteredClientId())
+				.principalName(authorization.getPrincipalName())
+				.accessToken(authorization.getAccessToken())
+				.attributes(attrs -> attrs.putAll(authorization.getAttributes()));
+	}
+
+	/**
 	 * A builder for {@link OAuth2Authorization}.
 	 */
 	public static class Builder implements Serializable {

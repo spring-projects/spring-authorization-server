@@ -30,12 +30,13 @@ import static org.assertj.core.data.MapEntry.entry;
  * Tests for {@link OAuth2Authorization}.
  *
  * @author Krisztian Toth
+ * @author Joe Grandja
  */
 public class OAuth2AuthorizationTests {
 	private static final RegisteredClient REGISTERED_CLIENT = TestRegisteredClients.registeredClient().build();
 	private static final String PRINCIPAL_NAME = "principal";
 	private static final OAuth2AccessToken ACCESS_TOKEN = new OAuth2AccessToken(
-			OAuth2AccessToken.TokenType.BEARER, "access-token", Instant.now().minusSeconds(60), Instant.now());
+			OAuth2AccessToken.TokenType.BEARER, "access-token", Instant.now(), Instant.now().plusSeconds(300));
 	private static final String AUTHORIZATION_CODE = "code";
 
 	@Test
@@ -43,6 +44,28 @@ public class OAuth2AuthorizationTests {
 		assertThatThrownBy(() -> OAuth2Authorization.withRegisteredClient(null))
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessage("registeredClient cannot be null");
+	}
+
+	@Test
+	public void fromWhenAuthorizationNullThenThrowIllegalArgumentException() {
+		assertThatThrownBy(() -> OAuth2Authorization.from(null))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("authorization cannot be null");
+	}
+
+	@Test
+	public void fromWhenAuthorizationProvidedThenCopied() {
+		OAuth2Authorization authorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
+				.principalName(PRINCIPAL_NAME)
+				.accessToken(ACCESS_TOKEN)
+				.attribute(OAuth2AuthorizationAttributeNames.CODE, AUTHORIZATION_CODE)
+				.build();
+		OAuth2Authorization authorizationResult = OAuth2Authorization.from(authorization).build();
+
+		assertThat(authorizationResult.getRegisteredClientId()).isEqualTo(authorization.getRegisteredClientId());
+		assertThat(authorizationResult.getPrincipalName()).isEqualTo(authorization.getPrincipalName());
+		assertThat(authorizationResult.getAccessToken()).isEqualTo(authorization.getAccessToken());
+		assertThat(authorizationResult.getAttributes()).isEqualTo(authorization.getAttributes());
 	}
 
 	@Test

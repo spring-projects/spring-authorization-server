@@ -1,1 +1,14 @@
 apply plugin: 'io.spring.convention.spring-module'
+
+dependencies {
+	compile 'org.springframework.security:spring-security-core'
+	compile 'org.springframework.security:spring-security-config'
+	compile springCoreDependency
+	compile project(':spring-authorization-server-core')
+
+	testCompile 'junit:junit'
+	testCompile 'org.assertj:assertj-core'
+	testCompile 'org.mockito:mockito-core'
+
+	provided 'javax.servlet:javax.servlet-api'
+}

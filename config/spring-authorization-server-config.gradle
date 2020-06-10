@@ -6,6 +6,7 @@ dependencies {
 	compile springCoreDependency
 	compile project(':spring-authorization-server-core')
 
+	testCompile 'org.springframework.security:spring-security-test'
 	testCompile 'junit:junit'
 	testCompile 'org.assertj:assertj-core'
 	testCompile 'org.mockito:mockito-core'

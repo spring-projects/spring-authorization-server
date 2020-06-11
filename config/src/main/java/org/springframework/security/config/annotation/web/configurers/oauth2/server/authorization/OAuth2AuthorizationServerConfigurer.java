@@ -26,6 +26,7 @@ import org.springframework.security.oauth2.server.authorization.InMemoryOAuth2Au
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientAuthenticationProvider;
+import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientCredentialsAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.web.OAuth2AuthorizationEndpointFilter;
 import org.springframework.security.oauth2.server.authorization.web.OAuth2ClientAuthenticationFilter;
@@ -88,7 +89,12 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 				new OAuth2AuthorizationCodeAuthenticationProvider(
 						getRegisteredClientRepository(builder),
 						getAuthorizationService(builder));
+
+		OAuth2ClientCredentialsAuthenticationProvider clientCredentialsAuthenticationProvider
+				= new OAuth2ClientCredentialsAuthenticationProvider();
+
 		builder.authenticationProvider(postProcess(authorizationCodeAuthenticationProvider));
+		builder.authenticationProvider(postProcess(clientCredentialsAuthenticationProvider));
 	}
 
 	@Override

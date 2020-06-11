@@ -19,6 +19,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.mock.http.client.MockClientHttpResponse;
@@ -40,12 +41,15 @@ import org.springframework.security.oauth2.server.authorization.OAuth2Authorizat
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AccessTokenAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientAuthenticationToken;
+import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientCredentialsAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
 
 import javax.servlet.FilterChain;
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
@@ -235,6 +239,69 @@ public class OAuth2TokenEndpointFilterTests {
 		assertThat(accessTokenResult.getExpiresAt()).isBetween(
 				accessToken.getExpiresAt().minusSeconds(1), accessToken.getExpiresAt().plusSeconds(1));
 		assertThat(accessTokenResult.getScopes()).isEqualTo(accessToken.getScopes());
+	}
+
+	@Test
+	public void doFilterWhenGrantTypeIsClientCredentialsThenAuthenticateWithClientCredentialsToken() throws ServletException, IOException {
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+		doFilterForClientCredentialsGrant(registeredClient, null);
+
+		ArgumentCaptor<Authentication> captor = ArgumentCaptor.forClass(Authentication.class);
+		verify(this.authenticationManager).authenticate(captor.capture());
+
+		assertThat(captor.getValue()).isInstanceOf(OAuth2ClientCredentialsAuthenticationToken.class);
+		OAuth2ClientCredentialsAuthenticationToken clientAuthenticationToken = (OAuth2ClientCredentialsAuthenticationToken) captor.getValue();
+
+		assertThat(clientAuthenticationToken.getPrincipal()).isEqualTo(new OAuth2ClientAuthenticationToken(registeredClient));
+	}
+
+	@Test
+	public void doFilterWhenGrantTypeIsClientCredentialsWithScopeThenIncludeScopeInResponse() throws ServletException, IOException {
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+		doFilterForClientCredentialsGrant(registeredClient, "openid email");
+
+		ArgumentCaptor<Authentication> captor = ArgumentCaptor.forClass(Authentication.class);
+		verify(this.authenticationManager).authenticate(captor.capture());
+
+		assertThat(captor.getValue()).isInstanceOf(OAuth2ClientCredentialsAuthenticationToken.class);
+		OAuth2ClientCredentialsAuthenticationToken clientAuthenticationToken = (OAuth2ClientCredentialsAuthenticationToken) captor.getValue();
+
+		HashSet<String> expectedScopes = new HashSet<>();
+		expectedScopes.add("openid");
+		expectedScopes.add("email");
+
+		assertThat(clientAuthenticationToken.getScopes()).isEqualTo(expectedScopes);
+	}
+
+	private void doFilterForClientCredentialsGrant(RegisteredClient registeredClient, String scope) throws ServletException, IOException {
+		Authentication clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient);
+		OAuth2AccessToken accessToken = new OAuth2AccessToken(
+				OAuth2AccessToken.TokenType.BEARER, "token",
+				Instant.now(), Instant.now().plus(Duration.ofHours(1)),
+				new HashSet<>(Arrays.asList("scope1", "scope2")));
+		OAuth2AccessTokenAuthenticationToken accessTokenAuthentication =
+				new OAuth2AccessTokenAuthenticationToken(
+						registeredClient, clientPrincipal, accessToken);
+		final String clientId = registeredClient.getClientId();
+		final String clientSecret = registeredClient.getClientSecret();
+
+		MockHttpServletRequest request = new MockHttpServletRequest("POST", OAuth2TokenEndpointFilter.DEFAULT_TOKEN_ENDPOINT_URI);
+		request.setServletPath(OAuth2TokenEndpointFilter.DEFAULT_TOKEN_ENDPOINT_URI);
+		request.addParameter("client_id", clientId);
+		request.addParameter("client_secret", clientSecret);
+		request.addParameter("grant_type", AuthorizationGrantType.CLIENT_CREDENTIALS.getValue());
+		if (scope != null) {
+			request.addParameter("scope", scope);
+		}
+
+		when(this.authenticationManager.authenticate(any())).thenReturn(accessTokenAuthentication);
+
+		SecurityContext context = SecurityContextHolder.createEmptyContext();
+		context.setAuthentication(new OAuth2ClientAuthenticationToken(registeredClient));
+		SecurityContextHolder.setContext(context);
+
+		MockHttpServletResponse response = new MockHttpServletResponse();
+		filter.doFilter(request, response, mock(FilterChain.class));
 	}
 
 	private void doFilterWhenTokenRequestInvalidParameterThenError(String parameterName, String errorCode,

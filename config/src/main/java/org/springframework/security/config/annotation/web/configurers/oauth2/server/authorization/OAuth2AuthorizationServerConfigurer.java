@@ -105,7 +105,7 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 				new OAuth2AuthorizationEndpointFilter(
 						getRegisteredClientRepository(builder),
 						getAuthorizationService(builder));
-		builder.addFilterAfter(postProcess(authorizationEndpointFilter), FilterSecurityInterceptor.class);
+		builder.addFilterBefore(postProcess(authorizationEndpointFilter), AbstractPreAuthenticatedProcessingFilter.class);
 
 		OAuth2TokenEndpointFilter tokenEndpointFilter =
 				new OAuth2TokenEndpointFilter(

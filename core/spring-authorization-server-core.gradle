@@ -17,6 +17,7 @@ dependencies {
 	testCompile 'org.assertj:assertj-core'
 	testCompile 'org.mockito:mockito-core'
 	testCompile 'com.squareup.okhttp3:mockwebserver'
+	testCompile 'com.jayway.jsonpath:json-path'
 
 	provided 'javax.servlet:javax.servlet-api'
 }

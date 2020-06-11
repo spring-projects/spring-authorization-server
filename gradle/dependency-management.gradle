@@ -14,5 +14,6 @@ dependencyManagement {
 		dependency 'org.mockito:mockito-core:latest.release'
 		dependency "com.squareup.okhttp3:mockwebserver:3.+"
 		dependency "com.squareup.okhttp3:okhttp:3.+"
+		dependency "com.jayway.jsonpath:json-path:2.+"
 	}
 }

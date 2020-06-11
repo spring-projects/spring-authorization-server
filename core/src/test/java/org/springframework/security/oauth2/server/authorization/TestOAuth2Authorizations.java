@@ -28,13 +28,16 @@ import java.time.Instant;
 public class TestOAuth2Authorizations {
 
 	public static OAuth2Authorization.Builder authorization() {
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+		return authorization(TestRegisteredClients.registeredClient().build());
+	}
+
+	public static OAuth2Authorization.Builder authorization(RegisteredClient registeredClient) {
 		OAuth2AccessToken accessToken = new OAuth2AccessToken(
 				OAuth2AccessToken.TokenType.BEARER, "access-token", Instant.now(), Instant.now().plusSeconds(300));
 		OAuth2AuthorizationRequest authorizationRequest = OAuth2AuthorizationRequest.authorizationCode()
 				.authorizationUri("https://provider.com/oauth2/authorize")
 				.clientId(registeredClient.getClientId())
-				.redirectUri("https://client.com/authorized")
+				.redirectUri(registeredClient.getRedirectUris().iterator().next())
 				.state("state")
 				.build();
 		return OAuth2Authorization.withRegisteredClient(registeredClient)

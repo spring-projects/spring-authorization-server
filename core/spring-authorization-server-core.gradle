@@ -11,6 +11,8 @@ dependencies {
 	optional 'com.nimbusds:nimbus-jose-jwt'
 	optional 'org.springframework.security:spring-security-oauth2-jose'
 
+	testCompile project(path: ':spring-authorization-server-config', configuration: 'tests')
+	testCompile 'org.springframework:spring-webmvc'
 	testCompile 'junit:junit'
 	testCompile 'org.assertj:assertj-core'
 	testCompile 'org.mockito:mockito-core'

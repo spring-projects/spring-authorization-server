@@ -30,12 +30,14 @@ import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationResponseType;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
+import org.springframework.security.oauth2.core.endpoint.PkceParameterNames;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationAttributeNames;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
+import org.springframework.security.oauth2.server.authorization.config.ClientSettings;
 import org.springframework.util.StringUtils;
 
 import javax.servlet.FilterChain;
@@ -281,6 +283,176 @@ public class OAuth2AuthorizationEndpointFilterTests {
 	}
 
 	@Test
+	public void doFilterWhenProofKeyRequiredAndMissingPkceCodeChallengeThenThrowError() throws Exception {
+		RegisteredClient registeredClient = createClientRequireProofKey();
+		when(this.registeredClientRepository.findByClientId((eq(registeredClient.getClientId()))))
+				.thenReturn(registeredClient);
+
+		MockHttpServletRequest request = createAuthorizationRequest(registeredClient);
+		request = addPkceParameters(request);
+		request.removeParameter(PkceParameterNames.CODE_CHALLENGE);
+		MockHttpServletResponse response = new MockHttpServletResponse();
+		FilterChain filterChain = mock(FilterChain.class);
+
+		this.filter.doFilter(request, response, filterChain);
+
+		verifyNoInteractions(filterChain);
+
+		assertThat(response.getStatus()).isEqualTo(HttpStatus.FOUND.value());
+		assertThat(response.getRedirectedUrl()).matches("https://example.com\\?" +
+				"error=invalid_request&" +
+				"error_description=OAuth%202.0%20Parameter:%20code_challenge&" +
+				"error_uri=https://tools.ietf.org/html/rfc7636%23section-4.4.1&" +
+				"state=state");
+	}
+
+	@Test
+	public void doFilterWhenProofKeyRequiredAndMultiplePkceCodeChallengeThenThrowError() throws Exception {
+		RegisteredClient registeredClient = createClientRequireProofKey();
+		when(this.registeredClientRepository.findByClientId((eq(registeredClient.getClientId()))))
+				.thenReturn(registeredClient);
+
+		MockHttpServletRequest request = createAuthorizationRequest(registeredClient);
+		request = addPkceParameters(request);
+		request.addParameter(PkceParameterNames.CODE_CHALLENGE, "another-code-challenger");
+		MockHttpServletResponse response = new MockHttpServletResponse();
+		FilterChain filterChain = mock(FilterChain.class);
+
+		this.filter.doFilter(request, response, filterChain);
+
+		verifyNoInteractions(filterChain);
+
+		assertThat(response.getStatus()).isEqualTo(HttpStatus.FOUND.value());
+		assertThat(response.getRedirectedUrl()).matches("https://example.com\\?" +
+				"error=invalid_request&" +
+				"error_description=OAuth%202.0%20Parameter:%20code_challenge&" +
+				"error_uri=https://tools.ietf.org/html/rfc7636%23section-4.4.1&" +
+				"state=state");
+	}
+
+	@Test
+	public void doFilterWhenProofKeyNotRequiredClientAndMultiplePkceCodeChallengeThenThrowError() throws Exception {
+		RegisteredClient registeredClient = createClientDoNotRequireProofKey();
+		when(this.registeredClientRepository.findByClientId((eq(registeredClient.getClientId()))))
+				.thenReturn(registeredClient);
+
+		MockHttpServletRequest request = createAuthorizationRequest(registeredClient);
+		request = addPkceParameters(request);
+		request.addParameter(PkceParameterNames.CODE_CHALLENGE, "another-code-challenger");
+		MockHttpServletResponse response = new MockHttpServletResponse();
+		FilterChain filterChain = mock(FilterChain.class);
+
+		this.filter.doFilter(request, response, filterChain);
+
+		verifyNoInteractions(filterChain);
+
+		assertThat(response.getStatus()).isEqualTo(HttpStatus.FOUND.value());
+		assertThat(response.getRedirectedUrl()).matches("https://example.com\\?" +
+				"error=invalid_request&" +
+				"error_description=OAuth%202.0%20Parameter:%20code_challenge&" +
+				"error_uri=https://tools.ietf.org/html/rfc7636%23section-4.4.1&" +
+				"state=state");
+
+	}
+
+	@Test
+	public void doFilterWhenProofKeyRequiredAndMultiplePkceCodeChallengeMethodThenThrowError() throws Exception {
+		RegisteredClient registeredClient = createClientRequireProofKey();
+		when(this.registeredClientRepository.findByClientId((eq(registeredClient.getClientId()))))
+				.thenReturn(registeredClient);
+
+		MockHttpServletRequest request = createAuthorizationRequest(registeredClient);
+		request = addPkceParameters(request);
+		request.addParameter(PkceParameterNames.CODE_CHALLENGE_METHOD, "plain");
+		MockHttpServletResponse response = new MockHttpServletResponse();
+		FilterChain filterChain = mock(FilterChain.class);
+
+		this.filter.doFilter(request, response, filterChain);
+
+		verifyNoInteractions(filterChain);
+
+		assertThat(response.getStatus()).isEqualTo(HttpStatus.FOUND.value());
+		assertThat(response.getRedirectedUrl()).matches("https://example.com\\?" +
+				"error=invalid_request&" +
+				"error_description=OAuth%202.0%20Parameter:%20code_challenge_method&" +
+				"error_uri=https://tools.ietf.org/html/rfc7636%23section-4.4.1&" +
+				"state=state");
+	}
+
+	@Test
+	public void doFilterWhenProofKeyNotRequiredClientAndPkceCodeChallengeAnMultiplePkceCodeChallengeMethodThenThrowError() throws Exception {
+		RegisteredClient registeredClient = createClientDoNotRequireProofKey();
+		when(this.registeredClientRepository.findByClientId((eq(registeredClient.getClientId()))))
+				.thenReturn(registeredClient);
+
+		MockHttpServletRequest request = createAuthorizationRequest(registeredClient);
+		request = addPkceParameters(request);
+		request.addParameter(PkceParameterNames.CODE_CHALLENGE_METHOD, "plain");
+		MockHttpServletResponse response = new MockHttpServletResponse();
+		FilterChain filterChain = mock(FilterChain.class);
+
+		this.filter.doFilter(request, response, filterChain);
+
+		verifyNoInteractions(filterChain);
+
+		assertThat(response.getStatus()).isEqualTo(HttpStatus.FOUND.value());
+		assertThat(response.getRedirectedUrl()).matches("https://example.com\\?" +
+				"error=invalid_request&" +
+				"error_description=OAuth%202.0%20Parameter:%20code_challenge_method&" +
+				"error_uri=https://tools.ietf.org/html/rfc7636%23section-4.4.1&" +
+				"state=state");
+	}
+
+	@Test
+	public void doFilterWhenProofKeyRequiredAndUnsupportedPkceCodeChallengeMethodThenThrowError() throws Exception {
+		RegisteredClient registeredClient = createClientRequireProofKey();
+		when(this.registeredClientRepository.findByClientId((eq(registeredClient.getClientId()))))
+				.thenReturn(registeredClient);
+
+		MockHttpServletRequest request = createAuthorizationRequest(registeredClient);
+		request = addPkceParameters(request);
+		request.setParameter(PkceParameterNames.CODE_CHALLENGE_METHOD, "unsupported-transform");
+		MockHttpServletResponse response = new MockHttpServletResponse();
+		FilterChain filterChain = mock(FilterChain.class);
+
+		this.filter.doFilter(request, response, filterChain);
+
+		verifyNoInteractions(filterChain);
+
+		assertThat(response.getStatus()).isEqualTo(HttpStatus.FOUND.value());
+		assertThat(response.getRedirectedUrl()).matches("https://example.com\\?" +
+				"error=invalid_request&" +
+				"error_description=OAuth%202.0%20Parameter:%20code_challenge_method&" +
+				"error_uri=https://tools.ietf.org/html/rfc7636%23section-4.4.1&" +
+				"state=state");
+	}
+
+	@Test
+	public void doFilterWhenProofKeyNotRequiredClientAndPkceCodeChallengeAndUnsupportedPkceCodeChallengeMethodThenThrowError() throws Exception {
+		RegisteredClient registeredClient = createClientDoNotRequireProofKey();
+		when(this.registeredClientRepository.findByClientId((eq(registeredClient.getClientId()))))
+				.thenReturn(registeredClient);
+
+		MockHttpServletRequest request = createAuthorizationRequest(registeredClient);
+		request = addPkceParameters(request);
+		request.setParameter(PkceParameterNames.CODE_CHALLENGE_METHOD, "unsupported-transform");
+		MockHttpServletResponse response = new MockHttpServletResponse();
+		FilterChain filterChain = mock(FilterChain.class);
+
+		this.filter.doFilter(request, response, filterChain);
+
+		verifyNoInteractions(filterChain);
+
+		assertThat(response.getStatus()).isEqualTo(HttpStatus.FOUND.value());
+		assertThat(response.getRedirectedUrl()).matches("https://example.com\\?" +
+				"error=invalid_request&" +
+				"error_description=OAuth%202.0%20Parameter:%20code_challenge_method&" +
+				"error_uri=https://tools.ietf.org/html/rfc7636%23section-4.4.1&" +
+				"state=state");
+
+	}
+
+	@Test
 	public void doFilterWhenAuthorizationRequestValidNotAuthenticatedThenContinueChainToCommenceAuthentication() throws Exception {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 		when(this.registeredClientRepository.findByClientId((eq(registeredClient.getClientId()))))
@@ -337,6 +509,40 @@ public class OAuth2AuthorizationEndpointFilterTests {
 		assertThat(authorizationRequest.getAdditionalParameters()).isEmpty();
 	}
 
+	@Test
+	public void doFilterWhenProofKeyRequiredAndAuthorizationRequestValidThenAuthorizationResponse() throws Exception {
+		RegisteredClient registeredClient = createClientRequireProofKey();
+		when(this.registeredClientRepository.findByClientId((eq(registeredClient.getClientId()))))
+				.thenReturn(registeredClient);
+
+		MockHttpServletRequest request = createAuthorizationRequest(registeredClient);
+		request = addPkceParameters(request);
+		MockHttpServletResponse response = new MockHttpServletResponse();
+		FilterChain filterChain = mock(FilterChain.class);
+
+		this.filter.doFilter(request, response, filterChain);
+
+		verifyNoInteractions(filterChain);
+
+		assertThat(response.getStatus()).isEqualTo(HttpStatus.FOUND.value());
+		assertThat(response.getRedirectedUrl()).matches("https://example.com\\?code=.{15,}&state=state");
+
+		ArgumentCaptor<OAuth2Authorization> authorizationCaptor = ArgumentCaptor.forClass(OAuth2Authorization.class);
+
+		verify(this.authorizationService).save(authorizationCaptor.capture());
+
+		OAuth2Authorization authorization = authorizationCaptor.getValue();
+		OAuth2AuthorizationRequest authorizationRequest = authorization.getAttribute(OAuth2AuthorizationAttributeNames.AUTHORIZATION_REQUEST);
+		assertThat(authorizationRequest.getClientId()).isEqualTo(registeredClient.getClientId());
+
+		assertThat(authorizationRequest.getAdditionalParameters())
+				.size()
+				.isEqualTo(2)
+				.returnToMap()
+				.containsEntry(PkceParameterNames.CODE_CHALLENGE, "code-challenge")
+				.containsEntry(PkceParameterNames.CODE_CHALLENGE_METHOD, "S256");
+	}
+
 	private void doFilterWhenAuthorizationRequestInvalidParameterThenError(RegisteredClient registeredClient,
 			String parameterName, String errorCode) throws Exception {
 		doFilterWhenAuthorizationRequestInvalidParameterThenError(registeredClient, parameterName, errorCode, request -> {});
@@ -374,4 +580,30 @@ public class OAuth2AuthorizationEndpointFilterTests {
 
 		return request;
 	}
+
+	private static MockHttpServletRequest addPkceParameters(MockHttpServletRequest request) {
+		request.addParameter(PkceParameterNames.CODE_CHALLENGE, "code-challenge");
+		request.addParameter(PkceParameterNames.CODE_CHALLENGE_METHOD, "S256");
+
+		return request;
+	}
+
+	private RegisteredClient createClientRequireProofKey() {
+		ClientSettings clientSettings = new ClientSettings();
+		clientSettings.requireProofKey(true);
+
+		return TestRegisteredClients.registeredClient()
+				.clientSettings(clientSettings)
+				.build();
+	}
+
+	private RegisteredClient createClientDoNotRequireProofKey() {
+		ClientSettings clientSettings = new ClientSettings();
+		clientSettings.requireProofKey(false);
+
+		return TestRegisteredClients.registeredClient()
+				.clientSettings(clientSettings)
+				.build();
+	}
+
 }

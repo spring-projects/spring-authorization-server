@@ -22,6 +22,7 @@ import org.springframework.security.core.SpringSecurityCoreVersion2;
 import org.springframework.util.Assert;
 
 import java.util.Collections;
+import java.util.Map;
 
 /**
  * An {@link Authentication} implementation used for the OAuth 2.0 Authorization Code Grant.
@@ -35,10 +36,11 @@ import java.util.Collections;
  */
 public class OAuth2AuthorizationCodeAuthenticationToken extends AbstractAuthenticationToken {
 	private static final long serialVersionUID = SpringSecurityCoreVersion2.SERIAL_VERSION_UID;
-	private String code;
+	private final String code;
 	private Authentication clientPrincipal;
-	private String clientId;
-	private String redirectUri;
+	private final String clientId;
+	private final String redirectUri;
+	private final Map<String, Object> additionalParameters;
 
 	/**
 	 * Constructs an {@code OAuth2AuthorizationCodeAuthenticationToken} using the provided parameters.
@@ -46,15 +48,24 @@ public class OAuth2AuthorizationCodeAuthenticationToken extends AbstractAuthenti
 	 * @param code the authorization code
 	 * @param clientPrincipal the authenticated client principal
 	 * @param redirectUri the redirect uri
+	 * @param additionalParameters the additional parameters
 	 */
 	public OAuth2AuthorizationCodeAuthenticationToken(String code,
-			Authentication clientPrincipal, @Nullable String redirectUri) {
+			Authentication clientPrincipal, @Nullable String redirectUri,
+			Map<String, Object> additionalParameters) {
 		super(Collections.emptyList());
 		Assert.hasText(code, "code cannot be empty");
 		Assert.notNull(clientPrincipal, "clientPrincipal cannot be null");
 		this.code = code;
 		this.clientPrincipal = clientPrincipal;
 		this.redirectUri = redirectUri;
+		this.additionalParameters = Collections.unmodifiableMap(additionalParameters != null ? additionalParameters : Collections.emptyMap());
+
+		if (OAuth2ClientAuthenticationToken.class.isAssignableFrom(this.clientPrincipal.getClass())) {
+			this.clientId = (String) this.clientPrincipal.getPrincipal();
+		} else {
+			this.clientId = null;
+		}
 	}
 
 	/**
@@ -63,15 +74,18 @@ public class OAuth2AuthorizationCodeAuthenticationToken extends AbstractAuthenti
 	 * @param code the authorization code
 	 * @param clientId the client identifier
 	 * @param redirectUri the redirect uri
+	 * @param additionalParameters the additional parameters
 	 */
 	public OAuth2AuthorizationCodeAuthenticationToken(String code,
-			String clientId, @Nullable String redirectUri) {
+			String clientId, @Nullable String redirectUri,
+			Map<String, Object> additionalParameters) {
 		super(Collections.emptyList());
 		Assert.hasText(code, "code cannot be empty");
 		Assert.hasText(clientId, "clientId cannot be empty");
 		this.code = code;
 		this.clientId = clientId;
 		this.redirectUri = redirectUri;
+		this.additionalParameters = Collections.unmodifiableMap(additionalParameters != null ? additionalParameters : Collections.emptyMap());
 	}
 
 	@Override
@@ -100,5 +114,23 @@ public class OAuth2AuthorizationCodeAuthenticationToken extends AbstractAuthenti
 	 */
 	public @Nullable String getRedirectUri() {
 		return this.redirectUri;
+	}
+
+	/**
+	 * Returns the additional parameters
+	 *
+	 * @return the additional parameters
+	 */
+	public Map<String, Object> getAdditionalParameters() {
+		return this.additionalParameters;
+	}
+
+	/**
+	 * Returns the client id
+	 *
+	 * @return the client id
+	 */
+	public @Nullable String getClientId() {
+		return this.clientId;
 	}
 }

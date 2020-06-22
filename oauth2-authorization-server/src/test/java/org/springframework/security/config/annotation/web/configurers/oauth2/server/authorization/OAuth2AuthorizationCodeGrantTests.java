@@ -31,6 +31,7 @@ import org.springframework.security.crypto.keys.StaticKeyGeneratingKeyManager;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationResponseType;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
+import org.springframework.security.oauth2.core.endpoint.PkceParameterNames;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationAttributeNames;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
@@ -169,6 +170,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 		parameters.set(OAuth2ParameterNames.SCOPE,
 				StringUtils.collectionToDelimitedString(registeredClient.getScopes(), " "));
 		parameters.set(OAuth2ParameterNames.STATE, "state");
+		parameters.set(PkceParameterNames.CODE_CHALLENGE, "code-challenge");
 		return parameters;
 	}
 

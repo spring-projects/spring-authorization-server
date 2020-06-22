@@ -19,6 +19,9 @@ import org.junit.Test;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
 
+import java.util.Collections;
+import java.util.Map;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -29,28 +32,30 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  */
 public class OAuth2AuthorizationCodeAuthenticationTokenTests {
 	private String code = "code";
+	private String clientPrincipalClientId = "clientPrincipal.clientId";
 	private OAuth2ClientAuthenticationToken clientPrincipal =
-			new OAuth2ClientAuthenticationToken(TestRegisteredClients.registeredClient().build());
+			new OAuth2ClientAuthenticationToken(TestRegisteredClients.registeredClient().clientId(clientPrincipalClientId).build());
 	private String clientId = "clientId";
 	private String redirectUri = "redirectUri";
+	private Map<String, Object> additonalParams = Collections.singletonMap("some_key", "some_value");
 
 	@Test
 	public void constructorWhenCodeNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> new OAuth2AuthorizationCodeAuthenticationToken(null, this.clientPrincipal, this.redirectUri))
+		assertThatThrownBy(() -> new OAuth2AuthorizationCodeAuthenticationToken(null, this.clientPrincipal, this.redirectUri, null))
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessage("code cannot be empty");
 	}
 
 	@Test
 	public void constructorWhenClientPrincipalNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> new OAuth2AuthorizationCodeAuthenticationToken(this.code, (Authentication) null, this.redirectUri))
+		assertThatThrownBy(() -> new OAuth2AuthorizationCodeAuthenticationToken(this.code, (Authentication) null, this.redirectUri, null))
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessage("clientPrincipal cannot be null");
 	}
 
 	@Test
 	public void constructorWhenClientIdNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> new OAuth2AuthorizationCodeAuthenticationToken(this.code, (String) null, this.redirectUri))
+		assertThatThrownBy(() -> new OAuth2AuthorizationCodeAuthenticationToken(this.code, (String) null, this.redirectUri, null))
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessage("clientId cannot be empty");
 	}
@@ -58,20 +63,50 @@ public class OAuth2AuthorizationCodeAuthenticationTokenTests {
 	@Test
 	public void constructorWhenClientPrincipalProvidedThenCreated() {
 		OAuth2AuthorizationCodeAuthenticationToken authentication = new OAuth2AuthorizationCodeAuthenticationToken(
-				this.code, this.clientPrincipal, this.redirectUri);
+				this.code, this.clientPrincipal, this.redirectUri, this.additonalParams);
 		assertThat(authentication.getPrincipal()).isEqualTo(this.clientPrincipal);
 		assertThat(authentication.getCredentials().toString()).isEmpty();
 		assertThat(authentication.getCode()).isEqualTo(this.code);
 		assertThat(authentication.getRedirectUri()).isEqualTo(this.redirectUri);
+		assertThat(authentication.getAdditionalParameters()).isEqualTo(this.additonalParams);
 	}
 
 	@Test
 	public void constructorWhenClientIdProvidedThenCreated() {
 		OAuth2AuthorizationCodeAuthenticationToken authentication = new OAuth2AuthorizationCodeAuthenticationToken(
-				this.code, this.clientId, this.redirectUri);
+				this.code, this.clientId, this.redirectUri, this.additonalParams);
 		assertThat(authentication.getPrincipal()).isEqualTo(this.clientId);
 		assertThat(authentication.getCredentials().toString()).isEmpty();
 		assertThat(authentication.getCode()).isEqualTo(this.code);
 		assertThat(authentication.getRedirectUri()).isEqualTo(this.redirectUri);
+		assertThat(authentication.getAdditionalParameters()).isEqualTo(this.additonalParams);
+	}
+
+	@Test
+	public void getAdditionalParamsIsImmutableMap() {
+		OAuth2AuthorizationCodeAuthenticationToken authentication = new OAuth2AuthorizationCodeAuthenticationToken(
+				this.code, this.clientId, this.redirectUri, this.additonalParams);
+		assertThatThrownBy(() -> authentication.getAdditionalParameters().put("another_key", 1))
+				.isInstanceOf(UnsupportedOperationException.class);
+		assertThatThrownBy(() -> authentication.getAdditionalParameters().remove("some_key"))
+				.isInstanceOf(UnsupportedOperationException.class);
+		assertThatThrownBy(() -> authentication.getAdditionalParameters().clear())
+				.isInstanceOf(UnsupportedOperationException.class);
+	}
+
+	@Test
+	public void getClientIdFromClientId() {
+		OAuth2AuthorizationCodeAuthenticationToken authentication = new OAuth2AuthorizationCodeAuthenticationToken(
+				this.code, this.clientId, this.redirectUri, this.additonalParams);
+
+		assertThat(authentication.getClientId()).isEqualTo(this.clientId);
+	}
+
+	@Test
+	public void getClientIdFromOAuth2ClientAuthenticationTokenPrincipal() {
+		OAuth2AuthorizationCodeAuthenticationToken authentication = new OAuth2AuthorizationCodeAuthenticationToken(
+				this.code, this.clientPrincipal, this.redirectUri, this.additonalParams);
+
+		assertThat(authentication.getClientId()).isEqualTo(this.clientPrincipalClientId);
 	}
 }

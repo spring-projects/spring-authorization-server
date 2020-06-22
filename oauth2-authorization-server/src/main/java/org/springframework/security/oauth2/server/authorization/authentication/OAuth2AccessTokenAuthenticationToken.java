@@ -38,8 +38,8 @@ import java.util.Collections;
  */
 public class OAuth2AccessTokenAuthenticationToken extends AbstractAuthenticationToken {
 	private static final long serialVersionUID = SpringSecurityCoreVersion2.SERIAL_VERSION_UID;
-	private final RegisteredClient registeredClient;
-	private final Authentication clientPrincipal;
+	private RegisteredClient registeredClient;
+	private Authentication clientPrincipal;
 	private final OAuth2AccessToken accessToken;
 
 	/**

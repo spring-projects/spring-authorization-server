@@ -367,7 +367,6 @@ public class RegisteredClient implements Serializable {
 			Assert.hasText(this.clientId, "clientId cannot be empty");
 			Assert.notEmpty(this.authorizationGrantTypes, "authorizationGrantTypes cannot be empty");
 			if (this.authorizationGrantTypes.contains(AuthorizationGrantType.AUTHORIZATION_CODE)) {
-				Assert.hasText(this.clientSecret, "clientSecret cannot be empty");
 				Assert.notEmpty(this.redirectUris, "redirectUris cannot be empty");
 			}
 			if (CollectionUtils.isEmpty(this.clientAuthenticationMethods)) {

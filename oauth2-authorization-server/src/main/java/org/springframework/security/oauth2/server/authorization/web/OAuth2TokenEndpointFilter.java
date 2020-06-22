@@ -30,11 +30,13 @@ import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AccessTokenResponse;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
+import org.springframework.security.oauth2.core.endpoint.PkceParameterNames;
 import org.springframework.security.oauth2.core.http.converter.OAuth2AccessTokenResponseHttpMessageConverter;
 import org.springframework.security.oauth2.core.http.converter.OAuth2ErrorHttpMessageConverter;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AccessTokenAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeAuthenticationToken;
+import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientCredentialsAuthenticationToken;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
@@ -54,6 +56,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * A {@code Filter} for the OAuth 2.0 Authorization Code Grant,
@@ -198,14 +201,22 @@ public class OAuth2TokenEndpointFilter extends OncePerRequestFilter {
 			MultiValueMap<String, String> parameters = OAuth2EndpointUtils.getParameters(request);
 
 			// client_id (REQUIRED)
-			String clientId = parameters.getFirst(OAuth2ParameterNames.CLIENT_ID);
-			Authentication clientPrincipal = null;
-			if (StringUtils.hasText(clientId)) {
-				if (parameters.get(OAuth2ParameterNames.CLIENT_ID).size() != 1) {
+			Authentication clientPrincipal = SecurityContextHolder.getContext().getAuthentication();
+			String clientId = null;
+			if (clientPrincipal == null ||
+					!OAuth2ClientAuthenticationToken.class.isAssignableFrom(clientPrincipal.getClass())) {
+				clientId = parameters.getFirst(OAuth2ParameterNames.CLIENT_ID);
+				if (!StringUtils.hasText(clientId) ||
+						parameters.get(OAuth2ParameterNames.CLIENT_ID).size() != 1) {
 					throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.CLIENT_ID);
 				}
-			} else {
-				clientPrincipal = SecurityContextHolder.getContext().getAuthentication();
+
+				// code_verifier (REQUIRED for public clients)
+				String codeVerifier = parameters.getFirst(PkceParameterNames.CODE_VERIFIER);
+				if (!StringUtils.hasText(codeVerifier) ||
+						parameters.get(PkceParameterNames.CODE_VERIFIER).size() != 1) {
+					throwError(OAuth2ErrorCodes.INVALID_REQUEST, PkceParameterNames.CODE_VERIFIER);
+				}
 			}
 
 			// code (REQUIRED)
@@ -223,9 +234,19 @@ public class OAuth2TokenEndpointFilter extends OncePerRequestFilter {
 				throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.REDIRECT_URI);
 			}
 
-			return clientPrincipal != null ?
-					new OAuth2AuthorizationCodeAuthenticationToken(code, clientPrincipal, redirectUri) :
-					new OAuth2AuthorizationCodeAuthenticationToken(code, clientId, redirectUri);
+			Map<String, Object> additionalParameters = parameters
+					.entrySet()
+					.stream()
+					.filter(e -> !e.getKey().equals(OAuth2ParameterNames.GRANT_TYPE) &&
+							!e.getKey().equals(OAuth2ParameterNames.CLIENT_ID) &&
+							!e.getKey().equals(OAuth2ParameterNames.CODE) &&
+							!e.getKey().equals(OAuth2ParameterNames.REDIRECT_URI))
+					.collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().get(0)));
+
+
+			return clientId != null ?
+					new OAuth2AuthorizationCodeAuthenticationToken(code, clientId, redirectUri, additionalParameters) :
+					new OAuth2AuthorizationCodeAuthenticationToken(code, clientPrincipal, redirectUri, additionalParameters);
 		}
 	}
 

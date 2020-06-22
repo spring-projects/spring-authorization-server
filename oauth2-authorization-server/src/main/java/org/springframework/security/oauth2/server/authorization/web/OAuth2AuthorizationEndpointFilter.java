@@ -28,6 +28,7 @@ import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationResponseType;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
+import org.springframework.security.oauth2.core.endpoint.PkceParameterNames;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationAttributeNames;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
@@ -78,6 +79,7 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 	private final RequestMatcher authorizationEndpointMatcher;
 	private final StringKeyGenerator codeGenerator = new Base64StringKeyGenerator(Base64.getUrlEncoder());
 	private final RedirectStrategy redirectStrategy = new DefaultRedirectStrategy();
+	private final String PKCE_ERROR_URI = "https://tools.ietf.org/html/rfc7636#section-4.4.1";
 
 	/**
 	 * Constructs an {@code OAuth2AuthorizationEndpointFilter} using the provided parameters.
@@ -174,6 +176,34 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 			return;
 		}
 
+		// code_challenge (REQUIRED for public clients) - RFC 7636 (PKCE)
+		String codeChallenge = parameters.getFirst(PkceParameterNames.CODE_CHALLENGE);
+		if (StringUtils.hasText(codeChallenge)) {
+			if (parameters.get(PkceParameterNames.CODE_CHALLENGE).size() != 1) {
+				OAuth2Error error = createError(OAuth2ErrorCodes.INVALID_REQUEST, PkceParameterNames.CODE_CHALLENGE, PKCE_ERROR_URI);
+				sendErrorResponse(request, response, error, stateParameter, redirectUri);
+				return;
+			}
+
+			if (parameters.get(PkceParameterNames.CODE_CHALLENGE_METHOD) != null &&
+					parameters.get(PkceParameterNames.CODE_CHALLENGE_METHOD).size() > 1) {
+				OAuth2Error error = createError(OAuth2ErrorCodes.INVALID_REQUEST, PkceParameterNames.CODE_CHALLENGE_METHOD, PKCE_ERROR_URI);
+				sendErrorResponse(request, response, error, stateParameter, redirectUri);
+				return;
+			}
+
+			String codeChallengeMethod = parameters.getFirst(PkceParameterNames.CODE_CHALLENGE_METHOD);
+			if (codeChallengeMethod != null && !Arrays.asList("plain", "S256").contains(codeChallengeMethod)) {
+				OAuth2Error error = createError(OAuth2ErrorCodes.INVALID_REQUEST, PkceParameterNames.CODE_CHALLENGE_METHOD, PKCE_ERROR_URI);
+				sendErrorResponse(request, response, error, stateParameter, redirectUri);
+				return;
+			}
+		} else if (registeredClient.getClientSettings().requireProofKey()) {
+			OAuth2Error error = createError(OAuth2ErrorCodes.INVALID_REQUEST, PkceParameterNames.CODE_CHALLENGE, PKCE_ERROR_URI);
+			sendErrorResponse(request, response, error, stateParameter, redirectUri);
+			return;
+		}
+
 		// ---------------
 		// The request is valid - ensure the resource owner is authenticated
 		// ---------------
@@ -245,8 +275,11 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 	}
 
 	private static OAuth2Error createError(String errorCode, String parameterName) {
-		return new OAuth2Error(errorCode, "OAuth 2.0 Parameter: " + parameterName,
-				"https://tools.ietf.org/html/rfc6749#section-4.1.2.1");
+		return createError(errorCode, parameterName, "https://tools.ietf.org/html/rfc6749#section-4.1.2.1");
+	}
+
+	private static OAuth2Error createError(String errorCode, String parameterName, String errorUri) {
+		return new OAuth2Error(errorCode, "OAuth 2.0 Parameter: " + parameterName, errorUri);
 	}
 
 	private static boolean isPrincipalAuthenticated(Authentication principal) {

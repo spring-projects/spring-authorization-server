@@ -34,6 +34,7 @@ import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AccessTokenResponse;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
+import org.springframework.security.oauth2.core.endpoint.PkceParameterNames;
 import org.springframework.security.oauth2.core.http.converter.OAuth2AccessTokenResponseHttpMessageConverter;
 import org.springframework.security.oauth2.core.http.converter.OAuth2ErrorHttpMessageConverter;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
@@ -178,6 +179,12 @@ public class OAuth2TokenEndpointFilterTests {
 
 	@Test
 	public void doFilterWhenTokenRequestMissingCodeThenInvalidRequestError() throws Exception {
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient2().build();
+		Authentication clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient);
+		SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
+		securityContext.setAuthentication(clientPrincipal);
+		SecurityContextHolder.setContext(securityContext);
+
 		MockHttpServletRequest request = createAuthorizationCodeTokenRequest(
 				TestRegisteredClients.registeredClient().build());
 		request.removeParameter(OAuth2ParameterNames.CODE);
@@ -188,6 +195,12 @@ public class OAuth2TokenEndpointFilterTests {
 
 	@Test
 	public void doFilterWhenTokenRequestMultipleCodeThenInvalidRequestError() throws Exception {
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient2().build();
+		Authentication clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient);
+		SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
+		securityContext.setAuthentication(clientPrincipal);
+		SecurityContextHolder.setContext(securityContext);
+
 		MockHttpServletRequest request = createAuthorizationCodeTokenRequest(
 				TestRegisteredClients.registeredClient().build());
 		request.addParameter(OAuth2ParameterNames.CODE, "code-2");
@@ -198,12 +211,46 @@ public class OAuth2TokenEndpointFilterTests {
 
 	@Test
 	public void doFilterWhenTokenRequestMultipleRedirectUriThenInvalidRequestError() throws Exception {
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient2().build();
+		Authentication clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient);
+		SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
+		securityContext.setAuthentication(clientPrincipal);
+		SecurityContextHolder.setContext(securityContext);
+
 		MockHttpServletRequest request = createAuthorizationCodeTokenRequest(
 				TestRegisteredClients.registeredClient().build());
 		request.addParameter(OAuth2ParameterNames.REDIRECT_URI, "https://example2.com");
 
 		doFilterWhenTokenRequestInvalidParameterThenError(
 				OAuth2ParameterNames.REDIRECT_URI, OAuth2ErrorCodes.INVALID_REQUEST, request);
+	}
+
+	@Test
+	public void doFilterWhenTokenRequestNotAuthenticatedAndMissingCodeVerifierThenInvalidRequestError() throws Exception {
+		SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
+		SecurityContextHolder.setContext(securityContext);
+
+		MockHttpServletRequest request = createAuthorizationCodeTokenRequest(
+				TestRegisteredClients.registeredClient().build());
+		request.addParameter(OAuth2ParameterNames.REDIRECT_URI, "https://example.com");
+
+		doFilterWhenTokenRequestInvalidParameterThenError(
+				PkceParameterNames.CODE_VERIFIER, OAuth2ErrorCodes.INVALID_REQUEST, request);
+	}
+
+	@Test
+	public void doFilterWhenTokenRequestNotAuthenticatedAndMultipleCodeVerifierThenInvalidRequestError() throws Exception {
+		SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
+		SecurityContextHolder.setContext(securityContext);
+
+		MockHttpServletRequest request = createAuthorizationCodeTokenRequest(
+				TestRegisteredClients.registeredClient().build());
+		request.addParameter(PkceParameterNames.CODE_VERIFIER, "one-verifier");
+		request.addParameter(PkceParameterNames.CODE_VERIFIER, "two-verifiers");
+		request.addParameter(OAuth2ParameterNames.REDIRECT_URI, "https://example.com");
+
+		doFilterWhenTokenRequestInvalidParameterThenError(
+				PkceParameterNames.CODE_VERIFIER, OAuth2ErrorCodes.INVALID_REQUEST, request);
 	}
 
 	@Test
@@ -359,6 +406,8 @@ public class OAuth2TokenEndpointFilterTests {
 		request.addParameter(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.AUTHORIZATION_CODE.getValue());
 		request.addParameter(OAuth2ParameterNames.CODE, "code");
 		request.addParameter(OAuth2ParameterNames.REDIRECT_URI, redirectUris[0]);
+		// The client does not need to send the client ID param, but we are resilient in case they do
+		request.addParameter(OAuth2ParameterNames.CLIENT_ID, registeredClient.getClientId());
 
 		return request;
 	}

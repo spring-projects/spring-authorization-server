@@ -15,6 +15,8 @@
  */
 package org.springframework.security.oauth2.server.authorization;
 
+import org.springframework.lang.Nullable;
+
 /**
  * Implementations of this interface are responsible for the management
  * of {@link OAuth2Authorization OAuth 2.0 Authorization(s)}.
@@ -40,6 +42,6 @@ public interface OAuth2AuthorizationService {
 	 * @param tokenType the {@link TokenType token type}
 	 * @return the {@link OAuth2Authorization} if found, otherwise {@code null}
 	 */
-	OAuth2Authorization findByTokenAndTokenType(String token, TokenType tokenType);
+	OAuth2Authorization findByToken(String token, @Nullable TokenType tokenType);
 
 }

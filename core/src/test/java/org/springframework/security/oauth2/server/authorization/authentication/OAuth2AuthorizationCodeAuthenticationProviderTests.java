@@ -119,7 +119,7 @@ public class OAuth2AuthorizationCodeAuthenticationProviderTests {
 	@Test
 	public void authenticateWhenCodeIssuedToAnotherClientThenThrowOAuth2AuthenticationException() {
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization().build();
-		when(this.authorizationService.findByTokenAndTokenType(eq("code"), eq(TokenType.AUTHORIZATION_CODE)))
+		when(this.authorizationService.findByToken(eq("code"), eq(TokenType.AUTHORIZATION_CODE)))
 				.thenReturn(authorization);
 
 		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(
@@ -136,7 +136,7 @@ public class OAuth2AuthorizationCodeAuthenticationProviderTests {
 	@Test
 	public void authenticateWhenInvalidRedirectUriThenThrowOAuth2AuthenticationException() {
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization().build();
-		when(this.authorizationService.findByTokenAndTokenType(eq("code"), eq(TokenType.AUTHORIZATION_CODE)))
+		when(this.authorizationService.findByToken(eq("code"), eq(TokenType.AUTHORIZATION_CODE)))
 				.thenReturn(authorization);
 
 		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(this.registeredClient);
@@ -154,7 +154,7 @@ public class OAuth2AuthorizationCodeAuthenticationProviderTests {
 	@Test
 	public void authenticateWhenValidCodeThenReturnAccessToken() {
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization().build();
-		when(this.authorizationService.findByTokenAndTokenType(eq("code"), eq(TokenType.AUTHORIZATION_CODE)))
+		when(this.authorizationService.findByToken(eq("code"), eq(TokenType.AUTHORIZATION_CODE)))
 				.thenReturn(authorization);
 
 		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(this.registeredClient);

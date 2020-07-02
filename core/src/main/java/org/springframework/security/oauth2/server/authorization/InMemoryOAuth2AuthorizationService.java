@@ -15,6 +15,7 @@
  */
 package org.springframework.security.oauth2.server.authorization;
 
+import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 import java.util.List;
@@ -54,9 +55,8 @@ public final class InMemoryOAuth2AuthorizationService implements OAuth2Authoriza
 	}
 
 	@Override
-	public OAuth2Authorization findByTokenAndTokenType(String token, TokenType tokenType) {
+	public OAuth2Authorization findByToken(String token, @Nullable TokenType tokenType) {
 		Assert.hasText(token, "token cannot be empty");
-		Assert.notNull(tokenType, "tokenType cannot be null");
 		return this.authorizations.stream()
 				.filter(authorization -> hasToken(authorization, token, tokenType))
 				.findFirst()

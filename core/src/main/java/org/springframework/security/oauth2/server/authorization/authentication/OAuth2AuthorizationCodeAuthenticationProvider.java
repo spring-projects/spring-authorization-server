@@ -89,7 +89,7 @@ public class OAuth2AuthorizationCodeAuthenticationProvider implements Authentica
 		// from inadvertently accepting a code intended for a client with a different "client_id".
 		// This protects the client from substitution of the authentication code.
 
-		OAuth2Authorization authorization = this.authorizationService.findByTokenAndTokenType(
+		OAuth2Authorization authorization = this.authorizationService.findByToken(
 				authorizationCodeAuthentication.getCode(), TokenType.AUTHORIZATION_CODE);
 		if (authorization == null) {
 			throw new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_GRANT));

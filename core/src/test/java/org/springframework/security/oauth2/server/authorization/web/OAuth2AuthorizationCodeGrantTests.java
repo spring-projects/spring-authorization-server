@@ -136,7 +136,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 				.thenReturn(registeredClient);
 
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();
-		when(authorizationService.findByTokenAndTokenType(
+		when(authorizationService.findByToken(
 				eq(authorization.getAttribute(OAuth2AuthorizationAttributeNames.CODE)),
 				eq(TokenType.AUTHORIZATION_CODE)))
 				.thenReturn(authorization);
@@ -151,7 +151,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 				.andExpect(header().string(HttpHeaders.PRAGMA, containsString("no-cache")));
 
 		verify(registeredClientRepository).findByClientId(eq(registeredClient.getClientId()));
-		verify(authorizationService).findByTokenAndTokenType(
+		verify(authorizationService).findByToken(
 				eq(authorization.getAttribute(OAuth2AuthorizationAttributeNames.CODE)),
 				eq(TokenType.AUTHORIZATION_CODE));
 		verify(authorizationService).save(any());

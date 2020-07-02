@@ -65,23 +65,16 @@ public class InMemoryOAuth2AuthorizationServiceTests {
 				.build();
 		this.authorizationService.save(expectedAuthorization);
 
-		OAuth2Authorization authorization = this.authorizationService.findByTokenAndTokenType(
+		OAuth2Authorization authorization = this.authorizationService.findByToken(
 				AUTHORIZATION_CODE, TokenType.AUTHORIZATION_CODE);
 		assertThat(authorization).isEqualTo(expectedAuthorization);
 	}
 
 	@Test
 	public void findByTokenAndTokenTypeWhenTokenNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> this.authorizationService.findByTokenAndTokenType(null, TokenType.AUTHORIZATION_CODE))
+		assertThatThrownBy(() -> this.authorizationService.findByToken(null, TokenType.AUTHORIZATION_CODE))
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessage("token cannot be empty");
-	}
-
-	@Test
-	public void findByTokenAndTokenTypeWhenTokenTypeNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> this.authorizationService.findByTokenAndTokenType(AUTHORIZATION_CODE, null))
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("tokenType cannot be null");
 	}
 
 	@Test
@@ -92,7 +85,7 @@ public class InMemoryOAuth2AuthorizationServiceTests {
 				.build();
 		this.authorizationService = new InMemoryOAuth2AuthorizationService(Collections.singletonList(authorization));
 
-		OAuth2Authorization result = this.authorizationService.findByTokenAndTokenType(
+		OAuth2Authorization result = this.authorizationService.findByToken(
 				AUTHORIZATION_CODE, TokenType.AUTHORIZATION_CODE);
 		assertThat(authorization).isEqualTo(result);
 	}
@@ -108,14 +101,14 @@ public class InMemoryOAuth2AuthorizationServiceTests {
 				.build();
 		this.authorizationService.save(authorization);
 
-		OAuth2Authorization result = this.authorizationService.findByTokenAndTokenType(
+		OAuth2Authorization result = this.authorizationService.findByToken(
 				"access-token", TokenType.ACCESS_TOKEN);
 		assertThat(authorization).isEqualTo(result);
 	}
 
 	@Test
 	public void findByTokenAndTokenTypeWhenTokenDoesNotExistThenNull() {
-		OAuth2Authorization result = this.authorizationService.findByTokenAndTokenType(
+		OAuth2Authorization result = this.authorizationService.findByToken(
 				"access-token", TokenType.ACCESS_TOKEN);
 		assertThat(result).isNull();
 	}

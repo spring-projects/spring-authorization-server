@@ -76,15 +76,6 @@ public class OAuth2AuthorizationTests {
 	}
 
 	@Test
-	public void buildWhenAuthorizationCodeNotProvidedThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() ->
-				OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
-						.principalName(PRINCIPAL_NAME).build())
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("authorization code cannot be null");
-	}
-
-	@Test
 	public void attributeWhenNameNullThenThrowIllegalArgumentException() {
 		assertThatThrownBy(() ->
 				OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)

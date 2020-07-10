@@ -13,42 +13,49 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.springframework.security.oauth2.server.authorization.web;
 
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.HttpHeaders;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.oauth2.server.authorization.OAuth2AuthorizationServerConfiguration;
 import org.springframework.security.config.test.SpringTestRule;
+import org.springframework.security.oauth2.core.AuthorizationGrantType;
+import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
 import org.springframework.test.web.servlet.MockMvc;
 
-import static org.hamcrest.CoreMatchers.endsWith;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
+ * Integration tests for the OAuth 2.0 Client Credentials Grant.
+ *
  * @author Alexey Nesterov
  */
 public class OAuth2ClientCredentialsGrantTests {
-
 	private static RegisteredClientRepository registeredClientRepository;
 	private static OAuth2AuthorizationService authorizationService;
 
@@ -71,35 +78,46 @@ public class OAuth2ClientCredentialsGrantTests {
 	}
 
 	@Test
-	public void requestWhenTokenRequestAuthenticatedThenThenReturnTokenAndScope() throws Exception {
+	public void requestWhenTokenRequestNotAuthenticatedThenUnauthorized() throws Exception {
 		this.spring.register(AuthorizationServerConfiguration.class).autowire();
-		RegisteredClient client = TestRegisteredClients.registeredClient().build();
-		when(registeredClientRepository.findByClientId(client.getClientId()))
-				.thenReturn(client);
 
 		this.mvc.perform(post(OAuth2TokenEndpointFilter.DEFAULT_TOKEN_ENDPOINT_URI)
-					.with(httpBasic(client.getClientId(), client.getClientSecret()))
-					.with(csrf())
-					.param("grant_type", "client_credentials")
-					.param("scope", "email openid"))
-				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.access_token").isNotEmpty())
-				.andExpect(jsonPath("$.scope").value("openid email"));
+				.param(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
+				.with(csrf()))
+				.andExpect(status().isUnauthorized());
+
+		verifyNoInteractions(registeredClientRepository);
+		verifyNoInteractions(authorizationService);
 	}
 
 	@Test
-	public void requestWhenTokenRequestNotAuthenticatedThenRedirect() throws Exception {
+	public void requestWhenTokenRequestValidThenTokenResponse() throws Exception {
 		this.spring.register(AuthorizationServerConfiguration.class).autowire();
-		RegisteredClient client = TestRegisteredClients.registeredClient().build();
-		when(registeredClientRepository.findByClientId(client.getClientId()))
-				.thenReturn(client);
+
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient2().build();
+		when(registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
+				.thenReturn(registeredClient);
 
 		this.mvc.perform(post(OAuth2TokenEndpointFilter.DEFAULT_TOKEN_ENDPOINT_URI)
-				.with(csrf())
-				.param("grant_type", "client_credentials")
-				.param("scope", "email openid"))
-				.andExpect(status().isFound())
-				.andExpect(header().string("Location", endsWith("/login")));
+				.param(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
+				.param(OAuth2ParameterNames.SCOPE, "scope1 scope2")
+				.header(HttpHeaders.AUTHORIZATION, "Basic " + encodeBasicAuth(
+						registeredClient.getClientId(), registeredClient.getClientSecret()))
+				.with(csrf()))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.access_token").isNotEmpty())
+				.andExpect(jsonPath("$.scope").value("scope1 scope2"));
+
+		verify(registeredClientRepository).findByClientId(eq(registeredClient.getClientId()));
+		verify(authorizationService).save(any());
+	}
+
+	private static String encodeBasicAuth(String clientId, String secret) throws Exception {
+		clientId = URLEncoder.encode(clientId, StandardCharsets.UTF_8.name());
+		secret = URLEncoder.encode(secret, StandardCharsets.UTF_8.name());
+		String credentialsString = clientId + ":" + secret;
+		byte[] encodedBytes = Base64.getEncoder().encode(credentialsString.getBytes(StandardCharsets.UTF_8));
+		return new String(encodedBytes, StandardCharsets.UTF_8);
 	}
 
 	@EnableWebSecurity

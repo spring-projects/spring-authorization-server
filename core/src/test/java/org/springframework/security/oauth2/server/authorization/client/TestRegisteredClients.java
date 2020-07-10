@@ -40,10 +40,13 @@ public class TestRegisteredClients {
 				.clientId("client-2")
 				.clientSecret("secret")
 				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+				.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
 				.clientAuthenticationMethod(ClientAuthenticationMethod.BASIC)
 				.redirectUri("https://example.com")
 				.scope("openid")
 				.scope("profile")
-				.scope("email");
+				.scope("email")
+				.scope("scope1")
+				.scope("scope2");
 	}
 }

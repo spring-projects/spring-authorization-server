@@ -19,9 +19,11 @@ import org.springframework.beans.factory.BeanFactoryUtils;
 import org.springframework.beans.factory.NoUniqueBeanDefinitionException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.web.HttpSecurityBuilder;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.web.configurers.ExceptionHandlingConfigurer;
 import org.springframework.security.oauth2.server.authorization.InMemoryOAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeAuthenticationProvider;
@@ -32,6 +34,7 @@ import org.springframework.security.oauth2.server.authorization.web.OAuth2Author
 import org.springframework.security.oauth2.server.authorization.web.OAuth2ClientAuthenticationFilter;
 import org.springframework.security.oauth2.server.authorization.web.OAuth2TokenEndpointFilter;
 import org.springframework.security.web.access.intercept.FilterSecurityInterceptor;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.preauth.AbstractPreAuthenticatedProcessingFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.util.Assert;
@@ -89,12 +92,22 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 				new OAuth2AuthorizationCodeAuthenticationProvider(
 						getRegisteredClientRepository(builder),
 						getAuthorizationService(builder));
-
-		OAuth2ClientCredentialsAuthenticationProvider clientCredentialsAuthenticationProvider
-				= new OAuth2ClientCredentialsAuthenticationProvider();
-
 		builder.authenticationProvider(postProcess(authorizationCodeAuthenticationProvider));
+
+		OAuth2ClientCredentialsAuthenticationProvider clientCredentialsAuthenticationProvider =
+				new OAuth2ClientCredentialsAuthenticationProvider(
+						getAuthorizationService(builder));
 		builder.authenticationProvider(postProcess(clientCredentialsAuthenticationProvider));
+
+		ExceptionHandlingConfigurer<B> exceptionHandling = builder.getConfigurer(ExceptionHandlingConfigurer.class);
+		if (exceptionHandling != null) {
+			// Register the default AuthenticationEntryPoint for the token endpoint
+			exceptionHandling.defaultAuthenticationEntryPointFor(
+					new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED),
+					new AntPathRequestMatcher(
+							OAuth2TokenEndpointFilter.DEFAULT_TOKEN_ENDPOINT_URI,
+							HttpMethod.POST.name()));
+		}
 	}
 
 	@Override

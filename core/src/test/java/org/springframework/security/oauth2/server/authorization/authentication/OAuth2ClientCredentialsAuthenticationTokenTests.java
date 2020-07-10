@@ -13,24 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.springframework.security.oauth2.server.authorization.authentication;
+
+import org.junit.Test;
+import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
 
 import java.util.Collections;
 import java.util.Set;
-
-import org.junit.Test;
-
-import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
+ * Tests for {@link OAuth2ClientCredentialsAuthenticationToken}.
+ *
  * @author Alexey Nesterov
  */
 public class OAuth2ClientCredentialsAuthenticationTokenTests {
-
 	private final OAuth2ClientAuthenticationToken clientPrincipal =
 			new OAuth2ClientAuthenticationToken(TestRegisteredClients.registeredClient().build());
 
@@ -43,15 +42,15 @@ public class OAuth2ClientCredentialsAuthenticationTokenTests {
 
 	@Test
 	public void constructorWhenScopesNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> new OAuth2ClientCredentialsAuthenticationToken(clientPrincipal, null))
+		assertThatThrownBy(() -> new OAuth2ClientCredentialsAuthenticationToken(this.clientPrincipal, null))
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessage("scopes cannot be null");
 	}
 
 	@Test
 	public void constructorWhenClientPrincipalProvidedThenCreated() {
-		OAuth2ClientCredentialsAuthenticationToken authentication
-				= new OAuth2ClientCredentialsAuthenticationToken(clientPrincipal);
+		OAuth2ClientCredentialsAuthenticationToken authentication =
+				new OAuth2ClientCredentialsAuthenticationToken(this.clientPrincipal);
 
 		assertThat(authentication.getPrincipal()).isEqualTo(this.clientPrincipal);
 		assertThat(authentication.getCredentials().toString()).isEmpty();
@@ -62,12 +61,11 @@ public class OAuth2ClientCredentialsAuthenticationTokenTests {
 	public void constructorWhenScopesProvidedThenCreated() {
 		Set<String> expectedScopes = Collections.singleton("test-scope");
 
-		OAuth2ClientCredentialsAuthenticationToken authentication
-				= new OAuth2ClientCredentialsAuthenticationToken(clientPrincipal, expectedScopes);
+		OAuth2ClientCredentialsAuthenticationToken authentication =
+				new OAuth2ClientCredentialsAuthenticationToken(this.clientPrincipal, expectedScopes);
 
 		assertThat(authentication.getPrincipal()).isEqualTo(this.clientPrincipal);
 		assertThat(authentication.getCredentials().toString()).isEmpty();
-		assertThat(authentication.getScopes()).containsAll(expectedScopes);
+		assertThat(authentication.getScopes()).isEqualTo(expectedScopes);
 	}
-
 }

@@ -35,7 +35,6 @@ import org.springframework.security.oauth2.core.http.converter.OAuth2ErrorHttpMe
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AccessTokenAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeAuthenticationToken;
-import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientCredentialsAuthenticationToken;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
@@ -94,7 +93,6 @@ public class OAuth2TokenEndpointFilter extends OncePerRequestFilter {
 	private final OAuth2AuthorizationService authorizationService;
 	private final RequestMatcher tokenEndpointMatcher;
 	private final Converter<HttpServletRequest, Authentication> authorizationGrantAuthenticationConverter;
-
 	private final HttpMessageConverter<OAuth2AccessTokenResponse> accessTokenHttpResponseConverter =
 			new OAuth2AccessTokenResponseHttpMessageConverter();
 	private final HttpMessageConverter<OAuth2Error> errorHttpResponseConverter =
@@ -126,7 +124,6 @@ public class OAuth2TokenEndpointFilter extends OncePerRequestFilter {
 		this.authenticationManager = authenticationManager;
 		this.authorizationService = authorizationService;
 		this.tokenEndpointMatcher = new AntPathRequestMatcher(tokenEndpointUri, HttpMethod.POST.name());
-
 		Map<AuthorizationGrantType, Converter<HttpServletRequest, Authentication>> converters = new HashMap<>();
 		converters.put(AuthorizationGrantType.AUTHORIZATION_CODE, new AuthorizationCodeAuthenticationConverter());
 		converters.put(AuthorizationGrantType.CLIENT_CREDENTIALS, new ClientCredentialsAuthenticationConverter());
@@ -144,18 +141,19 @@ public class OAuth2TokenEndpointFilter extends OncePerRequestFilter {
 
 		try {
 			String[] grantTypes = request.getParameterValues(OAuth2ParameterNames.GRANT_TYPE);
-			if (grantTypes == null || grantTypes.length == 0) {
-				throwError(OAuth2ErrorCodes.INVALID_REQUEST, "grant_type");
+			if (grantTypes == null || grantTypes.length != 1) {
+				throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.GRANT_TYPE);
 			}
 
 			Authentication authorizationGrantAuthentication = this.authorizationGrantAuthenticationConverter.convert(request);
 			if (authorizationGrantAuthentication == null) {
-				throwError(OAuth2ErrorCodes.UNSUPPORTED_GRANT_TYPE, "grant_type");
+				throwError(OAuth2ErrorCodes.UNSUPPORTED_GRANT_TYPE, OAuth2ParameterNames.GRANT_TYPE);
 			}
 
 			OAuth2AccessTokenAuthenticationToken accessTokenAuthentication =
 					(OAuth2AccessTokenAuthenticationToken) this.authenticationManager.authenticate(authorizationGrantAuthentication);
 			sendAccessTokenResponse(response, accessTokenAuthentication.getAccessToken());
+
 		} catch (OAuth2AuthenticationException ex) {
 			SecurityContextHolder.clearContext();
 			sendErrorResponse(response, ex.getError());
@@ -191,17 +189,13 @@ public class OAuth2TokenEndpointFilter extends OncePerRequestFilter {
 
 		@Override
 		public Authentication convert(HttpServletRequest request) {
-			MultiValueMap<String, String> parameters = OAuth2EndpointUtils.getParameters(request);
-
 			// grant_type (REQUIRED)
-			String grantType = parameters.getFirst(OAuth2ParameterNames.GRANT_TYPE);
-			if (!StringUtils.hasText(grantType) ||
-					parameters.get(OAuth2ParameterNames.GRANT_TYPE).size() != 1) {
-				throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.GRANT_TYPE);
-			}
+			String grantType = request.getParameter(OAuth2ParameterNames.GRANT_TYPE);
 			if (!AuthorizationGrantType.AUTHORIZATION_CODE.getValue().equals(grantType)) {
-				throwError(OAuth2ErrorCodes.UNSUPPORTED_GRANT_TYPE, OAuth2ParameterNames.GRANT_TYPE);
+				return null;
 			}
+
+			MultiValueMap<String, String> parameters = OAuth2EndpointUtils.getParameters(request);
 
 			// client_id (REQUIRED)
 			String clientId = parameters.getFirst(OAuth2ParameterNames.CLIENT_ID);
@@ -239,24 +233,29 @@ public class OAuth2TokenEndpointFilter extends OncePerRequestFilter {
 
 		@Override
 		public Authentication convert(HttpServletRequest request) {
-			final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-			final OAuth2ClientAuthenticationToken clientAuthenticationToken = (OAuth2ClientAuthenticationToken) authentication;
-
 			// grant_type (REQUIRED)
 			String grantType = request.getParameter(OAuth2ParameterNames.GRANT_TYPE);
 			if (!AuthorizationGrantType.CLIENT_CREDENTIALS.getValue().equals(grantType)) {
-				throwError(OAuth2ErrorCodes.UNSUPPORTED_GRANT_TYPE, OAuth2ParameterNames.GRANT_TYPE);
+				return null;
 			}
+
+			Authentication clientPrincipal = SecurityContextHolder.getContext().getAuthentication();
+
+			MultiValueMap<String, String> parameters = OAuth2EndpointUtils.getParameters(request);
 
 			// scope (OPTIONAL)
-			// https://tools.ietf.org/html/rfc6749#section-4.4.2
-			String scopeParameter = request.getParameter(OAuth2ParameterNames.SCOPE);
-			if (StringUtils.isEmpty(scopeParameter)) {
-				return new OAuth2ClientCredentialsAuthenticationToken(clientAuthenticationToken);
+			String scope = parameters.getFirst(OAuth2ParameterNames.SCOPE);
+			if (StringUtils.hasText(scope) &&
+					parameters.get(OAuth2ParameterNames.SCOPE).size() != 1) {
+				throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.SCOPE);
+			}
+			if (StringUtils.hasText(scope)) {
+				Set<String> requestedScopes = new HashSet<>(
+						Arrays.asList(StringUtils.delimitedListToStringArray(scope, " ")));
+				return new OAuth2ClientCredentialsAuthenticationToken(clientPrincipal, requestedScopes);
 			}
 
-			Set<String> requestedScopes = new HashSet<>(Arrays.asList(StringUtils.delimitedListToStringArray(scopeParameter, " ")));
-			return new OAuth2ClientCredentialsAuthenticationToken(clientAuthenticationToken, requestedScopes);
+			return new OAuth2ClientCredentialsAuthenticationToken(clientPrincipal);
 		}
 	}
 }

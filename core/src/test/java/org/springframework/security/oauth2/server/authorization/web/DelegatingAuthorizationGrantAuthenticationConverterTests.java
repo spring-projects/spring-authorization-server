@@ -13,84 +13,102 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.springframework.security.oauth2.server.authorization.web;
-
-import javax.servlet.http.HttpServletRequest;
-import java.util.Collections;
-import java.util.Map;
 
 import org.junit.Before;
 import org.junit.Test;
-
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockServletContext;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
+import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientAuthenticationToken;
+import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientCredentialsAuthenticationToken;
+import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
+import javax.servlet.http.HttpServletRequest;
+import java.util.Collections;
+import java.util.Map;
+
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 /**
+ * Tests for {@link DelegatingAuthorizationGrantAuthenticationConverter}.
+ *
  * @author Alexey Nesterov
  */
 public class DelegatingAuthorizationGrantAuthenticationConverterTests {
-
+	private Converter<HttpServletRequest, Authentication> clientCredentialsAuthenticationConverter;
 	private DelegatingAuthorizationGrantAuthenticationConverter authenticationConverter;
-	private Converter<HttpServletRequest, Authentication> clientCredentialsConverterMock;
 
 	@Before
 	public void setUp() {
-		clientCredentialsConverterMock = mock(Converter.class);
-		Map<AuthorizationGrantType, Converter<HttpServletRequest, Authentication>> converters
-				= Collections.singletonMap(AuthorizationGrantType.CLIENT_CREDENTIALS, clientCredentialsConverterMock);
-		authenticationConverter = new DelegatingAuthorizationGrantAuthenticationConverter(converters);
+		this.clientCredentialsAuthenticationConverter = mock(Converter.class);
+		Map<AuthorizationGrantType, Converter<HttpServletRequest, Authentication>> converters =
+				Collections.singletonMap(AuthorizationGrantType.CLIENT_CREDENTIALS, this.clientCredentialsAuthenticationConverter);
+		this.authenticationConverter = new DelegatingAuthorizationGrantAuthenticationConverter(converters);
 	}
 
 	@Test
-	public void convertWhenAuthorizationGrantTypeSupportedThenConverterCalled() {
-		MockHttpServletRequest request = MockMvcRequestBuilders
-				.post("/oauth/token")
-				.param("grant_type", "client_credentials")
-				.buildRequest(new MockServletContext());
-
-		OAuth2ClientAuthenticationToken expectedAuthentication = new OAuth2ClientAuthenticationToken("id", "secret");
-		when(clientCredentialsConverterMock.convert(request)).thenReturn(expectedAuthentication);
-
-		Authentication actualAuthentication = authenticationConverter.convert(request);
-
-		verify(clientCredentialsConverterMock).convert(request);
-		assertThat(actualAuthentication).isEqualTo(expectedAuthentication);
+	public void constructorWhenConvertersEmptyThenThrowIllegalArgumentException() {
+		assertThatThrownBy(() -> new DelegatingAuthorizationGrantAuthenticationConverter(Collections.emptyMap()))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("converters cannot be empty");
 	}
 
 	@Test
-	public void convertWhenAuthorizationGrantTypeNotSupportedThenNull() {
-		MockHttpServletRequest request = MockMvcRequestBuilders
-				.post("/oauth/token")
-				.param("grant_type", "authorization_code")
-				.buildRequest(new MockServletContext());
-
-		Authentication actualAuthentication = authenticationConverter.convert(request);
-
-		verifyNoInteractions(clientCredentialsConverterMock);
-		assertThat(actualAuthentication).isNull();
+	public void convertWhenRequestNullThenThrowIllegalArgumentException() {
+		assertThatThrownBy(() -> this.authenticationConverter.convert(null))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("request cannot be null");
 	}
 
 	@Test
-	public void convertWhenNoAuthorizationGrantTypeThenNull() {
+	public void convertWhenGrantTypeMissingThenNull() {
 		MockHttpServletRequest request = MockMvcRequestBuilders
-				.post("/oauth/token")
+				.post(OAuth2TokenEndpointFilter.DEFAULT_TOKEN_ENDPOINT_URI)
 				.buildRequest(new MockServletContext());
 
-		Authentication actualAuthentication = authenticationConverter.convert(request);
+		Authentication authentication = this.authenticationConverter.convert(request);
+		assertThat(authentication).isNull();
+		verifyNoInteractions(this.clientCredentialsAuthenticationConverter);
+	}
 
-		verifyNoInteractions(clientCredentialsConverterMock);
-		assertThat(actualAuthentication).isNull();
+	@Test
+	public void convertWhenGrantTypeUnsupportedThenNull() {
+		MockHttpServletRequest request = MockMvcRequestBuilders
+				.post(OAuth2TokenEndpointFilter.DEFAULT_TOKEN_ENDPOINT_URI)
+				.param(OAuth2ParameterNames.GRANT_TYPE, "extension_grant_type")
+				.buildRequest(new MockServletContext());
+
+		Authentication authentication = this.authenticationConverter.convert(request);
+		assertThat(authentication).isNull();
+		verifyNoInteractions(this.clientCredentialsAuthenticationConverter);
+	}
+
+	@Test
+	public void convertWhenGrantTypeSupportedThenConverterCalled() {
+		OAuth2ClientCredentialsAuthenticationToken expectedAuthentication =
+				new OAuth2ClientCredentialsAuthenticationToken(
+						new OAuth2ClientAuthenticationToken(
+								TestRegisteredClients.registeredClient().build()));
+		when(this.clientCredentialsAuthenticationConverter.convert(any())).thenReturn(expectedAuthentication);
+
+		MockHttpServletRequest request = MockMvcRequestBuilders
+				.post(OAuth2TokenEndpointFilter.DEFAULT_TOKEN_ENDPOINT_URI)
+				.param(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
+				.buildRequest(new MockServletContext());
+
+		Authentication authentication = this.authenticationConverter.convert(request);
+		assertThat(authentication).isEqualTo(expectedAuthentication);
+		verify(this.clientCredentialsAuthenticationConverter).convert(request);
 	}
 }

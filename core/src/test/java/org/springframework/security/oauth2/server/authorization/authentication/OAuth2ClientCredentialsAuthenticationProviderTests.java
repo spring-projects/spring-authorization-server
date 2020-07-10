@@ -13,104 +13,130 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.springframework.security.oauth2.server.authorization.authentication;
-
-import java.util.Collections;
 
 import org.junit.Before;
 import org.junit.Test;
-
-import org.springframework.security.core.Authentication;
+import org.mockito.ArgumentCaptor;
+import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
+import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
+import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
+import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
 
+import java.util.Collections;
+import java.util.Set;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 /**
+ * Tests for {@link OAuth2ClientCredentialsAuthenticationProvider}.
+ *
  * @author Alexey Nesterov
+ * @author Joe Grandja
  */
 public class OAuth2ClientCredentialsAuthenticationProviderTests {
-
-	private static final RegisteredClient EXISTING_CLIENT = TestRegisteredClients.registeredClient().build();
+	private RegisteredClient registeredClient;
+	private OAuth2AuthorizationService authorizationService;
 	private OAuth2ClientCredentialsAuthenticationProvider authenticationProvider;
 
 	@Before
 	public void setUp() {
-		this.authenticationProvider = new OAuth2ClientCredentialsAuthenticationProvider();
+		this.registeredClient = TestRegisteredClients.registeredClient().build();
+		this.authorizationService = mock(OAuth2AuthorizationService.class);
+		this.authenticationProvider = new OAuth2ClientCredentialsAuthenticationProvider(this.authorizationService);
 	}
 
 	@Test
-	public void supportsWhenSupportedClassThenTrue() {
+	public void constructorWhenAuthorizationServiceNullThenThrowIllegalArgumentException() {
+		assertThatThrownBy(() -> new OAuth2ClientCredentialsAuthenticationProvider(null))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("authorizationService cannot be null");
+	}
+
+	@Test
+	public void supportsWhenSupportedAuthenticationThenTrue() {
 		assertThat(this.authenticationProvider.supports(OAuth2ClientCredentialsAuthenticationToken.class)).isTrue();
 	}
 
 	@Test
-	public void supportsWhenUnsupportedClassThenFalse() {
-		assertThat(this.authenticationProvider.supports(OAuth2AuthorizationCodeAuthenticationProvider.class)).isFalse();
+	public void supportsWhenUnsupportedAuthenticationThenFalse() {
+		assertThat(this.authenticationProvider.supports(OAuth2AuthorizationCodeAuthenticationToken.class)).isFalse();
 	}
 
 	@Test
-	public void authenticateWhenValidAuthenticationThenReturnTokenWithClient() {
-		Authentication authentication = this.authenticationProvider.authenticate(getAuthentication());
-		assertThat(authentication).isInstanceOf(OAuth2AccessTokenAuthenticationToken.class);
-
-		OAuth2AccessTokenAuthenticationToken token = (OAuth2AccessTokenAuthenticationToken) authentication;
-		assertThat(token.getRegisteredClient()).isEqualTo(EXISTING_CLIENT);
-	}
-
-	@Test
-	public void authenticateWhenValidAuthenticationThenGenerateTokenValue() {
-		Authentication authentication = this.authenticationProvider.authenticate(getAuthentication());
-		OAuth2AccessTokenAuthenticationToken token = (OAuth2AccessTokenAuthenticationToken) authentication;
-		assertThat(token.getAccessToken().getTokenValue()).isNotBlank();
-	}
-
-	@Test
-	public void authenticateWhenValidateScopeThenReturnTokenWithScopes() {
-		Authentication authentication = this.authenticationProvider.authenticate(getAuthentication());
-		OAuth2AccessTokenAuthenticationToken token = (OAuth2AccessTokenAuthenticationToken) authentication;
-		assertThat(token.getAccessToken().getScopes()).containsAll(EXISTING_CLIENT.getScopes());
-	}
-
-	@Test
-	public void authenticateWhenNoScopeRequestedThenUseDefaultScopes() {
-		OAuth2ClientCredentialsAuthenticationToken authenticationToken = new OAuth2ClientCredentialsAuthenticationToken(new OAuth2ClientAuthenticationToken(EXISTING_CLIENT));
-		Authentication authentication = this.authenticationProvider.authenticate(authenticationToken);
-		OAuth2AccessTokenAuthenticationToken token = (OAuth2AccessTokenAuthenticationToken) authentication;
-		assertThat(token.getAccessToken().getScopes()).containsAll(EXISTING_CLIENT.getScopes());
-	}
-
-	@Test
-	public void authenticateWhenInvalidSecretThenThrowException() {
-		OAuth2ClientCredentialsAuthenticationToken authentication = new OAuth2ClientCredentialsAuthenticationToken(
-				new OAuth2ClientAuthenticationToken(EXISTING_CLIENT.getClientId(), "not-a-valid-secret"));
+	public void authenticateWhenClientPrincipalNotOAuth2ClientAuthenticationTokenThenThrowOAuth2AuthenticationException() {
+		TestingAuthenticationToken clientPrincipal = new TestingAuthenticationToken(
+				this.registeredClient.getClientId(), this.registeredClient.getClientSecret());
+		OAuth2ClientCredentialsAuthenticationToken authentication = new OAuth2ClientCredentialsAuthenticationToken(clientPrincipal);
 
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
-				.isInstanceOf(OAuth2AuthenticationException.class);
+				.isInstanceOf(OAuth2AuthenticationException.class)
+				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+				.extracting("errorCode")
+				.isEqualTo(OAuth2ErrorCodes.INVALID_CLIENT);
 	}
 
 	@Test
-	public void authenticateWhenNonExistingClientThenThrowException() {
-		OAuth2ClientCredentialsAuthenticationToken authentication = new OAuth2ClientCredentialsAuthenticationToken(
-				new OAuth2ClientAuthenticationToken("another-client-id", "another-secret"));
+	public void authenticateWhenClientPrincipalNotAuthenticatedThenThrowOAuth2AuthenticationException() {
+		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(
+				this.registeredClient.getClientId(), this.registeredClient.getClientSecret());
+		OAuth2ClientCredentialsAuthenticationToken authentication = new OAuth2ClientCredentialsAuthenticationToken(clientPrincipal);
 
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
-				.isInstanceOf(OAuth2AuthenticationException.class);
+				.isInstanceOf(OAuth2AuthenticationException.class)
+				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+				.extracting("errorCode")
+				.isEqualTo(OAuth2ErrorCodes.INVALID_CLIENT);
 	}
 
 	@Test
-	public void authenticateWhenInvalidScopesThenThrowException() {
+	public void authenticateWhenInvalidScopeThenThrowOAuth2AuthenticationException() {
+		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(this.registeredClient);
 		OAuth2ClientCredentialsAuthenticationToken authentication = new OAuth2ClientCredentialsAuthenticationToken(
-				new OAuth2ClientAuthenticationToken(EXISTING_CLIENT), Collections.singleton("non-existing-scope"));
+				clientPrincipal, Collections.singleton("invalid-scope"));
 
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
-				.isInstanceOf(OAuth2AuthenticationException.class);
+				.isInstanceOf(OAuth2AuthenticationException.class)
+				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+				.extracting("errorCode")
+				.isEqualTo(OAuth2ErrorCodes.INVALID_SCOPE);
 	}
 
-	private OAuth2ClientCredentialsAuthenticationToken getAuthentication() {
-		return new OAuth2ClientCredentialsAuthenticationToken(new OAuth2ClientAuthenticationToken(EXISTING_CLIENT), EXISTING_CLIENT.getScopes());
+	@Test
+	public void authenticateWhenScopeRequestedThenAccessTokenContainsScope() {
+		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(this.registeredClient);
+		Set<String> requestedScope = Collections.singleton("openid");
+		OAuth2ClientCredentialsAuthenticationToken authentication =
+				new OAuth2ClientCredentialsAuthenticationToken(clientPrincipal, requestedScope);
+
+		OAuth2AccessTokenAuthenticationToken accessTokenAuthentication =
+				(OAuth2AccessTokenAuthenticationToken) this.authenticationProvider.authenticate(authentication);
+		assertThat(accessTokenAuthentication.getAccessToken().getScopes()).isEqualTo(requestedScope);
+	}
+
+	@Test
+	public void authenticateWhenValidAuthenticationThenReturnAccessToken() {
+		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(this.registeredClient);
+		OAuth2ClientCredentialsAuthenticationToken authentication = new OAuth2ClientCredentialsAuthenticationToken(clientPrincipal);
+
+		OAuth2AccessTokenAuthenticationToken accessTokenAuthentication =
+				(OAuth2AccessTokenAuthenticationToken) this.authenticationProvider.authenticate(authentication);
+
+		ArgumentCaptor<OAuth2Authorization> authorizationCaptor = ArgumentCaptor.forClass(OAuth2Authorization.class);
+		verify(this.authorizationService).save(authorizationCaptor.capture());
+		OAuth2Authorization authorization = authorizationCaptor.getValue();
+
+		assertThat(authorization.getRegisteredClientId()).isEqualTo(clientPrincipal.getRegisteredClient().getId());
+		assertThat(authorization.getPrincipalName()).isEqualTo(clientPrincipal.getName());
+		assertThat(authorization.getAccessToken()).isNotNull();
+		assertThat(authorization.getAccessToken().getScopes()).isEqualTo(clientPrincipal.getRegisteredClient().getScopes());
+		assertThat(accessTokenAuthentication.getPrincipal()).isEqualTo(clientPrincipal);
+		assertThat(accessTokenAuthentication.getAccessToken()).isEqualTo(authorization.getAccessToken());
 	}
 }

@@ -210,7 +210,6 @@ public class OAuth2Authorization implements Serializable {
 		 */
 		public OAuth2Authorization build() {
 			Assert.hasText(this.principalName, "principalName cannot be empty");
-			Assert.notNull(this.attributes.get(OAuth2AuthorizationAttributeNames.CODE), "authorization code cannot be null");
 
 			OAuth2Authorization authorization = new OAuth2Authorization();
 			authorization.registeredClientId = this.registeredClientId;

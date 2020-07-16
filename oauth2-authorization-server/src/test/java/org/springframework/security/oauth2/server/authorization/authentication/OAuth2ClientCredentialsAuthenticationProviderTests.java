@@ -21,18 +21,26 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
+import org.springframework.security.oauth2.jose.JoseHeaderNames;
+import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * Tests for {@link OAuth2ClientCredentialsAuthenticationProvider}.
@@ -43,20 +51,30 @@ import static org.mockito.Mockito.verify;
 public class OAuth2ClientCredentialsAuthenticationProviderTests {
 	private RegisteredClient registeredClient;
 	private OAuth2AuthorizationService authorizationService;
+	private JwtEncoder jwtEncoder;
 	private OAuth2ClientCredentialsAuthenticationProvider authenticationProvider;
 
 	@Before
 	public void setUp() {
 		this.registeredClient = TestRegisteredClients.registeredClient().build();
 		this.authorizationService = mock(OAuth2AuthorizationService.class);
-		this.authenticationProvider = new OAuth2ClientCredentialsAuthenticationProvider(this.authorizationService);
+		this.jwtEncoder = mock(JwtEncoder.class);
+		this.authenticationProvider = new OAuth2ClientCredentialsAuthenticationProvider(
+				this.authorizationService, this.jwtEncoder);
 	}
 
 	@Test
 	public void constructorWhenAuthorizationServiceNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> new OAuth2ClientCredentialsAuthenticationProvider(null))
+		assertThatThrownBy(() -> new OAuth2ClientCredentialsAuthenticationProvider(null, this.jwtEncoder))
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessage("authorizationService cannot be null");
+	}
+
+	@Test
+	public void constructorWhenJwtEncoderNullThenThrowIllegalArgumentException() {
+		assertThatThrownBy(() -> new OAuth2ClientCredentialsAuthenticationProvider(this.authorizationService, null))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("jwtEncoder cannot be null");
 	}
 
 	@Test
@@ -115,6 +133,8 @@ public class OAuth2ClientCredentialsAuthenticationProviderTests {
 		OAuth2ClientCredentialsAuthenticationToken authentication =
 				new OAuth2ClientCredentialsAuthenticationToken(clientPrincipal, requestedScope);
 
+		when(this.jwtEncoder.encode(any(), any())).thenReturn(createJwt());
+
 		OAuth2AccessTokenAuthenticationToken accessTokenAuthentication =
 				(OAuth2AccessTokenAuthenticationToken) this.authenticationProvider.authenticate(authentication);
 		assertThat(accessTokenAuthentication.getAccessToken().getScopes()).isEqualTo(requestedScope);
@@ -124,6 +144,8 @@ public class OAuth2ClientCredentialsAuthenticationProviderTests {
 	public void authenticateWhenValidAuthenticationThenReturnAccessToken() {
 		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(this.registeredClient);
 		OAuth2ClientCredentialsAuthenticationToken authentication = new OAuth2ClientCredentialsAuthenticationToken(clientPrincipal);
+
+		when(this.jwtEncoder.encode(any(), any())).thenReturn(createJwt());
 
 		OAuth2AccessTokenAuthenticationToken accessTokenAuthentication =
 				(OAuth2AccessTokenAuthenticationToken) this.authenticationProvider.authenticate(authentication);
@@ -138,5 +160,15 @@ public class OAuth2ClientCredentialsAuthenticationProviderTests {
 		assertThat(authorization.getAccessToken().getScopes()).isEqualTo(clientPrincipal.getRegisteredClient().getScopes());
 		assertThat(accessTokenAuthentication.getPrincipal()).isEqualTo(clientPrincipal);
 		assertThat(accessTokenAuthentication.getAccessToken()).isEqualTo(authorization.getAccessToken());
+	}
+
+	private static Jwt createJwt() {
+		Instant issuedAt = Instant.now();
+		Instant expiresAt = issuedAt.plus(1, ChronoUnit.HOURS);
+		return Jwt.withTokenValue("token")
+				.header(JoseHeaderNames.ALG, SignatureAlgorithm.RS256.getName())
+				.issuedAt(issuedAt)
+				.expiresAt(expiresAt)
+				.build();
 	}
 }

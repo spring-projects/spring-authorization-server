@@ -1,0 +1,11 @@
+apply plugin: 'io.spring.convention.spring-module'
+
+dependencies {
+	compile project(':spring-security-core2')
+	compile 'org.springframework.security:spring-security-core'
+	compile springCoreDependency
+
+	testCompile 'junit:junit'
+	testCompile 'org.assertj:assertj-core'
+	testCompile 'org.mockito:mockito-core'
+}

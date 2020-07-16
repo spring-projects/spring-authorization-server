@@ -24,6 +24,8 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.web.HttpSecurityBuilder;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.ExceptionHandlingConfigurer;
+import org.springframework.security.crypto.keys.KeyManager;
+import org.springframework.security.oauth2.jose.jws.NimbusJwsEncoder;
 import org.springframework.security.oauth2.server.authorization.InMemoryOAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeAuthenticationProvider;
@@ -81,6 +83,18 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 		return this;
 	}
 
+	/**
+	 * Sets the key manager.
+	 *
+	 * @param keyManager the key manager
+	 * @return the {@link OAuth2AuthorizationServerConfigurer} for further configuration
+	 */
+	public OAuth2AuthorizationServerConfigurer<B> keyManager(KeyManager keyManager) {
+		Assert.notNull(keyManager, "keyManager cannot be null");
+		this.getBuilder().setSharedObject(KeyManager.class, keyManager);
+		return this;
+	}
+
 	@Override
 	public void init(B builder) {
 		OAuth2ClientAuthenticationProvider clientAuthenticationProvider =
@@ -88,15 +102,19 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 						getRegisteredClientRepository(builder));
 		builder.authenticationProvider(postProcess(clientAuthenticationProvider));
 
+		NimbusJwsEncoder jwtEncoder = new NimbusJwsEncoder(getKeyManager(builder));
+
 		OAuth2AuthorizationCodeAuthenticationProvider authorizationCodeAuthenticationProvider =
 				new OAuth2AuthorizationCodeAuthenticationProvider(
 						getRegisteredClientRepository(builder),
-						getAuthorizationService(builder));
+						getAuthorizationService(builder),
+						jwtEncoder);
 		builder.authenticationProvider(postProcess(authorizationCodeAuthenticationProvider));
 
 		OAuth2ClientCredentialsAuthenticationProvider clientCredentialsAuthenticationProvider =
 				new OAuth2ClientCredentialsAuthenticationProvider(
-						getAuthorizationService(builder));
+						getAuthorizationService(builder),
+						jwtEncoder);
 		builder.authenticationProvider(postProcess(clientCredentialsAuthenticationProvider));
 
 		ExceptionHandlingConfigurer<B> exceptionHandling = builder.getConfigurer(ExceptionHandlingConfigurer.class);
@@ -167,5 +185,18 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 							authorizationServiceMap.size() + ": " + StringUtils.collectionToCommaDelimitedString(authorizationServiceMap.keySet()));
 		}
 		return (!authorizationServiceMap.isEmpty() ? authorizationServiceMap.values().iterator().next() : null);
+	}
+
+	private static <B extends HttpSecurityBuilder<B>> KeyManager getKeyManager(B builder) {
+		KeyManager keyManager = builder.getSharedObject(KeyManager.class);
+		if (keyManager == null) {
+			keyManager = getKeyManagerBean(builder);
+			builder.setSharedObject(KeyManager.class, keyManager);
+		}
+		return keyManager;
+	}
+
+	private static <B extends HttpSecurityBuilder<B>> KeyManager getKeyManagerBean(B builder) {
+		return builder.getSharedObject(ApplicationContext.class).getBean(KeyManager.class);
 	}
 }

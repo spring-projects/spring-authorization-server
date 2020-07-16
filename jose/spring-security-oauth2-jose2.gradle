@@ -1,0 +1,14 @@
+apply plugin: 'io.spring.convention.spring-module'
+
+dependencies {
+	compile project(':spring-security-crypto2')
+	compile 'org.springframework.security:spring-security-oauth2-core'
+	compile 'org.springframework.security:spring-security-oauth2-jose'
+	compile springCoreDependency
+	compile 'com.nimbusds:nimbus-jose-jwt'
+
+	testCompile project(path: ':spring-security-crypto2', configuration: 'tests')
+	testCompile 'junit:junit'
+	testCompile 'org.assertj:assertj-core'
+	testCompile 'org.mockito:mockito-core'
+}

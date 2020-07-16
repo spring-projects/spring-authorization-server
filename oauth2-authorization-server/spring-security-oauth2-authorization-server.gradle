@@ -2,6 +2,7 @@ apply plugin: 'io.spring.convention.spring-module'
 
 dependencies {
 	compile project(':spring-security-core2')
+	compile project(':spring-security-oauth2-jose2')
 	compile 'org.springframework.security:spring-security-core'
 	compile 'org.springframework.security:spring-security-web'
 	compile 'org.springframework.security:spring-security-oauth2-core'

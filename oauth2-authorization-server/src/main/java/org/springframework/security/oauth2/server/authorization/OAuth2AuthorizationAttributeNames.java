@@ -16,6 +16,7 @@
 package org.springframework.security.oauth2.server.authorization;
 
 
+import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 
@@ -38,5 +39,10 @@ public interface OAuth2AuthorizationAttributeNames {
 	 * The name of the attribute used for the {@link OAuth2AuthorizationRequest}.
 	 */
 	String AUTHORIZATION_REQUEST = OAuth2Authorization.class.getName().concat(".AUTHORIZATION_REQUEST");
+
+	/**
+	 * The name of the attribute used for the attributes/claims of the {@link OAuth2AccessToken}.
+	 */
+	String ACCESS_TOKEN_ATTRIBUTES = OAuth2Authorization.class.getName().concat(".ACCESS_TOKEN_ATTRIBUTES");
 
 }

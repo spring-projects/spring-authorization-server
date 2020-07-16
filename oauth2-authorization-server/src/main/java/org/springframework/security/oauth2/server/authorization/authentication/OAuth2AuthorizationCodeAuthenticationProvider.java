@@ -18,13 +18,17 @@ package org.springframework.security.oauth2.server.authorization.authentication;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.crypto.keygen.Base64StringKeyGenerator;
-import org.springframework.security.crypto.keygen.StringKeyGenerator;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
+import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
+import org.springframework.security.oauth2.jose.JoseHeader;
+import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtClaimsSet;
+import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationAttributeNames;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
@@ -33,9 +37,12 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URL;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Base64;
+import java.util.Collections;
 
 /**
  * An {@link AuthenticationProvider} implementation for the OAuth 2.0 Authorization Code Grant.
@@ -46,26 +53,30 @@ import java.util.Base64;
  * @see OAuth2AccessTokenAuthenticationToken
  * @see RegisteredClientRepository
  * @see OAuth2AuthorizationService
+ * @see JwtEncoder
  * @see <a target="_blank" href="https://tools.ietf.org/html/rfc6749#section-4.1">Section 4.1 Authorization Code Grant</a>
  * @see <a target="_blank" href="https://tools.ietf.org/html/rfc6749#section-4.1.3">Section 4.1.3 Access Token Request</a>
  */
 public class OAuth2AuthorizationCodeAuthenticationProvider implements AuthenticationProvider {
 	private final RegisteredClientRepository registeredClientRepository;
 	private final OAuth2AuthorizationService authorizationService;
-	private final StringKeyGenerator accessTokenGenerator = new Base64StringKeyGenerator(Base64.getUrlEncoder());
+	private final JwtEncoder jwtEncoder;
 
 	/**
 	 * Constructs an {@code OAuth2AuthorizationCodeAuthenticationProvider} using the provided parameters.
 	 *
 	 * @param registeredClientRepository the repository of registered clients
 	 * @param authorizationService the authorization service
+	 * @param jwtEncoder the jwt encoder
 	 */
 	public OAuth2AuthorizationCodeAuthenticationProvider(RegisteredClientRepository registeredClientRepository,
-			OAuth2AuthorizationService authorizationService) {
+			OAuth2AuthorizationService authorizationService, JwtEncoder jwtEncoder) {
 		Assert.notNull(registeredClientRepository, "registeredClientRepository cannot be null");
 		Assert.notNull(authorizationService, "authorizationService cannot be null");
+		Assert.notNull(jwtEncoder, "jwtEncoder cannot be null");
 		this.registeredClientRepository = registeredClientRepository;
 		this.authorizationService = authorizationService;
+		this.jwtEncoder = jwtEncoder;
 	}
 
 	@Override
@@ -105,13 +116,34 @@ public class OAuth2AuthorizationCodeAuthenticationProvider implements Authentica
 			throw new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_GRANT));
 		}
 
-		String tokenValue = this.accessTokenGenerator.generateKey();
+		JoseHeader joseHeader = JoseHeader.withAlgorithm(SignatureAlgorithm.RS256).build();
+
+		// TODO Allow configuration for issuer claim
+		URL issuer = null;
+		try {
+			issuer = URI.create("https://oauth2.provider.com").toURL();
+		} catch (MalformedURLException e) { }
+
 		Instant issuedAt = Instant.now();
-		Instant expiresAt = issuedAt.plus(1, ChronoUnit.HOURS);		// TODO Allow configuration for access token lifespan
+		Instant expiresAt = issuedAt.plus(1, ChronoUnit.HOURS);		// TODO Allow configuration for access token time-to-live
+
+		JwtClaimsSet jwtClaimsSet = JwtClaimsSet.withClaims()
+				.issuer(issuer)
+				.subject(authorization.getPrincipalName())
+				.audience(Collections.singletonList(clientPrincipal.getRegisteredClient().getClientId()))
+				.issuedAt(issuedAt)
+				.expiresAt(expiresAt)
+				.notBefore(issuedAt)
+				.claim(OAuth2ParameterNames.SCOPE, authorizationRequest.getScopes())
+				.build();
+
+		Jwt jwt = this.jwtEncoder.encode(joseHeader, jwtClaimsSet);
+
 		OAuth2AccessToken accessToken = new OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER,
-				tokenValue, issuedAt, expiresAt, authorizationRequest.getScopes());
+				jwt.getTokenValue(), jwt.getIssuedAt(), jwt.getExpiresAt(), jwt.getClaim(OAuth2ParameterNames.SCOPE));
 
 		authorization = OAuth2Authorization.from(authorization)
+				.attribute(OAuth2AuthorizationAttributeNames.ACCESS_TOKEN_ATTRIBUTES, jwt)
 				.accessToken(accessToken)
 				.build();
 		this.authorizationService.save(authorization);

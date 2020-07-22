@@ -1,0 +1,17 @@
+apply plugin: 'io.spring.convention.spring-module'
+
+dependencies {
+	compile project(':spring-security-core2')
+	compile 'org.springframework.security:spring-security-core'
+	compile 'org.springframework.security:spring-security-web'
+	compile 'org.springframework.security:spring-security-oauth2-core'
+	compile springCoreDependency
+	compile 'com.fasterxml.jackson.core:jackson-databind'
+
+	testCompile 'org.springframework:spring-webmvc'
+	testCompile 'junit:junit'
+	testCompile 'org.assertj:assertj-core'
+	testCompile 'org.mockito:mockito-core'
+
+	provided 'javax.servlet:javax.servlet-api'
+}

@@ -1,0 +1,14 @@
+apply plugin: 'io.spring.convention.spring-module'
+
+dependencies {
+	compile 'org.springframework.security:spring-security-core'
+	compile springCoreDependency
+
+	testCompile 'junit:junit'
+	testCompile 'org.assertj:assertj-core'
+	testCompile 'org.mockito:mockito-core'
+}
+
+jacoco {
+	toolVersion = '0.8.5'
+}

@@ -1,0 +1,18 @@
+apply plugin: 'io.spring.convention.spring-module'
+
+dependencies {
+	compile 'org.springframework.security:spring-security-core'
+	compile 'org.springframework.security:spring-security-config'
+	compile springCoreDependency
+
+	optional project(':spring-security-oauth2-authorization-server')
+	optional project(path: ':spring-security-oauth2-authorization-server', configuration: 'tests')
+
+	testCompile 'org.springframework.security:spring-security-test'
+	testCompile 'junit:junit'
+	testCompile 'org.assertj:assertj-core'
+	testCompile 'org.mockito:mockito-core'
+	testCompile 'com.jayway.jsonpath:json-path'
+
+	provided 'javax.servlet:javax.servlet-api'
+}

@@ -15,7 +15,3 @@ dependencies {
 
 	provided 'javax.servlet:javax.servlet-api'
 }
-
-jacoco {
-	toolVersion = '0.8.5'
-}

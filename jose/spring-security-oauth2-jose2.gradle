@@ -12,3 +12,7 @@ dependencies {
 	testCompile 'org.assertj:assertj-core'
 	testCompile 'org.mockito:mockito-core'
 }
+
+jacoco {
+	toolVersion = '0.8.5'
+}

@@ -9,6 +9,7 @@ dependencies {
 	compile springCoreDependency
 	compile 'com.fasterxml.jackson.core:jackson-databind'
 
+	testCompile project(path: ':spring-security-crypto2', configuration: 'tests')
 	testCompile 'org.springframework:spring-webmvc'
 	testCompile 'junit:junit'
 	testCompile 'org.assertj:assertj-core'

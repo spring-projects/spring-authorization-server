@@ -2,7 +2,7 @@ buildscript {
 	dependencies {
 		classpath 'io.spring.gradle:spring-build-conventions:0.0.33.RELEASE'
 		classpath "org.springframework.boot:spring-boot-gradle-plugin:$springBootVersion"
-
+		classpath 'io.spring.nohttp:nohttp-gradle:0.0.5.RELEASE'
 	}
 	repositories {
 		maven { url 'https://repo.spring.io/plugins-snapshot' }
@@ -10,6 +10,7 @@ buildscript {
 	}
 }
 
+apply plugin: 'io.spring.nohttp'
 apply plugin: 'io.spring.convention.root'
 
 group = 'org.springframework.security.experimental'
@@ -25,4 +26,8 @@ subprojects {
 	plugins.withType(JavaPlugin) {
 		project.sourceCompatibility = '1.8'
 	}
+}
+
+nohttp {
+	allowlistFile = project.file("etc/nohttp/allowlist.lines")
 }

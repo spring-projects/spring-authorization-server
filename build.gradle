@@ -1,7 +1,7 @@
 buildscript {
 	dependencies {
 		classpath 'io.spring.gradle:spring-build-conventions:0.0.33.RELEASE'
-		classpath "org.springframework.boot:spring-boot-gradle-plugin:latest.release"
+		classpath "org.springframework.boot:spring-boot-gradle-plugin:$springBootVersion"
 
 	}
 	repositories {
@@ -14,7 +14,6 @@ apply plugin: 'io.spring.convention.root'
 
 group = 'org.springframework.security.experimental'
 description = 'Spring Authorization Server'
-version = '0.0.1-SNAPSHOT'
 
 repositories {
 	mavenCentral()

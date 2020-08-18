@@ -20,11 +20,14 @@ repositories {
 	mavenCentral()
 }
 
-dependencyManagementExport.projects = subprojects
+dependencyManagementExport.projects = subprojects.findAll { !it.name.contains('-boot') }
 
 subprojects {
 	plugins.withType(JavaPlugin) {
-		project.sourceCompatibility = '1.8'
+		project.sourceCompatibility = "1.8"
+	}
+	tasks.withType(JavaCompile) {
+		options.encoding = "UTF-8"
 	}
 }
 

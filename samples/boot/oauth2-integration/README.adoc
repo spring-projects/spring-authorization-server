@@ -1,0 +1,11 @@
+= OAuth 2.0 Integration Sample
+
+This sample integrates `spring-security-oauth2-client` and `spring-security-oauth2-resource-server` with *Spring Authorization Server*.
+
+== Run the Sample
+
+* Run Authorization Server -> `./gradlew -b samples/boot/oauth2-integration/authorizationserver/spring-security-samples-boot-oauth2-integrated-authorizationserver.gradle bootRun`
+** *IMPORTANT:* Make sure to modify your `/etc/hosts` file to avoid problems with session cookie overwrites between `client` and `authorizationserver`. Simply add the entry `127.0.0.1	auth-server`
+* Run Resource Server -> `./gradlew -b samples/boot/oauth2-integration/resourceserver/spring-security-samples-boot-oauth2-integrated-resourceserver.gradle bootRun`
+* Run Client -> `./gradlew -b samples/boot/oauth2-integration/client/spring-security-samples-boot-oauth2-integrated-client.gradle bootRun`
+* Go to `http://localhost:8080` and login using *user1/password*

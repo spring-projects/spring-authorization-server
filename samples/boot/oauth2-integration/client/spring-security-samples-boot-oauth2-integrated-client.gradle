@@ -1,0 +1,14 @@
+apply plugin: 'io.spring.convention.spring-sample-boot'
+
+dependencies {
+	compile 'org.springframework.boot:spring-boot-starter-web'
+	compile 'org.springframework.boot:spring-boot-starter-thymeleaf'
+	compile 'org.springframework.boot:spring-boot-starter-security'
+	compile 'org.springframework.boot:spring-boot-starter-oauth2-client'
+	compile 'org.springframework:spring-webflux'
+	compile 'io.projectreactor.netty:reactor-netty'
+	compile 'org.thymeleaf.extras:thymeleaf-extras-springsecurity5'
+	compile 'org.webjars:webjars-locator-core'
+	compile 'org.webjars:bootstrap:3.4.1'
+	compile 'org.webjars:jquery:3.4.1'
+}

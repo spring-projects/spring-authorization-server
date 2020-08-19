@@ -20,6 +20,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.oauth2.server.authorization.OAuth2AuthorizationServerConfigurer;
 import org.springframework.security.oauth2.server.authorization.web.OAuth2TokenEndpointFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.security.web.util.matcher.OrRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 
 import static org.springframework.security.config.Customizer.withDefaults;
@@ -35,14 +36,18 @@ public class OAuth2AuthorizationServerSecurity extends WebSecurityConfigurerAdap
 	// @formatter:off
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
+		OAuth2AuthorizationServerConfigurer<HttpSecurity> authorizationServerConfigurer =
+				new OAuth2AuthorizationServerConfigurer<>();
+
 		http
+			.requestMatcher(new OrRequestMatcher(authorizationServerConfigurer.getEndpointMatchers()))
 			.authorizeRequests(authorizeRequests ->
 				authorizeRequests
 						.anyRequest().authenticated()
 			)
 			.formLogin(withDefaults())
 			.csrf(csrf -> csrf.ignoringRequestMatchers(tokenEndpointMatcher()))
-			.apply(new OAuth2AuthorizationServerConfigurer<>());
+			.apply(authorizationServerConfigurer);
 	}
 	// @formatter:on
 

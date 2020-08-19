@@ -40,9 +40,12 @@ import org.springframework.security.web.access.intercept.FilterSecurityIntercept
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.preauth.AbstractPreAuthenticatedProcessingFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -59,6 +62,13 @@ import java.util.Map;
  */
 public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBuilder<B>>
 		extends AbstractHttpConfigurer<OAuth2AuthorizationServerConfigurer<B>, B> {
+
+	private final RequestMatcher authorizationEndpointMatcher = new AntPathRequestMatcher(
+			OAuth2AuthorizationEndpointFilter.DEFAULT_AUTHORIZATION_ENDPOINT_URI, HttpMethod.GET.name());
+	private final RequestMatcher tokenEndpointMatcher = new AntPathRequestMatcher(
+			OAuth2TokenEndpointFilter.DEFAULT_TOKEN_ENDPOINT_URI, HttpMethod.POST.name());
+	private final RequestMatcher jwkSetEndpointMatcher = new AntPathRequestMatcher(
+			JwkSetEndpointFilter.DEFAULT_JWK_SET_ENDPOINT_URI, HttpMethod.GET.name());
 
 	/**
 	 * Sets the repository of registered clients.
@@ -96,6 +106,16 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 		return this;
 	}
 
+	/**
+	 * Returns a {@code List} of {@link RequestMatcher}'s for the authorization server endpoints.
+	 *
+	 * @return a {@code List} of {@link RequestMatcher}'s for the authorization server endpoints
+	 */
+	public List<RequestMatcher> getEndpointMatchers() {
+		return Arrays.asList(this.authorizationEndpointMatcher,
+				this.tokenEndpointMatcher, this.jwkSetEndpointMatcher);
+	}
+
 	@Override
 	public void init(B builder) {
 		OAuth2ClientAuthenticationProvider clientAuthenticationProvider =
@@ -122,10 +142,7 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 		if (exceptionHandling != null) {
 			// Register the default AuthenticationEntryPoint for the token endpoint
 			exceptionHandling.defaultAuthenticationEntryPointFor(
-					new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED),
-					new AntPathRequestMatcher(
-							OAuth2TokenEndpointFilter.DEFAULT_TOKEN_ENDPOINT_URI,
-							HttpMethod.POST.name()));
+					new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED), this.tokenEndpointMatcher);
 		}
 	}
 
@@ -136,10 +153,8 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 
 		AuthenticationManager authenticationManager = builder.getSharedObject(AuthenticationManager.class);
 
-		OAuth2ClientAuthenticationFilter clientAuthenticationFilter =
-				new OAuth2ClientAuthenticationFilter(
-						authenticationManager,
-						new AntPathRequestMatcher(OAuth2TokenEndpointFilter.DEFAULT_TOKEN_ENDPOINT_URI, HttpMethod.POST.name()));
+		OAuth2ClientAuthenticationFilter clientAuthenticationFilter = new OAuth2ClientAuthenticationFilter(
+				authenticationManager, this.tokenEndpointMatcher);
 		builder.addFilterAfter(postProcess(clientAuthenticationFilter), AbstractPreAuthenticatedProcessingFilter.class);
 
 		OAuth2AuthorizationEndpointFilter authorizationEndpointFilter =

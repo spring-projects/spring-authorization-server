@@ -15,8 +15,12 @@
  */
 package org.springframework.security.config.annotation.web.configuration;
 
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.oauth2.server.authorization.OAuth2AuthorizationServerConfigurer;
+import org.springframework.security.oauth2.server.authorization.web.OAuth2TokenEndpointFilter;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.security.web.util.matcher.RequestMatcher;
 
 import static org.springframework.security.config.Customizer.withDefaults;
 
@@ -37,8 +41,14 @@ public class OAuth2AuthorizationServerSecurity extends WebSecurityConfigurerAdap
 						.anyRequest().authenticated()
 			)
 			.formLogin(withDefaults())
+			.csrf(csrf -> csrf.ignoringRequestMatchers(tokenEndpointMatcher()))
 			.apply(new OAuth2AuthorizationServerConfigurer<>());
 	}
 	// @formatter:on
 
+	private static RequestMatcher tokenEndpointMatcher() {
+		return new AntPathRequestMatcher(
+				OAuth2TokenEndpointFilter.DEFAULT_TOKEN_ENDPOINT_URI,
+				HttpMethod.POST.name());
+	}
 }

@@ -49,7 +49,6 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -88,8 +87,7 @@ public class OAuth2ClientCredentialsGrantTests {
 		this.spring.register(AuthorizationServerConfiguration.class).autowire();
 
 		this.mvc.perform(MockMvcRequestBuilders.post(OAuth2TokenEndpointFilter.DEFAULT_TOKEN_ENDPOINT_URI)
-				.param(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
-				.with(csrf()))
+				.param(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.CLIENT_CREDENTIALS.getValue()))
 				.andExpect(status().isUnauthorized());
 
 		verifyNoInteractions(registeredClientRepository);
@@ -108,8 +106,7 @@ public class OAuth2ClientCredentialsGrantTests {
 				.param(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
 				.param(OAuth2ParameterNames.SCOPE, "scope1 scope2")
 				.header(HttpHeaders.AUTHORIZATION, "Basic " + encodeBasicAuth(
-						registeredClient.getClientId(), registeredClient.getClientSecret()))
-				.with(csrf()))
+						registeredClient.getClientId(), registeredClient.getClientSecret())))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.access_token").isNotEmpty())
 				.andExpect(jsonPath("$.scope").value("scope1 scope2"));

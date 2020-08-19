@@ -1,19 +1,20 @@
 apply plugin: 'io.spring.convention.spring-module'
 
 dependencies {
-	compile project(':spring-security-core2')
-	compile project(':spring-security-oauth2-jose2')
-	compile 'org.springframework.security:spring-security-core'
+	compile 'org.springframework.security:spring-security-config'
 	compile 'org.springframework.security:spring-security-web'
 	compile 'org.springframework.security:spring-security-oauth2-core'
+	compile 'org.springframework.security:spring-security-oauth2-jose'
 	compile springCoreDependency
+	compile 'com.nimbusds:nimbus-jose-jwt'
 	compile 'com.fasterxml.jackson.core:jackson-databind'
 
-	testCompile project(path: ':spring-security-crypto2', configuration: 'tests')
+	testCompile 'org.springframework.security:spring-security-test'
 	testCompile 'org.springframework:spring-webmvc'
 	testCompile 'junit:junit'
 	testCompile 'org.assertj:assertj-core'
 	testCompile 'org.mockito:mockito-core'
+	testCompile 'com.jayway.jsonpath:json-path'
 
 	provided 'javax.servlet:javax.servlet-api'
 }

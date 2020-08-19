@@ -4,6 +4,4 @@ dependencies {
 	compile 'org.springframework.boot:spring-boot-starter-web'
 	compile 'org.springframework.boot:spring-boot-starter-security'
 	compile project(':spring-security-oauth2-authorization-server')
-	compile project(':spring-security-config2')
-	compile project(':spring-security-crypto2')
 }

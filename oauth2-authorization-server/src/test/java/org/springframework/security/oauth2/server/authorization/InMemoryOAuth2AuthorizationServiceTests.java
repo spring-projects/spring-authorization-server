@@ -22,7 +22,6 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
 
 import java.time.Instant;
-import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -41,13 +40,6 @@ public class InMemoryOAuth2AuthorizationServiceTests {
 	@Before
 	public void setup() {
 		this.authorizationService = new InMemoryOAuth2AuthorizationService();
-	}
-
-	@Test
-	public void constructorWhenAuthorizationListNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> new InMemoryOAuth2AuthorizationService(null))
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("authorizations cannot be empty");
 	}
 
 	@Test
@@ -83,7 +75,7 @@ public class InMemoryOAuth2AuthorizationServiceTests {
 				.principalName(PRINCIPAL_NAME)
 				.attribute(OAuth2AuthorizationAttributeNames.CODE, AUTHORIZATION_CODE)
 				.build();
-		this.authorizationService = new InMemoryOAuth2AuthorizationService(Collections.singletonList(authorization));
+		this.authorizationService.save(authorization);
 
 		OAuth2Authorization result = this.authorizationService.findByToken(
 				AUTHORIZATION_CODE, TokenType.AUTHORIZATION_CODE);

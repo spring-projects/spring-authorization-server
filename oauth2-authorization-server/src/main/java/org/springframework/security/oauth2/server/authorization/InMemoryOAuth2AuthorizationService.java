@@ -16,48 +16,37 @@
 package org.springframework.security.oauth2.server.authorization;
 
 import org.springframework.lang.Nullable;
+import org.springframework.security.core.SpringSecurityCoreVersion2;
 import org.springframework.util.Assert;
 
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.io.Serializable;
+import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * An {@link OAuth2AuthorizationService} that stores {@link OAuth2Authorization}'s in-memory.
  *
  * @author Krisztian Toth
+ * @author Joe Grandja
  * @since 0.0.1
  * @see OAuth2AuthorizationService
  */
 public final class InMemoryOAuth2AuthorizationService implements OAuth2AuthorizationService {
-	private final List<OAuth2Authorization> authorizations;
-
-	/**
-	 * Constructs an {@code InMemoryOAuth2AuthorizationService}.
-	 */
-	public InMemoryOAuth2AuthorizationService() {
-		this.authorizations = new CopyOnWriteArrayList<>();
-	}
-
-	/**
-	 * Constructs an {@code InMemoryOAuth2AuthorizationService} using the provided parameters.
-	 *
-	 * @param authorizations the initial {@code List} of {@link OAuth2Authorization}(s)
-	 */
-	public InMemoryOAuth2AuthorizationService(List<OAuth2Authorization> authorizations) {
-		Assert.notEmpty(authorizations, "authorizations cannot be empty");
-		this.authorizations = new CopyOnWriteArrayList<>(authorizations);
-	}
+	private final Map<OAuth2AuthorizationId, OAuth2Authorization> authorizations = new ConcurrentHashMap<>();
 
 	@Override
 	public void save(OAuth2Authorization authorization) {
 		Assert.notNull(authorization, "authorization cannot be null");
-		this.authorizations.add(authorization);
+		OAuth2AuthorizationId authorizationId = new OAuth2AuthorizationId(
+				authorization.getRegisteredClientId(), authorization.getPrincipalName());
+		this.authorizations.put(authorizationId, authorization);
 	}
 
 	@Override
 	public OAuth2Authorization findByToken(String token, @Nullable TokenType tokenType) {
 		Assert.hasText(token, "token cannot be empty");
-		return this.authorizations.stream()
+		return this.authorizations.values().stream()
 				.filter(authorization -> hasToken(authorization, token, tokenType))
 				.findFirst()
 				.orElse(null);
@@ -71,5 +60,34 @@ public final class InMemoryOAuth2AuthorizationService implements OAuth2Authoriza
 					authorization.getAccessToken().getTokenValue().equals(token);
 		}
 		return false;
+	}
+
+	private static class OAuth2AuthorizationId implements Serializable {
+		private static final long serialVersionUID = SpringSecurityCoreVersion2.SERIAL_VERSION_UID;
+		private final String registeredClientId;
+		private final String principalName;
+
+		private OAuth2AuthorizationId(String registeredClientId, String principalName) {
+			this.registeredClientId = registeredClientId;
+			this.principalName = principalName;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj) {
+				return true;
+			}
+			if (obj == null || getClass() != obj.getClass()) {
+				return false;
+			}
+			OAuth2AuthorizationId that = (OAuth2AuthorizationId) obj;
+			return Objects.equals(this.registeredClientId, that.registeredClientId) &&
+					Objects.equals(this.principalName, that.principalName);
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(this.registeredClientId, this.principalName);
+		}
 	}
 }

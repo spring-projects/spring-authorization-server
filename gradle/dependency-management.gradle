@@ -10,6 +10,12 @@ if (!project.hasProperty("reactorVersion")) {
 	ext.reactorVersion = "Dysprosium-SR+"
 }
 
+if (!project.hasProperty("locksDisabled")) {
+	dependencyLocking {
+		lockAllConfigurations()
+	}
+}
+
 dependencyManagement {
 	imports {
 		mavenBom "org.springframework:spring-framework-bom:$springVersion"

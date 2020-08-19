@@ -1,0 +1,14 @@
+apply plugin: "java-gradle-plugin"
+
+repositories {
+	mavenCentral()
+}
+
+gradlePlugin {
+	plugins {
+		locks {
+			id = "locks"
+			implementationClass = "lock.GlobalLockPlugin"
+		}
+	}
+}

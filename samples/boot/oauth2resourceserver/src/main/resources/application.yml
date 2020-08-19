@@ -1,6 +1,0 @@
-spring:
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          jwk-set-uri: https://localhost:8090/oauth2/keys

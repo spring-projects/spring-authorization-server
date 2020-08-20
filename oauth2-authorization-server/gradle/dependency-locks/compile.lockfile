@@ -1,0 +1,23 @@
+# This is a Gradle generated file for dependency locking.
+# Manual edits can break the build and are not advised.
+# This file is expected to be part of source control.
+com.fasterxml.jackson.core:jackson-annotations:2.11.2
+com.fasterxml.jackson.core:jackson-core:2.11.2
+com.fasterxml.jackson.core:jackson-databind:2.11.2
+com.github.stephenc.jcip:jcip-annotations:1.0-1
+com.nimbusds:nimbus-jose-jwt:8.20
+net.minidev:accessors-smart:1.2
+net.minidev:json-smart:2.3
+org.ow2.asm:asm:5.0.4
+org.springframework.security:spring-security-config:5.3.4.RELEASE
+org.springframework.security:spring-security-core:5.3.4.RELEASE
+org.springframework.security:spring-security-oauth2-core:5.3.4.RELEASE
+org.springframework.security:spring-security-oauth2-jose:5.3.4.RELEASE
+org.springframework.security:spring-security-web:5.3.4.RELEASE
+org.springframework:spring-aop:5.2.8.RELEASE
+org.springframework:spring-beans:5.2.8.RELEASE
+org.springframework:spring-context:5.2.8.RELEASE
+org.springframework:spring-core:5.2.8.RELEASE
+org.springframework:spring-expression:5.2.8.RELEASE
+org.springframework:spring-jcl:5.2.8.RELEASE
+org.springframework:spring-web:5.2.8.RELEASE

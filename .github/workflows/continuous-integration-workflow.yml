@@ -32,7 +32,7 @@ jobs:
           export GRADLE_ENTERPRISE_CACHE_USERNAME="$GRADLE_ENTERPRISE_CACHE_USER"
           export GRADLE_ENTERPRISE_CACHE_PASSWORD="$GRADLE_ENTERPRISE_CACHE_PASSWORD"
           export GRADLE_ENTERPRISE_ACCESS_KEY="$GRADLE_ENTERPRISE_SECRET_ACCESS_KEY"
-          ./gradlew clean build --continue
+          ./gradlew clean build --continue --refresh-dependencies
   test_alternate_jdks:
     name: Test JDK 11 and 12
     runs-on: ubuntu-latest
@@ -56,7 +56,7 @@ jobs:
           export GRADLE_ENTERPRISE_CACHE_USERNAME="$GRADLE_ENTERPRISE_CACHE_USER"
           export GRADLE_ENTERPRISE_CACHE_PASSWORD="$GRADLE_ENTERPRISE_CACHE_PASSWORD"
           export GRADLE_ENTERPRISE_ACCESS_KEY="$GRADLE_ENTERPRISE_SECRET_ACCESS_KEY"
-          ./gradlew test --stacktrace
+          ./gradlew test --stacktrace --refresh-dependencies
   snapshot_tests:
     name: Test against snapshots
     runs-on: ubuntu-latest
@@ -71,7 +71,7 @@ jobs:
           export GRADLE_ENTERPRISE_CACHE_USERNAME="$GRADLE_ENTERPRISE_CACHE_USER"
           export GRADLE_ENTERPRISE_CACHE_PASSWORD="$GRADLE_ENTERPRISE_CACHE_PASSWORD"
           export GRADLE_ENTERPRISE_ACCESS_KEY="$GRADLE_ENTERPRISE_SECRET_ACCESS_KEY"
-          ./gradlew test --refresh-dependencies -PforceMavenRepositories=snapshot -PspringVersion='5.+' -PspringSecurityVersion='5.+' -PreactorVersion='20+' -PspringBootVersion=2.4.0-SNAPSHOT -PlocksDisabled --stacktrace
+          ./gradlew test --refresh-dependencies -PforceMavenRepositories=snapshot -PspringVersion='5.+' -PspringSecurityVersion='5.+' -PreactorVersion='20+' -PspringBootVersion=2.4.0-SNAPSHOT -PlocksDisabled --stacktrace --refresh-dependencies
   sonar_analysis:
     name: Static Code Analysis
     runs-on: ubuntu-latest
@@ -91,14 +91,14 @@ jobs:
           export GRADLE_ENTERPRISE_CACHE_USERNAME="$GRADLE_ENTERPRISE_CACHE_USER"
           export GRADLE_ENTERPRISE_CACHE_PASSWORD="$GRADLE_ENTERPRISE_CACHE_PASSWORD"
           export GRADLE_ENTERPRISE_ACCESS_KEY="$GRADLE_ENTERPRISE_SECRET_ACCESS_KEY"
-          ./gradlew sonarqube -PexcludeProjects='**/samples/**' -Dsonar.projectKey="spring-security-${GITHUB_REF#refs/heads/}" -Dsonar.projectName="spring-security-${GITHUB_REF#refs/heads/}" -Dsonar.host.url="$SONAR_URL" -Dsonar.login="$SONAR_TOKEN" --stacktrace
+          ./gradlew sonarqube -PexcludeProjects='**/samples/**' -Dsonar.projectKey="spring-security-${GITHUB_REF#refs/heads/}" -Dsonar.projectName="spring-security-${GITHUB_REF#refs/heads/}" -Dsonar.host.url="$SONAR_URL" -Dsonar.login="$SONAR_TOKEN" --stacktrace --refresh-dependencies
       - name: Run Sonar on master
         if: ${{ github.ref == 'refs/heads/master' }}
         run: |
           export GRADLE_ENTERPRISE_CACHE_USERNAME="$GRADLE_ENTERPRISE_CACHE_USER"
           export GRADLE_ENTERPRISE_CACHE_PASSWORD="$GRADLE_ENTERPRISE_CACHE_PASSWORD"
           export GRADLE_ENTERPRISE_ACCESS_KEY="$GRADLE_ENTERPRISE_SECRET_ACCESS_KEY"
-          ./gradlew sonarqube -PexcludeProjects='**/samples/**' -Dsonar.host.url="$SONAR_URL" -Dsonar.login="$SONAR_TOKEN" --stacktrace
+          ./gradlew sonarqube -PexcludeProjects='**/samples/**' -Dsonar.host.url="$SONAR_URL" -Dsonar.login="$SONAR_TOKEN" --stacktrace --refresh-dependencies
   deploy_artifacts:
     name: Deploy Artifacts
     needs: [build, snapshot_tests, sonar_analysis]
@@ -117,7 +117,7 @@ jobs:
           export VERSION_HEADER=$'Version: GnuPG v2\n\n'
           export ORG_GRADLE_PROJECT_signingKey=${GPG_PRIVATE_KEY#"$VERSION_HEADER"}
           export ORG_GRADLE_PROJECT_signingPassword="$GPG_PASSPHRASE"
-          ./gradlew deployArtifacts finalizeDeployArtifacts -PossrhUsername="$OSSRH_USERNAME" -PossrhPassword="$OSSRH_PASSWORD" -PartifactoryUsername="$ARTIFACTORY_USERNAME" -PartifactoryPassword="$ARTIFACTORY_PASSWORD" --stacktrace
+          ./gradlew deployArtifacts finalizeDeployArtifacts -PossrhUsername="$OSSRH_USERNAME" -PossrhPassword="$OSSRH_PASSWORD" -PartifactoryUsername="$ARTIFACTORY_USERNAME" -PartifactoryPassword="$ARTIFACTORY_PASSWORD" --stacktrace --refresh-dependencies
         env:
           GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
           GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
@@ -140,7 +140,7 @@ jobs:
           export GRADLE_ENTERPRISE_CACHE_USERNAME="$GRADLE_ENTERPRISE_CACHE_USER"
           export GRADLE_ENTERPRISE_CACHE_PASSWORD="$GRADLE_ENTERPRISE_CACHE_PASSWORD"
           export GRADLE_ENTERPRISE_ACCESS_KEY="$GRADLE_ENTERPRISE_SECRET_ACCESS_KEY"
-          ./gradlew deployDocs -PdeployDocsSshKey="$DOCS_SSH_KEY" -PdeployDocsSshUsername="$DOCS_USERNAME" -PdeployDocsHost="$DOCS_HOST" --stacktrace
+          ./gradlew deployDocs -PdeployDocsSshKey="$DOCS_SSH_KEY" -PdeployDocsSshUsername="$DOCS_USERNAME" -PdeployDocsHost="$DOCS_HOST" --stacktrace --refresh-dependencies
         env:
           DOCS_USERNAME: ${{ secrets.DOCS_USERNAME }}
           DOCS_SSH_KEY: ${{ secrets.DOCS_SSH_KEY }}

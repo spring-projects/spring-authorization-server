@@ -13,19 +13,6 @@
                 <div class="container">
                     <div class="container-fluid">
                         <div class="navbar-collapse collapse" id="navbar">
-                            <ul class="nav navbar-nav navbar-right">
-                                <li class="dropdown">
-                                    <a id="user-menu" href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
-                                        <span sec:authentication="name">User</span>
-                                    </a>
-                                    <ul class="dropdown-menu">
-                                        <li><a id="sign-out" href="javascript:document.logoutForm.submit()">Sign Out</a></li>
-                                    </ul>
-                                    <form name="logoutForm" th:action="@{/logout}" method="post" th:hidden="true">
-                                        <input hidden type="submit" value="Sign Out"/>
-                                    </form>
-                                </li>
-                            </ul>
                         </div>
                     </div>
                 </div>

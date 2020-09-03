@@ -15,6 +15,8 @@
  */
 package org.springframework.security.config.annotation.web.configuration;
 
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.oauth2.server.authorization.OAuth2AuthorizationServerConfigurer;
@@ -31,6 +33,7 @@ import static org.springframework.security.config.Customizer.withDefaults;
  * @author Joe Grandja
  * @since 0.0.1
  */
+@Order(Ordered.HIGHEST_PRECEDENCE)
 public class OAuth2AuthorizationServerSecurity extends WebSecurityConfigurerAdapter {
 
 	// @formatter:off

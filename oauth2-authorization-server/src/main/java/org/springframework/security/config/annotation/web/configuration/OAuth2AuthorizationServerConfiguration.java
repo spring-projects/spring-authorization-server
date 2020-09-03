@@ -26,7 +26,7 @@ import org.springframework.security.config.annotation.web.builders.WebSecurity;
  * @author Joe Grandja
  * @since 0.0.1
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 public class OAuth2AuthorizationServerConfiguration {
 
 	@Bean

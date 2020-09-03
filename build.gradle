@@ -17,6 +17,8 @@ apply plugin: 'io.spring.convention.root'
 group = 'org.springframework.security.experimental'
 description = 'Spring Authorization Server'
 
+ext.snapshotBuild = version.contains("SNAPSHOT")
+
 repositories {
 	mavenCentral()
 }

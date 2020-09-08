@@ -1,0 +1,15 @@
+= Spring Authorization Server Reference
+Joe Grandja
+:include-dir: _includes
+:security-api-url: https://docs.spring.io/spring-authorization-server/site/docs/current/api/
+:source-indent: 0
+:tabsize: 4
+:toc: left
+
+== Preface
+
+#TODO:# Document preface
+
+== Introduction
+
+#TODO:# Document introduction

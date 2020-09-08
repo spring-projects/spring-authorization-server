@@ -24,8 +24,8 @@ dependencyManagement {
 	}
 
 	dependencies {
-		dependency "com.nimbusds:oauth2-oidc-sdk:latest.release"
-		dependency "com.nimbusds:nimbus-jose-jwt:latest.release"
+		dependency "com.nimbusds:oauth2-oidc-sdk:8.+"
+		dependency "com.nimbusds:nimbus-jose-jwt:8.+"
 		dependency "com.fasterxml.jackson.core:jackson-databind:2.+"
 		dependency "javax.servlet:javax.servlet-api:4.+"
 		dependency 'junit:junit:latest.release'

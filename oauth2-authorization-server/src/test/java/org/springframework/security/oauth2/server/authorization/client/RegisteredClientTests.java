@@ -322,6 +322,9 @@ public class RegisteredClientTests {
 		RegisteredClient registration = TestRegisteredClients.registeredClient().build();
 		RegisteredClient updated = RegisteredClient.withRegisteredClient(registration).build();
 
+		assertThat(registration.getId()).isEqualTo(updated.getId());
+		assertThat(registration.getClientId()).isEqualTo(updated.getClientId());
+		assertThat(registration.getClientSecret()).isEqualTo(updated.getClientSecret());
 		assertThat(registration.getClientAuthenticationMethods()).isEqualTo(updated.getClientAuthenticationMethods());
 		assertThat(registration.getClientAuthenticationMethods()).isNotSameAs(updated.getClientAuthenticationMethods());
 		assertThat(registration.getAuthorizationGrantTypes()).isEqualTo(updated.getAuthorizationGrantTypes());
@@ -330,20 +333,10 @@ public class RegisteredClientTests {
 		assertThat(registration.getRedirectUris()).isNotSameAs(updated.getRedirectUris());
 		assertThat(registration.getScopes()).isEqualTo(updated.getScopes());
 		assertThat(registration.getScopes()).isNotSameAs(updated.getScopes());
-	}
-
-	@Test
-	public void buildWhenRegisteredClientProvidedThenEachPropertyMatches() {
-		RegisteredClient registration = TestRegisteredClients.registeredClient().build();
-		RegisteredClient updated = RegisteredClient.withRegisteredClient(registration).build();
-
-		assertThat(registration.getId()).isEqualTo(updated.getId());
-		assertThat(registration.getClientId()).isEqualTo(updated.getClientId());
-		assertThat(registration.getClientSecret()).isEqualTo(updated.getClientSecret());
-		assertThat(registration.getClientAuthenticationMethods()).isEqualTo(updated.getClientAuthenticationMethods());
-		assertThat(registration.getAuthorizationGrantTypes()).isEqualTo(updated.getAuthorizationGrantTypes());
-		assertThat(registration.getRedirectUris()).isEqualTo(updated.getRedirectUris());
-		assertThat(registration.getScopes()).isEqualTo(updated.getScopes());
+		assertThat(registration.getClientSettings().settings()).isEqualTo(updated.getClientSettings().settings());
+		assertThat(registration.getClientSettings()).isNotSameAs(updated.getClientSettings());
+		assertThat(registration.getTokenSettings().settings()).isEqualTo(updated.getTokenSettings().settings());
+		assertThat(registration.getTokenSettings()).isNotSameAs(updated.getTokenSettings());
 	}
 
 	@Test

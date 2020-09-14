@@ -31,6 +31,7 @@ import org.springframework.security.oauth2.server.authorization.OAuth2Authorizat
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientCredentialsAuthenticationProvider;
+import org.springframework.security.oauth2.server.authorization.authentication.OAuth2OwnerPasswordCredentialsAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.web.JwkSetEndpointFilter;
 import org.springframework.security.oauth2.server.authorization.web.OAuth2AuthorizationEndpointFilter;
@@ -137,6 +138,12 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 						getAuthorizationService(builder),
 						jwtEncoder);
 		builder.authenticationProvider(postProcess(clientCredentialsAuthenticationProvider));
+
+		OAuth2OwnerPasswordCredentialsAuthenticationProvider clientPasswordAuthenticationProvider =
+				new OAuth2OwnerPasswordCredentialsAuthenticationProvider(
+						getAuthorizationService(builder),
+						jwtEncoder);
+		builder.authenticationProvider(postProcess(clientPasswordAuthenticationProvider));
 
 		ExceptionHandlingConfigurer<B> exceptionHandling = builder.getConfigurer(ExceptionHandlingConfigurer.class);
 		if (exceptionHandling != null) {

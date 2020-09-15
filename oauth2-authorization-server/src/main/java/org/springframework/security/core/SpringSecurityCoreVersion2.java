@@ -24,7 +24,7 @@ package org.springframework.security.core;
 public final class SpringSecurityCoreVersion2 {
 	private static final int MAJOR = 0;
 	private static final int MINOR = 0;
-	private static final int PATCH = 1;
+	private static final int PATCH = 2;
 
 	/**
 	 * Global Serialization value for Spring Security Authorization Server classes.

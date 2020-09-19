@@ -16,7 +16,7 @@
 package org.springframework.security.oauth2.server.authorization;
 
 import org.springframework.lang.Nullable;
-import org.springframework.security.core.SpringSecurityCoreVersion2;
+import org.springframework.security.oauth2.server.authorization.Version;
 import org.springframework.util.Assert;
 
 import java.io.Serializable;
@@ -73,7 +73,7 @@ public final class InMemoryOAuth2AuthorizationService implements OAuth2Authoriza
 	}
 
 	private static class OAuth2AuthorizationId implements Serializable {
-		private static final long serialVersionUID = SpringSecurityCoreVersion2.SERIAL_VERSION_UID;
+		private static final long serialVersionUID = Version.SERIAL_VERSION_UID;
 		private final String registeredClientId;
 		private final String principalName;
 

@@ -15,7 +15,7 @@
  */
 package org.springframework.security.oauth2.server.authorization.client;
 
-import org.springframework.security.core.SpringSecurityCoreVersion2;
+import org.springframework.security.oauth2.server.authorization.Version;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.server.authorization.config.ClientSettings;
@@ -40,7 +40,7 @@ import java.util.function.Consumer;
  * @since 0.0.1
  */
 public class RegisteredClient implements Serializable {
-	private static final long serialVersionUID = SpringSecurityCoreVersion2.SERIAL_VERSION_UID;
+	private static final long serialVersionUID = Version.SERIAL_VERSION_UID;
 	private String id;
 	private String clientId;
 	private String clientSecret;
@@ -174,7 +174,7 @@ public class RegisteredClient implements Serializable {
 	 * A builder for {@link RegisteredClient}.
 	 */
 	public static class Builder implements Serializable {
-		private static final long serialVersionUID = SpringSecurityCoreVersion2.SERIAL_VERSION_UID;
+		private static final long serialVersionUID = Version.SERIAL_VERSION_UID;
 		private String id;
 		private String clientId;
 		private String clientSecret;

@@ -15,7 +15,7 @@
  */
 package org.springframework.security.oauth2.server.authorization;
 
-import org.springframework.security.core.SpringSecurityCoreVersion2;
+import org.springframework.security.oauth2.server.authorization.Version;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.util.Assert;
@@ -39,7 +39,7 @@ import java.util.function.Consumer;
  * @see OAuth2AccessToken
  */
 public class OAuth2Authorization implements Serializable {
-	private static final long serialVersionUID = SpringSecurityCoreVersion2.SERIAL_VERSION_UID;
+	private static final long serialVersionUID = Version.SERIAL_VERSION_UID;
 	private String registeredClientId;
 	private String principalName;
 	private OAuth2AccessToken accessToken;
@@ -146,7 +146,7 @@ public class OAuth2Authorization implements Serializable {
 	 * A builder for {@link OAuth2Authorization}.
 	 */
 	public static class Builder implements Serializable {
-		private static final long serialVersionUID = SpringSecurityCoreVersion2.SERIAL_VERSION_UID;
+		private static final long serialVersionUID = Version.SERIAL_VERSION_UID;
 		private String registeredClientId;
 		private String principalName;
 		private OAuth2AccessToken accessToken;

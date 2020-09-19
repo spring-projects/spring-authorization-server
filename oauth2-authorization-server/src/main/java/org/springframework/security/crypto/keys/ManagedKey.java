@@ -16,7 +16,7 @@
 package org.springframework.security.crypto.keys;
 
 import org.springframework.lang.Nullable;
-import org.springframework.security.core.SpringSecurityCoreVersion2;
+import org.springframework.security.oauth2.server.authorization.Version;
 import org.springframework.util.Assert;
 
 import javax.crypto.SecretKey;
@@ -35,7 +35,7 @@ import java.util.Objects;
  * @see KeyManager
  */
 public final class ManagedKey implements Serializable {
-	private static final long serialVersionUID = SpringSecurityCoreVersion2.SERIAL_VERSION_UID;
+	private static final long serialVersionUID = Version.SERIAL_VERSION_UID;
 	private Key key;
 	private PublicKey publicKey;
 	private String keyId;

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.security.core;
+package org.springframework.security.oauth2.server.authorization;
 
 /**
  * Internal class used for serialization across Spring Security Authorization Server classes.
@@ -21,7 +21,7 @@ package org.springframework.security.core;
  * @author Anoop Garlapati
  * @since 0.0.1
  */
-public final class SpringSecurityCoreVersion2 {
+public final class Version {
 	private static final int MAJOR = 0;
 	private static final int MINOR = 0;
 	private static final int PATCH = 2;

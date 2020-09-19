@@ -17,7 +17,7 @@ package org.springframework.security.oauth2.server.authorization.authentication;
 
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.SpringSecurityCoreVersion2;
+import org.springframework.security.oauth2.server.authorization.Version;
 import org.springframework.util.Assert;
 
 import java.util.Collections;
@@ -34,7 +34,7 @@ import java.util.Set;
  * @see OAuth2ClientAuthenticationToken
  */
 public class OAuth2ClientCredentialsAuthenticationToken extends AbstractAuthenticationToken {
-	private static final long serialVersionUID = SpringSecurityCoreVersion2.SERIAL_VERSION_UID;
+	private static final long serialVersionUID = Version.SERIAL_VERSION_UID;
 	private final Authentication clientPrincipal;
 	private final Set<String> scopes;
 

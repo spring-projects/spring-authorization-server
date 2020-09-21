@@ -95,7 +95,7 @@ public class JwkSetEndpointFilter extends OncePerRequestFilter {
 
 		response.setContentType(MediaType.APPLICATION_JSON_VALUE);
 		try (Writer writer = response.getWriter()) {
-			writer.write(jwkSet.toJSONObject().toString());
+			writer.write(jwkSet.toString());
 		}
 	}
 

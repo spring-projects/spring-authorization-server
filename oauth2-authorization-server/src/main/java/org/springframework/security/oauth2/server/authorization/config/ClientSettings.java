@@ -28,6 +28,7 @@ import java.util.Map;
 public class ClientSettings extends Settings {
 	private static final String CLIENT_SETTING_BASE = "spring.security.oauth2.authorization-server.client.";
 	public static final String REQUIRE_PROOF_KEY = CLIENT_SETTING_BASE.concat("require-proof-key");
+	public static final String REQUIRE_USER_CONSENT = CLIENT_SETTING_BASE.concat("require-user-consent");
 
 	/**
 	 * Constructs a {@code ClientSettings}.
@@ -67,9 +68,32 @@ public class ClientSettings extends Settings {
 		return this;
 	}
 
+	/**
+	 * Returns {@code true} if the user's consent is required when the client requests access.
+	 * The default is {@code false}.
+	 *
+	 * @return {@code true} if the user's consent is required when the client requests access, {@code false} otherwise
+	 */
+	public boolean requireUserConsent() {
+		return setting(REQUIRE_USER_CONSENT);
+	}
+
+	/**
+	 * Set to {@code true} if the user's consent is required when the client requests access.
+	 * This applies to all interactive flows (e.g. {@code authorization_code} and {@code device_code}).
+	 *
+	 * @param requireUserConsent {@code true} if the user's consent is required when the client requests access, {@code false} otherwise
+	 * @return the {@link ClientSettings}
+	 */
+	public ClientSettings requireUserConsent(boolean requireUserConsent) {
+		setting(REQUIRE_USER_CONSENT, requireUserConsent);
+		return this;
+	}
+
 	protected static Map<String, Object> defaultSettings() {
 		Map<String, Object> settings = new HashMap<>();
 		settings.put(REQUIRE_PROOF_KEY, false);
+		settings.put(REQUIRE_USER_CONSENT, false);
 		return settings;
 	}
 }

@@ -17,11 +17,8 @@ package org.springframework.security.config.annotation.web.configuration;
 
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.oauth2.server.authorization.OAuth2AuthorizationServerConfigurer;
-import org.springframework.security.oauth2.server.authorization.web.OAuth2TokenEndpointFilter;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.OrRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 
@@ -41,22 +38,17 @@ public class OAuth2AuthorizationServerSecurity extends WebSecurityConfigurerAdap
 	protected void configure(HttpSecurity http) throws Exception {
 		OAuth2AuthorizationServerConfigurer<HttpSecurity> authorizationServerConfigurer =
 				new OAuth2AuthorizationServerConfigurer<>();
+		RequestMatcher[] endpointMatchers = authorizationServerConfigurer
+				.getEndpointMatchers().toArray(new RequestMatcher[0]);
 
 		http
-			.requestMatcher(new OrRequestMatcher(authorizationServerConfigurer.getEndpointMatchers()))
+			.requestMatcher(new OrRequestMatcher(endpointMatchers))
 			.authorizeRequests(authorizeRequests ->
-				authorizeRequests
-						.anyRequest().authenticated()
+					authorizeRequests.anyRequest().authenticated()
 			)
 			.formLogin(withDefaults())
-			.csrf(csrf -> csrf.ignoringRequestMatchers(tokenEndpointMatcher()))
+			.csrf(csrf -> csrf.ignoringRequestMatchers(endpointMatchers))
 			.apply(authorizationServerConfigurer);
 	}
 	// @formatter:on
-
-	private static RequestMatcher tokenEndpointMatcher() {
-		return new AntPathRequestMatcher(
-				OAuth2TokenEndpointFilter.DEFAULT_TOKEN_ENDPOINT_URI,
-				HttpMethod.POST.name());
-	}
 }

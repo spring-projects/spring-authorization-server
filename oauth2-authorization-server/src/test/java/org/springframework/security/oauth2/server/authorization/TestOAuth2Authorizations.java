@@ -46,6 +46,7 @@ public class TestOAuth2Authorizations {
 				.authorizationUri("https://provider.com/oauth2/authorize")
 				.clientId(registeredClient.getClientId())
 				.redirectUri(registeredClient.getRedirectUris().iterator().next())
+				.scopes(registeredClient.getScopes())
 				.additionalParameters(authorizationRequestAdditionalParameters)
 				.state("state")
 				.build();
@@ -53,6 +54,7 @@ public class TestOAuth2Authorizations {
 				.principalName("principal")
 				.accessToken(accessToken)
 				.attribute(OAuth2AuthorizationAttributeNames.CODE, "code")
-				.attribute(OAuth2AuthorizationAttributeNames.AUTHORIZATION_REQUEST, authorizationRequest);
+				.attribute(OAuth2AuthorizationAttributeNames.AUTHORIZATION_REQUEST, authorizationRequest)
+				.attribute(OAuth2AuthorizationAttributeNames.AUTHORIZED_SCOPES, authorizationRequest.getScopes());
 	}
 }

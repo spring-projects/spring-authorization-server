@@ -44,6 +44,7 @@ import java.net.URL;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
+import java.util.Set;
 
 /**
  * An {@link AuthenticationProvider} implementation for the OAuth 2.0 Authorization Code Grant.
@@ -123,6 +124,7 @@ public class OAuth2AuthorizationCodeAuthenticationProvider implements Authentica
 
 		Instant issuedAt = Instant.now();
 		Instant expiresAt = issuedAt.plus(1, ChronoUnit.HOURS);		// TODO Allow configuration for access token time-to-live
+		Set<String> authorizedScopes = authorization.getAttribute(OAuth2AuthorizationAttributeNames.AUTHORIZED_SCOPES);
 
 		JwtClaimsSet jwtClaimsSet = JwtClaimsSet.withClaims()
 				.issuer(issuer)
@@ -131,7 +133,7 @@ public class OAuth2AuthorizationCodeAuthenticationProvider implements Authentica
 				.issuedAt(issuedAt)
 				.expiresAt(expiresAt)
 				.notBefore(issuedAt)
-				.claim(OAuth2ParameterNames.SCOPE, authorizationRequest.getScopes())
+				.claim(OAuth2ParameterNames.SCOPE, authorizedScopes)
 				.build();
 
 		Jwt jwt = this.jwtEncoder.encode(joseHeader, jwtClaimsSet);

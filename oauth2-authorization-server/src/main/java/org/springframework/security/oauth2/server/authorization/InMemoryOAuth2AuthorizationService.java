@@ -44,6 +44,14 @@ public final class InMemoryOAuth2AuthorizationService implements OAuth2Authoriza
 	}
 
 	@Override
+	public void remove(OAuth2Authorization authorization) {
+		Assert.notNull(authorization, "authorization cannot be null");
+		OAuth2AuthorizationId authorizationId = new OAuth2AuthorizationId(
+				authorization.getRegisteredClientId(), authorization.getPrincipalName());
+		this.authorizations.remove(authorizationId, authorization);
+	}
+
+	@Override
 	public OAuth2Authorization findByToken(String token, @Nullable TokenType tokenType) {
 		Assert.hasText(token, "token cannot be empty");
 		return this.authorizations.values().stream()
@@ -53,7 +61,9 @@ public final class InMemoryOAuth2AuthorizationService implements OAuth2Authoriza
 	}
 
 	private boolean hasToken(OAuth2Authorization authorization, String token, TokenType tokenType) {
-		if (TokenType.AUTHORIZATION_CODE.equals(tokenType)) {
+		if (OAuth2AuthorizationAttributeNames.STATE.equals(tokenType.getValue())) {
+			return token.equals(authorization.getAttribute(OAuth2AuthorizationAttributeNames.STATE));
+		} else if (TokenType.AUTHORIZATION_CODE.equals(tokenType)) {
 			return token.equals(authorization.getAttribute(OAuth2AuthorizationAttributeNames.CODE));
 		} else if (TokenType.ACCESS_TOKEN.equals(tokenType)) {
 			return authorization.getAccessToken() != null &&

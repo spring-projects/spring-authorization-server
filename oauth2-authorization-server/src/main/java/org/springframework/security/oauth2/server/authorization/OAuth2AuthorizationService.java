@@ -35,6 +35,13 @@ public interface OAuth2AuthorizationService {
 	void save(OAuth2Authorization authorization);
 
 	/**
+	 * Removes the {@link OAuth2Authorization}.
+	 *
+	 * @param authorization the {@link OAuth2Authorization}
+	 */
+	void remove(OAuth2Authorization authorization);
+
+	/**
 	 * Returns the {@link OAuth2Authorization} containing the provided {@code token},
 	 * or {@code null} if not found.
 	 *

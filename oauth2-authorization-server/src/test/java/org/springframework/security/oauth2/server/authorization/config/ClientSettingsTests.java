@@ -30,8 +30,9 @@ public class ClientSettingsTests {
 	@Test
 	public void constructorWhenDefaultThenDefaultsAreSet() {
 		ClientSettings clientSettings = new ClientSettings();
-		assertThat(clientSettings.settings()).hasSize(1);
+		assertThat(clientSettings.settings()).hasSize(2);
 		assertThat(clientSettings.requireProofKey()).isFalse();
+		assertThat(clientSettings.requireUserConsent()).isFalse();
 	}
 
 	@Test
@@ -45,5 +46,11 @@ public class ClientSettingsTests {
 	public void requireProofKeyWhenTrueThenSet() {
 		ClientSettings clientSettings = new ClientSettings().requireProofKey(true);
 		assertThat(clientSettings.requireProofKey()).isTrue();
+	}
+
+	@Test
+	public void requireUserConsentWhenTrueThenSet() {
+		ClientSettings clientSettings = new ClientSettings().requireUserConsent(true);
+		assertThat(clientSettings.requireUserConsent()).isTrue();
 	}
 }

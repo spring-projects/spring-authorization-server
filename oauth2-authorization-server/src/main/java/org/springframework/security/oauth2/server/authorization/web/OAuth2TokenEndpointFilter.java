@@ -204,9 +204,8 @@ public class OAuth2TokenEndpointFilter extends OncePerRequestFilter {
 				if (parameters.get(OAuth2ParameterNames.CLIENT_ID).size() != 1) {
 					throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.CLIENT_ID);
 				}
-			} else {
-				clientPrincipal = SecurityContextHolder.getContext().getAuthentication();
 			}
+			clientPrincipal = SecurityContextHolder.getContext().getAuthentication();
 
 			// code (REQUIRED)
 			String code = parameters.getFirst(OAuth2ParameterNames.CODE);

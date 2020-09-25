@@ -74,6 +74,25 @@ public class OAuth2AuthorizationCodeAuthenticationToken extends AbstractAuthenti
 		this.redirectUri = redirectUri;
 	}
 
+	/**
+	 * Constructs an {@code OAuth2AuthorizationCodeAuthenticationToken} using the provided parameters.
+	 *
+	 * @param code the authorization code
+	 * @param clientId the client identifier
+	 * @param clientPrincipal the authenticated client principal
+	 * @param redirectUri the redirect uri
+	 */
+	public OAuth2AuthorizationCodeAuthenticationToken(String code,
+			String clientId, Authentication clientPrincipal, @Nullable String redirectUri) {
+		super(Collections.emptyList());
+		Assert.hasText(code, "code cannot be empty");
+		Assert.notNull(clientPrincipal, "clientPrincipal cannot be null");
+		this.code = code;
+		this.clientId = clientId;
+		this.clientPrincipal = clientPrincipal;
+		this.redirectUri = redirectUri;
+	}
+
 	@Override
 	public Object getPrincipal() {
 		return this.clientPrincipal != null ? this.clientPrincipal : this.clientId;

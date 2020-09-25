@@ -197,15 +197,14 @@ public class OAuth2TokenEndpointFilter extends OncePerRequestFilter {
 
 			MultiValueMap<String, String> parameters = OAuth2EndpointUtils.getParameters(request);
 
-			// client_id (REQUIRED)
+			// client_id (REQUIRED, if the client is not authenticating with the authorization server)
 			String clientId = parameters.getFirst(OAuth2ParameterNames.CLIENT_ID);
-			Authentication clientPrincipal = null;
 			if (StringUtils.hasText(clientId)) {
 				if (parameters.get(OAuth2ParameterNames.CLIENT_ID).size() != 1) {
 					throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.CLIENT_ID);
 				}
 			}
-			clientPrincipal = SecurityContextHolder.getContext().getAuthentication();
+			Authentication clientPrincipal = SecurityContextHolder.getContext().getAuthentication();
 
 			// code (REQUIRED)
 			String code = parameters.getFirst(OAuth2ParameterNames.CODE);
@@ -222,9 +221,7 @@ public class OAuth2TokenEndpointFilter extends OncePerRequestFilter {
 				throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.REDIRECT_URI);
 			}
 
-			return clientPrincipal != null ?
-					new OAuth2AuthorizationCodeAuthenticationToken(code, clientPrincipal, redirectUri) :
-					new OAuth2AuthorizationCodeAuthenticationToken(code, clientId, redirectUri);
+			return new OAuth2AuthorizationCodeAuthenticationToken(code, clientId, clientPrincipal, redirectUri);
 		}
 	}
 

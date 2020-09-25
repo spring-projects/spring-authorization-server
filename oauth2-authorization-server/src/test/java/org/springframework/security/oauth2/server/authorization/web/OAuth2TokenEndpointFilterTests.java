@@ -258,6 +258,57 @@ public class OAuth2TokenEndpointFilterTests {
 	}
 
 	@Test
+	public void doFilterWhenAuthorizationCodeAndClientIdTokenRequestValidThenAccessTokenResponse() throws Exception {
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+		Authentication clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient);
+		OAuth2AccessToken accessToken = new OAuth2AccessToken(
+				OAuth2AccessToken.TokenType.BEARER, "token",
+				Instant.now(), Instant.now().plus(Duration.ofHours(1)),
+				new HashSet<>(Arrays.asList("scope1", "scope2")));
+		OAuth2AccessTokenAuthenticationToken accessTokenAuthentication =
+				new OAuth2AccessTokenAuthenticationToken(
+						registeredClient, clientPrincipal, accessToken);
+
+		when(this.authenticationManager.authenticate(any())).thenReturn(accessTokenAuthentication);
+
+		SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
+		securityContext.setAuthentication(clientPrincipal);
+		SecurityContextHolder.setContext(securityContext);
+
+		MockHttpServletRequest request = createAuthorizationCodeAndClientIdTokenRequest(registeredClient);
+		MockHttpServletResponse response = new MockHttpServletResponse();
+		FilterChain filterChain = mock(FilterChain.class);
+
+		this.filter.doFilter(request, response, filterChain);
+
+		verifyNoInteractions(filterChain);
+
+		ArgumentCaptor<OAuth2AuthorizationCodeAuthenticationToken> authorizationCodeAuthenticationCaptor =
+				ArgumentCaptor.forClass(OAuth2AuthorizationCodeAuthenticationToken.class);
+		verify(this.authenticationManager).authenticate(authorizationCodeAuthenticationCaptor.capture());
+
+		OAuth2AuthorizationCodeAuthenticationToken authorizationCodeAuthentication =
+				authorizationCodeAuthenticationCaptor.getValue();
+		assertThat(authorizationCodeAuthentication.getCode()).isEqualTo(
+				request.getParameter(OAuth2ParameterNames.CODE));
+		assertThat(authorizationCodeAuthentication.getPrincipal()).isEqualTo(clientPrincipal);
+		assertThat(authorizationCodeAuthentication.getRedirectUri()).isEqualTo(
+				request.getParameter(OAuth2ParameterNames.REDIRECT_URI));
+
+		assertThat(response.getStatus()).isEqualTo(HttpStatus.OK.value());
+		OAuth2AccessTokenResponse accessTokenResponse = readAccessTokenResponse(response);
+
+		OAuth2AccessToken accessTokenResult = accessTokenResponse.getAccessToken();
+		assertThat(accessTokenResult.getTokenType()).isEqualTo(accessToken.getTokenType());
+		assertThat(accessTokenResult.getTokenValue()).isEqualTo(accessToken.getTokenValue());
+		assertThat(accessTokenResult.getIssuedAt()).isBetween(
+				accessToken.getIssuedAt().minusSeconds(1), accessToken.getIssuedAt().plusSeconds(1));
+		assertThat(accessTokenResult.getExpiresAt()).isBetween(
+				accessToken.getExpiresAt().minusSeconds(1), accessToken.getExpiresAt().plusSeconds(1));
+		assertThat(accessTokenResult.getScopes()).isEqualTo(accessToken.getScopes());
+	}
+
+	@Test
 	public void doFilterWhenTokenRequestMultipleScopeThenInvalidRequestError() throws Exception {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient2().build();
 		Authentication clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient);
@@ -359,6 +410,21 @@ public class OAuth2TokenEndpointFilterTests {
 		request.addParameter(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.AUTHORIZATION_CODE.getValue());
 		request.addParameter(OAuth2ParameterNames.CODE, "code");
 		request.addParameter(OAuth2ParameterNames.REDIRECT_URI, redirectUris[0]);
+
+		return request;
+	}
+
+	private static MockHttpServletRequest createAuthorizationCodeAndClientIdTokenRequest(RegisteredClient registeredClient) {
+		String[] redirectUris = registeredClient.getRedirectUris().toArray(new String[0]);
+
+		String requestUri = OAuth2TokenEndpointFilter.DEFAULT_TOKEN_ENDPOINT_URI;
+		MockHttpServletRequest request = new MockHttpServletRequest("POST", requestUri);
+		request.setServletPath(requestUri);
+
+		request.addParameter(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.AUTHORIZATION_CODE.getValue());
+		request.addParameter(OAuth2ParameterNames.CODE, "code");
+		request.addParameter(OAuth2ParameterNames.REDIRECT_URI, redirectUris[0]);
+		request.addParameter(OAuth2ParameterNames.CLIENT_ID, registeredClient.getClientId());
 
 		return request;
 	}

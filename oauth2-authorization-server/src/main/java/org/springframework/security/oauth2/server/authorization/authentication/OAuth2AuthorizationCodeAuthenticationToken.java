@@ -29,6 +29,7 @@ import java.util.Map;
  *
  * @author Joe Grandja
  * @author Madhu Bhat
+ * @author Daniel Garnier-Moiroux
  * @since 0.0.1
  * @see AbstractAuthenticationToken
  * @see OAuth2AuthorizationCodeAuthenticationProvider
@@ -37,7 +38,7 @@ import java.util.Map;
 public class OAuth2AuthorizationCodeAuthenticationToken extends AbstractAuthenticationToken {
 	private static final long serialVersionUID = SpringSecurityCoreVersion2.SERIAL_VERSION_UID;
 	private final String code;
-	private Authentication clientPrincipal;
+	private final Authentication clientPrincipal;
 	private final String clientId;
 	private final String redirectUri;
 	private final Map<String, Object> additionalParameters;
@@ -50,22 +51,21 @@ public class OAuth2AuthorizationCodeAuthenticationToken extends AbstractAuthenti
 	 * @param redirectUri the redirect uri
 	 * @param additionalParameters the additional parameters
 	 */
-	public OAuth2AuthorizationCodeAuthenticationToken(String code,
-			Authentication clientPrincipal, @Nullable String redirectUri,
-			Map<String, Object> additionalParameters) {
+	public OAuth2AuthorizationCodeAuthenticationToken(String code, Authentication clientPrincipal,
+			@Nullable String redirectUri, @Nullable Map<String, Object> additionalParameters) {
 		super(Collections.emptyList());
 		Assert.hasText(code, "code cannot be empty");
 		Assert.notNull(clientPrincipal, "clientPrincipal cannot be null");
 		this.code = code;
 		this.clientPrincipal = clientPrincipal;
+		this.clientId = OAuth2ClientAuthenticationToken.class.isAssignableFrom(this.clientPrincipal.getClass()) ?
+				(String) this.clientPrincipal.getPrincipal() :
+				null;
 		this.redirectUri = redirectUri;
-		this.additionalParameters = Collections.unmodifiableMap(additionalParameters != null ? additionalParameters : Collections.emptyMap());
-
-		if (OAuth2ClientAuthenticationToken.class.isAssignableFrom(this.clientPrincipal.getClass())) {
-			this.clientId = (String) this.clientPrincipal.getPrincipal();
-		} else {
-			this.clientId = null;
-		}
+		this.additionalParameters = Collections.unmodifiableMap(
+				additionalParameters != null ?
+						additionalParameters :
+						Collections.emptyMap());
 	}
 
 	/**
@@ -76,16 +76,19 @@ public class OAuth2AuthorizationCodeAuthenticationToken extends AbstractAuthenti
 	 * @param redirectUri the redirect uri
 	 * @param additionalParameters the additional parameters
 	 */
-	public OAuth2AuthorizationCodeAuthenticationToken(String code,
-			String clientId, @Nullable String redirectUri,
-			Map<String, Object> additionalParameters) {
+	public OAuth2AuthorizationCodeAuthenticationToken(String code, String clientId,
+			@Nullable String redirectUri, @Nullable Map<String, Object> additionalParameters) {
 		super(Collections.emptyList());
 		Assert.hasText(code, "code cannot be empty");
 		Assert.hasText(clientId, "clientId cannot be empty");
 		this.code = code;
+		this.clientPrincipal = null;
 		this.clientId = clientId;
 		this.redirectUri = redirectUri;
-		this.additionalParameters = Collections.unmodifiableMap(additionalParameters != null ? additionalParameters : Collections.emptyMap());
+		this.additionalParameters = Collections.unmodifiableMap(
+				additionalParameters != null ?
+						additionalParameters :
+						Collections.emptyMap());
 	}
 
 	@Override
@@ -108,6 +111,15 @@ public class OAuth2AuthorizationCodeAuthenticationToken extends AbstractAuthenti
 	}
 
 	/**
+	 * Returns the client identifier
+	 *
+	 * @return the client identifier
+	 */
+	public @Nullable String getClientId() {
+		return this.clientId;
+	}
+
+	/**
 	 * Returns the redirect uri.
 	 *
 	 * @return the redirect uri
@@ -123,14 +135,5 @@ public class OAuth2AuthorizationCodeAuthenticationToken extends AbstractAuthenti
 	 */
 	public Map<String, Object> getAdditionalParameters() {
 		return this.additionalParameters;
-	}
-
-	/**
-	 * Returns the client id
-	 *
-	 * @return the client id
-	 */
-	public @Nullable String getClientId() {
-		return this.clientId;
 	}
 }

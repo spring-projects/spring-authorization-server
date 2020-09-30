@@ -61,6 +61,7 @@ import java.util.Set;
  *
  * @author Joe Grandja
  * @author Paurav Munshi
+ * @author Daniel Garnier-Moiroux
  * @since 0.0.1
  * @see RegisteredClientRepository
  * @see OAuth2AuthorizationService
@@ -74,12 +75,13 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 	 */
 	public static final String DEFAULT_AUTHORIZATION_ENDPOINT_URI = "/oauth2/authorize";
 
+	private static final String PKCE_ERROR_URI = "https://tools.ietf.org/html/rfc7636#section-4.4.1";
+
 	private final RegisteredClientRepository registeredClientRepository;
 	private final OAuth2AuthorizationService authorizationService;
 	private final RequestMatcher authorizationEndpointMatcher;
 	private final StringKeyGenerator codeGenerator = new Base64StringKeyGenerator(Base64.getUrlEncoder());
 	private final RedirectStrategy redirectStrategy = new DefaultRedirectStrategy();
-	private final String PKCE_ERROR_URI = "https://tools.ietf.org/html/rfc7636#section-4.4.1";
 
 	/**
 	 * Constructs an {@code OAuth2AuthorizationEndpointFilter} using the provided parameters.
@@ -185,15 +187,16 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 				return;
 			}
 
-			if (parameters.get(PkceParameterNames.CODE_CHALLENGE_METHOD) != null &&
-					parameters.get(PkceParameterNames.CODE_CHALLENGE_METHOD).size() > 1) {
+			String codeChallengeMethod = parameters.getFirst(PkceParameterNames.CODE_CHALLENGE_METHOD);
+			if (StringUtils.hasText(codeChallengeMethod) &&
+					parameters.get(PkceParameterNames.CODE_CHALLENGE_METHOD).size() != 1) {
 				OAuth2Error error = createError(OAuth2ErrorCodes.INVALID_REQUEST, PkceParameterNames.CODE_CHALLENGE_METHOD, PKCE_ERROR_URI);
 				sendErrorResponse(request, response, error, stateParameter, redirectUri);
 				return;
 			}
 
-			String codeChallengeMethod = parameters.getFirst(PkceParameterNames.CODE_CHALLENGE_METHOD);
-			if (codeChallengeMethod != null && !Arrays.asList("plain", "S256").contains(codeChallengeMethod)) {
+			if (StringUtils.hasText(codeChallengeMethod) &&
+					(!"S256".equals(codeChallengeMethod) && !"plain".equals(codeChallengeMethod))) {
 				OAuth2Error error = createError(OAuth2ErrorCodes.INVALID_REQUEST, PkceParameterNames.CODE_CHALLENGE_METHOD, PKCE_ERROR_URI);
 				sendErrorResponse(request, response, error, stateParameter, redirectUri);
 				return;

@@ -29,15 +29,15 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * Tests for {@link OAuth2AuthorizationCodeAuthenticationToken}.
  *
  * @author Joe Grandja
+ * @author Daniel Garnier-Moiroux
  */
 public class OAuth2AuthorizationCodeAuthenticationTokenTests {
 	private String code = "code";
-	private String clientPrincipalClientId = "clientPrincipal.clientId";
-	private OAuth2ClientAuthenticationToken clientPrincipal =
-			new OAuth2ClientAuthenticationToken(TestRegisteredClients.registeredClient().clientId(clientPrincipalClientId).build());
+	private OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(
+			TestRegisteredClients.registeredClient().build());
 	private String clientId = "clientId";
 	private String redirectUri = "redirectUri";
-	private Map<String, Object> additonalParams = Collections.singletonMap("some_key", "some_value");
+	private Map<String, Object> additionalParameters = Collections.singletonMap("param1", "value1");
 
 	@Test
 	public void constructorWhenCodeNullThenThrowIllegalArgumentException() {
@@ -63,29 +63,29 @@ public class OAuth2AuthorizationCodeAuthenticationTokenTests {
 	@Test
 	public void constructorWhenClientPrincipalProvidedThenCreated() {
 		OAuth2AuthorizationCodeAuthenticationToken authentication = new OAuth2AuthorizationCodeAuthenticationToken(
-				this.code, this.clientPrincipal, this.redirectUri, this.additonalParams);
+				this.code, this.clientPrincipal, this.redirectUri, this.additionalParameters);
 		assertThat(authentication.getPrincipal()).isEqualTo(this.clientPrincipal);
 		assertThat(authentication.getCredentials().toString()).isEmpty();
 		assertThat(authentication.getCode()).isEqualTo(this.code);
 		assertThat(authentication.getRedirectUri()).isEqualTo(this.redirectUri);
-		assertThat(authentication.getAdditionalParameters()).isEqualTo(this.additonalParams);
+		assertThat(authentication.getAdditionalParameters()).isEqualTo(this.additionalParameters);
 	}
 
 	@Test
 	public void constructorWhenClientIdProvidedThenCreated() {
 		OAuth2AuthorizationCodeAuthenticationToken authentication = new OAuth2AuthorizationCodeAuthenticationToken(
-				this.code, this.clientId, this.redirectUri, this.additonalParams);
+				this.code, this.clientId, this.redirectUri, this.additionalParameters);
 		assertThat(authentication.getPrincipal()).isEqualTo(this.clientId);
 		assertThat(authentication.getCredentials().toString()).isEmpty();
 		assertThat(authentication.getCode()).isEqualTo(this.code);
 		assertThat(authentication.getRedirectUri()).isEqualTo(this.redirectUri);
-		assertThat(authentication.getAdditionalParameters()).isEqualTo(this.additonalParams);
+		assertThat(authentication.getAdditionalParameters()).isEqualTo(this.additionalParameters);
 	}
 
 	@Test
-	public void getAdditionalParamsIsImmutableMap() {
+	public void getAdditionalParametersWhenUpdateThenThrowUnsupportedOperationException() {
 		OAuth2AuthorizationCodeAuthenticationToken authentication = new OAuth2AuthorizationCodeAuthenticationToken(
-				this.code, this.clientId, this.redirectUri, this.additonalParams);
+				this.code, this.clientId, this.redirectUri, this.additionalParameters);
 		assertThatThrownBy(() -> authentication.getAdditionalParameters().put("another_key", 1))
 				.isInstanceOf(UnsupportedOperationException.class);
 		assertThatThrownBy(() -> authentication.getAdditionalParameters().remove("some_key"))
@@ -95,18 +95,10 @@ public class OAuth2AuthorizationCodeAuthenticationTokenTests {
 	}
 
 	@Test
-	public void getClientIdFromClientId() {
+	public void getClientIdWhenClientPrincipalProvidedThenNotNull() {
 		OAuth2AuthorizationCodeAuthenticationToken authentication = new OAuth2AuthorizationCodeAuthenticationToken(
-				this.code, this.clientId, this.redirectUri, this.additonalParams);
-
-		assertThat(authentication.getClientId()).isEqualTo(this.clientId);
-	}
-
-	@Test
-	public void getClientIdFromOAuth2ClientAuthenticationTokenPrincipal() {
-		OAuth2AuthorizationCodeAuthenticationToken authentication = new OAuth2AuthorizationCodeAuthenticationToken(
-				this.code, this.clientPrincipal, this.redirectUri, this.additonalParams);
-
-		assertThat(authentication.getClientId()).isEqualTo(this.clientPrincipalClientId);
+				this.code, this.clientPrincipal, this.redirectUri, this.additionalParameters);
+		assertThat(authentication.getClientId()).isNotNull();
+		assertThat(authentication.getClientId()).isEqualTo(this.clientPrincipal.getRegisteredClient().getClientId());
 	}
 }

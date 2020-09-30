@@ -26,6 +26,7 @@ import java.util.Map;
 
 /**
  * @author Joe Grandja
+ * @author Daniel Garnier-Moiroux
  */
 public class TestOAuth2Authorizations {
 
@@ -37,14 +38,15 @@ public class TestOAuth2Authorizations {
 		return authorization(registeredClient, Collections.emptyMap());
 	}
 
-	public static OAuth2Authorization.Builder authorization(RegisteredClient registeredClient, Map<String, Object> additionalParameters) {
+	public static OAuth2Authorization.Builder authorization(RegisteredClient registeredClient,
+			Map<String, Object> authorizationRequestAdditionalParameters) {
 		OAuth2AccessToken accessToken = new OAuth2AccessToken(
 				OAuth2AccessToken.TokenType.BEARER, "access-token", Instant.now(), Instant.now().plusSeconds(300));
 		OAuth2AuthorizationRequest authorizationRequest = OAuth2AuthorizationRequest.authorizationCode()
 				.authorizationUri("https://provider.com/oauth2/authorize")
 				.clientId(registeredClient.getClientId())
 				.redirectUri(registeredClient.getRedirectUris().iterator().next())
-				.additionalParameters(additionalParameters)
+				.additionalParameters(authorizationRequestAdditionalParameters)
 				.state("state")
 				.build();
 		return OAuth2Authorization.withRegisteredClient(registeredClient)

@@ -80,6 +80,7 @@ import java.util.stream.Collectors;
  *
  * @author Joe Grandja
  * @author Madhu Bhat
+ * @author Daniel Garnier-Moiroux
  * @since 0.0.1
  * @see AuthenticationManager
  * @see OAuth2AuthorizationService
@@ -188,6 +189,12 @@ public class OAuth2TokenEndpointFilter extends OncePerRequestFilter {
 		throw new OAuth2AuthenticationException(error);
 	}
 
+	private static boolean isClientAuthenticated(Authentication clientPrincipal) {
+		return clientPrincipal != null &&
+				OAuth2ClientAuthenticationToken.class.isAssignableFrom(clientPrincipal.getClass()) &&
+				clientPrincipal.isAuthenticated();
+	}
+
 	private static class AuthorizationCodeAuthenticationConverter implements Converter<HttpServletRequest, Authentication> {
 
 		@Override
@@ -199,25 +206,6 @@ public class OAuth2TokenEndpointFilter extends OncePerRequestFilter {
 			}
 
 			MultiValueMap<String, String> parameters = OAuth2EndpointUtils.getParameters(request);
-
-			// client_id (REQUIRED)
-			Authentication clientPrincipal = SecurityContextHolder.getContext().getAuthentication();
-			String clientId = null;
-			if (clientPrincipal == null ||
-					!OAuth2ClientAuthenticationToken.class.isAssignableFrom(clientPrincipal.getClass())) {
-				clientId = parameters.getFirst(OAuth2ParameterNames.CLIENT_ID);
-				if (!StringUtils.hasText(clientId) ||
-						parameters.get(OAuth2ParameterNames.CLIENT_ID).size() != 1) {
-					throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.CLIENT_ID);
-				}
-
-				// code_verifier (REQUIRED for public clients)
-				String codeVerifier = parameters.getFirst(PkceParameterNames.CODE_VERIFIER);
-				if (!StringUtils.hasText(codeVerifier) ||
-						parameters.get(PkceParameterNames.CODE_VERIFIER).size() != 1) {
-					throwError(OAuth2ErrorCodes.INVALID_REQUEST, PkceParameterNames.CODE_VERIFIER);
-				}
-			}
 
 			// code (REQUIRED)
 			String code = parameters.getFirst(OAuth2ParameterNames.CODE);
@@ -232,6 +220,25 @@ public class OAuth2TokenEndpointFilter extends OncePerRequestFilter {
 			if (StringUtils.hasText(redirectUri) &&
 					parameters.get(OAuth2ParameterNames.REDIRECT_URI).size() != 1) {
 				throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.REDIRECT_URI);
+			}
+
+			// client_id (REQUIRED)
+			// Required only if the client did not authenticate
+			String clientId = null;
+			Authentication clientPrincipal = SecurityContextHolder.getContext().getAuthentication();
+			if (!isClientAuthenticated(clientPrincipal)) {
+				clientId = parameters.getFirst(OAuth2ParameterNames.CLIENT_ID);
+				if (!StringUtils.hasText(clientId) ||
+						parameters.get(OAuth2ParameterNames.CLIENT_ID).size() != 1) {
+					throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.CLIENT_ID);
+				}
+
+				// code_verifier (REQUIRED for public clients)
+				String codeVerifier = parameters.getFirst(PkceParameterNames.CODE_VERIFIER);
+				if (!StringUtils.hasText(codeVerifier) ||
+						parameters.get(PkceParameterNames.CODE_VERIFIER).size() != 1) {
+					throwError(OAuth2ErrorCodes.INVALID_REQUEST, PkceParameterNames.CODE_VERIFIER);
+				}
 			}
 
 			Map<String, Object> additionalParameters = parameters

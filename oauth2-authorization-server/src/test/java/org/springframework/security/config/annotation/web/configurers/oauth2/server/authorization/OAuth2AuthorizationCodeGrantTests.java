@@ -19,6 +19,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
@@ -40,6 +41,7 @@ import org.springframework.security.oauth2.server.authorization.TokenType;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
+import org.springframework.security.oauth2.server.authorization.config.ClientSettings;
 import org.springframework.security.oauth2.server.authorization.web.OAuth2AuthorizationEndpointFilter;
 import org.springframework.security.oauth2.server.authorization.web.OAuth2TokenEndpointFilter;
 import org.springframework.test.web.servlet.MockMvc;
@@ -59,20 +61,29 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
  * Integration tests for the OAuth 2.0 Authorization Code Grant.
  *
  * @author Joe Grandja
+ * @author Daniel Garnier-Moiroux
  */
 public class OAuth2AuthorizationCodeGrantTests {
+	// See RFC 7636: Appendix B.  Example for the S256 code_challenge_method
+	// https://tools.ietf.org/html/rfc7636#appendix-B
+	private static final String S256_CODE_VERIFIER = "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk";
+	private static final String S256_CODE_CHALLENGE = "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM";
+
 	private static RegisteredClientRepository registeredClientRepository;
 	private static OAuth2AuthorizationService authorizationService;
 	private static KeyManager keyManager;
@@ -162,6 +173,52 @@ public class OAuth2AuthorizationCodeGrantTests {
 		verify(authorizationService).save(any());
 	}
 
+	@Test
+	public void requestWhenPublicClientWithPkceThenReturnAccessToken() throws Exception {
+		this.spring.register(AuthorizationServerConfiguration.class).autowire();
+
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
+				.clientSecret(null)
+				.clientSettings(new ClientSettings().requireProofKey(true))
+				.build();
+		when(registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
+				.thenReturn(registeredClient);
+
+		MvcResult mvcResult = this.mvc.perform(get(OAuth2AuthorizationEndpointFilter.DEFAULT_AUTHORIZATION_ENDPOINT_URI)
+				.params(getAuthorizationRequestParameters(registeredClient))
+				.param(PkceParameterNames.CODE_CHALLENGE, S256_CODE_CHALLENGE)
+				.param(PkceParameterNames.CODE_CHALLENGE_METHOD, "S256")
+				.with(user("user")))
+				.andExpect(status().is3xxRedirection())
+				.andReturn();
+		assertThat(mvcResult.getResponse().getRedirectedUrl()).matches("https://example.com\\?code=.{15,}&state=state");
+
+		verify(registeredClientRepository).findByClientId(eq(registeredClient.getClientId()));
+
+		ArgumentCaptor<OAuth2Authorization> authorizationCaptor = ArgumentCaptor.forClass(OAuth2Authorization.class);
+		verify(authorizationService).save(authorizationCaptor.capture());
+		OAuth2Authorization authorization = authorizationCaptor.getValue();
+
+		when(authorizationService.findByToken(
+				eq(authorization.getAttribute(OAuth2AuthorizationAttributeNames.CODE)),
+				eq(TokenType.AUTHORIZATION_CODE)))
+				.thenReturn(authorization);
+
+		this.mvc.perform(post(OAuth2TokenEndpointFilter.DEFAULT_TOKEN_ENDPOINT_URI)
+				.params(getTokenRequestParameters(registeredClient, authorization))
+				.param(OAuth2ParameterNames.CLIENT_ID, registeredClient.getClientId())
+				.param(PkceParameterNames.CODE_VERIFIER, S256_CODE_VERIFIER)
+				.with(user("user")))	// TODO Remove after PKCE authentication is moved to OAuth2ClientAuthenticationProvider
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.access_token").isNotEmpty());
+
+		verify(registeredClientRepository, times(2)).findByClientId(eq(registeredClient.getClientId()));
+		verify(authorizationService).findByToken(
+				eq(authorization.getAttribute(OAuth2AuthorizationAttributeNames.CODE)),
+				eq(TokenType.AUTHORIZATION_CODE));
+		verify(authorizationService, times(2)).save(any());
+	}
+
 	private static MultiValueMap<String, String> getAuthorizationRequestParameters(RegisteredClient registeredClient) {
 		MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
 		parameters.set(OAuth2ParameterNames.RESPONSE_TYPE, OAuth2AuthorizationResponseType.CODE.getValue());
@@ -170,7 +227,6 @@ public class OAuth2AuthorizationCodeGrantTests {
 		parameters.set(OAuth2ParameterNames.SCOPE,
 				StringUtils.collectionToDelimitedString(registeredClient.getScopes(), " "));
 		parameters.set(OAuth2ParameterNames.STATE, "state");
-		parameters.set(PkceParameterNames.CODE_CHALLENGE, "code-challenge");
 		return parameters;
 	}
 

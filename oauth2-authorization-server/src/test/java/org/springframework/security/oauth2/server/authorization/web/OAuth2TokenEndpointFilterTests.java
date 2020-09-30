@@ -67,6 +67,7 @@ import static org.mockito.Mockito.when;
  *
  * @author Madhu Bhat
  * @author Joe Grandja
+ * @author Daniel Garnier-Moiroux
  */
 public class OAuth2TokenEndpointFilterTests {
 	private AuthenticationManager authenticationManager;
@@ -179,12 +180,6 @@ public class OAuth2TokenEndpointFilterTests {
 
 	@Test
 	public void doFilterWhenTokenRequestMissingCodeThenInvalidRequestError() throws Exception {
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient2().build();
-		Authentication clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient);
-		SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
-		securityContext.setAuthentication(clientPrincipal);
-		SecurityContextHolder.setContext(securityContext);
-
 		MockHttpServletRequest request = createAuthorizationCodeTokenRequest(
 				TestRegisteredClients.registeredClient().build());
 		request.removeParameter(OAuth2ParameterNames.CODE);
@@ -195,12 +190,6 @@ public class OAuth2TokenEndpointFilterTests {
 
 	@Test
 	public void doFilterWhenTokenRequestMultipleCodeThenInvalidRequestError() throws Exception {
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient2().build();
-		Authentication clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient);
-		SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
-		securityContext.setAuthentication(clientPrincipal);
-		SecurityContextHolder.setContext(securityContext);
-
 		MockHttpServletRequest request = createAuthorizationCodeTokenRequest(
 				TestRegisteredClients.registeredClient().build());
 		request.addParameter(OAuth2ParameterNames.CODE, "code-2");
@@ -211,12 +200,6 @@ public class OAuth2TokenEndpointFilterTests {
 
 	@Test
 	public void doFilterWhenTokenRequestMultipleRedirectUriThenInvalidRequestError() throws Exception {
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient2().build();
-		Authentication clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient);
-		SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
-		securityContext.setAuthentication(clientPrincipal);
-		SecurityContextHolder.setContext(securityContext);
-
 		MockHttpServletRequest request = createAuthorizationCodeTokenRequest(
 				TestRegisteredClients.registeredClient().build());
 		request.addParameter(OAuth2ParameterNames.REDIRECT_URI, "https://example2.com");
@@ -227,12 +210,8 @@ public class OAuth2TokenEndpointFilterTests {
 
 	@Test
 	public void doFilterWhenTokenRequestNotAuthenticatedAndMissingCodeVerifierThenInvalidRequestError() throws Exception {
-		SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
-		SecurityContextHolder.setContext(securityContext);
-
 		MockHttpServletRequest request = createAuthorizationCodeTokenRequest(
 				TestRegisteredClients.registeredClient().build());
-		request.addParameter(OAuth2ParameterNames.REDIRECT_URI, "https://example.com");
 
 		doFilterWhenTokenRequestInvalidParameterThenError(
 				PkceParameterNames.CODE_VERIFIER, OAuth2ErrorCodes.INVALID_REQUEST, request);
@@ -240,14 +219,10 @@ public class OAuth2TokenEndpointFilterTests {
 
 	@Test
 	public void doFilterWhenTokenRequestNotAuthenticatedAndMultipleCodeVerifierThenInvalidRequestError() throws Exception {
-		SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
-		SecurityContextHolder.setContext(securityContext);
-
 		MockHttpServletRequest request = createAuthorizationCodeTokenRequest(
 				TestRegisteredClients.registeredClient().build());
 		request.addParameter(PkceParameterNames.CODE_VERIFIER, "one-verifier");
-		request.addParameter(PkceParameterNames.CODE_VERIFIER, "two-verifiers");
-		request.addParameter(OAuth2ParameterNames.REDIRECT_URI, "https://example.com");
+		request.addParameter(PkceParameterNames.CODE_VERIFIER, "two-verifier2");
 
 		doFilterWhenTokenRequestInvalidParameterThenError(
 				PkceParameterNames.CODE_VERIFIER, OAuth2ErrorCodes.INVALID_REQUEST, request);

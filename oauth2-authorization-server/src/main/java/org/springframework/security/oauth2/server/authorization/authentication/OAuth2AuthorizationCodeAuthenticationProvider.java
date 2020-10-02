@@ -24,7 +24,6 @@ import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
-import org.springframework.security.oauth2.core.endpoint.PkceParameterNames;
 import org.springframework.security.oauth2.jose.JoseHeader;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -42,12 +41,8 @@ import org.springframework.util.StringUtils;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Base64;
 import java.util.Collections;
 
 /**
@@ -92,22 +87,13 @@ public class OAuth2AuthorizationCodeAuthenticationProvider implements Authentica
 				(OAuth2AuthorizationCodeAuthenticationToken) authentication;
 
 		OAuth2ClientAuthenticationToken clientPrincipal = null;
-		RegisteredClient registeredClient;
 		if (OAuth2ClientAuthenticationToken.class.isAssignableFrom(authorizationCodeAuthentication.getPrincipal().getClass())) {
 			clientPrincipal = (OAuth2ClientAuthenticationToken) authorizationCodeAuthentication.getPrincipal();
-			if (!clientPrincipal.isAuthenticated()) {
-				throw new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_CLIENT));
-			}
-			registeredClient = clientPrincipal.getRegisteredClient();
-		} else if (StringUtils.hasText(authorizationCodeAuthentication.getClientId())) {
-			String clientId = authorizationCodeAuthentication.getClientId();
-			registeredClient = this.registeredClientRepository.findByClientId(clientId);
-			if (registeredClient == null) {
-				throw new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_CLIENT));
-			}
-		} else {
+		}
+		if (clientPrincipal == null || !clientPrincipal.isAuthenticated()) {
 			throw new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_CLIENT));
 		}
+		RegisteredClient registeredClient = clientPrincipal.getRegisteredClient();
 
 		OAuth2Authorization authorization = this.authorizationService.findByToken(
 				authorizationCodeAuthentication.getCode(), TokenType.AUTHORIZATION_CODE);
@@ -124,26 +110,6 @@ public class OAuth2AuthorizationCodeAuthenticationProvider implements Authentica
 
 		if (StringUtils.hasText(authorizationRequest.getRedirectUri()) &&
 				!authorizationRequest.getRedirectUri().equals(authorizationCodeAuthentication.getRedirectUri())) {
-			throw new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_GRANT));
-		}
-
-		// Validate PKCE parameters
-		String codeChallenge = (String) authorizationRequest
-				.getAdditionalParameters()
-				.get(PkceParameterNames.CODE_CHALLENGE);
-		if (StringUtils.hasText(codeChallenge)) {
-			String codeChallengeMethod = (String) authorizationRequest
-					.getAdditionalParameters()
-					.get(PkceParameterNames.CODE_CHALLENGE_METHOD);
-
-			String codeVerifier = (String) authorizationCodeAuthentication
-					.getAdditionalParameters()
-					.get(PkceParameterNames.CODE_VERIFIER);
-
-			if (!pkceCodeVerifierValid(codeVerifier, codeChallenge, codeChallengeMethod)) {
-				throw new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_GRANT));
-			}
-		} else if (registeredClient.getClientSettings().requireProofKey()) {
 			throw new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_GRANT));
 		}
 
@@ -179,28 +145,7 @@ public class OAuth2AuthorizationCodeAuthenticationProvider implements Authentica
 				.build();
 		this.authorizationService.save(authorization);
 
-		return clientPrincipal != null ?
-				new OAuth2AccessTokenAuthenticationToken(registeredClient, clientPrincipal, accessToken) :
-				new OAuth2AccessTokenAuthenticationToken(registeredClient, new OAuth2ClientAuthenticationToken(registeredClient), accessToken);
-	}
-
-	private static boolean pkceCodeVerifierValid(String codeVerifier, String codeChallenge, String codeChallengeMethod) {
-		if (!StringUtils.hasText(codeVerifier)) {
-			return false;
-		} else if (!StringUtils.hasText(codeChallengeMethod) || "plain".equals(codeChallengeMethod)) {
-			return  codeVerifier.equals(codeChallenge);
-		} else if ("S256".equals(codeChallengeMethod)) {
-			try {
-				MessageDigest md = MessageDigest.getInstance("SHA-256");
-				byte[] digest = md.digest(codeVerifier.getBytes(StandardCharsets.US_ASCII));
-				String encodedVerifier = Base64.getUrlEncoder().withoutPadding().encodeToString(digest);
-				return encodedVerifier.equals(codeChallenge);
-			} catch (NoSuchAlgorithmException ex) {
-				// It is unlikely that SHA-256 is not available on the server. If it is not available,
-				// there will likely be bigger issues as well. We default to SERVER_ERROR.
-			}
-		}
-		throw new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.SERVER_ERROR));
+		return new OAuth2AccessTokenAuthenticationToken(registeredClient, clientPrincipal, accessToken);
 	}
 
 	@Override

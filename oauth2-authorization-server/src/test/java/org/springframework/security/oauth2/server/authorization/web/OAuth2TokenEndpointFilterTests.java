@@ -34,7 +34,6 @@ import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AccessTokenResponse;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
-import org.springframework.security.oauth2.core.endpoint.PkceParameterNames;
 import org.springframework.security.oauth2.core.http.converter.OAuth2AccessTokenResponseHttpMessageConverter;
 import org.springframework.security.oauth2.core.http.converter.OAuth2ErrorHttpMessageConverter;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
@@ -168,17 +167,6 @@ public class OAuth2TokenEndpointFilterTests {
 	}
 
 	@Test
-	public void doFilterWhenTokenRequestMultipleClientIdThenInvalidRequestError() throws Exception {
-		MockHttpServletRequest request = createAuthorizationCodeTokenRequest(
-				TestRegisteredClients.registeredClient().build());
-		request.addParameter(OAuth2ParameterNames.CLIENT_ID, "client-1");
-		request.addParameter(OAuth2ParameterNames.CLIENT_ID, "client-2");
-
-		doFilterWhenTokenRequestInvalidParameterThenError(
-				OAuth2ParameterNames.CLIENT_ID, OAuth2ErrorCodes.INVALID_REQUEST, request);
-	}
-
-	@Test
 	public void doFilterWhenTokenRequestMissingCodeThenInvalidRequestError() throws Exception {
 		MockHttpServletRequest request = createAuthorizationCodeTokenRequest(
 				TestRegisteredClients.registeredClient().build());
@@ -206,26 +194,6 @@ public class OAuth2TokenEndpointFilterTests {
 
 		doFilterWhenTokenRequestInvalidParameterThenError(
 				OAuth2ParameterNames.REDIRECT_URI, OAuth2ErrorCodes.INVALID_REQUEST, request);
-	}
-
-	@Test
-	public void doFilterWhenTokenRequestNotAuthenticatedAndMissingCodeVerifierThenInvalidRequestError() throws Exception {
-		MockHttpServletRequest request = createAuthorizationCodeTokenRequest(
-				TestRegisteredClients.registeredClient().build());
-
-		doFilterWhenTokenRequestInvalidParameterThenError(
-				PkceParameterNames.CODE_VERIFIER, OAuth2ErrorCodes.INVALID_REQUEST, request);
-	}
-
-	@Test
-	public void doFilterWhenTokenRequestNotAuthenticatedAndMultipleCodeVerifierThenInvalidRequestError() throws Exception {
-		MockHttpServletRequest request = createAuthorizationCodeTokenRequest(
-				TestRegisteredClients.registeredClient().build());
-		request.addParameter(PkceParameterNames.CODE_VERIFIER, "one-verifier");
-		request.addParameter(PkceParameterNames.CODE_VERIFIER, "two-verifier2");
-
-		doFilterWhenTokenRequestInvalidParameterThenError(
-				PkceParameterNames.CODE_VERIFIER, OAuth2ErrorCodes.INVALID_REQUEST, request);
 	}
 
 	@Test

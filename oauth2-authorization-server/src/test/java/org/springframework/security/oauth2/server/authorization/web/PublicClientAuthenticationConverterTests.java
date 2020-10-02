@@ -16,7 +16,6 @@
 package org.springframework.security.oauth2.server.authorization.web;
 
 import org.junit.Test;
-import org.springframework.http.HttpHeaders;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
@@ -26,87 +25,60 @@ import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.endpoint.PkceParameterNames;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientAuthenticationToken;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.entry;
 
 /**
- * Tests for {@link ClientSecretBasicAuthenticationConverter}.
+ * Tests for {@link PublicClientAuthenticationConverter}.
  *
- * @author Patryk Kostrzewa
  * @author Joe Grandja
  */
-public class ClientSecretBasicAuthenticationConverterTests {
-	private ClientSecretBasicAuthenticationConverter converter = new ClientSecretBasicAuthenticationConverter();
+public class PublicClientAuthenticationConverterTests {
+	private PublicClientAuthenticationConverter converter = new PublicClientAuthenticationConverter();
 
 	@Test
-	public void convertWhenAuthorizationHeaderEmptyThenReturnNull() {
+	public void convertWhenNotPublicClientThenReturnNull() {
 		MockHttpServletRequest request = new MockHttpServletRequest();
 		Authentication authentication = this.converter.convert(request);
 		assertThat(authentication).isNull();
 	}
 
 	@Test
-	public void convertWhenAuthorizationHeaderNotBasicThenReturnNull() {
-		MockHttpServletRequest request = new MockHttpServletRequest();
-		request.addHeader(HttpHeaders.AUTHORIZATION, "Bearer token");
-		Authentication authentication = this.converter.convert(request);
-		assertThat(authentication).isNull();
-	}
-
-	@Test
-	public void convertWhenAuthorizationHeaderBasicWithMissingCredentialsThenThrowOAuth2AuthenticationException() {
-		MockHttpServletRequest request = new MockHttpServletRequest();
-		request.addHeader(HttpHeaders.AUTHORIZATION, "Basic ");
-		assertThatThrownBy(() -> this.converter.convert(request))
-				.isInstanceOf(OAuth2AuthenticationException.class)
-				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
-				.extracting("errorCode")
-				.isEqualTo(OAuth2ErrorCodes.INVALID_REQUEST);
-	}
-
-	@Test
-	public void convertWhenAuthorizationHeaderBasicWithInvalidBase64ThenThrowOAuth2AuthenticationException() {
-		MockHttpServletRequest request = new MockHttpServletRequest();
-		request.addHeader(HttpHeaders.AUTHORIZATION, "Basic clientId:secret");
-		assertThatThrownBy(() -> this.converter.convert(request))
-				.isInstanceOf(OAuth2AuthenticationException.class)
-				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
-				.extracting("errorCode")
-				.isEqualTo(OAuth2ErrorCodes.INVALID_REQUEST);
-	}
-
-	@Test
-	public void convertWhenAuthorizationHeaderBasicWithMissingSecretThenThrowOAuth2AuthenticationException() throws Exception {
-		MockHttpServletRequest request = new MockHttpServletRequest();
-		request.addHeader(HttpHeaders.AUTHORIZATION, "Basic " + encodeBasicAuth("clientId", ""));
-		assertThatThrownBy(() -> this.converter.convert(request))
-				.isInstanceOf(OAuth2AuthenticationException.class)
-				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
-				.extracting("errorCode")
-				.isEqualTo(OAuth2ErrorCodes.INVALID_REQUEST);
-	}
-
-	@Test
-	public void convertWhenAuthorizationHeaderBasicWithValidCredentialsThenReturnClientAuthenticationToken() throws Exception {
-		MockHttpServletRequest request = new MockHttpServletRequest();
-		request.addHeader(HttpHeaders.AUTHORIZATION, "Basic " + encodeBasicAuth("clientId", "secret"));
-		OAuth2ClientAuthenticationToken authentication = (OAuth2ClientAuthenticationToken) this.converter.convert(request);
-		assertThat(authentication.getPrincipal()).isEqualTo("clientId");
-		assertThat(authentication.getCredentials()).isEqualTo("secret");
-	}
-
-	@Test
-	public void convertWhenConfidentialClientWithPkceParametersThenAdditionalParametersIncluded() throws Exception {
+	public void convertWhenMissingClientIdThenReturnNull() {
 		MockHttpServletRequest request = createPkceTokenRequest();
-		request.addHeader(HttpHeaders.AUTHORIZATION, "Basic " + encodeBasicAuth("clientId", "secret"));
+		request.removeParameter(OAuth2ParameterNames.CLIENT_ID);
+		Authentication authentication = this.converter.convert(request);
+		assertThat(authentication).isNull();
+	}
+
+	@Test
+	public void convertWhenMultipleClientIdThenInvalidRequestError() {
+		MockHttpServletRequest request = createPkceTokenRequest();
+		request.addParameter(OAuth2ParameterNames.CLIENT_ID, "client-2");
+		assertThatThrownBy(() -> this.converter.convert(request))
+				.isInstanceOf(OAuth2AuthenticationException.class)
+				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+				.extracting("errorCode")
+				.isEqualTo(OAuth2ErrorCodes.INVALID_REQUEST);
+	}
+
+	@Test
+	public void convertWhenMultipleCodeVerifierThenInvalidRequestError() {
+		MockHttpServletRequest request = createPkceTokenRequest();
+		request.addParameter(PkceParameterNames.CODE_VERIFIER, "code-verifier-2");
+		assertThatThrownBy(() -> this.converter.convert(request))
+				.isInstanceOf(OAuth2AuthenticationException.class)
+				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+				.extracting("errorCode")
+				.isEqualTo(OAuth2ErrorCodes.INVALID_REQUEST);
+	}
+
+	@Test
+	public void convertWhenPublicClientThenReturnClientAuthenticationToken() {
+		MockHttpServletRequest request = createPkceTokenRequest();
 		OAuth2ClientAuthenticationToken authentication = (OAuth2ClientAuthenticationToken) this.converter.convert(request);
-		assertThat(authentication.getPrincipal()).isEqualTo("clientId");
-		assertThat(authentication.getCredentials()).isEqualTo("secret");
+		assertThat(authentication.getPrincipal()).isEqualTo("client-1");
 		assertThat(authentication.getAdditionalParameters())
 				.containsOnly(
 						entry(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.AUTHORIZATION_CODE.getValue()),
@@ -114,18 +86,11 @@ public class ClientSecretBasicAuthenticationConverterTests {
 						entry(PkceParameterNames.CODE_VERIFIER, "code-verifier-1"));
 	}
 
-	private static String encodeBasicAuth(String clientId, String secret) throws Exception {
-		clientId = URLEncoder.encode(clientId, StandardCharsets.UTF_8.name());
-		secret = URLEncoder.encode(secret, StandardCharsets.UTF_8.name());
-		String credentialsString = clientId + ":" + secret;
-		byte[] encodedBytes = Base64.getEncoder().encode(credentialsString.getBytes(StandardCharsets.UTF_8));
-		return new String(encodedBytes, StandardCharsets.UTF_8);
-	}
-
 	private static MockHttpServletRequest createPkceTokenRequest() {
 		MockHttpServletRequest request = new MockHttpServletRequest();
 		request.addParameter(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.AUTHORIZATION_CODE.getValue());
 		request.addParameter(OAuth2ParameterNames.CODE, "code");
+		request.addParameter(OAuth2ParameterNames.CLIENT_ID, "client-1");
 		request.addParameter(PkceParameterNames.CODE_VERIFIER, "code-verifier-1");
 		return request;
 	}

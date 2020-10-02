@@ -19,6 +19,9 @@ import org.junit.Test;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -31,14 +34,14 @@ public class OAuth2ClientAuthenticationTokenTests {
 
 	@Test
 	public void constructorWhenClientIdNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> new OAuth2ClientAuthenticationToken(null, "secret"))
+		assertThatThrownBy(() -> new OAuth2ClientAuthenticationToken(null, "secret", null))
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessage("clientId cannot be empty");
 	}
 
 	@Test
 	public void constructorWhenClientSecretNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> new OAuth2ClientAuthenticationToken("clientId", null))
+		assertThatThrownBy(() -> new OAuth2ClientAuthenticationToken("clientId", null, null))
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessage("clientSecret cannot be empty");
 	}
@@ -52,10 +55,22 @@ public class OAuth2ClientAuthenticationTokenTests {
 
 	@Test
 	public void constructorWhenClientCredentialsProvidedThenCreated() {
-		OAuth2ClientAuthenticationToken authentication = new OAuth2ClientAuthenticationToken("clientId", "secret");
+		OAuth2ClientAuthenticationToken authentication = new OAuth2ClientAuthenticationToken("clientId", "secret", null);
 		assertThat(authentication.isAuthenticated()).isFalse();
 		assertThat(authentication.getPrincipal().toString()).isEqualTo("clientId");
 		assertThat(authentication.getCredentials()).isEqualTo("secret");
+		assertThat(authentication.getRegisteredClient()).isNull();
+	}
+
+	@Test
+	public void constructorWhenClientIdProvidedThenCreated() {
+		Map<String, Object> additionalParameters = new HashMap<>();
+		additionalParameters.put("param1", "value1");
+		OAuth2ClientAuthenticationToken authentication = new OAuth2ClientAuthenticationToken("clientId", additionalParameters);
+		assertThat(authentication.isAuthenticated()).isFalse();
+		assertThat(authentication.getPrincipal().toString()).isEqualTo("clientId");
+		assertThat(authentication.getCredentials()).isNull();
+		assertThat(authentication.getAdditionalParameters()).isEqualTo(additionalParameters);
 		assertThat(authentication.getRegisteredClient()).isNull();
 	}
 

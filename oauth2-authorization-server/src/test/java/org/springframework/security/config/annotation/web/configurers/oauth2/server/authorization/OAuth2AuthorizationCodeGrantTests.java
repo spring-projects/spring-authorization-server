@@ -207,13 +207,12 @@ public class OAuth2AuthorizationCodeGrantTests {
 		this.mvc.perform(post(OAuth2TokenEndpointFilter.DEFAULT_TOKEN_ENDPOINT_URI)
 				.params(getTokenRequestParameters(registeredClient, authorization))
 				.param(OAuth2ParameterNames.CLIENT_ID, registeredClient.getClientId())
-				.param(PkceParameterNames.CODE_VERIFIER, S256_CODE_VERIFIER)
-				.with(user("user")))	// TODO Remove after PKCE authentication is moved to OAuth2ClientAuthenticationProvider
+				.param(PkceParameterNames.CODE_VERIFIER, S256_CODE_VERIFIER))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.access_token").isNotEmpty());
 
 		verify(registeredClientRepository, times(2)).findByClientId(eq(registeredClient.getClientId()));
-		verify(authorizationService).findByToken(
+		verify(authorizationService, times(2)).findByToken(
 				eq(authorization.getAttribute(OAuth2AuthorizationAttributeNames.CODE)),
 				eq(TokenType.AUTHORIZATION_CODE));
 		verify(authorizationService, times(2)).save(any());

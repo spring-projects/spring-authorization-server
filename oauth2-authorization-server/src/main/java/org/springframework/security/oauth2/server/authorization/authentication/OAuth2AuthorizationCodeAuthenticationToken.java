@@ -39,7 +39,6 @@ public class OAuth2AuthorizationCodeAuthenticationToken extends AbstractAuthenti
 	private static final long serialVersionUID = SpringSecurityCoreVersion2.SERIAL_VERSION_UID;
 	private final String code;
 	private final Authentication clientPrincipal;
-	private final String clientId;
 	private final String redirectUri;
 	private final Map<String, Object> additionalParameters;
 
@@ -58,32 +57,6 @@ public class OAuth2AuthorizationCodeAuthenticationToken extends AbstractAuthenti
 		Assert.notNull(clientPrincipal, "clientPrincipal cannot be null");
 		this.code = code;
 		this.clientPrincipal = clientPrincipal;
-		this.clientId = OAuth2ClientAuthenticationToken.class.isAssignableFrom(this.clientPrincipal.getClass()) ?
-				(String) this.clientPrincipal.getPrincipal() :
-				null;
-		this.redirectUri = redirectUri;
-		this.additionalParameters = Collections.unmodifiableMap(
-				additionalParameters != null ?
-						additionalParameters :
-						Collections.emptyMap());
-	}
-
-	/**
-	 * Constructs an {@code OAuth2AuthorizationCodeAuthenticationToken} using the provided parameters.
-	 *
-	 * @param code the authorization code
-	 * @param clientId the client identifier
-	 * @param redirectUri the redirect uri
-	 * @param additionalParameters the additional parameters
-	 */
-	public OAuth2AuthorizationCodeAuthenticationToken(String code, String clientId,
-			@Nullable String redirectUri, @Nullable Map<String, Object> additionalParameters) {
-		super(Collections.emptyList());
-		Assert.hasText(code, "code cannot be empty");
-		Assert.hasText(clientId, "clientId cannot be empty");
-		this.code = code;
-		this.clientPrincipal = null;
-		this.clientId = clientId;
 		this.redirectUri = redirectUri;
 		this.additionalParameters = Collections.unmodifiableMap(
 				additionalParameters != null ?
@@ -93,7 +66,7 @@ public class OAuth2AuthorizationCodeAuthenticationToken extends AbstractAuthenti
 
 	@Override
 	public Object getPrincipal() {
-		return this.clientPrincipal != null ? this.clientPrincipal : this.clientId;
+		return this.clientPrincipal;
 	}
 
 	@Override
@@ -108,15 +81,6 @@ public class OAuth2AuthorizationCodeAuthenticationToken extends AbstractAuthenti
 	 */
 	public String getCode() {
 		return this.code;
-	}
-
-	/**
-	 * Returns the client identifier
-	 *
-	 * @return the client identifier
-	 */
-	public @Nullable String getClientId() {
-		return this.clientId;
 	}
 
 	/**

@@ -22,7 +22,6 @@ import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
-import org.springframework.security.oauth2.core.endpoint.PkceParameterNames;
 import org.springframework.security.oauth2.jose.JoseHeaderNames;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -36,13 +35,9 @@ import org.springframework.security.oauth2.server.authorization.client.InMemoryR
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
-import org.springframework.security.oauth2.server.authorization.config.ClientSettings;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -59,19 +54,8 @@ import static org.mockito.Mockito.when;
  * @author Daniel Garnier-Moiroux
  */
 public class OAuth2AuthorizationCodeAuthenticationProviderTests {
-	private static final String PLAIN_CODE_VERIFIER = "pkce-key";
-	private static final String PLAIN_CODE_CHALLENGE = PLAIN_CODE_VERIFIER;
-
-	// See RFC 7636: Appendix B.  Example for the S256 code_challenge_method
-	// https://tools.ietf.org/html/rfc7636#appendix-B
-	private static final String S256_CODE_VERIFIER = "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk";
-	private static final String S256_CODE_CHALLENGE = "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM";
-
 	private static final String AUTHORIZATION_CODE = "code";
-
 	private RegisteredClient registeredClient;
-	private RegisteredClient otherRegisteredClient;
-	private RegisteredClient registeredClientRequiresProofKey;
 	private RegisteredClientRepository registeredClientRepository;
 	private OAuth2AuthorizationService authorizationService;
 	private JwtEncoder jwtEncoder;
@@ -80,17 +64,7 @@ public class OAuth2AuthorizationCodeAuthenticationProviderTests {
 	@Before
 	public void setUp() {
 		this.registeredClient = TestRegisteredClients.registeredClient().build();
-		this.otherRegisteredClient = TestRegisteredClients.registeredClient2().build();
-		this.registeredClientRequiresProofKey = TestRegisteredClients.registeredClient()
-				.id("registration-3")
-				.clientId("client-3")
-				.clientSettings(new ClientSettings().requireProofKey(true))
-				.build();
-		this.registeredClientRepository = new InMemoryRegisteredClientRepository(
-				this.registeredClient,
-				this.otherRegisteredClient,
-				this.registeredClientRequiresProofKey
-		);
+		this.registeredClientRepository = new InMemoryRegisteredClientRepository(this.registeredClient);
 		this.authorizationService = mock(OAuth2AuthorizationService.class);
 		this.jwtEncoder = mock(JwtEncoder.class);
 		this.authenticationProvider = new OAuth2AuthorizationCodeAuthenticationProvider(
@@ -139,34 +113,9 @@ public class OAuth2AuthorizationCodeAuthenticationProviderTests {
 	@Test
 	public void authenticateWhenClientPrincipalNotAuthenticatedThenThrowOAuth2AuthenticationException() {
 		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(
-				this.registeredClient.getClientId(), this.registeredClient.getClientSecret());
+				this.registeredClient.getClientId(), this.registeredClient.getClientSecret(), null);
 		OAuth2AuthorizationCodeAuthenticationToken authentication =
 				new OAuth2AuthorizationCodeAuthenticationToken(AUTHORIZATION_CODE, clientPrincipal, null, null);
-		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
-				.isInstanceOf(OAuth2AuthenticationException.class)
-				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
-				.extracting("errorCode")
-				.isEqualTo(OAuth2ErrorCodes.INVALID_CLIENT);
-	}
-
-	@Test
-	public void authenticateWhenPublicClientAndInvalidClientIdThenThrowOAuth2AuthenticationException() {
-		OAuth2Authorization authorization = TestOAuth2Authorizations
-				.authorization(this.registeredClient, createPkceParametersPlain())
-				.build();
-		when(this.authorizationService.findByToken(eq(AUTHORIZATION_CODE), eq(TokenType.AUTHORIZATION_CODE)))
-				.thenReturn(authorization);
-
-		OAuth2AuthorizationRequest authorizationRequest = authorization.getAttribute(
-				OAuth2AuthorizationAttributeNames.AUTHORIZATION_REQUEST);
-		OAuth2AuthorizationCodeAuthenticationToken authentication =
-				new OAuth2AuthorizationCodeAuthenticationToken(
-						AUTHORIZATION_CODE,
-						"invalid-client-id",
-						authorizationRequest.getRedirectUri(),
-						Collections.singletonMap(PkceParameterNames.CODE_VERIFIER, PLAIN_CODE_CHALLENGE)
-				);
-
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 				.isInstanceOf(OAuth2AuthenticationException.class)
 				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
@@ -196,30 +145,6 @@ public class OAuth2AuthorizationCodeAuthenticationProviderTests {
 				TestRegisteredClients.registeredClient2().build());
 		OAuth2AuthorizationCodeAuthenticationToken authentication =
 				new OAuth2AuthorizationCodeAuthenticationToken(AUTHORIZATION_CODE, clientPrincipal, null, null);
-		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
-				.isInstanceOf(OAuth2AuthenticationException.class)
-				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
-				.extracting("errorCode")
-				.isEqualTo(OAuth2ErrorCodes.INVALID_GRANT);
-	}
-
-	@Test
-	public void authenticateWhenPublicClientAndClientIdNotMatchThenThrowOAuth2AuthenticationException() {
-		OAuth2Authorization authorization = TestOAuth2Authorizations
-				.authorization(this.registeredClient, createPkceParametersPlain())
-				.build();
-		when(this.authorizationService.findByToken(eq(AUTHORIZATION_CODE), eq(TokenType.AUTHORIZATION_CODE)))
-				.thenReturn(authorization);
-
-		OAuth2AuthorizationRequest authorizationRequest = authorization.getAttribute(
-				OAuth2AuthorizationAttributeNames.AUTHORIZATION_REQUEST);
-		OAuth2AuthorizationCodeAuthenticationToken authentication =
-				new OAuth2AuthorizationCodeAuthenticationToken(
-						AUTHORIZATION_CODE,
-						this.otherRegisteredClient.getClientId(),
-						authorizationRequest.getRedirectUri(),
-						Collections.singletonMap(PkceParameterNames.CODE_VERIFIER, PLAIN_CODE_VERIFIER)
-				);
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 				.isInstanceOf(OAuth2AuthenticationException.class)
 				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
@@ -270,240 +195,6 @@ public class OAuth2AuthorizationCodeAuthenticationProviderTests {
 		assertThat(accessTokenAuthentication.getPrincipal()).isEqualTo(clientPrincipal);
 		assertThat(updatedAuthorization.getAccessToken()).isNotNull();
 		assertThat(accessTokenAuthentication.getAccessToken()).isEqualTo(updatedAuthorization.getAccessToken());
-	}
-
-	@Test
-	public void authenticateWhenRequireProofKeyAndMissingCodeChallengeThenThrowOAuth2AuthenticationException() {
-		OAuth2Authorization authorization = TestOAuth2Authorizations
-				.authorization(this.registeredClientRequiresProofKey)
-				.build();
-		when(this.authorizationService.findByToken(eq(AUTHORIZATION_CODE), eq(TokenType.AUTHORIZATION_CODE)))
-				.thenReturn(authorization);
-
-		OAuth2AuthorizationRequest authorizationRequest = authorization.getAttribute(
-				OAuth2AuthorizationAttributeNames.AUTHORIZATION_REQUEST);
-		OAuth2AuthorizationCodeAuthenticationToken authentication =
-				new OAuth2AuthorizationCodeAuthenticationToken(
-						AUTHORIZATION_CODE,
-						this.registeredClientRequiresProofKey.getClientId(),
-						authorizationRequest.getRedirectUri(),
-						Collections.singletonMap(PkceParameterNames.CODE_VERIFIER, PLAIN_CODE_VERIFIER)
-				);
-		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
-				.isInstanceOf(OAuth2AuthenticationException.class)
-				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
-				.extracting("errorCode")
-				.isEqualTo(OAuth2ErrorCodes.INVALID_GRANT);
-	}
-
-	@Test
-	public void authenticateWhenPublicClientAndMissingCodeVerifierThenThrowOAuth2AuthenticationException() {
-		OAuth2Authorization authorization = TestOAuth2Authorizations
-				.authorization(this.registeredClient, createPkceParametersPlain())
-				.build();
-		when(this.authorizationService.findByToken(eq(AUTHORIZATION_CODE), eq(TokenType.AUTHORIZATION_CODE)))
-				.thenReturn(authorization);
-
-		OAuth2AuthorizationRequest authorizationRequest = authorization.getAttribute(
-				OAuth2AuthorizationAttributeNames.AUTHORIZATION_REQUEST);
-		OAuth2AuthorizationCodeAuthenticationToken authentication =
-				new OAuth2AuthorizationCodeAuthenticationToken(
-						AUTHORIZATION_CODE,
-						authorizationRequest.getClientId(),
-						authorizationRequest.getRedirectUri(),
-						null
-				);
-		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
-				.isInstanceOf(OAuth2AuthenticationException.class)
-				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
-				.extracting("errorCode")
-				.isEqualTo(OAuth2ErrorCodes.INVALID_GRANT);
-	}
-
-	@Test
-	public void authenticateWhenConfidentialClientRequireProofKeyAndMissingCodeVerifierThenThrowOAuth2AuthenticationException() {
-		OAuth2Authorization authorization = TestOAuth2Authorizations
-				.authorization(this.registeredClientRequiresProofKey, createPkceParametersPlain())
-				.build();
-		when(this.authorizationService.findByToken(eq(AUTHORIZATION_CODE), eq(TokenType.AUTHORIZATION_CODE)))
-				.thenReturn(authorization);
-
-		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(
-				this.registeredClientRequiresProofKey);
-		OAuth2AuthorizationRequest authorizationRequest = authorization.getAttribute(
-				OAuth2AuthorizationAttributeNames.AUTHORIZATION_REQUEST);
-		OAuth2AuthorizationCodeAuthenticationToken authentication =
-				new OAuth2AuthorizationCodeAuthenticationToken(
-						AUTHORIZATION_CODE,
-						clientPrincipal,
-						authorizationRequest.getRedirectUri(),
-						null
-				);
-		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
-				.isInstanceOf(OAuth2AuthenticationException.class)
-				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
-				.extracting("errorCode")
-				.isEqualTo(OAuth2ErrorCodes.INVALID_GRANT);
-	}
-
-	@Test
-	public void authenticateWhenPublicClientAndPlainMethodAndInvalidCodeVerifierThenThrowOAuth2AuthenticationException() {
-		OAuth2Authorization authorization = TestOAuth2Authorizations
-				.authorization(this.registeredClient, createPkceParametersPlain())
-				.build();
-		when(this.authorizationService.findByToken(eq(AUTHORIZATION_CODE), eq(TokenType.AUTHORIZATION_CODE)))
-				.thenReturn(authorization);
-
-		OAuth2AuthorizationCodeAuthenticationToken authentication = createAuthorizationCodeAuthentication(
-				this.registeredClient, "invalid-code-verifier");
-		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
-				.isInstanceOf(OAuth2AuthenticationException.class)
-				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
-				.extracting("errorCode")
-				.isEqualTo(OAuth2ErrorCodes.INVALID_GRANT);
-	}
-
-	@Test
-	public void authenticateWhenPublicClientAndS256MethodAndInvalidCodeVerifierThenThrowOAuth2AuthenticationException() {
-		OAuth2Authorization authorization = TestOAuth2Authorizations
-				.authorization(this.registeredClient, createPkceParametersS256())
-				.build();
-		when(this.authorizationService.findByToken(eq(AUTHORIZATION_CODE), eq(TokenType.AUTHORIZATION_CODE)))
-				.thenReturn(authorization);
-
-		OAuth2AuthorizationCodeAuthenticationToken authentication = createAuthorizationCodeAuthentication(
-				this.registeredClient, "invalid-code-verifier");
-		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
-				.isInstanceOf(OAuth2AuthenticationException.class)
-				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
-				.extracting("errorCode")
-				.isEqualTo(OAuth2ErrorCodes.INVALID_GRANT);
-	}
-
-	@Test
-	public void authenticateWhenRequireProofKeyAndUnsupportedCodeChallengeMethodThenThrowOAuth2AuthenticationException() {
-		Map<String, Object> pkceParameters = createPkceParametersPlain();
-		// This should never happen: the Authorization endpoint should not allow it
-		pkceParameters.put(PkceParameterNames.CODE_CHALLENGE_METHOD, "unsupported-challenge-method");
-		OAuth2Authorization authorization = TestOAuth2Authorizations
-				.authorization(this.registeredClientRequiresProofKey, pkceParameters)
-				.build();
-		when(this.authorizationService.findByToken(eq(AUTHORIZATION_CODE), eq(TokenType.AUTHORIZATION_CODE)))
-				.thenReturn(authorization);
-
-		OAuth2AuthorizationRequest authorizationRequest = authorization.getAttribute(
-				OAuth2AuthorizationAttributeNames.AUTHORIZATION_REQUEST);
-		OAuth2AuthorizationCodeAuthenticationToken authentication =
-				new OAuth2AuthorizationCodeAuthenticationToken(
-						AUTHORIZATION_CODE,
-						this.registeredClientRequiresProofKey.getClientId(),
-						authorizationRequest.getRedirectUri(),
-						Collections.singletonMap(PkceParameterNames.CODE_VERIFIER, PLAIN_CODE_VERIFIER)
-				);
-		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
-				.isInstanceOf(OAuth2AuthenticationException.class)
-				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
-				.extracting("errorCode")
-				.isEqualTo(OAuth2ErrorCodes.SERVER_ERROR);
-	}
-
-	@Test
-	public void authenticateWhenPublicClientAndPlainMethodAndValidCodeVerifierThenReturnAccessToken() {
-		OAuth2Authorization authorization = TestOAuth2Authorizations
-				.authorization(this.registeredClient, createPkceParametersPlain())
-				.build();
-		when(this.authorizationService.findByToken(eq(AUTHORIZATION_CODE), eq(TokenType.AUTHORIZATION_CODE)))
-				.thenReturn(authorization);
-		when(this.jwtEncoder.encode(any(), any())).thenReturn(createJwt());
-
-		OAuth2AuthorizationCodeAuthenticationToken authentication = createAuthorizationCodeAuthentication(
-				this.registeredClient, PLAIN_CODE_VERIFIER);
-
-		OAuth2AccessTokenAuthenticationToken accessTokenAuthentication =
-				(OAuth2AccessTokenAuthenticationToken) this.authenticationProvider.authenticate(authentication);
-
-		ArgumentCaptor<OAuth2Authorization> authorizationCaptor = ArgumentCaptor.forClass(OAuth2Authorization.class);
-		verify(this.authorizationService).save(authorizationCaptor.capture());
-		OAuth2Authorization updatedAuthorization = authorizationCaptor.getValue();
-
-		OAuth2ClientAuthenticationToken clientAuthentication = (OAuth2ClientAuthenticationToken) accessTokenAuthentication.getPrincipal();
-		assertThat(clientAuthentication.getPrincipal()).isEqualTo(this.registeredClient.getClientId());
-		assertThat(updatedAuthorization.getAccessToken()).isNotNull();
-		assertThat(accessTokenAuthentication.getAccessToken()).isEqualTo(updatedAuthorization.getAccessToken());
-	}
-
-	@Test
-	public void authenticateWhenPublicClientAndMissingMethodThenDefaultPlainMethodAndReturnAccessToken() {
-		OAuth2Authorization authorization = TestOAuth2Authorizations
-				.authorization(this.registeredClient, Collections.singletonMap(PkceParameterNames.CODE_CHALLENGE, PLAIN_CODE_CHALLENGE))
-				.build();
-		when(this.authorizationService.findByToken(eq(AUTHORIZATION_CODE), eq(TokenType.AUTHORIZATION_CODE)))
-				.thenReturn(authorization);
-		when(this.jwtEncoder.encode(any(), any())).thenReturn(createJwt());
-
-		OAuth2AuthorizationCodeAuthenticationToken authentication = createAuthorizationCodeAuthentication(
-				this.registeredClient, PLAIN_CODE_VERIFIER);
-
-		OAuth2AccessTokenAuthenticationToken accessTokenAuthentication =
-				(OAuth2AccessTokenAuthenticationToken) this.authenticationProvider.authenticate(authentication);
-
-		ArgumentCaptor<OAuth2Authorization> authorizationCaptor = ArgumentCaptor.forClass(OAuth2Authorization.class);
-		verify(this.authorizationService).save(authorizationCaptor.capture());
-		OAuth2Authorization updatedAuthorization = authorizationCaptor.getValue();
-
-		OAuth2ClientAuthenticationToken clientAuthentication = (OAuth2ClientAuthenticationToken) accessTokenAuthentication.getPrincipal();
-		assertThat(clientAuthentication.getPrincipal()).isEqualTo(this.registeredClient.getClientId());
-		assertThat(updatedAuthorization.getAccessToken()).isNotNull();
-		assertThat(accessTokenAuthentication.getAccessToken()).isEqualTo(updatedAuthorization.getAccessToken());
-	}
-
-	@Test
-	public void authenticateWhenPublicClientAndS256MethodAndValidCodeVerifierThenReturnAccessToken() {
-		OAuth2Authorization authorization = TestOAuth2Authorizations
-				.authorization(this.registeredClient, createPkceParametersS256())
-				.build();
-		when(this.authorizationService.findByToken(eq(AUTHORIZATION_CODE), eq(TokenType.AUTHORIZATION_CODE)))
-				.thenReturn(authorization);
-		when(this.jwtEncoder.encode(any(), any())).thenReturn(createJwt());
-
-		OAuth2AuthorizationCodeAuthenticationToken authentication = createAuthorizationCodeAuthentication(
-				this.registeredClient, S256_CODE_VERIFIER);
-
-		OAuth2AccessTokenAuthenticationToken accessTokenAuthentication =
-				(OAuth2AccessTokenAuthenticationToken) this.authenticationProvider.authenticate(authentication);
-
-		ArgumentCaptor<OAuth2Authorization> authorizationCaptor = ArgumentCaptor.forClass(OAuth2Authorization.class);
-		verify(this.authorizationService).save(authorizationCaptor.capture());
-		OAuth2Authorization updatedAuthorization = authorizationCaptor.getValue();
-
-		OAuth2ClientAuthenticationToken clientAuthentication = (OAuth2ClientAuthenticationToken) accessTokenAuthentication.getPrincipal();
-		assertThat(clientAuthentication.getPrincipal()).isEqualTo(this.registeredClient.getClientId());
-		assertThat(updatedAuthorization.getAccessToken()).isNotNull();
-		assertThat(accessTokenAuthentication.getAccessToken()).isEqualTo(updatedAuthorization.getAccessToken());
-	}
-
-	private static Map<String, Object> createPkceParametersPlain() {
-		Map<String, Object> parameters = new HashMap<>();
-		parameters.put(PkceParameterNames.CODE_CHALLENGE_METHOD, "plain");
-		parameters.put(PkceParameterNames.CODE_CHALLENGE, PLAIN_CODE_CHALLENGE);
-		return parameters;
-	}
-
-	private static Map<String, Object> createPkceParametersS256() {
-		Map<String, Object> parameters = new HashMap<>();
-		parameters.put(PkceParameterNames.CODE_CHALLENGE_METHOD, "S256");
-		parameters.put(PkceParameterNames.CODE_CHALLENGE, S256_CODE_CHALLENGE);
-		return parameters;
-	}
-
-	private static OAuth2AuthorizationCodeAuthenticationToken createAuthorizationCodeAuthentication(
-			RegisteredClient registeredClient, String codeVerifier) {
-		return new OAuth2AuthorizationCodeAuthenticationToken(
-				AUTHORIZATION_CODE,
-				registeredClient.getClientId(),
-				registeredClient.getRedirectUris().iterator().next(),
-				Collections.singletonMap(PkceParameterNames.CODE_VERIFIER, codeVerifier)
-		);
 	}
 
 	private static Jwt createJwt() {

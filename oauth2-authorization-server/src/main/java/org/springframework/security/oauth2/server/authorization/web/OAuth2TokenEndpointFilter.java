@@ -30,13 +30,11 @@ import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AccessTokenResponse;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
-import org.springframework.security.oauth2.core.endpoint.PkceParameterNames;
 import org.springframework.security.oauth2.core.http.converter.OAuth2AccessTokenResponseHttpMessageConverter;
 import org.springframework.security.oauth2.core.http.converter.OAuth2ErrorHttpMessageConverter;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AccessTokenAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeAuthenticationToken;
-import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientCredentialsAuthenticationToken;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
@@ -189,12 +187,6 @@ public class OAuth2TokenEndpointFilter extends OncePerRequestFilter {
 		throw new OAuth2AuthenticationException(error);
 	}
 
-	private static boolean isClientAuthenticated(Authentication clientPrincipal) {
-		return clientPrincipal != null &&
-				OAuth2ClientAuthenticationToken.class.isAssignableFrom(clientPrincipal.getClass()) &&
-				clientPrincipal.isAuthenticated();
-	}
-
 	private static class AuthorizationCodeAuthenticationConverter implements Converter<HttpServletRequest, Authentication> {
 
 		@Override
@@ -204,6 +196,8 @@ public class OAuth2TokenEndpointFilter extends OncePerRequestFilter {
 			if (!AuthorizationGrantType.AUTHORIZATION_CODE.getValue().equals(grantType)) {
 				return null;
 			}
+
+			Authentication clientPrincipal = SecurityContextHolder.getContext().getAuthentication();
 
 			MultiValueMap<String, String> parameters = OAuth2EndpointUtils.getParameters(request);
 
@@ -222,25 +216,6 @@ public class OAuth2TokenEndpointFilter extends OncePerRequestFilter {
 				throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.REDIRECT_URI);
 			}
 
-			// client_id (REQUIRED)
-			// Required only if the client did not authenticate
-			String clientId = null;
-			Authentication clientPrincipal = SecurityContextHolder.getContext().getAuthentication();
-			if (!isClientAuthenticated(clientPrincipal)) {
-				clientId = parameters.getFirst(OAuth2ParameterNames.CLIENT_ID);
-				if (!StringUtils.hasText(clientId) ||
-						parameters.get(OAuth2ParameterNames.CLIENT_ID).size() != 1) {
-					throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.CLIENT_ID);
-				}
-
-				// code_verifier (REQUIRED for public clients)
-				String codeVerifier = parameters.getFirst(PkceParameterNames.CODE_VERIFIER);
-				if (!StringUtils.hasText(codeVerifier) ||
-						parameters.get(PkceParameterNames.CODE_VERIFIER).size() != 1) {
-					throwError(OAuth2ErrorCodes.INVALID_REQUEST, PkceParameterNames.CODE_VERIFIER);
-				}
-			}
-
 			Map<String, Object> additionalParameters = parameters
 					.entrySet()
 					.stream()
@@ -250,10 +225,7 @@ public class OAuth2TokenEndpointFilter extends OncePerRequestFilter {
 							!e.getKey().equals(OAuth2ParameterNames.REDIRECT_URI))
 					.collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().get(0)));
 
-
-			return clientId != null ?
-					new OAuth2AuthorizationCodeAuthenticationToken(code, clientId, redirectUri, additionalParameters) :
-					new OAuth2AuthorizationCodeAuthenticationToken(code, clientPrincipal, redirectUri, additionalParameters);
+			return new OAuth2AuthorizationCodeAuthenticationToken(code, clientPrincipal, redirectUri, additionalParameters);
 		}
 	}
 

@@ -120,7 +120,8 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 	public void init(B builder) {
 		OAuth2ClientAuthenticationProvider clientAuthenticationProvider =
 				new OAuth2ClientAuthenticationProvider(
-						getRegisteredClientRepository(builder));
+						getRegisteredClientRepository(builder),
+						getAuthorizationService(builder));
 		builder.authenticationProvider(postProcess(clientAuthenticationProvider));
 
 		NimbusJwsEncoder jwtEncoder = new NimbusJwsEncoder(getKeyManager(builder));

@@ -103,7 +103,7 @@ public class OAuth2ClientCredentialsAuthenticationProviderTests {
 	@Test
 	public void authenticateWhenClientPrincipalNotAuthenticatedThenThrowOAuth2AuthenticationException() {
 		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(
-				this.registeredClient.getClientId(), this.registeredClient.getClientSecret());
+				this.registeredClient.getClientId(), this.registeredClient.getClientSecret(), null);
 		OAuth2ClientCredentialsAuthenticationToken authentication = new OAuth2ClientCredentialsAuthenticationToken(clientPrincipal);
 
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))

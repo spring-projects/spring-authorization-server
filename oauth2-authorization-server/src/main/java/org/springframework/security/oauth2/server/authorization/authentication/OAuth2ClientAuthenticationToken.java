@@ -23,6 +23,7 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 import org.springframework.util.Assert;
 
 import java.util.Collections;
+import java.util.Map;
 
 /**
  * An {@link Authentication} implementation used for OAuth 2.0 Client Authentication.
@@ -38,6 +39,7 @@ public class OAuth2ClientAuthenticationToken extends AbstractAuthenticationToken
 	private static final long serialVersionUID = SpringSecurityCoreVersion2.SERIAL_VERSION_UID;
 	private String clientId;
 	private String clientSecret;
+	private Map<String, Object> additionalParameters;
 	private RegisteredClient registeredClient;
 
 	/**
@@ -45,13 +47,28 @@ public class OAuth2ClientAuthenticationToken extends AbstractAuthenticationToken
 	 *
 	 * @param clientId the client identifier
 	 * @param clientSecret the client secret
+	 * @param additionalParameters the additional parameters
 	 */
-	public OAuth2ClientAuthenticationToken(String clientId, String clientSecret) {
+	public OAuth2ClientAuthenticationToken(String clientId, String clientSecret,
+			@Nullable Map<String, Object> additionalParameters) {
+		this(clientId, additionalParameters);
+		Assert.hasText(clientSecret, "clientSecret cannot be empty");
+		this.clientSecret = clientSecret;
+	}
+
+	/**
+	 * Constructs an {@code OAuth2ClientAuthenticationToken} using the provided parameters.
+	 *
+	 * @param clientId the client identifier
+	 * @param additionalParameters the additional parameters
+	 */
+	public OAuth2ClientAuthenticationToken(String clientId,
+			@Nullable Map<String, Object> additionalParameters) {
 		super(Collections.emptyList());
 		Assert.hasText(clientId, "clientId cannot be empty");
-		Assert.hasText(clientSecret, "clientSecret cannot be empty");
 		this.clientId = clientId;
-		this.clientSecret = clientSecret;
+		this.additionalParameters = additionalParameters != null ?
+				Collections.unmodifiableMap(additionalParameters) : null;
 	}
 
 	/**
@@ -76,6 +93,15 @@ public class OAuth2ClientAuthenticationToken extends AbstractAuthenticationToken
 	@Override
 	public Object getCredentials() {
 		return this.clientSecret;
+	}
+
+	/**
+	 * Returns the additional parameters
+	 *
+	 * @return the additional parameters
+	 */
+	public @Nullable Map<String, Object> getAdditionalParameters() {
+		return this.additionalParameters;
 	}
 
 	/**

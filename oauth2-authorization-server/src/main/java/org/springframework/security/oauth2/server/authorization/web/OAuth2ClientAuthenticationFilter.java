@@ -41,6 +41,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Arrays;
 
 /**
  * A {@code Filter} that processes an authentication request for an OAuth 2.0 Client.
@@ -73,7 +74,10 @@ public class OAuth2ClientAuthenticationFilter extends OncePerRequestFilter {
 		Assert.notNull(requestMatcher, "requestMatcher cannot be null");
 		this.authenticationManager = authenticationManager;
 		this.requestMatcher = requestMatcher;
-		this.authenticationConverter = new ClientSecretBasicAuthenticationConverter();
+		this.authenticationConverter = new DelegatingAuthenticationConverter(
+				Arrays.asList(
+						new ClientSecretBasicAuthenticationConverter(),
+						new PublicClientAuthenticationConverter()));
 		this.authenticationSuccessHandler = this::onAuthenticationSuccess;
 		this.authenticationFailureHandler = this::onAuthenticationFailure;
 	}

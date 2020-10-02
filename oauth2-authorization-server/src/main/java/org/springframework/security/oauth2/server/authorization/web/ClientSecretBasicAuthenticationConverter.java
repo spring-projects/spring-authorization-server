@@ -28,6 +28,9 @@ import javax.servlet.http.HttpServletRequest;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Attempts to extract HTTP Basic credentials from {@link HttpServletRequest}
@@ -82,6 +85,15 @@ public class ClientSecretBasicAuthenticationConverter implements AuthenticationC
 			throw new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_REQUEST), ex);
 		}
 
-		return new OAuth2ClientAuthenticationToken(clientID, clientSecret);
+		return new OAuth2ClientAuthenticationToken(clientID, clientSecret, extractAdditionalParameters(request));
+	}
+
+	private static Map<String, Object> extractAdditionalParameters(HttpServletRequest request) {
+		Map<String, Object> additionalParameters = Collections.emptyMap();
+		if (OAuth2EndpointUtils.matchesPkceTokenRequest(request)) {
+			// Confidential clients can also leverage PKCE
+			additionalParameters = new HashMap<>(OAuth2EndpointUtils.getParameters(request).toSingleValueMap());
+		}
+		return additionalParameters;
 	}
 }

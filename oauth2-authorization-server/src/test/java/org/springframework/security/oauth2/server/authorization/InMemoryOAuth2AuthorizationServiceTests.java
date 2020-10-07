@@ -18,6 +18,7 @@ package org.springframework.security.oauth2.server.authorization;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
+import org.springframework.security.oauth2.core.OAuth2RefreshToken;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2AuthorizationCode;
@@ -139,6 +140,20 @@ public class InMemoryOAuth2AuthorizationServiceTests {
 		OAuth2Authorization result = this.authorizationService.findByToken(
 				"access-token", TokenType.ACCESS_TOKEN);
 		assertThat(authorization).isEqualTo(result);
+	}
+
+	@Test
+	public void findByTokenAndTokenTypeWhenTokenTypeRefreshTokenThenFound() {
+		final String refreshTokenValue = "refresh-token";
+		OAuth2Authorization expectedAuthorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
+															.principalName(PRINCIPAL_NAME)
+															.tokens(OAuth2Tokens.builder().refreshToken(new OAuth2RefreshToken(refreshTokenValue, Instant.now().plusSeconds(10))).build())
+															.build();
+		this.authorizationService.save(expectedAuthorization);
+
+		OAuth2Authorization result = this.authorizationService.findByToken(
+				refreshTokenValue, TokenType.REFRESH_TOKEN);
+		assertThat(result).isEqualTo(expectedAuthorization);
 	}
 
 	@Test

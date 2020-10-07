@@ -22,12 +22,9 @@ import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
+import org.springframework.security.oauth2.core.OAuth2RefreshToken;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
-import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
-import org.springframework.security.oauth2.jose.JoseHeader;
-import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationAttributeNames;
@@ -41,12 +38,6 @@ import org.springframework.security.oauth2.server.authorization.token.OAuth2Toke
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URL;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -128,37 +119,24 @@ public class OAuth2AuthorizationCodeAuthenticationProvider implements Authentica
 			throw new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_GRANT));
 		}
 
-		JoseHeader joseHeader = JoseHeader.withAlgorithm(SignatureAlgorithm.RS256).build();
-
-		// TODO Allow configuration for issuer claim
-		URL issuer = null;
-		try {
-			issuer = URI.create("https://oauth2.provider.com").toURL();
-		} catch (MalformedURLException e) { }
-
-		Instant issuedAt = Instant.now();
-		Instant expiresAt = issuedAt.plus(1, ChronoUnit.HOURS);		// TODO Allow configuration for access token time-to-live
 		Set<String> authorizedScopes = authorization.getAttribute(OAuth2AuthorizationAttributeNames.AUTHORIZED_SCOPES);
-
-		JwtClaimsSet jwtClaimsSet = JwtClaimsSet.withClaims()
-				.issuer(issuer)
-				.subject(authorization.getPrincipalName())
-				.audience(Collections.singletonList(registeredClient.getClientId()))
-				.issuedAt(issuedAt)
-				.expiresAt(expiresAt)
-				.notBefore(issuedAt)
-				.claim(OAuth2ParameterNames.SCOPE, authorizedScopes)
-				.build();
-
-		Jwt jwt = this.jwtEncoder.encode(joseHeader, jwtClaimsSet);
-
+		Jwt jwt = OAuth2TokenIssuerUtil
+			.issueJwtAccessToken(this.jwtEncoder, authorization.getPrincipalName(), registeredClient.getClientId(), authorizedScopes);
 		OAuth2AccessToken accessToken = new OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER,
-				jwt.getTokenValue(), jwt.getIssuedAt(), jwt.getExpiresAt(), jwt.getClaim(OAuth2ParameterNames.SCOPE));
+				jwt.getTokenValue(), jwt.getIssuedAt(), jwt.getExpiresAt(), authorizedScopes);
 
+		OAuth2Tokens.Builder tokensBuilder = OAuth2Tokens.from(authorization.getTokens())
+				.accessToken(accessToken);
+
+		OAuth2RefreshToken refreshToken = null;
+		if (registeredClient.getTokenSettings().enableRefreshTokens()) {
+			refreshToken = OAuth2TokenIssuerUtil.issueRefreshToken(registeredClient.getTokenSettings().refreshTokenTimeToLive());
+			tokensBuilder.refreshToken(refreshToken);
+		}
+
+		OAuth2Tokens tokens = tokensBuilder.build();
 		authorization = OAuth2Authorization.from(authorization)
-				.tokens(OAuth2Tokens.from(authorization.getTokens())
-						.accessToken(accessToken)
-						.build())
+				.tokens(tokens)
 				.attribute(OAuth2AuthorizationAttributeNames.ACCESS_TOKEN_ATTRIBUTES, jwt)
 				.build();
 
@@ -167,7 +145,7 @@ public class OAuth2AuthorizationCodeAuthenticationProvider implements Authentica
 
 		this.authorizationService.save(authorization);
 
-		return new OAuth2AccessTokenAuthenticationToken(registeredClient, clientPrincipal, accessToken);
+		return new OAuth2AccessTokenAuthenticationToken(registeredClient, clientPrincipal, accessToken, refreshToken);
 	}
 
 	@Override

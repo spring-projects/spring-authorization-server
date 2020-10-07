@@ -15,10 +15,12 @@
  */
 package org.springframework.security.oauth2.server.authorization.authentication;
 
+import org.springframework.lang.Nullable;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.server.authorization.Version;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
+import org.springframework.security.oauth2.core.OAuth2RefreshToken;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.util.Assert;
 
@@ -41,6 +43,7 @@ public class OAuth2AccessTokenAuthenticationToken extends AbstractAuthentication
 	private final RegisteredClient registeredClient;
 	private final Authentication clientPrincipal;
 	private final OAuth2AccessToken accessToken;
+	private final OAuth2RefreshToken refreshToken;
 
 	/**
 	 * Constructs an {@code OAuth2AccessTokenAuthenticationToken} using the provided parameters.
@@ -51,6 +54,19 @@ public class OAuth2AccessTokenAuthenticationToken extends AbstractAuthentication
 	 */
 	public OAuth2AccessTokenAuthenticationToken(RegisteredClient registeredClient,
 			Authentication clientPrincipal, OAuth2AccessToken accessToken) {
+		this(registeredClient, clientPrincipal, accessToken, null);
+	}
+
+	/**
+	 * Constructs an {@code OAuth2AccessTokenAuthenticationToken} using the provided parameters.
+	 *
+	 * @param registeredClient the registered client
+	 * @param clientPrincipal the authenticated client principal
+	 * @param accessToken the access token
+	 * @param refreshToken the refresh token
+	 */
+	public OAuth2AccessTokenAuthenticationToken(RegisteredClient registeredClient,
+			Authentication clientPrincipal, OAuth2AccessToken accessToken, @Nullable OAuth2RefreshToken refreshToken) {
 		super(Collections.emptyList());
 		Assert.notNull(registeredClient, "registeredClient cannot be null");
 		Assert.notNull(clientPrincipal, "clientPrincipal cannot be null");
@@ -58,6 +74,7 @@ public class OAuth2AccessTokenAuthenticationToken extends AbstractAuthentication
 		this.registeredClient = registeredClient;
 		this.clientPrincipal = clientPrincipal;
 		this.accessToken = accessToken;
+		this.refreshToken = refreshToken;
 	}
 
 	@Override
@@ -86,5 +103,16 @@ public class OAuth2AccessTokenAuthenticationToken extends AbstractAuthentication
 	 */
 	public OAuth2AccessToken getAccessToken() {
 		return this.accessToken;
+	}
+
+
+	/**
+	 * Returns the {@link OAuth2RefreshToken} if provided
+	 *
+	 * @return the {@link OAuth2RefreshToken}
+	 */
+	@Nullable
+	public OAuth2RefreshToken getRefreshToken() {
+		return refreshToken;
 	}
 }

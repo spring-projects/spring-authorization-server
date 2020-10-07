@@ -217,6 +217,46 @@ public class OAuth2AuthorizationCodeGrantTests {
 		verify(authorizationService, times(2)).save(any());
 	}
 
+	@Test
+	public void requestWhenPublicClientWithRefreshThenReturnRefreshToken() throws Exception {
+		this.spring.register(AuthorizationServerConfiguration.class).autowire();
+
+		RegisteredClient registeredClient = TestRegisteredClients
+				.registeredClient()
+				.clientSecret(null)
+				.tokenSettings(tokenSettings -> tokenSettings.enableRefreshTokens(true))
+				.build();
+		when(registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
+				.thenReturn(registeredClient);
+
+		MvcResult mvcResult = this.mvc.perform(get(OAuth2AuthorizationEndpointFilter.DEFAULT_AUTHORIZATION_ENDPOINT_URI)
+				.params(getAuthorizationRequestParameters(registeredClient))
+				.param(PkceParameterNames.CODE_CHALLENGE, S256_CODE_CHALLENGE)
+				.param(PkceParameterNames.CODE_CHALLENGE_METHOD, "S256")
+				.with(user("user")))
+				.andExpect(status().is3xxRedirection())
+				.andReturn();
+		assertThat(mvcResult.getResponse().getRedirectedUrl()).matches("https://example.com\\?code=.{15,}&state=state");
+
+		verify(registeredClientRepository).findByClientId(eq(registeredClient.getClientId()));
+
+		ArgumentCaptor<OAuth2Authorization> authorizationCaptor = ArgumentCaptor.forClass(OAuth2Authorization.class);
+		verify(authorizationService).save(authorizationCaptor.capture());
+		OAuth2Authorization authorization = authorizationCaptor.getValue();
+
+		when(authorizationService.findByToken(
+				eq(authorization.getTokens().getToken(OAuth2AuthorizationCode.class).getTokenValue()),
+				eq(TokenType.AUTHORIZATION_CODE)))
+				.thenReturn(authorization);
+
+		this.mvc.perform(post(OAuth2TokenEndpointFilter.DEFAULT_TOKEN_ENDPOINT_URI)
+				.params(getTokenRequestParameters(registeredClient, authorization))
+				.param(OAuth2ParameterNames.CLIENT_ID, registeredClient.getClientId())
+				.param(PkceParameterNames.CODE_VERIFIER, S256_CODE_VERIFIER))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.refresh_token").isNotEmpty());
+	}
+
 	private static MultiValueMap<String, String> getAuthorizationRequestParameters(RegisteredClient registeredClient) {
 		MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
 		parameters.set(OAuth2ParameterNames.RESPONSE_TYPE, OAuth2AuthorizationResponseType.CODE.getValue());

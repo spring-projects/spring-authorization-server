@@ -32,8 +32,11 @@ public class TokenSettingsTests {
 	@Test
 	public void constructorWhenDefaultThenDefaultsAreSet() {
 		TokenSettings tokenSettings = new TokenSettings();
-		assertThat(tokenSettings.settings()).hasSize(1);
+		assertThat(tokenSettings.settings()).hasSize(4);
 		assertThat(tokenSettings.accessTokenTimeToLive()).isEqualTo(Duration.ofMinutes(5));
+		assertThat(tokenSettings.enableRefreshTokens()).isTrue();
+		assertThat(tokenSettings.reuseRefreshTokens()).isEqualTo(false);
+		assertThat(tokenSettings.refreshTokenTimeToLive()).isEqualTo(Duration.ofMinutes(60));
 	}
 
 	@Test
@@ -51,14 +54,55 @@ public class TokenSettingsTests {
 	}
 
 	@Test
+	public void enableRefreshTokenWhenFalseThenSet() {
+		TokenSettings tokenSettings = new TokenSettings().enableRefreshTokens(false);
+		assertThat(tokenSettings.enableRefreshTokens()).isFalse();
+	}
+
+	@Test
+	public void reuseRefreshTokensWhenProvidedThenSet() {
+		boolean reuseRefreshTokens = true;
+		TokenSettings tokenSettings = new TokenSettings().reuseRefreshTokens(reuseRefreshTokens);
+		assertThat(tokenSettings.reuseRefreshTokens()).isEqualTo(reuseRefreshTokens);
+	}
+
+	@Test
+	public void refreshTokenTimeToLiveWhenProvidedThenSet() {
+		Duration refresTokenTimeToLive = Duration.ofDays(10);
+		TokenSettings tokenSettings = new TokenSettings().refreshTokenTimeToLive(refresTokenTimeToLive);
+		assertThat(tokenSettings.refreshTokenTimeToLive()).isEqualTo(refresTokenTimeToLive);
+	}
+
+	@Test
+	public void refreshTokenTimeToLiveWhenZeroOrNegativeThenThrowException() {
+		assertThatThrownBy(() -> new TokenSettings().refreshTokenTimeToLive(null))
+				.isInstanceOf(IllegalArgumentException.class)
+				.extracting(Throwable::getMessage)
+				.isEqualTo("refreshTokenTimeToLive cannot be null");
+
+		assertThatThrownBy(() -> new TokenSettings().refreshTokenTimeToLive(Duration.ZERO))
+				.isInstanceOf(IllegalArgumentException.class)
+				.extracting(Throwable::getMessage)
+				.isEqualTo("refreshTokenTimeToLive has to be greater than Duration.ZERO");
+
+		assertThatThrownBy(() -> new TokenSettings().refreshTokenTimeToLive(Duration.ofSeconds(-10)))
+				.isInstanceOf(IllegalArgumentException.class)
+				.extracting(Throwable::getMessage)
+				.isEqualTo("refreshTokenTimeToLive has to be greater than Duration.ZERO");
+	}
+
+	@Test
 	public void settingWhenCalledThenReturnTokenSettings() {
 		Duration accessTokenTimeToLive = Duration.ofMinutes(10);
 		TokenSettings tokenSettings = new TokenSettings()
 				.<TokenSettings>setting("name1", "value1")
 				.accessTokenTimeToLive(accessTokenTimeToLive)
 				.<TokenSettings>settings(settings -> settings.put("name2", "value2"));
-		assertThat(tokenSettings.settings()).hasSize(3);
+		assertThat(tokenSettings.settings()).hasSize(6);
 		assertThat(tokenSettings.accessTokenTimeToLive()).isEqualTo(accessTokenTimeToLive);
+		assertThat(tokenSettings.enableRefreshTokens()).isTrue();
+		assertThat(tokenSettings.reuseRefreshTokens()).isFalse();
+		assertThat(tokenSettings.refreshTokenTimeToLive()).isEqualTo(Duration.ofMinutes(60));
 		assertThat(tokenSettings.<String>setting("name1")).isEqualTo("value1");
 		assertThat(tokenSettings.<String>setting("name2")).isEqualTo("value2");
 	}

@@ -31,6 +31,7 @@ import org.springframework.security.oauth2.server.authorization.OAuth2Authorizat
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientCredentialsAuthenticationProvider;
+import org.springframework.security.oauth2.server.authorization.authentication.OAuth2RefreshTokenAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2TokenRevocationAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.web.JwkSetEndpointFilter;
@@ -148,6 +149,10 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 						getAuthorizationService(builder),
 						jwtEncoder);
 		builder.authenticationProvider(postProcess(clientCredentialsAuthenticationProvider));
+
+		OAuth2RefreshTokenAuthenticationProvider refreshTokenAuthenticationProvider =
+				new OAuth2RefreshTokenAuthenticationProvider(getAuthorizationService(builder), jwtEncoder);
+		builder.authenticationProvider(postProcess(refreshTokenAuthenticationProvider));
 
 		OAuth2TokenRevocationAuthenticationProvider tokenRevocationAuthenticationProvider =
 				new OAuth2TokenRevocationAuthenticationProvider(

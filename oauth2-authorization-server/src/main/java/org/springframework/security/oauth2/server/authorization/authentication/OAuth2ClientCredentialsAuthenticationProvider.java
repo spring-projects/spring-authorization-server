@@ -22,11 +22,7 @@ import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
-import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
-import org.springframework.security.oauth2.jose.JoseHeader;
-import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationAttributeNames;
@@ -36,12 +32,6 @@ import org.springframework.security.oauth2.server.authorization.token.OAuth2Toke
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URL;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -101,29 +91,8 @@ public class OAuth2ClientCredentialsAuthenticationProvider implements Authentica
 			scopes = new LinkedHashSet<>(clientCredentialsAuthentication.getScopes());
 		}
 
-		JoseHeader joseHeader = JoseHeader.withAlgorithm(SignatureAlgorithm.RS256).build();
-
-		// TODO Allow configuration for issuer claim
-		URL issuer = null;
-		try {
-			issuer = URI.create("https://oauth2.provider.com").toURL();
-		} catch (MalformedURLException e) { }
-
-		Instant issuedAt = Instant.now();
-		Instant expiresAt = issuedAt.plus(1, ChronoUnit.HOURS);		// TODO Allow configuration for access token time-to-live
-
-		JwtClaimsSet jwtClaimsSet = JwtClaimsSet.withClaims()
-				.issuer(issuer)
-				.subject(clientPrincipal.getName())
-				.audience(Collections.singletonList(registeredClient.getClientId()))
-				.issuedAt(issuedAt)
-				.expiresAt(expiresAt)
-				.notBefore(issuedAt)
-				.claim(OAuth2ParameterNames.SCOPE, scopes)
-				.build();
-
-		Jwt jwt = this.jwtEncoder.encode(joseHeader, jwtClaimsSet);
-
+		Jwt jwt = OAuth2TokenIssuerUtil
+			.issueJwtAccessToken(this.jwtEncoder, clientPrincipal.getName(), registeredClient.getClientId(), scopes);
 		OAuth2AccessToken accessToken = new OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER,
 				jwt.getTokenValue(), jwt.getIssuedAt(), jwt.getExpiresAt(), scopes);
 

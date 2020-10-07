@@ -66,10 +66,18 @@ public final class InMemoryOAuth2AuthorizationService implements OAuth2Authoriza
 		} else if (TokenType.AUTHORIZATION_CODE.equals(tokenType)) {
 			OAuth2AuthorizationCode authorizationCode = authorization.getTokens().getToken(OAuth2AuthorizationCode.class);
 			return authorizationCode != null && authorizationCode.getTokenValue().equals(token);
-		} else if (TokenType.ACCESS_TOKEN.equals(tokenType)) {
+		}
+
+		if (TokenType.ACCESS_TOKEN.equals(tokenType)) {
 			return authorization.getTokens().getAccessToken() != null &&
 					authorization.getTokens().getAccessToken().getTokenValue().equals(token);
 		}
+
+		if (TokenType.REFRESH_TOKEN.equals(tokenType)) {
+			return authorization.getTokens().getRefreshToken() != null &&
+						authorization.getTokens().getRefreshToken().getTokenValue().equals(token);
+		}
+
 		return false;
 	}
 

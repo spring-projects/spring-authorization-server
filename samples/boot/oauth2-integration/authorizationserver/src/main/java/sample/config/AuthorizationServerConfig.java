@@ -29,7 +29,6 @@ import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.server.authorization.client.InMemoryRegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
-import org.springframework.security.oauth2.server.authorization.config.ClientSettings;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 
 import java.util.UUID;
@@ -54,7 +53,7 @@ public class AuthorizationServerConfig {
 				.redirectUri("http://localhost:8080/authorized")
 				.scope("message.read")
 				.scope("message.write")
-				.clientSettings(new ClientSettings().requireUserConsent(true))
+				.clientSettings(clientSettings -> clientSettings.requireUserConsent(true))
 				.build();
 		return new InMemoryRegisteredClientRepository(registeredClient);
 	}

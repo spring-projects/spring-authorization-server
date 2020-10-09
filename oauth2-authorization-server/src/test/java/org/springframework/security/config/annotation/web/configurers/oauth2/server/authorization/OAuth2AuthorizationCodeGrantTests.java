@@ -41,7 +41,6 @@ import org.springframework.security.oauth2.server.authorization.TokenType;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
-import org.springframework.security.oauth2.server.authorization.config.ClientSettings;
 import org.springframework.security.oauth2.server.authorization.web.OAuth2AuthorizationEndpointFilter;
 import org.springframework.security.oauth2.server.authorization.web.OAuth2TokenEndpointFilter;
 import org.springframework.test.web.servlet.MockMvc;
@@ -179,7 +178,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
 				.clientSecret(null)
-				.clientSettings(new ClientSettings().requireProofKey(true))
+				.clientSettings(clientSettings -> clientSettings.requireProofKey(true))
 				.build();
 		when(registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
 				.thenReturn(registeredClient);

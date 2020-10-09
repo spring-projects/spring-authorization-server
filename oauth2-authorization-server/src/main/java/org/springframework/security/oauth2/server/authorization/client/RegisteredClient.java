@@ -182,8 +182,8 @@ public class RegisteredClient implements Serializable {
 		private Set<AuthorizationGrantType> authorizationGrantTypes = new LinkedHashSet<>();
 		private Set<String> redirectUris = new LinkedHashSet<>();
 		private Set<String> scopes = new LinkedHashSet<>();
-		private ClientSettings clientSettings;
-		private TokenSettings tokenSettings;
+		private ClientSettings clientSettings = new ClientSettings();
+		private TokenSettings tokenSettings = new TokenSettings();
 
 		protected Builder(String id) {
 			this.id = id;
@@ -337,24 +337,26 @@ public class RegisteredClient implements Serializable {
 		}
 
 		/**
-		 * Sets the {@link ClientSettings client configuration settings}.
+		 * A {@link Consumer} of the client configuration settings,
+		 * allowing the ability to add, replace, or remove.
 		 *
-		 * @param clientSettings the client configuration settings
+		 * @param clientSettingsConsumer a {@link Consumer} of the client configuration settings
 		 * @return the {@link Builder}
 		 */
-		public Builder clientSettings(ClientSettings clientSettings) {
-			this.clientSettings = clientSettings;
+		public Builder clientSettings(Consumer<ClientSettings> clientSettingsConsumer) {
+			clientSettingsConsumer.accept(this.clientSettings);
 			return this;
 		}
 
 		/**
-		 * Sets the {@link TokenSettings token configuration settings}.
+		 * A {@link Consumer} of the token configuration settings,
+		 * allowing the ability to add, replace, or remove.
 		 *
-		 * @param tokenSettings the token configuration settings
+		 * @param tokenSettingsConsumer a {@link Consumer} of the token configuration settings
 		 * @return the {@link Builder}
 		 */
-		public Builder tokenSettings(TokenSettings tokenSettings) {
-			this.tokenSettings = tokenSettings;
+		public Builder tokenSettings(Consumer<TokenSettings> tokenSettingsConsumer) {
+			tokenSettingsConsumer.accept(this.tokenSettings);
 			return this;
 		}
 
@@ -388,8 +390,8 @@ public class RegisteredClient implements Serializable {
 			registeredClient.authorizationGrantTypes = Collections.unmodifiableSet(this.authorizationGrantTypes);
 			registeredClient.redirectUris = Collections.unmodifiableSet(this.redirectUris);
 			registeredClient.scopes = Collections.unmodifiableSet(this.scopes);
-			registeredClient.clientSettings = this.clientSettings != null ? this.clientSettings : new ClientSettings();
-			registeredClient.tokenSettings = this.tokenSettings != null ? this.tokenSettings : new TokenSettings();
+			registeredClient.clientSettings = this.clientSettings;
+			registeredClient.tokenSettings = this.tokenSettings;
 
 			return registeredClient;
 		}

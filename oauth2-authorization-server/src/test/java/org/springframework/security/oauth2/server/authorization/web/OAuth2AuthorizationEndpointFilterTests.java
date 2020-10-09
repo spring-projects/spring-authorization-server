@@ -40,7 +40,6 @@ import org.springframework.security.oauth2.server.authorization.TokenType;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
-import org.springframework.security.oauth2.server.authorization.config.ClientSettings;
 import org.springframework.util.StringUtils;
 
 import javax.servlet.FilterChain;
@@ -269,7 +268,7 @@ public class OAuth2AuthorizationEndpointFilterTests {
 	@Test
 	public void doFilterWhenPkceRequiredAndMissingCodeChallengeThenInvalidRequestError() throws Exception {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
-				.clientSettings(new ClientSettings().requireProofKey(true))
+				.clientSettings(clientSettings -> clientSettings.requireProofKey(true))
 				.build();
 		when(this.registeredClientRepository.findByClientId((eq(registeredClient.getClientId()))))
 				.thenReturn(registeredClient);
@@ -288,7 +287,7 @@ public class OAuth2AuthorizationEndpointFilterTests {
 	@Test
 	public void doFilterWhenPkceRequiredAndMultipleCodeChallengeThenInvalidRequestError() throws Exception {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
-				.clientSettings(new ClientSettings().requireProofKey(true))
+				.clientSettings(clientSettings -> clientSettings.requireProofKey(true))
 				.build();
 		when(this.registeredClientRepository.findByClientId((eq(registeredClient.getClientId()))))
 				.thenReturn(registeredClient);
@@ -324,7 +323,7 @@ public class OAuth2AuthorizationEndpointFilterTests {
 	@Test
 	public void doFilterWhenPkceRequiredAndMultipleCodeChallengeMethodThenInvalidRequestError() throws Exception {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
-				.clientSettings(new ClientSettings().requireProofKey(true))
+				.clientSettings(clientSettings -> clientSettings.requireProofKey(true))
 				.build();
 		when(this.registeredClientRepository.findByClientId((eq(registeredClient.getClientId()))))
 				.thenReturn(registeredClient);
@@ -360,7 +359,7 @@ public class OAuth2AuthorizationEndpointFilterTests {
 	@Test
 	public void doFilterWhenPkceRequiredAndUnsupportedCodeChallengeMethodThenInvalidRequestError() throws Exception {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
-				.clientSettings(new ClientSettings().requireProofKey(true))
+				.clientSettings(clientSettings -> clientSettings.requireProofKey(true))
 				.build();
 		when(this.registeredClientRepository.findByClientId((eq(registeredClient.getClientId()))))
 				.thenReturn(registeredClient);
@@ -457,7 +456,7 @@ public class OAuth2AuthorizationEndpointFilterTests {
 	@Test
 	public void doFilterWhenPkceRequiredAndAuthorizationRequestValidThenAuthorizationResponse() throws Exception {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
-				.clientSettings(new ClientSettings().requireProofKey(true))
+				.clientSettings(clientSettings -> clientSettings.requireProofKey(true))
 				.build();
 		when(this.registeredClientRepository.findByClientId((eq(registeredClient.getClientId()))))
 				.thenReturn(registeredClient);
@@ -503,7 +502,7 @@ public class OAuth2AuthorizationEndpointFilterTests {
 	@Test
 	public void doFilterWhenUserConsentRequiredAndAuthorizationRequestValidThenUserConsentResponse() throws Exception {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
-				.clientSettings(new ClientSettings().requireUserConsent(true))
+				.clientSettings(clientSettings -> clientSettings.requireUserConsent(true))
 				.build();
 		when(this.registeredClientRepository.findByClientId((eq(registeredClient.getClientId()))))
 				.thenReturn(registeredClient);

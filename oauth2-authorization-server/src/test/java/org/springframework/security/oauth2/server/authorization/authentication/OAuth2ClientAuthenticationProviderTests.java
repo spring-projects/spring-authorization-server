@@ -29,7 +29,6 @@ import org.springframework.security.oauth2.server.authorization.TokenType;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
-import org.springframework.security.oauth2.server.authorization.config.ClientSettings;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -179,8 +178,7 @@ public class OAuth2ClientAuthenticationProviderTests {
 	@Test
 	public void authenticateWhenPkceAndRequireProofKeyAndMissingCodeChallengeThenThrowOAuth2AuthenticationException() {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
-				.clientSettings(
-						new ClientSettings().requireProofKey(true))
+				.clientSettings(clientSettings -> clientSettings.requireProofKey(true))
 				.build();
 		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
 				.thenReturn(registeredClient);

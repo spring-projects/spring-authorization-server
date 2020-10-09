@@ -15,6 +15,7 @@
  */
 package org.springframework.security.oauth2.server.authorization.web;
 
+import org.springframework.lang.Nullable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.util.Assert;
@@ -50,6 +51,7 @@ public final class DelegatingAuthenticationConverter implements AuthenticationCo
 		this.converters = Collections.unmodifiableList(new LinkedList<>(converters));
 	}
 
+	@Nullable
 	@Override
 	public Authentication convert(HttpServletRequest request) {
 		Assert.notNull(request, "request cannot be null");

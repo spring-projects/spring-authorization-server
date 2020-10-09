@@ -16,6 +16,7 @@
 package org.springframework.security.oauth2.server.authorization.web;
 
 import org.springframework.core.convert.converter.Converter;
+import org.springframework.lang.Nullable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
@@ -48,6 +49,7 @@ public final class DelegatingAuthorizationGrantAuthenticationConverter implement
 		this.converters = Collections.unmodifiableMap(new HashMap<>(converters));
 	}
 
+	@Nullable
 	@Override
 	public Authentication convert(HttpServletRequest request) {
 		Assert.notNull(request, "request cannot be null");

@@ -21,12 +21,12 @@ dependencyManagement {
 		mavenBom "org.springframework:spring-framework-bom:$springVersion"
 		mavenBom "org.springframework.security:spring-security-bom:$springSecurityVersion"
 		mavenBom "io.projectreactor:reactor-bom:$reactorVersion"
+        mavenBom "com.fasterxml.jackson:jackson-bom:2.+"
 	}
 
 	dependencies {
 		dependency "com.nimbusds:oauth2-oidc-sdk:latest.release"
 		dependency "com.nimbusds:nimbus-jose-jwt:latest.release"
-		dependency "com.fasterxml.jackson.core:jackson-databind:2.+"
 		dependency "javax.servlet:javax.servlet-api:4.+"
 		dependency 'junit:junit:latest.release'
 		dependency 'org.assertj:assertj-core:latest.release'

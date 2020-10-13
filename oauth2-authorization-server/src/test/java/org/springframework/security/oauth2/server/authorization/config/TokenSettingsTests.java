@@ -49,4 +49,17 @@ public class TokenSettingsTests {
 		TokenSettings tokenSettings = new TokenSettings().accessTokenTimeToLive(accessTokenTimeToLive);
 		assertThat(tokenSettings.accessTokenTimeToLive()).isEqualTo(accessTokenTimeToLive);
 	}
+
+	@Test
+	public void settingWhenCalledThenReturnTokenSettings() {
+		Duration accessTokenTimeToLive = Duration.ofMinutes(10);
+		TokenSettings tokenSettings = new TokenSettings()
+				.<TokenSettings>setting("name1", "value1")
+				.accessTokenTimeToLive(accessTokenTimeToLive)
+				.<TokenSettings>settings(settings -> settings.put("name2", "value2"));
+		assertThat(tokenSettings.settings()).hasSize(3);
+		assertThat(tokenSettings.accessTokenTimeToLive()).isEqualTo(accessTokenTimeToLive);
+		assertThat(tokenSettings.<String>setting("name1")).isEqualTo("value1");
+		assertThat(tokenSettings.<String>setting("name2")).isEqualTo("value2");
+	}
 }

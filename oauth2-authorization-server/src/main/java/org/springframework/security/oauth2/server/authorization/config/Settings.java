@@ -68,13 +68,15 @@ public class Settings implements Serializable {
 	 *
 	 * @param name the name of the setting
 	 * @param value the value of the setting
+	 * @param <T> the type of the {@link Settings}
 	 * @return the {@link Settings}
 	 */
-	public Settings setting(String name, Object value) {
+	@SuppressWarnings("unchecked")
+	public <T extends Settings> T setting(String name, Object value) {
 		Assert.hasText(name, "name cannot be empty");
 		Assert.notNull(value, "value cannot be null");
 		this.settings.put(name, value);
-		return this;
+		return (T) this;
 	}
 
 	/**
@@ -91,10 +93,12 @@ public class Settings implements Serializable {
 	 * allowing the ability to add, replace, or remove.
 	 *
 	 * @param settingsConsumer a {@link Consumer} of the configuration settings {@code Map}
+	 * @param <T> the type of the {@link Settings}
 	 * @return the {@link Settings}
 	 */
-	public Settings settings(Consumer<Map<String, Object>> settingsConsumer) {
+	@SuppressWarnings("unchecked")
+	public <T extends Settings> T settings(Consumer<Map<String, Object>> settingsConsumer) {
 		settingsConsumer.accept(this.settings);
-		return this;
+		return (T) this;
 	}
 }

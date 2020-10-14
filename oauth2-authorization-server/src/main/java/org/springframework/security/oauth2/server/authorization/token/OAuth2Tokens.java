@@ -83,6 +83,24 @@ public class OAuth2Tokens implements Serializable {
 	}
 
 	/**
+	 * Returns the token specified by {@code token}.
+	 *
+	 * @param token the token
+	 * @param <T> the type of the token
+	 * @return the token, or {@code null} if not available
+	 */
+	@Nullable
+	@SuppressWarnings("unchecked")
+	public <T extends AbstractOAuth2Token> T getToken(String token) {
+		Assert.hasText(token, "token cannot be empty");
+		OAuth2TokenHolder tokenHolder = this.tokens.values().stream()
+				.filter(holder -> holder.getToken().getTokenValue().equals(token))
+				.findFirst()
+				.orElse(null);
+		return tokenHolder != null ? (T) tokenHolder.getToken() : null;
+	}
+
+	/**
 	 * Returns the token metadata associated to the provided {@code token}.
 	 *
 	 * @param token the token
@@ -95,29 +113,6 @@ public class OAuth2Tokens implements Serializable {
 		OAuth2TokenHolder tokenHolder = this.tokens.get(token.getClass());
 		return (tokenHolder != null && tokenHolder.getToken().equals(token)) ?
 				tokenHolder.getTokenMetadata() : null;
-	}
-
-	/**
-	 * Invalidates all tokens.
-	 */
-	public void invalidate() {
-		this.tokens.values().forEach(tokenHolder -> invalidate(tokenHolder.getToken()));
-	}
-
-	/**
-	 * Invalidates the token matching the provided {@code token}.
-	 *
-	 * @param token the token
-	 * @param <T> the type of the token
-	 */
-	public <T extends AbstractOAuth2Token> void invalidate(T token) {
-		Assert.notNull(token, "token cannot be null");
-		this.tokens.computeIfPresent(token.getClass(),
-				(tokenType, tokenHolder) ->
-						new OAuth2TokenHolder(
-								tokenHolder.getToken(),
-								OAuth2TokenMetadata.builder().invalidated().build())
-		);
 	}
 
 	@Override

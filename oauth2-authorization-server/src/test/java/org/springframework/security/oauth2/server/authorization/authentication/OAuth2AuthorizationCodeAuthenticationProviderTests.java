@@ -38,6 +38,7 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2AuthorizationCode;
+import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenMetadata;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2Tokens;
 
 import java.time.Instant;
@@ -186,9 +187,10 @@ public class OAuth2AuthorizationCodeAuthenticationProviderTests {
 		OAuth2AuthorizationCode authorizationCode = new OAuth2AuthorizationCode(
 				AUTHORIZATION_CODE, Instant.now(), Instant.now().plusSeconds(120));
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization()
-				.tokens(OAuth2Tokens.builder().token(authorizationCode).build())
+				.tokens(OAuth2Tokens.builder()
+						.token(authorizationCode, OAuth2TokenMetadata.builder().invalidated().build())
+						.build())
 				.build();
-		authorization.getTokens().invalidate(authorizationCode);
 		when(this.authorizationService.findByToken(eq(AUTHORIZATION_CODE), eq(TokenType.AUTHORIZATION_CODE)))
 				.thenReturn(authorization);
 

@@ -16,9 +16,12 @@
 package org.springframework.security.oauth2.server.authorization.authentication;
 
 import org.junit.Test;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
+import org.springframework.security.oauth2.core.OAuth2AccessToken;
+import org.springframework.security.oauth2.server.authorization.TokenType;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
+
+import java.time.Duration;
+import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -27,62 +30,64 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * Tests for {@link OAuth2TokenRevocationAuthenticationToken}.
  *
  * @author Vivek Babu
+ * @author Joe Grandja
  */
 public class OAuth2TokenRevocationAuthenticationTokenTests {
-	private OAuth2TokenRevocationAuthenticationToken clientPrincipal = new OAuth2TokenRevocationAuthenticationToken(
-			"Token", TestRegisteredClients.registeredClient().build(), null);
-	private RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+	private String token = "token";
+	private OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(
+			TestRegisteredClients.registeredClient().build());
+	private String tokenTypeHint = TokenType.ACCESS_TOKEN.getValue();
+	private OAuth2AccessToken accessToken = new OAuth2AccessToken(
+			OAuth2AccessToken.TokenType.BEARER, this.token,
+			Instant.now(), Instant.now().plus(Duration.ofHours(1)));
 
 	@Test
 	public void constructorWhenTokenNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> new OAuth2TokenRevocationAuthenticationToken(null,
-				this.clientPrincipal, "hint"))
+		assertThatThrownBy(() -> new OAuth2TokenRevocationAuthenticationToken(null, this.clientPrincipal, this.tokenTypeHint))
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessage("token cannot be empty");
 	}
 
 	@Test
 	public void constructorWhenClientPrincipalNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> new OAuth2TokenRevocationAuthenticationToken("token",
-				(Authentication) null, "hint"))
+		assertThatThrownBy(() -> new OAuth2TokenRevocationAuthenticationToken(this.token, null, this.tokenTypeHint))
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessage("clientPrincipal cannot be null");
 	}
 
 	@Test
-	public void constructorWhenTokenNullRegisteredClientPresentThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> new OAuth2TokenRevocationAuthenticationToken(null, registeredClient, "hint"))
+	public void constructorWhenRevokedTokenNullThenThrowIllegalArgumentException() {
+		assertThatThrownBy(() -> new OAuth2TokenRevocationAuthenticationToken(null, this.clientPrincipal))
 				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("token cannot be empty");
+				.hasMessage("revokedToken cannot be null");
 	}
 
 	@Test
-	public void constructorWhenRegisteredClientNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> new OAuth2TokenRevocationAuthenticationToken("token",
-				(RegisteredClient) null, "hint"))
+	public void constructorWhenRevokedTokenAndClientPrincipalNullThenThrowIllegalArgumentException() {
+		assertThatThrownBy(() -> new OAuth2TokenRevocationAuthenticationToken(this.accessToken, null))
 				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("registeredClient cannot be null");
+				.hasMessage("clientPrincipal cannot be null");
 	}
 
 	@Test
-	public void constructorWhenTokenAndClientPrincipalProvidedThenCreated() {
+	public void constructorWhenTokenProvidedThenCreated() {
 		OAuth2TokenRevocationAuthenticationToken authentication = new OAuth2TokenRevocationAuthenticationToken(
-				"token", this.clientPrincipal, "token_hint");
+				this.token, this.clientPrincipal, this.tokenTypeHint);
+		assertThat(authentication.getToken()).isEqualTo(this.token);
 		assertThat(authentication.getPrincipal()).isEqualTo(this.clientPrincipal);
+		assertThat(authentication.getTokenTypeHint()).isEqualTo(this.tokenTypeHint);
 		assertThat(authentication.getCredentials().toString()).isEmpty();
-		assertThat(authentication.getToken()).isEqualTo("token");
-		assertThat(authentication.getTokenTypeHint()).isEqualTo("token_hint");
 		assertThat(authentication.isAuthenticated()).isFalse();
 	}
 
 	@Test
-	public void constructorWhenTokenAndRegisteredProvidedThenCreated() {
+	public void constructorWhenRevokedTokenProvidedThenCreated() {
 		OAuth2TokenRevocationAuthenticationToken authentication = new OAuth2TokenRevocationAuthenticationToken(
-				"token", this.registeredClient, "token_hint");
-		assertThat(authentication.getPrincipal()).isEqualTo(this.registeredClient.getClientId());
+				this.accessToken, this.clientPrincipal);
+		assertThat(authentication.getToken()).isEqualTo(this.accessToken.getTokenValue());
+		assertThat(authentication.getPrincipal()).isEqualTo(this.clientPrincipal);
+		assertThat(authentication.getTokenTypeHint()).isNull();
 		assertThat(authentication.getCredentials().toString()).isEmpty();
-		assertThat(authentication.getToken()).isEqualTo("token");
-		assertThat(authentication.getTokenTypeHint()).isEqualTo("token_hint");
 		assertThat(authentication.isAuthenticated()).isTrue();
 	}
 }

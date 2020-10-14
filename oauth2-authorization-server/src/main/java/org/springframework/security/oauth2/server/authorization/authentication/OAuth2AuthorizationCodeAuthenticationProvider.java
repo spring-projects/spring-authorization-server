@@ -105,14 +105,17 @@ public class OAuth2AuthorizationCodeAuthenticationProvider implements Authentica
 			throw new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_GRANT));
 		}
 		OAuth2AuthorizationCode authorizationCode = authorization.getTokens().getToken(OAuth2AuthorizationCode.class);
+		OAuth2TokenMetadata authorizationCodeMetadata = authorization.getTokens().getTokenMetadata(authorizationCode);
 
 		OAuth2AuthorizationRequest authorizationRequest = authorization.getAttribute(
 				OAuth2AuthorizationAttributeNames.AUTHORIZATION_REQUEST);
 
 		if (!registeredClient.getClientId().equals(authorizationRequest.getClientId())) {
-			// Invalidate the authorization code given that a different client is attempting to use it
-			authorization.getTokens().invalidate(authorizationCode);
-			this.authorizationService.save(authorization);
+			if (!authorizationCodeMetadata.isInvalidated()) {
+				// Invalidate the authorization code given that a different client is attempting to use it
+				authorization = OAuth2AuthenticationProviderUtils.invalidate(authorization, authorizationCode);
+				this.authorizationService.save(authorization);
+			}
 			throw new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_GRANT));
 		}
 
@@ -121,9 +124,7 @@ public class OAuth2AuthorizationCodeAuthenticationProvider implements Authentica
 			throw new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_GRANT));
 		}
 
-		OAuth2TokenMetadata authorizationCodeMetadata = authorization.getTokens().getTokenMetadata(authorizationCode);
 		if (authorizationCodeMetadata.isInvalidated()) {
-			// Prevent the same client from using the authorization code more than once
 			throw new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_GRANT));
 		}
 
@@ -154,15 +155,16 @@ public class OAuth2AuthorizationCodeAuthenticationProvider implements Authentica
 		OAuth2AccessToken accessToken = new OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER,
 				jwt.getTokenValue(), jwt.getIssuedAt(), jwt.getExpiresAt(), jwt.getClaim(OAuth2ParameterNames.SCOPE));
 
-		OAuth2Tokens tokens = OAuth2Tokens.from(authorization.getTokens())
-				.accessToken(accessToken)
-				.build();
-		tokens.invalidate(authorizationCode);		// Invalidate the authorization code as it can only be used once
-
 		authorization = OAuth2Authorization.from(authorization)
-				.tokens(tokens)
+				.tokens(OAuth2Tokens.from(authorization.getTokens())
+						.accessToken(accessToken)
+						.build())
 				.attribute(OAuth2AuthorizationAttributeNames.ACCESS_TOKEN_ATTRIBUTES, jwt)
 				.build();
+
+		// Invalidate the authorization code as it can only be used once
+		authorization = OAuth2AuthenticationProviderUtils.invalidate(authorization, authorizationCode);
+
 		this.authorizationService.save(authorization);
 
 		return new OAuth2AccessTokenAuthenticationToken(registeredClient, clientPrincipal, accessToken);

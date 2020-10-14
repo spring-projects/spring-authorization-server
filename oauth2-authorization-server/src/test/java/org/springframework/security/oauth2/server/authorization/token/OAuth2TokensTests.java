@@ -82,9 +82,16 @@ public class OAuth2TokensTests {
 
 	@Test
 	public void getTokenWhenTokenTypeNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> OAuth2Tokens.builder().build().getToken(null))
+		assertThatThrownBy(() -> OAuth2Tokens.builder().build().getToken((Class<OAuth2AccessToken>) null))
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessage("tokenType cannot be null");
+	}
+
+	@Test
+	public void getTokenWhenTokenNullThenThrowIllegalArgumentException() {
+		assertThatThrownBy(() -> OAuth2Tokens.builder().build().getToken((String) null))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("token cannot be empty");
 	}
 
 	@Test
@@ -184,33 +191,5 @@ public class OAuth2TokensTests {
 				this.accessToken.getExpiresAt(),
 				this.accessToken.getScopes());
 		assertThat(tokens.getTokenMetadata(otherAccessToken)).isNull();
-	}
-
-	@Test
-	public void invalidateWhenAllTokensThenAllInvalidated() {
-		OAuth2Tokens tokens = OAuth2Tokens.builder()
-				.accessToken(this.accessToken)
-				.refreshToken(this.refreshToken)
-				.token(this.idToken)
-				.build();
-		tokens.invalidate();
-
-		assertThat(tokens.getTokenMetadata(tokens.getAccessToken()).isInvalidated()).isTrue();
-		assertThat(tokens.getTokenMetadata(tokens.getRefreshToken()).isInvalidated()).isTrue();
-		assertThat(tokens.getTokenMetadata(tokens.getToken(OidcIdToken.class)).isInvalidated()).isTrue();
-	}
-
-	@Test
-	public void invalidateWhenTokenProvidedThenInvalidated() {
-		OAuth2Tokens tokens = OAuth2Tokens.builder()
-				.accessToken(this.accessToken)
-				.refreshToken(this.refreshToken)
-				.token(this.idToken)
-				.build();
-		tokens.invalidate(this.accessToken);
-
-		assertThat(tokens.getTokenMetadata(tokens.getAccessToken()).isInvalidated()).isTrue();
-		assertThat(tokens.getTokenMetadata(tokens.getRefreshToken()).isInvalidated()).isFalse();
-		assertThat(tokens.getTokenMetadata(tokens.getToken(OidcIdToken.class)).isInvalidated()).isFalse();
 	}
 }

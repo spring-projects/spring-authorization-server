@@ -18,7 +18,6 @@ package org.springframework.security.oauth2.server.authorization.web;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.ArgumentCaptor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.mock.http.client.MockClientHttpResponse;
@@ -28,9 +27,11 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.http.converter.OAuth2ErrorHttpMessageConverter;
+import org.springframework.security.oauth2.server.authorization.TokenType;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2TokenRevocationAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
@@ -39,6 +40,10 @@ import org.springframework.security.oauth2.server.authorization.client.TestRegis
 import javax.servlet.FilterChain;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -48,15 +53,16 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.oauth2.server.authorization.web.OAuth2TokenRevocationEndpointFilter.TOKEN_PARAM_NAME;
+import static org.springframework.security.oauth2.server.authorization.web.OAuth2TokenRevocationEndpointFilter.TOKEN_TYPE_HINT_PARAM_NAME;
 
 /**
  * Tests for {@link OAuth2TokenRevocationEndpointFilter}.
  *
  * @author Vivek Babu
+ * @author Joe Grandja
  */
 public class OAuth2TokenRevocationEndpointFilterTests {
-	private static final String TOKEN = "token";
-	private static final String TOKEN_TYPE_HINT = "token_type_hint";
 	private AuthenticationManager authenticationManager;
 	private OAuth2TokenRevocationEndpointFilter filter;
 	private final HttpMessageConverter<OAuth2Error> errorHttpResponseConverter =
@@ -81,14 +87,14 @@ public class OAuth2TokenRevocationEndpointFilterTests {
 	}
 
 	@Test
-	public void constructorWhenTokenEndpointUriNullThenThrowIllegalArgumentException() {
+	public void constructorWhenTokenRevocationEndpointUriNullThenThrowIllegalArgumentException() {
 		assertThatThrownBy(() -> new OAuth2TokenRevocationEndpointFilter(this.authenticationManager, null))
 				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("revocationEndpointUri cannot be empty");
+				.hasMessage("tokenRevocationEndpointUri cannot be empty");
 	}
 
 	@Test
-	public void doFilterWhenNotRevocationRequestThenNotProcessed() throws Exception {
+	public void doFilterWhenNotTokenRevocationRequestThenNotProcessed() throws Exception {
 		String requestUri = "/path";
 		MockHttpServletRequest request = new MockHttpServletRequest("POST", requestUri);
 		request.setServletPath(requestUri);
@@ -101,8 +107,8 @@ public class OAuth2TokenRevocationEndpointFilterTests {
 	}
 
 	@Test
-	public void doFilterWhenRevocationRequestGetThenNotProcessed() throws Exception {
-		String requestUri = OAuth2TokenEndpointFilter.DEFAULT_TOKEN_ENDPOINT_URI;
+	public void doFilterWhenTokenRevocationRequestGetThenNotProcessed() throws Exception {
+		String requestUri = OAuth2TokenRevocationEndpointFilter.DEFAULT_TOKEN_REVOCATION_ENDPOINT_URI;
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestUri);
 		request.setServletPath(requestUri);
 		MockHttpServletResponse response = new MockHttpServletResponse();
@@ -114,54 +120,63 @@ public class OAuth2TokenRevocationEndpointFilterTests {
 	}
 
 	@Test
-	public void doFilterWhenRevocationRequestMissingTokenThenInvalidRequestError() throws Exception {
-		doFilterWhenRevocationRequestInvalidParameterThenError(
-				TOKEN, OAuth2ErrorCodes.INVALID_REQUEST,
-				request -> request.removeParameter(TOKEN));
+	public void doFilterWhenTokenRevocationRequestMissingTokenThenInvalidRequestError() throws Exception {
+		doFilterWhenTokenRevocationRequestInvalidParameterThenError(
+				TOKEN_PARAM_NAME,
+				OAuth2ErrorCodes.INVALID_REQUEST,
+				request -> request.removeParameter(TOKEN_PARAM_NAME));
 	}
 
 	@Test
-	public void doFilterWhenRevocationRequestMultipleTokenThenInvalidRequestError() throws Exception {
-		doFilterWhenRevocationRequestInvalidParameterThenError(
-				TOKEN, OAuth2ErrorCodes.INVALID_REQUEST,
-				request -> {
-					request.addParameter(TOKEN, "token-1");
-					request.addParameter(TOKEN, "token-2");
-				});
+	public void doFilterWhenTokenRevocationRequestMultipleTokenThenInvalidRequestError() throws Exception {
+		doFilterWhenTokenRevocationRequestInvalidParameterThenError(
+				TOKEN_PARAM_NAME,
+				OAuth2ErrorCodes.INVALID_REQUEST,
+				request -> request.addParameter(TOKEN_PARAM_NAME, "token-2"));
 	}
 
 	@Test
-	public void doFilterWhenTokenRequestValidThenAccessTokenResponse() throws Exception {
+	public void doFilterWhenTokenRevocationRequestMultipleTokenTypeHintThenInvalidRequestError() throws Exception {
+		doFilterWhenTokenRevocationRequestInvalidParameterThenError(
+				TOKEN_TYPE_HINT_PARAM_NAME,
+				OAuth2ErrorCodes.INVALID_REQUEST,
+				request -> request.addParameter(TOKEN_TYPE_HINT_PARAM_NAME, TokenType.ACCESS_TOKEN.getValue()));
+	}
+
+	@Test
+	public void doFilterWhenTokenRevocationRequestValidThenSuccessResponse() throws Exception {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 		Authentication clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient);
+		OAuth2AccessToken accessToken = new OAuth2AccessToken(
+				OAuth2AccessToken.TokenType.BEARER, "token",
+				Instant.now(), Instant.now().plus(Duration.ofHours(1)),
+				new HashSet<>(Arrays.asList("scope1", "scope2")));
+		OAuth2TokenRevocationAuthenticationToken tokenRevocationAuthentication =
+				new OAuth2TokenRevocationAuthenticationToken(
+						accessToken, clientPrincipal);
 
-		Authentication tokenRevocationAuthenticationSuccess = mock(Authentication.class);
-
-		when(this.authenticationManager.authenticate(any())).thenReturn(tokenRevocationAuthenticationSuccess);
+		when(this.authenticationManager.authenticate(any())).thenReturn(tokenRevocationAuthentication);
 
 		SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
 		securityContext.setAuthentication(clientPrincipal);
 		SecurityContextHolder.setContext(securityContext);
 
-		MockHttpServletRequest request = createRevocationRequest();
+		MockHttpServletRequest request = createTokenRevocationRequest();
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		FilterChain filterChain = mock(FilterChain.class);
 
 		this.filter.doFilter(request, response, filterChain);
 
 		verifyNoInteractions(filterChain);
-
-		ArgumentCaptor<OAuth2TokenRevocationAuthenticationToken> tokenRevocationAuthenticationCaptor =
-				ArgumentCaptor.forClass(OAuth2TokenRevocationAuthenticationToken.class);
-		verify(this.authenticationManager).authenticate(tokenRevocationAuthenticationCaptor.capture());
+		verify(this.authenticationManager).authenticate(any());
 
 		assertThat(response.getStatus()).isEqualTo(HttpStatus.OK.value());
 	}
 
-	private void doFilterWhenRevocationRequestInvalidParameterThenError(String parameterName, String errorCode,
+	private void doFilterWhenTokenRevocationRequestInvalidParameterThenError(String parameterName, String errorCode,
 			Consumer<MockHttpServletRequest> requestConsumer) throws Exception {
 
-		MockHttpServletRequest request = createRevocationRequest();
+		MockHttpServletRequest request = createTokenRevocationRequest();
 		requestConsumer.accept(request);
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		FilterChain filterChain = mock(FilterChain.class);
@@ -173,7 +188,7 @@ public class OAuth2TokenRevocationEndpointFilterTests {
 		assertThat(response.getStatus()).isEqualTo(HttpStatus.BAD_REQUEST.value());
 		OAuth2Error error = readError(response);
 		assertThat(error.getErrorCode()).isEqualTo(errorCode);
-		assertThat(error.getDescription()).isEqualTo("Token Revocation Request Parameter: " + parameterName);
+		assertThat(error.getDescription()).isEqualTo("OAuth 2.0 Token Revocation Parameter: " + parameterName);
 	}
 
 	private OAuth2Error readError(MockHttpServletResponse response) throws Exception {
@@ -182,14 +197,13 @@ public class OAuth2TokenRevocationEndpointFilterTests {
 		return this.errorHttpResponseConverter.read(OAuth2Error.class, httpResponse);
 	}
 
-	private static MockHttpServletRequest createRevocationRequest() {
-
+	private static MockHttpServletRequest createTokenRevocationRequest() {
 		String requestUri = OAuth2TokenRevocationEndpointFilter.DEFAULT_TOKEN_REVOCATION_ENDPOINT_URI;
 		MockHttpServletRequest request = new MockHttpServletRequest("POST", requestUri);
 		request.setServletPath(requestUri);
 
-		request.addParameter(TOKEN, "token");
-		request.addParameter(TOKEN_TYPE_HINT, "access_token");
+		request.addParameter(TOKEN_PARAM_NAME, "token");
+		request.addParameter(TOKEN_TYPE_HINT_PARAM_NAME, TokenType.ACCESS_TOKEN.getValue());
 
 		return request;
 	}

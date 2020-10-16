@@ -34,11 +34,13 @@ import org.springframework.security.oauth2.server.authorization.authentication.O
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2RefreshTokenAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2TokenRevocationAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
+import org.springframework.security.oauth2.server.authorization.config.ProviderSettings;
 import org.springframework.security.oauth2.server.authorization.web.JwkSetEndpointFilter;
 import org.springframework.security.oauth2.server.authorization.web.OAuth2AuthorizationEndpointFilter;
 import org.springframework.security.oauth2.server.authorization.web.OAuth2ClientAuthenticationFilter;
 import org.springframework.security.oauth2.server.authorization.web.OAuth2TokenEndpointFilter;
 import org.springframework.security.oauth2.server.authorization.web.OAuth2TokenRevocationEndpointFilter;
+import org.springframework.security.oauth2.server.authorization.web.OidcProviderConfigurationEndpointFilter;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.access.intercept.FilterSecurityInterceptor;
 import org.springframework.security.web.authentication.DelegatingAuthenticationEntryPoint;
@@ -52,6 +54,9 @@ import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -85,6 +90,8 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 			OAuth2TokenRevocationEndpointFilter.DEFAULT_TOKEN_REVOCATION_ENDPOINT_URI, HttpMethod.POST.name());
 	private final RequestMatcher jwkSetEndpointMatcher = new AntPathRequestMatcher(
 			JwkSetEndpointFilter.DEFAULT_JWK_SET_ENDPOINT_URI, HttpMethod.GET.name());
+	private final RequestMatcher oidcProviderConfigurationEndpointMatcher = new AntPathRequestMatcher(
+			OidcProviderConfigurationEndpointFilter.DEFAULT_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI, HttpMethod.GET.name());
 
 	/**
 	 * Sets the repository of registered clients.
@@ -123,17 +130,32 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 	}
 
 	/**
+	 * Sets the provider settings.
+	 *
+	 * @param providerSettings the provider settings
+	 * @return the {@link OAuth2AuthorizationServerConfigurer} for further configuration
+	 */
+	public OAuth2AuthorizationServerConfigurer<B> providerSettings(ProviderSettings providerSettings) {
+		Assert.notNull(providerSettings, "providerSettings cannot be null");
+		this.getBuilder().setSharedObject(ProviderSettings.class, providerSettings);
+		return this;
+	}
+
+	/**
 	 * Returns a {@code List} of {@link RequestMatcher}'s for the authorization server endpoints.
 	 *
 	 * @return a {@code List} of {@link RequestMatcher}'s for the authorization server endpoints
 	 */
 	public List<RequestMatcher> getEndpointMatchers() {
+		// TODO: use ProviderSettings instead
 		return Arrays.asList(this.authorizationEndpointMatcher, this.tokenEndpointMatcher,
-				this.tokenRevocationEndpointMatcher, this.jwkSetEndpointMatcher);
+				this.tokenRevocationEndpointMatcher, this.jwkSetEndpointMatcher, this.oidcProviderConfigurationEndpointMatcher);
 	}
 
 	@Override
 	public void init(B builder) {
+		ProviderSettings providerSettings = getProviderSettings(builder);
+		validateProviderSettings(providerSettings);
 		OAuth2ClientAuthenticationProvider clientAuthenticationProvider =
 				new OAuth2ClientAuthenticationProvider(
 						getRegisteredClientRepository(builder),
@@ -186,7 +208,14 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 
 	@Override
 	public void configure(B builder) {
-		JwkSetEndpointFilter jwkSetEndpointFilter = new JwkSetEndpointFilter(getKeySource(builder));
+		if (getProviderSettings(builder).issuer() != null) {
+			OidcProviderConfigurationEndpointFilter oidcProviderConfigurationEndpointFilter = new OidcProviderConfigurationEndpointFilter(getProviderSettings(builder));
+			builder.addFilterBefore(postProcess(oidcProviderConfigurationEndpointFilter), AbstractPreAuthenticatedProcessingFilter.class);
+		}
+
+		JwkSetEndpointFilter jwkSetEndpointFilter = new JwkSetEndpointFilter(
+				getKeySource(builder),
+				getProviderSettings(builder).jwkSetEndpoint());
 		builder.addFilterBefore(postProcess(jwkSetEndpointFilter), AbstractPreAuthenticatedProcessingFilter.class);
 
 		AuthenticationManager authenticationManager = builder.getSharedObject(AuthenticationManager.class);
@@ -200,18 +229,21 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 		OAuth2AuthorizationEndpointFilter authorizationEndpointFilter =
 				new OAuth2AuthorizationEndpointFilter(
 						getRegisteredClientRepository(builder),
-						getAuthorizationService(builder));
+						getAuthorizationService(builder),
+						getProviderSettings(builder).authorizationEndpoint());
 		builder.addFilterBefore(postProcess(authorizationEndpointFilter), AbstractPreAuthenticatedProcessingFilter.class);
 
 		OAuth2TokenEndpointFilter tokenEndpointFilter =
 				new OAuth2TokenEndpointFilter(
 						authenticationManager,
-						getAuthorizationService(builder));
+						getAuthorizationService(builder),
+						getProviderSettings(builder).tokenEndpoint());
 		builder.addFilterAfter(postProcess(tokenEndpointFilter), FilterSecurityInterceptor.class);
 
 		OAuth2TokenRevocationEndpointFilter tokenRevocationEndpointFilter =
 				new OAuth2TokenRevocationEndpointFilter(
-						authenticationManager);
+						authenticationManager,
+						getProviderSettings(builder).tokenRevocationEndpoint());
 		builder.addFilterAfter(postProcess(tokenRevocationEndpointFilter), OAuth2TokenEndpointFilter.class);
 	}
 
@@ -262,5 +294,38 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 
 	private static <B extends HttpSecurityBuilder<B>> CryptoKeySource getKeySourceBean(B builder) {
 		return builder.getSharedObject(ApplicationContext.class).getBean(CryptoKeySource.class);
+	}
+
+	private static <B extends HttpSecurityBuilder<B>> ProviderSettings getProviderSettings(B builder) {
+		ProviderSettings providerSettings = builder.getSharedObject(ProviderSettings.class);
+		if (providerSettings == null) {
+			providerSettings = getProviderSettingsBean(builder);
+			if (providerSettings == null) {
+				providerSettings = new ProviderSettings();
+			}
+			builder.setSharedObject(ProviderSettings.class, providerSettings);
+		}
+		return providerSettings;
+	}
+
+	private static <B extends HttpSecurityBuilder<B>> ProviderSettings getProviderSettingsBean(B builder) {
+		Map<String, ProviderSettings> providerSettingsMap = BeanFactoryUtils.beansOfTypeIncludingAncestors(
+				builder.getSharedObject(ApplicationContext.class), ProviderSettings.class);
+		if (providerSettingsMap.size() > 1) {
+			throw new NoUniqueBeanDefinitionException(ProviderSettings.class, providerSettingsMap.size(),
+					"Expected single matching bean of type '" + ProviderSettings.class.getName() + "' but found " +
+							providerSettingsMap.size() + ": " + StringUtils.collectionToCommaDelimitedString(providerSettingsMap.keySet()));
+		}
+		return (!providerSettingsMap.isEmpty() ? providerSettingsMap.values().iterator().next() : null);
+	}
+
+	private void validateProviderSettings(ProviderSettings providerSettings) {
+		if (providerSettings.issuer() != null) {
+			try {
+				new URI(providerSettings.issuer()).toURL();
+			} catch (MalformedURLException | URISyntaxException e) {
+				throw new IllegalArgumentException("issuer must be a valid URL");
+			}
+		}
 	}
 }

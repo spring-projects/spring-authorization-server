@@ -16,7 +16,6 @@
 package org.springframework.security.oauth2.server.authorization;
 
 import org.springframework.lang.Nullable;
-import org.springframework.security.oauth2.server.authorization.Version;
 import org.springframework.util.Assert;
 
 import java.io.Serializable;
@@ -66,8 +65,8 @@ public final class InMemoryOAuth2AuthorizationService implements OAuth2Authoriza
 		} else if (TokenType.AUTHORIZATION_CODE.equals(tokenType)) {
 			return token.equals(authorization.getAttribute(OAuth2AuthorizationAttributeNames.CODE));
 		} else if (TokenType.ACCESS_TOKEN.equals(tokenType)) {
-			return authorization.getAccessToken() != null &&
-					authorization.getAccessToken().getTokenValue().equals(token);
+			return authorization.getTokens().getAccessToken() != null &&
+					authorization.getTokens().getAccessToken().getTokenValue().equals(token);
 		}
 		return false;
 	}

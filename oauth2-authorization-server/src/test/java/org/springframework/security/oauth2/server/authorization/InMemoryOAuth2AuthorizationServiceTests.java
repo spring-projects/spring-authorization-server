@@ -20,6 +20,7 @@ import org.junit.Test;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
+import org.springframework.security.oauth2.server.authorization.token.OAuth2Tokens;
 
 import java.time.Instant;
 
@@ -129,7 +130,7 @@ public class InMemoryOAuth2AuthorizationServiceTests {
 		OAuth2Authorization authorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
 				.principalName(PRINCIPAL_NAME)
 				.attribute(OAuth2AuthorizationAttributeNames.CODE, AUTHORIZATION_CODE)
-				.accessToken(accessToken)
+				.tokens(OAuth2Tokens.builder().accessToken(accessToken).build())
 				.build();
 		this.authorizationService.save(authorization);
 

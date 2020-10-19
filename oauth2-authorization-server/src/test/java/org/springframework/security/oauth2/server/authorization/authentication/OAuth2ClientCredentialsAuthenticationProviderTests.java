@@ -156,10 +156,10 @@ public class OAuth2ClientCredentialsAuthenticationProviderTests {
 
 		assertThat(authorization.getRegisteredClientId()).isEqualTo(clientPrincipal.getRegisteredClient().getId());
 		assertThat(authorization.getPrincipalName()).isEqualTo(clientPrincipal.getName());
-		assertThat(authorization.getAccessToken()).isNotNull();
-		assertThat(authorization.getAccessToken().getScopes()).isEqualTo(clientPrincipal.getRegisteredClient().getScopes());
+		assertThat(authorization.getTokens().getAccessToken()).isNotNull();
+		assertThat(authorization.getTokens().getAccessToken().getScopes()).isEqualTo(clientPrincipal.getRegisteredClient().getScopes());
 		assertThat(accessTokenAuthentication.getPrincipal()).isEqualTo(clientPrincipal);
-		assertThat(accessTokenAuthentication.getAccessToken()).isEqualTo(authorization.getAccessToken());
+		assertThat(accessTokenAuthentication.getAccessToken()).isEqualTo(authorization.getTokens().getAccessToken());
 	}
 
 	private static Jwt createJwt() {

@@ -35,6 +35,7 @@ import org.springframework.security.oauth2.server.authorization.OAuth2Authorizat
 import org.springframework.security.oauth2.server.authorization.TokenType;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
+import org.springframework.security.oauth2.server.authorization.token.OAuth2Tokens;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
@@ -143,7 +144,7 @@ public class OAuth2AuthorizationCodeAuthenticationProvider implements Authentica
 
 		authorization = OAuth2Authorization.from(authorization)
 				.attribute(OAuth2AuthorizationAttributeNames.ACCESS_TOKEN_ATTRIBUTES, jwt)
-				.accessToken(accessToken)
+				.tokens(OAuth2Tokens.builder().accessToken(accessToken).build())
 				.build();
 		this.authorizationService.save(authorization);
 

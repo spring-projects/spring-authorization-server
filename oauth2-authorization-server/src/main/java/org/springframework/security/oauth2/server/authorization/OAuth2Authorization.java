@@ -15,9 +15,9 @@
  */
 package org.springframework.security.oauth2.server.authorization;
 
-import org.springframework.security.oauth2.server.authorization.Version;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
+import org.springframework.security.oauth2.server.authorization.token.OAuth2Tokens;
 import org.springframework.util.Assert;
 
 import java.io.Serializable;
@@ -36,13 +36,17 @@ import java.util.function.Consumer;
  * @author Krisztian Toth
  * @since 0.0.1
  * @see RegisteredClient
- * @see OAuth2AccessToken
+ * @see OAuth2Tokens
  */
 public class OAuth2Authorization implements Serializable {
 	private static final long serialVersionUID = Version.SERIAL_VERSION_UID;
 	private String registeredClientId;
 	private String principalName;
+	private OAuth2Tokens tokens;
+
+	@Deprecated
 	private OAuth2AccessToken accessToken;
+
 	private Map<String, Object> attributes;
 
 	protected OAuth2Authorization() {
@@ -67,12 +71,22 @@ public class OAuth2Authorization implements Serializable {
 	}
 
 	/**
+	 * Returns the {@link OAuth2Tokens}.
+	 *
+	 * @return the {@link OAuth2Tokens}
+	 */
+	public OAuth2Tokens getTokens() {
+		return this.tokens;
+	}
+
+	/**
 	 * Returns the {@link OAuth2AccessToken access token} credential.
 	 *
 	 * @return the {@link OAuth2AccessToken}
 	 */
+	@Deprecated
 	public OAuth2AccessToken getAccessToken() {
-		return this.accessToken;
+		return getTokens().getAccessToken();
 	}
 
 	/**
@@ -108,13 +122,13 @@ public class OAuth2Authorization implements Serializable {
 		OAuth2Authorization that = (OAuth2Authorization) obj;
 		return Objects.equals(this.registeredClientId, that.registeredClientId) &&
 				Objects.equals(this.principalName, that.principalName) &&
-				Objects.equals(this.accessToken, that.accessToken) &&
+				Objects.equals(this.tokens, that.tokens) &&
 				Objects.equals(this.attributes, that.attributes);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(this.registeredClientId, this.principalName, this.accessToken, this.attributes);
+		return Objects.hash(this.registeredClientId, this.principalName, this.tokens, this.attributes);
 	}
 
 	/**
@@ -138,7 +152,7 @@ public class OAuth2Authorization implements Serializable {
 		Assert.notNull(authorization, "authorization cannot be null");
 		return new Builder(authorization.getRegisteredClientId())
 				.principalName(authorization.getPrincipalName())
-				.accessToken(authorization.getAccessToken())
+				.tokens(authorization.getTokens())
 				.attributes(attrs -> attrs.putAll(authorization.getAttributes()));
 	}
 
@@ -149,7 +163,11 @@ public class OAuth2Authorization implements Serializable {
 		private static final long serialVersionUID = Version.SERIAL_VERSION_UID;
 		private String registeredClientId;
 		private String principalName;
+		private OAuth2Tokens tokens;
+
+		@Deprecated
 		private OAuth2AccessToken accessToken;
+
 		private Map<String, Object> attributes = new HashMap<>();
 
 		protected Builder(String registeredClientId) {
@@ -168,11 +186,23 @@ public class OAuth2Authorization implements Serializable {
 		}
 
 		/**
+		 * Sets the {@link OAuth2Tokens}.
+		 *
+		 * @param tokens the {@link OAuth2Tokens}
+		 * @return the {@link Builder}
+		 */
+		public Builder tokens(OAuth2Tokens tokens) {
+			this.tokens = tokens;
+			return this;
+		}
+
+		/**
 		 * Sets the {@link OAuth2AccessToken access token} credential.
 		 *
 		 * @param accessToken the {@link OAuth2AccessToken}
 		 * @return the {@link Builder}
 		 */
+		@Deprecated
 		public Builder accessToken(OAuth2AccessToken accessToken) {
 			this.accessToken = accessToken;
 			return this;
@@ -215,7 +245,14 @@ public class OAuth2Authorization implements Serializable {
 			OAuth2Authorization authorization = new OAuth2Authorization();
 			authorization.registeredClientId = this.registeredClientId;
 			authorization.principalName = this.principalName;
-			authorization.accessToken = this.accessToken;
+			if (this.tokens == null) {
+				OAuth2Tokens.Builder builder = OAuth2Tokens.builder();
+				if (this.accessToken != null) {
+					builder.accessToken(this.accessToken);
+				}
+				this.tokens = builder.build();
+			}
+			authorization.tokens = this.tokens;
 			authorization.attributes = Collections.unmodifiableMap(this.attributes);
 			return authorization;
 		}

@@ -38,6 +38,7 @@ public interface OAuth2AuthorizationAttributeNames {
 	/**
 	 * The name of the attribute used for the {@link OAuth2ParameterNames#CODE} parameter.
 	 */
+	@Deprecated
 	String CODE = OAuth2Authorization.class.getName().concat(".CODE");
 
 	/**

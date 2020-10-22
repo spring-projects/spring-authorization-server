@@ -147,13 +147,29 @@ public class OAuth2Tokens implements Serializable {
 	}
 
 	/**
+	 * Returns a new {@link Builder}, initialized with the values from the provided {@code tokens}.
+	 *
+	 * @param tokens the tokens used for initializing the {@link Builder}
+	 * @return the {@link Builder}
+	 */
+	public static Builder from(OAuth2Tokens tokens) {
+		Assert.notNull(tokens, "tokens cannot be null");
+		return new Builder(tokens.tokens);
+	}
+
+	/**
 	 * A builder for {@link OAuth2Tokens}.
 	 */
 	public static class Builder implements Serializable {
 		private static final long serialVersionUID = Version.SERIAL_VERSION_UID;
-		private final Map<Class<? extends AbstractOAuth2Token>, OAuth2TokenHolder> tokens = new HashMap<>();
+		private Map<Class<? extends AbstractOAuth2Token>, OAuth2TokenHolder> tokens;
 
 		protected Builder() {
+			this.tokens = new HashMap<>();
+		}
+
+		protected Builder(Map<Class<? extends AbstractOAuth2Token>, OAuth2TokenHolder> tokens) {
+			this.tokens = new HashMap<>(tokens);
 		}
 
 		/**

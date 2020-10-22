@@ -20,9 +20,11 @@ import org.junit.Test;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
+import org.springframework.security.oauth2.server.authorization.token.OAuth2AuthorizationCode;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2Tokens;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -36,7 +38,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 public class InMemoryOAuth2AuthorizationServiceTests {
 	private static final RegisteredClient REGISTERED_CLIENT = TestRegisteredClients.registeredClient().build();
 	private static final String PRINCIPAL_NAME = "principal";
-	private static final String AUTHORIZATION_CODE = "code";
+	private static final OAuth2AuthorizationCode AUTHORIZATION_CODE = new OAuth2AuthorizationCode(
+			"code", Instant.now(), Instant.now().plus(5, ChronoUnit.MINUTES));
 	private InMemoryOAuth2AuthorizationService authorizationService;
 
 	@Before
@@ -55,12 +58,12 @@ public class InMemoryOAuth2AuthorizationServiceTests {
 	public void saveWhenAuthorizationProvidedThenSaved() {
 		OAuth2Authorization expectedAuthorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
 				.principalName(PRINCIPAL_NAME)
-				.attribute(OAuth2AuthorizationAttributeNames.CODE, AUTHORIZATION_CODE)
+				.tokens(OAuth2Tokens.builder().token(AUTHORIZATION_CODE).build())
 				.build();
 		this.authorizationService.save(expectedAuthorization);
 
 		OAuth2Authorization authorization = this.authorizationService.findByToken(
-				AUTHORIZATION_CODE, TokenType.AUTHORIZATION_CODE);
+				AUTHORIZATION_CODE.getTokenValue(), TokenType.AUTHORIZATION_CODE);
 		assertThat(authorization).isEqualTo(expectedAuthorization);
 	}
 
@@ -75,17 +78,17 @@ public class InMemoryOAuth2AuthorizationServiceTests {
 	public void removeWhenAuthorizationProvidedThenRemoved() {
 		OAuth2Authorization expectedAuthorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
 				.principalName(PRINCIPAL_NAME)
-				.attribute(OAuth2AuthorizationAttributeNames.CODE, AUTHORIZATION_CODE)
+				.tokens(OAuth2Tokens.builder().token(AUTHORIZATION_CODE).build())
 				.build();
 
 		this.authorizationService.save(expectedAuthorization);
 		OAuth2Authorization authorization = this.authorizationService.findByToken(
-				AUTHORIZATION_CODE, TokenType.AUTHORIZATION_CODE);
+				AUTHORIZATION_CODE.getTokenValue(), TokenType.AUTHORIZATION_CODE);
 		assertThat(authorization).isEqualTo(expectedAuthorization);
 
 		this.authorizationService.remove(expectedAuthorization);
 		authorization = this.authorizationService.findByToken(
-				AUTHORIZATION_CODE, TokenType.AUTHORIZATION_CODE);
+				AUTHORIZATION_CODE.getTokenValue(), TokenType.AUTHORIZATION_CODE);
 		assertThat(authorization).isNull();
 	}
 
@@ -114,12 +117,12 @@ public class InMemoryOAuth2AuthorizationServiceTests {
 	public void findByTokenWhenTokenTypeAuthorizationCodeThenFound() {
 		OAuth2Authorization authorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
 				.principalName(PRINCIPAL_NAME)
-				.attribute(OAuth2AuthorizationAttributeNames.CODE, AUTHORIZATION_CODE)
+				.tokens(OAuth2Tokens.builder().token(AUTHORIZATION_CODE).build())
 				.build();
 		this.authorizationService.save(authorization);
 
 		OAuth2Authorization result = this.authorizationService.findByToken(
-				AUTHORIZATION_CODE, TokenType.AUTHORIZATION_CODE);
+				AUTHORIZATION_CODE.getTokenValue(), TokenType.AUTHORIZATION_CODE);
 		assertThat(authorization).isEqualTo(result);
 	}
 
@@ -129,8 +132,7 @@ public class InMemoryOAuth2AuthorizationServiceTests {
 				"access-token", Instant.now().minusSeconds(60), Instant.now());
 		OAuth2Authorization authorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
 				.principalName(PRINCIPAL_NAME)
-				.attribute(OAuth2AuthorizationAttributeNames.CODE, AUTHORIZATION_CODE)
-				.tokens(OAuth2Tokens.builder().accessToken(accessToken).build())
+				.tokens(OAuth2Tokens.builder().token(AUTHORIZATION_CODE).accessToken(accessToken).build())
 				.build();
 		this.authorizationService.save(authorization);
 

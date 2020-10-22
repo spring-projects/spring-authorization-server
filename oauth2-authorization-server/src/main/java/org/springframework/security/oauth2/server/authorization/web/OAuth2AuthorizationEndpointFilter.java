@@ -36,6 +36,8 @@ import org.springframework.security.oauth2.server.authorization.OAuth2Authorizat
 import org.springframework.security.oauth2.server.authorization.TokenType;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
+import org.springframework.security.oauth2.server.authorization.token.OAuth2AuthorizationCode;
+import org.springframework.security.oauth2.server.authorization.token.OAuth2Tokens;
 import org.springframework.security.web.DefaultRedirectStrategy;
 import org.springframework.security.web.RedirectStrategy;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
@@ -53,6 +55,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
@@ -184,9 +188,12 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 
 			UserConsentPage.displayConsent(request, response, registeredClient, authorization);
 		} else {
-			String code = this.codeGenerator.generateKey();
+			Instant issuedAt = Instant.now();
+			Instant expiresAt = issuedAt.plus(5, ChronoUnit.MINUTES);		// TODO Allow configuration for authorization code time-to-live
+			OAuth2AuthorizationCode authorizationCode = new OAuth2AuthorizationCode(
+					this.codeGenerator.generateKey(), issuedAt, expiresAt);
 			OAuth2Authorization authorization = builder
-					.attribute(OAuth2AuthorizationAttributeNames.CODE, code)
+					.tokens(OAuth2Tokens.builder().token(authorizationCode).build())
 					.attribute(OAuth2AuthorizationAttributeNames.AUTHORIZED_SCOPES, authorizationRequest.getScopes())
 					.build();
 			this.authorizationService.save(authorization);
@@ -200,7 +207,7 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 //			The authorization code is bound to the client identifier and redirection URI.
 
 			sendAuthorizationResponse(request, response,
-					authorizationRequestContext.resolveRedirectUri(), code, authorizationRequest.getState());
+					authorizationRequestContext.resolveRedirectUri(), authorizationCode, authorizationRequest.getState());
 		}
 	}
 
@@ -232,18 +239,21 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 			return;
 		}
 
-		String code = this.codeGenerator.generateKey();
+		Instant issuedAt = Instant.now();
+		Instant expiresAt = issuedAt.plus(5, ChronoUnit.MINUTES);		// TODO Allow configuration for authorization code time-to-live
+		OAuth2AuthorizationCode authorizationCode = new OAuth2AuthorizationCode(
+				this.codeGenerator.generateKey(), issuedAt, expiresAt);
 		OAuth2Authorization authorization = OAuth2Authorization.from(userConsentRequestContext.getAuthorization())
+				.tokens(OAuth2Tokens.builder().token(authorizationCode).build())
 				.attributes(attrs -> {
 					attrs.remove(OAuth2AuthorizationAttributeNames.STATE);
-					attrs.put(OAuth2AuthorizationAttributeNames.CODE, code);
 					attrs.put(OAuth2AuthorizationAttributeNames.AUTHORIZED_SCOPES, userConsentRequestContext.getScopes());
 				})
 				.build();
 		this.authorizationService.save(authorization);
 
 		sendAuthorizationResponse(request, response, userConsentRequestContext.resolveRedirectUri(),
-				code, userConsentRequestContext.getAuthorizationRequest().getState());
+				authorizationCode, userConsentRequestContext.getAuthorizationRequest().getState());
 	}
 
 	private void validateAuthorizationRequest(OAuth2AuthorizationRequestContext authorizationRequestContext) {
@@ -389,11 +399,11 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 	}
 
 	private void sendAuthorizationResponse(HttpServletRequest request, HttpServletResponse response,
-			String redirectUri, String code, String state) throws IOException {
+			String redirectUri, OAuth2AuthorizationCode authorizationCode, String state) throws IOException {
 
 		UriComponentsBuilder uriBuilder = UriComponentsBuilder
 				.fromUriString(redirectUri)
-				.queryParam(OAuth2ParameterNames.CODE, code);
+				.queryParam(OAuth2ParameterNames.CODE, authorizationCode.getTokenValue());
 		if (StringUtils.hasText(state)) {
 			uriBuilder.queryParam(OAuth2ParameterNames.STATE, state);
 		}

@@ -19,6 +19,7 @@ import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
+import org.springframework.security.oauth2.server.authorization.token.OAuth2AuthorizationCode;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2Tokens;
 
 import java.time.Instant;
@@ -41,6 +42,8 @@ public class TestOAuth2Authorizations {
 
 	public static OAuth2Authorization.Builder authorization(RegisteredClient registeredClient,
 			Map<String, Object> authorizationRequestAdditionalParameters) {
+		OAuth2AuthorizationCode authorizationCode = new OAuth2AuthorizationCode(
+				"code", Instant.now(), Instant.now().plusSeconds(120));
 		OAuth2AccessToken accessToken = new OAuth2AccessToken(
 				OAuth2AccessToken.TokenType.BEARER, "access-token", Instant.now(), Instant.now().plusSeconds(300));
 		OAuth2AuthorizationRequest authorizationRequest = OAuth2AuthorizationRequest.authorizationCode()
@@ -53,8 +56,7 @@ public class TestOAuth2Authorizations {
 				.build();
 		return OAuth2Authorization.withRegisteredClient(registeredClient)
 				.principalName("principal")
-				.tokens(OAuth2Tokens.builder().accessToken(accessToken).build())
-				.attribute(OAuth2AuthorizationAttributeNames.CODE, "code")
+				.tokens(OAuth2Tokens.builder().token(authorizationCode).accessToken(accessToken).build())
 				.attribute(OAuth2AuthorizationAttributeNames.AUTHORIZATION_REQUEST, authorizationRequest)
 				.attribute(OAuth2AuthorizationAttributeNames.AUTHORIZED_SCOPES, authorizationRequest.getScopes());
 	}

@@ -34,13 +34,13 @@ import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationResp
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.endpoint.PkceParameterNames;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
-import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationAttributeNames;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.TestOAuth2Authorizations;
 import org.springframework.security.oauth2.server.authorization.TokenType;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
+import org.springframework.security.oauth2.server.authorization.token.OAuth2AuthorizationCode;
 import org.springframework.security.oauth2.server.authorization.web.OAuth2AuthorizationEndpointFilter;
 import org.springframework.security.oauth2.server.authorization.web.OAuth2TokenEndpointFilter;
 import org.springframework.test.web.servlet.MockMvc;
@@ -153,7 +153,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();
 		when(authorizationService.findByToken(
-				eq(authorization.getAttribute(OAuth2AuthorizationAttributeNames.CODE)),
+				eq(authorization.getTokens().getToken(OAuth2AuthorizationCode.class).getTokenValue()),
 				eq(TokenType.AUTHORIZATION_CODE)))
 				.thenReturn(authorization);
 
@@ -167,7 +167,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 
 		verify(registeredClientRepository).findByClientId(eq(registeredClient.getClientId()));
 		verify(authorizationService).findByToken(
-				eq(authorization.getAttribute(OAuth2AuthorizationAttributeNames.CODE)),
+				eq(authorization.getTokens().getToken(OAuth2AuthorizationCode.class).getTokenValue()),
 				eq(TokenType.AUTHORIZATION_CODE));
 		verify(authorizationService).save(any());
 	}
@@ -199,7 +199,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 		OAuth2Authorization authorization = authorizationCaptor.getValue();
 
 		when(authorizationService.findByToken(
-				eq(authorization.getAttribute(OAuth2AuthorizationAttributeNames.CODE)),
+				eq(authorization.getTokens().getToken(OAuth2AuthorizationCode.class).getTokenValue()),
 				eq(TokenType.AUTHORIZATION_CODE)))
 				.thenReturn(authorization);
 
@@ -212,7 +212,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 
 		verify(registeredClientRepository, times(2)).findByClientId(eq(registeredClient.getClientId()));
 		verify(authorizationService, times(2)).findByToken(
-				eq(authorization.getAttribute(OAuth2AuthorizationAttributeNames.CODE)),
+				eq(authorization.getTokens().getToken(OAuth2AuthorizationCode.class).getTokenValue()),
 				eq(TokenType.AUTHORIZATION_CODE));
 		verify(authorizationService, times(2)).save(any());
 	}
@@ -232,7 +232,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 			OAuth2Authorization authorization) {
 		MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
 		parameters.set(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.AUTHORIZATION_CODE.getValue());
-		parameters.set(OAuth2ParameterNames.CODE, authorization.getAttribute(OAuth2AuthorizationAttributeNames.CODE));
+		parameters.set(OAuth2ParameterNames.CODE, authorization.getTokens().getToken(OAuth2AuthorizationCode.class).getTokenValue());
 		parameters.set(OAuth2ParameterNames.REDIRECT_URI, registeredClient.getRedirectUris().iterator().next());
 		return parameters;
 	}

@@ -95,6 +95,35 @@ public class OAuth2TokensTests {
 	}
 
 	@Test
+	public void fromWhenTokensNullThenThrowIllegalArgumentException() {
+		assertThatThrownBy(() -> OAuth2Tokens.from(null))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("tokens cannot be null");
+	}
+
+	@Test
+	public void fromWhenTokensProvidedThenCopied() {
+		OAuth2Tokens tokens = OAuth2Tokens.builder()
+				.accessToken(this.accessToken)
+				.refreshToken(this.refreshToken)
+				.token(this.idToken)
+				.build();
+		OAuth2Tokens tokensResult = OAuth2Tokens.from(tokens).build();
+
+		assertThat(tokensResult.getAccessToken()).isEqualTo(tokens.getAccessToken());
+		assertThat(tokensResult.getTokenMetadata(tokensResult.getAccessToken()))
+				.isEqualTo(tokens.getTokenMetadata(tokens.getAccessToken()));
+
+		assertThat(tokensResult.getRefreshToken()).isEqualTo(tokens.getRefreshToken());
+		assertThat(tokensResult.getTokenMetadata(tokensResult.getRefreshToken()))
+				.isEqualTo(tokens.getTokenMetadata(tokens.getRefreshToken()));
+
+		assertThat(tokensResult.getToken(OidcIdToken.class)).isEqualTo(tokens.getToken(OidcIdToken.class));
+		assertThat(tokensResult.getTokenMetadata(tokensResult.getToken(OidcIdToken.class)))
+				.isEqualTo(tokens.getTokenMetadata(tokens.getToken(OidcIdToken.class)));
+	}
+
+	@Test
 	public void buildWhenTokenMetadataNotProvidedThenDefaultsAreSet() {
 		OAuth2Tokens tokens = OAuth2Tokens.builder()
 				.accessToken(this.accessToken)

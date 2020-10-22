@@ -152,7 +152,7 @@ public class OAuth2Authorization implements Serializable {
 		Assert.notNull(authorization, "authorization cannot be null");
 		return new Builder(authorization.getRegisteredClientId())
 				.principalName(authorization.getPrincipalName())
-				.tokens(authorization.getTokens())
+				.tokens(OAuth2Tokens.from(authorization.getTokens()).build())
 				.attributes(attrs -> attrs.putAll(authorization.getAttributes()));
 	}
 

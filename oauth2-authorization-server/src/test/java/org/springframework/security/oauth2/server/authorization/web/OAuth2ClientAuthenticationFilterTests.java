@@ -27,6 +27,7 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
@@ -162,7 +163,7 @@ public class OAuth2ClientAuthenticationFilterTests {
 	@Test
 	public void doFilterWhenRequestMatchesAndBadCredentialsThenInvalidClientError() throws Exception {
 		when(this.authenticationConverter.convert(any(HttpServletRequest.class))).thenReturn(
-				new OAuth2ClientAuthenticationToken("clientId", "invalid-secret", null));
+				new OAuth2ClientAuthenticationToken("clientId", "invalid-secret", ClientAuthenticationMethod.BASIC, null));
 		when(this.authenticationManager.authenticate(any(Authentication.class))).thenThrow(
 				new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_CLIENT)));
 
@@ -185,7 +186,7 @@ public class OAuth2ClientAuthenticationFilterTests {
 	public void doFilterWhenRequestMatchesAndValidCredentialsThenProcessed() throws Exception {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 		when(this.authenticationConverter.convert(any(HttpServletRequest.class))).thenReturn(
-				new OAuth2ClientAuthenticationToken(registeredClient.getClientId(), registeredClient.getClientSecret(), null));
+				new OAuth2ClientAuthenticationToken(registeredClient.getClientId(), registeredClient.getClientSecret(), ClientAuthenticationMethod.BASIC, null));
 		when(this.authenticationManager.authenticate(any(Authentication.class))).thenReturn(
 				new OAuth2ClientAuthenticationToken(registeredClient));
 

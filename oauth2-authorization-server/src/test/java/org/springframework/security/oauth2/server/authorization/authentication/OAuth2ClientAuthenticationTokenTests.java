@@ -16,6 +16,7 @@
 package org.springframework.security.oauth2.server.authorization.authentication;
 
 import org.junit.Test;
+import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
 
@@ -29,21 +30,29 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * Tests for {@link OAuth2ClientAuthenticationToken}.
  *
  * @author Joe Grandja
+ * @author Anoop Garlapati
  */
 public class OAuth2ClientAuthenticationTokenTests {
 
 	@Test
 	public void constructorWhenClientIdNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> new OAuth2ClientAuthenticationToken(null, "secret", null))
+		assertThatThrownBy(() -> new OAuth2ClientAuthenticationToken(null, "secret", ClientAuthenticationMethod.BASIC, null))
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessage("clientId cannot be empty");
 	}
 
 	@Test
 	public void constructorWhenClientSecretNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> new OAuth2ClientAuthenticationToken("clientId", null, null))
+		assertThatThrownBy(() -> new OAuth2ClientAuthenticationToken("clientId", null, ClientAuthenticationMethod.BASIC, null))
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessage("clientSecret cannot be empty");
+	}
+
+	@Test
+	public void constructorWhenClientAuthenticationMethodNullThenThrowIllegalArgumentException() {
+		assertThatThrownBy(() -> new OAuth2ClientAuthenticationToken("clientId", "clientSecret", null, null))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("clientAuthenticationMethod cannot be null");
 	}
 
 	@Test
@@ -55,11 +64,13 @@ public class OAuth2ClientAuthenticationTokenTests {
 
 	@Test
 	public void constructorWhenClientCredentialsProvidedThenCreated() {
-		OAuth2ClientAuthenticationToken authentication = new OAuth2ClientAuthenticationToken("clientId", "secret", null);
+		OAuth2ClientAuthenticationToken authentication = new OAuth2ClientAuthenticationToken("clientId", "secret",
+				ClientAuthenticationMethod.BASIC, null);
 		assertThat(authentication.isAuthenticated()).isFalse();
 		assertThat(authentication.getPrincipal().toString()).isEqualTo("clientId");
 		assertThat(authentication.getCredentials()).isEqualTo("secret");
 		assertThat(authentication.getRegisteredClient()).isNull();
+		assertThat(authentication.getClientAuthenticationMethod()).isEqualTo(ClientAuthenticationMethod.BASIC);
 	}
 
 	@Test
@@ -72,6 +83,7 @@ public class OAuth2ClientAuthenticationTokenTests {
 		assertThat(authentication.getCredentials()).isNull();
 		assertThat(authentication.getAdditionalParameters()).isEqualTo(additionalParameters);
 		assertThat(authentication.getRegisteredClient()).isNull();
+		assertThat(authentication.getClientAuthenticationMethod()).isEqualTo(ClientAuthenticationMethod.NONE);
 	}
 
 	@Test
@@ -82,5 +94,16 @@ public class OAuth2ClientAuthenticationTokenTests {
 		assertThat(authentication.getPrincipal().toString()).isEqualTo(registeredClient.getClientId());
 		assertThat(authentication.getCredentials()).isNull();
 		assertThat(authentication.getRegisteredClient()).isEqualTo(registeredClient);
+	}
+
+	@Test
+	public void constructorWhenClientCredentialsAndClientAuthenticationMethodProvidedThenCreated() {
+		OAuth2ClientAuthenticationToken authentication = new OAuth2ClientAuthenticationToken("clientId", "secret",
+				ClientAuthenticationMethod.BASIC, null);
+		assertThat(authentication.isAuthenticated()).isFalse();
+		assertThat(authentication.getPrincipal().toString()).isEqualTo("clientId");
+		assertThat(authentication.getCredentials()).isEqualTo("secret");
+		assertThat(authentication.getRegisteredClient()).isNull();
+		assertThat(authentication.getClientAuthenticationMethod()).isEqualTo(ClientAuthenticationMethod.BASIC);
 	}
 }

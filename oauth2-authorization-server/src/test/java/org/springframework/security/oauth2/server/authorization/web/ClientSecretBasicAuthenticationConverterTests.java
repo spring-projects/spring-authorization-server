@@ -20,6 +20,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
+import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
@@ -98,6 +99,7 @@ public class ClientSecretBasicAuthenticationConverterTests {
 		OAuth2ClientAuthenticationToken authentication = (OAuth2ClientAuthenticationToken) this.converter.convert(request);
 		assertThat(authentication.getPrincipal()).isEqualTo("clientId");
 		assertThat(authentication.getCredentials()).isEqualTo("secret");
+		assertThat(authentication.getClientAuthenticationMethod()).isEqualTo(ClientAuthenticationMethod.BASIC);
 	}
 
 	@Test
@@ -107,6 +109,7 @@ public class ClientSecretBasicAuthenticationConverterTests {
 		OAuth2ClientAuthenticationToken authentication = (OAuth2ClientAuthenticationToken) this.converter.convert(request);
 		assertThat(authentication.getPrincipal()).isEqualTo("clientId");
 		assertThat(authentication.getCredentials()).isEqualTo("secret");
+		assertThat(authentication.getClientAuthenticationMethod()).isEqualTo(ClientAuthenticationMethod.BASIC);
 		assertThat(authentication.getAdditionalParameters())
 				.containsOnly(
 						entry(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.AUTHORIZATION_CODE.getValue()),

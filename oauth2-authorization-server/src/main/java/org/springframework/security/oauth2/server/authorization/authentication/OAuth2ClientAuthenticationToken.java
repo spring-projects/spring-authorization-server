@@ -18,6 +18,7 @@ package org.springframework.security.oauth2.server.authorization.authentication;
 import org.springframework.lang.Nullable;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.server.authorization.Version;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.util.Assert;
@@ -30,6 +31,7 @@ import java.util.Map;
  *
  * @author Joe Grandja
  * @author Patryk Kostrzewa
+ * @author Anoop Garlapati
  * @since 0.0.1
  * @see AbstractAuthenticationToken
  * @see RegisteredClient
@@ -39,6 +41,7 @@ public class OAuth2ClientAuthenticationToken extends AbstractAuthenticationToken
 	private static final long serialVersionUID = Version.SERIAL_VERSION_UID;
 	private String clientId;
 	private String clientSecret;
+	private ClientAuthenticationMethod clientAuthenticationMethod;
 	private Map<String, Object> additionalParameters;
 	private RegisteredClient registeredClient;
 
@@ -47,13 +50,17 @@ public class OAuth2ClientAuthenticationToken extends AbstractAuthenticationToken
 	 *
 	 * @param clientId the client identifier
 	 * @param clientSecret the client secret
+	 * @param clientAuthenticationMethod the authentication method used by the client
 	 * @param additionalParameters the additional parameters
 	 */
 	public OAuth2ClientAuthenticationToken(String clientId, String clientSecret,
+			ClientAuthenticationMethod clientAuthenticationMethod,
 			@Nullable Map<String, Object> additionalParameters) {
 		this(clientId, additionalParameters);
 		Assert.hasText(clientSecret, "clientSecret cannot be empty");
+		Assert.notNull(clientAuthenticationMethod, "clientAuthenticationMethod cannot be null");
 		this.clientSecret = clientSecret;
+		this.clientAuthenticationMethod = clientAuthenticationMethod;
 	}
 
 	/**
@@ -69,6 +76,7 @@ public class OAuth2ClientAuthenticationToken extends AbstractAuthenticationToken
 		this.clientId = clientId;
 		this.additionalParameters = additionalParameters != null ?
 				Collections.unmodifiableMap(additionalParameters) : null;
+		this.clientAuthenticationMethod = ClientAuthenticationMethod.NONE;
 	}
 
 	/**
@@ -111,5 +119,14 @@ public class OAuth2ClientAuthenticationToken extends AbstractAuthenticationToken
 	 */
 	public @Nullable RegisteredClient getRegisteredClient() {
 		return this.registeredClient;
+	}
+
+	/**
+	 * Returns the {@link ClientAuthenticationMethod client authentication method}.
+	 *
+	 * @return the {@link ClientAuthenticationMethod}
+	 */
+	public @Nullable ClientAuthenticationMethod getClientAuthenticationMethod() {
+		return this.clientAuthenticationMethod;
 	}
 }

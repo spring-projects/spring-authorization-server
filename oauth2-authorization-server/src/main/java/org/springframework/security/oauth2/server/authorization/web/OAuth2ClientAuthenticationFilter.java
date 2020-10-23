@@ -77,6 +77,7 @@ public class OAuth2ClientAuthenticationFilter extends OncePerRequestFilter {
 		this.authenticationConverter = new DelegatingAuthenticationConverter(
 				Arrays.asList(
 						new ClientSecretBasicAuthenticationConverter(),
+						new ClientSecretPostAuthenticationConverter(),
 						new PublicClientAuthenticationConverter()));
 		this.authenticationSuccessHandler = this::onAuthenticationSuccess;
 		this.authenticationFailureHandler = this::onAuthenticationFailure;

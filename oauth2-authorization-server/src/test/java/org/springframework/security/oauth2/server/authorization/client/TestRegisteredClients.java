@@ -51,4 +51,16 @@ public class TestRegisteredClients {
 				.scope("scope1")
 				.scope("scope2");
 	}
+
+	public static RegisteredClient.Builder registeredPublicClient() {
+		return RegisteredClient.withId("registration-3")
+				.clientId("client-3")
+				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+				.clientAuthenticationMethod(ClientAuthenticationMethod.NONE)
+				.redirectUri("https://example.com")
+				.scope("openid")
+				.scope("profile")
+				.scope("email")
+				.clientSettings(clientSettings -> clientSettings.requireProofKey(true));
+	}
 }

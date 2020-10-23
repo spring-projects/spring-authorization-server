@@ -18,6 +18,7 @@ package org.springframework.security.oauth2.server.authorization.authentication;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
+import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
@@ -45,6 +46,7 @@ import static org.mockito.Mockito.when;
  * @author Patryk Kostrzewa
  * @author Joe Grandja
  * @author Daniel Garnier-Moiroux
+ * @author Anoop Garlapati
  */
 public class OAuth2ClientAuthenticationProviderTests {
 	private static final String PLAIN_CODE_VERIFIER = "pkce-key";
@@ -95,7 +97,7 @@ public class OAuth2ClientAuthenticationProviderTests {
 				.thenReturn(registeredClient);
 
 		OAuth2ClientAuthenticationToken authentication = new OAuth2ClientAuthenticationToken(
-				registeredClient.getClientId() + "-invalid", registeredClient.getClientSecret(), null);
+				registeredClient.getClientId() + "-invalid", registeredClient.getClientSecret(), ClientAuthenticationMethod.BASIC, null);
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 				.isInstanceOf(OAuth2AuthenticationException.class)
 				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
@@ -110,7 +112,7 @@ public class OAuth2ClientAuthenticationProviderTests {
 				.thenReturn(registeredClient);
 
 		OAuth2ClientAuthenticationToken authentication = new OAuth2ClientAuthenticationToken(
-				registeredClient.getClientId(), registeredClient.getClientSecret() + "-invalid", null);
+				registeredClient.getClientId(), registeredClient.getClientSecret() + "-invalid", ClientAuthenticationMethod.BASIC, null);
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 				.isInstanceOf(OAuth2AuthenticationException.class)
 				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
@@ -140,7 +142,7 @@ public class OAuth2ClientAuthenticationProviderTests {
 				.thenReturn(registeredClient);
 
 		OAuth2ClientAuthenticationToken authentication = new OAuth2ClientAuthenticationToken(
-				registeredClient.getClientId(), registeredClient.getClientSecret(), null);
+				registeredClient.getClientId(), registeredClient.getClientSecret(), ClientAuthenticationMethod.BASIC, null);
 		OAuth2ClientAuthenticationToken authenticationResult =
 				(OAuth2ClientAuthenticationToken) this.authenticationProvider.authenticate(authentication);
 		assertThat(authenticationResult.isAuthenticated()).isTrue();
@@ -275,7 +277,7 @@ public class OAuth2ClientAuthenticationProviderTests {
 
 	@Test
 	public void authenticateWhenPkceAndPlainMethodAndValidCodeVerifierThenAuthenticated() {
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+		RegisteredClient registeredClient = TestRegisteredClients.registeredPublicClient().build();
 		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
 				.thenReturn(registeredClient);
 
@@ -300,7 +302,7 @@ public class OAuth2ClientAuthenticationProviderTests {
 
 	@Test
 	public void authenticateWhenPkceAndMissingMethodThenDefaultPlainMethodAndAuthenticated() {
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+		RegisteredClient registeredClient = TestRegisteredClients.registeredPublicClient().build();
 		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
 				.thenReturn(registeredClient);
 
@@ -327,7 +329,7 @@ public class OAuth2ClientAuthenticationProviderTests {
 
 	@Test
 	public void authenticateWhenPkceAndS256MethodAndValidCodeVerifierThenAuthenticated() {
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+		RegisteredClient registeredClient = TestRegisteredClients.registeredPublicClient().build();
 		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
 				.thenReturn(registeredClient);
 
@@ -352,7 +354,7 @@ public class OAuth2ClientAuthenticationProviderTests {
 
 	@Test
 	public void authenticateWhenPkceAndUnsupportedCodeChallengeMethodThenThrowOAuth2AuthenticationException() {
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+		RegisteredClient registeredClient = TestRegisteredClients.registeredPublicClient().build();
 		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
 				.thenReturn(registeredClient);
 
@@ -375,6 +377,21 @@ public class OAuth2ClientAuthenticationProviderTests {
 				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
 				.extracting("errorCode")
 				.isEqualTo(OAuth2ErrorCodes.SERVER_ERROR);
+	}
+
+	@Test
+	public void authenticateWhenClientAuthenticationWithUnregisteredClientAuthenticationMethodThenThrowOAuth2AuthenticationException() {
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
+				.thenReturn(registeredClient);
+
+		OAuth2ClientAuthenticationToken authentication = new OAuth2ClientAuthenticationToken(
+				registeredClient.getClientId(), registeredClient.getClientSecret(), ClientAuthenticationMethod.POST, null);
+		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
+				.isInstanceOf(OAuth2AuthenticationException.class)
+				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+				.extracting("errorCode")
+				.isEqualTo(OAuth2ErrorCodes.INVALID_CLIENT);
 	}
 
 	private static Map<String, Object> createPkceTokenParameters(String codeVerifier) {

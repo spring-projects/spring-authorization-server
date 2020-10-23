@@ -181,9 +181,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 	public void requestWhenPublicClientWithPkceThenReturnAccessTokenResponse() throws Exception {
 		this.spring.register(AuthorizationServerConfiguration.class).autowire();
 
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
-				.clientSecret(null)
-				.clientSettings(clientSettings -> clientSettings.requireProofKey(true))
+		RegisteredClient registeredClient = TestRegisteredClients.registeredPublicClient()
 				.tokenSettings(tokenSettings -> tokenSettings.enableRefreshTokens(false))
 				.build();
 		when(registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))

@@ -84,6 +84,11 @@ public class OAuth2ClientAuthenticationProvider implements AuthenticationProvide
 
 		boolean authenticatedCredentials = false;
 
+		if (!registeredClient.getClientAuthenticationMethods().contains(
+				clientAuthentication.getClientAuthenticationMethod())) {
+			throwInvalidClient();
+		}
+
 		if (clientAuthentication.getCredentials() != null) {
 			String clientSecret = clientAuthentication.getCredentials().toString();
 			// TODO Use PasswordEncoder.matches()

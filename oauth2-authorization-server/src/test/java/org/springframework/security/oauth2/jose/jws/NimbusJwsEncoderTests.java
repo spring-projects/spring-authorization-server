@@ -17,9 +17,9 @@ package org.springframework.security.oauth2.jose.jws;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.springframework.security.crypto.keys.KeyManager;
-import org.springframework.security.crypto.keys.ManagedKey;
-import org.springframework.security.crypto.keys.TestManagedKeys;
+import org.springframework.security.crypto.key.AsymmetricKey;
+import org.springframework.security.crypto.key.CryptoKeySource;
+import org.springframework.security.crypto.key.TestCryptoKeys;
 import org.springframework.security.oauth2.jose.JoseHeader;
 import org.springframework.security.oauth2.jose.JoseHeaderNames;
 import org.springframework.security.oauth2.jose.TestJoseHeaders;
@@ -30,14 +30,12 @@ import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.jwt.TestJwtClaimsSets;
 
 import java.security.interfaces.RSAPublicKey;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -47,20 +45,20 @@ import static org.mockito.Mockito.when;
  * @author Joe Grandja
  */
 public class NimbusJwsEncoderTests {
-	private KeyManager keyManager;
+	private CryptoKeySource keySource;
 	private NimbusJwsEncoder jwtEncoder;
 
 	@Before
 	public void setUp() {
-		this.keyManager = mock(KeyManager.class);
-		this.jwtEncoder = new NimbusJwsEncoder(this.keyManager);
+		this.keySource = mock(CryptoKeySource.class);
+		this.jwtEncoder = new NimbusJwsEncoder(this.keySource);
 	}
 
 	@Test
-	public void constructorWhenKeyManagerNullThenThrowIllegalArgumentException() {
+	public void constructorWhenKeySourceNullThenThrowIllegalArgumentException() {
 		assertThatThrownBy(() -> new NimbusJwsEncoder(null))
 				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("keyManager cannot be null");
+				.hasMessage("keySource cannot be null");
 	}
 
 	@Test
@@ -103,8 +101,8 @@ public class NimbusJwsEncoderTests {
 
 	@Test
 	public void encodeWhenUnsupportedKeyTypeThenThrowJwtEncodingException() {
-		ManagedKey managedKey = TestManagedKeys.ecManagedKey().build();
-		when(this.keyManager.findByAlgorithm(any())).thenReturn(Collections.singleton(managedKey));
+		AsymmetricKey ecKey = TestCryptoKeys.ecKey().build();
+		when(this.keySource.getKeys()).thenReturn(Collections.singleton(ecKey));
 
 		JoseHeader joseHeader = TestJoseHeaders.joseHeader(SignatureAlgorithm.ES256).build();
 		JwtClaimsSet jwtClaimsSet = TestJwtClaimsSets.jwtClaimsSet().build();
@@ -116,8 +114,8 @@ public class NimbusJwsEncoderTests {
 
 	@Test
 	public void encodeWhenSuccessThenDecodes() {
-		ManagedKey managedKey = TestManagedKeys.rsaManagedKey().build();
-		when(this.keyManager.findByAlgorithm(any())).thenReturn(Collections.singleton(managedKey));
+		AsymmetricKey rsaKey = TestCryptoKeys.rsaKey().build();
+		when(this.keySource.getKeys()).thenReturn(Collections.singleton(rsaKey));
 
 		JoseHeader joseHeader = TestJoseHeaders.joseHeader()
 				.headers(headers -> headers.remove(JoseHeaderNames.CRIT))
@@ -126,25 +124,17 @@ public class NimbusJwsEncoderTests {
 
 		Jwt jws = this.jwtEncoder.encode(joseHeader, jwtClaimsSet);
 
-		NimbusJwtDecoder jwtDecoder = NimbusJwtDecoder.withPublicKey((RSAPublicKey) managedKey.getPublicKey()).build();
+		NimbusJwtDecoder jwtDecoder = NimbusJwtDecoder.withPublicKey((RSAPublicKey) rsaKey.getPublicKey()).build();
 		jwtDecoder.decode(jws.getTokenValue());
 	}
 
 	@Test
-	public void encodeWhenMultipleActiveKeysThenUseMostRecent() {
-		ManagedKey managedKeyActivated2DaysAgo = TestManagedKeys.rsaManagedKey()
-				.activatedOn(Instant.now().minus(2, ChronoUnit.DAYS))
-				.build();
-		ManagedKey managedKeyActivated1DayAgo = TestManagedKeys.rsaManagedKey()
-				.activatedOn(Instant.now().minus(1, ChronoUnit.DAYS))
-				.build();
-		ManagedKey managedKeyActivatedToday = TestManagedKeys.rsaManagedKey()
-				.activatedOn(Instant.now())
-				.build();
-
-		when(this.keyManager.findByAlgorithm(any())).thenReturn(
-				Stream.of(managedKeyActivated2DaysAgo, managedKeyActivated1DayAgo, managedKeyActivatedToday)
-						.collect(Collectors.toSet()));
+	public void encodeWhenMultipleActiveKeysThenUseFirst() {
+		AsymmetricKey rsaKey1 = TestCryptoKeys.rsaKey().build();
+		AsymmetricKey rsaKey2 = TestCryptoKeys.rsaKey().build();
+		when(this.keySource.getKeys()).thenReturn(
+				Stream.of(rsaKey1, rsaKey2)
+						.collect(Collectors.toCollection(LinkedHashSet::new)));
 
 		JoseHeader joseHeader = TestJoseHeaders.joseHeader()
 				.headers(headers -> headers.remove(JoseHeaderNames.CRIT))
@@ -153,7 +143,7 @@ public class NimbusJwsEncoderTests {
 
 		Jwt jws = this.jwtEncoder.encode(joseHeader, jwtClaimsSet);
 
-		NimbusJwtDecoder jwtDecoder = NimbusJwtDecoder.withPublicKey((RSAPublicKey) managedKeyActivatedToday.getPublicKey()).build();
+		NimbusJwtDecoder jwtDecoder = NimbusJwtDecoder.withPublicKey((RSAPublicKey) rsaKey1.getPublicKey()).build();
 		jwtDecoder.decode(jws.getTokenValue());
 	}
 }

@@ -29,8 +29,9 @@ import com.nimbusds.jose.util.Base64URL;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import org.springframework.core.convert.converter.Converter;
-import org.springframework.security.crypto.keys.KeyManager;
-import org.springframework.security.crypto.keys.ManagedKey;
+import org.springframework.security.crypto.key.AsymmetricKey;
+import org.springframework.security.crypto.key.CryptoKey;
+import org.springframework.security.crypto.key.CryptoKeySource;
 import org.springframework.security.oauth2.jose.JoseHeader;
 import org.springframework.security.oauth2.jose.JoseHeaderNames;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -58,7 +59,7 @@ import java.util.stream.Collectors;
  * An implementation of a {@link JwtEncoder} that encodes a JSON Web Token (JWT)
  * using the JSON Web Signature (JWS) Compact Serialization format.
  * The private/secret key used for signing the JWS is obtained
- * from the {@link KeyManager} supplied via the constructor.
+ * from the {@link CryptoKeySource} supplied via the constructor.
  *
  * <p>
  * <b>NOTE:</b> This implementation uses the Nimbus JOSE + JWT SDK.
@@ -66,7 +67,7 @@ import java.util.stream.Collectors;
  * @author Joe Grandja
  * @since 0.0.1
  * @see JwtEncoder
- * @see KeyManager
+ * @see CryptoKeySource
  * @see <a target="_blank" href="https://tools.ietf.org/html/rfc7519">JSON Web Token (JWT)</a>
  * @see <a target="_blank" href="https://tools.ietf.org/html/rfc7515">JSON Web Signature (JWS)</a>
  * @see <a target="_blank" href="https://tools.ietf.org/html/rfc7515#section-3.1">JWS Compact Serialization</a>
@@ -92,16 +93,16 @@ public final class NimbusJwsEncoder implements JwtEncoder {
 	};
 	private static final Converter<JoseHeader, JWSHeader> jwsHeaderConverter = new JwsHeaderConverter();
 	private static final Converter<JwtClaimsSet, JWTClaimsSet> jwtClaimsSetConverter = new JwtClaimsSetConverter();
-	private final KeyManager keyManager;
+	private final CryptoKeySource keySource;
 
 	/**
 	 * Constructs a {@code NimbusJwsEncoder} using the provided parameters.
 	 *
-	 * @param keyManager the key manager
+	 * @param keySource the source for cryptographic keys
 	 */
-	public NimbusJwsEncoder(KeyManager keyManager) {
-		Assert.notNull(keyManager, "keyManager cannot be null");
-		this.keyManager = keyManager;
+	public NimbusJwsEncoder(CryptoKeySource keySource) {
+		Assert.notNull(keySource, "keySource cannot be null");
+		this.keySource = keySource;
 	}
 
 	@Override
@@ -109,24 +110,24 @@ public final class NimbusJwsEncoder implements JwtEncoder {
 		Assert.notNull(headers, "headers cannot be null");
 		Assert.notNull(claims, "claims cannot be null");
 
-		ManagedKey managedKey = selectKey(headers);
-		if (managedKey == null) {
+		CryptoKey<?> cryptoKey = selectKey(headers);
+		if (cryptoKey == null) {
 			throw new JwtEncodingException(String.format(
 					ENCODING_ERROR_MESSAGE_TEMPLATE,
 					"Unsupported key for algorithm '" + headers.getJwsAlgorithm().getName() + "'"));
 		}
 
 		JWSSigner jwsSigner;
-		if (managedKey.isAsymmetric()) {
-			if (!managedKey.getAlgorithm().equals(RSA_KEY_TYPE)) {
+		if (AsymmetricKey.class.isAssignableFrom(cryptoKey.getClass())) {
+			if (!cryptoKey.getAlgorithm().equals(RSA_KEY_TYPE)) {
 				throw new JwtEncodingException(String.format(
 						ENCODING_ERROR_MESSAGE_TEMPLATE,
-						"Unsupported key type '" + managedKey.getAlgorithm() + "'"));
+						"Unsupported key type '" + cryptoKey.getAlgorithm() + "'"));
 			}
-			PrivateKey privateKey = managedKey.getKey();
+			PrivateKey privateKey = (PrivateKey) cryptoKey.getKey();
 			jwsSigner = new RSASSASigner(privateKey);
 		} else {
-			SecretKey secretKey = managedKey.getKey();
+			SecretKey secretKey = (SecretKey) cryptoKey.getKey();
 			try {
 				jwsSigner = new MACSigner(secretKey);
 			} catch (KeyLengthException ex) {
@@ -137,7 +138,7 @@ public final class NimbusJwsEncoder implements JwtEncoder {
 
 		headers = JoseHeader.from(headers)
 				.type(JOSEObjectType.JWT.getType())
-				.keyId(managedKey.getKeyId())
+				.keyId(cryptoKey.getId())
 				.build();
 		JWSHeader jwsHeader = jwsHeaderConverter.convert(headers);
 
@@ -159,26 +160,17 @@ public final class NimbusJwsEncoder implements JwtEncoder {
 				headers.getHeaders(), claims.getClaims());
 	}
 
-	private ManagedKey selectKey(JoseHeader headers) {
+	private CryptoKey<?> selectKey(JoseHeader headers) {
 		JwsAlgorithm jwsAlgorithm = headers.getJwsAlgorithm();
 		String keyAlgorithm = jcaKeyAlgorithmMappings.get(jwsAlgorithm);
 		if (!StringUtils.hasText(keyAlgorithm)) {
 			return null;
 		}
 
-		Set<ManagedKey> matchingKeys = this.keyManager.findByAlgorithm(keyAlgorithm);
-		if (CollectionUtils.isEmpty(matchingKeys)) {
-			return null;
-		}
-
-		return matchingKeys.stream()
-				.filter(ManagedKey::isActive)
-				.max(this::mostRecentActivated)
+		return this.keySource.getKeys().stream()
+				.filter(key -> key.getAlgorithm().equals(keyAlgorithm))
+				.findFirst()
 				.orElse(null);
-	}
-
-	private int mostRecentActivated(ManagedKey managedKey1, ManagedKey managedKey2) {
-		return managedKey1.getActivatedOn().isAfter(managedKey2.getActivatedOn()) ? 1 : -1;
 	}
 
 	private static class JwsHeaderConverter implements Converter<JoseHeader, JWSHeader> {

@@ -25,14 +25,14 @@ import org.junit.Test;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
-import org.springframework.security.crypto.keys.KeyManager;
-import org.springframework.security.crypto.keys.ManagedKey;
-import org.springframework.security.crypto.keys.TestManagedKeys;
+import org.springframework.security.crypto.key.AsymmetricKey;
+import org.springframework.security.crypto.key.CryptoKeySource;
+import org.springframework.security.crypto.key.SymmetricKey;
+import org.springframework.security.crypto.key.TestCryptoKeys;
 
 import javax.servlet.FilterChain;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.time.Instant;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.stream.Collectors;
@@ -52,25 +52,25 @@ import static org.mockito.Mockito.when;
  * @author Joe Grandja
  */
 public class JwkSetEndpointFilterTests {
-	private KeyManager keyManager;
+	private CryptoKeySource keySource;
 	private JwkSetEndpointFilter filter;
 
 	@Before
 	public void setUp() {
-		this.keyManager = mock(KeyManager.class);
-		this.filter = new JwkSetEndpointFilter(this.keyManager);
+		this.keySource = mock(CryptoKeySource.class);
+		this.filter = new JwkSetEndpointFilter(this.keySource);
 	}
 
 	@Test
-	public void constructorWhenKeyManagerNullThenThrowIllegalArgumentException() {
+	public void constructorWhenKeySourceNullThenThrowIllegalArgumentException() {
 		assertThatThrownBy(() -> new JwkSetEndpointFilter(null))
 				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("keyManager cannot be null");
+				.hasMessage("keySource cannot be null");
 	}
 
 	@Test
 	public void constructorWhenJwkSetEndpointUriNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> new JwkSetEndpointFilter(this.keyManager, null))
+		assertThatThrownBy(() -> new JwkSetEndpointFilter(this.keySource, null))
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessage("jwkSetEndpointUri cannot be empty");
 	}
@@ -103,10 +103,10 @@ public class JwkSetEndpointFilterTests {
 
 	@Test
 	public void doFilterWhenAsymmetricKeysThenJwkSetResponse() throws Exception {
-		ManagedKey rsaManagedKey = TestManagedKeys.rsaManagedKey().build();
-		ManagedKey ecManagedKey = TestManagedKeys.ecManagedKey().build();
-		when(this.keyManager.getKeys()).thenReturn(
-				Stream.of(rsaManagedKey, ecManagedKey).collect(Collectors.toSet()));
+		AsymmetricKey rsaKey = TestCryptoKeys.rsaKey().build();
+		AsymmetricKey ecKey = TestCryptoKeys.ecKey().build();
+		when(this.keySource.getKeys()).thenReturn(
+				Stream.of(rsaKey, ecKey).collect(Collectors.toSet()));
 
 		String requestUri = JwkSetEndpointFilter.DEFAULT_JWK_SET_ENDPOINT_URI;
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestUri);
@@ -123,17 +123,17 @@ public class JwkSetEndpointFilterTests {
 		JWKSet jwkSet = JWKSet.parse(response.getContentAsString());
 		assertThat(jwkSet.getKeys()).hasSize(2);
 
-		RSAKey rsaJwk = (RSAKey) jwkSet.getKeyByKeyId(rsaManagedKey.getKeyId());
+		RSAKey rsaJwk = (RSAKey) jwkSet.getKeyByKeyId(rsaKey.getId());
 		assertThat(rsaJwk).isNotNull();
-		assertThat(rsaJwk.toRSAPublicKey()).isEqualTo(rsaManagedKey.getPublicKey());
+		assertThat(rsaJwk.toRSAPublicKey()).isEqualTo(rsaKey.getPublicKey());
 		assertThat(rsaJwk.toRSAPrivateKey()).isNull();
 		assertThat(rsaJwk.getKeyUse()).isEqualTo(KeyUse.SIGNATURE);
 		assertThat(rsaJwk.getAlgorithm()).isEqualTo(JWSAlgorithm.RS256);
 
-		ECKey ecJwk = (ECKey) jwkSet.getKeyByKeyId(ecManagedKey.getKeyId());
+		ECKey ecJwk = (ECKey) jwkSet.getKeyByKeyId(ecKey.getId());
 		assertThat(ecJwk).isNotNull();
-		assertThat(ecJwk.toECPublicKey()).isEqualTo(ecManagedKey.getPublicKey());
-		assertThat(ecJwk.toECPublicKey()).isEqualTo(ecManagedKey.getPublicKey());
+		assertThat(ecJwk.toECPublicKey()).isEqualTo(ecKey.getPublicKey());
+		assertThat(ecJwk.toECPublicKey()).isEqualTo(ecKey.getPublicKey());
 		assertThat(ecJwk.toECPrivateKey()).isNull();
 		assertThat(ecJwk.getKeyUse()).isEqualTo(KeyUse.SIGNATURE);
 		assertThat(ecJwk.getAlgorithm()).isEqualTo(JWSAlgorithm.ES256);
@@ -141,32 +141,9 @@ public class JwkSetEndpointFilterTests {
 
 	@Test
 	public void doFilterWhenSymmetricKeysThenJwkSetResponseEmpty() throws Exception {
-		ManagedKey secretManagedKey = TestManagedKeys.secretManagedKey().build();
-		when(this.keyManager.getKeys()).thenReturn(
-				new HashSet<>(Collections.singleton(secretManagedKey)));
-
-		String requestUri = JwkSetEndpointFilter.DEFAULT_JWK_SET_ENDPOINT_URI;
-		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestUri);
-		request.setServletPath(requestUri);
-		MockHttpServletResponse response = new MockHttpServletResponse();
-		FilterChain filterChain = mock(FilterChain.class);
-
-		this.filter.doFilter(request, response, filterChain);
-
-		verifyNoInteractions(filterChain);
-
-		assertThat(response.getContentType()).isEqualTo(MediaType.APPLICATION_JSON_VALUE);
-
-		JWKSet jwkSet = JWKSet.parse(response.getContentAsString());
-		assertThat(jwkSet.getKeys()).isEmpty();
-	}
-
-	@Test
-	public void doFilterWhenNoActiveKeysThenJwkSetResponseEmpty() throws Exception {
-		ManagedKey rsaManagedKey = TestManagedKeys.rsaManagedKey().deactivatedOn(Instant.now()).build();
-		ManagedKey ecManagedKey = TestManagedKeys.ecManagedKey().deactivatedOn(Instant.now()).build();
-		when(this.keyManager.getKeys()).thenReturn(
-				Stream.of(rsaManagedKey, ecManagedKey).collect(Collectors.toSet()));
+		SymmetricKey secretKey = TestCryptoKeys.secretKey().build();
+		when(this.keySource.getKeys()).thenReturn(
+				new HashSet<>(Collections.singleton(secretKey)));
 
 		String requestUri = JwkSetEndpointFilter.DEFAULT_JWK_SET_ENDPOINT_URI;
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestUri);

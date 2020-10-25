@@ -27,8 +27,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
 import org.springframework.security.config.test.SpringTestRule;
-import org.springframework.security.crypto.keys.KeyManager;
-import org.springframework.security.crypto.keys.StaticKeyGeneratingKeyManager;
+import org.springframework.security.crypto.key.CryptoKeySource;
+import org.springframework.security.crypto.key.StaticKeyGeneratingCryptoKeySource;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationResponseType;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
@@ -85,7 +85,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 
 	private static RegisteredClientRepository registeredClientRepository;
 	private static OAuth2AuthorizationService authorizationService;
-	private static KeyManager keyManager;
+	private static CryptoKeySource keySource;
 
 	@Rule
 	public final SpringTestRule spring = new SpringTestRule();
@@ -97,7 +97,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 	public static void init() {
 		registeredClientRepository = mock(RegisteredClientRepository.class);
 		authorizationService = mock(OAuth2AuthorizationService.class);
-		keyManager = new StaticKeyGeneratingKeyManager();
+		keySource = new StaticKeyGeneratingCryptoKeySource();
 	}
 
 	@Before
@@ -266,8 +266,8 @@ public class OAuth2AuthorizationCodeGrantTests {
 		}
 
 		@Bean
-		KeyManager keyManager() {
-			return keyManager;
+		CryptoKeySource keySource() {
+			return keySource;
 		}
 	}
 }

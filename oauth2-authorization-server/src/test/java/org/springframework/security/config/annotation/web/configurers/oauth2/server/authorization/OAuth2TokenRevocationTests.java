@@ -27,8 +27,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
 import org.springframework.security.config.test.SpringTestRule;
-import org.springframework.security.crypto.keys.KeyManager;
-import org.springframework.security.crypto.keys.StaticKeyGeneratingKeyManager;
+import org.springframework.security.crypto.key.CryptoKeySource;
+import org.springframework.security.crypto.key.StaticKeyGeneratingCryptoKeySource;
 import org.springframework.security.oauth2.core.AbstractOAuth2Token;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2RefreshToken;
@@ -66,7 +66,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class OAuth2TokenRevocationTests {
 	private static RegisteredClientRepository registeredClientRepository;
 	private static OAuth2AuthorizationService authorizationService;
-	private static KeyManager keyManager;
+	private static CryptoKeySource keySource;
 
 	@Rule
 	public final SpringTestRule spring = new SpringTestRule();
@@ -78,7 +78,7 @@ public class OAuth2TokenRevocationTests {
 	public static void init() {
 		registeredClientRepository = mock(RegisteredClientRepository.class);
 		authorizationService = mock(OAuth2AuthorizationService.class);
-		keyManager = new StaticKeyGeneratingKeyManager();
+		keySource = new StaticKeyGeneratingCryptoKeySource();
 	}
 
 	@Before
@@ -181,8 +181,8 @@ public class OAuth2TokenRevocationTests {
 		}
 
 		@Bean
-		KeyManager keyManager() {
-			return keyManager;
+		CryptoKeySource keySource() {
+			return keySource;
 		}
 	}
 }

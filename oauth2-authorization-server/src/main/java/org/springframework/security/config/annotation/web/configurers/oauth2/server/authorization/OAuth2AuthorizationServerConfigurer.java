@@ -24,7 +24,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.web.HttpSecurityBuilder;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.ExceptionHandlingConfigurer;
-import org.springframework.security.crypto.keys.KeyManager;
+import org.springframework.security.crypto.key.CryptoKeySource;
 import org.springframework.security.oauth2.jose.jws.NimbusJwsEncoder;
 import org.springframework.security.oauth2.server.authorization.InMemoryOAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
@@ -106,14 +106,14 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 	}
 
 	/**
-	 * Sets the key manager.
+	 * Sets the source for cryptographic keys.
 	 *
-	 * @param keyManager the key manager
+	 * @param keySource the source for cryptographic keys
 	 * @return the {@link OAuth2AuthorizationServerConfigurer} for further configuration
 	 */
-	public OAuth2AuthorizationServerConfigurer<B> keyManager(KeyManager keyManager) {
-		Assert.notNull(keyManager, "keyManager cannot be null");
-		this.getBuilder().setSharedObject(KeyManager.class, keyManager);
+	public OAuth2AuthorizationServerConfigurer<B> keySource(CryptoKeySource keySource) {
+		Assert.notNull(keySource, "keySource cannot be null");
+		this.getBuilder().setSharedObject(CryptoKeySource.class, keySource);
 		return this;
 	}
 
@@ -135,7 +135,7 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 						getAuthorizationService(builder));
 		builder.authenticationProvider(postProcess(clientAuthenticationProvider));
 
-		NimbusJwsEncoder jwtEncoder = new NimbusJwsEncoder(getKeyManager(builder));
+		NimbusJwsEncoder jwtEncoder = new NimbusJwsEncoder(getKeySource(builder));
 
 		OAuth2AuthorizationCodeAuthenticationProvider authorizationCodeAuthenticationProvider =
 				new OAuth2AuthorizationCodeAuthenticationProvider(
@@ -172,7 +172,7 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 
 	@Override
 	public void configure(B builder) {
-		JwkSetEndpointFilter jwkSetEndpointFilter = new JwkSetEndpointFilter(getKeyManager(builder));
+		JwkSetEndpointFilter jwkSetEndpointFilter = new JwkSetEndpointFilter(getKeySource(builder));
 		builder.addFilterBefore(postProcess(jwkSetEndpointFilter), AbstractPreAuthenticatedProcessingFilter.class);
 
 		AuthenticationManager authenticationManager = builder.getSharedObject(AuthenticationManager.class);
@@ -237,16 +237,16 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 		return (!authorizationServiceMap.isEmpty() ? authorizationServiceMap.values().iterator().next() : null);
 	}
 
-	private static <B extends HttpSecurityBuilder<B>> KeyManager getKeyManager(B builder) {
-		KeyManager keyManager = builder.getSharedObject(KeyManager.class);
-		if (keyManager == null) {
-			keyManager = getKeyManagerBean(builder);
-			builder.setSharedObject(KeyManager.class, keyManager);
+	private static <B extends HttpSecurityBuilder<B>> CryptoKeySource getKeySource(B builder) {
+		CryptoKeySource keySource = builder.getSharedObject(CryptoKeySource.class);
+		if (keySource == null) {
+			keySource = getKeySourceBean(builder);
+			builder.setSharedObject(CryptoKeySource.class, keySource);
 		}
-		return keyManager;
+		return keySource;
 	}
 
-	private static <B extends HttpSecurityBuilder<B>> KeyManager getKeyManagerBean(B builder) {
-		return builder.getSharedObject(ApplicationContext.class).getBean(KeyManager.class);
+	private static <B extends HttpSecurityBuilder<B>> CryptoKeySource getKeySourceBean(B builder) {
+		return builder.getSharedObject(ApplicationContext.class).getBean(CryptoKeySource.class);
 	}
 }

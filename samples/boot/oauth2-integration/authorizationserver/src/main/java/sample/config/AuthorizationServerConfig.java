@@ -22,8 +22,8 @@ import org.springframework.security.config.annotation.web.configuration.OAuth2Au
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.crypto.keys.KeyManager;
-import org.springframework.security.crypto.keys.StaticKeyGeneratingKeyManager;
+import org.springframework.security.crypto.key.CryptoKeySource;
+import org.springframework.security.crypto.key.StaticKeyGeneratingCryptoKeySource;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.server.authorization.client.InMemoryRegisteredClientRepository;
@@ -60,8 +60,8 @@ public class AuthorizationServerConfig {
 	// @formatter:on
 
 	@Bean
-	public KeyManager keyManager() {
-		return new StaticKeyGeneratingKeyManager();
+	public CryptoKeySource keySource() {
+		return new StaticKeyGeneratingCryptoKeySource();
 	}
 
 	// @formatter:off

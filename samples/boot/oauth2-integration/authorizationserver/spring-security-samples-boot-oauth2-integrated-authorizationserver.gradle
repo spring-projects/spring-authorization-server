@@ -1,3 +1,5 @@
+ext['spring-security.version'] = '5.5.+' // TODO remove once Spring Boot upgraded to Spring Security 5.5
+
 apply plugin: 'io.spring.convention.spring-sample-boot'
 
 dependencies {

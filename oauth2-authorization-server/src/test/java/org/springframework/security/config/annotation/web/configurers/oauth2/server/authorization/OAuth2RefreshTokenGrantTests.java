@@ -13,27 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.springframework.security.config.annotation.web.configurers.oauth2.server.authorization;
-
-import java.time.Instant;
 
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.HttpHeaders;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
 import org.springframework.security.config.test.SpringTestRule;
 import org.springframework.security.crypto.keys.KeyManager;
 import org.springframework.security.crypto.keys.StaticKeyGeneratingKeyManager;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
-import org.springframework.security.oauth2.core.OAuth2AccessToken;
-import org.springframework.security.oauth2.core.OAuth2RefreshToken;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
@@ -42,27 +37,34 @@ import org.springframework.security.oauth2.server.authorization.TokenType;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
-import org.springframework.security.oauth2.server.authorization.token.OAuth2Tokens;
 import org.springframework.security.oauth2.server.authorization.web.OAuth2TokenEndpointFilter;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+
+import static org.hamcrest.CoreMatchers.containsString;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
+ * Integration tests for the OAuth 2.0 Refresh Token Grant.
+ *
  * @author Alexey Nesterov
  * @since 0.0.3
  */
 public class OAuth2RefreshTokenGrantTests {
-
-	private static final String TEST_REFRESH_TOKEN = "test-refresh-token";
-
 	private static RegisteredClientRepository registeredClientRepository;
 	private static OAuth2AuthorizationService authorizationService;
 
@@ -71,8 +73,6 @@ public class OAuth2RefreshTokenGrantTests {
 
 	@Autowired
 	private MockMvc mvc;
-
-	private RegisteredClient registeredClient;
 
 	@BeforeClass
 	public static void init() {
@@ -84,33 +84,56 @@ public class OAuth2RefreshTokenGrantTests {
 	public void setup() {
 		reset(registeredClientRepository);
 		reset(authorizationService);
-
-		this.registeredClient = TestRegisteredClients.registeredClient2().build();
-
-		this.spring.register(OAuth2RefreshTokenGrantTests.AuthorizationServerConfiguration.class).autowire();
 	}
 
 	@Test
-	public void requestWhenRefreshTokenExists() throws Exception {
-		when(registeredClientRepository.findByClientId(eq(this.registeredClient.getClientId())))
-				.thenReturn(this.registeredClient);
+	public void requestWhenRefreshTokenRequestValidThenReturnAccessTokenResponse() throws Exception {
+		this.spring.register(AuthorizationServerConfiguration.class).autowire();
 
-		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(this.registeredClient)
-				.tokens(OAuth2Tokens.builder()
-						.refreshToken(new OAuth2RefreshToken(TEST_REFRESH_TOKEN, Instant.now(), Instant.now().plusSeconds(60)))
-						.accessToken(new OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER, "access-token", Instant.now(), Instant.now().plusSeconds(10)))
-						.build())
-				.build();
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+		when(registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
+				.thenReturn(registeredClient);
 
-		when(authorizationService.findByToken(TEST_REFRESH_TOKEN, TokenType.REFRESH_TOKEN))
+		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();
+		when(authorizationService.findByToken(
+				eq(authorization.getTokens().getRefreshToken().getTokenValue()),
+				eq(TokenType.REFRESH_TOKEN)))
 				.thenReturn(authorization);
 
 		this.mvc.perform(post(OAuth2TokenEndpointFilter.DEFAULT_TOKEN_ENDPOINT_URI)
-				.param(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.REFRESH_TOKEN.getValue())
-				.param(OAuth2ParameterNames.REFRESH_TOKEN, TEST_REFRESH_TOKEN)
-				.with(httpBasic(this.registeredClient.getClientId(), this.registeredClient.getClientSecret())))
+				.params(getRefreshTokenRequestParameters(authorization))
+				.header(HttpHeaders.AUTHORIZATION, "Basic " + encodeBasicAuth(
+						registeredClient.getClientId(), registeredClient.getClientSecret())))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.access_token").isNotEmpty());
+				.andExpect(header().string(HttpHeaders.CACHE_CONTROL, containsString("no-store")))
+				.andExpect(header().string(HttpHeaders.PRAGMA, containsString("no-cache")))
+				.andExpect(jsonPath("$.access_token").isNotEmpty())
+				.andExpect(jsonPath("$.token_type").isNotEmpty())
+				.andExpect(jsonPath("$.expires_in").isNotEmpty())
+				.andExpect(jsonPath("$.refresh_token").isNotEmpty())
+				.andExpect(jsonPath("$.scope").isNotEmpty());
+
+		verify(registeredClientRepository).findByClientId(eq(registeredClient.getClientId()));
+		verify(authorizationService).findByToken(
+				eq(authorization.getTokens().getRefreshToken().getTokenValue()),
+				eq(TokenType.REFRESH_TOKEN));
+		verify(authorizationService).save(any());
+
+	}
+
+	private static MultiValueMap<String, String> getRefreshTokenRequestParameters(OAuth2Authorization authorization) {
+		MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+		parameters.set(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.REFRESH_TOKEN.getValue());
+		parameters.set(OAuth2ParameterNames.REFRESH_TOKEN, authorization.getTokens().getRefreshToken().getTokenValue());
+		return parameters;
+	}
+
+	private static String encodeBasicAuth(String clientId, String secret) throws Exception {
+		clientId = URLEncoder.encode(clientId, StandardCharsets.UTF_8.name());
+		secret = URLEncoder.encode(secret, StandardCharsets.UTF_8.name());
+		String credentialsString = clientId + ":" + secret;
+		byte[] encodedBytes = Base64.getEncoder().encode(credentialsString.getBytes(StandardCharsets.UTF_8));
+		return new String(encodedBytes, StandardCharsets.UTF_8);
 	}
 
 	@EnableWebSecurity

@@ -18,6 +18,7 @@ package org.springframework.security.oauth2.server.authorization.authentication;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
@@ -91,6 +92,10 @@ public class OAuth2RefreshTokenAuthenticationProvider implements AuthenticationP
 			throw new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_CLIENT));
 		}
 
+		if (!registeredClient.getAuthorizationGrantTypes().contains(AuthorizationGrantType.REFRESH_TOKEN)) {
+			throw new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.UNAUTHORIZED_CLIENT));
+		}
+
 		Instant refreshTokenExpiresAt = authorization.getTokens().getRefreshToken().getExpiresAt();
 		if (refreshTokenExpiresAt.isBefore(Instant.now())) {
 			// As per https://tools.ietf.org/html/rfc6749#section-5.2
@@ -125,7 +130,7 @@ public class OAuth2RefreshTokenAuthenticationProvider implements AuthenticationP
 		}
 
 		authorization = OAuth2Authorization.from(authorization)
-				.tokens(OAuth2Tokens.builder().accessToken(accessToken).refreshToken(refreshToken).build())
+				.tokens(OAuth2Tokens.from(authorization.getTokens()).accessToken(accessToken).refreshToken(refreshToken).build())
 				.attribute(OAuth2AuthorizationAttributeNames.ACCESS_TOKEN_ATTRIBUTES, jwt)
 				.build();
 		this.authorizationService.save(authorization);

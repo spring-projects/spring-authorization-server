@@ -144,7 +144,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 	}
 
 	@Test
-	public void requestWhenTokenRequestValidThenResponseIncludesCacheHeaders() throws Exception {
+	public void requestWhenTokenRequestValidThenReturnAccessTokenResponse() throws Exception {
 		this.spring.register(AuthorizationServerConfiguration.class).autowire();
 
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
@@ -157,13 +157,18 @@ public class OAuth2AuthorizationCodeGrantTests {
 				eq(TokenType.AUTHORIZATION_CODE)))
 				.thenReturn(authorization);
 
-		this.mvc.perform(MockMvcRequestBuilders.post(OAuth2TokenEndpointFilter.DEFAULT_TOKEN_ENDPOINT_URI)
+		this.mvc.perform(post(OAuth2TokenEndpointFilter.DEFAULT_TOKEN_ENDPOINT_URI)
 				.params(getTokenRequestParameters(registeredClient, authorization))
 				.header(HttpHeaders.AUTHORIZATION, "Basic " + encodeBasicAuth(
 						registeredClient.getClientId(), registeredClient.getClientSecret())))
 				.andExpect(status().isOk())
 				.andExpect(header().string(HttpHeaders.CACHE_CONTROL, containsString("no-store")))
-				.andExpect(header().string(HttpHeaders.PRAGMA, containsString("no-cache")));
+				.andExpect(header().string(HttpHeaders.PRAGMA, containsString("no-cache")))
+				.andExpect(jsonPath("$.access_token").isNotEmpty())
+				.andExpect(jsonPath("$.token_type").isNotEmpty())
+				.andExpect(jsonPath("$.expires_in").isNotEmpty())
+				.andExpect(jsonPath("$.refresh_token").isNotEmpty())
+				.andExpect(jsonPath("$.scope").isNotEmpty());
 
 		verify(registeredClientRepository).findByClientId(eq(registeredClient.getClientId()));
 		verify(authorizationService).findByToken(
@@ -173,12 +178,13 @@ public class OAuth2AuthorizationCodeGrantTests {
 	}
 
 	@Test
-	public void requestWhenPublicClientWithPkceThenReturnAccessToken() throws Exception {
+	public void requestWhenPublicClientWithPkceThenReturnAccessTokenResponse() throws Exception {
 		this.spring.register(AuthorizationServerConfiguration.class).autowire();
 
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
 				.clientSecret(null)
 				.clientSettings(clientSettings -> clientSettings.requireProofKey(true))
+				.tokenSettings(tokenSettings -> tokenSettings.enableRefreshTokens(false))
 				.build();
 		when(registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
 				.thenReturn(registeredClient);
@@ -208,53 +214,17 @@ public class OAuth2AuthorizationCodeGrantTests {
 				.param(OAuth2ParameterNames.CLIENT_ID, registeredClient.getClientId())
 				.param(PkceParameterNames.CODE_VERIFIER, S256_CODE_VERIFIER))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.access_token").isNotEmpty());
+				.andExpect(jsonPath("$.access_token").isNotEmpty())
+				.andExpect(jsonPath("$.token_type").isNotEmpty())
+				.andExpect(jsonPath("$.expires_in").isNotEmpty())
+				.andExpect(jsonPath("$.refresh_token").doesNotExist())
+				.andExpect(jsonPath("$.scope").isNotEmpty());
 
 		verify(registeredClientRepository, times(2)).findByClientId(eq(registeredClient.getClientId()));
 		verify(authorizationService, times(2)).findByToken(
 				eq(authorization.getTokens().getToken(OAuth2AuthorizationCode.class).getTokenValue()),
 				eq(TokenType.AUTHORIZATION_CODE));
 		verify(authorizationService, times(2)).save(any());
-	}
-
-	@Test
-	public void requestWhenPublicClientWithRefreshThenReturnRefreshToken() throws Exception {
-		this.spring.register(AuthorizationServerConfiguration.class).autowire();
-
-		RegisteredClient registeredClient = TestRegisteredClients
-				.registeredClient()
-				.clientSecret(null)
-				.tokenSettings(tokenSettings -> tokenSettings.enableRefreshTokens(true))
-				.build();
-		when(registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
-				.thenReturn(registeredClient);
-
-		MvcResult mvcResult = this.mvc.perform(get(OAuth2AuthorizationEndpointFilter.DEFAULT_AUTHORIZATION_ENDPOINT_URI)
-				.params(getAuthorizationRequestParameters(registeredClient))
-				.param(PkceParameterNames.CODE_CHALLENGE, S256_CODE_CHALLENGE)
-				.param(PkceParameterNames.CODE_CHALLENGE_METHOD, "S256")
-				.with(user("user")))
-				.andExpect(status().is3xxRedirection())
-				.andReturn();
-		assertThat(mvcResult.getResponse().getRedirectedUrl()).matches("https://example.com\\?code=.{15,}&state=state");
-
-		verify(registeredClientRepository).findByClientId(eq(registeredClient.getClientId()));
-
-		ArgumentCaptor<OAuth2Authorization> authorizationCaptor = ArgumentCaptor.forClass(OAuth2Authorization.class);
-		verify(authorizationService).save(authorizationCaptor.capture());
-		OAuth2Authorization authorization = authorizationCaptor.getValue();
-
-		when(authorizationService.findByToken(
-				eq(authorization.getTokens().getToken(OAuth2AuthorizationCode.class).getTokenValue()),
-				eq(TokenType.AUTHORIZATION_CODE)))
-				.thenReturn(authorization);
-
-		this.mvc.perform(post(OAuth2TokenEndpointFilter.DEFAULT_TOKEN_ENDPOINT_URI)
-				.params(getTokenRequestParameters(registeredClient, authorization))
-				.param(OAuth2ParameterNames.CLIENT_ID, registeredClient.getClientId())
-				.param(PkceParameterNames.CODE_VERIFIER, S256_CODE_VERIFIER))
-				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.refresh_token").isNotEmpty());
 	}
 
 	private static MultiValueMap<String, String> getAuthorizationRequestParameters(RegisteredClient registeredClient) {

@@ -143,17 +143,17 @@ public class InMemoryOAuth2AuthorizationServiceTests {
 	}
 
 	@Test
-	public void findByTokenAndTokenTypeWhenTokenTypeRefreshTokenThenFound() {
-		final String refreshTokenValue = "refresh-token";
-		OAuth2Authorization expectedAuthorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
-															.principalName(PRINCIPAL_NAME)
-															.tokens(OAuth2Tokens.builder().refreshToken(new OAuth2RefreshToken(refreshTokenValue, Instant.now().plusSeconds(10))).build())
-															.build();
-		this.authorizationService.save(expectedAuthorization);
+	public void findByTokenWhenTokenTypeRefreshTokenThenFound() {
+		OAuth2RefreshToken refreshToken = new OAuth2RefreshToken("refresh-token", Instant.now());
+		OAuth2Authorization authorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
+				.principalName(PRINCIPAL_NAME)
+				.tokens(OAuth2Tokens.builder().refreshToken(refreshToken).build())
+				.build();
+		this.authorizationService.save(authorization);
 
 		OAuth2Authorization result = this.authorizationService.findByToken(
-				refreshTokenValue, TokenType.REFRESH_TOKEN);
-		assertThat(result).isEqualTo(expectedAuthorization);
+				refreshToken.getTokenValue(), TokenType.REFRESH_TOKEN);
+		assertThat(authorization).isEqualTo(result);
 	}
 
 	@Test

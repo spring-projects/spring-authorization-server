@@ -18,24 +18,25 @@ package org.springframework.security.oauth2.server.authorization.authentication;
 import org.springframework.lang.Nullable;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.oauth2.server.authorization.Version;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2RefreshToken;
+import org.springframework.security.oauth2.server.authorization.Version;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.util.Assert;
 
 import java.util.Collections;
 
 /**
- * An {@link Authentication} implementation used when issuing an OAuth 2.0 Access Token.
+ * An {@link Authentication} implementation used when issuing an
+ * OAuth 2.0 Access Token and (optional) Refresh Token.
  *
  * @author Joe Grandja
  * @author Madhu Bhat
  * @since 0.0.1
  * @see AbstractAuthenticationToken
- * @see OAuth2AuthorizationCodeAuthenticationProvider
  * @see RegisteredClient
  * @see OAuth2AccessToken
+ * @see OAuth2RefreshToken
  * @see OAuth2ClientAuthenticationToken
  */
 public class OAuth2AccessTokenAuthenticationToken extends AbstractAuthenticationToken {
@@ -65,8 +66,8 @@ public class OAuth2AccessTokenAuthenticationToken extends AbstractAuthentication
 	 * @param accessToken the access token
 	 * @param refreshToken the refresh token
 	 */
-	public OAuth2AccessTokenAuthenticationToken(RegisteredClient registeredClient,
-			Authentication clientPrincipal, OAuth2AccessToken accessToken, @Nullable OAuth2RefreshToken refreshToken) {
+	public OAuth2AccessTokenAuthenticationToken(RegisteredClient registeredClient, Authentication clientPrincipal,
+			OAuth2AccessToken accessToken, @Nullable OAuth2RefreshToken refreshToken) {
 		super(Collections.emptyList());
 		Assert.notNull(registeredClient, "registeredClient cannot be null");
 		Assert.notNull(clientPrincipal, "clientPrincipal cannot be null");
@@ -105,14 +106,13 @@ public class OAuth2AccessTokenAuthenticationToken extends AbstractAuthentication
 		return this.accessToken;
 	}
 
-
 	/**
-	 * Returns the {@link OAuth2RefreshToken} if provided
+	 * Returns the {@link OAuth2RefreshToken refresh token}.
 	 *
-	 * @return the {@link OAuth2RefreshToken}
+	 * @return the {@link OAuth2RefreshToken} or {@code null} if not available
 	 */
 	@Nullable
 	public OAuth2RefreshToken getRefreshToken() {
-		return refreshToken;
+		return this.refreshToken;
 	}
 }

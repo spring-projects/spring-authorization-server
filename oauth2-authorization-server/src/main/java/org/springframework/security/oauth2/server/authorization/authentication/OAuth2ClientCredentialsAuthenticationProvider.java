@@ -97,9 +97,9 @@ public class OAuth2ClientCredentialsAuthenticationProvider implements Authentica
 				jwt.getTokenValue(), jwt.getIssuedAt(), jwt.getExpiresAt(), scopes);
 
 		OAuth2Authorization authorization = OAuth2Authorization.withRegisteredClient(registeredClient)
-				.attribute(OAuth2AuthorizationAttributeNames.ACCESS_TOKEN_ATTRIBUTES, jwt)
 				.principalName(clientPrincipal.getName())
 				.tokens(OAuth2Tokens.builder().accessToken(accessToken).build())
+				.attribute(OAuth2AuthorizationAttributeNames.ACCESS_TOKEN_ATTRIBUTES, jwt)
 				.build();
 		this.authorizationService.save(authorization);
 

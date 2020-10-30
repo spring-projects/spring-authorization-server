@@ -144,15 +144,17 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 						jwtEncoder);
 		builder.authenticationProvider(postProcess(authorizationCodeAuthenticationProvider));
 
+		OAuth2RefreshTokenAuthenticationProvider refreshTokenAuthenticationProvider =
+				new OAuth2RefreshTokenAuthenticationProvider(
+						getAuthorizationService(builder),
+						jwtEncoder);
+		builder.authenticationProvider(postProcess(refreshTokenAuthenticationProvider));
+
 		OAuth2ClientCredentialsAuthenticationProvider clientCredentialsAuthenticationProvider =
 				new OAuth2ClientCredentialsAuthenticationProvider(
 						getAuthorizationService(builder),
 						jwtEncoder);
 		builder.authenticationProvider(postProcess(clientCredentialsAuthenticationProvider));
-
-		OAuth2RefreshTokenAuthenticationProvider refreshTokenAuthenticationProvider =
-				new OAuth2RefreshTokenAuthenticationProvider(getAuthorizationService(builder), jwtEncoder);
-		builder.authenticationProvider(postProcess(refreshTokenAuthenticationProvider));
 
 		OAuth2TokenRevocationAuthenticationProvider tokenRevocationAuthenticationProvider =
 				new OAuth2TokenRevocationAuthenticationProvider(

@@ -15,11 +15,11 @@
  */
 package org.springframework.security.oauth2.server.authorization.config;
 
+import org.springframework.util.Assert;
+
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
-
-import org.springframework.util.Assert;
 
 /**
  * A facility for token configuration settings.
@@ -61,33 +61,31 @@ public class TokenSettings extends Settings {
 	}
 
 	/**
-	 * Set the time-to-live for an access token.
+	 * Set the time-to-live for an access token. Must be greater than {@code Duration.ZERO}.
 	 *
 	 * @param accessTokenTimeToLive the time-to-live for an access token
 	 * @return the {@link TokenSettings}
 	 */
 	public TokenSettings accessTokenTimeToLive(Duration accessTokenTimeToLive) {
+		Assert.notNull(accessTokenTimeToLive, "accessTokenTimeToLive cannot be null");
+		Assert.isTrue(accessTokenTimeToLive.getSeconds() > 0, "accessTokenTimeToLive must be greater than Duration.ZERO");
 		setting(ACCESS_TOKEN_TIME_TO_LIVE, accessTokenTimeToLive);
 		return this;
 	}
 
 	/**
-	 * Returns {@code true} if refresh tokens support is enabled.
-	 * This include generation of refresh token as a part of Authorization Code Grant flow and support of Refresh Token
-	 * Grant flow. The default is {@code true}.
+	 * Returns {@code true} if refresh tokens are enabled. The default is {@code true}.
 	 *
-	 * @return {@code true} if the client support refresh token, {@code false} otherwise
+	 * @return {@code true} if refresh tokens are enabled, {@code false} otherwise
 	 */
 	public boolean enableRefreshTokens() {
 		return setting(ENABLE_REFRESH_TOKENS);
 	}
 
 	/**
-	 * Set to {@code true} to enable refresh tokens support.
-	 * This include generation of refresh token as a part of Authorization Code Grant flow and support of Refresh Token
-	 * Grant flow.
+	 * Set to {@code true} to enable refresh tokens.
 	 *
-	 * @param enableRefreshTokens {@code true} to enable refresh token grant support, {@code false} otherwise
+	 * @param enableRefreshTokens {@code true} to enable refresh tokens, {@code false} otherwise
 	 * @return the {@link TokenSettings}
 	 */
 	public TokenSettings enableRefreshTokens(boolean enableRefreshTokens) {
@@ -96,18 +94,19 @@ public class TokenSettings extends Settings {
 	}
 
 	/**
-	 * Returns {@code true} if existing refresh token is re-used when a new access token is requested via Refresh Token grant,
-	 * or {@code false} if a new refresh token is generated.
-	 * The default is {@code false}.
+	 * Returns {@code true} if refresh tokens are reused when returning the access token response,
+	 * or {@code false} if a new refresh token is issued. The default is {@code true}.
 	 */
 	public boolean reuseRefreshTokens() {
 		return setting(REUSE_REFRESH_TOKENS);
 	}
 
 	/**
-	 * Set to {@code true} to re-use existing refresh token when new access token is requested via Refresh Token grant,
-	 * or to {@code false} to generate a new refresh token.
-	 * @param reuseRefreshTokens {@code true} to re-use existing refresh token, {@code false} to generate a new one
+	 * Set to {@code true} if refresh tokens are reused when returning the access token response,
+	 * or {@code false} if a new refresh token is issued.
+	 *
+	 * @param reuseRefreshTokens {@code true} to reuse refresh tokens, {@code false} to issue new refresh tokens
+	 * @return the {@link TokenSettings}
 	 */
 	public TokenSettings reuseRefreshTokens(boolean reuseRefreshTokens) {
 		setting(REUSE_REFRESH_TOKENS, reuseRefreshTokens);
@@ -115,21 +114,23 @@ public class TokenSettings extends Settings {
 	}
 
 	/**
-	 * Returns refresh token time-to-live. The default is 60 minutes. Always greater than {@code Duration.ZERO}.
-	 * @return refresh token time-to-live
+	 * Returns the time-to-live for a refresh token. The default is 60 minutes.
+	 *
+	 * @return the time-to-live for a refresh token
 	 */
 	public Duration refreshTokenTimeToLive() {
 		return setting(REFRESH_TOKEN_TIME_TO_LIVE);
 	}
 
 	/**
-	 * Sets refresh token time-to-live.
-	 * @param refreshTokenTimeToLive refresh token time-to-live. Has to be greater than {@code Duration.ZERO}.
+	 * Set the time-to-live for a refresh token. Must be greater than {@code Duration.ZERO}.
+	 *
+	 * @param refreshTokenTimeToLive the time-to-live for a refresh token
+	 * @return the {@link TokenSettings}
 	 */
 	public TokenSettings refreshTokenTimeToLive(Duration refreshTokenTimeToLive) {
 		Assert.notNull(refreshTokenTimeToLive, "refreshTokenTimeToLive cannot be null");
-		Assert.isTrue(refreshTokenTimeToLive.getSeconds() > 0, "refreshTokenTimeToLive has to be greater than Duration.ZERO");
-
+		Assert.isTrue(refreshTokenTimeToLive.getSeconds() > 0, "refreshTokenTimeToLive must be greater than Duration.ZERO");
 		setting(REFRESH_TOKEN_TIME_TO_LIVE, refreshTokenTimeToLive);
 		return this;
 	}
@@ -138,7 +139,7 @@ public class TokenSettings extends Settings {
 		Map<String, Object> settings = new HashMap<>();
 		settings.put(ACCESS_TOKEN_TIME_TO_LIVE, Duration.ofMinutes(5));
 		settings.put(ENABLE_REFRESH_TOKENS, true);
-		settings.put(REUSE_REFRESH_TOKENS, false);
+		settings.put(REUSE_REFRESH_TOKENS, true);
 		settings.put(REFRESH_TOKEN_TIME_TO_LIVE, Duration.ofMinutes(60));
 		return settings;
 	}

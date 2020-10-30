@@ -34,7 +34,7 @@ public class OAuth2RefreshTokenAuthenticationTokenTests {
 
 	@Test
 	public void constructorWhenClientPrincipalNullThrowException() {
-		assertThatThrownBy(() -> new OAuth2RefreshTokenAuthenticationToken("", null))
+		assertThatThrownBy(() -> new OAuth2RefreshTokenAuthenticationToken("test", null))
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessage("clientPrincipal cannot be null");
 	}
@@ -43,18 +43,18 @@ public class OAuth2RefreshTokenAuthenticationTokenTests {
 	public void constructorWhenRefreshTokenNullOrEmptyThrowException() {
 		assertThatThrownBy(() -> new OAuth2RefreshTokenAuthenticationToken(null, mock(OAuth2ClientAuthenticationToken.class)))
 				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("refreshToken cannot be null or empty");
+				.hasMessage("refreshToken cannot be empty");
 
 		assertThatThrownBy(() -> new OAuth2RefreshTokenAuthenticationToken("", mock(OAuth2ClientAuthenticationToken.class)))
 				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("refreshToken cannot be null or empty");
+				.hasMessage("refreshToken cannot be empty");
 	}
 
 	@Test
 	public void constructorWhenGettingScopesThenReturnRequestedScopes() {
 		Set<String> expectedScopes = new HashSet<>(Arrays.asList("scope-a", "scope-b"));
 		OAuth2RefreshTokenAuthenticationToken token
-				= new OAuth2RefreshTokenAuthenticationToken(mock(OAuth2ClientAuthenticationToken.class), "test", expectedScopes);
+				= new OAuth2RefreshTokenAuthenticationToken("test", mock(OAuth2ClientAuthenticationToken.class), expectedScopes);
 
 		assertThat(token.getScopes()).containsAll(expectedScopes);
 	}

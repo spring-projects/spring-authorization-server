@@ -130,8 +130,8 @@ public class OAuth2TokenEndpointFilter extends OncePerRequestFilter {
 		this.tokenEndpointMatcher = new AntPathRequestMatcher(tokenEndpointUri, HttpMethod.POST.name());
 		Map<AuthorizationGrantType, Converter<HttpServletRequest, Authentication>> converters = new HashMap<>();
 		converters.put(AuthorizationGrantType.AUTHORIZATION_CODE, new AuthorizationCodeAuthenticationConverter());
-		converters.put(AuthorizationGrantType.CLIENT_CREDENTIALS, new ClientCredentialsAuthenticationConverter());
 		converters.put(AuthorizationGrantType.REFRESH_TOKEN, new RefreshTokenAuthenticationConverter());
+		converters.put(AuthorizationGrantType.CLIENT_CREDENTIALS, new ClientCredentialsAuthenticationConverter());
 		this.authorizationGrantAuthenticationConverter = new DelegatingAuthorizationGrantAuthenticationConverter(converters);
 	}
 
@@ -165,7 +165,9 @@ public class OAuth2TokenEndpointFilter extends OncePerRequestFilter {
 		}
 	}
 
-	private void sendAccessTokenResponse(HttpServletResponse response, OAuth2AccessToken accessToken, OAuth2RefreshToken refreshToken) throws IOException {
+	private void sendAccessTokenResponse(HttpServletResponse response, OAuth2AccessToken accessToken,
+			OAuth2RefreshToken refreshToken) throws IOException {
+
 		OAuth2AccessTokenResponse.Builder builder =
 				OAuth2AccessTokenResponse.withToken(accessToken.getTokenValue())
 						.tokenType(accessToken.getTokenType())
@@ -235,6 +237,43 @@ public class OAuth2TokenEndpointFilter extends OncePerRequestFilter {
 		}
 	}
 
+	private static class RefreshTokenAuthenticationConverter implements Converter<HttpServletRequest, Authentication> {
+
+		@Override
+		public Authentication convert(HttpServletRequest request) {
+			// grant_type (REQUIRED)
+			String grantType = request.getParameter(OAuth2ParameterNames.GRANT_TYPE);
+			if (!AuthorizationGrantType.REFRESH_TOKEN.getValue().equals(grantType)) {
+				return null;
+			}
+
+			Authentication clientPrincipal = SecurityContextHolder.getContext().getAuthentication();
+
+			MultiValueMap<String, String> parameters = OAuth2EndpointUtils.getParameters(request);
+
+			// refresh_token (REQUIRED)
+			String refreshToken = parameters.getFirst(OAuth2ParameterNames.REFRESH_TOKEN);
+			if (!StringUtils.hasText(refreshToken) ||
+					parameters.get(OAuth2ParameterNames.REFRESH_TOKEN).size() != 1) {
+				throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.REFRESH_TOKEN);
+			}
+
+			// scope (OPTIONAL)
+			String scope = parameters.getFirst(OAuth2ParameterNames.SCOPE);
+			if (StringUtils.hasText(scope) &&
+					parameters.get(OAuth2ParameterNames.SCOPE).size() != 1) {
+				throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.SCOPE);
+			}
+			if (StringUtils.hasText(scope)) {
+				Set<String> requestedScopes = new HashSet<>(
+						Arrays.asList(StringUtils.delimitedListToStringArray(scope, " ")));
+				return new OAuth2RefreshTokenAuthenticationToken(refreshToken, clientPrincipal, requestedScopes);
+			}
+
+			return new OAuth2RefreshTokenAuthenticationToken(refreshToken, clientPrincipal);
+		}
+	}
+
 	private static class ClientCredentialsAuthenticationConverter implements Converter<HttpServletRequest, Authentication> {
 
 		@Override
@@ -262,43 +301,6 @@ public class OAuth2TokenEndpointFilter extends OncePerRequestFilter {
 			}
 
 			return new OAuth2ClientCredentialsAuthenticationToken(clientPrincipal);
-		}
-	}
-
-	private static class RefreshTokenAuthenticationConverter implements Converter<HttpServletRequest, Authentication> {
-
-		@Override
-		public Authentication convert(HttpServletRequest request) {
-			// grant_type (REQUIRED)
-			String grantType = request.getParameter(OAuth2ParameterNames.GRANT_TYPE);
-			if (!AuthorizationGrantType.REFRESH_TOKEN.getValue().equals(grantType)) {
-				return null;
-			}
-
-			Authentication clientPrincipal = SecurityContextHolder.getContext().getAuthentication();
-
-			MultiValueMap<String, String> parameters = OAuth2EndpointUtils.getParameters(request);
-
-			// refresh token (REQUIRED)
-			String refreshToken = parameters.getFirst(OAuth2ParameterNames.REFRESH_TOKEN);
-			if (StringUtils.hasText(refreshToken) &&
-					parameters.get(OAuth2ParameterNames.REFRESH_TOKEN).size() != 1) {
-				throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.REFRESH_TOKEN);
-			}
-
-			// scope (OPTIONAL)
-			String scope = parameters.getFirst(OAuth2ParameterNames.SCOPE);
-			if (StringUtils.hasText(scope) &&
-						parameters.get(OAuth2ParameterNames.SCOPE).size() != 1) {
-				throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.SCOPE);
-			}
-			if (StringUtils.hasText(scope)) {
-				Set<String> requestedScopes = new HashSet<>(
-						Arrays.asList(StringUtils.delimitedListToStringArray(scope, " ")));
-				return new OAuth2RefreshTokenAuthenticationToken(clientPrincipal, refreshToken, requestedScopes);
-			}
-
-			return new OAuth2RefreshTokenAuthenticationToken(refreshToken, clientPrincipal);
 		}
 	}
 }

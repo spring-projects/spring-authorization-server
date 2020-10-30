@@ -13,18 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.springframework.security.oauth2.server.authorization.authentication;
-
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URL;
-import java.time.Duration;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.Base64;
-import java.util.Collections;
-import java.util.Set;
 
 import org.springframework.security.crypto.keygen.Base64StringKeyGenerator;
 import org.springframework.security.crypto.keygen.StringKeyGenerator;
@@ -36,13 +25,23 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URL;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Base64;
+import java.util.Collections;
+import java.util.Set;
+
 /**
  * @author Alexey Nesterov
  * @since 0.0.3
  */
 class OAuth2TokenIssuerUtil {
 
-	private static final StringKeyGenerator CODE_GENERATOR = new Base64StringKeyGenerator(Base64.getUrlEncoder().withoutPadding(), 96);
+	private static final StringKeyGenerator TOKEN_GENERATOR = new Base64StringKeyGenerator(Base64.getUrlEncoder().withoutPadding(), 96);
 
 	static Jwt issueJwtAccessToken(JwtEncoder jwtEncoder, String subject, String audience, Set<String> scopes) {
 		JoseHeader joseHeader = JoseHeader.withAlgorithm(SignatureAlgorithm.RS256).build();
@@ -71,8 +70,8 @@ class OAuth2TokenIssuerUtil {
 
 	static OAuth2RefreshToken issueRefreshToken(Duration refreshTokenTimeToLive) {
 		Instant issuedAt = Instant.now();
-		Instant refreshTokenExpiresAt = issuedAt.plus(refreshTokenTimeToLive);
+		Instant expiresAt = issuedAt.plus(refreshTokenTimeToLive);
 
-		return new OAuth2RefreshToken(CODE_GENERATOR.generateKey(), issuedAt, refreshTokenExpiresAt);
+		return new OAuth2RefreshToken(TOKEN_GENERATOR.generateKey(), issuedAt, expiresAt);
 	}
 }

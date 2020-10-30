@@ -162,7 +162,7 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 		when(this.authorizationService.findByToken(REFRESH_TOKEN_VALUE, TokenType.REFRESH_TOKEN))
 				.thenReturn(this.authorization);
 
-		RegisteredClient clientWithReuseTokensTrue = TestRegisteredClients.registeredClient()
+		RegisteredClient clientWithReuseTokensTrue = TestRegisteredClients.registeredClient2()
 				.tokenSettings(tokenSettings -> tokenSettings.reuseRefreshTokens(true))
 				.build();
 
@@ -183,7 +183,7 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 		when(this.authorizationService.findByToken(REFRESH_TOKEN_VALUE, TokenType.REFRESH_TOKEN))
 				.thenReturn(this.authorization);
 
-		RegisteredClient clientWithReuseTokensFalse = TestRegisteredClients.registeredClient()
+		RegisteredClient clientWithReuseTokensFalse = TestRegisteredClients.registeredClient2()
 															.tokenSettings(tokenSettings -> tokenSettings.reuseRefreshTokens(false))
 															.build();
 
@@ -208,7 +208,7 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 		requestedScopes.add("openid");
 
 		OAuth2RefreshTokenAuthenticationToken tokenWithScopes
-				= new OAuth2RefreshTokenAuthenticationToken(this.clientPrincipal, REFRESH_TOKEN_VALUE, requestedScopes);
+				= new OAuth2RefreshTokenAuthenticationToken(REFRESH_TOKEN_VALUE, this.clientPrincipal, requestedScopes);
 
 		when(this.authorizationService.findByToken(REFRESH_TOKEN_VALUE, TokenType.REFRESH_TOKEN))
 				.thenReturn(this.authorization);
@@ -227,7 +227,7 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 		requestedScopes.add("another-scope");
 
 		OAuth2RefreshTokenAuthenticationToken tokenWithScopes
-				= new OAuth2RefreshTokenAuthenticationToken(this.clientPrincipal, REFRESH_TOKEN_VALUE, requestedScopes);
+				= new OAuth2RefreshTokenAuthenticationToken(REFRESH_TOKEN_VALUE, this.clientPrincipal, requestedScopes);
 
 		when(this.authorizationService.findByToken(REFRESH_TOKEN_VALUE, TokenType.REFRESH_TOKEN))
 				.thenReturn(this.authorization);

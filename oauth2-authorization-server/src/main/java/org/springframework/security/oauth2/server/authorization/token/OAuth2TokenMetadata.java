@@ -33,6 +33,7 @@ import java.util.function.Consumer;
  * @see OAuth2Tokens
  */
 public class OAuth2TokenMetadata implements Serializable {
+
 	private static final long serialVersionUID = Version.SERIAL_VERSION_UID;
 	protected static final String TOKEN_METADATA_BASE = "metadata.token.";
 
@@ -40,6 +41,12 @@ public class OAuth2TokenMetadata implements Serializable {
 	 * The name of the metadata that indicates if the token has been invalidated.
 	 */
 	public static final String INVALIDATED = TOKEN_METADATA_BASE.concat("invalidated");
+
+	/**
+	 * The name of the metadata tha contains the original generated token,
+	 * e.g. object of type {@link org.springframework.security.oauth2.jwt.Jwt}
+	 */
+	public static final String TOKEN = TOKEN_METADATA_BASE.concat("token");
 
 	private final Map<String, Object> metadata;
 

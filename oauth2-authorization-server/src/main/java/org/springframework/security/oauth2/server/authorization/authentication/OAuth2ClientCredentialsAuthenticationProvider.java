@@ -23,12 +23,13 @@ import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
-import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
-import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationAttributeNames;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
+import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenClaimNames;
+import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenIssuer;
+import org.springframework.security.oauth2.server.authorization.token.OAuth2AuthorizationGrantContext;
+import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenResult;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2Tokens;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
@@ -47,26 +48,26 @@ import static org.springframework.security.oauth2.server.authorization.authentic
  * @see OAuth2ClientCredentialsAuthenticationToken
  * @see OAuth2AccessTokenAuthenticationToken
  * @see OAuth2AuthorizationService
- * @see JwtEncoder
+ * @see OAuth2TokenIssuer
  * @see <a target="_blank" href="https://tools.ietf.org/html/rfc6749#section-4.4">Section 4.4 Client Credentials Grant</a>
  * @see <a target="_blank" href="https://tools.ietf.org/html/rfc6749#section-4.4.2">Section 4.4.2 Access Token Request</a>
  */
 public class OAuth2ClientCredentialsAuthenticationProvider implements AuthenticationProvider {
 	private final OAuth2AuthorizationService authorizationService;
-	private final JwtEncoder jwtEncoder;
+	private final OAuth2TokenIssuer<OAuth2AccessToken> accessTokenIssuer;
 
 	/**
 	 * Constructs an {@code OAuth2ClientCredentialsAuthenticationProvider} using the provided parameters.
 	 *
 	 * @param authorizationService the authorization service
-	 * @param jwtEncoder the jwt encoder
+	 * @param accessTokenIssuer the jwt encoder
 	 */
 	public OAuth2ClientCredentialsAuthenticationProvider(OAuth2AuthorizationService authorizationService,
-			JwtEncoder jwtEncoder) {
+			OAuth2TokenIssuer<OAuth2AccessToken> accessTokenIssuer) {
 		Assert.notNull(authorizationService, "authorizationService cannot be null");
-		Assert.notNull(jwtEncoder, "jwtEncoder cannot be null");
+		Assert.notNull(accessTokenIssuer, "accessTokenIssuer cannot be null");
 		this.authorizationService = authorizationService;
-		this.jwtEncoder = jwtEncoder;
+		this.accessTokenIssuer = accessTokenIssuer;
 	}
 
 	@Override
@@ -93,15 +94,17 @@ public class OAuth2ClientCredentialsAuthenticationProvider implements Authentica
 			scopes = new LinkedHashSet<>(clientCredentialsAuthentication.getScopes());
 		}
 
-		Jwt jwt = OAuth2TokenIssuerUtil
-			.issueJwtAccessToken(this.jwtEncoder, clientPrincipal.getName(), registeredClient.getClientId(), scopes);
-		OAuth2AccessToken accessToken = new OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER,
-				jwt.getTokenValue(), jwt.getIssuedAt(), jwt.getExpiresAt(), scopes);
+		OAuth2AuthorizationGrantContext tokenRequest = OAuth2AuthorizationGrantContext.builder()
+				.registeredClient(registeredClient)
+				.principalName(clientPrincipal.getName())
+				.claim(OAuth2TokenClaimNames.SCOPE, scopes)
+				.build();
 
+		OAuth2TokenResult<OAuth2AccessToken> tokenResult = this.accessTokenIssuer.issue(tokenRequest);
+		OAuth2AccessToken accessToken = tokenResult.getToken();
 		OAuth2Authorization authorization = OAuth2Authorization.withRegisteredClient(registeredClient)
 				.principalName(clientPrincipal.getName())
-				.tokens(OAuth2Tokens.builder().accessToken(accessToken).build())
-				.attribute(OAuth2AuthorizationAttributeNames.ACCESS_TOKEN_ATTRIBUTES, jwt)
+				.tokens(OAuth2Tokens.builder().accessToken(accessToken, tokenResult.getMetadata()).build())
 				.build();
 		this.authorizationService.save(authorization);
 

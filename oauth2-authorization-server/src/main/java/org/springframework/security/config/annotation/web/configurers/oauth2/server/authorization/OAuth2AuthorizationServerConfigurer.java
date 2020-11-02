@@ -18,6 +18,7 @@ package org.springframework.security.config.annotation.web.configurers.oauth2.se
 import org.springframework.beans.factory.BeanFactoryUtils;
 import org.springframework.beans.factory.NoUniqueBeanDefinitionException;
 import org.springframework.context.ApplicationContext;
+import org.springframework.core.ResolvableType;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -25,6 +26,7 @@ import org.springframework.security.config.annotation.web.HttpSecurityBuilder;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.ExceptionHandlingConfigurer;
 import org.springframework.security.crypto.key.CryptoKeySource;
+import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.jose.jws.NimbusJwsEncoder;
 import org.springframework.security.oauth2.server.authorization.InMemoryOAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
@@ -34,6 +36,10 @@ import org.springframework.security.oauth2.server.authorization.authentication.O
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2RefreshTokenAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2TokenRevocationAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
+import org.springframework.security.oauth2.server.authorization.token.JwtAccessTokenOAuth2TokenIssuer;
+import org.springframework.security.oauth2.server.authorization.token.JwtBuilder;
+import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer;
+import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenIssuer;
 import org.springframework.security.oauth2.server.authorization.config.ProviderSettings;
 import org.springframework.security.oauth2.server.authorization.web.JwkSetEndpointFilter;
 import org.springframework.security.oauth2.server.authorization.web.OAuth2AuthorizationEndpointFilter;
@@ -166,25 +172,25 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 						getAuthorizationService(builder));
 		builder.authenticationProvider(postProcess(clientAuthenticationProvider));
 
-		NimbusJwsEncoder jwtEncoder = new NimbusJwsEncoder(getKeySource(builder));
+		OAuth2TokenIssuer<OAuth2AccessToken> accessTokenIssuer = getAccessTokenIssuer(builder);
 
 		OAuth2AuthorizationCodeAuthenticationProvider authorizationCodeAuthenticationProvider =
 				new OAuth2AuthorizationCodeAuthenticationProvider(
 						getRegisteredClientRepository(builder),
 						getAuthorizationService(builder),
-						jwtEncoder);
+						accessTokenIssuer);
 		builder.authenticationProvider(postProcess(authorizationCodeAuthenticationProvider));
 
 		OAuth2RefreshTokenAuthenticationProvider refreshTokenAuthenticationProvider =
 				new OAuth2RefreshTokenAuthenticationProvider(
 						getAuthorizationService(builder),
-						jwtEncoder);
+						accessTokenIssuer);
 		builder.authenticationProvider(postProcess(refreshTokenAuthenticationProvider));
 
 		OAuth2ClientCredentialsAuthenticationProvider clientCredentialsAuthenticationProvider =
 				new OAuth2ClientCredentialsAuthenticationProvider(
 						getAuthorizationService(builder),
-						jwtEncoder);
+						accessTokenIssuer);
 		builder.authenticationProvider(postProcess(clientCredentialsAuthenticationProvider));
 
 		OAuth2TokenRevocationAuthenticationProvider tokenRevocationAuthenticationProvider =
@@ -208,6 +214,26 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 
 			exceptionHandling.authenticationEntryPoint(authenticationEntryPoint);
 		}
+	}
+
+	private OAuth2TokenIssuer<OAuth2AccessToken> getAccessTokenIssuer(B builder) {
+		OAuth2TokenIssuer<OAuth2AccessToken> accessTokenIssuer = getBeanOrNull(OAuth2TokenIssuer.class, OAuth2AccessToken.class);
+		if (accessTokenIssuer == null) {
+			accessTokenIssuer = getDefaultOAuth2TokenIssuer(builder);
+		}
+
+		return accessTokenIssuer;
+	}
+
+	private JwtAccessTokenOAuth2TokenIssuer getDefaultOAuth2TokenIssuer(B builder) {
+		NimbusJwsEncoder jwtEncoder = new NimbusJwsEncoder(getKeySource(builder));
+		JwtAccessTokenOAuth2TokenIssuer accessTokenIssuer = new JwtAccessTokenOAuth2TokenIssuer(jwtEncoder);
+		OAuth2TokenCustomizer<JwtBuilder> customizer = getBeanOrNull(OAuth2TokenCustomizer.class, JwtBuilder.class);
+		if (customizer != null) {
+			accessTokenIssuer.setCustomizer(customizer);
+		}
+
+		return accessTokenIssuer;
 	}
 
 	@Override
@@ -333,5 +359,17 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 				throw new IllegalArgumentException("issuer must be a valid URL", ex);
 			}
 		}
+	}
+
+	private <T> T getBeanOrNull(Class<T> clazz, Class<?> genericType) {
+		ApplicationContext context = getBuilder().getSharedObject(ApplicationContext.class);
+		if (context != null) {
+			ResolvableType resolvableType = ResolvableType.forClassWithGenerics(clazz, genericType);
+			String[] names = context.getBeanNamesForType(resolvableType);
+			if (names.length == 1) {
+				return (T) context.getBean(names[0]);
+			}
+		}
+		return null;
 	}
 }

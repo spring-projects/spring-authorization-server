@@ -15,13 +15,20 @@
  */
 package org.springframework.security.oauth2.server.authorization.authentication;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Base64;
+
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.keygen.Base64StringKeyGenerator;
+import org.springframework.security.crypto.keygen.StringKeyGenerator;
 import org.springframework.security.oauth2.core.AbstractOAuth2Token;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.OAuth2RefreshToken;
+import org.springframework.security.oauth2.core.OAuth2RefreshToken2;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2AuthorizationCode;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenMetadata;
@@ -34,6 +41,8 @@ import org.springframework.security.oauth2.server.authorization.token.OAuth2Toke
  * @since 0.0.3
  */
 final class OAuth2AuthenticationProviderUtils {
+
+	private static final StringKeyGenerator TOKEN_GENERATOR = new Base64StringKeyGenerator(Base64.getUrlEncoder().withoutPadding(), 96);
 
 	private OAuth2AuthenticationProviderUtils() {
 	}
@@ -72,5 +81,12 @@ final class OAuth2AuthenticationProviderUtils {
 		return OAuth2Authorization.from(authorization)
 				.tokens(builder.build())
 				.build();
+	}
+
+	static OAuth2RefreshToken issueRefreshToken(Duration refreshTokenTimeToLive) {
+		Instant issuedAt = Instant.now();
+		Instant expiresAt = issuedAt.plus(refreshTokenTimeToLive);
+
+		return new OAuth2RefreshToken2(TOKEN_GENERATOR.generateKey(), issuedAt, expiresAt);
 	}
 }

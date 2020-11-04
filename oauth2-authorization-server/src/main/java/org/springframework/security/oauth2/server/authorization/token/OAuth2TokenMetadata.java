@@ -34,7 +34,7 @@ import java.util.function.Consumer;
  */
 public class OAuth2TokenMetadata implements Serializable {
 	private static final long serialVersionUID = Version.SERIAL_VERSION_UID;
-	protected static final String TOKEN_METADATA_BASE = "token.metadata.";
+	protected static final String TOKEN_METADATA_BASE = "metadata.token.";
 
 	/**
 	 * The name of the metadata that indicates if the token has been invalidated.

@@ -25,6 +25,9 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * A {@link RegisteredClientRepository} that stores {@link RegisteredClient}(s) in-memory.
  *
+ * <p>
+ * <b>NOTE:</b> This implementation is recommended ONLY to be used during development/testing.
+ *
  * @author Anoop Garlapati
  * @see RegisteredClientRepository
  * @see RegisteredClient

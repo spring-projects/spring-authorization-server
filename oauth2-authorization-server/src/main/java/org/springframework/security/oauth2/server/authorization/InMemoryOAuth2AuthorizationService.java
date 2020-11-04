@@ -27,6 +27,9 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * An {@link OAuth2AuthorizationService} that stores {@link OAuth2Authorization}'s in-memory.
  *
+ * <p>
+ * <b>NOTE:</b> This implementation should ONLY be used during development/testing.
+ *
  * @author Krisztian Toth
  * @author Joe Grandja
  * @since 0.0.1

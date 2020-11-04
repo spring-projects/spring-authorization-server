@@ -74,8 +74,7 @@ public class OAuth2TokenRevocationAuthenticationProvider implements Authenticati
 			} else if (TokenType.ACCESS_TOKEN.getValue().equals(tokenTypeHint)) {
 				tokenType = TokenType.ACCESS_TOKEN;
 			} else {
-				// TODO Add OAuth2ErrorCodes.UNSUPPORTED_TOKEN_TYPE
-				throw new OAuth2AuthenticationException(new OAuth2Error("unsupported_token_type"));
+				throw new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.UNSUPPORTED_TOKEN_TYPE));
 			}
 		}
 

@@ -100,12 +100,12 @@ public class OAuth2TokenRevocationAuthenticationProviderTests {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient);
 		OAuth2TokenRevocationAuthenticationToken authentication = new OAuth2TokenRevocationAuthenticationToken(
-				"token", clientPrincipal, "unsupported_token_type");
+				"token", clientPrincipal, OAuth2ErrorCodes.UNSUPPORTED_TOKEN_TYPE);
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 				.isInstanceOf(OAuth2AuthenticationException.class)
 				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
 				.extracting("errorCode")
-				.isEqualTo("unsupported_token_type");
+				.isEqualTo(OAuth2ErrorCodes.UNSUPPORTED_TOKEN_TYPE);
 	}
 
 	@Test

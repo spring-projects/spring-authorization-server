@@ -37,6 +37,8 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthenticationProviderUtils.getAuthenticatedClientElseThrowInvalidClient;
+
 /**
  * An {@link AuthenticationProvider} implementation for the OAuth 2.0 Client Credentials Grant.
  *
@@ -72,13 +74,8 @@ public class OAuth2ClientCredentialsAuthenticationProvider implements Authentica
 		OAuth2ClientCredentialsAuthenticationToken clientCredentialsAuthentication =
 				(OAuth2ClientCredentialsAuthenticationToken) authentication;
 
-		OAuth2ClientAuthenticationToken clientPrincipal = null;
-		if (OAuth2ClientAuthenticationToken.class.isAssignableFrom(clientCredentialsAuthentication.getPrincipal().getClass())) {
-			clientPrincipal = (OAuth2ClientAuthenticationToken) clientCredentialsAuthentication.getPrincipal();
-		}
-		if (clientPrincipal == null || !clientPrincipal.isAuthenticated()) {
-			throw new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_CLIENT));
-		}
+		OAuth2ClientAuthenticationToken clientPrincipal =
+				getAuthenticatedClientElseThrowInvalidClient(clientCredentialsAuthentication);
 		RegisteredClient registeredClient = clientPrincipal.getRegisteredClient();
 
 		if (!registeredClient.getAuthorizationGrantTypes().contains(AuthorizationGrantType.CLIENT_CREDENTIALS)) {

@@ -38,6 +38,8 @@ import org.springframework.util.Assert;
 import java.time.Instant;
 import java.util.Set;
 
+import static org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthenticationProviderUtils.getAuthenticatedClientElseThrowInvalidClient;
+
 /**
  * An {@link AuthenticationProvider} implementation for the OAuth 2.0 Refresh Token Grant.
  *
@@ -73,13 +75,8 @@ public class OAuth2RefreshTokenAuthenticationProvider implements AuthenticationP
 		OAuth2RefreshTokenAuthenticationToken refreshTokenAuthentication =
 				(OAuth2RefreshTokenAuthenticationToken) authentication;
 
-		OAuth2ClientAuthenticationToken clientPrincipal = null;
-		if (OAuth2ClientAuthenticationToken.class.isAssignableFrom(refreshTokenAuthentication.getPrincipal().getClass())) {
-			clientPrincipal = (OAuth2ClientAuthenticationToken) refreshTokenAuthentication.getPrincipal();
-		}
-		if (clientPrincipal == null || !clientPrincipal.isAuthenticated()) {
-			throw new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_CLIENT));
-		}
+		OAuth2ClientAuthenticationToken clientPrincipal =
+				getAuthenticatedClientElseThrowInvalidClient(refreshTokenAuthentication);
 		RegisteredClient registeredClient = clientPrincipal.getRegisteredClient();
 
 		OAuth2Authorization authorization = this.authorizationService.findByToken(

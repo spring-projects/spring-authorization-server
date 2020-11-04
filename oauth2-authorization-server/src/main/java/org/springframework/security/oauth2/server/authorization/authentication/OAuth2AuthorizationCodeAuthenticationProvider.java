@@ -40,6 +40,8 @@ import org.springframework.util.StringUtils;
 
 import java.util.Set;
 
+import static org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthenticationProviderUtils.getAuthenticatedClientElseThrowInvalidClient;
+
 /**
  * An {@link AuthenticationProvider} implementation for the OAuth 2.0 Authorization Code Grant.
  *
@@ -81,13 +83,8 @@ public class OAuth2AuthorizationCodeAuthenticationProvider implements Authentica
 		OAuth2AuthorizationCodeAuthenticationToken authorizationCodeAuthentication =
 				(OAuth2AuthorizationCodeAuthenticationToken) authentication;
 
-		OAuth2ClientAuthenticationToken clientPrincipal = null;
-		if (OAuth2ClientAuthenticationToken.class.isAssignableFrom(authorizationCodeAuthentication.getPrincipal().getClass())) {
-			clientPrincipal = (OAuth2ClientAuthenticationToken) authorizationCodeAuthentication.getPrincipal();
-		}
-		if (clientPrincipal == null || !clientPrincipal.isAuthenticated()) {
-			throw new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_CLIENT));
-		}
+		OAuth2ClientAuthenticationToken clientPrincipal =
+				getAuthenticatedClientElseThrowInvalidClient(authorizationCodeAuthentication);
 		RegisteredClient registeredClient = clientPrincipal.getRegisteredClient();
 
 		OAuth2Authorization authorization = this.authorizationService.findByToken(

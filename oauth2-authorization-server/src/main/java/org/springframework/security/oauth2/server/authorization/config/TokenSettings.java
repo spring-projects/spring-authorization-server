@@ -29,7 +29,7 @@ import java.util.Map;
  * @see Settings
  */
 public class TokenSettings extends Settings {
-	private static final String TOKEN_SETTING_BASE = "spring.security.oauth2.authorization-server.token.";
+	private static final String TOKEN_SETTING_BASE = "setting.token.";
 	public static final String ACCESS_TOKEN_TIME_TO_LIVE = TOKEN_SETTING_BASE.concat("access-token-time-to-live");
 	public static final String ENABLE_REFRESH_TOKENS = TOKEN_SETTING_BASE.concat("enable-refresh-tokens");
 	public static final String REUSE_REFRESH_TOKENS = TOKEN_SETTING_BASE.concat("reuse-refresh-tokens");

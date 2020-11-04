@@ -26,7 +26,7 @@ import java.util.Map;
  * @see Settings
  */
 public class ClientSettings extends Settings {
-	private static final String CLIENT_SETTING_BASE = "spring.security.oauth2.authorization-server.client.";
+	private static final String CLIENT_SETTING_BASE = "setting.client.";
 	public static final String REQUIRE_PROOF_KEY = CLIENT_SETTING_BASE.concat("require-proof-key");
 	public static final String REQUIRE_USER_CONSENT = CLIENT_SETTING_BASE.concat("require-user-consent");
 

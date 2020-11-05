@@ -45,11 +45,14 @@ public class PublicClientAuthenticationConverterTests {
 	}
 
 	@Test
-	public void convertWhenMissingClientIdThenReturnNull() {
+	public void convertWhenMissingClientIdThenInvalidRequestError() {
 		MockHttpServletRequest request = createPkceTokenRequest();
 		request.removeParameter(OAuth2ParameterNames.CLIENT_ID);
-		Authentication authentication = this.converter.convert(request);
-		assertThat(authentication).isNull();
+		assertThatThrownBy(() -> this.converter.convert(request))
+				.isInstanceOf(OAuth2AuthenticationException.class)
+				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+				.extracting("errorCode")
+				.isEqualTo(OAuth2ErrorCodes.INVALID_REQUEST);
 	}
 
 	@Test

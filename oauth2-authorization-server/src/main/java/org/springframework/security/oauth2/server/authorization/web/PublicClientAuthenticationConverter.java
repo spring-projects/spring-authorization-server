@@ -52,10 +52,8 @@ public class PublicClientAuthenticationConverter implements AuthenticationConver
 
 		// client_id (REQUIRED for public clients)
 		String clientId = parameters.getFirst(OAuth2ParameterNames.CLIENT_ID);
-		if (!StringUtils.hasText(clientId)) {
-			return null;
-		}
-		if (parameters.get(OAuth2ParameterNames.CLIENT_ID).size() != 1) {
+		if (!StringUtils.hasText(clientId) ||
+				parameters.get(OAuth2ParameterNames.CLIENT_ID).size() != 1) {
 			throw new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_REQUEST));
 		}
 

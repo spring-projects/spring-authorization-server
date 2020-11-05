@@ -35,8 +35,11 @@ import org.springframework.security.oauth2.core.http.converter.OAuth2AccessToken
 import org.springframework.security.oauth2.core.http.converter.OAuth2ErrorHttpMessageConverter;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AccessTokenAuthenticationToken;
+import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeAuthenticationToken;
+import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientCredentialsAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientCredentialsAuthenticationToken;
+import org.springframework.security.oauth2.server.authorization.authentication.OAuth2RefreshTokenAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2RefreshTokenAuthenticationToken;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
@@ -59,19 +62,18 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * A {@code Filter} for the OAuth 2.0 Authorization Code Grant,
- * which handles the processing of the OAuth 2.0 Access Token Request.
+ * A {@code Filter} for the OAuth 2.0 Token endpoint,
+ * which handles the processing of an OAuth 2.0 Authorization Grant.
  *
  * <p>
- * It converts the OAuth 2.0 Access Token Request to an {@link OAuth2AuthorizationCodeAuthenticationToken},
+ * It converts the OAuth 2.0 Authorization Grant request to an {@link Authentication},
  * which is then authenticated by the {@link AuthenticationManager}.
  * If the authentication succeeds, the {@link AuthenticationManager} returns an
- * {@link OAuth2AccessTokenAuthenticationToken}, which contains
- * the {@link OAuth2AccessToken} that is returned in the response.
- * In case of any error, an {@link OAuth2Error} is returned in the response.
+ * {@link OAuth2AccessTokenAuthenticationToken}, which is returned in the OAuth 2.0 Access Token response.
+ * In case of any error, an {@link OAuth2Error} is returned in the OAuth 2.0 Error response.
  *
  * <p>
- * By default, this {@code Filter} responds to access token requests
+ * By default, this {@code Filter} responds to authorization grant requests
  * at the {@code URI} {@code /oauth2/token} and {@code HttpMethod} {@code POST}.
  *
  * <p>
@@ -83,9 +85,11 @@ import java.util.stream.Collectors;
  * @author Daniel Garnier-Moiroux
  * @since 0.0.1
  * @see AuthenticationManager
+ * @see OAuth2AuthorizationCodeAuthenticationProvider
+ * @see OAuth2RefreshTokenAuthenticationProvider
+ * @see OAuth2ClientCredentialsAuthenticationProvider
  * @see OAuth2AuthorizationService
- * @see <a target="_blank" href="https://tools.ietf.org/html/rfc6749#section-4.1">Section 4.1 Authorization Code Grant</a>
- * @see <a target="_blank" href="https://tools.ietf.org/html/rfc6749#section-4.1.3">Section 4.1.3 Access Token Request</a>
+ * @see <a target="_blank" href="https://tools.ietf.org/html/rfc6749#section-3.2">Section 3.2 Token Endpoint</a>
  */
 public class OAuth2TokenEndpointFilter extends OncePerRequestFilter {
 	/**

@@ -37,7 +37,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 /**
@@ -120,6 +119,21 @@ public class OAuth2ClientAuthenticationProviderTests {
 	}
 
 	@Test
+	public void authenticateWhenClientSecretNotProvidedThenThrowOAuth2AuthenticationException() {
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
+				.thenReturn(registeredClient);
+
+		OAuth2ClientAuthenticationToken authentication =
+				new OAuth2ClientAuthenticationToken(registeredClient.getClientId(), null);
+		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
+				.isInstanceOf(OAuth2AuthenticationException.class)
+				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+				.extracting("errorCode")
+				.isEqualTo(OAuth2ErrorCodes.INVALID_CLIENT);
+	}
+
+	@Test
 	public void authenticateWhenValidCredentialsThenAuthenticated() {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
@@ -133,21 +147,6 @@ public class OAuth2ClientAuthenticationProviderTests {
 		assertThat(authenticationResult.getPrincipal().toString()).isEqualTo(registeredClient.getClientId());
 		assertThat(authenticationResult.getCredentials()).isNull();
 		assertThat(authenticationResult.getRegisteredClient()).isEqualTo(registeredClient);
-	}
-
-	@Test
-	public void authenticateWhenNotPkceThenContinueAuthenticated() {
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
-		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
-				.thenReturn(registeredClient);
-
-		OAuth2ClientAuthenticationToken authentication = new OAuth2ClientAuthenticationToken(
-				registeredClient.getClientId(), registeredClient.getClientSecret(), null);
-		OAuth2ClientAuthenticationToken authenticationResult =
-				(OAuth2ClientAuthenticationToken) this.authenticationProvider.authenticate(authentication);
-		assertThat(authenticationResult.isAuthenticated()).isTrue();
-
-		verifyNoInteractions(this.authorizationService);
 	}
 
 	@Test

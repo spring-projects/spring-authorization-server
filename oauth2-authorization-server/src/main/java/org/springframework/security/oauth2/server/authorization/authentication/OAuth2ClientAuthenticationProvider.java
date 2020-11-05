@@ -82,15 +82,22 @@ public class OAuth2ClientAuthenticationProvider implements AuthenticationProvide
 			throwInvalidClient();
 		}
 
+		boolean authenticatedCredentials = false;
+
 		if (clientAuthentication.getCredentials() != null) {
 			String clientSecret = clientAuthentication.getCredentials().toString();
 			// TODO Use PasswordEncoder.matches()
 			if (!registeredClient.getClientSecret().equals(clientSecret)) {
 				throwInvalidClient();
 			}
+			authenticatedCredentials = true;
 		}
 
-		authenticatePkceIfAvailable(clientAuthentication, registeredClient);
+		authenticatedCredentials = authenticatedCredentials ||
+				authenticatePkceIfAvailable(clientAuthentication, registeredClient);
+		if (!authenticatedCredentials) {
+			throwInvalidClient();
+		}
 
 		return new OAuth2ClientAuthenticationToken(registeredClient);
 	}
@@ -100,12 +107,12 @@ public class OAuth2ClientAuthenticationProvider implements AuthenticationProvide
 		return OAuth2ClientAuthenticationToken.class.isAssignableFrom(authentication);
 	}
 
-	private void authenticatePkceIfAvailable(OAuth2ClientAuthenticationToken clientAuthentication,
+	private boolean authenticatePkceIfAvailable(OAuth2ClientAuthenticationToken clientAuthentication,
 			RegisteredClient registeredClient) {
 
 		Map<String, Object> parameters = clientAuthentication.getAdditionalParameters();
 		if (CollectionUtils.isEmpty(parameters) || !authorizationCodeGrant(parameters)) {
-			return;
+			return false;
 		}
 
 		OAuth2Authorization authorization = this.authorizationService.findByToken(
@@ -120,16 +127,19 @@ public class OAuth2ClientAuthenticationProvider implements AuthenticationProvide
 
 		String codeChallenge = (String) authorizationRequest.getAdditionalParameters()
 				.get(PkceParameterNames.CODE_CHALLENGE);
-		if (StringUtils.hasText(codeChallenge)) {
-			String codeChallengeMethod = (String) authorizationRequest.getAdditionalParameters()
-					.get(PkceParameterNames.CODE_CHALLENGE_METHOD);
-			String codeVerifier = (String) parameters.get(PkceParameterNames.CODE_VERIFIER);
-			if (!codeVerifierValid(codeVerifier, codeChallenge, codeChallengeMethod)) {
-				throwInvalidClient();
-			}
-		} else if (registeredClient.getClientSettings().requireProofKey()) {
+		if (!StringUtils.hasText(codeChallenge) &&
+				registeredClient.getClientSettings().requireProofKey()) {
 			throwInvalidClient();
 		}
+
+		String codeChallengeMethod = (String) authorizationRequest.getAdditionalParameters()
+				.get(PkceParameterNames.CODE_CHALLENGE_METHOD);
+		String codeVerifier = (String) parameters.get(PkceParameterNames.CODE_VERIFIER);
+		if (!codeVerifierValid(codeVerifier, codeChallenge, codeChallengeMethod)) {
+			throwInvalidClient();
+		}
+
+		return true;
 	}
 
 	private static boolean authorizationCodeGrant(Map<String, Object> parameters) {

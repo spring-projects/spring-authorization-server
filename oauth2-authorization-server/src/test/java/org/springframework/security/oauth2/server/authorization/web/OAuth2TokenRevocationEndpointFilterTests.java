@@ -30,7 +30,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
-import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
+import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames2;
 import org.springframework.security.oauth2.core.http.converter.OAuth2ErrorHttpMessageConverter;
 import org.springframework.security.oauth2.server.authorization.TokenType;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientAuthenticationToken;
@@ -121,25 +121,25 @@ public class OAuth2TokenRevocationEndpointFilterTests {
 	@Test
 	public void doFilterWhenTokenRevocationRequestMissingTokenThenInvalidRequestError() throws Exception {
 		doFilterWhenTokenRevocationRequestInvalidParameterThenError(
-				OAuth2ParameterNames.TOKEN,
+				OAuth2ParameterNames2.TOKEN,
 				OAuth2ErrorCodes.INVALID_REQUEST,
-				request -> request.removeParameter(OAuth2ParameterNames.TOKEN));
+				request -> request.removeParameter(OAuth2ParameterNames2.TOKEN));
 	}
 
 	@Test
 	public void doFilterWhenTokenRevocationRequestMultipleTokenThenInvalidRequestError() throws Exception {
 		doFilterWhenTokenRevocationRequestInvalidParameterThenError(
-				OAuth2ParameterNames.TOKEN,
+				OAuth2ParameterNames2.TOKEN,
 				OAuth2ErrorCodes.INVALID_REQUEST,
-				request -> request.addParameter(OAuth2ParameterNames.TOKEN, "token-2"));
+				request -> request.addParameter(OAuth2ParameterNames2.TOKEN, "token-2"));
 	}
 
 	@Test
 	public void doFilterWhenTokenRevocationRequestMultipleTokenTypeHintThenInvalidRequestError() throws Exception {
 		doFilterWhenTokenRevocationRequestInvalidParameterThenError(
-				OAuth2ParameterNames.TOKEN_TYPE_HINT,
+				OAuth2ParameterNames2.TOKEN_TYPE_HINT,
 				OAuth2ErrorCodes.INVALID_REQUEST,
-				request -> request.addParameter(OAuth2ParameterNames.TOKEN_TYPE_HINT, TokenType.ACCESS_TOKEN.getValue()));
+				request -> request.addParameter(OAuth2ParameterNames2.TOKEN_TYPE_HINT, TokenType.ACCESS_TOKEN.getValue()));
 	}
 
 	@Test
@@ -201,8 +201,8 @@ public class OAuth2TokenRevocationEndpointFilterTests {
 		MockHttpServletRequest request = new MockHttpServletRequest("POST", requestUri);
 		request.setServletPath(requestUri);
 
-		request.addParameter(OAuth2ParameterNames.TOKEN, "token");
-		request.addParameter(OAuth2ParameterNames.TOKEN_TYPE_HINT, TokenType.ACCESS_TOKEN.getValue());
+		request.addParameter(OAuth2ParameterNames2.TOKEN, "token");
+		request.addParameter(OAuth2ParameterNames2.TOKEN_TYPE_HINT, TokenType.ACCESS_TOKEN.getValue());
 
 		return request;
 	}

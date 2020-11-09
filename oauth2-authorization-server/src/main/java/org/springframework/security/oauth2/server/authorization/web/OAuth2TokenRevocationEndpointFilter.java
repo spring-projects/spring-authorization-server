@@ -26,7 +26,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
-import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
+import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames2;
 import org.springframework.security.oauth2.core.http.converter.OAuth2ErrorHttpMessageConverter;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2TokenRevocationAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2TokenRevocationAuthenticationToken;
@@ -131,17 +131,17 @@ public class OAuth2TokenRevocationEndpointFilter extends OncePerRequestFilter {
 			MultiValueMap<String, String> parameters = OAuth2EndpointUtils.getParameters(request);
 
 			// token (REQUIRED)
-			String token = parameters.getFirst(OAuth2ParameterNames.TOKEN);
+			String token = parameters.getFirst(OAuth2ParameterNames2.TOKEN);
 			if (!StringUtils.hasText(token) ||
-					parameters.get(OAuth2ParameterNames.TOKEN).size() != 1) {
-				throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.TOKEN);
+					parameters.get(OAuth2ParameterNames2.TOKEN).size() != 1) {
+				throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames2.TOKEN);
 			}
 
 			// token_type_hint (OPTIONAL)
-			String tokenTypeHint = parameters.getFirst(OAuth2ParameterNames.TOKEN_TYPE_HINT);
+			String tokenTypeHint = parameters.getFirst(OAuth2ParameterNames2.TOKEN_TYPE_HINT);
 			if (StringUtils.hasText(tokenTypeHint) &&
-					parameters.get(OAuth2ParameterNames.TOKEN_TYPE_HINT).size() != 1) {
-				throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.TOKEN_TYPE_HINT);
+					parameters.get(OAuth2ParameterNames2.TOKEN_TYPE_HINT).size() != 1) {
+				throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames2.TOKEN_TYPE_HINT);
 			}
 
 			return new OAuth2TokenRevocationAuthenticationToken(token, clientPrincipal, tokenTypeHint);

@@ -1,8 +1,5 @@
 apply plugin: 'io.spring.convention.spring-sample-boot'
 
-// TODO Remove once Spring Boot upgrades to Spring Security 5.5
-ext['spring-security.version'] = '5.5.0-M1'
-
 dependencies {
 	compile 'org.springframework.boot:spring-boot-starter-web'
 	compile 'org.springframework.boot:spring-boot-starter-security'

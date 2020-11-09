@@ -22,6 +22,7 @@ import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
+import org.springframework.security.oauth2.core.OAuth2ErrorCodes2;
 import org.springframework.security.oauth2.core.OAuth2RefreshToken;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
@@ -100,12 +101,12 @@ public class OAuth2TokenRevocationAuthenticationProviderTests {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient);
 		OAuth2TokenRevocationAuthenticationToken authentication = new OAuth2TokenRevocationAuthenticationToken(
-				"token", clientPrincipal, OAuth2ErrorCodes.UNSUPPORTED_TOKEN_TYPE);
+				"token", clientPrincipal, OAuth2ErrorCodes2.UNSUPPORTED_TOKEN_TYPE);
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 				.isInstanceOf(OAuth2AuthenticationException.class)
 				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
 				.extracting("errorCode")
-				.isEqualTo(OAuth2ErrorCodes.UNSUPPORTED_TOKEN_TYPE);
+				.isEqualTo(OAuth2ErrorCodes2.UNSUPPORTED_TOKEN_TYPE);
 	}
 
 	@Test

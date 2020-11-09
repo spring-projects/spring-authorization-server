@@ -23,6 +23,7 @@ import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.OAuth2RefreshToken;
+import org.springframework.security.oauth2.core.OAuth2RefreshToken2;
 import org.springframework.security.oauth2.jose.JoseHeaderNames;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -291,7 +292,7 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 	public void authenticateWhenExpiredRefreshTokenThenThrowOAuth2AuthenticationException() {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();
-		OAuth2RefreshToken expiredRefreshToken = new OAuth2RefreshToken(
+		OAuth2RefreshToken expiredRefreshToken = new OAuth2RefreshToken2(
 				"expired-refresh-token", Instant.now().minusSeconds(120), Instant.now().minusSeconds(60));
 		OAuth2Tokens tokens = OAuth2Tokens.from(authorization.getTokens()).refreshToken(expiredRefreshToken).build();
 		authorization = OAuth2Authorization.from(authorization).tokens(tokens).build();

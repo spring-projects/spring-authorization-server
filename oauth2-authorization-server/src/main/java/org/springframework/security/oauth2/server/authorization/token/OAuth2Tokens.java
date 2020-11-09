@@ -19,6 +19,7 @@ import org.springframework.lang.Nullable;
 import org.springframework.security.oauth2.core.AbstractOAuth2Token;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2RefreshToken;
+import org.springframework.security.oauth2.core.OAuth2RefreshToken2;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.Version;
 import org.springframework.util.Assert;
@@ -64,7 +65,8 @@ public class OAuth2Tokens implements Serializable {
 	 */
 	@Nullable
 	public OAuth2RefreshToken getRefreshToken() {
-		return getToken(OAuth2RefreshToken.class);
+		OAuth2RefreshToken refreshToken = getToken(OAuth2RefreshToken.class);
+		return refreshToken != null ? refreshToken : getToken(OAuth2RefreshToken2.class);
 	}
 
 	/**

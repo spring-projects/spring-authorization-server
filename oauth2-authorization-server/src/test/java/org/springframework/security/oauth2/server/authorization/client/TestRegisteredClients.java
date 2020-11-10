@@ -44,6 +44,7 @@ public class TestRegisteredClients {
 				.authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
 				.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
 				.clientAuthenticationMethod(ClientAuthenticationMethod.BASIC)
+				.clientAuthenticationMethod(ClientAuthenticationMethod.POST)
 				.redirectUri("https://example.com")
 				.scope("openid")
 				.scope("profile")
@@ -61,6 +62,7 @@ public class TestRegisteredClients {
 				.scope("openid")
 				.scope("profile")
 				.scope("email")
-				.clientSettings(clientSettings -> clientSettings.requireProofKey(true));
+				.clientSettings(clientSettings -> clientSettings.requireProofKey(true))
+				.tokenSettings(tokenSettings -> tokenSettings.enableRefreshTokens(false));
 	}
 }

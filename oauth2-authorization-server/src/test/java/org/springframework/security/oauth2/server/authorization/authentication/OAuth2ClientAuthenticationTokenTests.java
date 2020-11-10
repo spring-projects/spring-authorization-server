@@ -95,15 +95,4 @@ public class OAuth2ClientAuthenticationTokenTests {
 		assertThat(authentication.getCredentials()).isNull();
 		assertThat(authentication.getRegisteredClient()).isEqualTo(registeredClient);
 	}
-
-	@Test
-	public void constructorWhenClientCredentialsAndClientAuthenticationMethodProvidedThenCreated() {
-		OAuth2ClientAuthenticationToken authentication = new OAuth2ClientAuthenticationToken("clientId", "secret",
-				ClientAuthenticationMethod.BASIC, null);
-		assertThat(authentication.isAuthenticated()).isFalse();
-		assertThat(authentication.getPrincipal().toString()).isEqualTo("clientId");
-		assertThat(authentication.getCredentials()).isEqualTo("secret");
-		assertThat(authentication.getRegisteredClient()).isNull();
-		assertThat(authentication.getClientAuthenticationMethod()).isEqualTo(ClientAuthenticationMethod.BASIC);
-	}
 }

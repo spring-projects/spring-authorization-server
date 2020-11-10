@@ -380,7 +380,7 @@ public class OAuth2ClientAuthenticationProviderTests {
 	}
 
 	@Test
-	public void authenticateWhenClientAuthenticationWithUnregisteredClientAuthenticationMethodThenThrowOAuth2AuthenticationException() {
+	public void authenticateWhenClientAuthenticationMethodNotConfiguredThenThrowOAuth2AuthenticationException() {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
 				.thenReturn(registeredClient);

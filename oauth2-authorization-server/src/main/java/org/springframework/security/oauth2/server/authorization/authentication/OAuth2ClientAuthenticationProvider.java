@@ -31,6 +31,7 @@ import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.OAuth2TokenType;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
+import org.springframework.security.oauth2.core.endpoint.PkceCodeChallengeMethod2;
 import org.springframework.security.oauth2.core.endpoint.PkceParameterNames;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
@@ -156,9 +157,9 @@ public class OAuth2ClientAuthenticationProvider implements AuthenticationProvide
 	private static boolean codeVerifierValid(String codeVerifier, String codeChallenge, String codeChallengeMethod) {
 		if (!StringUtils.hasText(codeVerifier)) {
 			return false;
-		} else if (!StringUtils.hasText(codeChallengeMethod) || "plain".equals(codeChallengeMethod)) {
+		} else if (!StringUtils.hasText(codeChallengeMethod) || PkceCodeChallengeMethod2.PLAIN.getValue().equals(codeChallengeMethod)) {
 			return  codeVerifier.equals(codeChallenge);
-		} else if ("S256".equals(codeChallengeMethod)) {
+		} else if (PkceCodeChallengeMethod2.S256.getValue().equals(codeChallengeMethod)) {
 			try {
 				MessageDigest md = MessageDigest.getInstance("SHA-256");
 				byte[] digest = md.digest(codeVerifier.getBytes(StandardCharsets.US_ASCII));

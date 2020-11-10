@@ -13,17 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.security.oauth2.server.authorization.oidc.web;
+package org.springframework.security.oauth2.server.authorization.web;
 
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.server.ServletServerHttpResponse;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationResponseType;
-import org.springframework.security.oauth2.core.oidc.OidcProviderConfiguration;
+import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationServerConfiguration;
+import org.springframework.security.oauth2.core.endpoint.PkceCodeChallengeMethod2;
+import org.springframework.security.oauth2.core.http.converter.OAuth2AuthorizationServerConfigurationHttpMessageConverter;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
-import org.springframework.security.oauth2.core.oidc.http.converter.OidcProviderConfigurationHttpMessageConverter;
-import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 import org.springframework.security.oauth2.server.authorization.config.ProviderSettings;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
@@ -38,30 +38,29 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 /**
- * A {@code Filter} that processes OpenID Provider Configuration Requests.
+ * A {@code Filter} that processes OAuth 2.0 Authorization Server Configuration Requests.
  *
  * @author Daniel Garnier-Moiroux
- * @since 0.1.0
- * @see OidcProviderConfiguration
+ * @since 0.1.1
  * @see ProviderSettings
- * @see <a target="_blank" href="https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderConfigurationRequest">4.1. OpenID Provider Configuration Request</a>
+ * @see <a target="_blank" href="https://tools.ietf.org/html/rfc8414#section-3">3. Obtaining Authorization Server Metadata</a>
  */
-public class OidcProviderConfigurationEndpointFilter extends OncePerRequestFilter {
+public class OAuth2AuthorizationServerConfigurationEndpointFilter extends OncePerRequestFilter {
 	/**
-	 * The default endpoint {@code URI} for OpenID Provider Configuration requests.
+	 * The default endpoint {@code URI} for OAuth 2.0 Authorization Server Configuration requests.
 	 */
-	public static final String DEFAULT_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI = "/.well-known/openid-configuration";
+	public static final String DEFAULT_OAUTH2_AUTHORIZATION_SERVER_CONFIGURATION_ENDPOINT_URI = "/.well-known/oauth-authorization-server";
 
-	private final ProviderSettings providerSettings;
 	private final RequestMatcher requestMatcher;
-	private final OidcProviderConfigurationHttpMessageConverter providerConfigurationHttpMessageConverter =
-			new OidcProviderConfigurationHttpMessageConverter();
+	private final ProviderSettings providerSettings;
+	private final OAuth2AuthorizationServerConfigurationHttpMessageConverter authorizationServerConfigurationHttpMessageConverter
+			= new OAuth2AuthorizationServerConfigurationHttpMessageConverter();
 
-	public OidcProviderConfigurationEndpointFilter(ProviderSettings providerSettings) {
+	public OAuth2AuthorizationServerConfigurationEndpointFilter(ProviderSettings providerSettings) {
 		Assert.notNull(providerSettings, "providerSettings cannot be null");
 		this.providerSettings = providerSettings;
 		this.requestMatcher = new AntPathRequestMatcher(
-				DEFAULT_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI,
+				DEFAULT_OAUTH2_AUTHORIZATION_SERVER_CONFIGURATION_ENDPOINT_URI,
 				HttpMethod.GET.name()
 		);
 	}
@@ -69,35 +68,37 @@ public class OidcProviderConfigurationEndpointFilter extends OncePerRequestFilte
 	@Override
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
 			throws ServletException, IOException {
-
 		if (!this.requestMatcher.matches(request)) {
 			filterChain.doFilter(request, response);
 			return;
 		}
 
-		OidcProviderConfiguration providerConfiguration = OidcProviderConfiguration
+		OAuth2AuthorizationServerConfiguration authorizationServerConfiguration = OAuth2AuthorizationServerConfiguration
 				.builder()
 				.issuer(this.providerSettings.issuer())
 				.authorizationEndpoint(asUrl(this.providerSettings.issuer(), this.providerSettings.authorizationEndpoint()))
 				.tokenEndpoint(asUrl(this.providerSettings.issuer(), this.providerSettings.tokenEndpoint()))
 				.tokenEndpointAuthenticationMethod("client_secret_basic") // TODO: Use ClientAuthenticationMethod.CLIENT_SECRET_BASIC in Spring Security 5.5.0
 				.tokenEndpointAuthenticationMethod("client_secret_post") // TODO: Use ClientAuthenticationMethod.CLIENT_SECRET_POST in Spring Security 5.5.0
+				.tokenRevocationEndpoint(asUrl(this.providerSettings.issuer(), this.providerSettings.tokenRevocationEndpoint()))
+				.tokenRevocationEndpointAuthenticationMethod("client_secret_basic") // TODO: Use ClientAuthenticationMethod.CLIENT_SECRET_BASIC in Spring Security 5.5.0
+				.tokenRevocationEndpointAuthenticationMethod("client_secret_post") // TODO: Use ClientAuthenticationMethod.CLIENT_SECRET_POST in Spring Security 5.5.0
 				.jwkSetUri(asUrl(this.providerSettings.issuer(), this.providerSettings.jwkSetEndpoint()))
 				.grantType(AuthorizationGrantType.AUTHORIZATION_CODE.getValue())
 				.grantType(AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
 				.grantType(AuthorizationGrantType.REFRESH_TOKEN.getValue())
 				.responseType(OAuth2AuthorizationResponseType.CODE.getValue())
 				.scope(OidcScopes.OPENID)
-				.subjectType("public")
-				.idTokenSigningAlgorithm(SignatureAlgorithm.RS256.getName())
+				.codeChallengeMethod(PkceCodeChallengeMethod2.PLAIN.getValue())
+				.codeChallengeMethod(PkceCodeChallengeMethod2.S256.getValue())
 				.build();
 
-		ServletServerHttpResponse httpResponse = new ServletServerHttpResponse(response);
-		this.providerConfigurationHttpMessageConverter.write(
-				providerConfiguration, MediaType.APPLICATION_JSON, httpResponse);
+		ServletServerHttpResponse resp = new ServletServerHttpResponse(response);
+		this.authorizationServerConfigurationHttpMessageConverter.write(
+				authorizationServerConfiguration, MediaType.APPLICATION_JSON, resp);
 	}
 
 	private static String asUrl(String issuer, String endpoint) {
-		return UriComponentsBuilder.fromUriString(issuer).path(endpoint).build().toUriString();
+		return UriComponentsBuilder.fromUriString(issuer).path(endpoint).toUriString();
 	}
 }

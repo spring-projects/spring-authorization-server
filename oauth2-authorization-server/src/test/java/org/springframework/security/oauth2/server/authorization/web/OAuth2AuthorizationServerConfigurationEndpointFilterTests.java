@@ -13,7 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.security.oauth2.server.authorization.oidc.web;
+package org.springframework.security.oauth2.server.authorization.web;
+
 
 import org.junit.Test;
 import org.springframework.http.MediaType;
@@ -33,23 +34,23 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 
 /**
- * Tests for {@link OidcProviderConfigurationEndpointFilter}.
+ * Tests for {@link OAuth2AuthorizationServerConfigurationEndpointFilter}.
  *
  * @author Daniel Garnier-Moiroux
  */
-public class OidcProviderConfigurationEndpointFilterTests {
+public class OAuth2AuthorizationServerConfigurationEndpointFilterTests {
 
 	@Test
 	public void constructorWhenProviderSettingsNullThenThrowIllegalArgumentException() {
 		assertThatIllegalArgumentException()
-				.isThrownBy(() -> new OidcProviderConfigurationEndpointFilter(null))
+				.isThrownBy(() -> new OAuth2AuthorizationServerConfigurationEndpointFilter(null))
 				.withMessage("providerSettings cannot be null");
 	}
 
 	@Test
-	public void doFilterWhenNotConfigurationRequestThenNotProcessed() throws Exception {
-		OidcProviderConfigurationEndpointFilter filter =
-				new OidcProviderConfigurationEndpointFilter(new ProviderSettings());
+	public void doFilterWhenNotAuthorizationServerConfigurationRequestThenNotProcessed() throws Exception {
+		OAuth2AuthorizationServerConfigurationEndpointFilter filter =
+				new OAuth2AuthorizationServerConfigurationEndpointFilter(new ProviderSettings().issuer("https://example.com"));
 
 		String requestUri = "/path";
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestUri);
@@ -63,11 +64,11 @@ public class OidcProviderConfigurationEndpointFilterTests {
 	}
 
 	@Test
-	public void doFilterWhenConfigurationRequestPostThenNotProcessed() throws Exception {
-		OidcProviderConfigurationEndpointFilter filter =
-				new OidcProviderConfigurationEndpointFilter(new ProviderSettings());
+	public void doFilterWhenAuthorizationServerConfigurationRequestPostThenNotProcessed() throws Exception {
+		OAuth2AuthorizationServerConfigurationEndpointFilter filter =
+				new OAuth2AuthorizationServerConfigurationEndpointFilter(new ProviderSettings().issuer("https://example.com"));
 
-		String requestUri = OidcProviderConfigurationEndpointFilter.DEFAULT_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI;
+		String requestUri = OAuth2AuthorizationServerConfigurationEndpointFilter.DEFAULT_OAUTH2_AUTHORIZATION_SERVER_CONFIGURATION_ENDPOINT_URI;
 		MockHttpServletRequest request = new MockHttpServletRequest("POST", requestUri);
 		request.setServletPath(requestUri);
 		MockHttpServletResponse response = new MockHttpServletResponse();
@@ -79,20 +80,22 @@ public class OidcProviderConfigurationEndpointFilterTests {
 	}
 
 	@Test
-	public void doFilterWhenConfigurationRequestThenConfigurationResponse() throws Exception {
+	public void doFilterWhenAuthorizationServerConfigurationRequestThenAuthorizationServerConfigurationResponse() throws Exception {
 		String authorizationEndpoint = "/oauth2/v1/authorize";
 		String tokenEndpoint = "/oauth2/v1/token";
+		String tokenRevocationEndpoint = "/oauth2/v1/revoke";
 		String jwkSetEndpoint = "/oauth2/v1/jwks";
 
 		ProviderSettings providerSettings = new ProviderSettings()
 				.issuer("https://example.com/issuer1")
 				.authorizationEndpoint(authorizationEndpoint)
 				.tokenEndpoint(tokenEndpoint)
+				.tokenRevocationEndpoint(tokenRevocationEndpoint)
 				.jwkSetEndpoint(jwkSetEndpoint);
-		OidcProviderConfigurationEndpointFilter filter =
-				new OidcProviderConfigurationEndpointFilter(providerSettings);
+		OAuth2AuthorizationServerConfigurationEndpointFilter filter =
+				new OAuth2AuthorizationServerConfigurationEndpointFilter(providerSettings);
 
-		String requestUri = OidcProviderConfigurationEndpointFilter.DEFAULT_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI;
+		String requestUri = OAuth2AuthorizationServerConfigurationEndpointFilter.DEFAULT_OAUTH2_AUTHORIZATION_SERVER_CONFIGURATION_ENDPOINT_URI;
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestUri);
 		request.setServletPath(requestUri);
 		MockHttpServletResponse response = new MockHttpServletResponse();
@@ -103,31 +106,33 @@ public class OidcProviderConfigurationEndpointFilterTests {
 		verifyNoInteractions(filterChain);
 
 		assertThat(response.getContentType()).isEqualTo(MediaType.APPLICATION_JSON_VALUE);
-		String providerConfigurationResponse = response.getContentAsString();
-		assertThat(providerConfigurationResponse).contains("\"issuer\":\"https://example.com/issuer1\"");
-		assertThat(providerConfigurationResponse).contains("\"authorization_endpoint\":\"https://example.com/issuer1/oauth2/v1/authorize\"");
-		assertThat(providerConfigurationResponse).contains("\"token_endpoint\":\"https://example.com/issuer1/oauth2/v1/token\"");
-		assertThat(providerConfigurationResponse).contains("\"jwks_uri\":\"https://example.com/issuer1/oauth2/v1/jwks\"");
-		assertThat(providerConfigurationResponse).contains("\"scopes_supported\":[\"openid\"]");
-		assertThat(providerConfigurationResponse).contains("\"response_types_supported\":[\"code\"]");
-		assertThat(providerConfigurationResponse).contains("\"grant_types_supported\":[\"authorization_code\",\"client_credentials\",\"refresh_token\"]");
-		assertThat(providerConfigurationResponse).contains("\"subject_types_supported\":[\"public\"]");
-		assertThat(providerConfigurationResponse).contains("\"id_token_signing_alg_values_supported\":[\"RS256\"]");
-		assertThat(providerConfigurationResponse).contains("\"token_endpoint_auth_methods_supported\":[\"client_secret_basic\",\"client_secret_post\"]");
+		String serverConfigurationResponse = response.getContentAsString();
+		assertThat(serverConfigurationResponse).contains("\"issuer\":\"https://example.com/issuer1\"");
+		assertThat(serverConfigurationResponse).contains("\"authorization_endpoint\":\"https://example.com/issuer1/oauth2/v1/authorize\"");
+		assertThat(serverConfigurationResponse).contains("\"token_endpoint\":\"https://example.com/issuer1/oauth2/v1/token\"");
+		assertThat(serverConfigurationResponse).contains("\"revocation_endpoint\":\"https://example.com/issuer1/oauth2/v1/revoke\"");
+		assertThat(serverConfigurationResponse).contains("\"jwks_uri\":\"https://example.com/issuer1/oauth2/v1/jwks\"");
+		assertThat(serverConfigurationResponse).contains("\"scopes_supported\":[\"openid\"]");
+		assertThat(serverConfigurationResponse).contains("\"response_types_supported\":[\"code\"]");
+		assertThat(serverConfigurationResponse).contains("\"grant_types_supported\":[\"authorization_code\",\"client_credentials\",\"refresh_token\"]");
+		assertThat(serverConfigurationResponse).contains("\"token_endpoint_auth_methods_supported\":[\"client_secret_basic\",\"client_secret_post\"]");
+		assertThat(serverConfigurationResponse).contains("\"revocation_endpoint_auth_methods_supported\":[\"client_secret_basic\",\"client_secret_post\"]");
+		assertThat(serverConfigurationResponse).contains("\"code_challenge_methods_supported\":[\"plain\",\"S256\"]");
 	}
 
 	@Test
 	public void doFilterWhenProviderSettingsWithInvalidIssuerThenThrowIllegalArgumentException() {
 		ProviderSettings providerSettings = new ProviderSettings()
 				.issuer("https://this is an invalid URL");
-		OidcProviderConfigurationEndpointFilter filter =
-				new OidcProviderConfigurationEndpointFilter(providerSettings);
+		OAuth2AuthorizationServerConfigurationEndpointFilter filter =
+				new OAuth2AuthorizationServerConfigurationEndpointFilter(providerSettings);
 
-		String requestUri = OidcProviderConfigurationEndpointFilter.DEFAULT_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI;
+		String requestUri = OAuth2AuthorizationServerConfigurationEndpointFilter.DEFAULT_OAUTH2_AUTHORIZATION_SERVER_CONFIGURATION_ENDPOINT_URI;
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestUri);
 		request.setServletPath(requestUri);
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		FilterChain filterChain = mock(FilterChain.class);
+
 
 		assertThatIllegalArgumentException()
 				.isThrownBy(() -> filter.doFilter(request, response, filterChain))

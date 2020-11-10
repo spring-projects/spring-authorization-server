@@ -31,7 +31,6 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Tests for {@link OidcProviderConfigurationHttpMessageConverter}
@@ -205,9 +204,9 @@ public class OidcProviderConfigurationHttpMessageConverterTests {
 
 		MockHttpOutputMessage outputMessage = new MockHttpOutputMessage();
 
-		assertThatThrownBy(() -> this.messageConverter.writeInternal(providerConfiguration, outputMessage))
-				.isInstanceOf(HttpMessageNotWritableException.class)
-				.hasMessageContaining("An error occurred writing the OpenID Provider Configuration")
-				.hasMessageContaining(errorMessage);
+		assertThatExceptionOfType(HttpMessageNotWritableException.class)
+				.isThrownBy(() -> this.messageConverter.writeInternal(providerConfiguration, outputMessage))
+				.withMessageContaining("An error occurred writing the OpenID Provider Configuration")
+				.withMessageContaining(errorMessage);
 	}
 }

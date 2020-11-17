@@ -26,9 +26,6 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URL;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -47,12 +44,7 @@ class OAuth2TokenIssuerUtil {
 	static Jwt issueJwtAccessToken(JwtEncoder jwtEncoder, String subject, String audience, Set<String> scopes) {
 		JoseHeader joseHeader = JoseHeader.withAlgorithm(SignatureAlgorithm.RS256).build();
 
-		// TODO Allow configuration for issuer claim
-		URL issuer = null;
-		try {
-			issuer = URI.create("https://oauth2.provider.com").toURL();
-		} catch (MalformedURLException e) { }
-
+		String issuer = "https://oauth2.provider.com";		// TODO Allow configuration for issuer claim
 		Instant issuedAt = Instant.now();
 		Instant expiresAt = issuedAt.plus(1, ChronoUnit.HOURS);		// TODO Allow configuration for access token time-to-live
 

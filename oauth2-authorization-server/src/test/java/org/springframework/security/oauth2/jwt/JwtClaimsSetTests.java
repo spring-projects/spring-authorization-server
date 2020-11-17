@@ -39,7 +39,7 @@ public class JwtClaimsSetTests {
 		JwtClaimsSet expectedJwtClaimsSet = TestJwtClaimsSets.jwtClaimsSet().build();
 
 		JwtClaimsSet jwtClaimsSet = JwtClaimsSet.withClaims()
-				.issuer(expectedJwtClaimsSet.getIssuer())
+				.issuer(expectedJwtClaimsSet.getIssuer().toExternalForm())
 				.subject(expectedJwtClaimsSet.getSubject())
 				.audience(expectedJwtClaimsSet.getAudience())
 				.issuedAt(expectedJwtClaimsSet.getIssuedAt())

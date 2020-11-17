@@ -17,7 +17,6 @@ package org.springframework.security.oauth2.jwt;
 
 import org.springframework.util.Assert;
 
-import java.net.URL;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -94,7 +93,7 @@ public final class JwtClaimsSet implements JwtClaimAccessor {
 		 * @param issuer the issuer identifier
 		 * @return the {@link Builder}
 		 */
-		public Builder issuer(URL issuer) {
+		public Builder issuer(String issuer) {
 			return claim(ISS, issuer);
 		}
 

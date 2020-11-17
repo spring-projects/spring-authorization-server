@@ -15,9 +15,6 @@
  */
 package org.springframework.security.oauth2.jwt;
 
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URL;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
@@ -29,11 +26,7 @@ import java.util.UUID;
 public class TestJwtClaimsSets {
 
 	public static JwtClaimsSet.Builder jwtClaimsSet() {
-		URL issuer = null;
-		try {
-			issuer = URI.create("https://provider.com").toURL();
-		} catch (MalformedURLException e) { }
-
+		String issuer = "https://provider.com";
 		Instant issuedAt = Instant.now();
 		Instant expiresAt = issuedAt.plus(1, ChronoUnit.HOURS);
 

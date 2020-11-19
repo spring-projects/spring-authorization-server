@@ -15,37 +15,38 @@
  */
 package sample.config;
 
+import org.springframework.context.annotation.Bean;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
+import org.springframework.security.web.SecurityFilterChain;
+
+import static org.springframework.security.config.Customizer.withDefaults;
 
 /**
  * @author Joe Grandja
  * @since 0.0.1
  */
 @EnableWebSecurity
-public class SecurityConfig extends WebSecurityConfigurerAdapter {
+public class SecurityConfig {
 
-	// @formatter:off
-	@Override
-	public void configure(WebSecurity web) {
-		web
-			.ignoring()
-				.antMatchers("/webjars/**");
+	@Bean
+	WebSecurityCustomizer webSecurityCustomizer() {
+		return (web) -> web.ignoring().antMatchers("/webjars/**");
 	}
-	// @formatter:on
 
-	// @formatter:off
-	@Override
-	protected void configure(HttpSecurity http) throws Exception {
+	// formatter:off
+	@Bean
+	SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 		http
-			.authorizeRequests()
-				.anyRequest().permitAll()
-				.and()
+			.authorizeRequests(authorizeRequests ->
+				authorizeRequests.anyRequest().permitAll()
+			)
 			.logout()
 				.disable()
-			.oauth2Client();
+			.oauth2Client(withDefaults());
+		return http.build();
 	}
-	// @formatter:on
+	// formatter:on
+
 }

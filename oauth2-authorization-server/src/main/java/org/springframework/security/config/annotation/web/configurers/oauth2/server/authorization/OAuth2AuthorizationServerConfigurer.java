@@ -39,9 +39,13 @@ import org.springframework.security.oauth2.server.authorization.web.OAuth2Author
 import org.springframework.security.oauth2.server.authorization.web.OAuth2ClientAuthenticationFilter;
 import org.springframework.security.oauth2.server.authorization.web.OAuth2TokenEndpointFilter;
 import org.springframework.security.oauth2.server.authorization.web.OAuth2TokenRevocationEndpointFilter;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.access.intercept.FilterSecurityInterceptor;
+import org.springframework.security.web.authentication.DelegatingAuthenticationEntryPoint;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
+import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.authentication.preauth.AbstractPreAuthenticatedProcessingFilter;
+import org.springframework.security.web.authentication.ui.DefaultLoginPageGeneratingFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.OrRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
@@ -49,6 +53,7 @@ import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -163,10 +168,19 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 
 		ExceptionHandlingConfigurer<B> exceptionHandling = builder.getConfigurer(ExceptionHandlingConfigurer.class);
 		if (exceptionHandling != null) {
-			// Register the default AuthenticationEntryPoint for the token endpoint and token revocation endpoint
-			exceptionHandling.defaultAuthenticationEntryPointFor(
-					new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED),
-					new OrRequestMatcher(this.tokenEndpointMatcher, this.tokenRevocationEndpointMatcher));
+			LinkedHashMap<RequestMatcher, AuthenticationEntryPoint> entryPoints = new LinkedHashMap<>();
+			entryPoints.put(
+					new OrRequestMatcher(this.tokenEndpointMatcher, this.tokenRevocationEndpointMatcher),
+					new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED));
+			DelegatingAuthenticationEntryPoint authenticationEntryPoint =
+					new DelegatingAuthenticationEntryPoint(entryPoints);
+
+			// TODO This needs to change as the login page could be customized with a different URL
+			authenticationEntryPoint.setDefaultEntryPoint(
+					new LoginUrlAuthenticationEntryPoint(
+							DefaultLoginPageGeneratingFilter.DEFAULT_LOGIN_PAGE_URL));
+
+			exceptionHandling.authenticationEntryPoint(authenticationEntryPoint);
 		}
 	}
 

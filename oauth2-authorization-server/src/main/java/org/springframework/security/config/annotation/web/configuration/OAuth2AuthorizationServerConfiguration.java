@@ -17,21 +17,45 @@ package org.springframework.security.config.annotation.web.configuration;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.annotation.web.WebSecurityConfigurer;
-import org.springframework.security.config.annotation.web.builders.WebSecurity;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.oauth2.server.authorization.OAuth2AuthorizationServerConfigurer;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.util.matcher.OrRequestMatcher;
+import org.springframework.security.web.util.matcher.RequestMatcher;
 
 /**
  * {@link Configuration} for OAuth 2.0 Authorization Server support.
  *
  * @author Joe Grandja
  * @since 0.0.1
+ * @see OAuth2AuthorizationServerConfigurer
  */
 @Configuration(proxyBeanMethods = false)
 public class OAuth2AuthorizationServerConfiguration {
 
 	@Bean
-	public WebSecurityConfigurer<WebSecurity> defaultOAuth2AuthorizationServerSecurity() {
-		return new OAuth2AuthorizationServerSecurity();
+	@Order(Ordered.HIGHEST_PRECEDENCE)
+	public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
+		applyDefaultSecurity(http);
+		return http.build();
 	}
 
+	// @formatter:off
+	public static void applyDefaultSecurity(HttpSecurity http) throws Exception {
+		OAuth2AuthorizationServerConfigurer<HttpSecurity> authorizationServerConfigurer =
+				new OAuth2AuthorizationServerConfigurer<>();
+		RequestMatcher[] endpointMatchers = authorizationServerConfigurer
+				.getEndpointMatchers().toArray(new RequestMatcher[0]);
+
+		http
+			.requestMatcher(new OrRequestMatcher(endpointMatchers))
+			.authorizeRequests(authorizeRequests ->
+				authorizeRequests.anyRequest().authenticated()
+			)
+			.csrf(csrf -> csrf.ignoringRequestMatchers(endpointMatchers))
+			.apply(authorizationServerConfigurer);
+	}
+	// @formatter:on
 }

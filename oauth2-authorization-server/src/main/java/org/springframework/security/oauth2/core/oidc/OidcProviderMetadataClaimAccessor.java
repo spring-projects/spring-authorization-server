@@ -35,30 +35,30 @@ import java.util.List;
 public interface OidcProviderMetadataClaimAccessor extends ClaimAccessor {
 
 	/**
-	 * Returns the URL the OpenID Provider asserts as its Issuer Identifier {@code (issuer)}.
+	 * Returns the {@code URL} the OpenID Provider asserts as its Issuer Identifier {@code (issuer)}.
 	 *
-	 * @return the URL the OpenID Provider asserts as its Issuer Identifier
+	 * @return the {@code URL} the OpenID Provider asserts as its Issuer Identifier
 	 */
 	default URL getIssuer() {
-		return this.getClaimAsURL(OidcProviderMetadataClaimNames.ISSUER);
+		return getClaimAsURL(OidcProviderMetadataClaimNames.ISSUER);
 	}
 
 	/**
-	 * Returns the URL of the OAuth 2.0 Authorization Endpoint {@code (authorization_endpoint)}.
+	 * Returns the {@code URL} of the OAuth 2.0 Authorization Endpoint {@code (authorization_endpoint)}.
 	 *
-	 * @return the URL of the OAuth 2.0 Authorization Endpoint
+	 * @return the {@code URL} of the OAuth 2.0 Authorization Endpoint
 	 */
 	default URL getAuthorizationEndpoint() {
-		return this.getClaimAsURL(OidcProviderMetadataClaimNames.AUTHORIZATION_ENDPOINT);
+		return getClaimAsURL(OidcProviderMetadataClaimNames.AUTHORIZATION_ENDPOINT);
 	}
 
 	/**
-	 * Returns the URL of the OAuth 2.0 Token Endpoint {@code (token_endpoint)}.
+	 * Returns the {@code URL} of the OAuth 2.0 Token Endpoint {@code (token_endpoint)}.
 	 *
-	 * @return the URL of the OAuth 2.0 Token Endpoint
+	 * @return the {@code URL} of the OAuth 2.0 Token Endpoint
 	 */
 	default URL getTokenEndpoint() {
-		return this.getClaimAsURL(OidcProviderMetadataClaimNames.TOKEN_ENDPOINT);
+		return getClaimAsURL(OidcProviderMetadataClaimNames.TOKEN_ENDPOINT);
 	}
 
 	/**
@@ -67,16 +67,16 @@ public interface OidcProviderMetadataClaimAccessor extends ClaimAccessor {
 	 * @return the client authentication methods supported by the OAuth 2.0 Token Endpoint
 	 */
 	default List<String> getTokenEndpointAuthenticationMethods() {
-		return this.getClaimAsStringList(OidcProviderMetadataClaimNames.TOKEN_ENDPOINT_AUTH_METHODS_SUPPORTED);
+		return getClaimAsStringList(OidcProviderMetadataClaimNames.TOKEN_ENDPOINT_AUTH_METHODS_SUPPORTED);
 	}
 
 	/**
-	 * Returns the URL of the JSON Web Key Set {@code (jwks_uri)}.
+	 * Returns the {@code URL} of the JSON Web Key Set {@code (jwks_uri)}.
 	 *
-	 * @return the URL of the JSON Web Key Set
+	 * @return the {@code URL} of the JSON Web Key Set
 	 */
 	default URL getJwksUri() {
-		return this.getClaimAsURL(OidcProviderMetadataClaimNames.JWKS_URI);
+		return getClaimAsURL(OidcProviderMetadataClaimNames.JWKS_URI);
 	}
 
 	/**
@@ -85,7 +85,7 @@ public interface OidcProviderMetadataClaimAccessor extends ClaimAccessor {
 	 * @return the OAuth 2.0 {@code response_type} values supported
 	 */
 	default List<String> getResponseTypes() {
-		return this.getClaimAsStringList(OidcProviderMetadataClaimNames.RESPONSE_TYPES_SUPPORTED);
+		return getClaimAsStringList(OidcProviderMetadataClaimNames.RESPONSE_TYPES_SUPPORTED);
 	}
 
 	/**
@@ -94,7 +94,7 @@ public interface OidcProviderMetadataClaimAccessor extends ClaimAccessor {
 	 * @return the OAuth 2.0 {@code grant_type} values supported
 	 */
 	default List<String> getGrantTypes() {
-		return this.getClaimAsStringList(OidcProviderMetadataClaimNames.GRANT_TYPES_SUPPORTED);
+		return getClaimAsStringList(OidcProviderMetadataClaimNames.GRANT_TYPES_SUPPORTED);
 	}
 
 	/**
@@ -103,7 +103,7 @@ public interface OidcProviderMetadataClaimAccessor extends ClaimAccessor {
 	 * @return the Subject Identifier types supported
 	 */
 	default List<String> getSubjectTypes() {
-		return this.getClaimAsStringList(OidcProviderMetadataClaimNames.SUBJECT_TYPES_SUPPORTED);
+		return getClaimAsStringList(OidcProviderMetadataClaimNames.SUBJECT_TYPES_SUPPORTED);
 	}
 
 	/**
@@ -112,7 +112,7 @@ public interface OidcProviderMetadataClaimAccessor extends ClaimAccessor {
 	 * @return the OAuth 2.0 {@code scope} values supported
 	 */
 	default List<String> getScopes() {
-		return this.getClaimAsStringList(OidcProviderMetadataClaimNames.SCOPES_SUPPORTED);
+		return getClaimAsStringList(OidcProviderMetadataClaimNames.SCOPES_SUPPORTED);
 	}
 
 }

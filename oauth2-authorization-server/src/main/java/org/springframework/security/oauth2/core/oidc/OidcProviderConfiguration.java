@@ -23,9 +23,9 @@ import java.net.URI;
 import java.net.URL;
 import java.util.Collections;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Consumer;
 
 /**
@@ -39,13 +39,11 @@ import java.util.function.Consumer;
  * @see OidcProviderMetadataClaimAccessor
  * @see <a target="_blank" href="https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderConfigurationResponse">4.2. OpenID Provider Configuration Response</a>
  */
-public class OidcProviderConfiguration implements OidcProviderMetadataClaimAccessor, Serializable {
+public final class OidcProviderConfiguration implements OidcProviderMetadataClaimAccessor, Serializable {
 	private static final long serialVersionUID = Version.SERIAL_VERSION_UID;
-
 	private final Map<String, Object> claims;
 
 	private OidcProviderConfiguration(Map<String, Object> claims) {
-		Assert.notEmpty(claims, "claims cannot be empty");
 		this.claims = Collections.unmodifiableMap(new LinkedHashMap<>(claims));
 	}
 
@@ -60,14 +58,13 @@ public class OidcProviderConfiguration implements OidcProviderMetadataClaimAcces
 	}
 
 	/**
-	 * Constructs a new empty {@link Builder}.
+	 * Constructs a new {@link Builder} with empty claims.
 	 *
 	 * @return the {@link Builder}
 	 */
 	public static Builder withClaims() {
 		return new Builder();
 	}
-
 
 	/**
 	 * Constructs a new {@link Builder} with the provided claims.
@@ -82,13 +79,8 @@ public class OidcProviderConfiguration implements OidcProviderMetadataClaimAcces
 
 	/**
 	 * Helps configure an {@link OidcProviderConfiguration}
-	 *
-	 * @author Daniel Garnier-Moiroux
-	 * @since 0.1.0
-	 * @see <a target="_blank" href="https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderMetadata">OpenID Connect Discovery 1.0</a>
-	 * for required claims
 	 */
-	public static final class Builder {
+	public static class Builder {
 		private final Map<String, Object> claims = new LinkedHashMap<>();
 
 		private Builder() {
@@ -97,7 +89,7 @@ public class OidcProviderConfiguration implements OidcProviderMetadataClaimAcces
 		/**
 		 * Use this {@code issuer} in the resulting {@link OidcProviderConfiguration}, REQUIRED.
 		 *
-		 * @param issuer the issuer URI
+		 * @param issuer the URL of the OpenID Provider's Issuer Identifier
 		 * @return the {@link Builder} for further configuration
 		 */
 		public Builder issuer(String issuer) {
@@ -125,6 +117,29 @@ public class OidcProviderConfiguration implements OidcProviderMetadataClaimAcces
 		}
 
 		/**
+		 * Add this Authentication Method to the collection of {@code token_endpoint_auth_methods_supported}
+		 * in the resulting {@link OidcProviderConfiguration}, OPTIONAL.
+		 *
+		 * @param authenticationMethod the OAuth 2.0 Authentication Method supported by the Token endpoint
+		 * @return the {@link Builder} for further configuration
+		 */
+		public Builder tokenEndpointAuthenticationMethod(String authenticationMethod) {
+			addClaimToClaimList(OidcProviderMetadataClaimNames.TOKEN_ENDPOINT_AUTH_METHODS_SUPPORTED, authenticationMethod);
+			return this;
+		}
+
+		/**
+		 * A {@code Consumer} of the Token Endpoint Authentication Method(s) allowing the ability to add, replace, or remove.
+		 *
+		 * @param authenticationMethodsConsumer a {@code Consumer} of the Token Endpoint Authentication Method(s)
+		 * @return the {@link Builder} for further configuration
+		 */
+		public Builder tokenEndpointAuthenticationMethods(Consumer<List<String>> authenticationMethodsConsumer) {
+			acceptClaimValues(OidcProviderMetadataClaimNames.TOKEN_ENDPOINT_AUTH_METHODS_SUPPORTED, authenticationMethodsConsumer);
+			return this;
+		}
+
+		/**
 		 * Use this {@code jwks_uri} in the resulting {@link OidcProviderConfiguration}, REQUIRED.
 		 *
 		 * @param jwksUri the URL of the OpenID Provider's JSON Web Key Set document
@@ -138,11 +153,11 @@ public class OidcProviderConfiguration implements OidcProviderMetadataClaimAcces
 		 * Add this Response Type to the collection of {@code response_types_supported} in the resulting
 		 * {@link OidcProviderConfiguration}, REQUIRED.
 		 *
-		 * @param responseType the OAuth 2.0 {@code response_type} values that the OpenID Provider supports
+		 * @param responseType the OAuth 2.0 {@code response_type} value that the OpenID Provider supports
 		 * @return the {@link Builder} for further configuration
 		 */
 		public Builder responseType(String responseType) {
-			addClaimToClaimSet(OidcProviderMetadataClaimNames.RESPONSE_TYPES_SUPPORTED, responseType);
+			addClaimToClaimList(OidcProviderMetadataClaimNames.RESPONSE_TYPES_SUPPORTED, responseType);
 			return this;
 		}
 
@@ -152,54 +167,8 @@ public class OidcProviderConfiguration implements OidcProviderMetadataClaimAcces
 		 * @param responseTypesConsumer a {@code Consumer} of the Response Type(s)
 		 * @return the {@link Builder} for further configuration
 		 */
-		public Builder responseTypes(Consumer<Set<String>> responseTypesConsumer) {
-			applyToClaim(OidcProviderMetadataClaimNames.RESPONSE_TYPES_SUPPORTED, responseTypesConsumer);
-			return this;
-		}
-
-		/**
-		 * Add this Subject Type to the collection of {@code subject_types_supported} in the resulting
-		 * {@link OidcProviderConfiguration}, REQUIRED.
-		 *
-		 * @param subjectType the Subject Identifiers that the OpenID Provider supports
-		 * @return the {@link Builder} for further configuration
-		 */
-		public Builder subjectType(String subjectType) {
-			addClaimToClaimSet(OidcProviderMetadataClaimNames.SUBJECT_TYPES_SUPPORTED, subjectType);
-			return this;
-		}
-
-		/**
-		 * A {@code Consumer} of the Subject Types(s) allowing the ability to add, replace, or remove.
-		 *
-		 * @param subjectTypesConsumer a {@code Consumer} of the Subject Types(s)
-		 * @return the {@link Builder} for further configuration
-		 */
-		public Builder subjectTypes(Consumer<Set<String>> subjectTypesConsumer) {
-			applyToClaim(OidcProviderMetadataClaimNames.SUBJECT_TYPES_SUPPORTED, subjectTypesConsumer);
-			return this;
-		}
-
-		/**
-		 * Add this Scope to the collection of {@code scopes_supported} in the resulting
-		 * {@link OidcProviderConfiguration}, RECOMMENDED.
-		 *
-		 * @param scope the OAuth 2.0 {@code scopes} values that the OpenID Provider supports
-		 * @return the {@link Builder} for further configuration
-		 */
-		public Builder scope(String scope) {
-			addClaimToClaimSet(OidcProviderMetadataClaimNames.SCOPES_SUPPORTED, scope);
-			return this;
-		}
-
-		/**
-		 * A {@code Consumer} of the Scopes(s) allowing the ability to add, replace, or remove.
-		 *
-		 * @param scopesConsumer a {@code Consumer} of the Scopes(s)
-		 * @return the {@link Builder} for further configuration
-		 */
-		public Builder scopes(Consumer<Set<String>> scopesConsumer) {
-			applyToClaim(OidcProviderMetadataClaimNames.SCOPES_SUPPORTED, scopesConsumer);
+		public Builder responseTypes(Consumer<List<String>> responseTypesConsumer) {
+			acceptClaimValues(OidcProviderMetadataClaimNames.RESPONSE_TYPES_SUPPORTED, responseTypesConsumer);
 			return this;
 		}
 
@@ -207,11 +176,11 @@ public class OidcProviderConfiguration implements OidcProviderMetadataClaimAcces
 		 * Add this Grant Type to the collection of {@code grant_types_supported} in the resulting
 		 * {@link OidcProviderConfiguration}, OPTIONAL.
 		 *
-		 * @param grantType the OAuth 2.0 {@code grant_type} values that the OpenID Provider supports
+		 * @param grantType the OAuth 2.0 {@code grant_type} value that the OpenID Provider supports
 		 * @return the {@link Builder} for further configuration
 		 */
 		public Builder grantType(String grantType) {
-			addClaimToClaimSet(OidcProviderMetadataClaimNames.GRANT_TYPES_SUPPORTED, grantType);
+			addClaimToClaimList(OidcProviderMetadataClaimNames.GRANT_TYPES_SUPPORTED, grantType);
 			return this;
 		}
 
@@ -221,39 +190,62 @@ public class OidcProviderConfiguration implements OidcProviderMetadataClaimAcces
 		 * @param grantTypesConsumer a {@code Consumer} of the Grant Type(s)
 		 * @return the {@link Builder} for further configuration
 		 */
-		public Builder grantTypes(Consumer<Set<String>> grantTypesConsumer) {
-			applyToClaim(OidcProviderMetadataClaimNames.GRANT_TYPES_SUPPORTED, grantTypesConsumer);
+		public Builder grantTypes(Consumer<List<String>> grantTypesConsumer) {
+			acceptClaimValues(OidcProviderMetadataClaimNames.GRANT_TYPES_SUPPORTED, grantTypesConsumer);
 			return this;
 		}
 
 		/**
-		 * Add this Authentication Method to the collection of {@code token_endpoint_auth_methods_supported}
-		 * in the resulting {@link OidcProviderConfiguration}, OPTIONAL.
+		 * Add this Subject Type to the collection of {@code subject_types_supported} in the resulting
+		 * {@link OidcProviderConfiguration}, REQUIRED.
 		 *
-		 * @param authenticationMethod the OAuth 2.0 Authentication Method supported by the Token endpoint
+		 * @param subjectType the Subject Type that the OpenID Provider supports
 		 * @return the {@link Builder} for further configuration
 		 */
-		public Builder tokenEndpointAuthenticationMethod(String authenticationMethod) {
-			addClaimToClaimSet(OidcProviderMetadataClaimNames.TOKEN_ENDPOINT_AUTH_METHODS_SUPPORTED, authenticationMethod);
+		public Builder subjectType(String subjectType) {
+			addClaimToClaimList(OidcProviderMetadataClaimNames.SUBJECT_TYPES_SUPPORTED, subjectType);
 			return this;
 		}
 
 		/**
-		 * A {@code Consumer} of the Token Endpoint Authentication Method(s) allowing the ability to add, replace, or remove.
+		 * A {@code Consumer} of the Subject Types(s) allowing the ability to add, replace, or remove.
 		 *
-		 * @param authenticationMethodsConsumer a {@code Consumer} of the Token Endpoint Authentication Method(s)
+		 * @param subjectTypesConsumer a {@code Consumer} of the Subject Types(s)
 		 * @return the {@link Builder} for further configuration
 		 */
-		public Builder tokenEndpointAuthenticationMethods(Consumer<Set<String>> authenticationMethodsConsumer) {
-			applyToClaim(OidcProviderMetadataClaimNames.TOKEN_ENDPOINT_AUTH_METHODS_SUPPORTED, authenticationMethodsConsumer);
+		public Builder subjectTypes(Consumer<List<String>> subjectTypesConsumer) {
+			acceptClaimValues(OidcProviderMetadataClaimNames.SUBJECT_TYPES_SUPPORTED, subjectTypesConsumer);
 			return this;
 		}
 
 		/**
-		 * Use this claim in the resulting {@link OidcProviderConfiguration}
+		 * Add this Scope to the collection of {@code scopes_supported} in the resulting
+		 * {@link OidcProviderConfiguration}, RECOMMENDED.
 		 *
-		 * @param name The claim name
-		 * @param value The claim value
+		 * @param scope the OAuth 2.0 {@code scope} value that the OpenID Provider supports
+		 * @return the {@link Builder} for further configuration
+		 */
+		public Builder scope(String scope) {
+			addClaimToClaimList(OidcProviderMetadataClaimNames.SCOPES_SUPPORTED, scope);
+			return this;
+		}
+
+		/**
+		 * A {@code Consumer} of the Scopes(s) allowing the ability to add, replace, or remove.
+		 *
+		 * @param scopesConsumer a {@code Consumer} of the Scopes(s)
+		 * @return the {@link Builder} for further configuration
+		 */
+		public Builder scopes(Consumer<List<String>> scopesConsumer) {
+			acceptClaimValues(OidcProviderMetadataClaimNames.SCOPES_SUPPORTED, scopesConsumer);
+			return this;
+		}
+
+		/**
+		 * Use this claim in the resulting {@link OidcProviderConfiguration}.
+		 *
+		 * @param name the claim name
+		 * @param value the claim value
 		 * @return the {@link Builder} for further configuration
 		 */
 		public Builder claim(String name, Object value) {
@@ -267,7 +259,7 @@ public class OidcProviderConfiguration implements OidcProviderMetadataClaimAcces
 		 * Provides access to every {@link #claim(String, Object)} declared so far with
 		 * the possibility to add, replace, or remove.
 		 *
-		 * @param claimsConsumer the consumer
+		 * @param claimsConsumer a {@code Consumer} of the claims
 		 * @return the {@link Builder} for further configurations
 		 */
 		public Builder claims(Consumer<Map<String, Object>> claimsConsumer) {
@@ -276,15 +268,13 @@ public class OidcProviderConfiguration implements OidcProviderMetadataClaimAcces
 		}
 
 		/**
-		 * Validate the claims and build the {@link OidcProviderConfiguration}. The following claims are REQUIRED:
-		 * - issuer
-		 * - authorization_endpoint
-		 * - token_endpoint
-		 * - jwks_uri
-		 * - response_types_supported
-		 * - subject_types_supported
+		 * Validate the claims and build the {@link OidcProviderConfiguration}.
+		 * <p>
+		 * The following claims are REQUIRED:
+		 * {@code issuer}, {@code authorization_endpoint}, {@code token_endpoint}, {@code jwks_uri},
+		 * {@code response_types_supported} and {@code subject_types_supported}.
 		 *
-		 * @return The constructed {@link OidcProviderConfiguration}
+		 * @return the {@link OidcProviderConfiguration}
 		 */
 		public OidcProviderConfiguration build() {
 			validateClaims();
@@ -298,34 +288,43 @@ public class OidcProviderConfiguration implements OidcProviderMetadataClaimAcces
 			validateURL(this.claims.get(OidcProviderMetadataClaimNames.AUTHORIZATION_ENDPOINT), "authorizationEndpoint must be a valid URL");
 			Assert.notNull(this.claims.get(OidcProviderMetadataClaimNames.TOKEN_ENDPOINT), "tokenEndpoint cannot be null");
 			validateURL(this.claims.get(OidcProviderMetadataClaimNames.TOKEN_ENDPOINT), "tokenEndpoint must be a valid URL");
-			Assert.notNull(this.claims.get(OidcProviderMetadataClaimNames.JWKS_URI), "jwkSetUri cannot be null");
-			validateURL(this.claims.get(OidcProviderMetadataClaimNames.JWKS_URI), "jwkSetUri must be a valid URL");
-			Assert.notEmpty((Set<?>) this.claims.get(OidcProviderMetadataClaimNames.SUBJECT_TYPES_SUPPORTED), "subjectTypes cannot be empty");
-			Assert.notEmpty((Set<?>) this.claims.get(OidcProviderMetadataClaimNames.RESPONSE_TYPES_SUPPORTED), "responseTypes cannot be empty");
+			Assert.notNull(this.claims.get(OidcProviderMetadataClaimNames.JWKS_URI), "jwksUri cannot be null");
+			validateURL(this.claims.get(OidcProviderMetadataClaimNames.JWKS_URI), "jwksUri must be a valid URL");
+			Assert.notNull(this.claims.get(OidcProviderMetadataClaimNames.RESPONSE_TYPES_SUPPORTED), "responseTypes cannot be null");
+			Assert.isInstanceOf(List.class, this.claims.get(OidcProviderMetadataClaimNames.RESPONSE_TYPES_SUPPORTED), "responseTypes must be of type List");
+			Assert.notEmpty((List<?>) this.claims.get(OidcProviderMetadataClaimNames.RESPONSE_TYPES_SUPPORTED), "responseTypes cannot be empty");
+			Assert.notNull(this.claims.get(OidcProviderMetadataClaimNames.SUBJECT_TYPES_SUPPORTED), "subjectTypes cannot be null");
+			Assert.isInstanceOf(List.class, this.claims.get(OidcProviderMetadataClaimNames.SUBJECT_TYPES_SUPPORTED), "subjectTypes must be of type List");
+			Assert.notEmpty((List<?>) this.claims.get(OidcProviderMetadataClaimNames.SUBJECT_TYPES_SUPPORTED), "subjectTypes cannot be empty");
 		}
 
-		private void validateURL(Object url, String errorMessage) {
-			if (url.getClass().isAssignableFrom(URL.class)) return;
+		private static void validateURL(Object url, String errorMessage) {
+			if (URL.class.isAssignableFrom(url.getClass())) {
+				return;
+			}
 
 			try {
 				new URI(url.toString()).toURL();
-			} catch (Exception e) {
-				throw new IllegalArgumentException(errorMessage);
+			} catch (Exception ex) {
+				throw new IllegalArgumentException(errorMessage, ex);
 			}
-
 		}
 
 		@SuppressWarnings("unchecked")
-		private void addClaimToClaimSet(String name, String value) {
-			this.claims.putIfAbsent(name, new LinkedHashSet<String>());
-			((Set<String>) this.claims.get(name)).add(value);
+		private void addClaimToClaimList(String name, String value) {
+			Assert.hasText(name, "name cannot be empty");
+			Assert.notNull(value, "value cannot be null");
+			this.claims.computeIfAbsent(name, k -> new LinkedList<String>());
+			((List<String>) this.claims.get(name)).add(value);
 		}
 
 		@SuppressWarnings("unchecked")
-		private void applyToClaim(String name, Consumer<Set<String>> consumer) {
-			this.claims.putIfAbsent(name, new LinkedHashSet<String>());
-			Set<String> values = (Set<String>) this.claims.get(name);
-			consumer.accept(values);
+		private void acceptClaimValues(String name, Consumer<List<String>> valuesConsumer) {
+			Assert.hasText(name, "name cannot be empty");
+			Assert.notNull(valuesConsumer, "valuesConsumer cannot be null");
+			this.claims.computeIfAbsent(name, k -> new LinkedList<String>());
+			List<String> values = (List<String>) this.claims.get(name);
+			valuesConsumer.accept(values);
 		}
 	}
 }

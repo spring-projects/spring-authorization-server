@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.security.oauth2.core.http.converter;
+package org.springframework.security.oauth2.core.oidc.http.converter;
 
 import org.junit.Test;
 import org.springframework.core.convert.converter.Converter;
@@ -24,7 +24,6 @@ import org.springframework.mock.http.MockHttpOutputMessage;
 import org.springframework.mock.http.client.MockClientHttpResponse;
 import org.springframework.security.oauth2.core.oidc.OidcProviderConfiguration;
 
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Map;
@@ -48,17 +47,17 @@ public class OidcProviderConfigurationHttpMessageConverterTests {
 	}
 
 	@Test
-	public void setProviderConfigurationParametersConverterWhenConverterIsNullThenThrowIllegalArgumentException() {
+	public void setProviderConfigurationParametersConverterWhenNullThenThrowIllegalArgumentException() {
 		assertThatIllegalArgumentException().isThrownBy(() -> this.messageConverter.setProviderConfigurationParametersConverter(null));
 	}
 
 	@Test
-	public void setProviderConfigurationConverterWhenConverterIsNullThenThrowIllegalArgumentException() {
+	public void setProviderConfigurationConverterWhenNullThenThrowIllegalArgumentException() {
 		assertThatIllegalArgumentException().isThrownBy(() -> this.messageConverter.setProviderConfigurationConverter(null));
 	}
 
 	@Test
-	public void readInternalWhenSuccessfulProviderConfigurationOnlyRequiredParametersThenReadOidcProviderConfiguration() throws Exception {
+	public void readInternalWhenRequiredParametersThenSuccess() throws Exception {
 		// @formatter:off
 		String providerConfigurationResponse = "{\n"
 				+ "		\"issuer\": \"https://example.com/issuer1\",\n"
@@ -85,7 +84,7 @@ public class OidcProviderConfigurationHttpMessageConverterTests {
 	}
 
 	@Test
-	public void readInternalWhenSuccessfulProviderConfigurationThenReadOidcProviderConfiguration() throws Exception {
+	public void readInternalWhenValidParametersThenSuccess() throws Exception {
 		// @formatter:off
 		String providerConfigurationResponse = "{\n"
 				+ "		\"issuer\": \"https://example.com/issuer1\",\n"
@@ -96,7 +95,7 @@ public class OidcProviderConfigurationHttpMessageConverterTests {
 				+ "		\"response_types_supported\": [\"code\"],\n"
 				+ "		\"grant_types_supported\": [\"authorization_code\", \"client_credentials\"],\n"
 				+ "		\"subject_types_supported\": [\"public\"],\n"
-				+ "		\"token_endpoint_auth_methods_supported\": [\"basic\"],\n"
+				+ "		\"token_endpoint_auth_methods_supported\": [\"client_secret_basic\"],\n"
 				+ "		\"custom_claim\": \"value\",\n"
 				+ "		\"custom_collection_claim\": [\"value1\", \"value2\"]\n"
 				+ "}\n";
@@ -113,8 +112,8 @@ public class OidcProviderConfigurationHttpMessageConverterTests {
 		assertThat(providerConfiguration.getResponseTypes()).containsExactly("code");
 		assertThat(providerConfiguration.getGrantTypes()).containsExactlyInAnyOrder("authorization_code", "client_credentials");
 		assertThat(providerConfiguration.getSubjectTypes()).containsExactly("public");
-		assertThat(providerConfiguration.getTokenEndpointAuthenticationMethods()).containsExactly("basic");
-		assertThat(providerConfiguration.getClaimAsString("custom_claim")).isEqualTo("value");
+		assertThat(providerConfiguration.getTokenEndpointAuthenticationMethods()).containsExactly("client_secret_basic");
+		assertThat(providerConfiguration.<String>getClaim("custom_claim")).isEqualTo("value");
 		assertThat(providerConfiguration.getClaimAsStringList("custom_collection_claim")).containsExactlyInAnyOrder("value1", "value2");
 	}
 
@@ -144,7 +143,7 @@ public class OidcProviderConfigurationHttpMessageConverterTests {
 	}
 
 	@Test
-	public void writeInternalWhenOidcProviderConfigurationThenWriteTokenResponse() throws Exception {
+	public void writeInternalWhenProviderConfigurationThenSuccess() {
 		OidcProviderConfiguration providerConfiguration =
 				OidcProviderConfiguration.withClaims()
 						.issuer("https://example.com/issuer1")
@@ -156,7 +155,7 @@ public class OidcProviderConfigurationHttpMessageConverterTests {
 						.grantType("authorization_code")
 						.grantType("client_credentials")
 						.subjectType("public")
-						.tokenEndpointAuthenticationMethod("basic")
+						.tokenEndpointAuthenticationMethod("client_secret_basic")
 						.claim("custom_claim", "value")
 						.claim("custom_collection_claim", Arrays.asList("value1", "value2"))
 						.build();
@@ -173,14 +172,13 @@ public class OidcProviderConfigurationHttpMessageConverterTests {
 		assertThat(providerConfigurationResponse).contains("\"response_types_supported\":[\"code\"]");
 		assertThat(providerConfigurationResponse).contains("\"grant_types_supported\":[\"authorization_code\",\"client_credentials\"]");
 		assertThat(providerConfigurationResponse).contains("\"subject_types_supported\":[\"public\"]");
-		assertThat(providerConfigurationResponse).contains("\"token_endpoint_auth_methods_supported\":[\"basic\"]");
+		assertThat(providerConfigurationResponse).contains("\"token_endpoint_auth_methods_supported\":[\"client_secret_basic\"]");
 		assertThat(providerConfigurationResponse).contains("\"custom_claim\":\"value\"");
 		assertThat(providerConfigurationResponse).contains("\"custom_collection_claim\":[\"value1\",\"value2\"]");
 	}
 
 	@Test
-	@SuppressWarnings("unchecked")
-	public void writeInternalWhenWriteFailsThenThrowsException() throws MalformedURLException {
+	public void writeInternalWhenWriteFailsThenThrowsException() {
 		String errorMessage = "this is not a valid converter";
 		Converter<OidcProviderConfiguration, Map<String, Object>> failingConverter =
 				source -> {
@@ -190,10 +188,10 @@ public class OidcProviderConfigurationHttpMessageConverterTests {
 
 		OidcProviderConfiguration providerConfiguration =
 				OidcProviderConfiguration.withClaims()
-						.issuer("https://example.com")
-						.authorizationEndpoint("https://example.com")
-						.tokenEndpoint("https://example.com")
-						.jwksUri("https://example.com")
+						.issuer("https://example.com/issuer1")
+						.authorizationEndpoint("https://example.com/issuer1/oauth2/authorize")
+						.tokenEndpoint("https://example.com/issuer1/oauth2/token")
+						.jwksUri("https://example.com/issuer1/oauth2/jwks")
 						.responseType("code")
 						.subjectType("public")
 						.build();

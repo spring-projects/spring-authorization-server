@@ -24,13 +24,11 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
 import org.springframework.security.config.test.SpringTestRule;
 import org.springframework.security.crypto.key.CryptoKeySource;
-import org.springframework.security.crypto.key.StaticKeyGeneratingCryptoKeySource;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.config.ProviderSettings;
 import org.springframework.security.oauth2.server.authorization.web.OidcProviderConfigurationEndpointFilter;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -40,7 +38,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Integration tests for the OpenID Connect.
+ * Integration tests for OpenID Connect 1.0.
  *
  * @author Daniel Garnier-Moiroux
  */
@@ -54,17 +52,17 @@ public class OidcTests {
 	private MockMvc mvc;
 
 	@Test
-	public void requestWhenIssuerSetAndOpenIDProviderConfigurationRequestThenReturnProviderConfigurationResponse() throws Exception {
+	public void requestWhenConfigurationRequestAndIssuerSetThenReturnConfigurationResponse() throws Exception {
 		this.spring.register(AuthorizationServerConfigurationWithIssuer.class).autowire();
 
-		this.mvc.perform(MockMvcRequestBuilders.get(OidcProviderConfigurationEndpointFilter.DEFAULT_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI))
+		this.mvc.perform(get(OidcProviderConfigurationEndpointFilter.DEFAULT_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI))
 				.andExpect(status().is2xxSuccessful())
 				.andExpect(jsonPath("issuer").value(issuerUrl))
 				.andReturn();
 	}
 
 	@Test
-	public void requestWhenIssuerNotSetAndOpenIDProviderConfigurationRequestThenRedirectsToLogin() throws Exception {
+	public void requestWhenConfigurationRequestAndIssuerNotSetThenRedirectToLogin() throws Exception {
 		this.spring.register(AuthorizationServerConfiguration.class).autowire();
 
 		MvcResult mvcResult = this.mvc.perform(get(OidcProviderConfigurationEndpointFilter.DEFAULT_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI))
@@ -74,16 +72,16 @@ public class OidcTests {
 	}
 
 	@Test
-	public void requestWhenIssuerNotValidUrlThenThrowException() {
+	public void loadContextWhenIssuerNotValidUrlThenThrowException() {
 		assertThatThrownBy(
-				() -> this.spring.register(AuthorizationServerConfigurationWithInvalidUrlIssuer.class).autowire()
+				() -> this.spring.register(AuthorizationServerConfigurationWithInvalidIssuerUrl.class).autowire()
 		);
 	}
 
 	@Test
-	public void requestWhenIssuerNotValidUriThenThrowException() {
+	public void loadContextWhenIssuerNotValidUriThenThrowException() {
 		assertThatThrownBy(
-				() -> this.spring.register(AuthorizationServerConfigurationWithInvalidUriIssuer.class).autowire()
+				() -> this.spring.register(AuthorizationServerConfigurationWithInvalidIssuerUri.class).autowire()
 		);
 	}
 
@@ -98,20 +96,15 @@ public class OidcTests {
 
 		@Bean
 		CryptoKeySource keySource() {
-			return new StaticKeyGeneratingCryptoKeySource();
-		}
-
-		@Bean
-		ProviderSettings providerSettings() {
-			return new ProviderSettings();
+			return mock(CryptoKeySource.class);
 		}
 	}
 
 	@EnableWebSecurity
 	@Import(OAuth2AuthorizationServerConfiguration.class)
 	static class AuthorizationServerConfigurationWithIssuer extends AuthorizationServerConfiguration {
+
 		@Bean
-		@Override
 		ProviderSettings providerSettings() {
 			return new ProviderSettings().issuer(issuerUrl);
 		}
@@ -119,9 +112,9 @@ public class OidcTests {
 
 	@EnableWebSecurity
 	@Import(OAuth2AuthorizationServerConfiguration.class)
-	static class AuthorizationServerConfigurationWithInvalidUrlIssuer extends AuthorizationServerConfiguration {
+	static class AuthorizationServerConfigurationWithInvalidIssuerUrl extends AuthorizationServerConfiguration {
+
 		@Bean
-		@Override
 		ProviderSettings providerSettings() {
 			return new ProviderSettings().issuer("urn:example");
 		}
@@ -129,9 +122,9 @@ public class OidcTests {
 
 	@EnableWebSecurity
 	@Import(OAuth2AuthorizationServerConfiguration.class)
-	static class AuthorizationServerConfigurationWithInvalidUriIssuer extends AuthorizationServerConfiguration {
+	static class AuthorizationServerConfigurationWithInvalidIssuerUri extends AuthorizationServerConfiguration {
+
 		@Bean
-		@Override
 		ProviderSettings providerSettings() {
 			return new ProviderSettings().issuer("https://not a valid uri");
 		}

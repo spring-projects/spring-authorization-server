@@ -20,9 +20,9 @@ import org.springframework.http.MediaType;
 import org.springframework.http.server.ServletServerHttpResponse;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationResponseType;
-import org.springframework.security.oauth2.core.http.converter.OidcProviderConfigurationHttpMessageConverter;
 import org.springframework.security.oauth2.core.oidc.OidcProviderConfiguration;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
+import org.springframework.security.oauth2.core.oidc.http.converter.OidcProviderConfigurationHttpMessageConverter;
 import org.springframework.security.oauth2.server.authorization.config.ProviderSettings;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
@@ -37,12 +37,13 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 /**
- * A {@code Filter} that processes OpenID Provider Configuration Request.
+ * A {@code Filter} that processes OpenID Provider Configuration Requests.
  *
  * @author Daniel Garnier-Moiroux
  * @since 0.1.0
+ * @see OidcProviderConfiguration
  * @see ProviderSettings
- * @see <a target="_blank" href="https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderConfig">OpenID Connect Discovery 1.0</a>
+ * @see <a target="_blank" href="https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderConfigurationRequest">4.1. OpenID Provider Configuration Request</a>
  */
 public class OidcProviderConfigurationEndpointFilter extends OncePerRequestFilter {
 	/**
@@ -50,22 +51,24 @@ public class OidcProviderConfigurationEndpointFilter extends OncePerRequestFilte
 	 */
 	public static final String DEFAULT_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI = "/.well-known/openid-configuration";
 
-	private final RequestMatcher requestMatcher;
 	private final ProviderSettings providerSettings;
-	private final OidcProviderConfigurationHttpMessageConverter providerConfigurationHttpMessageConverter = new OidcProviderConfigurationHttpMessageConverter();
+	private final RequestMatcher requestMatcher;
+	private final OidcProviderConfigurationHttpMessageConverter providerConfigurationHttpMessageConverter =
+			new OidcProviderConfigurationHttpMessageConverter();
 
 	public OidcProviderConfigurationEndpointFilter(ProviderSettings providerSettings) {
 		Assert.notNull(providerSettings, "providerSettings cannot be null");
+		this.providerSettings = providerSettings;
 		this.requestMatcher = new AntPathRequestMatcher(
 				DEFAULT_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI,
 				HttpMethod.GET.name()
 		);
-		this.providerSettings = providerSettings;
 	}
 
 	@Override
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
 			throws ServletException, IOException {
+
 		if (!this.requestMatcher.matches(request)) {
 			filterChain.doFilter(request, response);
 			return;
@@ -75,20 +78,23 @@ public class OidcProviderConfigurationEndpointFilter extends OncePerRequestFilte
 				.issuer(this.providerSettings.issuer())
 				.authorizationEndpoint(asUrl(this.providerSettings.issuer(), this.providerSettings.authorizationEndpoint()))
 				.tokenEndpoint(asUrl(this.providerSettings.issuer(), this.providerSettings.tokenEndpoint()))
-				.jwksUri(asUrl(this.providerSettings.issuer(), this.providerSettings.jwkSetEndpoint()))
-				.subjectType("public")
+				.tokenEndpointAuthenticationMethod("client_secret_basic")	// TODO: Use ClientAuthenticationMethod.CLIENT_SECRET_BASIC in Spring Security 5.5.0
+				.tokenEndpointAuthenticationMethod("client_secret_post")	// TODO: Use ClientAuthenticationMethod.CLIENT_SECRET_POST in Spring Security 5.5.0
+				.jwksUri(asUrl(this.providerSettings.issuer(), this.providerSettings.jwksEndpoint()))
 				.responseType(OAuth2AuthorizationResponseType.CODE.getValue())
-				.scope(OidcScopes.OPENID)
 				.grantType(AuthorizationGrantType.AUTHORIZATION_CODE.getValue())
 				.grantType(AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
-				.tokenEndpointAuthenticationMethod("client_secret_basic") // TODO: move this ClientAuthenticationMethod
+				.grantType(AuthorizationGrantType.REFRESH_TOKEN.getValue())
+				.subjectType("public")
+				.scope(OidcScopes.OPENID)
 				.build();
 
-		ServletServerHttpResponse resp = new ServletServerHttpResponse(response);
-		this.providerConfigurationHttpMessageConverter.write(providerConfiguration, MediaType.APPLICATION_JSON, resp);
+		ServletServerHttpResponse httpResponse = new ServletServerHttpResponse(response);
+		this.providerConfigurationHttpMessageConverter.write(
+				providerConfiguration, MediaType.APPLICATION_JSON, httpResponse);
 	}
 
-	private String asUrl(String issuer, String endpoint) {
+	private static String asUrl(String issuer, String endpoint) {
 		return UriComponentsBuilder.fromUriString(issuer).path(endpoint).build().toUriString();
 	}
 }

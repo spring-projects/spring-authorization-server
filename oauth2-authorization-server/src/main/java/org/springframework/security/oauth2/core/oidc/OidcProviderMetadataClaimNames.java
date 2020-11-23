@@ -16,7 +16,7 @@
 package org.springframework.security.oauth2.core.oidc;
 
 /**
- * The names of the "claims" defined by the OpenID Connect Discovery 1.0 that can be returned
+ * The names of the "claims" defined by OpenID Connect Discovery 1.0 that can be returned
  * in the OpenID Provider Configuration Response.
  *
  * @author Daniel Garnier-Moiroux
@@ -26,17 +26,17 @@ package org.springframework.security.oauth2.core.oidc;
 public interface OidcProviderMetadataClaimNames {
 
 	/**
-	 * {@code issuer} - the URL the OpenID Provider asserts as its Issuer Identifier
+	 * {@code issuer} - the {@code URL} the OpenID Provider asserts as its Issuer Identifier
 	 */
 	String ISSUER = "issuer";
 
 	/**
-	 * {@code authorization_endpoint} - the URL of the OAuth 2.0 Authorization Endpoint
+	 * {@code authorization_endpoint} - the {@code URL} of the OAuth 2.0 Authorization Endpoint
 	 */
 	String AUTHORIZATION_ENDPOINT = "authorization_endpoint";
 
 	/**
-	 * {@code token_endpoint} - the URL of the OAuth 2.0 Token Endpoint
+	 * {@code token_endpoint} - the {@code URL} of the OAuth 2.0 Token Endpoint
 	 */
 	String TOKEN_ENDPOINT = "token_endpoint";
 
@@ -46,7 +46,7 @@ public interface OidcProviderMetadataClaimNames {
 	String TOKEN_ENDPOINT_AUTH_METHODS_SUPPORTED = "token_endpoint_auth_methods_supported";
 
 	/**
-	 * {@code jwks_uri} - the URL of the JSON Web Key Set
+	 * {@code jwks_uri} - the {@code URL} of the JSON Web Key Set
 	 */
 	String JWKS_URI = "jwks_uri";
 

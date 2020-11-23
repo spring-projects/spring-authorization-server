@@ -17,8 +17,6 @@ package org.springframework.security.oauth2.server.authorization.config;
 
 import org.junit.Test;
 
-import java.net.MalformedURLException;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -28,41 +26,42 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * @author Daniel Garnier-Moiroux
  */
 public class ProviderSettingsTests {
+
 	@Test
-	public void constructorWhenDefaultThenDefaultsAreSetAndIssuerIsNotSet() {
+	public void constructorWhenDefaultThenDefaultsAreSet() {
 		ProviderSettings providerSettings = new ProviderSettings();
 
 		assertThat(providerSettings.issuer()).isNull();
 		assertThat(providerSettings.authorizationEndpoint()).isEqualTo("/oauth2/authorize");
 		assertThat(providerSettings.tokenEndpoint()).isEqualTo("/oauth2/token");
-		assertThat(providerSettings.jwkSetEndpoint()).isEqualTo("/oauth2/jwks");
+		assertThat(providerSettings.jwksEndpoint()).isEqualTo("/oauth2/jwks");
 		assertThat(providerSettings.tokenRevocationEndpoint()).isEqualTo("/oauth2/revoke");
 	}
 
 	@Test
-	public void settingsWhenProvidedThenSet() throws MalformedURLException {
-		String authorizationEndpoint = "/my-endpoints/authorize";
-		String tokenEndpoint = "/my-endpoints/token";
-		String jwksEndpoint = "/my-endpoints/jwks";
-		String tokenRevocationEndpoint = "/my-endpoints/revoke";
-		String issuer = "https://example.com/9000";
+	public void settingsWhenProvidedThenSet() {
+		String authorizationEndpoint = "/oauth2/v1/authorize";
+		String tokenEndpoint = "/oauth2/v1/token";
+		String jwksEndpoint = "/oauth2/v1/jwks";
+		String tokenRevocationEndpoint = "/oauth2/v1/revoke";
+		String issuer = "https://example.com:9000";
 
 		ProviderSettings providerSettings = new ProviderSettings()
 				.issuer(issuer)
 				.authorizationEndpoint(authorizationEndpoint)
 				.tokenEndpoint(tokenEndpoint)
-				.jwkSetEndpoint(jwksEndpoint)
+				.jwksEndpoint(jwksEndpoint)
 				.tokenRevocationEndpoint(tokenRevocationEndpoint);
 
 		assertThat(providerSettings.issuer()).isEqualTo(issuer);
 		assertThat(providerSettings.authorizationEndpoint()).isEqualTo(authorizationEndpoint);
 		assertThat(providerSettings.tokenEndpoint()).isEqualTo(tokenEndpoint);
-		assertThat(providerSettings.jwkSetEndpoint()).isEqualTo(jwksEndpoint);
+		assertThat(providerSettings.jwksEndpoint()).isEqualTo(jwksEndpoint);
 		assertThat(providerSettings.tokenRevocationEndpoint()).isEqualTo(tokenRevocationEndpoint);
 	}
 
 	@Test
-	public void settingWhenCalledThenReturnTokenSettings() {
+	public void settingWhenCustomThenReturnAllSettings() {
 		ProviderSettings providerSettings = new ProviderSettings()
 				.setting("name1", "value1")
 				.settings(settings -> settings.put("name2", "value2"));
@@ -73,54 +72,42 @@ public class ProviderSettingsTests {
 	}
 
 	@Test
-	public void issuerWhenNullThenThrowsIllegalArgumentException() {
+	public void issuerWhenNullThenThrowIllegalArgumentException() {
 		ProviderSettings settings = new ProviderSettings();
 		assertThatThrownBy(() -> settings.issuer(null))
 				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("issuer cannot be null");
+				.hasMessage("value cannot be null");
 	}
 
 	@Test
-	public void authorizationEndpointWhenNullThenThrowsIllegalArgumentException() {
+	public void authorizationEndpointWhenNullThenThrowIllegalArgumentException() {
 		ProviderSettings settings = new ProviderSettings();
 		assertThatThrownBy(() -> settings.authorizationEndpoint(null))
 				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("authorizationEndpoint cannot be empty");
-		assertThatThrownBy(() -> settings.authorizationEndpoint(""))
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("authorizationEndpoint cannot be empty");
+				.hasMessage("value cannot be null");
 	}
 
 	@Test
-	public void tokenEndpointWhenNullThenThrowsIllegalArgumentException() {
+	public void tokenEndpointWhenNullThenThrowIllegalArgumentException() {
 		ProviderSettings settings = new ProviderSettings();
 		assertThatThrownBy(() -> settings.tokenEndpoint(null))
 				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("tokenEndpoint cannot be empty");
-		assertThatThrownBy(() -> settings.tokenEndpoint(""))
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("tokenEndpoint cannot be empty");
+				.hasMessage("value cannot be null");
 	}
 
 	@Test
-	public void tokenRevocationEndpointWhenNullThenThrowsIllegalArgumentException() {
+	public void tokenRevocationEndpointWhenNullThenThrowIllegalArgumentException() {
 		ProviderSettings settings = new ProviderSettings();
 		assertThatThrownBy(() -> settings.tokenRevocationEndpoint(null))
 				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("tokenRevocationEndpoint cannot be empty");
-		assertThatThrownBy(() -> settings.tokenRevocationEndpoint(""))
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("tokenRevocationEndpoint cannot be empty");
+				.hasMessage("value cannot be null");
 	}
 
 	@Test
-	public void jwkSetEndpointWhenNullThenThrowsIllegalArgumentException() {
+	public void jwksEndpointWhenNullThenThrowIllegalArgumentException() {
 		ProviderSettings settings = new ProviderSettings();
-		assertThatThrownBy(() -> settings.jwkSetEndpoint(null))
+		assertThatThrownBy(() -> settings.jwksEndpoint(null))
 				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("jwkSetEndpoint cannot be empty");
-		assertThatThrownBy(() -> settings.jwkSetEndpoint(""))
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("jwkSetEndpoint cannot be empty");
+				.hasMessage("value cannot be null");
 	}
 }

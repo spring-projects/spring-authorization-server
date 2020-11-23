@@ -54,9 +54,7 @@ import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
-import java.net.MalformedURLException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -66,12 +64,16 @@ import java.util.Map;
  * An {@link AbstractHttpConfigurer} for OAuth 2.0 Authorization Server support.
  *
  * @author Joe Grandja
+ * @author Daniel Garnier-Moiroux
  * @since 0.0.1
  * @see AbstractHttpConfigurer
  * @see RegisteredClientRepository
  * @see OAuth2AuthorizationService
  * @see OAuth2AuthorizationEndpointFilter
  * @see OAuth2TokenEndpointFilter
+ * @see OAuth2TokenRevocationEndpointFilter
+ * @see JwkSetEndpointFilter
+ * @see OidcProviderConfigurationEndpointFilter
  * @see OAuth2ClientAuthenticationFilter
  */
 public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBuilder<B>>
@@ -147,15 +149,17 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 	 * @return a {@code List} of {@link RequestMatcher}'s for the authorization server endpoints
 	 */
 	public List<RequestMatcher> getEndpointMatchers() {
-		// TODO: use ProviderSettings instead
+		// TODO Initialize matchers using URI's from ProviderSettings
 		return Arrays.asList(this.authorizationEndpointMatcher, this.tokenEndpointMatcher,
-				this.tokenRevocationEndpointMatcher, this.jwkSetEndpointMatcher, this.oidcProviderConfigurationEndpointMatcher);
+				this.tokenRevocationEndpointMatcher, this.jwkSetEndpointMatcher,
+				this.oidcProviderConfigurationEndpointMatcher);
 	}
 
 	@Override
 	public void init(B builder) {
 		ProviderSettings providerSettings = getProviderSettings(builder);
 		validateProviderSettings(providerSettings);
+
 		OAuth2ClientAuthenticationProvider clientAuthenticationProvider =
 				new OAuth2ClientAuthenticationProvider(
 						getRegisteredClientRepository(builder),
@@ -208,14 +212,16 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 
 	@Override
 	public void configure(B builder) {
-		if (getProviderSettings(builder).issuer() != null) {
-			OidcProviderConfigurationEndpointFilter oidcProviderConfigurationEndpointFilter = new OidcProviderConfigurationEndpointFilter(getProviderSettings(builder));
+		ProviderSettings providerSettings = getProviderSettings(builder);
+		if (providerSettings.issuer() != null) {
+			OidcProviderConfigurationEndpointFilter oidcProviderConfigurationEndpointFilter =
+					new OidcProviderConfigurationEndpointFilter(providerSettings);
 			builder.addFilterBefore(postProcess(oidcProviderConfigurationEndpointFilter), AbstractPreAuthenticatedProcessingFilter.class);
 		}
 
 		JwkSetEndpointFilter jwkSetEndpointFilter = new JwkSetEndpointFilter(
 				getKeySource(builder),
-				getProviderSettings(builder).jwkSetEndpoint());
+				providerSettings.jwksEndpoint());
 		builder.addFilterBefore(postProcess(jwkSetEndpointFilter), AbstractPreAuthenticatedProcessingFilter.class);
 
 		AuthenticationManager authenticationManager = builder.getSharedObject(AuthenticationManager.class);
@@ -230,20 +236,20 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 				new OAuth2AuthorizationEndpointFilter(
 						getRegisteredClientRepository(builder),
 						getAuthorizationService(builder),
-						getProviderSettings(builder).authorizationEndpoint());
+						providerSettings.authorizationEndpoint());
 		builder.addFilterBefore(postProcess(authorizationEndpointFilter), AbstractPreAuthenticatedProcessingFilter.class);
 
 		OAuth2TokenEndpointFilter tokenEndpointFilter =
 				new OAuth2TokenEndpointFilter(
 						authenticationManager,
 						getAuthorizationService(builder),
-						getProviderSettings(builder).tokenEndpoint());
+						providerSettings.tokenEndpoint());
 		builder.addFilterAfter(postProcess(tokenEndpointFilter), FilterSecurityInterceptor.class);
 
 		OAuth2TokenRevocationEndpointFilter tokenRevocationEndpointFilter =
 				new OAuth2TokenRevocationEndpointFilter(
 						authenticationManager,
-						getProviderSettings(builder).tokenRevocationEndpoint());
+						providerSettings.tokenRevocationEndpoint());
 		builder.addFilterAfter(postProcess(tokenRevocationEndpointFilter), OAuth2TokenEndpointFilter.class);
 	}
 
@@ -323,8 +329,8 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 		if (providerSettings.issuer() != null) {
 			try {
 				new URI(providerSettings.issuer()).toURL();
-			} catch (MalformedURLException | URISyntaxException e) {
-				throw new IllegalArgumentException("issuer must be a valid URL");
+			} catch (Exception ex) {
+				throw new IllegalArgumentException("issuer must be a valid URL", ex);
 			}
 		}
 	}

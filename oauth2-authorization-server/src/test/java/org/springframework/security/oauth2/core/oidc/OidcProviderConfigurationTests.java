@@ -62,7 +62,7 @@ public class OidcProviderConfigurationTests {
 		assertThat(providerConfiguration.getIssuer()).isEqualTo(url("https://example.com/issuer1"));
 		assertThat(providerConfiguration.getAuthorizationEndpoint()).isEqualTo(url("https://example.com/issuer1/oauth2/authorize"));
 		assertThat(providerConfiguration.getTokenEndpoint()).isEqualTo(url("https://example.com/issuer1/oauth2/token"));
-		assertThat(providerConfiguration.getJwksUri()).isEqualTo(url("https://example.com/issuer1/oauth2/jwks"));
+		assertThat(providerConfiguration.getJwkSetUri()).isEqualTo(url("https://example.com/issuer1/oauth2/jwks"));
 		assertThat(providerConfiguration.getScopes()).containsExactly("openid");
 		assertThat(providerConfiguration.getResponseTypes()).containsExactly("code");
 		assertThat(providerConfiguration.getGrantTypes()).containsExactlyInAnyOrder("authorization_code", "client_credentials");
@@ -86,7 +86,7 @@ public class OidcProviderConfigurationTests {
 		assertThat(providerConfiguration.getIssuer()).isEqualTo(url("https://example.com/issuer1"));
 		assertThat(providerConfiguration.getAuthorizationEndpoint()).isEqualTo(url("https://example.com/issuer1/oauth2/authorize"));
 		assertThat(providerConfiguration.getTokenEndpoint()).isEqualTo(url("https://example.com/issuer1/oauth2/token"));
-		assertThat(providerConfiguration.getJwksUri()).isEqualTo(url("https://example.com/issuer1/oauth2/jwks"));
+		assertThat(providerConfiguration.getJwkSetUri()).isEqualTo(url("https://example.com/issuer1/oauth2/jwks"));
 		assertThat(providerConfiguration.getScopes()).containsExactly("openid");
 		assertThat(providerConfiguration.getResponseTypes()).containsExactly("code");
 		assertThat(providerConfiguration.getGrantTypes()).isNull();
@@ -111,7 +111,7 @@ public class OidcProviderConfigurationTests {
 		assertThat(providerConfiguration.getIssuer()).isEqualTo(url("https://example.com/issuer1"));
 		assertThat(providerConfiguration.getAuthorizationEndpoint()).isEqualTo(url("https://example.com/issuer1/oauth2/authorize"));
 		assertThat(providerConfiguration.getTokenEndpoint()).isEqualTo(url("https://example.com/issuer1/oauth2/token"));
-		assertThat(providerConfiguration.getJwksUri()).isEqualTo(url("https://example.com/issuer1/oauth2/jwks"));
+		assertThat(providerConfiguration.getJwkSetUri()).isEqualTo(url("https://example.com/issuer1/oauth2/jwks"));
 		assertThat(providerConfiguration.getScopes()).containsExactly("openid");
 		assertThat(providerConfiguration.getResponseTypes()).containsExactly("code");
 		assertThat(providerConfiguration.getGrantTypes()).isNull();
@@ -137,7 +137,7 @@ public class OidcProviderConfigurationTests {
 		assertThat(providerConfiguration.getIssuer()).isEqualTo(url("https://example.com/issuer1"));
 		assertThat(providerConfiguration.getAuthorizationEndpoint()).isEqualTo(url("https://example.com/issuer1/oauth2/authorize"));
 		assertThat(providerConfiguration.getTokenEndpoint()).isEqualTo(url("https://example.com/issuer1/oauth2/token"));
-		assertThat(providerConfiguration.getJwksUri()).isEqualTo(url("https://example.com/issuer1/oauth2/jwks"));
+		assertThat(providerConfiguration.getJwkSetUri()).isEqualTo(url("https://example.com/issuer1/oauth2/jwks"));
 		assertThat(providerConfiguration.getScopes()).containsExactly("openid");
 		assertThat(providerConfiguration.getResponseTypes()).containsExactly("code");
 		assertThat(providerConfiguration.getGrantTypes()).isNull();

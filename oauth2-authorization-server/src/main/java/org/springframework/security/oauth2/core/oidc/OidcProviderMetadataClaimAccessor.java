@@ -75,7 +75,7 @@ public interface OidcProviderMetadataClaimAccessor extends ClaimAccessor {
 	 *
 	 * @return the {@code URL} of the JSON Web Key Set
 	 */
-	default URL getJwksUri() {
+	default URL getJwkSetUri() {
 		return getClaimAsURL(OidcProviderMetadataClaimNames.JWKS_URI);
 	}
 

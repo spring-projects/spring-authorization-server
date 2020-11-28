@@ -18,6 +18,7 @@ package org.springframework.security.oauth2.server.authorization.authentication;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
@@ -126,7 +127,8 @@ public class OAuth2AuthorizationCodeAuthenticationProvider implements Authentica
 				.accessToken(accessToken);
 
 		OAuth2RefreshToken refreshToken = null;
-		if (registeredClient.getTokenSettings().enableRefreshTokens()) {
+		if (registeredClient.getAuthorizationGrantTypes()
+				.contains(AuthorizationGrantType.REFRESH_TOKEN)) {
 			refreshToken = OAuth2TokenIssuerUtil.issueRefreshToken(registeredClient.getTokenSettings().refreshTokenTimeToLive());
 			tokensBuilder.refreshToken(refreshToken);
 		}
@@ -149,4 +151,5 @@ public class OAuth2AuthorizationCodeAuthenticationProvider implements Authentica
 	public boolean supports(Class<?> authentication) {
 		return OAuth2AuthorizationCodeAuthenticationToken.class.isAssignableFrom(authentication);
 	}
+
 }

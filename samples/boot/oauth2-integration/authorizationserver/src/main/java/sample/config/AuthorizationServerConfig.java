@@ -41,13 +41,14 @@ public class AuthorizationServerConfig {
 	@Bean
 	public RegisteredClientRepository registeredClientRepository() {
 		RegisteredClient registeredClient = RegisteredClient.withId(UUID.randomUUID().toString())
-				.clientId("messaging-client")
+				.clientId("client")
 				.clientSecret("secret")
 				.clientAuthenticationMethod(ClientAuthenticationMethod.BASIC)
 				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+//				.authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
 				.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
 				.redirectUri("http://localhost:8080/authorized")
-				.scope("message.read")
+				.scope("read")
 				.scope("message.write")
 				.clientSettings(clientSettings -> clientSettings.requireUserConsent(true))
 				.build();

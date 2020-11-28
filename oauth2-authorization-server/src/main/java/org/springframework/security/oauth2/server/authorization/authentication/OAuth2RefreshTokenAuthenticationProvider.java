@@ -27,7 +27,6 @@ import org.springframework.security.oauth2.server.authorization.OAuth2Authorizat
 import org.springframework.security.oauth2.server.authorization.TokenType;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.config.TokenSettings;
-import org.springframework.security.oauth2.server.authorization.token.OAuth2AuthorizationCode;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenMetadata;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2Tokens;
 import org.springframework.util.Assert;

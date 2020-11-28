@@ -36,6 +36,7 @@ import org.springframework.security.oauth2.server.authorization.TestOAuth2Author
 import org.springframework.security.oauth2.server.authorization.TokenType;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
+import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenMetadata;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2Tokens;
 
 import java.time.Instant;
@@ -297,6 +298,33 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 				"expired-refresh-token", Instant.now().minusSeconds(120), Instant.now().minusSeconds(60));
 		OAuth2Tokens tokens = OAuth2Tokens.from(authorization.getTokens()).refreshToken(expiredRefreshToken).build();
 		authorization = OAuth2Authorization.from(authorization).tokens(tokens).build();
+		when(this.authorizationService.findByToken(
+				eq(authorization.getTokens().getRefreshToken().getTokenValue()),
+				eq(TokenType.REFRESH_TOKEN)))
+				.thenReturn(authorization);
+
+		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient);
+		OAuth2RefreshTokenAuthenticationToken authentication = new OAuth2RefreshTokenAuthenticationToken(
+				authorization.getTokens().getRefreshToken().getTokenValue(), clientPrincipal);
+
+		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
+				.isInstanceOf(OAuth2AuthenticationException.class)
+				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+				.extracting("errorCode")
+				.isEqualTo(OAuth2ErrorCodes.INVALID_GRANT);
+	}
+
+	@Test
+	public void authenticateWhenRevokedRefreshTokenThenThrowOAuth2AuthenticationException() {
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+		OAuth2RefreshToken refreshToken = new OAuth2RefreshToken2(
+				"refresh-token", Instant.now().minusSeconds(120), Instant.now().plusSeconds(1000));
+		OAuth2TokenMetadata metadata = OAuth2TokenMetadata.builder().invalidated().build();
+		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient)
+				.tokens(OAuth2Tokens.builder()
+						.refreshToken(refreshToken, metadata)
+						.build())
+				.build();
 		when(this.authorizationService.findByToken(
 				eq(authorization.getTokens().getRefreshToken().getTokenValue()),
 				eq(TokenType.REFRESH_TOKEN)))

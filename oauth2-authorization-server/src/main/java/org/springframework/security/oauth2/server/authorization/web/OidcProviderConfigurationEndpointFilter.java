@@ -80,7 +80,7 @@ public class OidcProviderConfigurationEndpointFilter extends OncePerRequestFilte
 				.tokenEndpoint(asUrl(this.providerSettings.issuer(), this.providerSettings.tokenEndpoint()))
 				.tokenEndpointAuthenticationMethod("client_secret_basic")	// TODO: Use ClientAuthenticationMethod.CLIENT_SECRET_BASIC in Spring Security 5.5.0
 				.tokenEndpointAuthenticationMethod("client_secret_post")	// TODO: Use ClientAuthenticationMethod.CLIENT_SECRET_POST in Spring Security 5.5.0
-				.jwksUri(asUrl(this.providerSettings.issuer(), this.providerSettings.jwksEndpoint()))
+				.jwkSetUri(asUrl(this.providerSettings.issuer(), this.providerSettings.jwkSetEndpoint()))
 				.responseType(OAuth2AuthorizationResponseType.CODE.getValue())
 				.grantType(AuthorizationGrantType.AUTHORIZATION_CODE.getValue())
 				.grantType(AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())

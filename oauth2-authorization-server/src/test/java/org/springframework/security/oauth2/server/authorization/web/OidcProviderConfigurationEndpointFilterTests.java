@@ -82,13 +82,13 @@ public class OidcProviderConfigurationEndpointFilterTests {
 	public void doFilterWhenConfigurationRequestThenConfigurationResponse() throws Exception {
 		String authorizationEndpoint = "/oauth2/v1/authorize";
 		String tokenEndpoint = "/oauth2/v1/token";
-		String jwksEndpoint = "/oauth2/v1/jwks";
+		String jwkSetEndpoint = "/oauth2/v1/jwks";
 
 		ProviderSettings providerSettings = new ProviderSettings()
 				.issuer("https://example.com/issuer1")
 				.authorizationEndpoint(authorizationEndpoint)
 				.tokenEndpoint(tokenEndpoint)
-				.jwksEndpoint(jwksEndpoint);
+				.jwkSetEndpoint(jwkSetEndpoint);
 		OidcProviderConfigurationEndpointFilter filter =
 				new OidcProviderConfigurationEndpointFilter(providerSettings);
 

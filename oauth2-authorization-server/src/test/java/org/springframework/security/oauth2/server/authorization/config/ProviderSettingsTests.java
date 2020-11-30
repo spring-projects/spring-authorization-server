@@ -34,7 +34,7 @@ public class ProviderSettingsTests {
 		assertThat(providerSettings.issuer()).isNull();
 		assertThat(providerSettings.authorizationEndpoint()).isEqualTo("/oauth2/authorize");
 		assertThat(providerSettings.tokenEndpoint()).isEqualTo("/oauth2/token");
-		assertThat(providerSettings.jwksEndpoint()).isEqualTo("/oauth2/jwks");
+		assertThat(providerSettings.jwkSetEndpoint()).isEqualTo("/oauth2/jwks");
 		assertThat(providerSettings.tokenRevocationEndpoint()).isEqualTo("/oauth2/revoke");
 	}
 
@@ -42,7 +42,7 @@ public class ProviderSettingsTests {
 	public void settingsWhenProvidedThenSet() {
 		String authorizationEndpoint = "/oauth2/v1/authorize";
 		String tokenEndpoint = "/oauth2/v1/token";
-		String jwksEndpoint = "/oauth2/v1/jwks";
+		String jwkSetEndpoint = "/oauth2/v1/jwks";
 		String tokenRevocationEndpoint = "/oauth2/v1/revoke";
 		String issuer = "https://example.com:9000";
 
@@ -50,13 +50,13 @@ public class ProviderSettingsTests {
 				.issuer(issuer)
 				.authorizationEndpoint(authorizationEndpoint)
 				.tokenEndpoint(tokenEndpoint)
-				.jwksEndpoint(jwksEndpoint)
+				.jwkSetEndpoint(jwkSetEndpoint)
 				.tokenRevocationEndpoint(tokenRevocationEndpoint);
 
 		assertThat(providerSettings.issuer()).isEqualTo(issuer);
 		assertThat(providerSettings.authorizationEndpoint()).isEqualTo(authorizationEndpoint);
 		assertThat(providerSettings.tokenEndpoint()).isEqualTo(tokenEndpoint);
-		assertThat(providerSettings.jwksEndpoint()).isEqualTo(jwksEndpoint);
+		assertThat(providerSettings.jwkSetEndpoint()).isEqualTo(jwkSetEndpoint);
 		assertThat(providerSettings.tokenRevocationEndpoint()).isEqualTo(tokenRevocationEndpoint);
 	}
 
@@ -106,7 +106,7 @@ public class ProviderSettingsTests {
 	@Test
 	public void jwksEndpointWhenNullThenThrowIllegalArgumentException() {
 		ProviderSettings settings = new ProviderSettings();
-		assertThatThrownBy(() -> settings.jwksEndpoint(null))
+		assertThatThrownBy(() -> settings.jwkSetEndpoint(null))
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessage("value cannot be null");
 	}

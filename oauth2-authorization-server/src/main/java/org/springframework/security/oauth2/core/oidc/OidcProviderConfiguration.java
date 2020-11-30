@@ -142,11 +142,11 @@ public final class OidcProviderConfiguration implements OidcProviderMetadataClai
 		/**
 		 * Use this {@code jwks_uri} in the resulting {@link OidcProviderConfiguration}, REQUIRED.
 		 *
-		 * @param jwksUri the URL of the OpenID Provider's JSON Web Key Set document
+		 * @param jwkSetUri the URL of the OpenID Provider's JSON Web Key Set document
 		 * @return the {@link Builder} for further configuration
 		 */
-		public Builder jwksUri(String jwksUri) {
-			return claim(OidcProviderMetadataClaimNames.JWKS_URI, jwksUri);
+		public Builder jwkSetUri(String jwkSetUri) {
+			return claim(OidcProviderMetadataClaimNames.JWKS_URI, jwkSetUri);
 		}
 
 		/**

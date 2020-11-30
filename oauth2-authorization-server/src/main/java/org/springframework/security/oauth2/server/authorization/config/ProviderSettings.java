@@ -30,7 +30,7 @@ public class ProviderSettings extends Settings {
 	public static final String ISSUER = PROVIDER_SETTING_BASE.concat("issuer");
 	public static final String AUTHORIZATION_ENDPOINT = PROVIDER_SETTING_BASE.concat("authorization-endpoint");
 	public static final String TOKEN_ENDPOINT = PROVIDER_SETTING_BASE.concat("token-endpoint");
-	public static final String JWKS_ENDPOINT = PROVIDER_SETTING_BASE.concat("jwks-endpoint");
+	public static final String JWK_SET_ENDPOINT = PROVIDER_SETTING_BASE.concat("jwk-set-endpoint");
 	public static final String TOKEN_REVOCATION_ENDPOINT = PROVIDER_SETTING_BASE.concat("token-revocation-endpoint");
 
 	/**
@@ -111,18 +111,18 @@ public class ProviderSettings extends Settings {
 	 *
 	 * @return the JWK Set endpoint
 	 */
-	public String jwksEndpoint() {
-		return setting(JWKS_ENDPOINT);
+	public String jwkSetEndpoint() {
+		return setting(JWK_SET_ENDPOINT);
 	}
 
 	/**
 	 * Sets the Provider's JWK Set endpoint.
 	 *
-	 * @param jwksEndpoint the JWK Set endpoint
+	 * @param jwkSetEndpoint the JWK Set endpoint
 	 * @return the {@link ProviderSettings} for further configuration
 	 */
-	public ProviderSettings jwksEndpoint(String jwksEndpoint) {
-		return setting(JWKS_ENDPOINT, jwksEndpoint);
+	public ProviderSettings jwkSetEndpoint(String jwkSetEndpoint) {
+		return setting(JWK_SET_ENDPOINT, jwkSetEndpoint);
 	}
 
 	/**
@@ -148,7 +148,7 @@ public class ProviderSettings extends Settings {
 		Map<String, Object> settings = new HashMap<>();
 		settings.put(AUTHORIZATION_ENDPOINT, "/oauth2/authorize");
 		settings.put(TOKEN_ENDPOINT, "/oauth2/token");
-		settings.put(JWKS_ENDPOINT, "/oauth2/jwks");
+		settings.put(JWK_SET_ENDPOINT, "/oauth2/jwks");
 		settings.put(TOKEN_REVOCATION_ENDPOINT, "/oauth2/revoke");
 		return settings;
 	}

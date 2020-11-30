@@ -149,7 +149,7 @@ public class OidcProviderConfigurationHttpMessageConverterTests {
 						.issuer("https://example.com/issuer1")
 						.authorizationEndpoint("https://example.com/issuer1/oauth2/authorize")
 						.tokenEndpoint("https://example.com/issuer1/oauth2/token")
-						.jwksUri("https://example.com/issuer1/oauth2/jwks")
+						.jwkSetUri("https://example.com/issuer1/oauth2/jwks")
 						.scope("openid")
 						.responseType("code")
 						.grantType("authorization_code")
@@ -191,7 +191,7 @@ public class OidcProviderConfigurationHttpMessageConverterTests {
 						.issuer("https://example.com/issuer1")
 						.authorizationEndpoint("https://example.com/issuer1/oauth2/authorize")
 						.tokenEndpoint("https://example.com/issuer1/oauth2/token")
-						.jwksUri("https://example.com/issuer1/oauth2/jwks")
+						.jwkSetUri("https://example.com/issuer1/oauth2/jwks")
 						.responseType("code")
 						.subjectType("public")
 						.build();

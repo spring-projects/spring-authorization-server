@@ -221,7 +221,7 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 
 		JwkSetEndpointFilter jwkSetEndpointFilter = new JwkSetEndpointFilter(
 				getKeySource(builder),
-				providerSettings.jwksEndpoint());
+				providerSettings.jwkSetEndpoint());
 		builder.addFilterBefore(postProcess(jwkSetEndpointFilter), AbstractPreAuthenticatedProcessingFilter.class);
 
 		AuthenticationManager authenticationManager = builder.getSharedObject(AuthenticationManager.class);

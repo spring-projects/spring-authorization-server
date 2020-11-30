@@ -30,7 +30,7 @@ public class TestJwtClaimsSets {
 		Instant issuedAt = Instant.now();
 		Instant expiresAt = issuedAt.plus(1, ChronoUnit.HOURS);
 
-		return JwtClaimsSet.withClaims()
+		return JwtClaimsSet.builder()
 				.issuer(issuer)
 				.subject("subject")
 				.audience(Collections.singletonList("client-1"))

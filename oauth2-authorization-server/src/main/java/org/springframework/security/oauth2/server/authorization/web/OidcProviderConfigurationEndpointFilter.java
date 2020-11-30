@@ -74,7 +74,7 @@ public class OidcProviderConfigurationEndpointFilter extends OncePerRequestFilte
 			return;
 		}
 
-		OidcProviderConfiguration providerConfiguration = OidcProviderConfiguration.withClaims()
+		OidcProviderConfiguration providerConfiguration = OidcProviderConfiguration.builder()
 				.issuer(this.providerSettings.issuer())
 				.authorizationEndpoint(asUrl(this.providerSettings.issuer(), this.providerSettings.authorizationEndpoint()))
 				.tokenEndpoint(asUrl(this.providerSettings.issuer(), this.providerSettings.tokenEndpoint()))

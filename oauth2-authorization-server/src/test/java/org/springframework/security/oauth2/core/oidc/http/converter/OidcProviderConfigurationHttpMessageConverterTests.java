@@ -145,7 +145,7 @@ public class OidcProviderConfigurationHttpMessageConverterTests {
 	@Test
 	public void writeInternalWhenProviderConfigurationThenSuccess() {
 		OidcProviderConfiguration providerConfiguration =
-				OidcProviderConfiguration.withClaims()
+				OidcProviderConfiguration.builder()
 						.issuer("https://example.com/issuer1")
 						.authorizationEndpoint("https://example.com/issuer1/oauth2/authorize")
 						.tokenEndpoint("https://example.com/issuer1/oauth2/token")
@@ -187,7 +187,7 @@ public class OidcProviderConfigurationHttpMessageConverterTests {
 		this.messageConverter.setProviderConfigurationParametersConverter(failingConverter);
 
 		OidcProviderConfiguration providerConfiguration =
-				OidcProviderConfiguration.withClaims()
+				OidcProviderConfiguration.builder()
 						.issuer("https://example.com/issuer1")
 						.authorizationEndpoint("https://example.com/issuer1/oauth2/authorize")
 						.tokenEndpoint("https://example.com/issuer1/oauth2/token")

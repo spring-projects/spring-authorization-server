@@ -34,7 +34,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  */
 public class OidcProviderConfigurationTests {
 	private final OidcProviderConfiguration.Builder minimalConfigurationBuilder =
-			OidcProviderConfiguration.withClaims()
+			OidcProviderConfiguration.builder()
 					.issuer("https://example.com/issuer1")
 					.authorizationEndpoint("https://example.com/issuer1/oauth2/authorize")
 					.tokenEndpoint("https://example.com/issuer1/oauth2/token")
@@ -45,7 +45,7 @@ public class OidcProviderConfigurationTests {
 
 	@Test
 	public void buildWhenAllRequiredClaimsAndAdditionalClaimsThenCreated() {
-		OidcProviderConfiguration providerConfiguration = OidcProviderConfiguration.withClaims()
+		OidcProviderConfiguration providerConfiguration = OidcProviderConfiguration.builder()
 				.issuer("https://example.com/issuer1")
 				.authorizationEndpoint("https://example.com/issuer1/oauth2/authorize")
 				.tokenEndpoint("https://example.com/issuer1/oauth2/token")
@@ -73,7 +73,7 @@ public class OidcProviderConfigurationTests {
 
 	@Test
 	public void buildWhenOnlyRequiredClaimsThenCreated() {
-		OidcProviderConfiguration providerConfiguration = OidcProviderConfiguration.withClaims()
+		OidcProviderConfiguration providerConfiguration = OidcProviderConfiguration.builder()
 				.issuer("https://example.com/issuer1")
 				.authorizationEndpoint("https://example.com/issuer1/oauth2/authorize")
 				.tokenEndpoint("https://example.com/issuer1/oauth2/token")
@@ -409,14 +409,14 @@ public class OidcProviderConfigurationTests {
 
 	@Test
 	public void claimWhenNameIsNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> OidcProviderConfiguration.withClaims().claim(null, "value"))
+		assertThatThrownBy(() -> OidcProviderConfiguration.builder().claim(null, "value"))
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessage("name cannot be empty");
 	}
 
 	@Test
 	public void claimWhenValueIsNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> OidcProviderConfiguration.withClaims().claim("claim-name", null))
+		assertThatThrownBy(() -> OidcProviderConfiguration.builder().claim("claim-name", null))
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessage("value cannot be null");
 	}

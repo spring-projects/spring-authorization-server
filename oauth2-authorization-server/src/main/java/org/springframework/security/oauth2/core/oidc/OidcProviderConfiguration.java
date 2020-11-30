@@ -62,7 +62,7 @@ public final class OidcProviderConfiguration implements OidcProviderMetadataClai
 	 *
 	 * @return the {@link Builder}
 	 */
-	public static Builder withClaims() {
+	public static Builder builder() {
 		return new Builder();
 	}
 

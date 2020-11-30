@@ -59,7 +59,7 @@ public final class JwtClaimsSet implements JwtClaimAccessor {
 	 *
 	 * @return the {@link Builder}
 	 */
-	public static Builder withClaims() {
+	public static Builder builder() {
 		return new Builder();
 	}
 

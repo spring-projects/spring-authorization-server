@@ -30,6 +30,7 @@ import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequ
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationResponseType;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.endpoint.PkceParameterNames;
+import org.springframework.security.oauth2.core.oidc.OidcScopes;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationAttributeNames;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
@@ -40,7 +41,10 @@ import org.springframework.security.oauth2.server.authorization.token.OAuth2Auth
 import org.springframework.security.oauth2.server.authorization.token.OAuth2Tokens;
 import org.springframework.security.web.DefaultRedirectStrategy;
 import org.springframework.security.web.RedirectStrategy;
+import org.springframework.security.web.util.matcher.AndRequestMatcher;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.security.web.util.matcher.NegatedRequestMatcher;
+import org.springframework.security.web.util.matcher.OrRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
@@ -120,10 +124,24 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 		Assert.hasText(authorizationEndpointUri, "authorizationEndpointUri cannot be empty");
 		this.registeredClientRepository = registeredClientRepository;
 		this.authorizationService = authorizationService;
-		this.authorizationRequestMatcher = new AntPathRequestMatcher(
+
+		RequestMatcher authorizationRequestGetMatcher = new AntPathRequestMatcher(
 				authorizationEndpointUri, HttpMethod.GET.name());
-		this.userConsentMatcher = new AntPathRequestMatcher(
+		RequestMatcher authorizationRequestPostMatcher = new AntPathRequestMatcher(
 				authorizationEndpointUri, HttpMethod.POST.name());
+		RequestMatcher openidScopeMatcher = request -> {
+			String scope = request.getParameter(OAuth2ParameterNames.SCOPE);
+			return StringUtils.hasText(scope) && scope.contains(OidcScopes.OPENID);
+		};
+		RequestMatcher consentActionMatcher = request ->
+				request.getParameter(UserConsentPage.CONSENT_ACTION_PARAMETER_NAME) != null;
+		this.authorizationRequestMatcher = new OrRequestMatcher(
+				authorizationRequestGetMatcher,
+				new AndRequestMatcher(
+						authorizationRequestPostMatcher, openidScopeMatcher,
+						new NegatedRequestMatcher(consentActionMatcher)));
+		this.userConsentMatcher = new AndRequestMatcher(
+				authorizationRequestPostMatcher, consentActionMatcher);
 	}
 
 	@Override
@@ -289,7 +307,8 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 						createError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.REDIRECT_URI));
 				return;
 			}
-		} else if (registeredClient.getRedirectUris().size() != 1) {
+		} else if (authorizationRequestContext.isAuthenticationRequest() ||		// redirect_uri is REQUIRED for OpenID Connect
+				registeredClient.getRedirectUris().size() != 1) {
 			authorizationRequestContext.setError(
 					createError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.REDIRECT_URI));
 			return;
@@ -474,6 +493,10 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 
 		private String getRedirectUri() {
 			return this.redirectUri;
+		}
+
+		private boolean isAuthenticationRequest() {
+			return getScopes().contains(OidcScopes.OPENID);
 		}
 
 		protected String resolveRedirectUri() {

@@ -31,9 +31,7 @@ public class TestRegisteredClients {
 				.authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
 				.clientAuthenticationMethod(ClientAuthenticationMethod.BASIC)
 				.redirectUri("https://example.com")
-				.scope("openid")
-				.scope("profile")
-				.scope("email");
+				.scope("scope1");
 	}
 
 	public static RegisteredClient.Builder registeredClient2() {
@@ -46,9 +44,6 @@ public class TestRegisteredClients {
 				.clientAuthenticationMethod(ClientAuthenticationMethod.BASIC)
 				.clientAuthenticationMethod(ClientAuthenticationMethod.POST)
 				.redirectUri("https://example.com")
-				.scope("openid")
-				.scope("profile")
-				.scope("email")
 				.scope("scope1")
 				.scope("scope2");
 	}
@@ -59,9 +54,7 @@ public class TestRegisteredClients {
 				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
 				.clientAuthenticationMethod(ClientAuthenticationMethod.NONE)
 				.redirectUri("https://example.com")
-				.scope("openid")
-				.scope("profile")
-				.scope("email")
+				.scope("scope1")
 				.clientSettings(clientSettings -> clientSettings.requireProofKey(true));
 	}
 }

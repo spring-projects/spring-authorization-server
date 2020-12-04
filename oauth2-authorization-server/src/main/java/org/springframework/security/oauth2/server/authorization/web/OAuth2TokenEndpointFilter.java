@@ -44,6 +44,7 @@ import org.springframework.security.oauth2.server.authorization.authentication.O
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -161,7 +162,7 @@ public class OAuth2TokenEndpointFilter extends OncePerRequestFilter {
 
 			OAuth2AccessTokenAuthenticationToken accessTokenAuthentication =
 					(OAuth2AccessTokenAuthenticationToken) this.authenticationManager.authenticate(authorizationGrantAuthentication);
-			sendAccessTokenResponse(response, accessTokenAuthentication.getAccessToken(), accessTokenAuthentication.getRefreshToken());
+			sendAccessTokenResponse(response, accessTokenAuthentication);
 
 		} catch (OAuth2AuthenticationException ex) {
 			SecurityContextHolder.clearContext();
@@ -169,8 +170,12 @@ public class OAuth2TokenEndpointFilter extends OncePerRequestFilter {
 		}
 	}
 
-	private void sendAccessTokenResponse(HttpServletResponse response, OAuth2AccessToken accessToken,
-			OAuth2RefreshToken refreshToken) throws IOException {
+	private void sendAccessTokenResponse(HttpServletResponse response,
+			OAuth2AccessTokenAuthenticationToken accessTokenAuthentication) throws IOException {
+
+		OAuth2AccessToken accessToken = accessTokenAuthentication.getAccessToken();
+		OAuth2RefreshToken refreshToken = accessTokenAuthentication.getRefreshToken();
+		Map<String, Object> additionalParameters = accessTokenAuthentication.getAdditionalParameters();
 
 		OAuth2AccessTokenResponse.Builder builder =
 				OAuth2AccessTokenResponse.withToken(accessToken.getTokenValue())
@@ -181,6 +186,9 @@ public class OAuth2TokenEndpointFilter extends OncePerRequestFilter {
 		}
 		if (refreshToken != null) {
 			builder.refreshToken(refreshToken.getTokenValue());
+		}
+		if (!CollectionUtils.isEmpty(additionalParameters)) {
+			builder.additionalParameters(additionalParameters);
 		}
 		OAuth2AccessTokenResponse accessTokenResponse = builder.build();
 		ServletServerHttpResponse httpResponse = new ServletServerHttpResponse(response);

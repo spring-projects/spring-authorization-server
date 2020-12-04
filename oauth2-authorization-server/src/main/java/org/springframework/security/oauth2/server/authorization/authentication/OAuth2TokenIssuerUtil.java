@@ -20,14 +20,17 @@ import org.springframework.security.crypto.keygen.StringKeyGenerator;
 import org.springframework.security.oauth2.core.OAuth2RefreshToken;
 import org.springframework.security.oauth2.core.OAuth2RefreshToken2;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
+import org.springframework.security.oauth2.core.oidc.IdTokenClaimNames;
 import org.springframework.security.oauth2.jose.JoseHeader;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
+import org.springframework.util.StringUtils;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.Set;
@@ -43,7 +46,7 @@ class OAuth2TokenIssuerUtil {
 	static Jwt issueJwtAccessToken(JwtEncoder jwtEncoder, String subject, String audience, Set<String> scopes, Duration tokenTimeToLive) {
 		JoseHeader joseHeader = JoseHeader.withAlgorithm(SignatureAlgorithm.RS256).build();
 
-		String issuer = "https://oauth2.provider.com";		// TODO Allow configuration for issuer claim
+		String issuer = "http://auth-server:9000";		// TODO Allow configuration for issuer claim
 		Instant issuedAt = Instant.now();
 		Instant expiresAt = issuedAt.plus(tokenTimeToLive);
 
@@ -56,6 +59,31 @@ class OAuth2TokenIssuerUtil {
 											.notBefore(issuedAt)
 											.claim(OAuth2ParameterNames.SCOPE, scopes)
 											.build();
+
+		return jwtEncoder.encode(joseHeader, jwtClaimsSet);
+	}
+
+	static Jwt issueIdToken(JwtEncoder jwtEncoder, String subject, String audience, String nonce) {
+		JoseHeader joseHeader = JoseHeader.withAlgorithm(SignatureAlgorithm.RS256).build();
+
+		String issuer = "http://auth-server:9000";		// TODO Allow configuration for issuer claim
+		Instant issuedAt = Instant.now();
+		Instant expiresAt = issuedAt.plus(30, ChronoUnit.MINUTES);		// TODO Allow configuration for id token time-to-live
+
+		JwtClaimsSet.Builder builder = JwtClaimsSet.builder()
+				.issuer(issuer)
+				.subject(subject)
+				.audience(Collections.singletonList(audience))
+				.issuedAt(issuedAt)
+				.expiresAt(expiresAt)
+				.claim(IdTokenClaimNames.AZP, audience);
+		if (StringUtils.hasText(nonce)) {
+			builder.claim(IdTokenClaimNames.NONCE, nonce);
+		}
+
+		// TODO Add 'auth_time' claim
+
+		JwtClaimsSet jwtClaimsSet = builder.build();
 
 		return jwtEncoder.encode(joseHeader, jwtClaimsSet);
 	}

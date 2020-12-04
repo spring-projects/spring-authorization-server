@@ -17,10 +17,15 @@ package org.springframework.security.oauth2.server.authorization.authentication;
 
 import org.junit.Test;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
+import org.springframework.security.oauth2.core.OAuth2RefreshToken;
+import org.springframework.security.oauth2.core.OAuth2RefreshToken2;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Collections;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -36,6 +41,9 @@ public class OAuth2AccessTokenAuthenticationTokenTests {
 			new OAuth2ClientAuthenticationToken(this.registeredClient);
 	private OAuth2AccessToken accessToken = new OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER,
 			"access-token", Instant.now(), Instant.now().plusSeconds(300));
+	private OAuth2RefreshToken refreshToken = new OAuth2RefreshToken2(
+			"refresh-token", Instant.now(), Instant.now().plus(1, ChronoUnit.DAYS));
+	private Map<String, Object> additionalParameters = Collections.singletonMap("custom-param", "custom-value");
 
 	@Test
 	public void constructorWhenRegisteredClientNullThenThrowIllegalArgumentException() {
@@ -59,12 +67,22 @@ public class OAuth2AccessTokenAuthenticationTokenTests {
 	}
 
 	@Test
+	public void constructorWhenAdditionalParametersNullThenThrowIllegalArgumentException() {
+		assertThatThrownBy(() -> new OAuth2AccessTokenAuthenticationToken(
+				this.registeredClient, this.clientPrincipal, this.accessToken, this.refreshToken, null))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("additionalParameters cannot be null");
+	}
+
+	@Test
 	public void constructorWhenAllValuesProvidedThenCreated() {
 		OAuth2AccessTokenAuthenticationToken authentication = new OAuth2AccessTokenAuthenticationToken(
-				this.registeredClient, this.clientPrincipal, this.accessToken);
+				this.registeredClient, this.clientPrincipal, this.accessToken, this.refreshToken, this.additionalParameters);
 		assertThat(authentication.getPrincipal()).isEqualTo(this.clientPrincipal);
 		assertThat(authentication.getCredentials().toString()).isEmpty();
 		assertThat(authentication.getRegisteredClient()).isEqualTo(this.registeredClient);
 		assertThat(authentication.getAccessToken()).isEqualTo(this.accessToken);
+		assertThat(authentication.getRefreshToken()).isEqualTo(this.refreshToken);
+		assertThat(authentication.getAdditionalParameters()).isEqualTo(this.additionalParameters);
 	}
 }

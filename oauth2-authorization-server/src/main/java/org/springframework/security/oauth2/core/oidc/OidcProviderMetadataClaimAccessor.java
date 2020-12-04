@@ -17,6 +17,8 @@ package org.springframework.security.oauth2.core.oidc;
 
 
 import org.springframework.security.oauth2.core.ClaimAccessor;
+import org.springframework.security.oauth2.jose.jws.JwsAlgorithm;
+import org.springframework.security.oauth2.jwt.Jwt;
 
 import java.net.URL;
 import java.util.List;
@@ -113,6 +115,16 @@ public interface OidcProviderMetadataClaimAccessor extends ClaimAccessor {
 	 */
 	default List<String> getScopes() {
 		return getClaimAsStringList(OidcProviderMetadataClaimNames.SCOPES_SUPPORTED);
+	}
+
+	/**
+	 * Returns the {@link JwsAlgorithm JWS} signing algorithms supported for the {@link OidcIdToken ID Token}
+	 * to encode the claims in a {@link Jwt} {@code (id_token_signing_alg_values_supported)}.
+	 *
+	 * @return the {@link JwsAlgorithm JWS} signing algorithms supported for the {@link OidcIdToken ID Token}
+	 */
+	default List<String> getIdTokenSigningAlgorithms() {
+		return getClaimAsStringList(OidcProviderMetadataClaimNames.ID_TOKEN_SIGNING_ALG_VALUES_SUPPORTED);
 	}
 
 }

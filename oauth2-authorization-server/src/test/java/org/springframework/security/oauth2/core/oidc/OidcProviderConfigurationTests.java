@@ -41,7 +41,8 @@ public class OidcProviderConfigurationTests {
 					.jwkSetUri("https://example.com/issuer1/oauth2/jwks")
 					.scope("openid")
 					.responseType("code")
-					.subjectType("public");
+					.subjectType("public")
+					.idTokenSigningAlgorithm("RS256");
 
 	@Test
 	public void buildWhenAllRequiredClaimsAndAdditionalClaimsThenCreated() {
@@ -55,6 +56,7 @@ public class OidcProviderConfigurationTests {
 				.grantType("authorization_code")
 				.grantType("client_credentials")
 				.subjectType("public")
+				.idTokenSigningAlgorithm("RS256")
 				.tokenEndpointAuthenticationMethod("client_secret_basic")
 				.claim("a-claim", "a-value")
 				.build();
@@ -67,6 +69,7 @@ public class OidcProviderConfigurationTests {
 		assertThat(providerConfiguration.getResponseTypes()).containsExactly("code");
 		assertThat(providerConfiguration.getGrantTypes()).containsExactlyInAnyOrder("authorization_code", "client_credentials");
 		assertThat(providerConfiguration.getSubjectTypes()).containsExactly("public");
+		assertThat(providerConfiguration.getIdTokenSigningAlgorithms()).containsExactly("RS256");
 		assertThat(providerConfiguration.getTokenEndpointAuthenticationMethods()).containsExactly("client_secret_basic");
 		assertThat(providerConfiguration.<String>getClaim("a-claim")).isEqualTo("a-value");
 	}
@@ -81,6 +84,7 @@ public class OidcProviderConfigurationTests {
 				.scope("openid")
 				.responseType("code")
 				.subjectType("public")
+				.idTokenSigningAlgorithm("RS256")
 				.build();
 
 		assertThat(providerConfiguration.getIssuer()).isEqualTo(url("https://example.com/issuer1"));
@@ -91,6 +95,7 @@ public class OidcProviderConfigurationTests {
 		assertThat(providerConfiguration.getResponseTypes()).containsExactly("code");
 		assertThat(providerConfiguration.getGrantTypes()).isNull();
 		assertThat(providerConfiguration.getSubjectTypes()).containsExactly("public");
+		assertThat(providerConfiguration.getIdTokenSigningAlgorithms()).containsExactly("RS256");
 		assertThat(providerConfiguration.getTokenEndpointAuthenticationMethods()).isNull();
 	}
 
@@ -104,6 +109,7 @@ public class OidcProviderConfigurationTests {
 		claims.put(OidcProviderMetadataClaimNames.SCOPES_SUPPORTED, Collections.singletonList("openid"));
 		claims.put(OidcProviderMetadataClaimNames.RESPONSE_TYPES_SUPPORTED, Collections.singletonList("code"));
 		claims.put(OidcProviderMetadataClaimNames.SUBJECT_TYPES_SUPPORTED, Collections.singletonList("public"));
+		claims.put(OidcProviderMetadataClaimNames.ID_TOKEN_SIGNING_ALG_VALUES_SUPPORTED, Collections.singletonList("RS256"));
 		claims.put("some-claim", "some-value");
 
 		OidcProviderConfiguration providerConfiguration = OidcProviderConfiguration.withClaims(claims).build();
@@ -116,6 +122,7 @@ public class OidcProviderConfigurationTests {
 		assertThat(providerConfiguration.getResponseTypes()).containsExactly("code");
 		assertThat(providerConfiguration.getGrantTypes()).isNull();
 		assertThat(providerConfiguration.getSubjectTypes()).containsExactly("public");
+		assertThat(providerConfiguration.getIdTokenSigningAlgorithms()).containsExactly("RS256");
 		assertThat(providerConfiguration.getTokenEndpointAuthenticationMethods()).isNull();
 		assertThat(providerConfiguration.<String>getClaim("some-claim")).isEqualTo("some-value");
 	}
@@ -130,6 +137,7 @@ public class OidcProviderConfigurationTests {
 		claims.put(OidcProviderMetadataClaimNames.SCOPES_SUPPORTED, Collections.singletonList("openid"));
 		claims.put(OidcProviderMetadataClaimNames.RESPONSE_TYPES_SUPPORTED, Collections.singletonList("code"));
 		claims.put(OidcProviderMetadataClaimNames.SUBJECT_TYPES_SUPPORTED, Collections.singletonList("public"));
+		claims.put(OidcProviderMetadataClaimNames.ID_TOKEN_SIGNING_ALG_VALUES_SUPPORTED, Collections.singletonList("RS256"));
 		claims.put("some-claim", "some-value");
 
 		OidcProviderConfiguration providerConfiguration = OidcProviderConfiguration.withClaims(claims).build();
@@ -142,6 +150,7 @@ public class OidcProviderConfigurationTests {
 		assertThat(providerConfiguration.getResponseTypes()).containsExactly("code");
 		assertThat(providerConfiguration.getGrantTypes()).isNull();
 		assertThat(providerConfiguration.getSubjectTypes()).containsExactly("public");
+		assertThat(providerConfiguration.getIdTokenSigningAlgorithms()).containsExactly("RS256");
 		assertThat(providerConfiguration.getTokenEndpointAuthenticationMethods()).isNull();
 		assertThat(providerConfiguration.<String>getClaim("some-claim")).isEqualTo("some-value");
 	}
@@ -333,6 +342,42 @@ public class OidcProviderConfigurationTests {
 	}
 
 	@Test
+	public void buildWhenMissingIdTokenSigningAlgorithmsThenThrowIllegalArgumentException() {
+		OidcProviderConfiguration.Builder builder = this.minimalConfigurationBuilder
+				.claims((claims) -> claims.remove(OidcProviderMetadataClaimNames.ID_TOKEN_SIGNING_ALG_VALUES_SUPPORTED));
+
+		assertThatThrownBy(builder::build)
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("idTokenSigningAlgorithms cannot be null");
+	}
+
+	@Test
+	public void buildWhenIdTokenSigningAlgorithmsNotListThenThrowIllegalArgumentException() {
+		OidcProviderConfiguration.Builder builder = this.minimalConfigurationBuilder
+				.claims((claims) -> {
+					claims.remove(OidcProviderMetadataClaimNames.ID_TOKEN_SIGNING_ALG_VALUES_SUPPORTED);
+					claims.put(OidcProviderMetadataClaimNames.ID_TOKEN_SIGNING_ALG_VALUES_SUPPORTED, "RS256");
+				});
+
+		assertThatThrownBy(builder::build)
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessageContaining("idTokenSigningAlgorithms must be of type List");
+	}
+
+	@Test
+	public void buildWhenIdTokenSigningAlgorithmsEmptyListThenThrowIllegalArgumentException() {
+		OidcProviderConfiguration.Builder builder = this.minimalConfigurationBuilder
+				.claims((claims) -> {
+					claims.remove(OidcProviderMetadataClaimNames.ID_TOKEN_SIGNING_ALG_VALUES_SUPPORTED);
+					claims.put(OidcProviderMetadataClaimNames.ID_TOKEN_SIGNING_ALG_VALUES_SUPPORTED, Collections.emptyList());
+				});
+
+		assertThatThrownBy(builder::build)
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessageContaining("idTokenSigningAlgorithms cannot be empty");
+	}
+
+	@Test
 	public void responseTypesWhenAddingOrRemovingThenCorrectValues() {
 		OidcProviderConfiguration configuration = this.minimalConfigurationBuilder
 				.responseType("should-be-removed")
@@ -366,6 +411,19 @@ public class OidcProviderConfigurationTests {
 				.build();
 
 		assertThat(configuration.getSubjectTypes()).containsExactly("some-subject-type");
+	}
+
+	@Test
+	public void idTokenSigningAlgorithmsWhenAddingOrRemovingThenCorrectValues() {
+		OidcProviderConfiguration configuration = this.minimalConfigurationBuilder
+				.idTokenSigningAlgorithm("should-be-removed")
+				.idTokenSigningAlgorithms(signingAlgorithms -> {
+					signingAlgorithms.clear();
+					signingAlgorithms.add("ES256");
+				})
+				.build();
+
+		assertThat(configuration.getIdTokenSigningAlgorithms()).containsExactly("ES256");
 	}
 
 	@Test

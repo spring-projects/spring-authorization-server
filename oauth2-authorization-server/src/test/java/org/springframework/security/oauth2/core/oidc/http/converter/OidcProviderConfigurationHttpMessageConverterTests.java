@@ -65,7 +65,8 @@ public class OidcProviderConfigurationHttpMessageConverterTests {
 				+ "		\"token_endpoint\": \"https://example.com/issuer1/oauth2/token\",\n"
 				+ "		\"jwks_uri\": \"https://example.com/issuer1/oauth2/jwks\",\n"
 				+ "		\"response_types_supported\": [\"code\"],\n"
-				+ "		\"subject_types_supported\": [\"public\"]\n"
+				+ "		\"subject_types_supported\": [\"public\"],\n"
+				+ "		\"id_token_signing_alg_values_supported\": [\"RS256\"]\n"
 				+ "}\n";
 		// @formatter:on
 		MockClientHttpResponse response = new MockClientHttpResponse(providerConfigurationResponse.getBytes(), HttpStatus.OK);
@@ -78,6 +79,7 @@ public class OidcProviderConfigurationHttpMessageConverterTests {
 		assertThat(providerConfiguration.getJwkSetUri()).isEqualTo(new URL("https://example.com/issuer1/oauth2/jwks"));
 		assertThat(providerConfiguration.getResponseTypes()).containsExactly("code");
 		assertThat(providerConfiguration.getSubjectTypes()).containsExactly("public");
+		assertThat(providerConfiguration.getIdTokenSigningAlgorithms()).containsExactly("RS256");
 		assertThat(providerConfiguration.getScopes()).isNull();
 		assertThat(providerConfiguration.getGrantTypes()).isNull();
 		assertThat(providerConfiguration.getTokenEndpointAuthenticationMethods()).isNull();
@@ -95,6 +97,7 @@ public class OidcProviderConfigurationHttpMessageConverterTests {
 				+ "		\"response_types_supported\": [\"code\"],\n"
 				+ "		\"grant_types_supported\": [\"authorization_code\", \"client_credentials\"],\n"
 				+ "		\"subject_types_supported\": [\"public\"],\n"
+				+ "		\"id_token_signing_alg_values_supported\": [\"RS256\"],\n"
 				+ "		\"token_endpoint_auth_methods_supported\": [\"client_secret_basic\"],\n"
 				+ "		\"custom_claim\": \"value\",\n"
 				+ "		\"custom_collection_claim\": [\"value1\", \"value2\"]\n"
@@ -112,6 +115,7 @@ public class OidcProviderConfigurationHttpMessageConverterTests {
 		assertThat(providerConfiguration.getResponseTypes()).containsExactly("code");
 		assertThat(providerConfiguration.getGrantTypes()).containsExactlyInAnyOrder("authorization_code", "client_credentials");
 		assertThat(providerConfiguration.getSubjectTypes()).containsExactly("public");
+		assertThat(providerConfiguration.getIdTokenSigningAlgorithms()).containsExactly("RS256");
 		assertThat(providerConfiguration.getTokenEndpointAuthenticationMethods()).containsExactly("client_secret_basic");
 		assertThat(providerConfiguration.<String>getClaim("custom_claim")).isEqualTo("value");
 		assertThat(providerConfiguration.getClaimAsStringList("custom_collection_claim")).containsExactlyInAnyOrder("value1", "value2");
@@ -155,6 +159,7 @@ public class OidcProviderConfigurationHttpMessageConverterTests {
 						.grantType("authorization_code")
 						.grantType("client_credentials")
 						.subjectType("public")
+						.idTokenSigningAlgorithm("RS256")
 						.tokenEndpointAuthenticationMethod("client_secret_basic")
 						.claim("custom_claim", "value")
 						.claim("custom_collection_claim", Arrays.asList("value1", "value2"))
@@ -172,6 +177,7 @@ public class OidcProviderConfigurationHttpMessageConverterTests {
 		assertThat(providerConfigurationResponse).contains("\"response_types_supported\":[\"code\"]");
 		assertThat(providerConfigurationResponse).contains("\"grant_types_supported\":[\"authorization_code\",\"client_credentials\"]");
 		assertThat(providerConfigurationResponse).contains("\"subject_types_supported\":[\"public\"]");
+		assertThat(providerConfigurationResponse).contains("\"id_token_signing_alg_values_supported\":[\"RS256\"]");
 		assertThat(providerConfigurationResponse).contains("\"token_endpoint_auth_methods_supported\":[\"client_secret_basic\"]");
 		assertThat(providerConfigurationResponse).contains("\"custom_claim\":\"value\"");
 		assertThat(providerConfigurationResponse).contains("\"custom_collection_claim\":[\"value1\",\"value2\"]");
@@ -194,6 +200,7 @@ public class OidcProviderConfigurationHttpMessageConverterTests {
 						.jwkSetUri("https://example.com/issuer1/oauth2/jwks")
 						.responseType("code")
 						.subjectType("public")
+						.idTokenSigningAlgorithm("RS256")
 						.build();
 
 		MockHttpOutputMessage outputMessage = new MockHttpOutputMessage();

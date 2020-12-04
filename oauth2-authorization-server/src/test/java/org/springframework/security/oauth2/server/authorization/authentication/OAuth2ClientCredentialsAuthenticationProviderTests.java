@@ -148,7 +148,7 @@ public class OAuth2ClientCredentialsAuthenticationProviderTests {
 	public void authenticateWhenScopeRequestedThenAccessTokenContainsScope() {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient2().build();
 		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient);
-		Set<String> requestedScope = Collections.singleton("openid");
+		Set<String> requestedScope = Collections.singleton("scope1");
 		OAuth2ClientCredentialsAuthenticationToken authentication =
 				new OAuth2ClientCredentialsAuthenticationToken(clientPrincipal, requestedScope);
 

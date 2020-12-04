@@ -25,6 +25,7 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 import org.springframework.util.Assert;
 
 import java.util.Collections;
+import java.util.Map;
 
 /**
  * An {@link Authentication} implementation used when issuing an
@@ -45,6 +46,7 @@ public class OAuth2AccessTokenAuthenticationToken extends AbstractAuthentication
 	private final Authentication clientPrincipal;
 	private final OAuth2AccessToken accessToken;
 	private final OAuth2RefreshToken refreshToken;
+	private final Map<String, Object> additionalParameters;
 
 	/**
 	 * Constructs an {@code OAuth2AccessTokenAuthenticationToken} using the provided parameters.
@@ -68,14 +70,30 @@ public class OAuth2AccessTokenAuthenticationToken extends AbstractAuthentication
 	 */
 	public OAuth2AccessTokenAuthenticationToken(RegisteredClient registeredClient, Authentication clientPrincipal,
 			OAuth2AccessToken accessToken, @Nullable OAuth2RefreshToken refreshToken) {
+		this(registeredClient, clientPrincipal, accessToken, refreshToken, Collections.emptyMap());
+	}
+
+	/**
+	 * Constructs an {@code OAuth2AccessTokenAuthenticationToken} using the provided parameters.
+	 *
+	 * @param registeredClient the registered client
+	 * @param clientPrincipal the authenticated client principal
+	 * @param accessToken the access token
+	 * @param refreshToken the refresh token
+	 * @param additionalParameters the additional parameters
+	 */
+	public OAuth2AccessTokenAuthenticationToken(RegisteredClient registeredClient, Authentication clientPrincipal,
+			OAuth2AccessToken accessToken, @Nullable OAuth2RefreshToken refreshToken, Map<String, Object> additionalParameters) {
 		super(Collections.emptyList());
 		Assert.notNull(registeredClient, "registeredClient cannot be null");
 		Assert.notNull(clientPrincipal, "clientPrincipal cannot be null");
 		Assert.notNull(accessToken, "accessToken cannot be null");
+		Assert.notNull(additionalParameters, "additionalParameters cannot be null");
 		this.registeredClient = registeredClient;
 		this.clientPrincipal = clientPrincipal;
 		this.accessToken = accessToken;
 		this.refreshToken = refreshToken;
+		this.additionalParameters = additionalParameters;
 	}
 
 	@Override
@@ -114,5 +132,14 @@ public class OAuth2AccessTokenAuthenticationToken extends AbstractAuthentication
 	@Nullable
 	public OAuth2RefreshToken getRefreshToken() {
 		return this.refreshToken;
+	}
+
+	/**
+	 * Returns the additional parameters.
+	 *
+	 * @return a {@code Map} of the additional parameters, may be empty
+	 */
+	public Map<String, Object> getAdditionalParameters() {
+		return this.additionalParameters;
 	}
 }

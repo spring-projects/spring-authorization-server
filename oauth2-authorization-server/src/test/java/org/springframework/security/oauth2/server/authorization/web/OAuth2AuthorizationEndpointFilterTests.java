@@ -32,6 +32,7 @@ import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequ
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationResponseType;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.endpoint.PkceParameterNames;
+import org.springframework.security.oauth2.core.oidc.OidcScopes;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationAttributeNames;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
@@ -166,6 +167,20 @@ public class OAuth2AuthorizationEndpointFilterTests {
 				registeredClient,
 				OAuth2ParameterNames.CLIENT_ID,
 				OAuth2ErrorCodes.UNAUTHORIZED_CLIENT);
+	}
+
+	@Test
+	public void doFilterWhenAuthenticationRequestMissingRedirectUriThenInvalidRequestError() throws Exception {
+		// redirect_uri is REQUIRED for OpenID Connect requests
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().scope(OidcScopes.OPENID).build();
+		when(this.registeredClientRepository.findByClientId((eq(registeredClient.getClientId()))))
+				.thenReturn(registeredClient);
+
+		doFilterWhenAuthorizationRequestInvalidParameterThenError(
+				registeredClient,
+				OAuth2ParameterNames.REDIRECT_URI,
+				OAuth2ErrorCodes.INVALID_REQUEST,
+				request -> request.removeParameter(OAuth2ParameterNames.REDIRECT_URI));
 	}
 
 	@Test
@@ -394,7 +409,7 @@ public class OAuth2AuthorizationEndpointFilterTests {
 	}
 
 	@Test
-	public void doFilterWhenAuthorizationRequestValidNotAuthenticatedThenContinueChainToCommenceAuthentication() throws Exception {
+	public void doFilterWhenAuthorizationRequestNotAuthenticatedThenContinueChainToCommenceAuthentication() throws Exception {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 		when(this.registeredClientRepository.findByClientId((eq(registeredClient.getClientId()))))
 				.thenReturn(registeredClient);
@@ -411,12 +426,27 @@ public class OAuth2AuthorizationEndpointFilterTests {
 	}
 
 	@Test
-	public void doFilterWhenAuthorizationRequestValidThenAuthorizationResponse() throws Exception {
+	public void doFilterWhenAuthorizationRequestGetThenAuthorizationResponse() throws Exception {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+		MockHttpServletRequest request = createAuthorizationRequest(registeredClient);
+		doFilterWhenAuthorizationRequestThenAuthorizationResponse(registeredClient, request);
+	}
+
+	@Test
+	public void doFilterWhenAuthorizationRequestPostThenAuthorizationResponse() throws Exception {
+		// OpenID Connect requests support POST method
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().scope(OidcScopes.OPENID).build();
+		MockHttpServletRequest request = createAuthorizationRequest(registeredClient);
+		request.setMethod("POST");
+		doFilterWhenAuthorizationRequestThenAuthorizationResponse(registeredClient, request);
+	}
+
+	private void doFilterWhenAuthorizationRequestThenAuthorizationResponse(
+			RegisteredClient registeredClient, MockHttpServletRequest request) throws Exception {
+
 		when(this.registeredClientRepository.findByClientId((eq(registeredClient.getClientId()))))
 				.thenReturn(registeredClient);
 
-		MockHttpServletRequest request = createAuthorizationRequest(registeredClient);
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		FilterChain filterChain = mock(FilterChain.class);
 
@@ -455,7 +485,7 @@ public class OAuth2AuthorizationEndpointFilterTests {
 	}
 
 	@Test
-	public void doFilterWhenPkceRequiredAndAuthorizationRequestValidThenAuthorizationResponse() throws Exception {
+	public void doFilterWhenPkceRequiredAndAuthorizationRequestThenAuthorizationResponse() throws Exception {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
 				.clientSettings(clientSettings -> clientSettings.requireProofKey(true))
 				.build();
@@ -501,7 +531,7 @@ public class OAuth2AuthorizationEndpointFilterTests {
 	}
 
 	@Test
-	public void doFilterWhenUserConsentRequiredAndAuthorizationRequestValidThenUserConsentResponse() throws Exception {
+	public void doFilterWhenUserConsentRequiredAndAuthorizationRequestThenUserConsentResponse() throws Exception {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
 				.clientSettings(clientSettings -> clientSettings.requireUserConsent(true))
 				.build();
@@ -722,7 +752,7 @@ public class OAuth2AuthorizationEndpointFilterTests {
 				OAuth2ParameterNames.CLIENT_ID,
 				OAuth2ErrorCodes.ACCESS_DENIED,
 				DEFAULT_ERROR_URI,
-				request -> request.removeParameter("consent_action"));
+				request -> request.setParameter("consent_action", "cancel"));
 
 		verify(this.authorizationService).remove(eq(authorization));
 	}

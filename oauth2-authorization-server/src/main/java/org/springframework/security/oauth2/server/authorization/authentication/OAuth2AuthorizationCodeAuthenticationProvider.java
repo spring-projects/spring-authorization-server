@@ -25,6 +25,9 @@ import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.OAuth2RefreshToken;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
+import org.springframework.security.oauth2.core.oidc.OidcIdToken;
+import org.springframework.security.oauth2.core.oidc.OidcScopes;
+import org.springframework.security.oauth2.core.oidc.endpoint.OidcParameterNames;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
@@ -39,6 +42,9 @@ import org.springframework.security.oauth2.server.authorization.token.OAuth2Toke
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 import static org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthenticationProviderUtils.getAuthenticatedClientElseThrowInvalidClient;
@@ -118,8 +124,9 @@ public class OAuth2AuthorizationCodeAuthenticationProvider implements Authentica
 		}
 
 		Set<String> authorizedScopes = authorization.getAttribute(OAuth2AuthorizationAttributeNames.AUTHORIZED_SCOPES);
-		Jwt jwt = OAuth2TokenIssuerUtil
-			.issueJwtAccessToken(this.jwtEncoder, authorization.getPrincipalName(), registeredClient.getClientId(), authorizedScopes, registeredClient.getTokenSettings().accessTokenTimeToLive());
+		Jwt jwt = OAuth2TokenIssuerUtil.issueJwtAccessToken(
+				this.jwtEncoder, authorization.getPrincipalName(), registeredClient.getClientId(),
+				authorizedScopes, registeredClient.getTokenSettings().accessTokenTimeToLive());
 		OAuth2AccessToken accessToken = new OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER,
 				jwt.getTokenValue(), jwt.getIssuedAt(), jwt.getExpiresAt(), authorizedScopes);
 
@@ -130,6 +137,16 @@ public class OAuth2AuthorizationCodeAuthenticationProvider implements Authentica
 		if (registeredClient.getAuthorizationGrantTypes().contains(AuthorizationGrantType.REFRESH_TOKEN)) {
 			refreshToken = OAuth2TokenIssuerUtil.issueRefreshToken(registeredClient.getTokenSettings().refreshTokenTimeToLive());
 			tokensBuilder.refreshToken(refreshToken);
+		}
+
+		OidcIdToken idToken = null;
+		if (authorizationRequest.getScopes().contains(OidcScopes.OPENID)) {
+			Jwt jwtIdToken = OAuth2TokenIssuerUtil.issueIdToken(
+					this.jwtEncoder, authorization.getPrincipalName(), registeredClient.getClientId(),
+					(String) authorizationRequest.getAdditionalParameters().get(OidcParameterNames.NONCE));
+			idToken = new OidcIdToken(jwtIdToken.getTokenValue(), jwtIdToken.getIssuedAt(),
+					jwtIdToken.getExpiresAt(), jwtIdToken.getClaims());
+			tokensBuilder.token(idToken);
 		}
 
 		OAuth2Tokens tokens = tokensBuilder.build();
@@ -143,7 +160,14 @@ public class OAuth2AuthorizationCodeAuthenticationProvider implements Authentica
 
 		this.authorizationService.save(authorization);
 
-		return new OAuth2AccessTokenAuthenticationToken(registeredClient, clientPrincipal, accessToken, refreshToken);
+		Map<String, Object> additionalParameters = Collections.emptyMap();
+		if (idToken != null) {
+			additionalParameters = new HashMap<>();
+			additionalParameters.put(OidcParameterNames.ID_TOKEN, idToken.getTokenValue());
+		}
+
+		return new OAuth2AccessTokenAuthenticationToken(
+				registeredClient, clientPrincipal, accessToken, refreshToken, additionalParameters);
 	}
 
 	@Override

@@ -15,6 +15,7 @@
  */
 package org.springframework.security.oauth2.core.oidc;
 
+import org.springframework.security.oauth2.jose.jws.JwsAlgorithm;
 import org.springframework.security.oauth2.server.authorization.Version;
 import org.springframework.util.Assert;
 
@@ -242,6 +243,30 @@ public final class OidcProviderConfiguration implements OidcProviderMetadataClai
 		}
 
 		/**
+		 * Add this {@link JwsAlgorithm JWS} signing algorithm to the collection of {@code id_token_signing_alg_values_supported}
+		 * in the resulting {@link OidcProviderConfiguration}, REQUIRED.
+		 *
+		 * @param signingAlgorithm the {@link JwsAlgorithm JWS} signing algorithm supported for the {@link OidcIdToken ID Token}
+		 * @return the {@link Builder} for further configuration
+		 */
+		public Builder idTokenSigningAlgorithm(String signingAlgorithm) {
+			addClaimToClaimList(OidcProviderMetadataClaimNames.ID_TOKEN_SIGNING_ALG_VALUES_SUPPORTED, signingAlgorithm);
+			return this;
+		}
+
+		/**
+		 * A {@code Consumer} of the {@link JwsAlgorithm JWS} signing algorithms for the {@link OidcIdToken ID Token}
+		 * allowing the ability to add, replace, or remove.
+		 *
+		 * @param signingAlgorithmsConsumer a {@code Consumer} of the {@link JwsAlgorithm JWS} signing algorithms for the {@link OidcIdToken ID Token}
+		 * @return the {@link Builder} for further configuration
+		 */
+		public Builder idTokenSigningAlgorithms(Consumer<List<String>> signingAlgorithmsConsumer) {
+			acceptClaimValues(OidcProviderMetadataClaimNames.ID_TOKEN_SIGNING_ALG_VALUES_SUPPORTED, signingAlgorithmsConsumer);
+			return this;
+		}
+
+		/**
 		 * Use this claim in the resulting {@link OidcProviderConfiguration}.
 		 *
 		 * @param name the claim name
@@ -296,6 +321,9 @@ public final class OidcProviderConfiguration implements OidcProviderMetadataClai
 			Assert.notNull(this.claims.get(OidcProviderMetadataClaimNames.SUBJECT_TYPES_SUPPORTED), "subjectTypes cannot be null");
 			Assert.isInstanceOf(List.class, this.claims.get(OidcProviderMetadataClaimNames.SUBJECT_TYPES_SUPPORTED), "subjectTypes must be of type List");
 			Assert.notEmpty((List<?>) this.claims.get(OidcProviderMetadataClaimNames.SUBJECT_TYPES_SUPPORTED), "subjectTypes cannot be empty");
+			Assert.notNull(this.claims.get(OidcProviderMetadataClaimNames.ID_TOKEN_SIGNING_ALG_VALUES_SUPPORTED), "idTokenSigningAlgorithms cannot be null");
+			Assert.isInstanceOf(List.class, this.claims.get(OidcProviderMetadataClaimNames.ID_TOKEN_SIGNING_ALG_VALUES_SUPPORTED), "idTokenSigningAlgorithms must be of type List");
+			Assert.notEmpty((List<?>) this.claims.get(OidcProviderMetadataClaimNames.ID_TOKEN_SIGNING_ALG_VALUES_SUPPORTED), "idTokenSigningAlgorithms cannot be empty");
 		}
 
 		private static void validateURL(Object url, String errorMessage) {

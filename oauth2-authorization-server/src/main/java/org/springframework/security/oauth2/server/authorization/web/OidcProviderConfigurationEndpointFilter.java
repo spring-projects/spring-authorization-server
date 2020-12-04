@@ -23,6 +23,7 @@ import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationResp
 import org.springframework.security.oauth2.core.oidc.OidcProviderConfiguration;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
 import org.springframework.security.oauth2.core.oidc.http.converter.OidcProviderConfigurationHttpMessageConverter;
+import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 import org.springframework.security.oauth2.server.authorization.config.ProviderSettings;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
@@ -86,6 +87,7 @@ public class OidcProviderConfigurationEndpointFilter extends OncePerRequestFilte
 				.grantType(AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
 				.grantType(AuthorizationGrantType.REFRESH_TOKEN.getValue())
 				.subjectType("public")
+				.idTokenSigningAlgorithm(SignatureAlgorithm.RS256.getName())
 				.scope(OidcScopes.OPENID)
 				.build();
 

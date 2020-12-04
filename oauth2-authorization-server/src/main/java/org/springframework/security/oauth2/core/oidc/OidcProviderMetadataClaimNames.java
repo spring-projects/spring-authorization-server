@@ -15,6 +15,8 @@
  */
 package org.springframework.security.oauth2.core.oidc;
 
+import org.springframework.security.oauth2.jose.jws.JwsAlgorithm;
+
 /**
  * The names of the "claims" defined by OpenID Connect Discovery 1.0 that can be returned
  * in the OpenID Provider Configuration Response.
@@ -69,5 +71,10 @@ public interface OidcProviderMetadataClaimNames {
 	 * {@code scopes_supported} - the OAuth 2.0 {@code scope} values supported
 	 */
 	String SCOPES_SUPPORTED = "scopes_supported";
+
+	/**
+	 * {@code id_token_signing_alg_values_supported} - the {@link JwsAlgorithm JWS} signing algorithms supported for the {@link OidcIdToken ID Token}
+	 */
+	String ID_TOKEN_SIGNING_ALG_VALUES_SUPPORTED = "id_token_signing_alg_values_supported";
 
 }

@@ -18,7 +18,12 @@ package org.springframework.security.oauth2.server.authorization.authentication;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.oauth2.core.*;
+import org.springframework.security.oauth2.core.AuthorizationGrantType;
+import org.springframework.security.oauth2.core.OAuth2AccessToken;
+import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
+import org.springframework.security.oauth2.core.OAuth2Error;
+import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
+import org.springframework.security.oauth2.core.OAuth2RefreshToken;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
@@ -106,11 +111,11 @@ public class OAuth2RefreshTokenAuthenticationProvider implements AuthenticationP
 			throw new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_SCOPE));
 		}
 
-		OAuth2RefreshToken authorizationCode = authorization.getTokens().getToken(OAuth2RefreshToken2.class);
-		OAuth2TokenMetadata refreshTokenAuthorizationCodeMetadata = authorization.getTokens().getTokenMetadata(authorizationCode);
+		OAuth2RefreshToken refreshToken = authorization.getTokens().getRefreshToken();
+		OAuth2TokenMetadata refreshTokenMetadata = authorization.getTokens().getTokenMetadata(refreshToken);
 
-		if (refreshTokenAuthorizationCodeMetadata.isInvalidated()) {
-			throw new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.ACCESS_DENIED));
+		if (refreshTokenMetadata.isInvalidated()) {
+			throw new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_GRANT));
 		}
 
 		if (scopes.isEmpty()) {
@@ -123,10 +128,8 @@ public class OAuth2RefreshTokenAuthenticationProvider implements AuthenticationP
 			jwt.getTokenValue(), jwt.getIssuedAt(), jwt.getExpiresAt(), scopes);
 
 		TokenSettings tokenSettings = registeredClient.getTokenSettings();
-		OAuth2RefreshToken refreshToken;
-		if (tokenSettings.reuseRefreshTokens()) {
-			refreshToken = authorization.getTokens().getRefreshToken();
-		} else {
+
+		if (!tokenSettings.reuseRefreshTokens()) {
 			refreshToken = OAuth2TokenIssuerUtil.issueRefreshToken(tokenSettings.refreshTokenTimeToLive());
 		}
 

@@ -31,7 +31,6 @@ import java.util.Map;
 public class TokenSettings extends Settings {
 	private static final String TOKEN_SETTING_BASE = "setting.token.";
 	public static final String ACCESS_TOKEN_TIME_TO_LIVE = TOKEN_SETTING_BASE.concat("access-token-time-to-live");
-	public static final String ENABLE_REFRESH_TOKENS = TOKEN_SETTING_BASE.concat("enable-refresh-tokens");
 	public static final String REUSE_REFRESH_TOKENS = TOKEN_SETTING_BASE.concat("reuse-refresh-tokens");
 	public static final String REFRESH_TOKEN_TIME_TO_LIVE = TOKEN_SETTING_BASE.concat("refresh-token-time-to-live");
 
@@ -70,26 +69,6 @@ public class TokenSettings extends Settings {
 		Assert.notNull(accessTokenTimeToLive, "accessTokenTimeToLive cannot be null");
 		Assert.isTrue(accessTokenTimeToLive.getSeconds() > 0, "accessTokenTimeToLive must be greater than Duration.ZERO");
 		setting(ACCESS_TOKEN_TIME_TO_LIVE, accessTokenTimeToLive);
-		return this;
-	}
-
-	/**
-	 * Returns {@code true} if refresh tokens are enabled. The default is {@code true}.
-	 *
-	 * @return {@code true} if refresh tokens are enabled, {@code false} otherwise
-	 */
-	public boolean enableRefreshTokens() {
-		return setting(ENABLE_REFRESH_TOKENS);
-	}
-
-	/**
-	 * Set to {@code true} to enable refresh tokens.
-	 *
-	 * @param enableRefreshTokens {@code true} to enable refresh tokens, {@code false} otherwise
-	 * @return the {@link TokenSettings}
-	 */
-	public TokenSettings enableRefreshTokens(boolean enableRefreshTokens) {
-		setting(ENABLE_REFRESH_TOKENS, enableRefreshTokens);
 		return this;
 	}
 
@@ -138,7 +117,6 @@ public class TokenSettings extends Settings {
 	protected static Map<String, Object> defaultSettings() {
 		Map<String, Object> settings = new HashMap<>();
 		settings.put(ACCESS_TOKEN_TIME_TO_LIVE, Duration.ofMinutes(5));
-		settings.put(ENABLE_REFRESH_TOKENS, true);
 		settings.put(REUSE_REFRESH_TOKENS, true);
 		settings.put(REFRESH_TOKEN_TIME_TO_LIVE, Duration.ofMinutes(60));
 		return settings;

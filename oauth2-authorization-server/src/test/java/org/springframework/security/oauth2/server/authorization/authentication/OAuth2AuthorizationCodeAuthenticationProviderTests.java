@@ -252,7 +252,7 @@ public class OAuth2AuthorizationCodeAuthenticationProviderTests {
 
 	@Test
 	public void authenticateWhenValidCodeThenReturnAccessTokenButNotRefreshTokenIfClientHasNoRefreshTokenGrantType() {
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient3().build();
+		RegisteredClient registeredClient = TestRegisteredClients.registeredPublicClient().build();
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();
 		when(this.authorizationService.findByToken(eq(AUTHORIZATION_CODE), eq(TokenType.AUTHORIZATION_CODE)))
 				.thenReturn(authorization);
@@ -356,30 +356,6 @@ public class OAuth2AuthorizationCodeAuthenticationProviderTests {
 		Instant expectedRefreshTokenExpiresAt = accessTokenAuthentication.getRefreshToken().getIssuedAt().plus(refreshTokenTTL);
 		assertThat(accessTokenAuthentication.getRefreshToken().getExpiresAt()).isBetween(
 				expectedRefreshTokenExpiresAt.minusSeconds(1), expectedRefreshTokenExpiresAt.plusSeconds(1));
-	}
-
-	@Test
-	public void authenticateWhenRefreshTokenDisabledThenRefreshTokenNull() {
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
-				.tokenSettings(tokenSettings -> tokenSettings.enableRefreshTokens(false))
-				.build();
-
-		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();
-		when(this.authorizationService.findByToken(eq(AUTHORIZATION_CODE), eq(TokenType.AUTHORIZATION_CODE)))
-				.thenReturn(authorization);
-
-		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient);
-		OAuth2AuthorizationRequest authorizationRequest = authorization.getAttribute(
-				OAuth2AuthorizationAttributeNames.AUTHORIZATION_REQUEST);
-		OAuth2AuthorizationCodeAuthenticationToken authentication =
-				new OAuth2AuthorizationCodeAuthenticationToken(AUTHORIZATION_CODE, clientPrincipal, authorizationRequest.getRedirectUri(), null);
-
-		when(this.jwtEncoder.encode(any(), any())).thenReturn(createJwt());
-
-		OAuth2AccessTokenAuthenticationToken accessTokenAuthentication =
-				(OAuth2AccessTokenAuthenticationToken) this.authenticationProvider.authenticate(authentication);
-
-		assertThat(accessTokenAuthentication.getRefreshToken()).isNull();
 	}
 
 	private static Jwt createJwt() {

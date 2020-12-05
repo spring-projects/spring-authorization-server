@@ -53,18 +53,6 @@ public class TestRegisteredClients {
 				.scope("scope2");
 	}
 
-	public static RegisteredClient.Builder registeredClient3() {
-		return RegisteredClient.withId("registration-3")
-				.clientId("client-3")
-				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-				.clientAuthenticationMethod(ClientAuthenticationMethod.NONE)
-				.redirectUri("https://example.com")
-				.scope("openid")
-				.scope("profile")
-				.scope("email")
-				.clientSettings(clientSettings -> clientSettings.requireProofKey(true));
-	}
-
 	public static RegisteredClient.Builder registeredPublicClient() {
 		return RegisteredClient.withId("registration-3")
 				.clientId("client-3")
@@ -74,7 +62,6 @@ public class TestRegisteredClients {
 				.scope("openid")
 				.scope("profile")
 				.scope("email")
-				.clientSettings(clientSettings -> clientSettings.requireProofKey(true))
-				.tokenSettings(tokenSettings -> tokenSettings.enableRefreshTokens(false));
+				.clientSettings(clientSettings -> clientSettings.requireProofKey(true));
 	}
 }

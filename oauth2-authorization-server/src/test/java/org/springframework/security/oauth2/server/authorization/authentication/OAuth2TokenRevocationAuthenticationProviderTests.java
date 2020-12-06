@@ -36,6 +36,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -197,5 +198,61 @@ public class OAuth2TokenRevocationAuthenticationProviderTests {
 		assertThat(updatedAuthorization.getTokens().getTokenMetadata(accessToken).isInvalidated()).isTrue();
 		OAuth2RefreshToken refreshToken = updatedAuthorization.getTokens().getRefreshToken();
 		assertThat(updatedAuthorization.getTokens().getTokenMetadata(refreshToken).isInvalidated()).isFalse();
+	}
+
+	@Test
+	public void authenticateWhenValidAccessTokenButNoTokenTypeSpecifiedThenRevoked() {
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(
+				registeredClient).build();
+		when(this.authorizationService.findByToken(
+				eq(authorization.getTokens().getAccessToken().getTokenValue()),
+				isNull()))
+				.thenReturn(authorization);
+
+		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient);
+		OAuth2TokenRevocationAuthenticationToken authentication = new OAuth2TokenRevocationAuthenticationToken(
+				authorization.getTokens().getAccessToken().getTokenValue(), clientPrincipal, null);
+
+		OAuth2TokenRevocationAuthenticationToken authenticationResult =
+				(OAuth2TokenRevocationAuthenticationToken) this.authenticationProvider.authenticate(authentication);
+		assertThat(authenticationResult.isAuthenticated()).isTrue();
+
+		ArgumentCaptor<OAuth2Authorization> authorizationCaptor = ArgumentCaptor.forClass(OAuth2Authorization.class);
+		verify(this.authorizationService).save(authorizationCaptor.capture());
+
+		OAuth2Authorization updatedAuthorization = authorizationCaptor.getValue();
+		OAuth2AccessToken accessToken = updatedAuthorization.getTokens().getAccessToken();
+		assertThat(updatedAuthorization.getTokens().getTokenMetadata(accessToken).isInvalidated()).isTrue();
+		OAuth2RefreshToken refreshToken = updatedAuthorization.getTokens().getRefreshToken();
+		assertThat(updatedAuthorization.getTokens().getTokenMetadata(refreshToken).isInvalidated()).isFalse();
+	}
+
+	@Test
+	public void authenticateWhenValidRefreshTokenButNoTokenTypeSpecifiedThenRevoked() {
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(
+				registeredClient).build();
+		when(this.authorizationService.findByToken(
+				eq(authorization.getTokens().getRefreshToken().getTokenValue()),
+				isNull()))
+				.thenReturn(authorization);
+
+		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient);
+		OAuth2TokenRevocationAuthenticationToken authentication = new OAuth2TokenRevocationAuthenticationToken(
+				authorization.getTokens().getRefreshToken().getTokenValue(), clientPrincipal, null);
+
+		OAuth2TokenRevocationAuthenticationToken authenticationResult =
+				(OAuth2TokenRevocationAuthenticationToken) this.authenticationProvider.authenticate(authentication);
+		assertThat(authenticationResult.isAuthenticated()).isTrue();
+
+		ArgumentCaptor<OAuth2Authorization> authorizationCaptor = ArgumentCaptor.forClass(OAuth2Authorization.class);
+		verify(this.authorizationService).save(authorizationCaptor.capture());
+
+		OAuth2Authorization updatedAuthorization = authorizationCaptor.getValue();
+		OAuth2RefreshToken refreshToken = updatedAuthorization.getTokens().getRefreshToken();
+		assertThat(updatedAuthorization.getTokens().getTokenMetadata(refreshToken).isInvalidated()).isTrue();
+		OAuth2AccessToken accessToken = updatedAuthorization.getTokens().getAccessToken();
+		assertThat(updatedAuthorization.getTokens().getTokenMetadata(accessToken).isInvalidated()).isTrue();
 	}
 }

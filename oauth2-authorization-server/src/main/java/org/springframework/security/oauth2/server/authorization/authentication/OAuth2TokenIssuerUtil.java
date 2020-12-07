@@ -48,7 +48,7 @@ class OAuth2TokenIssuerUtil {
 		Instant issuedAt = Instant.now();
 		Instant expiresAt = issuedAt.plus(1, ChronoUnit.HOURS);		// TODO Allow configuration for access token time-to-live
 
-		JwtClaimsSet jwtClaimsSet = JwtClaimsSet.withClaims()
+		JwtClaimsSet jwtClaimsSet = JwtClaimsSet.builder()
 											.issuer(issuer)
 											.subject(subject)
 											.audience(Collections.singletonList(audience))

@@ -29,7 +29,7 @@ public class JwtClaimsSetTests {
 
 	@Test
 	public void buildWhenClaimsEmptyThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> JwtClaimsSet.withClaims().build())
+		assertThatThrownBy(() -> JwtClaimsSet.builder().build())
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessage("claims cannot be empty");
 	}
@@ -38,7 +38,7 @@ public class JwtClaimsSetTests {
 	public void buildWhenAllClaimsProvidedThenAllClaimsAreSet() {
 		JwtClaimsSet expectedJwtClaimsSet = TestJwtClaimsSets.jwtClaimsSet().build();
 
-		JwtClaimsSet jwtClaimsSet = JwtClaimsSet.withClaims()
+		JwtClaimsSet jwtClaimsSet = JwtClaimsSet.builder()
 				.issuer(expectedJwtClaimsSet.getIssuer().toExternalForm())
 				.subject(expectedJwtClaimsSet.getSubject())
 				.audience(expectedJwtClaimsSet.getAudience())
@@ -76,14 +76,14 @@ public class JwtClaimsSetTests {
 
 	@Test
 	public void claimWhenNameNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> JwtClaimsSet.withClaims().claim(null, "value"))
+		assertThatThrownBy(() -> JwtClaimsSet.builder().claim(null, "value"))
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessage("name cannot be empty");
 	}
 
 	@Test
 	public void claimWhenValueNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> JwtClaimsSet.withClaims().claim("name", null))
+		assertThatThrownBy(() -> JwtClaimsSet.builder().claim("name", null))
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessage("value cannot be null");
 	}

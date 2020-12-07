@@ -33,6 +33,10 @@ import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationResponseType;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.endpoint.PkceParameterNames;
+import org.springframework.security.oauth2.jose.JoseHeader;
+import org.springframework.security.oauth2.jose.jws.NimbusJwsEncoder;
+import org.springframework.security.oauth2.jwt.JwtClaimsSet;
+import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.TestOAuth2Authorizations;
@@ -53,6 +57,7 @@ import org.springframework.util.StringUtils;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.function.BiConsumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.containsString;
@@ -86,6 +91,8 @@ public class OAuth2AuthorizationCodeGrantTests {
 	private static RegisteredClientRepository registeredClientRepository;
 	private static OAuth2AuthorizationService authorizationService;
 	private static CryptoKeySource keySource;
+	private static NimbusJwsEncoder jwtEncoder;
+	private static BiConsumer<JoseHeader.Builder, JwtClaimsSet.Builder> jwtCustomizer;
 
 	@Rule
 	public final SpringTestRule spring = new SpringTestRule();
@@ -98,6 +105,9 @@ public class OAuth2AuthorizationCodeGrantTests {
 		registeredClientRepository = mock(RegisteredClientRepository.class);
 		authorizationService = mock(OAuth2AuthorizationService.class);
 		keySource = new StaticKeyGeneratingCryptoKeySource();
+		jwtEncoder = new NimbusJwsEncoder(keySource);
+		jwtCustomizer = mock(BiConsumer.class);
+		jwtEncoder.setJwtCustomizer(jwtCustomizer);
 	}
 
 	@Before
@@ -223,6 +233,28 @@ public class OAuth2AuthorizationCodeGrantTests {
 		verify(authorizationService, times(2)).save(any());
 	}
 
+	@Test
+	public void requestWhenCustomJwtEncoderThenUsed() throws Exception {
+		this.spring.register(AuthorizationServerConfigurationWithJwtEncoder.class).autowire();
+
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+		when(registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
+				.thenReturn(registeredClient);
+
+		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();
+		when(authorizationService.findByToken(
+				eq(authorization.getTokens().getToken(OAuth2AuthorizationCode.class).getTokenValue()),
+				eq(TokenType.AUTHORIZATION_CODE)))
+				.thenReturn(authorization);
+
+		this.mvc.perform(post(OAuth2TokenEndpointFilter.DEFAULT_TOKEN_ENDPOINT_URI)
+				.params(getTokenRequestParameters(registeredClient, authorization))
+				.header(HttpHeaders.AUTHORIZATION, "Basic " + encodeBasicAuth(
+						registeredClient.getClientId(), registeredClient.getClientSecret())));
+
+		verify(jwtCustomizer).accept(any(JoseHeader.Builder.class), any(JwtClaimsSet.Builder.class));
+	}
+
 	private static MultiValueMap<String, String> getAuthorizationRequestParameters(RegisteredClient registeredClient) {
 		MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
 		parameters.set(OAuth2ParameterNames.RESPONSE_TYPE, OAuth2AuthorizationResponseType.CODE.getValue());
@@ -268,6 +300,16 @@ public class OAuth2AuthorizationCodeGrantTests {
 		@Bean
 		CryptoKeySource keySource() {
 			return keySource;
+		}
+	}
+
+	@EnableWebSecurity
+	@Import(OAuth2AuthorizationServerConfiguration.class)
+	static class AuthorizationServerConfigurationWithJwtEncoder extends AuthorizationServerConfiguration {
+
+		@Bean
+		JwtEncoder jwtEncoder() {
+			return jwtEncoder;
 		}
 	}
 }

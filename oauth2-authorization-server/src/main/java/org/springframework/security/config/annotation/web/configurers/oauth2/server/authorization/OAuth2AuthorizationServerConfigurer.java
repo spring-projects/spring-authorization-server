@@ -26,6 +26,7 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.annotation.web.configurers.ExceptionHandlingConfigurer;
 import org.springframework.security.crypto.key.CryptoKeySource;
 import org.springframework.security.oauth2.jose.jws.NimbusJwsEncoder;
+import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.server.authorization.InMemoryOAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeAuthenticationProvider;
@@ -166,7 +167,7 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 						getAuthorizationService(builder));
 		builder.authenticationProvider(postProcess(clientAuthenticationProvider));
 
-		NimbusJwsEncoder jwtEncoder = new NimbusJwsEncoder(getKeySource(builder));
+		JwtEncoder jwtEncoder = getJwtEncoder(builder);
 
 		OAuth2AuthorizationCodeAuthenticationProvider authorizationCodeAuthenticationProvider =
 				new OAuth2AuthorizationCodeAuthenticationProvider(
@@ -253,23 +254,29 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 		builder.addFilterAfter(postProcess(tokenRevocationEndpointFilter), OAuth2TokenEndpointFilter.class);
 	}
 
+	private static void validateProviderSettings(ProviderSettings providerSettings) {
+		if (providerSettings.issuer() != null) {
+			try {
+				new URI(providerSettings.issuer()).toURL();
+			} catch (Exception ex) {
+				throw new IllegalArgumentException("issuer must be a valid URL", ex);
+			}
+		}
+	}
+
 	private static <B extends HttpSecurityBuilder<B>> RegisteredClientRepository getRegisteredClientRepository(B builder) {
 		RegisteredClientRepository registeredClientRepository = builder.getSharedObject(RegisteredClientRepository.class);
 		if (registeredClientRepository == null) {
-			registeredClientRepository = getRegisteredClientRepositoryBean(builder);
+			registeredClientRepository = getBean(builder, RegisteredClientRepository.class);
 			builder.setSharedObject(RegisteredClientRepository.class, registeredClientRepository);
 		}
 		return registeredClientRepository;
 	}
 
-	private static <B extends HttpSecurityBuilder<B>> RegisteredClientRepository getRegisteredClientRepositoryBean(B builder) {
-		return builder.getSharedObject(ApplicationContext.class).getBean(RegisteredClientRepository.class);
-	}
-
 	private static <B extends HttpSecurityBuilder<B>> OAuth2AuthorizationService getAuthorizationService(B builder) {
 		OAuth2AuthorizationService authorizationService = builder.getSharedObject(OAuth2AuthorizationService.class);
 		if (authorizationService == null) {
-			authorizationService = getAuthorizationServiceBean(builder);
+			authorizationService = getOptionalBean(builder, OAuth2AuthorizationService.class);
 			if (authorizationService == null) {
 				authorizationService = new InMemoryOAuth2AuthorizationService();
 			}
@@ -278,34 +285,28 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 		return authorizationService;
 	}
 
-	private static <B extends HttpSecurityBuilder<B>> OAuth2AuthorizationService getAuthorizationServiceBean(B builder) {
-		Map<String, OAuth2AuthorizationService> authorizationServiceMap = BeanFactoryUtils.beansOfTypeIncludingAncestors(
-				builder.getSharedObject(ApplicationContext.class), OAuth2AuthorizationService.class);
-		if (authorizationServiceMap.size() > 1) {
-			throw new NoUniqueBeanDefinitionException(OAuth2AuthorizationService.class, authorizationServiceMap.size(),
-					"Expected single matching bean of type '" + OAuth2AuthorizationService.class.getName() + "' but found " +
-							authorizationServiceMap.size() + ": " + StringUtils.collectionToCommaDelimitedString(authorizationServiceMap.keySet()));
+	private static <B extends HttpSecurityBuilder<B>> JwtEncoder getJwtEncoder(B builder) {
+		JwtEncoder jwtEncoder = getOptionalBean(builder, JwtEncoder.class);
+		if (jwtEncoder == null) {
+			CryptoKeySource keySource = getKeySource(builder);
+			jwtEncoder = new NimbusJwsEncoder(keySource);
 		}
-		return (!authorizationServiceMap.isEmpty() ? authorizationServiceMap.values().iterator().next() : null);
+		return jwtEncoder;
 	}
 
 	private static <B extends HttpSecurityBuilder<B>> CryptoKeySource getKeySource(B builder) {
 		CryptoKeySource keySource = builder.getSharedObject(CryptoKeySource.class);
 		if (keySource == null) {
-			keySource = getKeySourceBean(builder);
+			keySource = getBean(builder, CryptoKeySource.class);
 			builder.setSharedObject(CryptoKeySource.class, keySource);
 		}
 		return keySource;
 	}
 
-	private static <B extends HttpSecurityBuilder<B>> CryptoKeySource getKeySourceBean(B builder) {
-		return builder.getSharedObject(ApplicationContext.class).getBean(CryptoKeySource.class);
-	}
-
 	private static <B extends HttpSecurityBuilder<B>> ProviderSettings getProviderSettings(B builder) {
 		ProviderSettings providerSettings = builder.getSharedObject(ProviderSettings.class);
 		if (providerSettings == null) {
-			providerSettings = getProviderSettingsBean(builder);
+			providerSettings = getOptionalBean(builder, ProviderSettings.class);
 			if (providerSettings == null) {
 				providerSettings = new ProviderSettings();
 			}
@@ -314,24 +315,18 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 		return providerSettings;
 	}
 
-	private static <B extends HttpSecurityBuilder<B>> ProviderSettings getProviderSettingsBean(B builder) {
-		Map<String, ProviderSettings> providerSettingsMap = BeanFactoryUtils.beansOfTypeIncludingAncestors(
-				builder.getSharedObject(ApplicationContext.class), ProviderSettings.class);
-		if (providerSettingsMap.size() > 1) {
-			throw new NoUniqueBeanDefinitionException(ProviderSettings.class, providerSettingsMap.size(),
-					"Expected single matching bean of type '" + ProviderSettings.class.getName() + "' but found " +
-							providerSettingsMap.size() + ": " + StringUtils.collectionToCommaDelimitedString(providerSettingsMap.keySet()));
-		}
-		return (!providerSettingsMap.isEmpty() ? providerSettingsMap.values().iterator().next() : null);
+	private static <B extends HttpSecurityBuilder<B>, T> T getBean(B builder, Class<T> type) {
+		return builder.getSharedObject(ApplicationContext.class).getBean(type);
 	}
 
-	private void validateProviderSettings(ProviderSettings providerSettings) {
-		if (providerSettings.issuer() != null) {
-			try {
-				new URI(providerSettings.issuer()).toURL();
-			} catch (Exception ex) {
-				throw new IllegalArgumentException("issuer must be a valid URL", ex);
-			}
+	private static <B extends HttpSecurityBuilder<B>, T> T getOptionalBean(B builder, Class<T> type) {
+		Map<String, T> beansMap = BeanFactoryUtils.beansOfTypeIncludingAncestors(
+				builder.getSharedObject(ApplicationContext.class), type);
+		if (beansMap.size() > 1) {
+			throw new NoUniqueBeanDefinitionException(type, beansMap.size(),
+					"Expected single matching bean of type '" + type.getName() + "' but found " +
+							beansMap.size() + ": " + StringUtils.collectionToCommaDelimitedString(beansMap.keySet()));
 		}
+		return (!beansMap.isEmpty() ? beansMap.values().iterator().next() : null);
 	}
 }

@@ -53,6 +53,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 /**
@@ -94,6 +95,7 @@ public final class NimbusJwsEncoder implements JwtEncoder {
 	private static final Converter<JoseHeader, JWSHeader> jwsHeaderConverter = new JwsHeaderConverter();
 	private static final Converter<JwtClaimsSet, JWTClaimsSet> jwtClaimsSetConverter = new JwtClaimsSetConverter();
 	private final CryptoKeySource keySource;
+	private BiConsumer<JoseHeader.Builder, JwtClaimsSet.Builder> jwtCustomizer = (headers, claims) -> {};
 
 	/**
 	 * Constructs a {@code NimbusJwsEncoder} using the provided parameters.
@@ -103,6 +105,19 @@ public final class NimbusJwsEncoder implements JwtEncoder {
 	public NimbusJwsEncoder(CryptoKeySource keySource) {
 		Assert.notNull(keySource, "keySource cannot be null");
 		this.keySource = keySource;
+	}
+
+	/**
+	 * Sets the {@link Jwt} customizer to be provided the
+	 * {@link JoseHeader.Builder} and {@link JwtClaimsSet.Builder}
+	 * allowing for further customizations.
+	 *
+	 * @param jwtCustomizer the {@link Jwt} customizer to be provided the
+	 * {@link JoseHeader.Builder} and {@link JwtClaimsSet.Builder}
+	 */
+	public void setJwtCustomizer(BiConsumer<JoseHeader.Builder, JwtClaimsSet.Builder> jwtCustomizer) {
+		Assert.notNull(jwtCustomizer, "jwtCustomizer cannot be null");
+		this.jwtCustomizer = jwtCustomizer;
 	}
 
 	@Override
@@ -136,15 +151,18 @@ public final class NimbusJwsEncoder implements JwtEncoder {
 			}
 		}
 
-		headers = JoseHeader.from(headers)
+		JoseHeader.Builder headersBuilder = JoseHeader.from(headers)
 				.type(JOSEObjectType.JWT.getType())
-				.keyId(cryptoKey.getId())
-				.build();
-		JWSHeader jwsHeader = jwsHeaderConverter.convert(headers);
+				.keyId(cryptoKey.getId());
+		JwtClaimsSet.Builder claimsBuilder = JwtClaimsSet.from(claims)
+				.id(UUID.randomUUID().toString());
 
-		claims = JwtClaimsSet.from(claims)
-				.id(UUID.randomUUID().toString())
-				.build();
+		this.jwtCustomizer.accept(headersBuilder, claimsBuilder);
+
+		headers = headersBuilder.build();
+		claims = claimsBuilder.build();
+
+		JWSHeader jwsHeader = jwsHeaderConverter.convert(headers);
 		JWTClaimsSet jwtClaimsSet = jwtClaimsSetConverter.convert(claims);
 
 		SignedJWT signedJWT = new SignedJWT(jwsHeader, jwtClaimsSet);

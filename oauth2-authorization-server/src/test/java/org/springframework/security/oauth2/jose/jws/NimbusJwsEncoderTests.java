@@ -32,11 +32,14 @@ import org.springframework.security.oauth2.jwt.TestJwtClaimsSets;
 import java.security.interfaces.RSAPublicKey;
 import java.util.Collections;
 import java.util.LinkedHashSet;
+import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -59,6 +62,13 @@ public class NimbusJwsEncoderTests {
 		assertThatThrownBy(() -> new NimbusJwsEncoder(null))
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessage("keySource cannot be null");
+	}
+
+	@Test
+	public void setJwtCustomizerWhenNullThenThrowIllegalArgumentException() {
+		assertThatThrownBy(() -> this.jwtEncoder.setJwtCustomizer(null))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("jwtCustomizer cannot be null");
 	}
 
 	@Test
@@ -126,6 +136,24 @@ public class NimbusJwsEncoderTests {
 
 		NimbusJwtDecoder jwtDecoder = NimbusJwtDecoder.withPublicKey((RSAPublicKey) rsaKey.getPublicKey()).build();
 		jwtDecoder.decode(jws.getTokenValue());
+	}
+
+	@Test
+	public void encodeWhenCustomizerSetThenCalled() {
+		AsymmetricKey rsaKey = TestCryptoKeys.rsaKey().build();
+		when(this.keySource.getKeys()).thenReturn(Collections.singleton(rsaKey));
+
+		JoseHeader joseHeader = TestJoseHeaders.joseHeader()
+				.headers(headers -> headers.remove(JoseHeaderNames.CRIT))
+				.build();
+		JwtClaimsSet jwtClaimsSet = TestJwtClaimsSets.jwtClaimsSet().build();
+
+		BiConsumer<JoseHeader.Builder, JwtClaimsSet.Builder> jwtCustomizer = mock(BiConsumer.class);
+		this.jwtEncoder.setJwtCustomizer(jwtCustomizer);
+
+		this.jwtEncoder.encode(joseHeader, jwtClaimsSet);
+
+		verify(jwtCustomizer).accept(any(JoseHeader.Builder.class), any(JwtClaimsSet.Builder.class));
 	}
 
 	@Test

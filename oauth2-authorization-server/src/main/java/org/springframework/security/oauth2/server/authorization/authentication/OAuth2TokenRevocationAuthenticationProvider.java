@@ -22,7 +22,6 @@ import org.springframework.security.oauth2.core.AbstractOAuth2Token;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
-import org.springframework.security.oauth2.core.OAuth2ErrorCodes2;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.TokenType;
@@ -71,8 +70,6 @@ public class OAuth2TokenRevocationAuthenticationProvider implements Authenticati
 				tokenType = TokenType.REFRESH_TOKEN;
 			} else if (TokenType.ACCESS_TOKEN.getValue().equals(tokenTypeHint)) {
 				tokenType = TokenType.ACCESS_TOKEN;
-			} else {
-				throw new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes2.UNSUPPORTED_TOKEN_TYPE));
 			}
 		}
 

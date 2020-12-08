@@ -101,7 +101,7 @@ public class InMemoryOAuth2AuthorizationServiceTests {
 	}
 
 	@Test
-	public void findByTokenWhenTokenTypeStateThenFound() {
+	public void findByTokenWhenStateExistsThenFound() {
 		String state = "state";
 		OAuth2Authorization authorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
 				.principalName(PRINCIPAL_NAME)
@@ -112,10 +112,12 @@ public class InMemoryOAuth2AuthorizationServiceTests {
 		OAuth2Authorization result = this.authorizationService.findByToken(
 				state, new TokenType(OAuth2AuthorizationAttributeNames.STATE));
 		assertThat(authorization).isEqualTo(result);
+		result = this.authorizationService.findByToken(state, null);
+		assertThat(authorization).isEqualTo(result);
 	}
 
 	@Test
-	public void findByTokenWhenTokenTypeAuthorizationCodeThenFound() {
+	public void findByTokenWhenAuthorizationCodeExistsThenFound() {
 		OAuth2Authorization authorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
 				.principalName(PRINCIPAL_NAME)
 				.tokens(OAuth2Tokens.builder().token(AUTHORIZATION_CODE).build())
@@ -125,10 +127,12 @@ public class InMemoryOAuth2AuthorizationServiceTests {
 		OAuth2Authorization result = this.authorizationService.findByToken(
 				AUTHORIZATION_CODE.getTokenValue(), TokenType.AUTHORIZATION_CODE);
 		assertThat(authorization).isEqualTo(result);
+		result = this.authorizationService.findByToken(AUTHORIZATION_CODE.getTokenValue(), null);
+		assertThat(authorization).isEqualTo(result);
 	}
 
 	@Test
-	public void findByTokenWhenTokenTypeAccessTokenThenFound() {
+	public void findByTokenWhenAccessTokenExistsThenFound() {
 		OAuth2AccessToken accessToken = new OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER,
 				"access-token", Instant.now().minusSeconds(60), Instant.now());
 		OAuth2Authorization authorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
@@ -138,12 +142,14 @@ public class InMemoryOAuth2AuthorizationServiceTests {
 		this.authorizationService.save(authorization);
 
 		OAuth2Authorization result = this.authorizationService.findByToken(
-				"access-token", TokenType.ACCESS_TOKEN);
+				accessToken.getTokenValue(), TokenType.ACCESS_TOKEN);
+		assertThat(authorization).isEqualTo(result);
+		result = this.authorizationService.findByToken(accessToken.getTokenValue(), null);
 		assertThat(authorization).isEqualTo(result);
 	}
 
 	@Test
-	public void findByTokenWhenTokenTypeRefreshTokenThenFound() {
+	public void findByTokenWhenRefreshTokenExistsThenFound() {
 		OAuth2RefreshToken refreshToken = new OAuth2RefreshToken("refresh-token", Instant.now());
 		OAuth2Authorization authorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
 				.principalName(PRINCIPAL_NAME)
@@ -153,6 +159,8 @@ public class InMemoryOAuth2AuthorizationServiceTests {
 
 		OAuth2Authorization result = this.authorizationService.findByToken(
 				refreshToken.getTokenValue(), TokenType.REFRESH_TOKEN);
+		assertThat(authorization).isEqualTo(result);
+		result = this.authorizationService.findByToken(refreshToken.getTokenValue(), null);
 		assertThat(authorization).isEqualTo(result);
 	}
 

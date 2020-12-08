@@ -63,21 +63,41 @@ public final class InMemoryOAuth2AuthorizationService implements OAuth2Authoriza
 				.orElse(null);
 	}
 
-	private boolean hasToken(OAuth2Authorization authorization, String token, TokenType tokenType) {
-		if (OAuth2AuthorizationAttributeNames.STATE.equals(tokenType.getValue())) {
-			return token.equals(authorization.getAttribute(OAuth2AuthorizationAttributeNames.STATE));
+	private static boolean hasToken(OAuth2Authorization authorization, String token, @Nullable TokenType tokenType) {
+		if (tokenType == null) {
+			return matchesState(authorization, token) ||
+					matchesAuthorizationCode(authorization, token) ||
+					matchesAccessToken(authorization, token) ||
+					matchesRefreshToken(authorization, token);
+		} else if (OAuth2AuthorizationAttributeNames.STATE.equals(tokenType.getValue())) {
+			return matchesState(authorization, token);
 		} else if (TokenType.AUTHORIZATION_CODE.equals(tokenType)) {
-			OAuth2AuthorizationCode authorizationCode = authorization.getTokens().getToken(OAuth2AuthorizationCode.class);
-			return authorizationCode != null && authorizationCode.getTokenValue().equals(token);
+			return matchesAuthorizationCode(authorization, token);
 		} else if (TokenType.ACCESS_TOKEN.equals(tokenType)) {
-			return authorization.getTokens().getAccessToken() != null &&
-					authorization.getTokens().getAccessToken().getTokenValue().equals(token);
+			return matchesAccessToken(authorization, token);
 		} else if (TokenType.REFRESH_TOKEN.equals(tokenType)) {
-			return authorization.getTokens().getRefreshToken() != null &&
-					authorization.getTokens().getRefreshToken().getTokenValue().equals(token);
+			return matchesRefreshToken(authorization, token);
 		}
-
 		return false;
+	}
+
+	private static boolean matchesState(OAuth2Authorization authorization, String token) {
+		return token.equals(authorization.getAttribute(OAuth2AuthorizationAttributeNames.STATE));
+	}
+
+	private static boolean matchesAuthorizationCode(OAuth2Authorization authorization, String token) {
+		OAuth2AuthorizationCode authorizationCode = authorization.getTokens().getToken(OAuth2AuthorizationCode.class);
+		return authorizationCode != null && authorizationCode.getTokenValue().equals(token);
+	}
+
+	private static boolean matchesAccessToken(OAuth2Authorization authorization, String token) {
+		return authorization.getTokens().getAccessToken() != null &&
+				authorization.getTokens().getAccessToken().getTokenValue().equals(token);
+	}
+
+	private static boolean matchesRefreshToken(OAuth2Authorization authorization, String token) {
+		return authorization.getTokens().getRefreshToken() != null &&
+				authorization.getTokens().getRefreshToken().getTokenValue().equals(token);
 	}
 
 	private static class OAuth2AuthorizationId implements Serializable {

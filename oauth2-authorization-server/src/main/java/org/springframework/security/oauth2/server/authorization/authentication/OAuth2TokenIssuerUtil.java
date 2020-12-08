@@ -28,7 +28,6 @@ import org.springframework.security.oauth2.jwt.JwtEncoder;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.Set;
@@ -41,12 +40,12 @@ class OAuth2TokenIssuerUtil {
 
 	private static final StringKeyGenerator TOKEN_GENERATOR = new Base64StringKeyGenerator(Base64.getUrlEncoder().withoutPadding(), 96);
 
-	static Jwt issueJwtAccessToken(JwtEncoder jwtEncoder, String subject, String audience, Set<String> scopes) {
+	static Jwt issueJwtAccessToken(JwtEncoder jwtEncoder, String subject, String audience, Set<String> scopes, Duration tokenTimeToLive) {
 		JoseHeader joseHeader = JoseHeader.withAlgorithm(SignatureAlgorithm.RS256).build();
 
 		String issuer = "https://oauth2.provider.com";		// TODO Allow configuration for issuer claim
 		Instant issuedAt = Instant.now();
-		Instant expiresAt = issuedAt.plus(1, ChronoUnit.HOURS);		// TODO Allow configuration for access token time-to-live
+		Instant expiresAt = issuedAt.plus(tokenTimeToLive);
 
 		JwtClaimsSet jwtClaimsSet = JwtClaimsSet.builder()
 											.issuer(issuer)
@@ -61,9 +60,9 @@ class OAuth2TokenIssuerUtil {
 		return jwtEncoder.encode(joseHeader, jwtClaimsSet);
 	}
 
-	static OAuth2RefreshToken issueRefreshToken(Duration refreshTokenTimeToLive) {
+	static OAuth2RefreshToken issueRefreshToken(Duration tokenTimeToLive) {
 		Instant issuedAt = Instant.now();
-		Instant expiresAt = issuedAt.plus(refreshTokenTimeToLive);
+		Instant expiresAt = issuedAt.plus(tokenTimeToLive);
 
 		return new OAuth2RefreshToken2(TOKEN_GENERATOR.generateKey(), issuedAt, expiresAt);
 	}

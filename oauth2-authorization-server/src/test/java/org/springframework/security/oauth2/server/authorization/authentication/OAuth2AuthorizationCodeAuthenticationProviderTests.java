@@ -251,10 +251,12 @@ public class OAuth2AuthorizationCodeAuthenticationProviderTests {
 	}
 
 	@Test
-	public void authenticateWhenRefreshTokenTimeToLiveConfiguredThenRefreshTokenExpirySet() {
+	public void authenticateWhenTokenTimeToLiveConfiguredThenTokenExpirySet() {
+		Duration accessTokenTTL = Duration.ofHours(2);
 		Duration refreshTokenTTL = Duration.ofDays(1);
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
-				.tokenSettings(tokenSettings -> tokenSettings.refreshTokenTimeToLive(refreshTokenTTL))
+				.tokenSettings(tokenSettings ->
+						tokenSettings.accessTokenTimeToLive(accessTokenTTL).refreshTokenTimeToLive(refreshTokenTTL))
 				.build();
 
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();
@@ -267,7 +269,9 @@ public class OAuth2AuthorizationCodeAuthenticationProviderTests {
 		OAuth2AuthorizationCodeAuthenticationToken authentication =
 				new OAuth2AuthorizationCodeAuthenticationToken(AUTHORIZATION_CODE, clientPrincipal, authorizationRequest.getRedirectUri(), null);
 
-		when(this.jwtEncoder.encode(any(), any())).thenReturn(createJwt());
+		Instant accessTokenIssuedAt = Instant.now();
+		Instant accessTokenExpiresAt = accessTokenIssuedAt.plus(accessTokenTTL);
+		when(this.jwtEncoder.encode(any(), any())).thenReturn(createJwt(accessTokenIssuedAt, accessTokenExpiresAt));
 
 		OAuth2AccessTokenAuthenticationToken accessTokenAuthentication =
 				(OAuth2AccessTokenAuthenticationToken) this.authenticationProvider.authenticate(authentication);
@@ -275,6 +279,11 @@ public class OAuth2AuthorizationCodeAuthenticationProviderTests {
 		ArgumentCaptor<OAuth2Authorization> authorizationCaptor = ArgumentCaptor.forClass(OAuth2Authorization.class);
 		verify(this.authorizationService).save(authorizationCaptor.capture());
 		OAuth2Authorization updatedAuthorization = authorizationCaptor.getValue();
+
+		assertThat(accessTokenAuthentication.getAccessToken()).isEqualTo(updatedAuthorization.getTokens().getAccessToken());
+		Instant expectedAccessTokenExpiresAt = accessTokenAuthentication.getAccessToken().getIssuedAt().plus(accessTokenTTL);
+		assertThat(accessTokenAuthentication.getAccessToken().getExpiresAt()).isBetween(
+				expectedAccessTokenExpiresAt.minusSeconds(1), expectedAccessTokenExpiresAt.plusSeconds(1));
 
 		assertThat(accessTokenAuthentication.getRefreshToken()).isEqualTo(updatedAuthorization.getTokens().getRefreshToken());
 		Instant expectedRefreshTokenExpiresAt = accessTokenAuthentication.getRefreshToken().getIssuedAt().plus(refreshTokenTTL);
@@ -309,6 +318,10 @@ public class OAuth2AuthorizationCodeAuthenticationProviderTests {
 	private static Jwt createJwt() {
 		Instant issuedAt = Instant.now();
 		Instant expiresAt = issuedAt.plus(1, ChronoUnit.HOURS);
+		return createJwt(issuedAt, expiresAt);
+	}
+
+	private static Jwt createJwt(Instant issuedAt, Instant expiresAt) {
 		return Jwt.withTokenValue("token")
 				.header(JoseHeaderNames.ALG, SignatureAlgorithm.RS256.getName())
 				.issuedAt(issuedAt)

@@ -127,8 +127,7 @@ public class OAuth2AuthorizationCodeAuthenticationProvider implements Authentica
 				.accessToken(accessToken);
 
 		OAuth2RefreshToken refreshToken = null;
-		if (registeredClient.getAuthorizationGrantTypes()
-				.contains(AuthorizationGrantType.REFRESH_TOKEN)) {
+		if (registeredClient.getAuthorizationGrantTypes().contains(AuthorizationGrantType.REFRESH_TOKEN)) {
 			refreshToken = OAuth2TokenIssuerUtil.issueRefreshToken(registeredClient.getTokenSettings().refreshTokenTimeToLive());
 			tokensBuilder.refreshToken(refreshToken);
 		}

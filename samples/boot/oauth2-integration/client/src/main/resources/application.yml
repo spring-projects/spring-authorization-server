@@ -45,3 +45,10 @@ spring:
 
 messages:
   base-uri: http://localhost:8090/messages
+
+management:
+  endpoints:
+    enabled-by-default: false
+  endpoint:
+    health:
+      enabled: true

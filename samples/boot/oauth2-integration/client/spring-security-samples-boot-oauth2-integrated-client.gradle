@@ -5,6 +5,7 @@ dependencies {
 	compile 'org.springframework.boot:spring-boot-starter-thymeleaf'
 	compile 'org.springframework.boot:spring-boot-starter-security'
 	compile 'org.springframework.boot:spring-boot-starter-oauth2-client'
+	compile 'org.springframework.boot:spring-boot-starter-actuator'
 	compile 'org.springframework:spring-webflux'
 	compile 'io.projectreactor.netty:reactor-netty'
 	compile 'org.thymeleaf.extras:thymeleaf-extras-springsecurity5'

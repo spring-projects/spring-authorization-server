@@ -32,7 +32,7 @@ public class SecurityConfig {
 
 	@Bean
 	WebSecurityCustomizer webSecurityCustomizer() {
-		return (web) -> web.ignoring().antMatchers("/webjars/**");
+		return (web) -> web.ignoring().antMatchers("/webjars/**", "/actuator/health");
 	}
 
 	// formatter:off

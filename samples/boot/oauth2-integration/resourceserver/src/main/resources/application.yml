@@ -15,3 +15,10 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: http://auth-server:9000
+
+management:
+  endpoints:
+    enabled-by-default: false
+  endpoint:
+    health:
+      enabled: true

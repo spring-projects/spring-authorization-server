@@ -38,7 +38,6 @@ import org.springframework.security.oauth2.core.endpoint.OAuth2AccessTokenRespon
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.http.converter.OAuth2AccessTokenResponseHttpMessageConverter;
 import org.springframework.security.oauth2.core.http.converter.OAuth2ErrorHttpMessageConverter;
-import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AccessTokenAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientAuthenticationToken;
@@ -76,7 +75,6 @@ import static org.mockito.Mockito.when;
  */
 public class OAuth2TokenEndpointFilterTests {
 	private AuthenticationManager authenticationManager;
-	private OAuth2AuthorizationService authorizationService;
 	private OAuth2TokenEndpointFilter filter;
 	private final HttpMessageConverter<OAuth2Error> errorHttpResponseConverter =
 			new OAuth2ErrorHttpMessageConverter();
@@ -86,8 +84,7 @@ public class OAuth2TokenEndpointFilterTests {
 	@Before
 	public void setUp() {
 		this.authenticationManager = mock(AuthenticationManager.class);
-		this.authorizationService = mock(OAuth2AuthorizationService.class);
-		this.filter = new OAuth2TokenEndpointFilter(this.authenticationManager, this.authorizationService);
+		this.filter = new OAuth2TokenEndpointFilter(this.authenticationManager);
 	}
 
 	@After
@@ -97,21 +94,14 @@ public class OAuth2TokenEndpointFilterTests {
 
 	@Test
 	public void constructorWhenAuthenticationManagerNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> new OAuth2TokenEndpointFilter(null, this.authorizationService))
+		assertThatThrownBy(() -> new OAuth2TokenEndpointFilter(null, "tokenEndpointUri"))
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessage("authenticationManager cannot be null");
 	}
 
 	@Test
-	public void constructorWhenAuthorizationServiceNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> new OAuth2TokenEndpointFilter(this.authenticationManager, null))
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("authorizationService cannot be null");
-	}
-
-	@Test
 	public void constructorWhenTokenEndpointUriNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> new OAuth2TokenEndpointFilter(this.authenticationManager, this.authorizationService, null))
+		assertThatThrownBy(() -> new OAuth2TokenEndpointFilter(this.authenticationManager, null))
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessage("tokenEndpointUri cannot be empty");
 	}

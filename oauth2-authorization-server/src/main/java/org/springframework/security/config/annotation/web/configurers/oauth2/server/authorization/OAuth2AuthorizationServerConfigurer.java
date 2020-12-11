@@ -171,7 +171,6 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 
 		OAuth2AuthorizationCodeAuthenticationProvider authorizationCodeAuthenticationProvider =
 				new OAuth2AuthorizationCodeAuthenticationProvider(
-						getRegisteredClientRepository(builder),
 						getAuthorizationService(builder),
 						jwtEncoder);
 		builder.authenticationProvider(postProcess(authorizationCodeAuthenticationProvider));

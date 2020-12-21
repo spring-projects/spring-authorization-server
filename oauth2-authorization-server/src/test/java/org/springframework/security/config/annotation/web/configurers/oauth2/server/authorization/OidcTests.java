@@ -56,6 +56,7 @@ import org.springframework.security.oauth2.core.oidc.endpoint.OidcParameterNames
 import org.springframework.security.oauth2.jose.TestJwks;
 import org.springframework.security.oauth2.jose.TestKeys;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.authorization.JwtEncodingContext;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
@@ -272,6 +273,11 @@ public class OidcTests {
 					context.getClaims().claim(AUTHORITIES_CLAIM, authorities);
 				}
 			};
+		}
+
+		@Bean
+		JwtDecoder jwtDecoder(){
+			return jwtDecoder;
 		}
 	}
 

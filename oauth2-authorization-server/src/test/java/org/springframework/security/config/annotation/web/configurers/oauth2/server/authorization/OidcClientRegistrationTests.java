@@ -15,6 +15,8 @@
  */
 package org.springframework.security.config.annotation.web.configurers.oauth2.server.authorization;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
@@ -22,77 +24,86 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.mock.http.client.MockClientHttpResponse;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
 import org.springframework.security.config.test.SpringTestRule;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
+import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
+import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2TokenType;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AccessTokenResponse;
+import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationResponseType;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.http.converter.OAuth2AccessTokenResponseHttpMessageConverter;
+import org.springframework.security.oauth2.core.oidc.OidcClientRegistration;
+import org.springframework.security.oauth2.core.oidc.http.converter.OidcClientRegistrationHttpMessageConverter;
 import org.springframework.security.oauth2.jose.TestJwks;
 import org.springframework.security.oauth2.jose.TestKeys;
-import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
-import org.springframework.security.oauth2.server.authorization.JwtEncodingContext;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
-import org.springframework.security.oauth2.server.authorization.OAuth2TokenCustomizer;
-import org.springframework.security.oauth2.server.authorization.TestOAuth2Authorizations;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
+import org.springframework.security.oauth2.server.authorization.config.ProviderSettings;
 import org.springframework.security.oauth2.server.authorization.web.OAuth2TokenEndpointFilter;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.security.Principal;
 import java.util.Base64;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.CoreMatchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Integration tests for the OAuth 2.0 Refresh Token Grant.
+ * Integration tests for OpenID Connect 1.0 Client Registration Endpoint.
  *
- * @author Alexey Nesterov
- * @since 0.0.3
+ * @author Ovidiu Popa
+ * @since 0.1.1
  */
-public class OAuth2RefreshTokenGrantTests {
-	private static final String AUTHORITIES_CLAIM = "authorities";
+public class OidcClientRegistrationTests {
+	private static final OidcClientRegistration.Builder OIDC_CLIENT_REGISTRATION = OidcClientRegistration.builder()
+			.redirectUri("https://localhost:8080/client")
+			.responseType(OAuth2AuthorizationResponseType.CODE.getValue())
+			.grantType(AuthorizationGrantType.AUTHORIZATION_CODE.getValue())
+			.tokenEndpointAuthenticationMethod(ClientAuthenticationMethod.BASIC.getValue())
+			.scope("test");
+
+	private static final HttpMessageConverter<OAuth2AccessTokenResponse> accessTokenHttpResponseConverter =
+			new OAuth2AccessTokenResponseHttpMessageConverter();
+
+	private static final OidcClientRegistrationHttpMessageConverter clientRegistrationHttpMessageConverter =
+			new OidcClientRegistrationHttpMessageConverter();
+
+	private static final OAuth2TokenType ACCESS_TOKEN_TOKEN_TYPE = new OAuth2TokenType(OAuth2ParameterNames.ACCESS_TOKEN);
+
 	private static RegisteredClientRepository registeredClientRepository;
 	private static OAuth2AuthorizationService authorizationService;
 	private static JWKSource<SecurityContext> jwkSource;
 	private static NimbusJwtDecoder jwtDecoder;
-	private static HttpMessageConverter<OAuth2AccessTokenResponse> accessTokenHttpResponseConverter =
-			new OAuth2AccessTokenResponseHttpMessageConverter();
 
 	@Rule
 	public final SpringTestRule spring = new SpringTestRule();
@@ -116,60 +127,63 @@ public class OAuth2RefreshTokenGrantTests {
 	}
 
 	@Test
-	public void requestWhenRefreshTokenRequestValidThenReturnAccessTokenResponse() throws Exception {
-		this.spring.register(AuthorizationServerConfiguration.class).autowire();
-
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+	public void requestWhenAuthenticatedThenResponseIncludesRegisteredClientDetails() throws Exception {
+		this.spring.register(AuthorizationServerConfigurationEnabledClientRegistration.class).autowire();
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient2()
+				.scope("client.create").build();
 		when(registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
 				.thenReturn(registeredClient);
-
-		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();
-		when(authorizationService.findByToken(
-				eq(authorization.getRefreshToken().getToken().getTokenValue()),
-				eq(OAuth2TokenType.REFRESH_TOKEN)))
-				.thenReturn(authorization);
-
+		// get access token
 		MvcResult mvcResult = this.mvc.perform(post(OAuth2TokenEndpointFilter.DEFAULT_TOKEN_ENDPOINT_URI)
-				.params(getRefreshTokenRequestParameters(authorization))
+				.param(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
+				.param(OAuth2ParameterNames.SCOPE, "client.create")
 				.header(HttpHeaders.AUTHORIZATION, "Basic " + encodeBasicAuth(
 						registeredClient.getClientId(), registeredClient.getClientSecret())))
 				.andExpect(status().isOk())
-				.andExpect(header().string(HttpHeaders.CACHE_CONTROL, containsString("no-store")))
-				.andExpect(header().string(HttpHeaders.PRAGMA, containsString("no-cache")))
 				.andExpect(jsonPath("$.access_token").isNotEmpty())
-				.andExpect(jsonPath("$.token_type").isNotEmpty())
-				.andExpect(jsonPath("$.expires_in").isNotEmpty())
-				.andExpect(jsonPath("$.refresh_token").isNotEmpty())
-				.andExpect(jsonPath("$.scope").isNotEmpty())
+				.andExpect(jsonPath("$.scope").value("client.create"))
 				.andReturn();
 
+		//assert get access token
 		verify(registeredClientRepository).findByClientId(eq(registeredClient.getClientId()));
-		verify(authorizationService).findByToken(
-				eq(authorization.getRefreshToken().getToken().getTokenValue()),
-				eq(OAuth2TokenType.REFRESH_TOKEN));
-		verify(authorizationService).save(any());
-
+		ArgumentCaptor<OAuth2Authorization> authorizationCaptor = ArgumentCaptor.forClass(OAuth2Authorization.class);
+		verify(authorizationService).save(authorizationCaptor.capture());
+		OAuth2Authorization authorization = authorizationCaptor.getValue();
 		MockHttpServletResponse servletResponse = mvcResult.getResponse();
 		MockClientHttpResponse httpResponse = new MockClientHttpResponse(
 				servletResponse.getContentAsByteArray(), HttpStatus.valueOf(servletResponse.getStatus()));
-		OAuth2AccessTokenResponse accessTokenResponse = accessTokenHttpResponseConverter.read(
-				OAuth2AccessTokenResponse.class, httpResponse);
+		OAuth2AccessTokenResponse accessTokenResponse = accessTokenHttpResponseConverter.read(OAuth2AccessTokenResponse.class, httpResponse);
+		String tokenValue = accessTokenResponse.getAccessToken().getTokenValue();
 
-		// Assert user authorities was propagated as claim in JWT
-		Jwt jwt = jwtDecoder.decode(accessTokenResponse.getAccessToken().getTokenValue());
-		List<String> authoritiesClaim = jwt.getClaim(AUTHORITIES_CLAIM);
-		Authentication principal = authorization.getAttribute(Principal.class.getName());
-		Set<String> userAuthorities = principal.getAuthorities().stream()
-				.map(GrantedAuthority::getAuthority)
-				.collect(Collectors.toSet());
-		assertThat(authoritiesClaim).containsExactlyInAnyOrderElementsOf(userAuthorities);
-	}
+		// prepare register client request
+		when(authorizationService.findByToken(
+				eq(authorization.getToken(OAuth2AccessToken.class).getToken().getTokenValue()),
+				eq(ACCESS_TOKEN_TOKEN_TYPE)))
+				.thenReturn(authorization);
+		doNothing().when(registeredClientRepository).saveClient(any(RegisteredClient.class));
+		mvcResult = this.mvc.perform(post("/connect/register")
+				.header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenValue)
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(convertToByteArray(OIDC_CLIENT_REGISTRATION.build())))
+				.andExpect(status().isCreated()).andReturn();
 
-	private static MultiValueMap<String, String> getRefreshTokenRequestParameters(OAuth2Authorization authorization) {
-		MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
-		parameters.set(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.REFRESH_TOKEN.getValue());
-		parameters.set(OAuth2ParameterNames.REFRESH_TOKEN, authorization.getRefreshToken().getToken().getTokenValue());
-		return parameters;
+		servletResponse = mvcResult.getResponse();
+		httpResponse = new MockClientHttpResponse(
+				servletResponse.getContentAsByteArray(), HttpStatus.valueOf(servletResponse.getStatus()));
+
+		OidcClientRegistration result = clientRegistrationHttpMessageConverter.read(OidcClientRegistration.class, httpResponse);
+
+
+		assertThat(result).isNotNull();
+		assertThat(result.getClaimAsString("client_id")).isNotEmpty();
+		assertThat(result.getClaimAsString("client_id_issued_at")).isNotEmpty();
+		assertThat(result.getClaimAsString("client_secret")).isNotEmpty();
+		assertThat(result.getClaimAsString("client_secret_expires_at")).isNotNull().isEqualTo("0.0");
+		assertThat(result.getRedirectUris()).isNotEmpty().containsExactly("https://localhost:8080/client");
+		assertThat(result.getResponseTypes()).isNotEmpty().containsExactly(OAuth2AuthorizationResponseType.CODE.getValue());
+		assertThat(result.getGrantTypes()).isNotEmpty().containsExactly(AuthorizationGrantType.AUTHORIZATION_CODE.getValue());
+		assertThat(result.getTokenEndpointAuthenticationMethod()).isNotEmpty().isEqualTo(ClientAuthenticationMethod.BASIC.getValue());
+		assertThat(result.getScope()).isNotEmpty().isEqualTo("test");
 	}
 
 	private static String encodeBasicAuth(String clientId, String secret) throws Exception {
@@ -178,6 +192,14 @@ public class OAuth2RefreshTokenGrantTests {
 		String credentialsString = clientId + ":" + secret;
 		byte[] encodedBytes = Base64.getEncoder().encode(credentialsString.getBytes(StandardCharsets.UTF_8));
 		return new String(encodedBytes, StandardCharsets.UTF_8);
+	}
+
+	private static byte[] convertToByteArray(OidcClientRegistration clientRegistration) throws JsonProcessingException {
+		ObjectMapper objectMapper = new ObjectMapper();
+
+		return objectMapper
+				.writerFor(Map.class)
+				.writeValueAsBytes(clientRegistration.getClaims());
 	}
 
 	@EnableWebSecurity
@@ -199,17 +221,21 @@ public class OAuth2RefreshTokenGrantTests {
 			return jwkSource;
 		}
 
+
+	}
+
+	@EnableWebSecurity
+	@Import(OAuth2AuthorizationServerConfiguration.class)
+	static class AuthorizationServerConfigurationEnabledClientRegistration extends AuthorizationServerConfiguration{
+
 		@Bean
-		OAuth2TokenCustomizer<JwtEncodingContext> jwtCustomizer() {
-			return context -> {
-				if (AuthorizationGrantType.REFRESH_TOKEN.equals(context.getAuthorizationGrantType())) {
-					Authentication principal = context.getPrincipal();
-					Set<String> authorities = principal.getAuthorities().stream()
-							.map(GrantedAuthority::getAuthority)
-							.collect(Collectors.toSet());
-					context.getClaims().claim(AUTHORITIES_CLAIM, authorities);
-				}
-			};
+		JwtDecoder jwtDecoder() {
+			return jwtDecoder;
+		}
+
+		@Bean
+		ProviderSettings providerSettings() {
+			return new ProviderSettings().isOidClientRegistrationEndpointEnabled(true);
 		}
 	}
 }

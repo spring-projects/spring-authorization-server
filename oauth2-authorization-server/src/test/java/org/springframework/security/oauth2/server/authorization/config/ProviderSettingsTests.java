@@ -37,6 +37,8 @@ public class ProviderSettingsTests {
 		assertThat(providerSettings.jwkSetEndpoint()).isEqualTo("/oauth2/jwks");
 		assertThat(providerSettings.tokenRevocationEndpoint()).isEqualTo("/oauth2/revoke");
 		assertThat(providerSettings.tokenIntrospectionEndpoint()).isEqualTo("/oauth2/introspect");
+		assertThat(providerSettings.oidcClientRegistrationEndpoint()).isEqualTo("/connect/register");
+		assertThat(providerSettings.isOidClientRegistrationEndpointEnabled()).isFalse();
 	}
 
 	@Test
@@ -47,6 +49,7 @@ public class ProviderSettingsTests {
 		String tokenRevocationEndpoint = "/oauth2/v1/revoke";
 		String tokenIntrospectionEndpoint = "/oauth2/v1/introspect";
 		String issuer = "https://example.com:9000";
+		String oidcClientRegistrationEndpoint = "/connect/v1/register";
 
 		ProviderSettings providerSettings = new ProviderSettings()
 				.issuer(issuer)
@@ -54,7 +57,10 @@ public class ProviderSettingsTests {
 				.tokenEndpoint(tokenEndpoint)
 				.jwkSetEndpoint(jwkSetEndpoint)
 				.tokenRevocationEndpoint(tokenRevocationEndpoint)
-				.tokenIntrospectionEndpoint(tokenIntrospectionEndpoint);
+				.tokenIntrospectionEndpoint(tokenIntrospectionEndpoint)
+				.tokenRevocationEndpoint(tokenRevocationEndpoint)
+				.isOidClientRegistrationEndpointEnabled(true)
+				.oidcClientRegistrationEndpoint(oidcClientRegistrationEndpoint);
 
 		assertThat(providerSettings.issuer()).isEqualTo(issuer);
 		assertThat(providerSettings.authorizationEndpoint()).isEqualTo(authorizationEndpoint);
@@ -62,6 +68,8 @@ public class ProviderSettingsTests {
 		assertThat(providerSettings.jwkSetEndpoint()).isEqualTo(jwkSetEndpoint);
 		assertThat(providerSettings.tokenRevocationEndpoint()).isEqualTo(tokenRevocationEndpoint);
 		assertThat(providerSettings.tokenIntrospectionEndpoint()).isEqualTo(tokenIntrospectionEndpoint);
+		assertThat(providerSettings.oidcClientRegistrationEndpoint()).isEqualTo(oidcClientRegistrationEndpoint);
+		assertThat(providerSettings.isOidClientRegistrationEndpointEnabled()).isTrue();
 	}
 
 	@Test
@@ -70,7 +78,7 @@ public class ProviderSettingsTests {
 				.setting("name1", "value1")
 				.settings(settings -> settings.put("name2", "value2"));
 
-		assertThat(providerSettings.settings()).hasSize(7);
+		assertThat(providerSettings.settings()).hasSize(9);
 		assertThat(providerSettings.<String>setting("name1")).isEqualTo("value1");
 		assertThat(providerSettings.<String>setting("name2")).isEqualTo("value2");
 	}
@@ -114,6 +122,15 @@ public class ProviderSettingsTests {
 				.isThrownBy(() -> settings.tokenIntrospectionEndpoint(null))
 				.withMessage("value cannot be null");
 	}
+
+	@Test
+	public void oidcClientRegistrationEndpointWhenNullThenThrowIllegalArgumentException() {
+		ProviderSettings settings = new ProviderSettings();
+		assertThatThrownBy(() -> settings.oidcClientRegistrationEndpoint(null))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("value cannot be null");
+	}
+
 
 	@Test
 	public void jwksEndpointWhenNullThenThrowIllegalArgumentException() {

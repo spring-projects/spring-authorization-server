@@ -88,4 +88,21 @@ public final class InMemoryRegisteredClientRepository implements RegisteredClien
 		Assert.hasText(clientId, "clientId cannot be empty");
 		return this.clientIdRegistrationMap.get(clientId);
 	}
+
+	@Override
+	public void saveClient(RegisteredClient registeredClient) {
+		Assert.notNull(registeredClient, "registeredClient cannot be null");
+		String id = registeredClient.getId();
+		if (idRegistrationMap.containsKey(id)) {
+			throw new IllegalArgumentException("Registered client must be unique. " +
+					"Found duplicate identifier: " + id);
+		}
+		String clientId = registeredClient.getClientId();
+		if (clientIdRegistrationMap.containsKey(clientId)) {
+			throw new IllegalArgumentException("Registered client must be unique. " +
+					"Found duplicate client identifier: " + clientId);
+		}
+		this.idRegistrationMap.put(registeredClient.getId(), registeredClient);
+		this.clientIdRegistrationMap.put(registeredClient.getClientId(), registeredClient);
+	}
 }

@@ -21,6 +21,11 @@ import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
+import org.springframework.security.oauth2.core.OAuth2TokenValidator;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.JwtValidators;
+import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import sample.jose.Jwks;
 
 import org.springframework.context.annotation.Bean;
@@ -84,5 +89,13 @@ public class AuthorizationServerConfig {
 	@Bean
 	public ProviderSettings providerSettings() {
 		return new ProviderSettings().issuer("http://auth-server:9000");
+	}
+
+	@Bean
+	public JwtDecoder jwtDecoder(ProviderSettings providerSettings){
+		OAuth2TokenValidator<Jwt> jwtValidator = JwtValidators.createDefaultWithIssuer(providerSettings.issuer());
+		NimbusJwtDecoder jwtDecoder = NimbusJwtDecoder.withJwkSetUri("http://auth-server:9000"+providerSettings.jwkSetEndpoint()).build();
+		jwtDecoder.setJwtValidator(jwtValidator);
+		return jwtDecoder;
 	}
 }

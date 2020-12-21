@@ -47,4 +47,11 @@ public interface RegisteredClientRepository {
 	@Nullable
 	RegisteredClient findByClientId(String clientId);
 
+	/**
+	 * Saves a new registered client
+	 *
+	 * @param registeredClient the {@link RegisteredClient} to be saved
+	 */
+	void saveClient(RegisteredClient registeredClient);
+
 }

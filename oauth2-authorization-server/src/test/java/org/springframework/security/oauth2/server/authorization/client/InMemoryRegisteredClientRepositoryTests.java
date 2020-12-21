@@ -16,6 +16,8 @@
 package org.springframework.security.oauth2.server.authorization.client;
 
 import org.junit.Test;
+import org.springframework.security.oauth2.core.AuthorizationGrantType;
+import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -111,5 +113,78 @@ public class InMemoryRegisteredClientRepositoryTests {
 	@Test
 	public void findByClientIdWhenNullThenThrowIllegalArgumentException() {
 		assertThatThrownBy(() -> this.clients.findByClientId(null)).isInstanceOf(IllegalArgumentException.class);
+	}
+
+	@Test
+	public void saveNullRegisteredClientThenThrowIllegalArgumentException() {
+		assertThatThrownBy(() -> this.clients.saveClient(null))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessageContaining("registeredClient cannot be null");
+	}
+
+	@Test
+	public void saveRegisteredClientThenReturnsSavedRegisteredClientWhenSearchedById() {
+		RegisteredClient registeredClient = RegisteredClient.withId("new-client")
+				.clientId("new-client")
+				.clientSecret("secret")
+				.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
+				.clientAuthenticationMethod(ClientAuthenticationMethod.BASIC)
+				.redirectUri("https://newclient.com")
+				.scope("scope1").build();
+
+		this.clients.saveClient(registeredClient);
+
+		RegisteredClient savedClient = this.clients.findById("new-client");
+
+		assertThat(savedClient).isNotNull().isEqualTo(registeredClient);
+	}
+
+	@Test
+	public void saveRegisteredClientThenReturnsSavedRegisteredClientWhenSearchedByClientId() {
+		RegisteredClient registeredClient = RegisteredClient.withId("id1")
+				.clientId("new-client-id")
+				.clientSecret("secret")
+				.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
+				.clientAuthenticationMethod(ClientAuthenticationMethod.BASIC)
+				.redirectUri("https://newclient.com")
+				.scope("scope1").build();
+
+		this.clients.saveClient(registeredClient);
+
+		RegisteredClient savedClient = this.clients.findByClientId("new-client-id");
+
+		assertThat(savedClient).isNotNull().isEqualTo(registeredClient);
+	}
+
+	@Test
+	public void saveRegisteredClientWithExistingIdThrowIllegalArgumentException() {
+		assertThatThrownBy(() -> {
+			RegisteredClient registeredClient = RegisteredClient.withId("registration-1")
+					.clientId("new-client")
+					.clientSecret("secret")
+					.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
+					.clientAuthenticationMethod(ClientAuthenticationMethod.BASIC)
+					.redirectUri("https://newclient.com")
+					.scope("scope1").build();
+
+			this.clients.saveClient(registeredClient);
+		}).isInstanceOf(IllegalArgumentException.class)
+		.hasMessageContaining("Registered client must be unique. Found duplicate identifier");
+	}
+
+	@Test
+	public void saveRegisteredClientWithExistingClientIdThrowIllegalArgumentException() {
+		assertThatThrownBy(() -> {
+			RegisteredClient registeredClient = RegisteredClient.withId("new-client")
+					.clientId("client-1")
+					.clientSecret("secret")
+					.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
+					.clientAuthenticationMethod(ClientAuthenticationMethod.BASIC)
+					.redirectUri("https://newclient.com")
+					.scope("scope1").build();
+
+			this.clients.saveClient(registeredClient);
+		}).isInstanceOf(IllegalArgumentException.class)
+		.hasMessageContaining("Registered client must be unique. Found duplicate client identifier");
 	}
 }

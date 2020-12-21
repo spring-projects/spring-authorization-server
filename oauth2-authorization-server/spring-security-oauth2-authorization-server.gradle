@@ -5,6 +5,7 @@ dependencies {
 	compile 'org.springframework.security:spring-security-web'
 	compile 'org.springframework.security:spring-security-oauth2-core'
 	compile 'org.springframework.security:spring-security-oauth2-jose'
+	compile 'org.springframework.security:spring-security-oauth2-resource-server'
 	compile springCoreDependency
 	compile 'com.nimbusds:nimbus-jose-jwt'
 	compile 'com.fasterxml.jackson.core:jackson-databind'
@@ -15,6 +16,7 @@ dependencies {
 	testCompile 'org.assertj:assertj-core'
 	testCompile 'org.mockito:mockito-core'
 	testCompile 'com.jayway.jsonpath:json-path'
+	testCompile 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
 
 	provided 'javax.servlet:javax.servlet-api'
 }

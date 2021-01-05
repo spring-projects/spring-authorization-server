@@ -197,7 +197,7 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 			LinkedHashMap<RequestMatcher, AuthenticationEntryPoint> entryPoints = new LinkedHashMap<>();
 			entryPoints.put(
 					new OrRequestMatcher(
-							new AntPathRequestMatcher(providerSettings.tokenEndpoint(), HttpMethod.POST.name()), 
+							new AntPathRequestMatcher(providerSettings.tokenEndpoint(), HttpMethod.POST.name()),
 							new AntPathRequestMatcher(providerSettings.tokenRevocationEndpoint(), HttpMethod.POST.name())),
 					new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED));
 			DelegatingAuthenticationEntryPoint authenticationEntryPoint =
@@ -232,7 +232,7 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 				new OAuth2ClientAuthenticationFilter(
 						authenticationManager,
 						new OrRequestMatcher(
-								new AntPathRequestMatcher(providerSettings.tokenEndpoint(), HttpMethod.POST.name()), 
+								new AntPathRequestMatcher(providerSettings.tokenEndpoint(), HttpMethod.POST.name()),
 								new AntPathRequestMatcher(providerSettings.tokenRevocationEndpoint(), HttpMethod.POST.name())));
 		builder.addFilterAfter(postProcess(clientAuthenticationFilter), AbstractPreAuthenticatedProcessingFilter.class);
 

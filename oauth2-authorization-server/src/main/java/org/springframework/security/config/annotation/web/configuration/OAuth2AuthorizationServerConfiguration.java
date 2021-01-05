@@ -22,7 +22,6 @@ import org.springframework.core.annotation.Order;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.oauth2.server.authorization.OAuth2AuthorizationServerConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.util.matcher.OrRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 
 /**
@@ -46,15 +45,15 @@ public class OAuth2AuthorizationServerConfiguration {
 	public static void applyDefaultSecurity(HttpSecurity http) throws Exception {
 		OAuth2AuthorizationServerConfigurer<HttpSecurity> authorizationServerConfigurer =
 				new OAuth2AuthorizationServerConfigurer<>();
-		RequestMatcher[] endpointMatchers = authorizationServerConfigurer
-				.getEndpointMatchers().toArray(new RequestMatcher[0]);
+		RequestMatcher endpointsMatcher = authorizationServerConfigurer
+				.getEndpointsMatcher();
 
 		http
-			.requestMatcher(new OrRequestMatcher(endpointMatchers))
+			.requestMatcher(endpointsMatcher)
 			.authorizeRequests(authorizeRequests ->
 				authorizeRequests.anyRequest().authenticated()
 			)
-			.csrf(csrf -> csrf.ignoringRequestMatchers(endpointMatchers))
+			.csrf(csrf -> csrf.ignoringRequestMatchers(endpointsMatcher))
 			.apply(authorizationServerConfigurer);
 	}
 	// @formatter:on

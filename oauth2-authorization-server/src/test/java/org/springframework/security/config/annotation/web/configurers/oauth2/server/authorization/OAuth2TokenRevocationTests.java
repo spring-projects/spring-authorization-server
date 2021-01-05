@@ -47,6 +47,7 @@ import org.springframework.security.oauth2.server.authorization.TokenType;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
+import org.springframework.security.oauth2.server.authorization.config.ProviderSettings;
 import org.springframework.security.oauth2.server.authorization.web.OAuth2TokenRevocationEndpointFilter;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
@@ -71,6 +72,7 @@ public class OAuth2TokenRevocationTests {
 	private static RegisteredClientRepository registeredClientRepository;
 	private static OAuth2AuthorizationService authorizationService;
 	private static JWKSource<SecurityContext> jwkSource;
+	private static ProviderSettings providerSettings;
 
 	@Rule
 	public final SpringTestRule spring = new SpringTestRule();
@@ -84,6 +86,7 @@ public class OAuth2TokenRevocationTests {
 		authorizationService = mock(OAuth2AuthorizationService.class);
 		JWKSet jwkSet = new JWKSet(TestJwks.DEFAULT_RSA_JWK);
 		jwkSource = (jwkSelector, securityContext) -> jwkSelector.select(jwkSet);
+		providerSettings = new ProviderSettings().tokenRevocationEndpoint("/test/revoke");
 	}
 
 	@Before
@@ -156,6 +159,46 @@ public class OAuth2TokenRevocationTests {
 		assertThat(updatedAuthorization.getTokens().getTokenMetadata(refreshToken).isInvalidated()).isFalse();
 	}
 
+	@Test
+	public void requestWhenCustomProviderSettingsThenOk() throws Exception {
+		this.spring.register(AuthorizationServerConfigurationWithProviderSettings.class).autowire();
+
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+		when(registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
+				.thenReturn(registeredClient);
+
+		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();
+		OAuth2RefreshToken token = authorization.getTokens().getRefreshToken();
+		TokenType tokenType = TokenType.REFRESH_TOKEN;
+		when(authorizationService.findByToken(eq(token.getTokenValue()), eq(tokenType))).thenReturn(authorization);
+
+		this.mvc.perform(MockMvcRequestBuilders.post(providerSettings.tokenRevocationEndpoint())
+				.params(getTokenRevocationRequestParameters(token, tokenType))
+				.header(HttpHeaders.AUTHORIZATION, "Basic " + encodeBasicAuth(
+						registeredClient.getClientId(), registeredClient.getClientSecret())))
+				.andExpect(status().isOk());
+	}
+
+	@Test
+	public void requestWhenCustomProviderSettingsThenNotFound() throws Exception {
+		this.spring.register(AuthorizationServerConfigurationWithProviderSettings.class).autowire();
+
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+		when(registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
+				.thenReturn(registeredClient);
+
+		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();
+		OAuth2RefreshToken token = authorization.getTokens().getRefreshToken();
+		TokenType tokenType = TokenType.REFRESH_TOKEN;
+		when(authorizationService.findByToken(eq(token.getTokenValue()), eq(tokenType))).thenReturn(authorization);
+
+		this.mvc.perform(MockMvcRequestBuilders.post(OAuth2TokenRevocationEndpointFilter.DEFAULT_TOKEN_REVOCATION_ENDPOINT_URI)
+				.params(getTokenRevocationRequestParameters(token, tokenType))
+				.header(HttpHeaders.AUTHORIZATION, "Basic " + encodeBasicAuth(
+						registeredClient.getClientId(), registeredClient.getClientSecret())))
+				.andExpect(status().isNotFound());
+	}
+
 	private static MultiValueMap<String, String> getTokenRevocationRequestParameters(AbstractOAuth2Token token, TokenType tokenType) {
 		MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
 		parameters.set(OAuth2ParameterNames2.TOKEN, token.getTokenValue());
@@ -190,4 +233,15 @@ public class OAuth2TokenRevocationTests {
 			return jwkSource;
 		}
 	}
+
+	@EnableWebSecurity
+	@Import(OAuth2AuthorizationServerConfiguration.class)
+	static class AuthorizationServerConfigurationWithProviderSettings extends AuthorizationServerConfiguration {
+
+		@Bean
+		ProviderSettings providerSettings() {
+			return providerSettings;
+		}
+	}
+
 }

@@ -113,7 +113,7 @@ public class OAuth2TokenRevocationAuthenticationProviderTests {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(
 				TestRegisteredClients.registeredClient2().build()).build();
-		when(this.authorizationService.findByToken(
+		when(this.authorizationService.findByTokenWithHint(
 				eq("token"),
 				eq(TokenType.ACCESS_TOKEN)))
 				.thenReturn(authorization);
@@ -134,7 +134,7 @@ public class OAuth2TokenRevocationAuthenticationProviderTests {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(
 				registeredClient).build();
-		when(this.authorizationService.findByToken(
+		when(this.authorizationService.findByTokenWithHint(
 				eq(authorization.getTokens().getRefreshToken().getTokenValue()),
 				eq(TokenType.REFRESH_TOKEN)))
 				.thenReturn(authorization);
@@ -162,7 +162,7 @@ public class OAuth2TokenRevocationAuthenticationProviderTests {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(
 				registeredClient).build();
-		when(this.authorizationService.findByToken(
+		when(this.authorizationService.findByTokenWithHint(
 				eq(authorization.getTokens().getAccessToken().getTokenValue()),
 				eq(TokenType.ACCESS_TOKEN)))
 				.thenReturn(authorization);

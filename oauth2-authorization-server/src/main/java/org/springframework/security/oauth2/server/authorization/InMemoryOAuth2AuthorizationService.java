@@ -20,6 +20,9 @@ import org.springframework.security.oauth2.server.authorization.token.OAuth2Auth
 import org.springframework.util.Assert;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
@@ -32,6 +35,7 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * @author Krisztian Toth
  * @author Joe Grandja
+ * @author Gerardo Roza
  * @since 0.0.1
  * @see OAuth2AuthorizationService
  */
@@ -54,6 +58,7 @@ public final class InMemoryOAuth2AuthorizationService implements OAuth2Authoriza
 		this.authorizations.remove(authorizationId, authorization);
 	}
 
+	@Nullable
 	@Override
 	public OAuth2Authorization findByToken(String token, @Nullable TokenType tokenType) {
 		Assert.hasText(token, "token cannot be empty");
@@ -61,6 +66,27 @@ public final class InMemoryOAuth2AuthorizationService implements OAuth2Authoriza
 				.filter(authorization -> hasToken(authorization, token, tokenType))
 				.findFirst()
 				.orElse(null);
+	}
+
+	@Nullable
+	@Override
+	public OAuth2Authorization findByTokenWithHint(String token, @Nullable TokenType tokenTypeHint) {
+		Assert.hasText(token, "token cannot be empty");
+		List<TokenType> supportedTokenTypes = new ArrayList<>(
+				Arrays.asList(
+						TokenType.ACCESS_TOKEN,
+						TokenType.REFRESH_TOKEN,
+						new TokenType(OAuth2AuthorizationAttributeNames.STATE)));
+		if (tokenTypeHint != null && supportedTokenTypes.remove(tokenTypeHint)) {
+				supportedTokenTypes.add(0, tokenTypeHint);
+		}
+		for (TokenType tokenType : supportedTokenTypes) {
+			OAuth2Authorization authorization = this.findByToken(token, tokenType);
+			if (authorization != null) {
+				return authorization;
+			}
+		}
+		return null;
 	}
 
 	private static boolean hasToken(OAuth2Authorization authorization, String token, @Nullable TokenType tokenType) {

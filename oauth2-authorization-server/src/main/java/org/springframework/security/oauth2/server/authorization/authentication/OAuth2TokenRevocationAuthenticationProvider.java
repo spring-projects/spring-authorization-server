@@ -73,7 +73,7 @@ public class OAuth2TokenRevocationAuthenticationProvider implements Authenticati
 			}
 		}
 
-		OAuth2Authorization authorization = this.authorizationService.findByToken(
+		OAuth2Authorization authorization = this.authorizationService.findByTokenWithHint(
 				tokenRevocationAuthentication.getToken(), tokenType);
 		if (authorization == null) {
 			// Return the authentication request when token not found

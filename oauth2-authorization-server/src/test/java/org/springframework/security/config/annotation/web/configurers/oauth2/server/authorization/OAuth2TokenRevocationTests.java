@@ -98,7 +98,7 @@ public class OAuth2TokenRevocationTests {
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();
 		OAuth2RefreshToken token = authorization.getTokens().getRefreshToken();
 		TokenType tokenType = TokenType.REFRESH_TOKEN;
-		when(authorizationService.findByToken(eq(token.getTokenValue()), eq(tokenType))).thenReturn(authorization);
+		when(authorizationService.findByTokenWithHint(eq(token.getTokenValue()), eq(tokenType))).thenReturn(authorization);
 
 		this.mvc.perform(MockMvcRequestBuilders.post(OAuth2TokenRevocationEndpointFilter.DEFAULT_TOKEN_REVOCATION_ENDPOINT_URI)
 				.params(getTokenRevocationRequestParameters(token, tokenType))
@@ -107,7 +107,7 @@ public class OAuth2TokenRevocationTests {
 				.andExpect(status().isOk());
 
 		verify(registeredClientRepository).findByClientId(eq(registeredClient.getClientId()));
-		verify(authorizationService).findByToken(eq(token.getTokenValue()), eq(tokenType));
+		verify(authorizationService).findByTokenWithHint(eq(token.getTokenValue()), eq(tokenType));
 
 		ArgumentCaptor<OAuth2Authorization> authorizationCaptor = ArgumentCaptor.forClass(OAuth2Authorization.class);
 		verify(authorizationService).save(authorizationCaptor.capture());
@@ -130,7 +130,7 @@ public class OAuth2TokenRevocationTests {
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();
 		OAuth2AccessToken token = authorization.getTokens().getAccessToken();
 		TokenType tokenType = TokenType.ACCESS_TOKEN;
-		when(authorizationService.findByToken(eq(token.getTokenValue()), eq(tokenType))).thenReturn(authorization);
+		when(authorizationService.findByTokenWithHint(eq(token.getTokenValue()), eq(tokenType))).thenReturn(authorization);
 
 		this.mvc.perform(MockMvcRequestBuilders.post(OAuth2TokenRevocationEndpointFilter.DEFAULT_TOKEN_REVOCATION_ENDPOINT_URI)
 				.params(getTokenRevocationRequestParameters(token, tokenType))
@@ -139,7 +139,7 @@ public class OAuth2TokenRevocationTests {
 				.andExpect(status().isOk());
 
 		verify(registeredClientRepository).findByClientId(eq(registeredClient.getClientId()));
-		verify(authorizationService).findByToken(eq(token.getTokenValue()), eq(tokenType));
+		verify(authorizationService).findByTokenWithHint(eq(token.getTokenValue()), eq(tokenType));
 
 		ArgumentCaptor<OAuth2Authorization> authorizationCaptor = ArgumentCaptor.forClass(OAuth2Authorization.class);
 		verify(authorizationService).save(authorizationCaptor.capture());

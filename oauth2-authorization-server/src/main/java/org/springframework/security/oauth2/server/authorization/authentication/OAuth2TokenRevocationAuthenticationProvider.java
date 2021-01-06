@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright 2020-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,10 +24,8 @@ import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
-import org.springframework.security.oauth2.server.authorization.TokenType;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.util.Assert;
-import org.springframework.util.StringUtils;
 
 import static org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthenticationProviderUtils.getAuthenticatedClientElseThrowInvalidClient;
 
@@ -63,18 +61,8 @@ public class OAuth2TokenRevocationAuthenticationProvider implements Authenticati
 				getAuthenticatedClientElseThrowInvalidClient(tokenRevocationAuthentication);
 		RegisteredClient registeredClient = clientPrincipal.getRegisteredClient();
 
-		TokenType tokenType = null;
-		String tokenTypeHint = tokenRevocationAuthentication.getTokenTypeHint();
-		if (StringUtils.hasText(tokenTypeHint)) {
-			if (TokenType.REFRESH_TOKEN.getValue().equals(tokenTypeHint)) {
-				tokenType = TokenType.REFRESH_TOKEN;
-			} else if (TokenType.ACCESS_TOKEN.getValue().equals(tokenTypeHint)) {
-				tokenType = TokenType.ACCESS_TOKEN;
-			}
-		}
-
 		OAuth2Authorization authorization = this.authorizationService.findByToken(
-				tokenRevocationAuthentication.getToken(), tokenType);
+				tokenRevocationAuthentication.getToken(), null);
 		if (authorization == null) {
 			// Return the authentication request when token not found
 			return tokenRevocationAuthentication;

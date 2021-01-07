@@ -255,7 +255,7 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 			}
 		}
 	}
-	
+
 	private void initEndpointMatchers(ProviderSettings providerSettings) {
 		this.authorizationEndpointMatcher = new OrRequestMatcher(
 				new AntPathRequestMatcher(

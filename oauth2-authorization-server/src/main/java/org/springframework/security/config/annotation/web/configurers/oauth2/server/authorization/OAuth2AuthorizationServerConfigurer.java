@@ -80,21 +80,11 @@ import java.util.Map;
 public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBuilder<B>>
 		extends AbstractHttpConfigurer<OAuth2AuthorizationServerConfigurer<B>, B> {
 
-	private final RequestMatcher authorizationEndpointMatcher = new OrRequestMatcher(
-			new AntPathRequestMatcher(
-					OAuth2AuthorizationEndpointFilter.DEFAULT_AUTHORIZATION_ENDPOINT_URI,
-					HttpMethod.GET.name()),
-			new AntPathRequestMatcher(
-					OAuth2AuthorizationEndpointFilter.DEFAULT_AUTHORIZATION_ENDPOINT_URI,
-					HttpMethod.POST.name()));
-	private final RequestMatcher tokenEndpointMatcher = new AntPathRequestMatcher(
-			OAuth2TokenEndpointFilter.DEFAULT_TOKEN_ENDPOINT_URI, HttpMethod.POST.name());
-	private final RequestMatcher tokenRevocationEndpointMatcher = new AntPathRequestMatcher(
-			OAuth2TokenRevocationEndpointFilter.DEFAULT_TOKEN_REVOCATION_ENDPOINT_URI, HttpMethod.POST.name());
-	private final RequestMatcher jwkSetEndpointMatcher = new AntPathRequestMatcher(
-			JwkSetEndpointFilter.DEFAULT_JWK_SET_ENDPOINT_URI, HttpMethod.GET.name());
-	private final RequestMatcher oidcProviderConfigurationEndpointMatcher = new AntPathRequestMatcher(
-			OidcProviderConfigurationEndpointFilter.DEFAULT_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI, HttpMethod.GET.name());
+	private RequestMatcher authorizationEndpointMatcher;
+	private RequestMatcher tokenEndpointMatcher;
+	private RequestMatcher tokenRevocationEndpointMatcher;
+	private RequestMatcher jwkSetEndpointMatcher;
+	private RequestMatcher oidcProviderConfigurationEndpointMatcher;
 
 	/**
 	 * Sets the repository of registered clients.
@@ -150,7 +140,6 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 	 * @return a {@code List} of {@link RequestMatcher}'s for the authorization server endpoints
 	 */
 	public List<RequestMatcher> getEndpointMatchers() {
-		// TODO Initialize matchers using URI's from ProviderSettings
 		return Arrays.asList(this.authorizationEndpointMatcher, this.tokenEndpointMatcher,
 				this.tokenRevocationEndpointMatcher, this.jwkSetEndpointMatcher,
 				this.oidcProviderConfigurationEndpointMatcher);
@@ -160,6 +149,7 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 	public void init(B builder) {
 		ProviderSettings providerSettings = getProviderSettings(builder);
 		validateProviderSettings(providerSettings);
+		initEndpointMatchers(providerSettings);
 
 		OAuth2ClientAuthenticationProvider clientAuthenticationProvider =
 				new OAuth2ClientAuthenticationProvider(
@@ -197,8 +187,8 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 			LinkedHashMap<RequestMatcher, AuthenticationEntryPoint> entryPoints = new LinkedHashMap<>();
 			entryPoints.put(
 					new OrRequestMatcher(
-							new AntPathRequestMatcher(providerSettings.tokenEndpoint(), HttpMethod.POST.name()),
-							new AntPathRequestMatcher(providerSettings.tokenRevocationEndpoint(), HttpMethod.POST.name())),
+							this.tokenEndpointMatcher,
+							this.tokenRevocationEndpointMatcher),
 					new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED));
 			DelegatingAuthenticationEntryPoint authenticationEntryPoint =
 					new DelegatingAuthenticationEntryPoint(entryPoints);
@@ -232,8 +222,8 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 				new OAuth2ClientAuthenticationFilter(
 						authenticationManager,
 						new OrRequestMatcher(
-								new AntPathRequestMatcher(providerSettings.tokenEndpoint(), HttpMethod.POST.name()),
-								new AntPathRequestMatcher(providerSettings.tokenRevocationEndpoint(), HttpMethod.POST.name())));
+								this.tokenEndpointMatcher,
+								this.tokenRevocationEndpointMatcher));
 		builder.addFilterAfter(postProcess(clientAuthenticationFilter), AbstractPreAuthenticatedProcessingFilter.class);
 
 		OAuth2AuthorizationEndpointFilter authorizationEndpointFilter =
@@ -264,6 +254,24 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 				throw new IllegalArgumentException("issuer must be a valid URL", ex);
 			}
 		}
+	}
+	
+	private void initEndpointMatchers(ProviderSettings providerSettings) {
+		this.authorizationEndpointMatcher = new OrRequestMatcher(
+				new AntPathRequestMatcher(
+						providerSettings.authorizationEndpoint(),
+						HttpMethod.GET.name()),
+				new AntPathRequestMatcher(
+						providerSettings.authorizationEndpoint(),
+						HttpMethod.POST.name()));
+		this.tokenEndpointMatcher = new AntPathRequestMatcher(
+				providerSettings.tokenEndpoint(), HttpMethod.POST.name());
+		this.tokenRevocationEndpointMatcher = new AntPathRequestMatcher(
+				providerSettings.tokenRevocationEndpoint(), HttpMethod.POST.name());
+		this.jwkSetEndpointMatcher = new AntPathRequestMatcher(
+				providerSettings.jwkSetEndpoint(), HttpMethod.GET.name());
+		this.oidcProviderConfigurationEndpointMatcher = new AntPathRequestMatcher(
+				OidcProviderConfigurationEndpointFilter.DEFAULT_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI, HttpMethod.GET.name());
 	}
 
 	private static <B extends HttpSecurityBuilder<B>> RegisteredClientRepository getRegisteredClientRepository(B builder) {

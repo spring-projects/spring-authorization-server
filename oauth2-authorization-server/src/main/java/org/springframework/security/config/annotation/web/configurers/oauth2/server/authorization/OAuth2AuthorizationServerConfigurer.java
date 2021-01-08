@@ -56,9 +56,7 @@ import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
 import java.net.URI;
-import java.util.Arrays;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -139,10 +137,16 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 	 *
 	 * @return a {@code List} of {@link RequestMatcher}'s for the authorization server endpoints
 	 */
-	public List<RequestMatcher> getEndpointMatchers() {
-		return Arrays.asList(this.authorizationEndpointMatcher, this.tokenEndpointMatcher,
-				this.tokenRevocationEndpointMatcher, this.jwkSetEndpointMatcher,
-				this.oidcProviderConfigurationEndpointMatcher);
+	public RequestMatcher getEndpointMatchers() {
+		return request -> {
+			RequestMatcher matcher = new OrRequestMatcher(
+					this.authorizationEndpointMatcher, 
+					this.tokenEndpointMatcher,
+					this.tokenRevocationEndpointMatcher, 
+					this.jwkSetEndpointMatcher,
+					this.oidcProviderConfigurationEndpointMatcher);
+			return matcher.matches(request);
+		};
 	}
 
 	@Override

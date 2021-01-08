@@ -140,9 +140,9 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 	public RequestMatcher getEndpointMatchers() {
 		return request -> {
 			RequestMatcher matcher = new OrRequestMatcher(
-					this.authorizationEndpointMatcher, 
+					this.authorizationEndpointMatcher,
 					this.tokenEndpointMatcher,
-					this.tokenRevocationEndpointMatcher, 
+					this.tokenRevocationEndpointMatcher,
 					this.jwkSetEndpointMatcher,
 					this.oidcProviderConfigurationEndpointMatcher);
 			return matcher.matches(request);

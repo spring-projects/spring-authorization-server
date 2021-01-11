@@ -83,6 +83,15 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 	private RequestMatcher tokenRevocationEndpointMatcher;
 	private RequestMatcher jwkSetEndpointMatcher;
 	private RequestMatcher oidcProviderConfigurationEndpointMatcher;
+	private final RequestMatcher endpointMatchers = request -> {
+		RequestMatcher matcher = new OrRequestMatcher(
+				this.authorizationEndpointMatcher,
+				this.tokenEndpointMatcher,
+				this.tokenRevocationEndpointMatcher,
+				this.jwkSetEndpointMatcher,
+				this.oidcProviderConfigurationEndpointMatcher);
+		return matcher.matches(request);
+	};
 
 	/**
 	 * Sets the repository of registered clients.
@@ -133,20 +142,12 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 	}
 
 	/**
-	 * Returns a {@code List} of {@link RequestMatcher}'s for the authorization server endpoints.
+	 * Returns a {@link RequestMatcher} for the authorization server endpoints.
 	 *
-	 * @return a {@code List} of {@link RequestMatcher}'s for the authorization server endpoints
+	 * @return a {@link RequestMatcher} for the authorization server endpoints
 	 */
 	public RequestMatcher getEndpointMatchers() {
-		return request -> {
-			RequestMatcher matcher = new OrRequestMatcher(
-					this.authorizationEndpointMatcher,
-					this.tokenEndpointMatcher,
-					this.tokenRevocationEndpointMatcher,
-					this.jwkSetEndpointMatcher,
-					this.oidcProviderConfigurationEndpointMatcher);
-			return matcher.matches(request);
-		};
+		return endpointMatchers;
 	}
 
 	@Override

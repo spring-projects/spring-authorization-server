@@ -18,11 +18,6 @@ package org.springframework.security.oauth2.server.authorization.config;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.springframework.security.oauth2.server.authorization.web.JwkSetEndpointFilter;
-import org.springframework.security.oauth2.server.authorization.web.OAuth2AuthorizationEndpointFilter;
-import org.springframework.security.oauth2.server.authorization.web.OAuth2TokenEndpointFilter;
-import org.springframework.security.oauth2.server.authorization.web.OAuth2TokenRevocationEndpointFilter;
-
 /**
  * A facility for provider configuration settings.
  *
@@ -151,10 +146,10 @@ public class ProviderSettings extends Settings {
 
 	protected static Map<String, Object> defaultSettings() {
 		Map<String, Object> settings = new HashMap<>();
-		settings.put(AUTHORIZATION_ENDPOINT, OAuth2AuthorizationEndpointFilter.DEFAULT_AUTHORIZATION_ENDPOINT_URI);
-		settings.put(TOKEN_ENDPOINT, OAuth2TokenEndpointFilter.DEFAULT_TOKEN_ENDPOINT_URI);
-		settings.put(JWK_SET_ENDPOINT, JwkSetEndpointFilter.DEFAULT_JWK_SET_ENDPOINT_URI);
-		settings.put(TOKEN_REVOCATION_ENDPOINT, OAuth2TokenRevocationEndpointFilter.DEFAULT_TOKEN_REVOCATION_ENDPOINT_URI);
+		settings.put(AUTHORIZATION_ENDPOINT, "/oauth2/authorize");
+		settings.put(TOKEN_ENDPOINT, "/oauth2/token");
+		settings.put(JWK_SET_ENDPOINT, "/oauth2/jwks");
+		settings.put(TOKEN_REVOCATION_ENDPOINT, "/oauth2/revoke");
 		return settings;
 	}
 }

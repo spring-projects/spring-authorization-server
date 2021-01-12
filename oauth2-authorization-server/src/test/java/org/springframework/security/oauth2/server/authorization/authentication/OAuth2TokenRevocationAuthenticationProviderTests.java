@@ -35,6 +35,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -113,9 +114,9 @@ public class OAuth2TokenRevocationAuthenticationProviderTests {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(
 				TestRegisteredClients.registeredClient2().build()).build();
-		when(this.authorizationService.findByTokenWithHint(
+		when(this.authorizationService.findByToken(
 				eq("token"),
-				eq(TokenType.ACCESS_TOKEN)))
+				isNull()))
 				.thenReturn(authorization);
 
 		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient);
@@ -134,9 +135,9 @@ public class OAuth2TokenRevocationAuthenticationProviderTests {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(
 				registeredClient).build();
-		when(this.authorizationService.findByTokenWithHint(
+		when(this.authorizationService.findByToken(
 				eq(authorization.getTokens().getRefreshToken().getTokenValue()),
-				eq(TokenType.REFRESH_TOKEN)))
+				isNull()))
 				.thenReturn(authorization);
 
 		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient);
@@ -162,9 +163,9 @@ public class OAuth2TokenRevocationAuthenticationProviderTests {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(
 				registeredClient).build();
-		when(this.authorizationService.findByTokenWithHint(
+		when(this.authorizationService.findByToken(
 				eq(authorization.getTokens().getAccessToken().getTokenValue()),
-				eq(TokenType.ACCESS_TOKEN)))
+				isNull()))
 				.thenReturn(authorization);
 
 		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient);

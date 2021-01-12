@@ -51,19 +51,4 @@ public interface OAuth2AuthorizationService {
 	 */
 	@Nullable
 	OAuth2Authorization findByToken(String token, @Nullable TokenType tokenType);
-
-	/**
-	 * Returns the {@link OAuth2Authorization} containing the provided {@code token},
-	 * or {@code null} if not found.
-	 *
-	 * The optional {@code tokenTypeHint} is used only as a hint; if it is unable to locate the token using the given hint,
-	 * it will extend its search across all of its supported token types.
-	 *
-	 * @param token the token credential
-	 * @param tokenTypeHint the {@link TokenType token type}
-	 * @return the {@link OAuth2Authorization} if found, otherwise {@code null}
-	 */
-	@Nullable
-	OAuth2Authorization findByTokenWithHint(String token, @Nullable TokenType tokenTypeHint);
-
 }

@@ -51,5 +51,5 @@ public interface OAuth2AuthorizationService {
 	 */
 	@Nullable
 	OAuth2Authorization findByToken(String token, @Nullable TokenType tokenType);
-	
+
 }

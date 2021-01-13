@@ -155,7 +155,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 		verify(registeredClientRepository).findByClientId(eq(registeredClient.getClientId()));
 		verify(authorizationService).save(any());
 	}
-	
+
 	@Test
 	public void requestWhenAuthorizationRequestAndCustomProviderSettingsThenOk() throws Exception {
 		this.spring.register(AuthorizationServerConfigurationWithProviderSettings.class).autowire();
@@ -176,7 +176,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 		when(registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
 				.thenReturn(registeredClient);
-		
+
 		this.mvc.perform(MockMvcRequestBuilders.get(OAuth2AuthorizationEndpointFilter.DEFAULT_AUTHORIZATION_ENDPOINT_URI)
 				.params(getAuthorizationRequestParameters(registeredClient)))
 				.andExpect(status().isNotFound());
@@ -341,7 +341,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 			return jwtEncoder;
 		}
 	}
-	
+
 	@EnableWebSecurity
 	@Import(OAuth2AuthorizationServerConfiguration.class)
 	static class AuthorizationServerConfigurationWithProviderSettings extends AuthorizationServerConfiguration {
@@ -350,7 +350,6 @@ public class OAuth2AuthorizationCodeGrantTests {
 		ProviderSettings providerSettings() {
 			return providerSettings;
 		}
-
 	}
-	
+
 }

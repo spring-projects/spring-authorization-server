@@ -202,7 +202,7 @@ public class OAuth2RefreshTokenGrantTests {
 			return keySource;
 		}
 	}
-	
+
 	@EnableWebSecurity
 	@Import(OAuth2AuthorizationServerConfiguration.class)
 	static class AuthorizationServerConfigurationWithProviderSettings extends AuthorizationServerConfiguration {
@@ -211,6 +211,6 @@ public class OAuth2RefreshTokenGrantTests {
 		ProviderSettings providerSettings() {
 			return providerSettings;
 		}
-
 	}
+
 }

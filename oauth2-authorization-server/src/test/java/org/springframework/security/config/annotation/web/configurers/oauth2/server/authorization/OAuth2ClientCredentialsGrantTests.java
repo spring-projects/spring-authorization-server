@@ -199,7 +199,6 @@ public class OAuth2ClientCredentialsGrantTests {
 		}
 
 	}
-	
 	@EnableWebSecurity
 	@Import(OAuth2AuthorizationServerConfiguration.class)
 	static class AuthorizationServerConfigurationWithProviderSettings extends AuthorizationServerConfiguration {
@@ -208,6 +207,6 @@ public class OAuth2ClientCredentialsGrantTests {
 		ProviderSettings providerSettings() {
 			return providerSettings;
 		}
-
 	}
+
 }

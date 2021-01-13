@@ -228,7 +228,7 @@ public class OAuth2TokenRevocationTests {
 			return keySource;
 		}
 	}
-	
+
 	@EnableWebSecurity
 	@Import(OAuth2AuthorizationServerConfiguration.class)
 	static class AuthorizationServerConfigurationWithProviderSettings extends AuthorizationServerConfiguration {
@@ -237,6 +237,6 @@ public class OAuth2TokenRevocationTests {
 		ProviderSettings providerSettings() {
 			return providerSettings;
 		}
-
 	}
+
 }

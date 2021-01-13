@@ -34,6 +34,7 @@ import org.springframework.security.oauth2.server.authorization.OAuth2Authorizat
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
+import org.springframework.security.oauth2.server.authorization.config.ProviderSettings;
 import org.springframework.security.oauth2.server.authorization.web.OAuth2TokenEndpointFilter;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
@@ -62,6 +63,7 @@ public class OAuth2ClientCredentialsGrantTests {
 	private static RegisteredClientRepository registeredClientRepository;
 	private static OAuth2AuthorizationService authorizationService;
 	private static CryptoKeySource keySource;
+	private static ProviderSettings providerSettings;
 
 	@Rule
 	public final SpringTestRule spring = new SpringTestRule();
@@ -74,6 +76,7 @@ public class OAuth2ClientCredentialsGrantTests {
 		registeredClientRepository = mock(RegisteredClientRepository.class);
 		authorizationService = mock(OAuth2AuthorizationService.class);
 		keySource = new StaticKeyGeneratingCryptoKeySource();
+		providerSettings = new ProviderSettings().tokenEndpoint("/test/token");
 	}
 
 	@Before
@@ -136,6 +139,38 @@ public class OAuth2ClientCredentialsGrantTests {
 		verify(authorizationService).save(any());
 	}
 
+	@Test
+	public void requestWhenCustomProviderSettingsThenOk() throws Exception {
+		this.spring.register(AuthorizationServerConfigurationWithProviderSettings.class).autowire();
+
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient2().build();
+		when(registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
+				.thenReturn(registeredClient);
+
+		this.mvc.perform(post(providerSettings.tokenEndpoint())
+				.param(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
+				.param(OAuth2ParameterNames.SCOPE, "scope1 scope2")
+				.header(HttpHeaders.AUTHORIZATION, "Basic " + encodeBasicAuth(
+						registeredClient.getClientId(), registeredClient.getClientSecret())))
+				.andExpect(status().isOk());
+	}
+
+	@Test
+	public void requestWhenCustomProviderSettingsThenNotFound() throws Exception {
+		this.spring.register(AuthorizationServerConfigurationWithProviderSettings.class).autowire();
+
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient2().build();
+		when(registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
+				.thenReturn(registeredClient);
+
+		this.mvc.perform(post(OAuth2TokenEndpointFilter.DEFAULT_TOKEN_ENDPOINT_URI)
+				.param(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
+				.param(OAuth2ParameterNames.SCOPE, "scope1 scope2")
+				.header(HttpHeaders.AUTHORIZATION, "Basic " + encodeBasicAuth(
+						registeredClient.getClientId(), registeredClient.getClientSecret())))
+				.andExpect(status().isNotFound());
+	}
+
 	private static String encodeBasicAuth(String clientId, String secret) throws Exception {
 		clientId = URLEncoder.encode(clientId, StandardCharsets.UTF_8.name());
 		secret = URLEncoder.encode(secret, StandardCharsets.UTF_8.name());
@@ -162,5 +197,17 @@ public class OAuth2ClientCredentialsGrantTests {
 		CryptoKeySource keySource() {
 			return keySource;
 		}
+
+	}
+	
+	@EnableWebSecurity
+	@Import(OAuth2AuthorizationServerConfiguration.class)
+	static class AuthorizationServerConfigurationWithProviderSettings extends AuthorizationServerConfiguration {
+
+		@Bean
+		ProviderSettings providerSettings() {
+			return providerSettings;
+		}
+
 	}
 }

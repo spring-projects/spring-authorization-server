@@ -46,7 +46,7 @@ public class OAuth2AuthorizationServerConfiguration {
 		OAuth2AuthorizationServerConfigurer<HttpSecurity> authorizationServerConfigurer =
 				new OAuth2AuthorizationServerConfigurer<>();
 		RequestMatcher endpointMatchers = authorizationServerConfigurer
-				.getEndpointMatchers();
+				.getEndpointsMatcher();
 
 		http
 			.requestMatcher(endpointMatchers)

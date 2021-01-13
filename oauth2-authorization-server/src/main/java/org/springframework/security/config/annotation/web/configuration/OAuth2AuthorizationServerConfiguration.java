@@ -45,15 +45,15 @@ public class OAuth2AuthorizationServerConfiguration {
 	public static void applyDefaultSecurity(HttpSecurity http) throws Exception {
 		OAuth2AuthorizationServerConfigurer<HttpSecurity> authorizationServerConfigurer =
 				new OAuth2AuthorizationServerConfigurer<>();
-		RequestMatcher endpointMatchers = authorizationServerConfigurer
+		RequestMatcher endpointsMatcher = authorizationServerConfigurer
 				.getEndpointsMatcher();
 
 		http
-			.requestMatcher(endpointMatchers)
+			.requestMatcher(endpointsMatcher)
 			.authorizeRequests(authorizeRequests ->
 				authorizeRequests.anyRequest().authenticated()
 			)
-			.csrf(csrf -> csrf.ignoringRequestMatchers(endpointMatchers))
+			.csrf(csrf -> csrf.ignoringRequestMatchers(endpointsMatcher))
 			.apply(authorizationServerConfigurer);
 	}
 	// @formatter:on

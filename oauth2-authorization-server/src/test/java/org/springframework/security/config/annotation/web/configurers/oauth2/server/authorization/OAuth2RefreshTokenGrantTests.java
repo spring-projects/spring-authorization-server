@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright 2020-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,18 @@
  */
 package org.springframework.security.config.annotation.web.configurers.oauth2.server.authorization;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+
+import com.nimbusds.jose.jwk.JWKSet;
+import com.nimbusds.jose.jwk.source.JWKSource;
+import com.nimbusds.jose.proc.SecurityContext;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
@@ -26,10 +34,9 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
 import org.springframework.security.config.test.SpringTestRule;
-import org.springframework.security.crypto.key.CryptoKeySource;
-import org.springframework.security.crypto.key.StaticKeyGeneratingCryptoKeySource;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
+import org.springframework.security.oauth2.jose.TestJwks;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.TestOAuth2Authorizations;
@@ -41,10 +48,6 @@ import org.springframework.security.oauth2.server.authorization.web.OAuth2TokenE
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
-
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
 
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
@@ -67,7 +70,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class OAuth2RefreshTokenGrantTests {
 	private static RegisteredClientRepository registeredClientRepository;
 	private static OAuth2AuthorizationService authorizationService;
-	private static CryptoKeySource keySource;
+	private static JWKSource<SecurityContext> jwkSource;
 
 	@Rule
 	public final SpringTestRule spring = new SpringTestRule();
@@ -79,7 +82,8 @@ public class OAuth2RefreshTokenGrantTests {
 	public static void init() {
 		registeredClientRepository = mock(RegisteredClientRepository.class);
 		authorizationService = mock(OAuth2AuthorizationService.class);
-		keySource = new StaticKeyGeneratingCryptoKeySource();
+		JWKSet jwkSet = new JWKSet(TestJwks.DEFAULT_RSA_JWK);
+		jwkSource = (jwkSelector, securityContext) -> jwkSelector.select(jwkSet);
 	}
 
 	@Before
@@ -153,8 +157,8 @@ public class OAuth2RefreshTokenGrantTests {
 		}
 
 		@Bean
-		CryptoKeySource keySource() {
-			return keySource;
+		JWKSource<SecurityContext> jwkSource() {
+			return jwkSource;
 		}
 	}
 }

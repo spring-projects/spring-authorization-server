@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright 2020-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,62 +15,61 @@
  */
 package org.springframework.security.oauth2.server.authorization.web;
 
-import com.nimbusds.jose.JWSAlgorithm;
-import com.nimbusds.jose.jwk.ECKey;
-import com.nimbusds.jose.jwk.JWKSet;
-import com.nimbusds.jose.jwk.KeyUse;
-import com.nimbusds.jose.jwk.RSAKey;
-import org.junit.Before;
-import org.junit.Test;
-import org.springframework.http.MediaType;
-import org.springframework.mock.web.MockHttpServletRequest;
-import org.springframework.mock.web.MockHttpServletResponse;
-import org.springframework.security.crypto.key.AsymmetricKey;
-import org.springframework.security.crypto.key.CryptoKeySource;
-import org.springframework.security.crypto.key.SymmetricKey;
-import org.springframework.security.crypto.key.TestCryptoKeys;
+import java.util.Arrays;
+import java.util.Collections;
 
 import javax.servlet.FilterChain;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+
+import com.nimbusds.jose.jwk.ECKey;
+import com.nimbusds.jose.jwk.JWKSet;
+import com.nimbusds.jose.jwk.KeyUse;
+import com.nimbusds.jose.jwk.OctetSequenceKey;
+import com.nimbusds.jose.jwk.RSAKey;
+import com.nimbusds.jose.jwk.source.JWKSource;
+import com.nimbusds.jose.proc.SecurityContext;
+import org.junit.Before;
+import org.junit.Test;
+
+import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.security.oauth2.jose.TestJwks;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
 
 /**
- * Tests for {@link JwkSetEndpointFilter}.
+ * Tests for {@link NimbusJwkSetEndpointFilter}.
  *
  * @author Joe Grandja
  */
-public class JwkSetEndpointFilterTests {
-	private CryptoKeySource keySource;
-	private JwkSetEndpointFilter filter;
+public class NimbusJwkSetEndpointFilterTests {
+	private JWKSource<SecurityContext> jwkSource;
+	private NimbusJwkSetEndpointFilter filter;
 
 	@Before
 	public void setUp() {
-		this.keySource = mock(CryptoKeySource.class);
-		this.filter = new JwkSetEndpointFilter(this.keySource);
+		this.jwkSource = mock(JWKSource.class);
+		this.filter = new NimbusJwkSetEndpointFilter(this.jwkSource);
 	}
 
 	@Test
-	public void constructorWhenKeySourceNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> new JwkSetEndpointFilter(null))
+	public void constructorWhenJwkSourceNullThenThrowIllegalArgumentException() {
+		assertThatThrownBy(() -> new NimbusJwkSetEndpointFilter(null))
 				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("keySource cannot be null");
+				.hasMessage("jwkSource cannot be null");
 	}
 
 	@Test
 	public void constructorWhenJwkSetEndpointUriNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> new JwkSetEndpointFilter(this.keySource, null))
+		assertThatThrownBy(() -> new NimbusJwkSetEndpointFilter(this.jwkSource, null))
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessage("jwkSetEndpointUri cannot be empty");
 	}
@@ -90,7 +89,7 @@ public class JwkSetEndpointFilterTests {
 
 	@Test
 	public void doFilterWhenJwkSetRequestPostThenNotProcessed() throws Exception {
-		String requestUri = JwkSetEndpointFilter.DEFAULT_JWK_SET_ENDPOINT_URI;
+		String requestUri = NimbusJwkSetEndpointFilter.DEFAULT_JWK_SET_ENDPOINT_URI;
 		MockHttpServletRequest request = new MockHttpServletRequest("POST", requestUri);
 		request.setServletPath(requestUri);
 		MockHttpServletResponse response = new MockHttpServletResponse();
@@ -103,12 +102,11 @@ public class JwkSetEndpointFilterTests {
 
 	@Test
 	public void doFilterWhenAsymmetricKeysThenJwkSetResponse() throws Exception {
-		AsymmetricKey rsaKey = TestCryptoKeys.rsaKey().build();
-		AsymmetricKey ecKey = TestCryptoKeys.ecKey().build();
-		when(this.keySource.getKeys()).thenReturn(
-				Stream.of(rsaKey, ecKey).collect(Collectors.toSet()));
+		RSAKey rsaJwk = TestJwks.DEFAULT_RSA_JWK;
+		ECKey ecJwk = TestJwks.DEFAULT_EC_JWK;
+		given(this.jwkSource.get(any(), any())).willReturn(Arrays.asList(rsaJwk, ecJwk));
 
-		String requestUri = JwkSetEndpointFilter.DEFAULT_JWK_SET_ENDPOINT_URI;
+		String requestUri = NimbusJwkSetEndpointFilter.DEFAULT_JWK_SET_ENDPOINT_URI;
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestUri);
 		request.setServletPath(requestUri);
 		MockHttpServletResponse response = new MockHttpServletResponse();
@@ -123,29 +121,25 @@ public class JwkSetEndpointFilterTests {
 		JWKSet jwkSet = JWKSet.parse(response.getContentAsString());
 		assertThat(jwkSet.getKeys()).hasSize(2);
 
-		RSAKey rsaJwk = (RSAKey) jwkSet.getKeyByKeyId(rsaKey.getId());
-		assertThat(rsaJwk).isNotNull();
-		assertThat(rsaJwk.toRSAPublicKey()).isEqualTo(rsaKey.getPublicKey());
-		assertThat(rsaJwk.toRSAPrivateKey()).isNull();
-		assertThat(rsaJwk.getKeyUse()).isEqualTo(KeyUse.SIGNATURE);
-		assertThat(rsaJwk.getAlgorithm()).isEqualTo(JWSAlgorithm.RS256);
+		RSAKey rsaJwkResult = (RSAKey) jwkSet.getKeyByKeyId(rsaJwk.getKeyID());
+		assertThat(rsaJwkResult).isNotNull();
+		assertThat(rsaJwkResult.toRSAPublicKey()).isEqualTo(rsaJwk.toRSAPublicKey());
+		assertThat(rsaJwkResult.toRSAPrivateKey()).isNull();
+		assertThat(rsaJwkResult.getKeyUse()).isEqualTo(KeyUse.SIGNATURE);
 
-		ECKey ecJwk = (ECKey) jwkSet.getKeyByKeyId(ecKey.getId());
-		assertThat(ecJwk).isNotNull();
-		assertThat(ecJwk.toECPublicKey()).isEqualTo(ecKey.getPublicKey());
-		assertThat(ecJwk.toECPublicKey()).isEqualTo(ecKey.getPublicKey());
-		assertThat(ecJwk.toECPrivateKey()).isNull();
-		assertThat(ecJwk.getKeyUse()).isEqualTo(KeyUse.SIGNATURE);
-		assertThat(ecJwk.getAlgorithm()).isEqualTo(JWSAlgorithm.ES256);
+		ECKey ecJwkResult = (ECKey) jwkSet.getKeyByKeyId(ecJwk.getKeyID());
+		assertThat(ecJwkResult).isNotNull();
+		assertThat(ecJwkResult.toECPublicKey()).isEqualTo(ecJwk.toECPublicKey());
+		assertThat(ecJwkResult.toECPrivateKey()).isNull();
+		assertThat(ecJwkResult.getKeyUse()).isEqualTo(KeyUse.SIGNATURE);
 	}
 
 	@Test
 	public void doFilterWhenSymmetricKeysThenJwkSetResponseEmpty() throws Exception {
-		SymmetricKey secretKey = TestCryptoKeys.secretKey().build();
-		when(this.keySource.getKeys()).thenReturn(
-				new HashSet<>(Collections.singleton(secretKey)));
+		OctetSequenceKey secretJwk = TestJwks.DEFAULT_SECRET_JWK;
+		given(this.jwkSource.get(any(), any())).willReturn(Collections.singletonList(secretJwk));
 
-		String requestUri = JwkSetEndpointFilter.DEFAULT_JWK_SET_ENDPOINT_URI;
+		String requestUri = NimbusJwkSetEndpointFilter.DEFAULT_JWK_SET_ENDPOINT_URI;
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestUri);
 		request.setServletPath(requestUri);
 		MockHttpServletResponse response = new MockHttpServletResponse();

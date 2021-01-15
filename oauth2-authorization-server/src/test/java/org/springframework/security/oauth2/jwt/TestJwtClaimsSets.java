@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright 2020-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,18 +18,21 @@ package org.springframework.security.oauth2.jwt;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
-import java.util.UUID;
 
 /**
  * @author Joe Grandja
  */
-public class TestJwtClaimsSets {
+public final class TestJwtClaimsSets {
+
+	private TestJwtClaimsSets() {
+	}
 
 	public static JwtClaimsSet.Builder jwtClaimsSet() {
 		String issuer = "https://provider.com";
 		Instant issuedAt = Instant.now();
 		Instant expiresAt = issuedAt.plus(1, ChronoUnit.HOURS);
 
+		// @formatter:off
 		return JwtClaimsSet.builder()
 				.issuer(issuer)
 				.subject("subject")
@@ -37,7 +40,8 @@ public class TestJwtClaimsSets {
 				.issuedAt(issuedAt)
 				.notBefore(issuedAt)
 				.expiresAt(expiresAt)
-				.id(UUID.randomUUID().toString())
+				.id("jti")
 				.claim("custom-claim-name", "custom-claim-value");
+		// @formatter:on
 	}
 }

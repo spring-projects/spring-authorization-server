@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright 2020-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,38 +13,40 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.security.oauth2.jose;
-
-import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
+package org.springframework.security.oauth2.jwt;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
+
+import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 
 /**
  * @author Joe Grandja
  */
-public class TestJoseHeaders {
+public final class TestJoseHeaders {
+
+	private TestJoseHeaders() {
+	}
 
 	public static JoseHeader.Builder joseHeader() {
 		return joseHeader(SignatureAlgorithm.RS256);
 	}
 
 	public static JoseHeader.Builder joseHeader(SignatureAlgorithm signatureAlgorithm) {
+		// @formatter:off
 		return JoseHeader.withAlgorithm(signatureAlgorithm)
 				.jwkSetUri("https://provider.com/oauth2/jwks")
 				.jwk(rsaJwk())
-				.keyId(UUID.randomUUID().toString())
+				.keyId("keyId")
 				.x509Uri("https://provider.com/oauth2/x509")
 				.x509CertificateChain(Arrays.asList("x509Cert1", "x509Cert2"))
 				.x509SHA1Thumbprint("x509SHA1Thumbprint")
 				.x509SHA256Thumbprint("x509SHA256Thumbprint")
-				.critical(Collections.singleton("custom-header-name"))
 				.type("JWT")
 				.contentType("jwt-content-type")
 				.header("custom-header-name", "custom-header-value");
+		// @formatter:on
 	}
 
 	private static Map<String, Object> rsaJwk() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright 2020-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.security.crypto.key;
+package sample.jose;
 
-import javax.crypto.KeyGenerator;
-import javax.crypto.SecretKey;
 import java.math.BigInteger;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -25,11 +23,17 @@ import java.security.spec.ECParameterSpec;
 import java.security.spec.ECPoint;
 import java.security.spec.EllipticCurve;
 
+import javax.crypto.KeyGenerator;
+import javax.crypto.SecretKey;
+
 /**
  * @author Joe Grandja
- * @since 0.0.1
+ * @since 0.1.0
  */
 final class KeyGeneratorUtils {
+
+	private KeyGeneratorUtils() {
+	}
 
 	static SecretKey generateSecretKey() {
 		SecretKey hmacKey;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright 2020-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,30 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.security.oauth2.jose;
+package org.springframework.security.oauth2.jwt;
 
-import org.springframework.security.oauth2.jose.jws.JwsAlgorithm;
-import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.util.Assert;
-
+import java.net.URL;
 import java.util.Collections;
-import java.util.LinkedHashMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 
-import static org.springframework.security.oauth2.jose.JoseHeaderNames.ALG;
-import static org.springframework.security.oauth2.jose.JoseHeaderNames.CRIT;
-import static org.springframework.security.oauth2.jose.JoseHeaderNames.CTY;
-import static org.springframework.security.oauth2.jose.JoseHeaderNames.JKU;
-import static org.springframework.security.oauth2.jose.JoseHeaderNames.JWK;
-import static org.springframework.security.oauth2.jose.JoseHeaderNames.KID;
-import static org.springframework.security.oauth2.jose.JoseHeaderNames.TYP;
-import static org.springframework.security.oauth2.jose.JoseHeaderNames.X5C;
-import static org.springframework.security.oauth2.jose.JoseHeaderNames.X5T;
-import static org.springframework.security.oauth2.jose.JoseHeaderNames.X5T_S256;
-import static org.springframework.security.oauth2.jose.JoseHeaderNames.X5U;
+import org.springframework.security.oauth2.core.converter.ClaimConversionService;
+import org.springframework.security.oauth2.jose.jws.JwsAlgorithm;
+import org.springframework.util.Assert;
 
 /**
  * The JOSE header is a JSON object representing the header parameters of a JSON Web Token,
@@ -55,16 +44,16 @@ public final class JoseHeader {
 	private final Map<String, Object> headers;
 
 	private JoseHeader(Map<String, Object> headers) {
-		this.headers = Collections.unmodifiableMap(new LinkedHashMap<>(headers));
+		this.headers = Collections.unmodifiableMap(new HashMap<>(headers));
 	}
 
 	/**
-	 * Returns the JWS algorithm used to digitally sign the JWS.
+	 * Returns the {@link JwsAlgorithm JWS algorithm} used to digitally sign the JWS.
 	 *
 	 * @return the JWS algorithm
 	 */
 	public JwsAlgorithm getJwsAlgorithm() {
-		return getHeader(ALG);
+		return getHeader(JoseHeaderNames.ALG);
 	}
 
 	/**
@@ -73,8 +62,8 @@ public final class JoseHeader {
 	 *
 	 * @return the JWK Set URL
 	 */
-	public String getJwkSetUri() {
-		return getHeader(JKU);
+	public URL getJwkSetUri() {
+		return getHeader(JoseHeaderNames.JKU);
 	}
 
 	/**
@@ -84,7 +73,7 @@ public final class JoseHeader {
 	 * @return the JSON Web Key
 	 */
 	public Map<String, Object> getJwk() {
-		return getHeader(JWK);
+		return getHeader(JoseHeaderNames.JWK);
 	}
 
 	/**
@@ -93,7 +82,7 @@ public final class JoseHeader {
 	 * @return the key ID
 	 */
 	public String getKeyId() {
-		return getHeader(KID);
+		return getHeader(JoseHeaderNames.KID);
 	}
 
 	/**
@@ -102,8 +91,8 @@ public final class JoseHeader {
 	 *
 	 * @return the X.509 URL
 	 */
-	public String getX509Uri() {
-		return getHeader(X5U);
+	public URL getX509Uri() {
+		return getHeader(JoseHeaderNames.X5U);
 	}
 
 	/**
@@ -113,7 +102,7 @@ public final class JoseHeader {
 	 * @return the X.509 certificate chain
 	 */
 	public List<String> getX509CertificateChain() {
-		return getHeader(X5C);
+		return getHeader(JoseHeaderNames.X5C);
 	}
 
 	/**
@@ -123,7 +112,7 @@ public final class JoseHeader {
 	 * @return the X.509 certificate SHA-1 thumbprint
 	 */
 	public String getX509SHA1Thumbprint() {
-		return getHeader(X5T);
+		return getHeader(JoseHeaderNames.X5T);
 	}
 
 	/**
@@ -133,7 +122,7 @@ public final class JoseHeader {
 	 * @return the X.509 certificate SHA-256 thumbprint
 	 */
 	public String getX509SHA256Thumbprint() {
-		return getHeader(X5T_S256);
+		return getHeader(JoseHeaderNames.X5T_S256);
 	}
 
 	/**
@@ -143,7 +132,7 @@ public final class JoseHeader {
 	 * @return the critical headers
 	 */
 	public Set<String> getCritical() {
-		return getHeader(CRIT);
+		return getHeader(JoseHeaderNames.CRIT);
 	}
 
 	/**
@@ -152,7 +141,7 @@ public final class JoseHeader {
 	 * @return the type header
 	 */
 	public String getType() {
-		return getHeader(TYP);
+		return getHeader(JoseHeaderNames.TYP);
 	}
 
 	/**
@@ -161,7 +150,7 @@ public final class JoseHeader {
 	 * @return the content type header
 	 */
 	public String getContentType() {
-		return getHeader(CTY);
+		return getHeader(JoseHeaderNames.CTY);
 	}
 
 	/**
@@ -209,12 +198,12 @@ public final class JoseHeader {
 	/**
 	 * A builder for {@link JoseHeader}.
 	 */
-	public static class Builder {
-		private final Map<String, Object> headers = new LinkedHashMap<>();
+	public static final class Builder {
+		private final Map<String, Object> headers = new HashMap<>();
 
 		private Builder(JwsAlgorithm jwsAlgorithm) {
 			Assert.notNull(jwsAlgorithm, "jwsAlgorithm cannot be null");
-			header(ALG, jwsAlgorithm);
+			header(JoseHeaderNames.ALG, jwsAlgorithm);
 		}
 
 		private Builder(JoseHeader headers) {
@@ -230,7 +219,7 @@ public final class JoseHeader {
 		 * @return the {@link Builder}
 		 */
 		public Builder jwkSetUri(String jwkSetUri) {
-			return header(JKU, jwkSetUri);
+			return header(JoseHeaderNames.JKU, jwkSetUri);
 		}
 
 		/**
@@ -241,7 +230,7 @@ public final class JoseHeader {
 		 * @return the {@link Builder}
 		 */
 		public Builder jwk(Map<String, Object> jwk) {
-			return header(JWK, jwk);
+			return header(JoseHeaderNames.JWK, jwk);
 		}
 
 		/**
@@ -251,7 +240,7 @@ public final class JoseHeader {
 		 * @return the {@link Builder}
 		 */
 		public Builder keyId(String keyId) {
-			return header(KID, keyId);
+			return header(JoseHeaderNames.KID, keyId);
 		}
 
 		/**
@@ -262,7 +251,7 @@ public final class JoseHeader {
 		 * @return the {@link Builder}
 		 */
 		public Builder x509Uri(String x509Uri) {
-			return header(X5U, x509Uri);
+			return header(JoseHeaderNames.X5U, x509Uri);
 		}
 
 		/**
@@ -273,7 +262,7 @@ public final class JoseHeader {
 		 * @return the {@link Builder}
 		 */
 		public Builder x509CertificateChain(List<String> x509CertificateChain) {
-			return header(X5C, x509CertificateChain);
+			return header(JoseHeaderNames.X5C, x509CertificateChain);
 		}
 
 		/**
@@ -284,7 +273,7 @@ public final class JoseHeader {
 		 * @return the {@link Builder}
 		 */
 		public Builder x509SHA1Thumbprint(String x509SHA1Thumbprint) {
-			return header(X5T, x509SHA1Thumbprint);
+			return header(JoseHeaderNames.X5T, x509SHA1Thumbprint);
 		}
 
 		/**
@@ -295,7 +284,7 @@ public final class JoseHeader {
 		 * @return the {@link Builder}
 		 */
 		public Builder x509SHA256Thumbprint(String x509SHA256Thumbprint) {
-			return header(X5T_S256, x509SHA256Thumbprint);
+			return header(JoseHeaderNames.X5T_S256, x509SHA256Thumbprint);
 		}
 
 		/**
@@ -306,7 +295,7 @@ public final class JoseHeader {
 		 * @return the {@link Builder}
 		 */
 		public Builder critical(Set<String> headerNames) {
-			return header(CRIT, headerNames);
+			return header(JoseHeaderNames.CRIT, headerNames);
 		}
 
 		/**
@@ -316,7 +305,7 @@ public final class JoseHeader {
 		 * @return the {@link Builder}
 		 */
 		public Builder type(String type) {
-			return header(TYP, type);
+			return header(JoseHeaderNames.TYP, type);
 		}
 
 		/**
@@ -326,7 +315,7 @@ public final class JoseHeader {
 		 * @return the {@link Builder}
 		 */
 		public Builder contentType(String contentType) {
-			return header(CTY, contentType);
+			return header(JoseHeaderNames.CTY, contentType);
 		}
 
 		/**
@@ -362,7 +351,19 @@ public final class JoseHeader {
 		 */
 		public JoseHeader build() {
 			Assert.notEmpty(this.headers, "headers cannot be empty");
+			convertAsURL(JoseHeaderNames.JKU);
+			convertAsURL(JoseHeaderNames.X5U);
 			return new JoseHeader(this.headers);
+		}
+
+		private void convertAsURL(String header) {
+			Object value = this.headers.get(header);
+			if (value != null) {
+				URL convertedValue = ClaimConversionService.getSharedInstance().convert(value, URL.class);
+				Assert.isTrue(convertedValue != null,
+						() -> "Unable to convert header '" + header + "' of type '" + value.getClass() + "' to URL.");
+				this.headers.put(header, convertedValue);
+			}
 		}
 	}
 }

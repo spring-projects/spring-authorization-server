@@ -23,8 +23,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 import com.nimbusds.jose.JOSEException;
@@ -46,7 +44,6 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 
 import org.springframework.core.convert.converter.Converter;
-import org.springframework.security.oauth2.jose.jws.JwsAlgorithm;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
@@ -88,9 +85,6 @@ public final class NimbusJwsEncoder implements JwtEncoder {
 
 	private final JWKSource<SecurityContext> jwkSource;
 
-	private BiConsumer<JoseHeader.Builder, JwtClaimsSet.Builder> jwtCustomizer = (headers, claims) -> {
-	};
-
 	/**
 	 * Constructs a {@code NimbusJwsEncoder} using the provided parameters.
 	 * @param jwkSource the {@code com.nimbusds.jose.jwk.source.JWKSource}
@@ -100,32 +94,12 @@ public final class NimbusJwsEncoder implements JwtEncoder {
 		this.jwkSource = jwkSource;
 	}
 
-	/**
-	 * Sets the {@link Jwt} customizer to be provided the {@link JoseHeader.Builder} and
-	 * {@link JwtClaimsSet.Builder} allowing for further customizations.
-	 * @param jwtCustomizer the {@link Jwt} customizer to be provided the
-	 * {@link JoseHeader.Builder} and {@link JwtClaimsSet.Builder}
-	 */
-	public void setJwtCustomizer(BiConsumer<JoseHeader.Builder, JwtClaimsSet.Builder> jwtCustomizer) {
-		Assert.notNull(jwtCustomizer, "jwtCustomizer cannot be null");
-		this.jwtCustomizer = jwtCustomizer;
-	}
-
 	@Override
 	public Jwt encode(JoseHeader headers, JwtClaimsSet claims) throws JwtEncodingException {
 		Assert.notNull(headers, "headers cannot be null");
 		Assert.notNull(claims, "claims cannot be null");
 
-		// @formatter:off
-		JoseHeader.Builder headersBuilder = JoseHeader.from(headers)
-				.type(JOSEObjectType.JWT.getType());
-		JwtClaimsSet.Builder claimsBuilder = JwtClaimsSet.from(claims)
-				.id(UUID.randomUUID().toString());
-		// @formatter:on
-
-		this.jwtCustomizer.accept(headersBuilder, claimsBuilder);
-
-		JWK jwk = selectJwk(headersBuilder);
+		JWK jwk = selectJwk(headers);
 		if (jwk == null) {
 			throw new JwtEncodingException(
 					String.format(ENCODING_ERROR_MESSAGE_TEMPLATE, "Failed to select a JWK signing key"));
@@ -135,8 +109,15 @@ public final class NimbusJwsEncoder implements JwtEncoder {
 					"The \"kid\" (key ID) from the selected JWK cannot be empty"));
 		}
 
-		headers = headersBuilder.keyId(jwk.getKeyID()).build();
-		claims = claimsBuilder.build();
+		// @formatter:off
+		headers = JoseHeader.from(headers)
+				.type(JOSEObjectType.JWT.getType())
+				.keyId(jwk.getKeyID())
+				.build();
+		claims = JwtClaimsSet.from(claims)
+				.id(UUID.randomUUID().toString())
+				.build();
+		// @formatter:on
 
 		JWSHeader jwsHeader = JWS_HEADER_CONVERTER.convert(headers);
 		JWTClaimsSet jwtClaimsSet = JWT_CLAIMS_SET_CONVERTER.convert(claims);
@@ -164,13 +145,9 @@ public final class NimbusJwsEncoder implements JwtEncoder {
 		return new Jwt(jws, claims.getIssuedAt(), claims.getExpiresAt(), headers.getHeaders(), claims.getClaims());
 	}
 
-	private JWK selectJwk(JoseHeader.Builder headersBuilder) {
-		final AtomicReference<JWSAlgorithm> jwsAlgorithm = new AtomicReference<>();
-		headersBuilder.headers((h) -> {
-			JwsAlgorithm jwsAlg = (JwsAlgorithm) h.get(JoseHeaderNames.ALG);
-			jwsAlgorithm.set(JWSAlgorithm.parse(jwsAlg.getName()));
-		});
-		JWSHeader jwsHeader = new JWSHeader(jwsAlgorithm.get());
+	private JWK selectJwk(JoseHeader headers) {
+		JWSAlgorithm jwsAlgorithm = JWSAlgorithm.parse(headers.getJwsAlgorithm().getName());
+		JWSHeader jwsHeader = new JWSHeader(jwsAlgorithm);
 		JWKSelector jwkSelector = new JWKSelector(JWKMatcher.forJWSHeader(jwsHeader));
 
 		List<JWK> jwks;
@@ -184,7 +161,7 @@ public final class NimbusJwsEncoder implements JwtEncoder {
 
 		if (jwks.size() > 1) {
 			throw new JwtEncodingException(String.format(ENCODING_ERROR_MESSAGE_TEMPLATE,
-					"Found multiple JWK signing keys for algorithm '" + jwsAlgorithm.get().getName() + "'"));
+					"Found multiple JWK signing keys for algorithm '" + jwsAlgorithm.getName() + "'"));
 		}
 
 		return !jwks.isEmpty() ? jwks.get(0) : null;

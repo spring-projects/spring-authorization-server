@@ -41,6 +41,8 @@ import org.springframework.security.oauth2.server.authorization.OAuth2Authorizat
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
+import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext;
+import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer;
 import org.springframework.security.oauth2.server.authorization.web.OAuth2TokenEndpointFilter;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
@@ -65,6 +67,7 @@ public class OAuth2ClientCredentialsGrantTests {
 	private static RegisteredClientRepository registeredClientRepository;
 	private static OAuth2AuthorizationService authorizationService;
 	private static JWKSource<SecurityContext> jwkSource;
+	private static OAuth2TokenCustomizer<JwtEncodingContext> jwtCustomizer;
 
 	@Rule
 	public final SpringTestRule spring = new SpringTestRule();
@@ -78,10 +81,13 @@ public class OAuth2ClientCredentialsGrantTests {
 		authorizationService = mock(OAuth2AuthorizationService.class);
 		JWKSet jwkSet = new JWKSet(TestJwks.DEFAULT_RSA_JWK);
 		jwkSource = (jwkSelector, securityContext) -> jwkSelector.select(jwkSet);
+		jwtCustomizer = mock(OAuth2TokenCustomizer.class);
 	}
 
+	@SuppressWarnings("unchecked")
 	@Before
 	public void setup() {
+		reset(jwtCustomizer);
 		reset(registeredClientRepository);
 		reset(authorizationService);
 	}
@@ -115,6 +121,7 @@ public class OAuth2ClientCredentialsGrantTests {
 				.andExpect(jsonPath("$.access_token").isNotEmpty())
 				.andExpect(jsonPath("$.scope").value("scope1 scope2"));
 
+		verify(jwtCustomizer).customize(any());
 		verify(registeredClientRepository).findByClientId(eq(registeredClient.getClientId()));
 		verify(authorizationService).save(any());
 	}
@@ -136,6 +143,7 @@ public class OAuth2ClientCredentialsGrantTests {
 				.andExpect(jsonPath("$.access_token").isNotEmpty())
 				.andExpect(jsonPath("$.scope").value("scope1 scope2"));
 
+		verify(jwtCustomizer).customize(any());
 		verify(registeredClientRepository).findByClientId(eq(registeredClient.getClientId()));
 		verify(authorizationService).save(any());
 	}
@@ -165,6 +173,11 @@ public class OAuth2ClientCredentialsGrantTests {
 		@Bean
 		JWKSource<SecurityContext> jwkSource() {
 			return jwkSource;
+		}
+
+		@Bean
+		OAuth2TokenCustomizer<JwtEncodingContext> jwtCustomizer() {
+			return jwtCustomizer;
 		}
 	}
 }

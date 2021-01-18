@@ -33,7 +33,9 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.web.HttpSecurityBuilder;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.ExceptionHandlingConfigurer;
+import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
+import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext;
 import org.springframework.security.oauth2.jwt.NimbusJwsEncoder;
 import org.springframework.security.oauth2.server.authorization.InMemoryOAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
@@ -152,23 +154,33 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 		builder.authenticationProvider(postProcess(clientAuthenticationProvider));
 
 		JwtEncoder jwtEncoder = getJwtEncoder(builder);
+		OAuth2TokenCustomizer<JwtEncodingContext> jwtCustomizer = getJwtCustomizer(builder);
 
 		OAuth2AuthorizationCodeAuthenticationProvider authorizationCodeAuthenticationProvider =
 				new OAuth2AuthorizationCodeAuthenticationProvider(
 						getAuthorizationService(builder),
 						jwtEncoder);
+		if (jwtCustomizer != null) {
+			authorizationCodeAuthenticationProvider.setJwtCustomizer(jwtCustomizer);
+		}
 		builder.authenticationProvider(postProcess(authorizationCodeAuthenticationProvider));
 
 		OAuth2RefreshTokenAuthenticationProvider refreshTokenAuthenticationProvider =
 				new OAuth2RefreshTokenAuthenticationProvider(
 						getAuthorizationService(builder),
 						jwtEncoder);
+		if (jwtCustomizer != null) {
+			refreshTokenAuthenticationProvider.setJwtCustomizer(jwtCustomizer);
+		}
 		builder.authenticationProvider(postProcess(refreshTokenAuthenticationProvider));
 
 		OAuth2ClientCredentialsAuthenticationProvider clientCredentialsAuthenticationProvider =
 				new OAuth2ClientCredentialsAuthenticationProvider(
 						getAuthorizationService(builder),
 						jwtEncoder);
+		if (jwtCustomizer != null) {
+			clientCredentialsAuthenticationProvider.setJwtCustomizer(jwtCustomizer);
+		}
 		builder.authenticationProvider(postProcess(clientCredentialsAuthenticationProvider));
 
 		OAuth2TokenRevocationAuthenticationProvider tokenRevocationAuthenticationProvider =
@@ -314,6 +326,19 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 		return jwkSource;
 	}
 
+	@SuppressWarnings("unchecked")
+	private static <B extends HttpSecurityBuilder<B>> OAuth2TokenCustomizer<JwtEncodingContext> getJwtCustomizer(B builder) {
+		OAuth2TokenCustomizer<JwtEncodingContext> jwtCustomizer = builder.getSharedObject(OAuth2TokenCustomizer.class);
+		if (jwtCustomizer == null) {
+			ResolvableType type = ResolvableType.forClassWithGenerics(OAuth2TokenCustomizer.class, JwtEncodingContext.class);
+			jwtCustomizer = getOptionalBean(builder, type);
+			if (jwtCustomizer != null) {
+				builder.setSharedObject(OAuth2TokenCustomizer.class, jwtCustomizer);
+			}
+		}
+		return jwtCustomizer;
+	}
+
 	private static <B extends HttpSecurityBuilder<B>> ProviderSettings getProviderSettings(B builder) {
 		ProviderSettings providerSettings = builder.getSharedObject(ProviderSettings.class);
 		if (providerSettings == null) {
@@ -352,5 +377,15 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 							beansMap.size() + ": " + StringUtils.collectionToCommaDelimitedString(beansMap.keySet()));
 		}
 		return (!beansMap.isEmpty() ? beansMap.values().iterator().next() : null);
+	}
+
+	@SuppressWarnings("unchecked")
+	private static <B extends HttpSecurityBuilder<B>, T> T getOptionalBean(B builder, ResolvableType type) {
+		ApplicationContext context = builder.getSharedObject(ApplicationContext.class);
+		String[] names = context.getBeanNamesForType(type);
+		if (names.length > 1) {
+			throw new NoUniqueBeanDefinitionException(type, names);
+		}
+		return names.length == 1 ? (T) context.getBean(names[0]) : null;
 	}
 }

@@ -21,7 +21,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.BiConsumer;
 
 import com.nimbusds.jose.KeySourceException;
 import com.nimbusds.jose.jwk.ECKey;
@@ -49,7 +48,6 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
 
 /**
  * Tests for {@link NimbusJwsEncoder}.
@@ -78,12 +76,6 @@ public class NimbusJwsEncoderTests {
 	}
 
 	@Test
-	public void setJwtCustomizerWhenNullThenThrowIllegalArgumentException() {
-		assertThatIllegalArgumentException().isThrownBy(() -> this.jwsEncoder.setJwtCustomizer(null))
-				.withMessage("jwtCustomizer cannot be null");
-	}
-
-	@Test
 	public void encodeWhenHeadersNullThenThrowIllegalArgumentException() {
 		JwtClaimsSet jwtClaimsSet = TestJwtClaimsSets.jwtClaimsSet().build();
 
@@ -97,22 +89,6 @@ public class NimbusJwsEncoderTests {
 
 		assertThatIllegalArgumentException().isThrownBy(() -> this.jwsEncoder.encode(joseHeader, null))
 				.withMessage("claims cannot be null");
-	}
-
-	@Test
-	public void encodeWhenCustomizerSetThenCalled() {
-		RSAKey rsaJwk = TestJwks.DEFAULT_RSA_JWK;
-		this.jwkList.add(rsaJwk);
-
-		BiConsumer<JoseHeader.Builder, JwtClaimsSet.Builder> jwtCustomizer = mock(BiConsumer.class);
-		this.jwsEncoder.setJwtCustomizer(jwtCustomizer);
-
-		JoseHeader joseHeader = TestJoseHeaders.joseHeader().build();
-		JwtClaimsSet jwtClaimsSet = TestJwtClaimsSets.jwtClaimsSet().build();
-
-		this.jwsEncoder.encode(joseHeader, jwtClaimsSet);
-
-		verify(jwtCustomizer).accept(any(JoseHeader.Builder.class), any(JwtClaimsSet.Builder.class));
 	}
 
 	@Test

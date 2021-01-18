@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright 2020-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,5 +55,10 @@ public interface OAuth2AuthorizationAttributeNames {
 	 * The name of the attribute used for the attributes/claims of the {@link OAuth2AccessToken}.
 	 */
 	String ACCESS_TOKEN_ATTRIBUTES = OAuth2Authorization.class.getName().concat(".ACCESS_TOKEN_ATTRIBUTES");
+
+	/**
+	 * The name of the attribute used for the resource owner {@code Principal}.
+	 */
+	String PRINCIPAL = OAuth2Authorization.class.getName().concat(".PRINCIPAL");
 
 }

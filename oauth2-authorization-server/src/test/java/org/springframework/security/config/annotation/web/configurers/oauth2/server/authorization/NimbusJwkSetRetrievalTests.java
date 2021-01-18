@@ -34,23 +34,26 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
 import org.springframework.security.config.test.SpringTestRule;
-import org.springframework.security.crypto.key.CryptoKeySource;
-import org.springframework.security.crypto.key.StaticKeyGeneratingCryptoKeySource;
+import org.springframework.security.oauth2.jose.TestJwks;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.config.ProviderSettings;
-import org.springframework.security.oauth2.server.authorization.web.JwkSetEndpointFilter;
+import org.springframework.security.oauth2.server.authorization.web.NimbusJwkSetEndpointFilter;
 import org.springframework.test.web.servlet.MockMvc;
+
+import com.nimbusds.jose.jwk.JWKSet;
+import com.nimbusds.jose.jwk.source.JWKSource;
+import com.nimbusds.jose.proc.SecurityContext;
 
 /**
  * Integration tests for the JWK Set requests.
  *
  * @author Florian Berthe
  */
-public class JwkSetRetrievalTests {
+public class NimbusJwkSetRetrievalTests {
 	private static RegisteredClientRepository registeredClientRepository;
 	private static OAuth2AuthorizationService authorizationService;
-	private static CryptoKeySource keySource;
+	private static JWKSource<SecurityContext> jwkSource;
 	private static ProviderSettings providerSettings;
 
 	@Rule
@@ -63,7 +66,8 @@ public class JwkSetRetrievalTests {
 	public static void init() {
 		registeredClientRepository = mock(RegisteredClientRepository.class);
 		authorizationService = mock(OAuth2AuthorizationService.class);
-		keySource = new StaticKeyGeneratingCryptoKeySource();
+		JWKSet jwkSet = new JWKSet(TestJwks.DEFAULT_RSA_JWK);
+		jwkSource = (jwkSelector, securityContext) -> jwkSelector.select(jwkSet);
 		providerSettings = new ProviderSettings().jwkSetEndpoint("/test/jwks");
 	}
 
@@ -77,7 +81,7 @@ public class JwkSetRetrievalTests {
 	public void requestWhenJwkSetValidThenReturnKeys() throws Exception {
 		this.spring.register(AuthorizationServerConfiguration.class).autowire();
 
-		this.mvc.perform(get(JwkSetEndpointFilter.DEFAULT_JWK_SET_ENDPOINT_URI))
+		this.mvc.perform(get(NimbusJwkSetEndpointFilter.DEFAULT_JWK_SET_ENDPOINT_URI))
 				.andExpect(status().isOk())
 				.andExpect(header().string(HttpHeaders.CACHE_CONTROL, containsString("no-store")))
 				.andExpect(header().string(HttpHeaders.PRAGMA, containsString("no-cache")))
@@ -98,7 +102,7 @@ public class JwkSetRetrievalTests {
 	public void requestWhenCustomProviderSettingsThenNotFound() throws Exception {
 		this.spring.register(AuthorizationServerConfigurationWithProviderSettings.class).autowire();
 
-		this.mvc.perform(get(JwkSetEndpointFilter.DEFAULT_JWK_SET_ENDPOINT_URI))
+		this.mvc.perform(get(NimbusJwkSetEndpointFilter.DEFAULT_JWK_SET_ENDPOINT_URI))
 				.andExpect(status().isNotFound());
 	}
 
@@ -117,8 +121,8 @@ public class JwkSetRetrievalTests {
 		}
 
 		@Bean
-		CryptoKeySource keySource() {
-			return keySource;
+		JWKSource<SecurityContext> jwkSource() {
+			return jwkSource;
 		}
 	}
 

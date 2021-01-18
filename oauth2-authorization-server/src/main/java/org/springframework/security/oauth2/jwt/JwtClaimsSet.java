@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright 2020-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,22 +15,14 @@
  */
 package org.springframework.security.oauth2.jwt;
 
-import org.springframework.util.Assert;
-
 import java.time.Instant;
 import java.util.Collections;
-import java.util.LinkedHashMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
-import static org.springframework.security.oauth2.jwt.JwtClaimNames.AUD;
-import static org.springframework.security.oauth2.jwt.JwtClaimNames.EXP;
-import static org.springframework.security.oauth2.jwt.JwtClaimNames.IAT;
-import static org.springframework.security.oauth2.jwt.JwtClaimNames.ISS;
-import static org.springframework.security.oauth2.jwt.JwtClaimNames.JTI;
-import static org.springframework.security.oauth2.jwt.JwtClaimNames.NBF;
-import static org.springframework.security.oauth2.jwt.JwtClaimNames.SUB;
+import org.springframework.util.Assert;
 
 /**
  * The {@link Jwt JWT} Claims Set is a JSON object representing the claims conveyed by a JSON Web Token.
@@ -46,7 +38,7 @@ public final class JwtClaimsSet implements JwtClaimAccessor {
 	private final Map<String, Object> claims;
 
 	private JwtClaimsSet(Map<String, Object> claims) {
-		this.claims = Collections.unmodifiableMap(new LinkedHashMap<>(claims));
+		this.claims = Collections.unmodifiableMap(new HashMap<>(claims));
 	}
 
 	@Override
@@ -76,8 +68,8 @@ public final class JwtClaimsSet implements JwtClaimAccessor {
 	/**
 	 * A builder for {@link JwtClaimsSet}.
 	 */
-	public static class Builder {
-		private final Map<String, Object> claims = new LinkedHashMap<>();
+	public static final class Builder {
+		private final Map<String, Object> claims = new HashMap<>();
 
 		private Builder() {
 		}
@@ -94,7 +86,7 @@ public final class JwtClaimsSet implements JwtClaimAccessor {
 		 * @return the {@link Builder}
 		 */
 		public Builder issuer(String issuer) {
-			return claim(ISS, issuer);
+			return claim(JwtClaimNames.ISS, issuer);
 		}
 
 		/**
@@ -104,7 +96,7 @@ public final class JwtClaimsSet implements JwtClaimAccessor {
 		 * @return the {@link Builder}
 		 */
 		public Builder subject(String subject) {
-			return claim(SUB, subject);
+			return claim(JwtClaimNames.SUB, subject);
 		}
 
 		/**
@@ -114,7 +106,7 @@ public final class JwtClaimsSet implements JwtClaimAccessor {
 		 * @return the {@link Builder}
 		 */
 		public Builder audience(List<String> audience) {
-			return claim(AUD, audience);
+			return claim(JwtClaimNames.AUD, audience);
 		}
 
 		/**
@@ -125,7 +117,7 @@ public final class JwtClaimsSet implements JwtClaimAccessor {
 		 * @return the {@link Builder}
 		 */
 		public Builder expiresAt(Instant expiresAt) {
-			return claim(EXP, expiresAt);
+			return claim(JwtClaimNames.EXP, expiresAt);
 		}
 
 		/**
@@ -136,7 +128,7 @@ public final class JwtClaimsSet implements JwtClaimAccessor {
 		 * @return the {@link Builder}
 		 */
 		public Builder notBefore(Instant notBefore) {
-			return claim(NBF, notBefore);
+			return claim(JwtClaimNames.NBF, notBefore);
 		}
 
 		/**
@@ -146,7 +138,7 @@ public final class JwtClaimsSet implements JwtClaimAccessor {
 		 * @return the {@link Builder}
 		 */
 		public Builder issuedAt(Instant issuedAt) {
-			return claim(IAT, issuedAt);
+			return claim(JwtClaimNames.IAT, issuedAt);
 		}
 
 		/**
@@ -156,7 +148,7 @@ public final class JwtClaimsSet implements JwtClaimAccessor {
 		 * @return the {@link Builder}
 		 */
 		public Builder id(String jti) {
-			return claim(JTI, jti);
+			return claim(JwtClaimNames.JTI, jti);
 		}
 
 		/**

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright 2020-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.security.oauth2.jose;
+package org.springframework.security.oauth2.jwt;
 
 import org.junit.Test;
+
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -40,14 +41,13 @@ public class JoseHeaderTests {
 		JoseHeader expectedJoseHeader = TestJoseHeaders.joseHeader().build();
 
 		JoseHeader joseHeader = JoseHeader.withAlgorithm(expectedJoseHeader.getJwsAlgorithm())
-				.jwkSetUri(expectedJoseHeader.getJwkSetUri())
+				.jwkSetUri(expectedJoseHeader.getJwkSetUri().toExternalForm())
 				.jwk(expectedJoseHeader.getJwk())
 				.keyId(expectedJoseHeader.getKeyId())
-				.x509Uri(expectedJoseHeader.getX509Uri())
+				.x509Uri(expectedJoseHeader.getX509Uri().toExternalForm())
 				.x509CertificateChain(expectedJoseHeader.getX509CertificateChain())
 				.x509SHA1Thumbprint(expectedJoseHeader.getX509SHA1Thumbprint())
 				.x509SHA256Thumbprint(expectedJoseHeader.getX509SHA256Thumbprint())
-				.critical(expectedJoseHeader.getCritical())
 				.type(expectedJoseHeader.getType())
 				.contentType(expectedJoseHeader.getContentType())
 				.headers(headers -> headers.put("custom-header-name", "custom-header-value"))

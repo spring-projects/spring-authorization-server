@@ -73,7 +73,7 @@ public class NimbusJwkSetEndpointFilter extends OncePerRequestFilter {
 		Assert.notNull(jwkSource, "jwkSource cannot be null");
 		Assert.hasText(jwkSetEndpointUri, "jwkSetEndpointUri cannot be empty");
 		this.jwkSource = jwkSource;
-		this.jwkSelector = new JWKSelector(new JWKMatcher.Builder().publicOnly(true).build());
+		this.jwkSelector = new JWKSelector(new JWKMatcher.Builder().build());
 		this.requestMatcher = new AntPathRequestMatcher(jwkSetEndpointUri, HttpMethod.GET.name());
 	}
 
@@ -91,12 +91,12 @@ public class NimbusJwkSetEndpointFilter extends OncePerRequestFilter {
 			jwkSet = new JWKSet(this.jwkSource.get(this.jwkSelector, null));
 		}
 		catch (Exception ex) {
-			throw new IllegalStateException("Failed to select the JWK public key(s) -> " + ex.getMessage(), ex);
+			throw new IllegalStateException("Failed to select the JWK(s) -> " + ex.getMessage(), ex);
 		}
 
 		response.setContentType(MediaType.APPLICATION_JSON_VALUE);
 		try (Writer writer = response.getWriter()) {
-			writer.write(jwkSet.toString());
+			writer.write(jwkSet.toString());	// toString() excludes private keys
 		}
 	}
 }

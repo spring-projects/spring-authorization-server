@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright 2020-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,6 +49,7 @@ public interface OAuth2AuthorizationService {
 	 * @param tokenType the {@link TokenType token type}
 	 * @return the {@link OAuth2Authorization} if found, otherwise {@code null}
 	 */
+	@Nullable
 	OAuth2Authorization findByToken(String token, @Nullable TokenType tokenType);
 
 }

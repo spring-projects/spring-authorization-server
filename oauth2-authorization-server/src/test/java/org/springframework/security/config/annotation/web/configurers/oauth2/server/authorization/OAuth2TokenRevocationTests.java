@@ -56,6 +56,7 @@ import org.springframework.util.MultiValueMap;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
@@ -105,7 +106,7 @@ public class OAuth2TokenRevocationTests {
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();
 		OAuth2RefreshToken token = authorization.getTokens().getRefreshToken();
 		TokenType tokenType = TokenType.REFRESH_TOKEN;
-		when(authorizationService.findByToken(eq(token.getTokenValue()), eq(tokenType))).thenReturn(authorization);
+		when(authorizationService.findByToken(eq(token.getTokenValue()), isNull())).thenReturn(authorization);
 
 		this.mvc.perform(MockMvcRequestBuilders.post(OAuth2TokenRevocationEndpointFilter.DEFAULT_TOKEN_REVOCATION_ENDPOINT_URI)
 				.params(getTokenRevocationRequestParameters(token, tokenType))
@@ -114,7 +115,7 @@ public class OAuth2TokenRevocationTests {
 				.andExpect(status().isOk());
 
 		verify(registeredClientRepository).findByClientId(eq(registeredClient.getClientId()));
-		verify(authorizationService).findByToken(eq(token.getTokenValue()), eq(tokenType));
+		verify(authorizationService).findByToken(eq(token.getTokenValue()), isNull());
 
 		ArgumentCaptor<OAuth2Authorization> authorizationCaptor = ArgumentCaptor.forClass(OAuth2Authorization.class);
 		verify(authorizationService).save(authorizationCaptor.capture());
@@ -137,7 +138,7 @@ public class OAuth2TokenRevocationTests {
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();
 		OAuth2AccessToken token = authorization.getTokens().getAccessToken();
 		TokenType tokenType = TokenType.ACCESS_TOKEN;
-		when(authorizationService.findByToken(eq(token.getTokenValue()), eq(tokenType))).thenReturn(authorization);
+		when(authorizationService.findByToken(eq(token.getTokenValue()), isNull())).thenReturn(authorization);
 
 		this.mvc.perform(MockMvcRequestBuilders.post(OAuth2TokenRevocationEndpointFilter.DEFAULT_TOKEN_REVOCATION_ENDPOINT_URI)
 				.params(getTokenRevocationRequestParameters(token, tokenType))
@@ -146,7 +147,7 @@ public class OAuth2TokenRevocationTests {
 				.andExpect(status().isOk());
 
 		verify(registeredClientRepository).findByClientId(eq(registeredClient.getClientId()));
-		verify(authorizationService).findByToken(eq(token.getTokenValue()), eq(tokenType));
+		verify(authorizationService).findByToken(eq(token.getTokenValue()), isNull());
 
 		ArgumentCaptor<OAuth2Authorization> authorizationCaptor = ArgumentCaptor.forClass(OAuth2Authorization.class);
 		verify(authorizationService).save(authorizationCaptor.capture());

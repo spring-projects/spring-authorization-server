@@ -137,7 +137,7 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 	 * @return a {@link RequestMatcher} for the authorization server endpoints
 	 */
 	public RequestMatcher getEndpointsMatcher() {
-		return endpointsMatcher;
+		return this.endpointsMatcher;
 	}
 
 	@Override

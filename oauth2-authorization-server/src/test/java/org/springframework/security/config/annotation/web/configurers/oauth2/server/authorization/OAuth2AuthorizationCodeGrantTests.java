@@ -287,7 +287,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 
 		verify(jwtCustomizer).accept(any(JoseHeader.Builder.class), any(JwtClaimsSet.Builder.class));
 	}
-	
+
 	@Test
 	public void requestWhenCustomProviderSettingsThenOk() throws Exception {
 		this.spring.register(AuthorizationServerConfigurationWithProviderSettings.class).autowire();
@@ -308,7 +308,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 						registeredClient.getClientId(), registeredClient.getClientSecret())))
 				.andExpect(status().isOk());
 	}
-	
+
 	@Test
 	public void requestWhenCustomProviderSettingsThenNotFound() throws Exception {
 		this.spring.register(AuthorizationServerConfigurationWithProviderSettings.class).autowire();

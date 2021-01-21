@@ -17,6 +17,8 @@ This project uses https://www.zenhub.com/[ZenHub] to prioritize the feature road
 The project board can be accessed https://app.zenhub.com/workspaces/authorization-server-5e8f3182b5e8f5841bfc4902/board?repos=248032165[here].
 It is recommended to install the ZenHub https://www.zenhub.com/extension[browser extension] as it integrates natively within GitHub's user interface.
 
+The completed and upcoming feature list can be viewed in the https://github.com/spring-projects-experimental/spring-authorization-server/wiki/Feature-List[wiki].
+
 == Getting Started
 The first place to start is to read the https://tools.ietf.org/html/rfc6749[OAuth 2.0 Authorization Framework] to gain an in-depth understanding on how to build an Authorization Server.
 It is a critically important first step as the implementation must conform to the specification defined in the OAuth 2.0 Authorization Framework and the https://github.com/spring-projects-experimental/spring-authorization-server/wiki/OAuth-2.0-Specifications[related specifications].

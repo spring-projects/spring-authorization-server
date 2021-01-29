@@ -15,18 +15,14 @@
  */
 package org.springframework.security.config.annotation.web.configurers.oauth2.server.authorization;
 
-import static org.hamcrest.CoreMatchers.containsString;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.reset;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
+import com.nimbusds.jose.jwk.JWKSet;
+import com.nimbusds.jose.jwk.source.JWKSource;
+import com.nimbusds.jose.proc.SecurityContext;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
@@ -41,12 +37,16 @@ import org.springframework.security.oauth2.server.authorization.config.ProviderS
 import org.springframework.security.oauth2.server.authorization.web.NimbusJwkSetEndpointFilter;
 import org.springframework.test.web.servlet.MockMvc;
 
-import com.nimbusds.jose.jwk.JWKSet;
-import com.nimbusds.jose.jwk.source.JWKSource;
-import com.nimbusds.jose.proc.SecurityContext;
+import static org.hamcrest.CoreMatchers.containsString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.reset;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Integration tests for the JWK Set requests.
+ * Integration tests for the JWK Set endpoint.
  *
  * @author Florian Berthe
  */
@@ -78,32 +78,26 @@ public class JwkSetTests {
 	}
 
 	@Test
-	public void requestWhenJwkSetValidThenReturnKeys() throws Exception {
+	public void requestWhenJwkSetThenReturnKeys() throws Exception {
 		this.spring.register(AuthorizationServerConfiguration.class).autowire();
 
-		this.mvc.perform(get(NimbusJwkSetEndpointFilter.DEFAULT_JWK_SET_ENDPOINT_URI))
+		assertJwkSetRequestThenReturnKeys(NimbusJwkSetEndpointFilter.DEFAULT_JWK_SET_ENDPOINT_URI);
+	}
+
+	@Test
+	public void requestWhenJwkSetCustomEndpointThenReturnKeys() throws Exception {
+		this.spring.register(AuthorizationServerConfigurationCustomEndpoints.class).autowire();
+
+		assertJwkSetRequestThenReturnKeys(providerSettings.jwkSetEndpoint());
+	}
+
+	private void assertJwkSetRequestThenReturnKeys(String jwkSetEndpointUri) throws Exception {
+		this.mvc.perform(get(jwkSetEndpointUri))
 				.andExpect(status().isOk())
 				.andExpect(header().string(HttpHeaders.CACHE_CONTROL, containsString("no-store")))
 				.andExpect(header().string(HttpHeaders.PRAGMA, containsString("no-cache")))
 				.andExpect(jsonPath("$.keys").isNotEmpty())
 				.andExpect(jsonPath("$.keys").isArray());
-
-	}
-
-	@Test
-	public void requestWhenCustomProviderSettingsThenOk() throws Exception {
-		this.spring.register(AuthorizationServerConfigurationWithProviderSettings.class).autowire();
-
-		this.mvc.perform(get(providerSettings.jwkSetEndpoint()))
-				.andExpect(status().isOk());
-	}
-
-	@Test
-	public void requestWhenCustomProviderSettingsThenNotFound() throws Exception {
-		this.spring.register(AuthorizationServerConfigurationWithProviderSettings.class).autowire();
-
-		this.mvc.perform(get(NimbusJwkSetEndpointFilter.DEFAULT_JWK_SET_ENDPOINT_URI))
-				.andExpect(status().isNotFound());
 	}
 
 	@EnableWebSecurity
@@ -128,7 +122,7 @@ public class JwkSetTests {
 
 	@EnableWebSecurity
 	@Import(OAuth2AuthorizationServerConfiguration.class)
-	static class AuthorizationServerConfigurationWithProviderSettings extends AuthorizationServerConfiguration {
+	static class AuthorizationServerConfigurationCustomEndpoints extends AuthorizationServerConfiguration {
 
 		@Bean
 		ProviderSettings providerSettings() {

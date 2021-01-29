@@ -58,7 +58,6 @@ import org.springframework.security.oauth2.server.authorization.web.OAuth2Author
 import org.springframework.security.oauth2.server.authorization.web.OAuth2TokenEndpointFilter;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
@@ -114,7 +113,9 @@ public class OAuth2AuthorizationCodeGrantTests {
 		jwtEncoder = new NimbusJwsEncoder(jwkSource);
 		jwtCustomizer = mock(BiConsumer.class);
 		jwtEncoder.setJwtCustomizer(jwtCustomizer);
-		providerSettings = new ProviderSettings().authorizationEndpoint("/test/authorize").tokenEndpoint("/test/token");
+		providerSettings = new ProviderSettings()
+				.authorizationEndpoint("/test/authorize")
+				.tokenEndpoint("/test/token");
 	}
 
 	@Before
@@ -131,7 +132,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 		when(registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
 				.thenReturn(registeredClient);
 
-		MvcResult mvcResult = this.mvc.perform(MockMvcRequestBuilders.get(OAuth2AuthorizationEndpointFilter.DEFAULT_AUTHORIZATION_ENDPOINT_URI)
+		MvcResult mvcResult = this.mvc.perform(get(OAuth2AuthorizationEndpointFilter.DEFAULT_AUTHORIZATION_ENDPOINT_URI)
 				.params(getAuthorizationRequestParameters(registeredClient)))
 				.andExpect(status().is3xxRedirection())
 				.andReturn();
@@ -145,11 +146,22 @@ public class OAuth2AuthorizationCodeGrantTests {
 	public void requestWhenAuthorizationRequestAuthenticatedThenRedirectToClient() throws Exception {
 		this.spring.register(AuthorizationServerConfiguration.class).autowire();
 
+		assertAuthorizationRequestRedirectsToClient(OAuth2AuthorizationEndpointFilter.DEFAULT_AUTHORIZATION_ENDPOINT_URI);
+	}
+
+	@Test
+	public void requestWhenAuthorizationRequestCustomEndpointThenRedirectToClient() throws Exception {
+		this.spring.register(AuthorizationServerConfigurationCustomEndpoints.class).autowire();
+
+		assertAuthorizationRequestRedirectsToClient(providerSettings.authorizationEndpoint());
+	}
+
+	private void assertAuthorizationRequestRedirectsToClient(String authorizationEndpointUri) throws Exception {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 		when(registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
 				.thenReturn(registeredClient);
 
-		MvcResult mvcResult = this.mvc.perform(get(OAuth2AuthorizationEndpointFilter.DEFAULT_AUTHORIZATION_ENDPOINT_URI)
+		MvcResult mvcResult = this.mvc.perform(get(authorizationEndpointUri)
 				.params(getAuthorizationRequestParameters(registeredClient))
 				.with(user("user")))
 				.andExpect(status().is3xxRedirection())
@@ -158,32 +170,6 @@ public class OAuth2AuthorizationCodeGrantTests {
 
 		verify(registeredClientRepository).findByClientId(eq(registeredClient.getClientId()));
 		verify(authorizationService).save(any());
-	}
-
-	@Test
-	public void requestWhenAuthorizationRequestAndCustomProviderSettingsThenOk() throws Exception {
-		this.spring.register(AuthorizationServerConfigurationWithProviderSettings.class).autowire();
-
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
-		when(registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
-				.thenReturn(registeredClient);
-
-		this.mvc.perform(MockMvcRequestBuilders.get(providerSettings.authorizationEndpoint())
-				.params(getAuthorizationRequestParameters(registeredClient)))
-				.andExpect(status().is3xxRedirection());
-	}
-
-	@Test
-	public void requestWhenAuthorizationRequestAndCustomProviderSettingsThenNotFound() throws Exception {
-		this.spring.register(AuthorizationServerConfigurationWithProviderSettings.class).autowire();
-
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
-		when(registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
-				.thenReturn(registeredClient);
-
-		this.mvc.perform(MockMvcRequestBuilders.get(OAuth2AuthorizationEndpointFilter.DEFAULT_AUTHORIZATION_ENDPOINT_URI)
-				.params(getAuthorizationRequestParameters(registeredClient)))
-				.andExpect(status().isNotFound());
 	}
 
 	@Test
@@ -200,7 +186,32 @@ public class OAuth2AuthorizationCodeGrantTests {
 				eq(TokenType.AUTHORIZATION_CODE)))
 				.thenReturn(authorization);
 
-		this.mvc.perform(post(OAuth2TokenEndpointFilter.DEFAULT_TOKEN_ENDPOINT_URI)
+		assertTokenRequestReturnsAccessTokenResponse(
+				registeredClient, authorization, OAuth2TokenEndpointFilter.DEFAULT_TOKEN_ENDPOINT_URI);
+	}
+
+	@Test
+	public void requestWhenTokenRequestCustomEndpointThenReturnAccessTokenResponse() throws Exception {
+		this.spring.register(AuthorizationServerConfigurationCustomEndpoints.class).autowire();
+
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+		when(registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
+				.thenReturn(registeredClient);
+
+		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();
+		when(authorizationService.findByToken(
+				eq(authorization.getTokens().getToken(OAuth2AuthorizationCode.class).getTokenValue()),
+				eq(TokenType.AUTHORIZATION_CODE)))
+				.thenReturn(authorization);
+
+		assertTokenRequestReturnsAccessTokenResponse(
+				registeredClient, authorization, providerSettings.tokenEndpoint());
+	}
+
+	private void assertTokenRequestReturnsAccessTokenResponse(RegisteredClient registeredClient,
+			OAuth2Authorization authorization, String tokenEndpointUri) throws Exception {
+
+		this.mvc.perform(post(tokenEndpointUri)
 				.params(getTokenRequestParameters(registeredClient, authorization))
 				.header(HttpHeaders.AUTHORIZATION, "Basic " + encodeBasicAuth(
 						registeredClient.getClientId(), registeredClient.getClientSecret())))
@@ -288,48 +299,6 @@ public class OAuth2AuthorizationCodeGrantTests {
 		verify(jwtCustomizer).accept(any(JoseHeader.Builder.class), any(JwtClaimsSet.Builder.class));
 	}
 
-	@Test
-	public void requestWhenCustomProviderSettingsThenOk() throws Exception {
-		this.spring.register(AuthorizationServerConfigurationWithProviderSettings.class).autowire();
-
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
-		when(registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
-				.thenReturn(registeredClient);
-
-		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();
-		when(authorizationService.findByToken(
-				eq(authorization.getTokens().getToken(OAuth2AuthorizationCode.class).getTokenValue()),
-				eq(TokenType.AUTHORIZATION_CODE)))
-				.thenReturn(authorization);
-
-		this.mvc.perform(post(providerSettings.tokenEndpoint())
-				.params(getTokenRequestParameters(registeredClient, authorization))
-				.header(HttpHeaders.AUTHORIZATION, "Basic " + encodeBasicAuth(
-						registeredClient.getClientId(), registeredClient.getClientSecret())))
-				.andExpect(status().isOk());
-	}
-
-	@Test
-	public void requestWhenCustomProviderSettingsThenNotFound() throws Exception {
-		this.spring.register(AuthorizationServerConfigurationWithProviderSettings.class).autowire();
-
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
-		when(registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
-				.thenReturn(registeredClient);
-
-		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();
-		when(authorizationService.findByToken(
-				eq(authorization.getTokens().getToken(OAuth2AuthorizationCode.class).getTokenValue()),
-				eq(TokenType.AUTHORIZATION_CODE)))
-				.thenReturn(authorization);
-
-		this.mvc.perform(post(OAuth2TokenEndpointFilter.DEFAULT_TOKEN_ENDPOINT_URI)
-				.params(getTokenRequestParameters(registeredClient, authorization))
-				.header(HttpHeaders.AUTHORIZATION, "Basic " + encodeBasicAuth(
-						registeredClient.getClientId(), registeredClient.getClientSecret())))
-				.andExpect(status().isNotFound());
-	}
-
 	private static MultiValueMap<String, String> getAuthorizationRequestParameters(RegisteredClient registeredClient) {
 		MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
 		parameters.set(OAuth2ParameterNames.RESPONSE_TYPE, OAuth2AuthorizationResponseType.CODE.getValue());
@@ -390,7 +359,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 
 	@EnableWebSecurity
 	@Import(OAuth2AuthorizationServerConfiguration.class)
-	static class AuthorizationServerConfigurationWithProviderSettings extends AuthorizationServerConfiguration {
+	static class AuthorizationServerConfigurationCustomEndpoints extends AuthorizationServerConfiguration {
 
 		@Bean
 		ProviderSettings providerSettings() {

@@ -87,13 +87,12 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 	private RequestMatcher tokenRevocationEndpointMatcher;
 	private RequestMatcher jwkSetEndpointMatcher;
 	private RequestMatcher oidcProviderConfigurationEndpointMatcher;
-	private final RequestMatcher endpointsMatcher = request -> {
-		return this.authorizationEndpointMatcher.matches(request) ||
-				this.tokenEndpointMatcher.matches(request) ||
-				this.tokenRevocationEndpointMatcher.matches(request) ||
-				this.jwkSetEndpointMatcher.matches(request) ||
-				this.oidcProviderConfigurationEndpointMatcher.matches(request);
-	};
+	private final RequestMatcher endpointsMatcher = (request) ->
+			this.authorizationEndpointMatcher.matches(request) ||
+			this.tokenEndpointMatcher.matches(request) ||
+			this.tokenRevocationEndpointMatcher.matches(request) ||
+			this.jwkSetEndpointMatcher.matches(request) ||
+			this.oidcProviderConfigurationEndpointMatcher.matches(request);
 
 	/**
 	 * Sets the repository of registered clients.
@@ -242,16 +241,6 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 		builder.addFilterAfter(postProcess(tokenRevocationEndpointFilter), OAuth2TokenEndpointFilter.class);
 	}
 
-	private static void validateProviderSettings(ProviderSettings providerSettings) {
-		if (providerSettings.issuer() != null) {
-			try {
-				new URI(providerSettings.issuer()).toURL();
-			} catch (Exception ex) {
-				throw new IllegalArgumentException("issuer must be a valid URL", ex);
-			}
-		}
-	}
-
 	private void initEndpointMatchers(ProviderSettings providerSettings) {
 		this.authorizationEndpointMatcher = new OrRequestMatcher(
 				new AntPathRequestMatcher(
@@ -268,6 +257,16 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 				providerSettings.jwkSetEndpoint(), HttpMethod.GET.name());
 		this.oidcProviderConfigurationEndpointMatcher = new AntPathRequestMatcher(
 				OidcProviderConfigurationEndpointFilter.DEFAULT_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI, HttpMethod.GET.name());
+	}
+
+	private static void validateProviderSettings(ProviderSettings providerSettings) {
+		if (providerSettings.issuer() != null) {
+			try {
+				new URI(providerSettings.issuer()).toURL();
+			} catch (Exception ex) {
+				throw new IllegalArgumentException("issuer must be a valid URL", ex);
+			}
+		}
 	}
 
 	private static <B extends HttpSecurityBuilder<B>> RegisteredClientRepository getRegisteredClientRepository(B builder) {

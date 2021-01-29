@@ -50,7 +50,6 @@ import org.springframework.security.oauth2.server.authorization.client.TestRegis
 import org.springframework.security.oauth2.server.authorization.config.ProviderSettings;
 import org.springframework.security.oauth2.server.authorization.web.OAuth2TokenRevocationEndpointFilter;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
@@ -61,6 +60,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
@@ -108,7 +108,7 @@ public class OAuth2TokenRevocationTests {
 		TokenType tokenType = TokenType.REFRESH_TOKEN;
 		when(authorizationService.findByToken(eq(token.getTokenValue()), isNull())).thenReturn(authorization);
 
-		this.mvc.perform(MockMvcRequestBuilders.post(OAuth2TokenRevocationEndpointFilter.DEFAULT_TOKEN_REVOCATION_ENDPOINT_URI)
+		this.mvc.perform(post(OAuth2TokenRevocationEndpointFilter.DEFAULT_TOKEN_REVOCATION_ENDPOINT_URI)
 				.params(getTokenRevocationRequestParameters(token, tokenType))
 				.header(HttpHeaders.AUTHORIZATION, "Basic " + encodeBasicAuth(
 						registeredClient.getClientId(), registeredClient.getClientSecret())))
@@ -131,6 +131,17 @@ public class OAuth2TokenRevocationTests {
 	public void requestWhenRevokeAccessTokenThenRevoked() throws Exception {
 		this.spring.register(AuthorizationServerConfiguration.class).autowire();
 
+		assertRevokeAccessTokenThenRevoked(OAuth2TokenRevocationEndpointFilter.DEFAULT_TOKEN_REVOCATION_ENDPOINT_URI);
+	}
+
+	@Test
+	public void requestWhenRevokeAccessTokenCustomEndpointThenRevoked() throws Exception {
+		this.spring.register(AuthorizationServerConfigurationCustomEndpoints.class).autowire();
+
+		assertRevokeAccessTokenThenRevoked(providerSettings.tokenRevocationEndpoint());
+	}
+
+	private void assertRevokeAccessTokenThenRevoked(String tokenRevocationEndpointUri) throws Exception {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 		when(registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
 				.thenReturn(registeredClient);
@@ -140,7 +151,7 @@ public class OAuth2TokenRevocationTests {
 		TokenType tokenType = TokenType.ACCESS_TOKEN;
 		when(authorizationService.findByToken(eq(token.getTokenValue()), isNull())).thenReturn(authorization);
 
-		this.mvc.perform(MockMvcRequestBuilders.post(OAuth2TokenRevocationEndpointFilter.DEFAULT_TOKEN_REVOCATION_ENDPOINT_URI)
+		this.mvc.perform(post(tokenRevocationEndpointUri)
 				.params(getTokenRevocationRequestParameters(token, tokenType))
 				.header(HttpHeaders.AUTHORIZATION, "Basic " + encodeBasicAuth(
 						registeredClient.getClientId(), registeredClient.getClientSecret())))
@@ -157,46 +168,6 @@ public class OAuth2TokenRevocationTests {
 		assertThat(updatedAuthorization.getTokens().getTokenMetadata(accessToken).isInvalidated()).isTrue();
 		OAuth2RefreshToken refreshToken = updatedAuthorization.getTokens().getRefreshToken();
 		assertThat(updatedAuthorization.getTokens().getTokenMetadata(refreshToken).isInvalidated()).isFalse();
-	}
-
-	@Test
-	public void requestWhenCustomProviderSettingsThenOk() throws Exception {
-		this.spring.register(AuthorizationServerConfigurationWithProviderSettings.class).autowire();
-
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
-		when(registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
-				.thenReturn(registeredClient);
-
-		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();
-		OAuth2RefreshToken token = authorization.getTokens().getRefreshToken();
-		TokenType tokenType = TokenType.REFRESH_TOKEN;
-		when(authorizationService.findByToken(eq(token.getTokenValue()), eq(tokenType))).thenReturn(authorization);
-
-		this.mvc.perform(MockMvcRequestBuilders.post(providerSettings.tokenRevocationEndpoint())
-				.params(getTokenRevocationRequestParameters(token, tokenType))
-				.header(HttpHeaders.AUTHORIZATION, "Basic " + encodeBasicAuth(
-						registeredClient.getClientId(), registeredClient.getClientSecret())))
-				.andExpect(status().isOk());
-	}
-
-	@Test
-	public void requestWhenCustomProviderSettingsThenNotFound() throws Exception {
-		this.spring.register(AuthorizationServerConfigurationWithProviderSettings.class).autowire();
-
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
-		when(registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
-				.thenReturn(registeredClient);
-
-		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();
-		OAuth2RefreshToken token = authorization.getTokens().getRefreshToken();
-		TokenType tokenType = TokenType.REFRESH_TOKEN;
-		when(authorizationService.findByToken(eq(token.getTokenValue()), eq(tokenType))).thenReturn(authorization);
-
-		this.mvc.perform(MockMvcRequestBuilders.post(OAuth2TokenRevocationEndpointFilter.DEFAULT_TOKEN_REVOCATION_ENDPOINT_URI)
-				.params(getTokenRevocationRequestParameters(token, tokenType))
-				.header(HttpHeaders.AUTHORIZATION, "Basic " + encodeBasicAuth(
-						registeredClient.getClientId(), registeredClient.getClientSecret())))
-				.andExpect(status().isNotFound());
 	}
 
 	private static MultiValueMap<String, String> getTokenRevocationRequestParameters(AbstractOAuth2Token token, TokenType tokenType) {
@@ -236,7 +207,7 @@ public class OAuth2TokenRevocationTests {
 
 	@EnableWebSecurity
 	@Import(OAuth2AuthorizationServerConfiguration.class)
-	static class AuthorizationServerConfigurationWithProviderSettings extends AuthorizationServerConfiguration {
+	static class AuthorizationServerConfigurationCustomEndpoints extends AuthorizationServerConfiguration {
 
 		@Bean
 		ProviderSettings providerSettings() {

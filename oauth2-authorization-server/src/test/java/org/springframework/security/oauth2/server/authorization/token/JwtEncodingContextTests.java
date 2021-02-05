@@ -30,6 +30,7 @@ import org.springframework.security.oauth2.server.authorization.OAuth2Authorizat
 import org.springframework.security.oauth2.server.authorization.TestOAuth2Authorizations;
 import org.springframework.security.oauth2.server.authorization.TokenType;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeAuthenticationToken;
+import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationGrantAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
@@ -110,7 +111,7 @@ public class JwtEncodingContextTests {
 		assertThat(context.getAuthorization()).isEqualTo(authorization);
 		assertThat(context.getTokenType()).isEqualTo(TokenType.ACCESS_TOKEN);
 		assertThat(context.getAuthorizationGrantType()).isEqualTo(AuthorizationGrantType.AUTHORIZATION_CODE);
-		assertThat(context.<Authentication>getAuthorizationGrant()).isEqualTo(authorizationGrant);
+		assertThat(context.<OAuth2AuthorizationGrantAuthenticationToken>getAuthorizationGrant()).isEqualTo(authorizationGrant);
 		assertThat(context.<String>get("custom-key-1")).isEqualTo("custom-value-1");
 		assertThat(context.<String>get("custom-key-2")).isEqualTo("custom-value-2");
 	}

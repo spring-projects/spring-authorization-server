@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright 2020-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,27 +15,23 @@
  */
 package org.springframework.security.oauth2.server.authorization.authentication;
 
-import org.springframework.security.authentication.AbstractAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.oauth2.server.authorization.Version;
-import org.springframework.util.Assert;
-
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
+
+import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.core.AuthorizationGrantType;
+import org.springframework.util.Assert;
 
 /**
  * An {@link Authentication} implementation used for the OAuth 2.0 Client Credentials Grant.
  *
  * @author Alexey Nesterov
  * @since 0.0.1
- * @see AbstractAuthenticationToken
+ * @see OAuth2AuthorizationGrantAuthenticationToken
  * @see OAuth2ClientCredentialsAuthenticationProvider
- * @see OAuth2ClientAuthenticationToken
  */
-public class OAuth2ClientCredentialsAuthenticationToken extends AbstractAuthenticationToken {
-	private static final long serialVersionUID = Version.SERIAL_VERSION_UID;
-	private final Authentication clientPrincipal;
+public class OAuth2ClientCredentialsAuthenticationToken extends OAuth2AuthorizationGrantAuthenticationToken {
 	private final Set<String> scopes;
 
 	/**
@@ -54,21 +50,9 @@ public class OAuth2ClientCredentialsAuthenticationToken extends AbstractAuthenti
 	 * @param scopes the requested scope(s)
 	 */
 	public OAuth2ClientCredentialsAuthenticationToken(Authentication clientPrincipal, Set<String> scopes) {
-		super(Collections.emptyList());
-		Assert.notNull(clientPrincipal, "clientPrincipal cannot be null");
+		super(AuthorizationGrantType.CLIENT_CREDENTIALS, clientPrincipal, null);
 		Assert.notNull(scopes, "scopes cannot be null");
-		this.clientPrincipal = clientPrincipal;
 		this.scopes = Collections.unmodifiableSet(new LinkedHashSet<>(scopes));
-	}
-
-	@Override
-	public Object getPrincipal() {
-		return this.clientPrincipal;
-	}
-
-	@Override
-	public Object getCredentials() {
-		return "";
 	}
 
 	/**

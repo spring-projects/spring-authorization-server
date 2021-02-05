@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright 2020-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,12 @@
  */
 package org.springframework.security.oauth2.server.authorization.authentication;
 
-import org.springframework.lang.Nullable;
-import org.springframework.security.authentication.AbstractAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.oauth2.server.authorization.Version;
-import org.springframework.util.Assert;
-
-import java.util.Collections;
 import java.util.Map;
+
+import org.springframework.lang.Nullable;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.core.AuthorizationGrantType;
+import org.springframework.util.Assert;
 
 /**
  * An {@link Authentication} implementation used for the OAuth 2.0 Authorization Code Grant.
@@ -31,16 +29,12 @@ import java.util.Map;
  * @author Madhu Bhat
  * @author Daniel Garnier-Moiroux
  * @since 0.0.1
- * @see AbstractAuthenticationToken
+ * @see OAuth2AuthorizationGrantAuthenticationToken
  * @see OAuth2AuthorizationCodeAuthenticationProvider
- * @see OAuth2ClientAuthenticationToken
  */
-public class OAuth2AuthorizationCodeAuthenticationToken extends AbstractAuthenticationToken {
-	private static final long serialVersionUID = Version.SERIAL_VERSION_UID;
+public class OAuth2AuthorizationCodeAuthenticationToken extends OAuth2AuthorizationGrantAuthenticationToken {
 	private final String code;
-	private final Authentication clientPrincipal;
 	private final String redirectUri;
-	private final Map<String, Object> additionalParameters;
 
 	/**
 	 * Constructs an {@code OAuth2AuthorizationCodeAuthenticationToken} using the provided parameters.
@@ -52,26 +46,10 @@ public class OAuth2AuthorizationCodeAuthenticationToken extends AbstractAuthenti
 	 */
 	public OAuth2AuthorizationCodeAuthenticationToken(String code, Authentication clientPrincipal,
 			@Nullable String redirectUri, @Nullable Map<String, Object> additionalParameters) {
-		super(Collections.emptyList());
+		super(AuthorizationGrantType.AUTHORIZATION_CODE, clientPrincipal, additionalParameters);
 		Assert.hasText(code, "code cannot be empty");
-		Assert.notNull(clientPrincipal, "clientPrincipal cannot be null");
 		this.code = code;
-		this.clientPrincipal = clientPrincipal;
 		this.redirectUri = redirectUri;
-		this.additionalParameters = Collections.unmodifiableMap(
-				additionalParameters != null ?
-						additionalParameters :
-						Collections.emptyMap());
-	}
-
-	@Override
-	public Object getPrincipal() {
-		return this.clientPrincipal;
-	}
-
-	@Override
-	public Object getCredentials() {
-		return "";
 	}
 
 	/**
@@ -88,16 +66,8 @@ public class OAuth2AuthorizationCodeAuthenticationToken extends AbstractAuthenti
 	 *
 	 * @return the redirect uri
 	 */
-	public @Nullable String getRedirectUri() {
+	@Nullable
+	public String getRedirectUri() {
 		return this.redirectUri;
-	}
-
-	/**
-	 * Returns the additional parameters
-	 *
-	 * @return the additional parameters
-	 */
-	public Map<String, Object> getAdditionalParameters() {
-		return this.additionalParameters;
 	}
 }

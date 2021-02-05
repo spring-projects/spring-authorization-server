@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright 2020-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,21 @@
  */
 package org.springframework.security.oauth2.server.authorization.web;
 
-import org.springframework.core.convert.converter.Converter;
+import java.io.IOException;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import javax.servlet.FilterChain;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageConverter;
@@ -40,6 +54,7 @@ import org.springframework.security.oauth2.server.authorization.authentication.O
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientCredentialsAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2RefreshTokenAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2RefreshTokenAuthenticationToken;
+import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
@@ -47,19 +62,6 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
-
-import javax.servlet.FilterChain;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.time.temporal.ChronoUnit;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * A {@code Filter} for the OAuth 2.0 Token endpoint,
@@ -98,7 +100,7 @@ public class OAuth2TokenEndpointFilter extends OncePerRequestFilter {
 
 	private final AuthenticationManager authenticationManager;
 	private final RequestMatcher tokenEndpointMatcher;
-	private final Converter<HttpServletRequest, Authentication> authorizationGrantAuthenticationConverter;
+	private final AuthenticationConverter authorizationGrantAuthenticationConverter;
 	private final HttpMessageConverter<OAuth2AccessTokenResponse> accessTokenHttpResponseConverter =
 			new OAuth2AccessTokenResponseHttpMessageConverter();
 	private final HttpMessageConverter<OAuth2Error> errorHttpResponseConverter =
@@ -124,11 +126,11 @@ public class OAuth2TokenEndpointFilter extends OncePerRequestFilter {
 		Assert.hasText(tokenEndpointUri, "tokenEndpointUri cannot be empty");
 		this.authenticationManager = authenticationManager;
 		this.tokenEndpointMatcher = new AntPathRequestMatcher(tokenEndpointUri, HttpMethod.POST.name());
-		Map<AuthorizationGrantType, Converter<HttpServletRequest, Authentication>> converters = new HashMap<>();
-		converters.put(AuthorizationGrantType.AUTHORIZATION_CODE, new AuthorizationCodeAuthenticationConverter());
-		converters.put(AuthorizationGrantType.REFRESH_TOKEN, new RefreshTokenAuthenticationConverter());
-		converters.put(AuthorizationGrantType.CLIENT_CREDENTIALS, new ClientCredentialsAuthenticationConverter());
-		this.authorizationGrantAuthenticationConverter = new DelegatingAuthorizationGrantAuthenticationConverter(converters);
+		List<AuthenticationConverter> converters = new ArrayList<>();
+		converters.add(new AuthorizationCodeAuthenticationConverter());
+		converters.add(new RefreshTokenAuthenticationConverter());
+		converters.add(new ClientCredentialsAuthenticationConverter());
+		this.authorizationGrantAuthenticationConverter = new DelegatingAuthenticationConverter(converters);
 	}
 
 	@Override
@@ -198,7 +200,7 @@ public class OAuth2TokenEndpointFilter extends OncePerRequestFilter {
 		throw new OAuth2AuthenticationException(error);
 	}
 
-	private static class AuthorizationCodeAuthenticationConverter implements Converter<HttpServletRequest, Authentication> {
+	private static class AuthorizationCodeAuthenticationConverter implements AuthenticationConverter {
 
 		@Override
 		public Authentication convert(HttpServletRequest request) {
@@ -240,7 +242,7 @@ public class OAuth2TokenEndpointFilter extends OncePerRequestFilter {
 		}
 	}
 
-	private static class RefreshTokenAuthenticationConverter implements Converter<HttpServletRequest, Authentication> {
+	private static class RefreshTokenAuthenticationConverter implements AuthenticationConverter {
 
 		@Override
 		public Authentication convert(HttpServletRequest request) {
@@ -277,7 +279,7 @@ public class OAuth2TokenEndpointFilter extends OncePerRequestFilter {
 		}
 	}
 
-	private static class ClientCredentialsAuthenticationConverter implements Converter<HttpServletRequest, Authentication> {
+	private static class ClientCredentialsAuthenticationConverter implements AuthenticationConverter {
 
 		@Override
 		public Authentication convert(HttpServletRequest request) {

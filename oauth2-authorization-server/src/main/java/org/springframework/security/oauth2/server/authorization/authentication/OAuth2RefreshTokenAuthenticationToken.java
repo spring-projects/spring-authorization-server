@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright 2020-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,27 +15,23 @@
  */
 package org.springframework.security.oauth2.server.authorization.authentication;
 
-import org.springframework.security.authentication.AbstractAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.oauth2.server.authorization.Version;
-import org.springframework.util.Assert;
-
 import java.util.Collections;
 import java.util.Set;
+
+import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.core.AuthorizationGrantType;
+import org.springframework.util.Assert;
 
 /**
  * An {@link Authentication} implementation used for the OAuth 2.0 Refresh Token Grant.
  *
  * @author Alexey Nesterov
  * @since 0.0.3
- * @see AbstractAuthenticationToken
+ * @see OAuth2AuthorizationGrantAuthenticationToken
  * @see OAuth2RefreshTokenAuthenticationProvider
- * @see OAuth2ClientAuthenticationToken
  */
-public class OAuth2RefreshTokenAuthenticationToken extends AbstractAuthenticationToken {
-	private static final long serialVersionUID = Version.SERIAL_VERSION_UID;
+public class OAuth2RefreshTokenAuthenticationToken extends OAuth2AuthorizationGrantAuthenticationToken {
 	private final String refreshToken;
-	private final Authentication clientPrincipal;
 	private final Set<String> scopes;
 
 	/**
@@ -57,23 +53,11 @@ public class OAuth2RefreshTokenAuthenticationToken extends AbstractAuthenticatio
 	 */
 	public OAuth2RefreshTokenAuthenticationToken(String refreshToken, Authentication clientPrincipal,
 			Set<String> scopes) {
-		super(Collections.emptySet());
+		super(AuthorizationGrantType.REFRESH_TOKEN, clientPrincipal, null);
 		Assert.hasText(refreshToken, "refreshToken cannot be empty");
-		Assert.notNull(clientPrincipal, "clientPrincipal cannot be null");
 		Assert.notNull(scopes, "scopes cannot be null");
 		this.refreshToken = refreshToken;
-		this.clientPrincipal = clientPrincipal;
 		this.scopes = scopes;
-	}
-
-	@Override
-	public Object getPrincipal() {
-		return this.clientPrincipal;
-	}
-
-	@Override
-	public Object getCredentials() {
-		return "";
 	}
 
 	/**

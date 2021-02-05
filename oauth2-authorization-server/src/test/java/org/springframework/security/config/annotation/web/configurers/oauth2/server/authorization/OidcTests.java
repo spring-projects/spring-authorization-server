@@ -183,7 +183,7 @@ public class OidcTests {
 		OAuth2Authorization authorization = authorizationCaptor.getValue();
 
 		when(authorizationService.findByToken(
-				eq(authorization.getTokens().getToken(OAuth2AuthorizationCode.class).getTokenValue()),
+				eq(authorization.getToken(OAuth2AuthorizationCode.class).getToken().getTokenValue()),
 				eq(TokenType.AUTHORIZATION_CODE)))
 				.thenReturn(authorization);
 
@@ -204,7 +204,7 @@ public class OidcTests {
 
 		verify(registeredClientRepository, times(2)).findByClientId(eq(registeredClient.getClientId()));
 		verify(authorizationService).findByToken(
-				eq(authorization.getTokens().getToken(OAuth2AuthorizationCode.class).getTokenValue()),
+				eq(authorization.getToken(OAuth2AuthorizationCode.class).getToken().getTokenValue()),
 				eq(TokenType.AUTHORIZATION_CODE));
 		verify(authorizationService, times(2)).save(any());
 
@@ -238,7 +238,7 @@ public class OidcTests {
 			OAuth2Authorization authorization) {
 		MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
 		parameters.set(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.AUTHORIZATION_CODE.getValue());
-		parameters.set(OAuth2ParameterNames.CODE, authorization.getTokens().getToken(OAuth2AuthorizationCode.class).getTokenValue());
+		parameters.set(OAuth2ParameterNames.CODE, authorization.getToken(OAuth2AuthorizationCode.class).getToken().getTokenValue());
 		parameters.set(OAuth2ParameterNames.REDIRECT_URI, registeredClient.getRedirectUris().iterator().next());
 		return parameters;
 	}

@@ -15,14 +15,16 @@
  */
 package org.springframework.security.oauth2.server.authorization;
 
-import org.springframework.lang.Nullable;
-import org.springframework.security.oauth2.server.authorization.token.OAuth2AuthorizationCode;
-import org.springframework.util.Assert;
-
 import java.io.Serializable;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
+
+import org.springframework.lang.Nullable;
+import org.springframework.security.oauth2.core.OAuth2AccessToken;
+import org.springframework.security.oauth2.core.OAuth2RefreshToken;
+import org.springframework.security.oauth2.server.authorization.token.OAuth2AuthorizationCode;
+import org.springframework.util.Assert;
 
 /**
  * An {@link OAuth2AuthorizationService} that stores {@link OAuth2Authorization}'s in-memory.
@@ -87,18 +89,21 @@ public final class InMemoryOAuth2AuthorizationService implements OAuth2Authoriza
 	}
 
 	private static boolean matchesAuthorizationCode(OAuth2Authorization authorization, String token) {
-		OAuth2AuthorizationCode authorizationCode = authorization.getTokens().getToken(OAuth2AuthorizationCode.class);
-		return authorizationCode != null && authorizationCode.getTokenValue().equals(token);
+		OAuth2Authorization.Token<OAuth2AuthorizationCode> authorizationCode =
+				authorization.getToken(OAuth2AuthorizationCode.class);
+		return authorizationCode != null && authorizationCode.getToken().getTokenValue().equals(token);
 	}
 
 	private static boolean matchesAccessToken(OAuth2Authorization authorization, String token) {
-		return authorization.getTokens().getAccessToken() != null &&
-				authorization.getTokens().getAccessToken().getTokenValue().equals(token);
+		OAuth2Authorization.Token<OAuth2AccessToken> accessToken =
+				authorization.getToken(OAuth2AccessToken.class);
+		return accessToken != null && accessToken.getToken().getTokenValue().equals(token);
 	}
 
 	private static boolean matchesRefreshToken(OAuth2Authorization authorization, String token) {
-		return authorization.getTokens().getRefreshToken() != null &&
-				authorization.getTokens().getRefreshToken().getTokenValue().equals(token);
+		OAuth2Authorization.Token<OAuth2RefreshToken> refreshToken =
+				authorization.getToken(OAuth2RefreshToken.class);
+		return refreshToken != null && refreshToken.getToken().getTokenValue().equals(token);
 	}
 
 	private static class OAuth2AuthorizationId implements Serializable {

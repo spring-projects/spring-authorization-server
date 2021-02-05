@@ -126,7 +126,7 @@ public class OAuth2RefreshTokenGrantTests {
 
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();
 		when(authorizationService.findByToken(
-				eq(authorization.getTokens().getRefreshToken().getTokenValue()),
+				eq(authorization.getRefreshToken().getToken().getTokenValue()),
 				eq(TokenType.REFRESH_TOKEN)))
 				.thenReturn(authorization);
 
@@ -146,7 +146,7 @@ public class OAuth2RefreshTokenGrantTests {
 
 		verify(registeredClientRepository).findByClientId(eq(registeredClient.getClientId()));
 		verify(authorizationService).findByToken(
-				eq(authorization.getTokens().getRefreshToken().getTokenValue()),
+				eq(authorization.getRefreshToken().getToken().getTokenValue()),
 				eq(TokenType.REFRESH_TOKEN));
 		verify(authorizationService).save(any());
 
@@ -169,7 +169,7 @@ public class OAuth2RefreshTokenGrantTests {
 	private static MultiValueMap<String, String> getRefreshTokenRequestParameters(OAuth2Authorization authorization) {
 		MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
 		parameters.set(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.REFRESH_TOKEN.getValue());
-		parameters.set(OAuth2ParameterNames.REFRESH_TOKEN, authorization.getTokens().getRefreshToken().getTokenValue());
+		parameters.set(OAuth2ParameterNames.REFRESH_TOKEN, authorization.getRefreshToken().getToken().getTokenValue());
 		return parameters;
 	}
 

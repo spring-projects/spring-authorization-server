@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright 2020-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,17 +15,17 @@
  */
 package org.springframework.security.oauth2.server.authorization;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+
 import org.junit.Before;
 import org.junit.Test;
+
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2RefreshToken;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2AuthorizationCode;
-import org.springframework.security.oauth2.server.authorization.token.OAuth2Tokens;
-
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -59,7 +59,7 @@ public class InMemoryOAuth2AuthorizationServiceTests {
 	public void saveWhenAuthorizationProvidedThenSaved() {
 		OAuth2Authorization expectedAuthorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
 				.principalName(PRINCIPAL_NAME)
-				.tokens(OAuth2Tokens.builder().token(AUTHORIZATION_CODE).build())
+				.token(AUTHORIZATION_CODE)
 				.build();
 		this.authorizationService.save(expectedAuthorization);
 
@@ -79,7 +79,7 @@ public class InMemoryOAuth2AuthorizationServiceTests {
 	public void removeWhenAuthorizationProvidedThenRemoved() {
 		OAuth2Authorization expectedAuthorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
 				.principalName(PRINCIPAL_NAME)
-				.tokens(OAuth2Tokens.builder().token(AUTHORIZATION_CODE).build())
+				.token(AUTHORIZATION_CODE)
 				.build();
 
 		this.authorizationService.save(expectedAuthorization);
@@ -120,7 +120,7 @@ public class InMemoryOAuth2AuthorizationServiceTests {
 	public void findByTokenWhenAuthorizationCodeExistsThenFound() {
 		OAuth2Authorization authorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
 				.principalName(PRINCIPAL_NAME)
-				.tokens(OAuth2Tokens.builder().token(AUTHORIZATION_CODE).build())
+				.token(AUTHORIZATION_CODE)
 				.build();
 		this.authorizationService.save(authorization);
 
@@ -137,7 +137,8 @@ public class InMemoryOAuth2AuthorizationServiceTests {
 				"access-token", Instant.now().minusSeconds(60), Instant.now());
 		OAuth2Authorization authorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
 				.principalName(PRINCIPAL_NAME)
-				.tokens(OAuth2Tokens.builder().token(AUTHORIZATION_CODE).accessToken(accessToken).build())
+				.token(AUTHORIZATION_CODE)
+				.accessToken(accessToken)
 				.build();
 		this.authorizationService.save(authorization);
 
@@ -153,7 +154,7 @@ public class InMemoryOAuth2AuthorizationServiceTests {
 		OAuth2RefreshToken refreshToken = new OAuth2RefreshToken("refresh-token", Instant.now());
 		OAuth2Authorization authorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
 				.principalName(PRINCIPAL_NAME)
-				.tokens(OAuth2Tokens.builder().refreshToken(refreshToken).build())
+				.refreshToken(refreshToken)
 				.build();
 		this.authorizationService.save(authorization);
 

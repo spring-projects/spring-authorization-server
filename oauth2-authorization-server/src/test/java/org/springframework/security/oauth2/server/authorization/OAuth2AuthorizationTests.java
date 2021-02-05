@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright 2020-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,16 +15,16 @@
  */
 package org.springframework.security.oauth2.server.authorization;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+
 import org.junit.Test;
+
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2RefreshToken;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2AuthorizationCode;
-import org.springframework.security.oauth2.server.authorization.token.OAuth2Tokens;
-
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -62,15 +62,16 @@ public class OAuth2AuthorizationTests {
 	public void fromWhenAuthorizationProvidedThenCopied() {
 		OAuth2Authorization authorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
 				.principalName(PRINCIPAL_NAME)
-				.tokens(OAuth2Tokens.builder().token(AUTHORIZATION_CODE).accessToken(ACCESS_TOKEN).build())
+				.token(AUTHORIZATION_CODE)
+				.accessToken(ACCESS_TOKEN)
 				.build();
 		OAuth2Authorization authorizationResult = OAuth2Authorization.from(authorization).build();
 
 		assertThat(authorizationResult.getRegisteredClientId()).isEqualTo(authorization.getRegisteredClientId());
 		assertThat(authorizationResult.getPrincipalName()).isEqualTo(authorization.getPrincipalName());
-		assertThat(authorizationResult.getTokens().getAccessToken()).isEqualTo(authorization.getTokens().getAccessToken());
-		assertThat(authorizationResult.getTokens().getToken(OAuth2AuthorizationCode.class))
-				.isEqualTo(authorization.getTokens().getToken(OAuth2AuthorizationCode.class));
+		assertThat(authorizationResult.getAccessToken()).isEqualTo(authorization.getAccessToken());
+		assertThat(authorizationResult.getToken(OAuth2AuthorizationCode.class))
+				.isEqualTo(authorization.getToken(OAuth2AuthorizationCode.class));
 		assertThat(authorizationResult.getAttributes()).isEqualTo(authorization.getAttributes());
 	}
 
@@ -103,13 +104,15 @@ public class OAuth2AuthorizationTests {
 	public void buildWhenAllAttributesAreProvidedThenAllAttributesAreSet() {
 		OAuth2Authorization authorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
 				.principalName(PRINCIPAL_NAME)
-				.tokens(OAuth2Tokens.builder().token(AUTHORIZATION_CODE).accessToken(ACCESS_TOKEN).refreshToken(REFRESH_TOKEN).build())
+				.token(AUTHORIZATION_CODE)
+				.accessToken(ACCESS_TOKEN)
+				.refreshToken(REFRESH_TOKEN)
 				.build();
 
 		assertThat(authorization.getRegisteredClientId()).isEqualTo(REGISTERED_CLIENT.getId());
 		assertThat(authorization.getPrincipalName()).isEqualTo(PRINCIPAL_NAME);
-		assertThat(authorization.getTokens().getToken(OAuth2AuthorizationCode.class)).isEqualTo(AUTHORIZATION_CODE);
-		assertThat(authorization.getTokens().getAccessToken()).isEqualTo(ACCESS_TOKEN);
-		assertThat(authorization.getTokens().getRefreshToken()).isEqualTo(REFRESH_TOKEN);
+		assertThat(authorization.getToken(OAuth2AuthorizationCode.class).getToken()).isEqualTo(AUTHORIZATION_CODE);
+		assertThat(authorization.getAccessToken().getToken()).isEqualTo(ACCESS_TOKEN);
+		assertThat(authorization.getRefreshToken().getToken()).isEqualTo(REFRESH_TOKEN);
 	}
 }

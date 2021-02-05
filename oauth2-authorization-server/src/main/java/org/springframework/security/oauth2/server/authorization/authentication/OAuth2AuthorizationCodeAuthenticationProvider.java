@@ -37,16 +37,14 @@ import org.springframework.security.oauth2.jwt.JoseHeader;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
-import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationAttributeNames;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.TokenType;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
+import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2AuthorizationCode;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer;
-import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenMetadata;
-import org.springframework.security.oauth2.server.authorization.token.OAuth2Tokens;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
@@ -104,16 +102,16 @@ public class OAuth2AuthorizationCodeAuthenticationProvider implements Authentica
 		if (authorization == null) {
 			throw new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_GRANT));
 		}
-		OAuth2AuthorizationCode authorizationCode = authorization.getTokens().getToken(OAuth2AuthorizationCode.class);
-		OAuth2TokenMetadata authorizationCodeMetadata = authorization.getTokens().getTokenMetadata(authorizationCode);
+		OAuth2Authorization.Token<OAuth2AuthorizationCode> authorizationCode =
+				authorization.getToken(OAuth2AuthorizationCode.class);
 
 		OAuth2AuthorizationRequest authorizationRequest = authorization.getAttribute(
 				OAuth2AuthorizationAttributeNames.AUTHORIZATION_REQUEST);
 
 		if (!registeredClient.getClientId().equals(authorizationRequest.getClientId())) {
-			if (!authorizationCodeMetadata.isInvalidated()) {
+			if (!authorizationCode.isInvalidated()) {
 				// Invalidate the authorization code given that a different client is attempting to use it
-				authorization = OAuth2AuthenticationProviderUtils.invalidate(authorization, authorizationCode);
+				authorization = OAuth2AuthenticationProviderUtils.invalidate(authorization, authorizationCode.getToken());
 				this.authorizationService.save(authorization);
 			}
 			throw new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_GRANT));
@@ -124,7 +122,7 @@ public class OAuth2AuthorizationCodeAuthenticationProvider implements Authentica
 			throw new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_GRANT));
 		}
 
-		if (authorizationCodeMetadata.isInvalidated()) {
+		if (authorizationCode.isInvalidated()) {
 			throw new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_GRANT));
 		}
 
@@ -143,14 +141,11 @@ public class OAuth2AuthorizationCodeAuthenticationProvider implements Authentica
 
 		OAuth2AccessToken accessToken = new OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER,
 				jwt.getTokenValue(), jwt.getIssuedAt(), jwt.getExpiresAt(), jwt.getClaim(OAuth2ParameterNames.SCOPE));
-		OAuth2Tokens.Builder tokensBuilder = OAuth2Tokens.from(authorization.getTokens())
-				.accessToken(accessToken);
 
 		OAuth2RefreshToken refreshToken = null;
 		if (registeredClient.getAuthorizationGrantTypes().contains(AuthorizationGrantType.REFRESH_TOKEN)) {
 			refreshToken = OAuth2RefreshTokenAuthenticationProvider.generateRefreshToken(
 					registeredClient.getTokenSettings().refreshTokenTimeToLive());
-			tokensBuilder.refreshToken(refreshToken);
 		}
 
 		OidcIdToken idToken = null;
@@ -170,17 +165,21 @@ public class OAuth2AuthorizationCodeAuthenticationProvider implements Authentica
 
 			idToken = new OidcIdToken(jwtIdToken.getTokenValue(), jwtIdToken.getIssuedAt(),
 					jwtIdToken.getExpiresAt(), jwtIdToken.getClaims());
-			tokensBuilder.token(idToken);
 		}
 
-		OAuth2Tokens tokens = tokensBuilder.build();
-		authorization = OAuth2Authorization.from(authorization)
-				.tokens(tokens)
-				.attribute(OAuth2AuthorizationAttributeNames.ACCESS_TOKEN_ATTRIBUTES, jwt)
-				.build();
+		OAuth2Authorization.Builder authorizationBuilder = OAuth2Authorization.from(authorization)
+				.accessToken(accessToken)
+				.attribute(OAuth2AuthorizationAttributeNames.ACCESS_TOKEN_ATTRIBUTES, jwt);
+		if (refreshToken != null) {
+			authorizationBuilder.refreshToken(refreshToken);
+		}
+		if (idToken != null) {
+			authorizationBuilder.token(idToken);
+		}
+		authorization = authorizationBuilder.build();
 
 		// Invalidate the authorization code as it can only be used once
-		authorization = OAuth2AuthenticationProviderUtils.invalidate(authorization, authorizationCode);
+		authorization = OAuth2AuthenticationProviderUtils.invalidate(authorization, authorizationCode.getToken());
 
 		this.authorizationService.save(authorization);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright 2020-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,8 +24,6 @@ import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.OAuth2RefreshToken;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2AuthorizationCode;
-import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenMetadata;
-import org.springframework.security.oauth2.server.authorization.token.OAuth2Tokens;
 
 /**
  * Utility methods for the OAuth 2.0 {@link AuthenticationProvider}'s.
@@ -52,25 +50,29 @@ final class OAuth2AuthenticationProviderUtils {
 	static <T extends AbstractOAuth2Token> OAuth2Authorization invalidate(
 			OAuth2Authorization authorization, T token) {
 
-		OAuth2Tokens.Builder builder = OAuth2Tokens.from(authorization.getTokens())
-				.token(token, OAuth2TokenMetadata.builder().invalidated().build());
+		// @formatter:off
+		OAuth2Authorization.Builder authorizationBuilder = OAuth2Authorization.from(authorization)
+				.token(token,
+						(metadata) ->
+								metadata.put(OAuth2Authorization.Token.INVALIDATED_METADATA_NAME, true));
 
 		if (OAuth2RefreshToken.class.isAssignableFrom(token.getClass())) {
-			builder.token(
-					authorization.getTokens().getAccessToken(),
-					OAuth2TokenMetadata.builder().invalidated().build());
-			OAuth2AuthorizationCode authorizationCode =
-					authorization.getTokens().getToken(OAuth2AuthorizationCode.class);
-			if (authorizationCode != null &&
-					!authorization.getTokens().getTokenMetadata(authorizationCode).isInvalidated()) {
-				builder.token(
-						authorizationCode,
-						OAuth2TokenMetadata.builder().invalidated().build());
+			authorizationBuilder.token(
+					authorization.getAccessToken().getToken(),
+					(metadata) ->
+							metadata.put(OAuth2Authorization.Token.INVALIDATED_METADATA_NAME, true));
+
+			OAuth2Authorization.Token<OAuth2AuthorizationCode> authorizationCode =
+					authorization.getToken(OAuth2AuthorizationCode.class);
+			if (authorizationCode != null && !authorizationCode.isInvalidated()) {
+				authorizationBuilder.token(
+						authorizationCode.getToken(),
+						(metadata) ->
+								metadata.put(OAuth2Authorization.Token.INVALIDATED_METADATA_NAME, true));
 			}
 		}
+		// @formatter:on
 
-		return OAuth2Authorization.from(authorization)
-				.tokens(builder.build())
-				.build();
+		return authorizationBuilder.build();
 	}
 }

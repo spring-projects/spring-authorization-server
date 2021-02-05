@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright 2020-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,6 @@
  */
 package org.springframework.security.oauth2.server.authorization;
 
-import org.springframework.security.oauth2.core.OAuth2AccessToken;
-import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
-import org.springframework.security.oauth2.server.authorization.token.OAuth2Tokens;
-import org.springframework.util.Assert;
-
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.HashMap;
@@ -27,26 +22,32 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
 
+import org.springframework.lang.Nullable;
+import org.springframework.security.oauth2.core.AbstractOAuth2Token;
+import org.springframework.security.oauth2.core.OAuth2AccessToken;
+import org.springframework.security.oauth2.core.OAuth2RefreshToken;
+import org.springframework.security.oauth2.core.OAuth2RefreshToken2;
+import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
+import org.springframework.util.Assert;
+
 /**
- * A representation of an OAuth 2.0 Authorization,
- * which holds state related to the authorization granted to the {@link #getRegisteredClientId() client}
- * by the {@link #getPrincipalName() resource owner}.
+ * A representation of an OAuth 2.0 Authorization, which holds state related to the authorization granted
+ * to a {@link #getRegisteredClientId() client}, by the {@link #getPrincipalName() resource owner}
+ * or itself in the case of the {@code client_credentials} grant type.
  *
  * @author Joe Grandja
  * @author Krisztian Toth
  * @since 0.0.1
  * @see RegisteredClient
- * @see OAuth2Tokens
+ * @see AbstractOAuth2Token
+ * @see OAuth2AccessToken
+ * @see OAuth2RefreshToken
  */
 public class OAuth2Authorization implements Serializable {
 	private static final long serialVersionUID = Version.SERIAL_VERSION_UID;
 	private String registeredClientId;
 	private String principalName;
-	private OAuth2Tokens tokens;
-
-	@Deprecated
-	private OAuth2AccessToken accessToken;
-
+	private Map<Class<? extends AbstractOAuth2Token>, Token<?>> tokens;
 	private Map<String, Object> attributes;
 
 	protected OAuth2Authorization() {
@@ -62,31 +63,64 @@ public class OAuth2Authorization implements Serializable {
 	}
 
 	/**
-	 * Returns the resource owner's {@code Principal} name.
+	 * Returns the {@code Principal} name of the resource owner (or client).
 	 *
-	 * @return the resource owner's {@code Principal} name
+	 * @return the {@code Principal} name of the resource owner (or client)
 	 */
 	public String getPrincipalName() {
 		return this.principalName;
 	}
 
 	/**
-	 * Returns the {@link OAuth2Tokens}.
+	 * Returns the {@link Token} of type {@link OAuth2AccessToken}.
 	 *
-	 * @return the {@link OAuth2Tokens}
+	 * @return the {@link Token} of type {@link OAuth2AccessToken}
 	 */
-	public OAuth2Tokens getTokens() {
-		return this.tokens;
+	public Token<OAuth2AccessToken> getAccessToken() {
+		return getToken(OAuth2AccessToken.class);
 	}
 
 	/**
-	 * Returns the {@link OAuth2AccessToken access token} credential.
+	 * Returns the {@link Token} of type {@link OAuth2RefreshToken}.
 	 *
-	 * @return the {@link OAuth2AccessToken}
+	 * @return the {@link Token} of type {@link OAuth2RefreshToken}, or {@code null} if not available
 	 */
-	@Deprecated
-	public OAuth2AccessToken getAccessToken() {
-		return getTokens().getAccessToken();
+	@Nullable
+	public Token<OAuth2RefreshToken> getRefreshToken() {
+		return getToken(OAuth2RefreshToken.class);
+	}
+
+	/**
+	 * Returns the {@link Token} of type {@code tokenType}.
+	 *
+	 * @param tokenType the token type
+	 * @param <T> the type of the token
+	 * @return the {@link Token}, or {@code null} if not available
+	 */
+	@Nullable
+	@SuppressWarnings("unchecked")
+	public <T extends AbstractOAuth2Token> Token<T> getToken(Class<T> tokenType) {
+		Assert.notNull(tokenType, "tokenType cannot be null");
+		Token<?> token = this.tokens.get(tokenType);
+		return token != null ? (Token<T>) token : null;
+	}
+
+	/**
+	 * Returns the {@link Token} matching the {@code tokenValue}.
+	 *
+	 * @param tokenValue the token value
+	 * @param <T> the type of the token
+	 * @return the {@link Token}, or {@code null} if not available
+	 */
+	@Nullable
+	@SuppressWarnings("unchecked")
+	public <T extends AbstractOAuth2Token> Token<T> getToken(String tokenValue) {
+		Assert.hasText(tokenValue, "tokenValue cannot be empty");
+		Token<?> token = this.tokens.values().stream()
+				.filter(t -> t.getToken().getTokenValue().equals(tokenValue))
+				.findFirst()
+				.orElse(null);
+		return token != null ? (Token<T>) token : null;
 	}
 
 	/**
@@ -103,8 +137,9 @@ public class OAuth2Authorization implements Serializable {
 	 *
 	 * @param name the name of the attribute
 	 * @param <T> the type of the attribute
-	 * @return the value of the attribute associated to the authorization, or {@code null} if not available
+	 * @return the value of an attribute associated to the authorization, or {@code null} if not available
 	 */
+	@Nullable
 	@SuppressWarnings("unchecked")
 	public <T> T getAttribute(String name) {
 		Assert.hasText(name, "name cannot be empty");
@@ -143,17 +178,111 @@ public class OAuth2Authorization implements Serializable {
 	}
 
 	/**
-	 * Returns a new {@link Builder}, initialized with the values from the provided {@code authorization}.
+	 * Returns a new {@link Builder}, initialized with the values from the provided {@code OAuth2Authorization}.
 	 *
-	 * @param authorization the authorization used for initializing the {@link Builder}
+	 * @param authorization the {@code OAuth2Authorization} used for initializing the {@link Builder}
 	 * @return the {@link Builder}
 	 */
 	public static Builder from(OAuth2Authorization authorization) {
 		Assert.notNull(authorization, "authorization cannot be null");
 		return new Builder(authorization.getRegisteredClientId())
 				.principalName(authorization.getPrincipalName())
-				.tokens(OAuth2Tokens.from(authorization.getTokens()).build())
+				.tokens(authorization.tokens)
 				.attributes(attrs -> attrs.putAll(authorization.getAttributes()));
+	}
+
+	/**
+	 * A holder of an OAuth 2.0 Token and it's associated metadata.
+	 *
+	 * @author Joe Grandja
+	 * @since 0.1.0
+	 */
+	public static class Token<T extends AbstractOAuth2Token> implements Serializable {
+		private static final long serialVersionUID = Version.SERIAL_VERSION_UID;
+		protected static final String TOKEN_METADATA_BASE = "metadata.token.";
+
+		/**
+		 * The name of the metadata that indicates if the token has been invalidated.
+		 */
+		public static final String INVALIDATED_METADATA_NAME = TOKEN_METADATA_BASE.concat("invalidated");
+
+		private final T token;
+		private final Map<String, Object> metadata;
+
+		protected Token(T token) {
+			this(token, defaultMetadata());
+		}
+
+		protected Token(T token, Map<String, Object> metadata) {
+			this.token = token;
+			this.metadata = Collections.unmodifiableMap(metadata);
+		}
+
+		/**
+		 * Returns the token of type {@link AbstractOAuth2Token}.
+		 *
+		 * @return the token of type {@link AbstractOAuth2Token}
+		 */
+		public T getToken() {
+			return this.token;
+		}
+
+		/**
+		 * Returns {@code true} if the token has been invalidated (e.g. revoked).
+		 * The default is {@code false}.
+		 *
+		 * @return {@code true} if the token has been invalidated, {@code false} otherwise
+		 */
+		public boolean isInvalidated() {
+			return Boolean.TRUE.equals(getMetadata(INVALIDATED_METADATA_NAME));
+		}
+
+		/**
+		 * Returns the value of the metadata associated to the token.
+		 *
+		 * @param name the name of the metadata
+		 * @param <V> the value type of the metadata
+		 * @return the value of the metadata, or {@code null} if not available
+		 */
+		@Nullable
+		@SuppressWarnings("unchecked")
+		public <V> V getMetadata(String name) {
+			Assert.hasText(name, "name cannot be empty");
+			return (V) this.metadata.get(name);
+		}
+
+		/**
+		 * Returns the metadata associated to the token.
+		 *
+		 * @return a {@code Map} of the metadata
+		 */
+		public Map<String, Object> getMetadata() {
+			return this.metadata;
+		}
+
+		protected static Map<String, Object> defaultMetadata() {
+			Map<String, Object> metadata = new HashMap<>();
+			metadata.put(INVALIDATED_METADATA_NAME, false);
+			return metadata;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj) {
+				return true;
+			}
+			if (obj == null || getClass() != obj.getClass()) {
+				return false;
+			}
+			Token<?> that = (Token<?>) obj;
+			return Objects.equals(this.token, that.token) &&
+					Objects.equals(this.metadata, that.metadata);
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(this.token, this.metadata);
+		}
 	}
 
 	/**
@@ -161,23 +290,19 @@ public class OAuth2Authorization implements Serializable {
 	 */
 	public static class Builder implements Serializable {
 		private static final long serialVersionUID = Version.SERIAL_VERSION_UID;
-		private String registeredClientId;
+		private final String registeredClientId;
 		private String principalName;
-		private OAuth2Tokens tokens;
-
-		@Deprecated
-		private OAuth2AccessToken accessToken;
-
-		private Map<String, Object> attributes = new HashMap<>();
+		private Map<Class<? extends AbstractOAuth2Token>, Token<?>> tokens = new HashMap<>();
+		private final Map<String, Object> attributes = new HashMap<>();
 
 		protected Builder(String registeredClientId) {
 			this.registeredClientId = registeredClientId;
 		}
 
 		/**
-		 * Sets the resource owner's {@code Principal} name.
+		 * Sets the {@code Principal} name of the resource owner (or client).
 		 *
-		 * @param principalName the resource owner's {@code Principal} name
+		 * @param principalName the {@code Principal} name of the resource owner (or client)
 		 * @return the {@link Builder}
 		 */
 		public Builder principalName(String principalName) {
@@ -186,25 +311,60 @@ public class OAuth2Authorization implements Serializable {
 		}
 
 		/**
-		 * Sets the {@link OAuth2Tokens}.
-		 *
-		 * @param tokens the {@link OAuth2Tokens}
-		 * @return the {@link Builder}
-		 */
-		public Builder tokens(OAuth2Tokens tokens) {
-			this.tokens = tokens;
-			return this;
-		}
-
-		/**
-		 * Sets the {@link OAuth2AccessToken access token} credential.
+		 * Sets the {@link OAuth2AccessToken access token}.
 		 *
 		 * @param accessToken the {@link OAuth2AccessToken}
 		 * @return the {@link Builder}
 		 */
-		@Deprecated
 		public Builder accessToken(OAuth2AccessToken accessToken) {
-			this.accessToken = accessToken;
+			return token(accessToken);
+		}
+
+		/**
+		 * Sets the {@link OAuth2RefreshToken refresh token}.
+		 *
+		 * @param refreshToken the {@link OAuth2RefreshToken}
+		 * @return the {@link Builder}
+		 */
+		public Builder refreshToken(OAuth2RefreshToken refreshToken) {
+			return token(refreshToken);
+		}
+
+		/**
+		 * Sets the {@link AbstractOAuth2Token token}.
+		 *
+		 * @param token the token
+		 * @param <T> the type of the token
+		 * @return the {@link Builder}
+		 */
+		public <T extends AbstractOAuth2Token> Builder token(T token) {
+			return token(token, (metadata) -> {});
+		}
+
+		/**
+		 * Sets the {@link AbstractOAuth2Token token} and associated metadata.
+		 *
+		 * @param token the token
+		 * @param metadataConsumer a {@code Consumer} of the metadata {@code Map}
+		 * @param <T> the type of the token
+		 * @return the {@link Builder}
+		 */
+		public <T extends AbstractOAuth2Token> Builder token(T token,
+				Consumer<Map<String, Object>> metadataConsumer) {
+
+			Assert.notNull(token, "token cannot be null");
+			Map<String, Object> metadata = Token.defaultMetadata();
+			metadataConsumer.accept(metadata);
+			Class<? extends AbstractOAuth2Token> tokenClass = token.getClass();
+			if (tokenClass.equals(OAuth2RefreshToken2.class)) {
+				tokenClass = OAuth2RefreshToken.class;
+			}
+			this.tokens.put(tokenClass, new Token<>(token, metadata));
+			return this;
+		}
+
+		protected final Builder tokens(Map<Class<? extends AbstractOAuth2Token>, Token<?>> tokens) {
+			this.tokens = new HashMap<>(tokens);
 			return this;
 		}
 
@@ -245,14 +405,7 @@ public class OAuth2Authorization implements Serializable {
 			OAuth2Authorization authorization = new OAuth2Authorization();
 			authorization.registeredClientId = this.registeredClientId;
 			authorization.principalName = this.principalName;
-			if (this.tokens == null) {
-				OAuth2Tokens.Builder builder = OAuth2Tokens.builder();
-				if (this.accessToken != null) {
-					builder.accessToken(this.accessToken);
-				}
-				this.tokens = builder.build();
-			}
-			authorization.tokens = this.tokens;
+			authorization.tokens = Collections.unmodifiableMap(this.tokens);
 			authorization.attributes = Collections.unmodifiableMap(this.attributes);
 			return authorization;
 		}

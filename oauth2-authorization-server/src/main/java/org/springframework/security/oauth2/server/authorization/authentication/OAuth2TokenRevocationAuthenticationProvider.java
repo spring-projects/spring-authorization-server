@@ -72,11 +72,11 @@ public class OAuth2TokenRevocationAuthenticationProvider implements Authenticati
 			throw new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_CLIENT));
 		}
 
-		AbstractOAuth2Token token = authorization.getTokens().getToken(tokenRevocationAuthentication.getToken());
-		authorization = OAuth2AuthenticationProviderUtils.invalidate(authorization, token);
+		OAuth2Authorization.Token<AbstractOAuth2Token> token = authorization.getToken(tokenRevocationAuthentication.getToken());
+		authorization = OAuth2AuthenticationProviderUtils.invalidate(authorization, token.getToken());
 		this.authorizationService.save(authorization);
 
-		return new OAuth2TokenRevocationAuthenticationToken(token, clientPrincipal);
+		return new OAuth2TokenRevocationAuthenticationToken(token.getToken(), clientPrincipal);
 	}
 
 	@Override

@@ -104,7 +104,7 @@ public class OAuth2TokenRevocationTests {
 				.thenReturn(registeredClient);
 
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();
-		OAuth2RefreshToken token = authorization.getTokens().getRefreshToken();
+		OAuth2RefreshToken token = authorization.getRefreshToken().getToken();
 		TokenType tokenType = TokenType.REFRESH_TOKEN;
 		when(authorizationService.findByToken(eq(token.getTokenValue()), isNull())).thenReturn(authorization);
 
@@ -121,10 +121,10 @@ public class OAuth2TokenRevocationTests {
 		verify(authorizationService).save(authorizationCaptor.capture());
 
 		OAuth2Authorization updatedAuthorization = authorizationCaptor.getValue();
-		OAuth2RefreshToken refreshToken = updatedAuthorization.getTokens().getRefreshToken();
-		assertThat(updatedAuthorization.getTokens().getTokenMetadata(refreshToken).isInvalidated()).isTrue();
-		OAuth2AccessToken accessToken = updatedAuthorization.getTokens().getAccessToken();
-		assertThat(updatedAuthorization.getTokens().getTokenMetadata(accessToken).isInvalidated()).isTrue();
+		OAuth2Authorization.Token<OAuth2RefreshToken> refreshToken = updatedAuthorization.getRefreshToken();
+		assertThat(refreshToken.isInvalidated()).isTrue();
+		OAuth2Authorization.Token<OAuth2AccessToken> accessToken = updatedAuthorization.getAccessToken();
+		assertThat(accessToken.isInvalidated()).isTrue();
 	}
 
 	@Test
@@ -147,7 +147,7 @@ public class OAuth2TokenRevocationTests {
 				.thenReturn(registeredClient);
 
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();
-		OAuth2AccessToken token = authorization.getTokens().getAccessToken();
+		OAuth2AccessToken token = authorization.getAccessToken().getToken();
 		TokenType tokenType = TokenType.ACCESS_TOKEN;
 		when(authorizationService.findByToken(eq(token.getTokenValue()), isNull())).thenReturn(authorization);
 
@@ -164,10 +164,10 @@ public class OAuth2TokenRevocationTests {
 		verify(authorizationService).save(authorizationCaptor.capture());
 
 		OAuth2Authorization updatedAuthorization = authorizationCaptor.getValue();
-		OAuth2AccessToken accessToken = updatedAuthorization.getTokens().getAccessToken();
-		assertThat(updatedAuthorization.getTokens().getTokenMetadata(accessToken).isInvalidated()).isTrue();
-		OAuth2RefreshToken refreshToken = updatedAuthorization.getTokens().getRefreshToken();
-		assertThat(updatedAuthorization.getTokens().getTokenMetadata(refreshToken).isInvalidated()).isFalse();
+		OAuth2Authorization.Token<OAuth2AccessToken> accessToken = updatedAuthorization.getAccessToken();
+		assertThat(accessToken.isInvalidated()).isTrue();
+		OAuth2Authorization.Token<OAuth2RefreshToken> refreshToken = updatedAuthorization.getRefreshToken();
+		assertThat(refreshToken.isInvalidated()).isFalse();
 	}
 
 	private static MultiValueMap<String, String> getTokenRevocationRequestParameters(AbstractOAuth2Token token, TokenType tokenType) {

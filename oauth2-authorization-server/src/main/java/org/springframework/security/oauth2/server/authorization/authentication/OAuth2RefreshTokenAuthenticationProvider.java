@@ -37,16 +37,14 @@ import org.springframework.security.oauth2.jwt.JoseHeader;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
-import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationAttributeNames;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.TokenType;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.config.TokenSettings;
+import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer;
-import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenMetadata;
-import org.springframework.security.oauth2.server.authorization.token.OAuth2Tokens;
 import org.springframework.util.Assert;
 
 import static org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthenticationProviderUtils.getAuthenticatedClientElseThrowInvalidClient;
@@ -114,7 +112,8 @@ public class OAuth2RefreshTokenAuthenticationProvider implements AuthenticationP
 			throw new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.UNAUTHORIZED_CLIENT));
 		}
 
-		Instant refreshTokenExpiresAt = authorization.getTokens().getRefreshToken().getExpiresAt();
+		OAuth2Authorization.Token<OAuth2RefreshToken> refreshToken = authorization.getRefreshToken();
+		Instant refreshTokenExpiresAt = refreshToken.getToken().getExpiresAt();
 		if (refreshTokenExpiresAt.isBefore(Instant.now())) {
 			// As per https://tools.ietf.org/html/rfc6749#section-5.2
 			// invalid_grant: The provided authorization grant (e.g., authorization code,
@@ -134,10 +133,7 @@ public class OAuth2RefreshTokenAuthenticationProvider implements AuthenticationP
 			scopes = authorizedScopes;
 		}
 
-		OAuth2RefreshToken refreshToken = authorization.getTokens().getRefreshToken();
-		OAuth2TokenMetadata refreshTokenMetadata = authorization.getTokens().getTokenMetadata(refreshToken);
-
-		if (refreshTokenMetadata.isInvalidated()) {
+		if (refreshToken.isInvalidated()) {
 			throw new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_GRANT));
 		}
 
@@ -159,18 +155,20 @@ public class OAuth2RefreshTokenAuthenticationProvider implements AuthenticationP
 
 		TokenSettings tokenSettings = registeredClient.getTokenSettings();
 
+		OAuth2RefreshToken currentRefreshToken = refreshToken.getToken();
 		if (!tokenSettings.reuseRefreshTokens()) {
-			refreshToken = generateRefreshToken(tokenSettings.refreshTokenTimeToLive());
+			currentRefreshToken = generateRefreshToken(tokenSettings.refreshTokenTimeToLive());
 		}
 
 		authorization = OAuth2Authorization.from(authorization)
-				.tokens(OAuth2Tokens.from(authorization.getTokens()).accessToken(accessToken).refreshToken(refreshToken).build())
+				.accessToken(accessToken)
+				.refreshToken(currentRefreshToken)
 				.attribute(OAuth2AuthorizationAttributeNames.ACCESS_TOKEN_ATTRIBUTES, jwt)
 				.build();
 		this.authorizationService.save(authorization);
 
 		return new OAuth2AccessTokenAuthenticationToken(
-				registeredClient, clientPrincipal, accessToken, refreshToken);
+				registeredClient, clientPrincipal, accessToken, currentRefreshToken);
 	}
 
 	@Override

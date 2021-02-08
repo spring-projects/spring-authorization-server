@@ -18,7 +18,6 @@ package org.springframework.security.oauth2.server.authorization;
 
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
-import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 
 /**
  * The name of the attributes that may be contained in the
@@ -34,12 +33,6 @@ public interface OAuth2AuthorizationAttributeNames {
 	 * The name of the attribute used for correlating the user consent request/response.
 	 */
 	String STATE = OAuth2Authorization.class.getName().concat(".STATE");
-
-	/**
-	 * The name of the attribute used for the {@link OAuth2ParameterNames#CODE} parameter.
-	 */
-	@Deprecated
-	String CODE = OAuth2Authorization.class.getName().concat(".CODE");
 
 	/**
 	 * The name of the attribute used for the {@link OAuth2AuthorizationRequest}.

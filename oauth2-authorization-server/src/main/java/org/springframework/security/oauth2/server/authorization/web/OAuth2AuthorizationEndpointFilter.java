@@ -193,6 +193,7 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 		OAuth2AuthorizationRequest authorizationRequest = authorizationRequestContext.buildAuthorizationRequest();
 		OAuth2Authorization.Builder builder = OAuth2Authorization.withRegisteredClient(registeredClient)
 				.principalName(principal.getName())
+				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
 				.attribute(OAuth2AuthorizationAttributeNames.PRINCIPAL, principal)
 				.attribute(OAuth2AuthorizationAttributeNames.AUTHORIZATION_REQUEST, authorizationRequest);
 

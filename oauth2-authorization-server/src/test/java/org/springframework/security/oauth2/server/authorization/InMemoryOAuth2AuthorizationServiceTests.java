@@ -21,6 +21,7 @@ import java.time.temporal.ChronoUnit;
 import org.junit.Before;
 import org.junit.Test;
 
+import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2RefreshToken;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
@@ -39,6 +40,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 public class InMemoryOAuth2AuthorizationServiceTests {
 	private static final RegisteredClient REGISTERED_CLIENT = TestRegisteredClients.registeredClient().build();
 	private static final String PRINCIPAL_NAME = "principal";
+	private static final AuthorizationGrantType AUTHORIZATION_GRANT_TYPE = AuthorizationGrantType.AUTHORIZATION_CODE;
 	private static final OAuth2AuthorizationCode AUTHORIZATION_CODE = new OAuth2AuthorizationCode(
 			"code", Instant.now(), Instant.now().plus(5, ChronoUnit.MINUTES));
 	private InMemoryOAuth2AuthorizationService authorizationService;
@@ -59,6 +61,7 @@ public class InMemoryOAuth2AuthorizationServiceTests {
 	public void saveWhenAuthorizationProvidedThenSaved() {
 		OAuth2Authorization expectedAuthorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
 				.principalName(PRINCIPAL_NAME)
+				.authorizationGrantType(AUTHORIZATION_GRANT_TYPE)
 				.token(AUTHORIZATION_CODE)
 				.build();
 		this.authorizationService.save(expectedAuthorization);
@@ -79,6 +82,7 @@ public class InMemoryOAuth2AuthorizationServiceTests {
 	public void removeWhenAuthorizationProvidedThenRemoved() {
 		OAuth2Authorization expectedAuthorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
 				.principalName(PRINCIPAL_NAME)
+				.authorizationGrantType(AUTHORIZATION_GRANT_TYPE)
 				.token(AUTHORIZATION_CODE)
 				.build();
 
@@ -105,6 +109,7 @@ public class InMemoryOAuth2AuthorizationServiceTests {
 		String state = "state";
 		OAuth2Authorization authorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
 				.principalName(PRINCIPAL_NAME)
+				.authorizationGrantType(AUTHORIZATION_GRANT_TYPE)
 				.attribute(OAuth2AuthorizationAttributeNames.STATE, state)
 				.build();
 		this.authorizationService.save(authorization);
@@ -120,6 +125,7 @@ public class InMemoryOAuth2AuthorizationServiceTests {
 	public void findByTokenWhenAuthorizationCodeExistsThenFound() {
 		OAuth2Authorization authorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
 				.principalName(PRINCIPAL_NAME)
+				.authorizationGrantType(AUTHORIZATION_GRANT_TYPE)
 				.token(AUTHORIZATION_CODE)
 				.build();
 		this.authorizationService.save(authorization);
@@ -137,6 +143,7 @@ public class InMemoryOAuth2AuthorizationServiceTests {
 				"access-token", Instant.now().minusSeconds(60), Instant.now());
 		OAuth2Authorization authorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
 				.principalName(PRINCIPAL_NAME)
+				.authorizationGrantType(AUTHORIZATION_GRANT_TYPE)
 				.token(AUTHORIZATION_CODE)
 				.accessToken(accessToken)
 				.build();
@@ -154,6 +161,7 @@ public class InMemoryOAuth2AuthorizationServiceTests {
 		OAuth2RefreshToken refreshToken = new OAuth2RefreshToken("refresh-token", Instant.now());
 		OAuth2Authorization authorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
 				.principalName(PRINCIPAL_NAME)
+				.authorizationGrantType(AUTHORIZATION_GRANT_TYPE)
 				.refreshToken(refreshToken)
 				.build();
 		this.authorizationService.save(authorization);

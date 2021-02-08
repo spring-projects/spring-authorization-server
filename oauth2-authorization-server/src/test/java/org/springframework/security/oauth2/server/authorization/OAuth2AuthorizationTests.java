@@ -20,6 +20,7 @@ import java.time.temporal.ChronoUnit;
 
 import org.junit.Test;
 
+import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2RefreshToken;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
@@ -38,6 +39,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 public class OAuth2AuthorizationTests {
 	private static final RegisteredClient REGISTERED_CLIENT = TestRegisteredClients.registeredClient().build();
 	private static final String PRINCIPAL_NAME = "principal";
+	private static final AuthorizationGrantType AUTHORIZATION_GRANT_TYPE = AuthorizationGrantType.AUTHORIZATION_CODE;
 	private static final OAuth2AccessToken ACCESS_TOKEN = new OAuth2AccessToken(
 			OAuth2AccessToken.TokenType.BEARER, "access-token", Instant.now(), Instant.now().plusSeconds(300));
 	private static final OAuth2RefreshToken REFRESH_TOKEN = new OAuth2RefreshToken("refresh-token", Instant.now());
@@ -62,6 +64,7 @@ public class OAuth2AuthorizationTests {
 	public void fromWhenAuthorizationProvidedThenCopied() {
 		OAuth2Authorization authorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
 				.principalName(PRINCIPAL_NAME)
+				.authorizationGrantType(AUTHORIZATION_GRANT_TYPE)
 				.token(AUTHORIZATION_CODE)
 				.accessToken(ACCESS_TOKEN)
 				.build();
@@ -69,6 +72,7 @@ public class OAuth2AuthorizationTests {
 
 		assertThat(authorizationResult.getRegisteredClientId()).isEqualTo(authorization.getRegisteredClientId());
 		assertThat(authorizationResult.getPrincipalName()).isEqualTo(authorization.getPrincipalName());
+		assertThat(authorizationResult.getAuthorizationGrantType()).isEqualTo(authorization.getAuthorizationGrantType());
 		assertThat(authorizationResult.getAccessToken()).isEqualTo(authorization.getAccessToken());
 		assertThat(authorizationResult.getToken(OAuth2AuthorizationCode.class))
 				.isEqualTo(authorization.getToken(OAuth2AuthorizationCode.class));
@@ -80,6 +84,13 @@ public class OAuth2AuthorizationTests {
 		assertThatThrownBy(() -> OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT).build())
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessage("principalName cannot be empty");
+	}
+
+	@Test
+	public void buildWhenAuthorizationGrantTypeNotProvidedThenThrowIllegalArgumentException() {
+		assertThatThrownBy(() -> OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT).principalName(PRINCIPAL_NAME).build())
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("authorizationGrantType cannot be null");
 	}
 
 	@Test
@@ -104,6 +115,7 @@ public class OAuth2AuthorizationTests {
 	public void buildWhenAllAttributesAreProvidedThenAllAttributesAreSet() {
 		OAuth2Authorization authorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
 				.principalName(PRINCIPAL_NAME)
+				.authorizationGrantType(AUTHORIZATION_GRANT_TYPE)
 				.token(AUTHORIZATION_CODE)
 				.accessToken(ACCESS_TOKEN)
 				.refreshToken(REFRESH_TOKEN)
@@ -111,6 +123,7 @@ public class OAuth2AuthorizationTests {
 
 		assertThat(authorization.getRegisteredClientId()).isEqualTo(REGISTERED_CLIENT.getId());
 		assertThat(authorization.getPrincipalName()).isEqualTo(PRINCIPAL_NAME);
+		assertThat(authorization.getAuthorizationGrantType()).isEqualTo(AUTHORIZATION_GRANT_TYPE);
 		assertThat(authorization.getToken(OAuth2AuthorizationCode.class).getToken()).isEqualTo(AUTHORIZATION_CODE);
 		assertThat(authorization.getAccessToken().getToken()).isEqualTo(ACCESS_TOKEN);
 		assertThat(authorization.getRefreshToken().getToken()).isEqualTo(REFRESH_TOKEN);

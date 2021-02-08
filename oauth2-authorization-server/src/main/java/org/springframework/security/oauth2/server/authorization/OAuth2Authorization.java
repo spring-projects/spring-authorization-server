@@ -24,6 +24,7 @@ import java.util.function.Consumer;
 
 import org.springframework.lang.Nullable;
 import org.springframework.security.oauth2.core.AbstractOAuth2Token;
+import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2RefreshToken;
 import org.springframework.security.oauth2.core.OAuth2RefreshToken2;
@@ -39,6 +40,7 @@ import org.springframework.util.Assert;
  * @author Krisztian Toth
  * @since 0.0.1
  * @see RegisteredClient
+ * @see AuthorizationGrantType
  * @see AbstractOAuth2Token
  * @see OAuth2AccessToken
  * @see OAuth2RefreshToken
@@ -47,6 +49,7 @@ public class OAuth2Authorization implements Serializable {
 	private static final long serialVersionUID = Version.SERIAL_VERSION_UID;
 	private String registeredClientId;
 	private String principalName;
+	private AuthorizationGrantType authorizationGrantType;
 	private Map<Class<? extends AbstractOAuth2Token>, Token<?>> tokens;
 	private Map<String, Object> attributes;
 
@@ -69,6 +72,15 @@ public class OAuth2Authorization implements Serializable {
 	 */
 	public String getPrincipalName() {
 		return this.principalName;
+	}
+
+	/**
+	 * Returns the {@link AuthorizationGrantType authorization grant type} used for the authorization.
+	 *
+	 * @return the {@link AuthorizationGrantType} used for the authorization
+	 */
+	public AuthorizationGrantType getAuthorizationGrantType() {
+		return this.authorizationGrantType;
 	}
 
 	/**
@@ -157,13 +169,15 @@ public class OAuth2Authorization implements Serializable {
 		OAuth2Authorization that = (OAuth2Authorization) obj;
 		return Objects.equals(this.registeredClientId, that.registeredClientId) &&
 				Objects.equals(this.principalName, that.principalName) &&
+				Objects.equals(this.authorizationGrantType, that.authorizationGrantType) &&
 				Objects.equals(this.tokens, that.tokens) &&
 				Objects.equals(this.attributes, that.attributes);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(this.registeredClientId, this.principalName, this.tokens, this.attributes);
+		return Objects.hash(this.registeredClientId, this.principalName,
+				this.authorizationGrantType, this.tokens, this.attributes);
 	}
 
 	/**
@@ -187,6 +201,7 @@ public class OAuth2Authorization implements Serializable {
 		Assert.notNull(authorization, "authorization cannot be null");
 		return new Builder(authorization.getRegisteredClientId())
 				.principalName(authorization.getPrincipalName())
+				.authorizationGrantType(authorization.getAuthorizationGrantType())
 				.tokens(authorization.tokens)
 				.attributes(attrs -> attrs.putAll(authorization.getAttributes()));
 	}
@@ -292,6 +307,7 @@ public class OAuth2Authorization implements Serializable {
 		private static final long serialVersionUID = Version.SERIAL_VERSION_UID;
 		private final String registeredClientId;
 		private String principalName;
+		private AuthorizationGrantType authorizationGrantType;
 		private Map<Class<? extends AbstractOAuth2Token>, Token<?>> tokens = new HashMap<>();
 		private final Map<String, Object> attributes = new HashMap<>();
 
@@ -307,6 +323,17 @@ public class OAuth2Authorization implements Serializable {
 		 */
 		public Builder principalName(String principalName) {
 			this.principalName = principalName;
+			return this;
+		}
+
+		/**
+		 * Sets the {@link AuthorizationGrantType authorization grant type} used for the authorization.
+		 *
+		 * @param authorizationGrantType the {@link AuthorizationGrantType}
+		 * @return the {@link Builder}
+		 */
+		public Builder authorizationGrantType(AuthorizationGrantType authorizationGrantType) {
+			this.authorizationGrantType = authorizationGrantType;
 			return this;
 		}
 
@@ -401,10 +428,12 @@ public class OAuth2Authorization implements Serializable {
 		 */
 		public OAuth2Authorization build() {
 			Assert.hasText(this.principalName, "principalName cannot be empty");
+			Assert.notNull(this.authorizationGrantType, "authorizationGrantType cannot be null");
 
 			OAuth2Authorization authorization = new OAuth2Authorization();
 			authorization.registeredClientId = this.registeredClientId;
 			authorization.principalName = this.principalName;
+			authorization.authorizationGrantType = this.authorizationGrantType;
 			authorization.tokens = Collections.unmodifiableMap(this.tokens);
 			authorization.attributes = Collections.unmodifiableMap(this.attributes);
 			return authorization;

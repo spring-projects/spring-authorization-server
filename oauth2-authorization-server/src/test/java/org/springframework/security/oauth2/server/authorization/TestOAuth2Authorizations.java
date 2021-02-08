@@ -21,6 +21,7 @@ import java.util.Collections;
 import java.util.Map;
 
 import org.springframework.security.authentication.TestingAuthenticationToken;
+import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2RefreshToken;
 import org.springframework.security.oauth2.core.OAuth2RefreshToken2;
@@ -61,6 +62,7 @@ public class TestOAuth2Authorizations {
 				.build();
 		return OAuth2Authorization.withRegisteredClient(registeredClient)
 				.principalName("principal")
+				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
 				.token(authorizationCode)
 				.accessToken(accessToken)
 				.refreshToken(refreshToken)

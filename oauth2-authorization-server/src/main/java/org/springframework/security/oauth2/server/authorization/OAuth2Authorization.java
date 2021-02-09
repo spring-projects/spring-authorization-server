@@ -20,6 +20,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.function.Consumer;
 
 import org.springframework.lang.Nullable;
@@ -30,6 +31,7 @@ import org.springframework.security.oauth2.core.OAuth2RefreshToken;
 import org.springframework.security.oauth2.core.OAuth2RefreshToken2;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.util.Assert;
+import org.springframework.util.StringUtils;
 
 /**
  * A representation of an OAuth 2.0 Authorization, which holds state related to the authorization granted
@@ -55,6 +57,7 @@ public class OAuth2Authorization implements Serializable {
 	public static final String AUTHORIZED_SCOPE_ATTRIBUTE_NAME =
 			OAuth2Authorization.class.getName().concat(".AUTHORIZED_SCOPE");
 
+	private String id;
 	private String registeredClientId;
 	private String principalName;
 	private AuthorizationGrantType authorizationGrantType;
@@ -62,6 +65,15 @@ public class OAuth2Authorization implements Serializable {
 	private Map<String, Object> attributes;
 
 	protected OAuth2Authorization() {
+	}
+
+	/**
+	 * Returns the identifier for the authorization.
+	 *
+	 * @return the identifier for the authorization
+	 */
+	public String getId() {
+		return this.id;
 	}
 
 	/**
@@ -175,7 +187,8 @@ public class OAuth2Authorization implements Serializable {
 			return false;
 		}
 		OAuth2Authorization that = (OAuth2Authorization) obj;
-		return Objects.equals(this.registeredClientId, that.registeredClientId) &&
+		return Objects.equals(this.id, that.id) &&
+				Objects.equals(this.registeredClientId, that.registeredClientId) &&
 				Objects.equals(this.principalName, that.principalName) &&
 				Objects.equals(this.authorizationGrantType, that.authorizationGrantType) &&
 				Objects.equals(this.tokens, that.tokens) &&
@@ -184,7 +197,7 @@ public class OAuth2Authorization implements Serializable {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(this.registeredClientId, this.principalName,
+		return Objects.hash(this.id, this.registeredClientId, this.principalName,
 				this.authorizationGrantType, this.tokens, this.attributes);
 	}
 
@@ -208,6 +221,7 @@ public class OAuth2Authorization implements Serializable {
 	public static Builder from(OAuth2Authorization authorization) {
 		Assert.notNull(authorization, "authorization cannot be null");
 		return new Builder(authorization.getRegisteredClientId())
+				.id(authorization.getId())
 				.principalName(authorization.getPrincipalName())
 				.authorizationGrantType(authorization.getAuthorizationGrantType())
 				.tokens(authorization.tokens)
@@ -328,6 +342,7 @@ public class OAuth2Authorization implements Serializable {
 	 */
 	public static class Builder implements Serializable {
 		private static final long serialVersionUID = Version.SERIAL_VERSION_UID;
+		private String id;
 		private final String registeredClientId;
 		private String principalName;
 		private AuthorizationGrantType authorizationGrantType;
@@ -336,6 +351,17 @@ public class OAuth2Authorization implements Serializable {
 
 		protected Builder(String registeredClientId) {
 			this.registeredClientId = registeredClientId;
+		}
+
+		/**
+		 * Sets the identifier for the authorization.
+		 *
+		 * @param id the identifier for the authorization
+		 * @return the {@link Builder}
+		 */
+		public Builder id(String id) {
+			this.id = id;
+			return this;
 		}
 
 		/**
@@ -458,6 +484,10 @@ public class OAuth2Authorization implements Serializable {
 			Assert.notNull(this.authorizationGrantType, "authorizationGrantType cannot be null");
 
 			OAuth2Authorization authorization = new OAuth2Authorization();
+			if (!StringUtils.hasText(this.id)) {
+				this.id = UUID.randomUUID().toString();
+			}
+			authorization.id = this.id;
 			authorization.registeredClientId = this.registeredClientId;
 			authorization.principalName = this.principalName;
 			authorization.authorizationGrantType = this.authorizationGrantType;

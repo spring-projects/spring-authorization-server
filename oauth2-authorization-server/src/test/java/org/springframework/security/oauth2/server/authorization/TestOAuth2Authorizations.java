@@ -63,6 +63,7 @@ public class TestOAuth2Authorizations {
 				.state("state")
 				.build();
 		return OAuth2Authorization.withRegisteredClient(registeredClient)
+				.id("id")
 				.principalName("principal")
 				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
 				.token(authorizationCode)

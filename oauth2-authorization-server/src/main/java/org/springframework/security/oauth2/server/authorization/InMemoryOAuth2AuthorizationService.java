@@ -15,9 +15,7 @@
  */
 package org.springframework.security.oauth2.server.authorization;
 
-import java.io.Serializable;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.lang.Nullable;
@@ -40,22 +38,27 @@ import org.springframework.util.Assert;
  * @see OAuth2AuthorizationService
  */
 public final class InMemoryOAuth2AuthorizationService implements OAuth2AuthorizationService {
-	private final Map<OAuth2AuthorizationId, OAuth2Authorization> authorizations = new ConcurrentHashMap<>();
+	private final Map<String, OAuth2Authorization> authorizations = new ConcurrentHashMap<>();
 
 	@Override
 	public void save(OAuth2Authorization authorization) {
 		Assert.notNull(authorization, "authorization cannot be null");
-		OAuth2AuthorizationId authorizationId = new OAuth2AuthorizationId(
-				authorization.getRegisteredClientId(), authorization.getPrincipalName());
-		this.authorizations.put(authorizationId, authorization);
+		Assert.isTrue(!this.authorizations.containsKey(authorization.getId()),
+				"The authorization must be unique. Found duplicate identifier: " + authorization.getId());
+		this.authorizations.put(authorization.getId(), authorization);
 	}
 
 	@Override
 	public void remove(OAuth2Authorization authorization) {
 		Assert.notNull(authorization, "authorization cannot be null");
-		OAuth2AuthorizationId authorizationId = new OAuth2AuthorizationId(
-				authorization.getRegisteredClientId(), authorization.getPrincipalName());
-		this.authorizations.remove(authorizationId, authorization);
+		this.authorizations.remove(authorization.getId(), authorization);
+	}
+
+	@Nullable
+	@Override
+	public OAuth2Authorization findById(String id) {
+		Assert.hasText(id, "id cannot be empty");
+		return this.authorizations.get(id);
 	}
 
 	@Nullable
@@ -106,34 +109,5 @@ public final class InMemoryOAuth2AuthorizationService implements OAuth2Authoriza
 		OAuth2Authorization.Token<OAuth2RefreshToken> refreshToken =
 				authorization.getToken(OAuth2RefreshToken.class);
 		return refreshToken != null && refreshToken.getToken().getTokenValue().equals(token);
-	}
-
-	private static class OAuth2AuthorizationId implements Serializable {
-		private static final long serialVersionUID = Version.SERIAL_VERSION_UID;
-		private final String registeredClientId;
-		private final String principalName;
-
-		private OAuth2AuthorizationId(String registeredClientId, String principalName) {
-			this.registeredClientId = registeredClientId;
-			this.principalName = principalName;
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			if (this == obj) {
-				return true;
-			}
-			if (obj == null || getClass() != obj.getClass()) {
-				return false;
-			}
-			OAuth2AuthorizationId that = (OAuth2AuthorizationId) obj;
-			return Objects.equals(this.registeredClientId, that.registeredClientId) &&
-					Objects.equals(this.principalName, that.principalName);
-		}
-
-		@Override
-		public int hashCode() {
-			return Objects.hash(this.registeredClientId, this.principalName);
-		}
 	}
 }

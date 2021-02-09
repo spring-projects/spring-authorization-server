@@ -37,6 +37,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * @author Joe Grandja
  */
 public class OAuth2AuthorizationTests {
+	private static final String ID = "id";
 	private static final RegisteredClient REGISTERED_CLIENT = TestRegisteredClients.registeredClient().build();
 	private static final String PRINCIPAL_NAME = "principal";
 	private static final AuthorizationGrantType AUTHORIZATION_GRANT_TYPE = AuthorizationGrantType.AUTHORIZATION_CODE;
@@ -63,6 +64,7 @@ public class OAuth2AuthorizationTests {
 	@Test
 	public void fromWhenAuthorizationProvidedThenCopied() {
 		OAuth2Authorization authorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
+				.id(ID)
 				.principalName(PRINCIPAL_NAME)
 				.authorizationGrantType(AUTHORIZATION_GRANT_TYPE)
 				.token(AUTHORIZATION_CODE)
@@ -70,6 +72,7 @@ public class OAuth2AuthorizationTests {
 				.build();
 		OAuth2Authorization authorizationResult = OAuth2Authorization.from(authorization).build();
 
+		assertThat(authorizationResult.getId()).isEqualTo(authorization.getId());
 		assertThat(authorizationResult.getRegisteredClientId()).isEqualTo(authorization.getRegisteredClientId());
 		assertThat(authorizationResult.getPrincipalName()).isEqualTo(authorization.getPrincipalName());
 		assertThat(authorizationResult.getAuthorizationGrantType()).isEqualTo(authorization.getAuthorizationGrantType());
@@ -114,6 +117,7 @@ public class OAuth2AuthorizationTests {
 	@Test
 	public void buildWhenAllAttributesAreProvidedThenAllAttributesAreSet() {
 		OAuth2Authorization authorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
+				.id(ID)
 				.principalName(PRINCIPAL_NAME)
 				.authorizationGrantType(AUTHORIZATION_GRANT_TYPE)
 				.token(AUTHORIZATION_CODE)
@@ -121,6 +125,7 @@ public class OAuth2AuthorizationTests {
 				.refreshToken(REFRESH_TOKEN)
 				.build();
 
+		assertThat(authorization.getId()).isEqualTo(ID);
 		assertThat(authorization.getRegisteredClientId()).isEqualTo(REGISTERED_CLIENT.getId());
 		assertThat(authorization.getPrincipalName()).isEqualTo(PRINCIPAL_NAME);
 		assertThat(authorization.getAuthorizationGrantType()).isEqualTo(AUTHORIZATION_GRANT_TYPE);

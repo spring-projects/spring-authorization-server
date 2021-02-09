@@ -40,6 +40,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * @author Joe Grandja
  */
 public class InMemoryOAuth2AuthorizationServiceTests {
+	private static final String ID = "id";
 	private static final RegisteredClient REGISTERED_CLIENT = TestRegisteredClients.registeredClient().build();
 	private static final String PRINCIPAL_NAME = "principal";
 	private static final AuthorizationGrantType AUTHORIZATION_GRANT_TYPE = AuthorizationGrantType.AUTHORIZATION_CODE;
@@ -64,6 +65,7 @@ public class InMemoryOAuth2AuthorizationServiceTests {
 	@Test
 	public void saveWhenAuthorizationProvidedThenSaved() {
 		OAuth2Authorization expectedAuthorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
+				.id(ID)
 				.principalName(PRINCIPAL_NAME)
 				.authorizationGrantType(AUTHORIZATION_GRANT_TYPE)
 				.token(AUTHORIZATION_CODE)
@@ -76,6 +78,25 @@ public class InMemoryOAuth2AuthorizationServiceTests {
 	}
 
 	@Test
+	public void saveWhenAuthorizationNotUniqueThenThrowIllegalArgumentException() {
+		OAuth2Authorization expectedAuthorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
+				.id(ID)
+				.principalName(PRINCIPAL_NAME)
+				.authorizationGrantType(AUTHORIZATION_GRANT_TYPE)
+				.token(AUTHORIZATION_CODE)
+				.build();
+		this.authorizationService.save(expectedAuthorization);
+
+		OAuth2Authorization authorization = this.authorizationService.findById(
+				expectedAuthorization.getId());
+		assertThat(authorization).isEqualTo(expectedAuthorization);
+
+		assertThatThrownBy(() -> this.authorizationService.save(authorization))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("The authorization must be unique. Found duplicate identifier: " + ID);
+	}
+
+	@Test
 	public void removeWhenAuthorizationNullThenThrowIllegalArgumentException() {
 		assertThatThrownBy(() -> this.authorizationService.remove(null))
 				.isInstanceOf(IllegalArgumentException.class)
@@ -85,6 +106,7 @@ public class InMemoryOAuth2AuthorizationServiceTests {
 	@Test
 	public void removeWhenAuthorizationProvidedThenRemoved() {
 		OAuth2Authorization expectedAuthorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
+				.id(ID)
 				.principalName(PRINCIPAL_NAME)
 				.authorizationGrantType(AUTHORIZATION_GRANT_TYPE)
 				.token(AUTHORIZATION_CODE)
@@ -102,6 +124,13 @@ public class InMemoryOAuth2AuthorizationServiceTests {
 	}
 
 	@Test
+	public void findByIdWhenIdNullThenThrowIllegalArgumentException() {
+		assertThatThrownBy(() -> this.authorizationService.findById(null))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("id cannot be empty");
+	}
+
+	@Test
 	public void findByTokenWhenTokenNullThenThrowIllegalArgumentException() {
 		assertThatThrownBy(() -> this.authorizationService.findByToken(null, AUTHORIZATION_CODE_TOKEN_TYPE))
 				.isInstanceOf(IllegalArgumentException.class)
@@ -112,6 +141,7 @@ public class InMemoryOAuth2AuthorizationServiceTests {
 	public void findByTokenWhenStateExistsThenFound() {
 		String state = "state";
 		OAuth2Authorization authorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
+				.id(ID)
 				.principalName(PRINCIPAL_NAME)
 				.authorizationGrantType(AUTHORIZATION_GRANT_TYPE)
 				.attribute(OAuth2ParameterNames.STATE, state)
@@ -128,6 +158,7 @@ public class InMemoryOAuth2AuthorizationServiceTests {
 	@Test
 	public void findByTokenWhenAuthorizationCodeExistsThenFound() {
 		OAuth2Authorization authorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
+				.id(ID)
 				.principalName(PRINCIPAL_NAME)
 				.authorizationGrantType(AUTHORIZATION_GRANT_TYPE)
 				.token(AUTHORIZATION_CODE)
@@ -146,6 +177,7 @@ public class InMemoryOAuth2AuthorizationServiceTests {
 		OAuth2AccessToken accessToken = new OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER,
 				"access-token", Instant.now().minusSeconds(60), Instant.now());
 		OAuth2Authorization authorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
+				.id(ID)
 				.principalName(PRINCIPAL_NAME)
 				.authorizationGrantType(AUTHORIZATION_GRANT_TYPE)
 				.token(AUTHORIZATION_CODE)
@@ -164,6 +196,7 @@ public class InMemoryOAuth2AuthorizationServiceTests {
 	public void findByTokenWhenRefreshTokenExistsThenFound() {
 		OAuth2RefreshToken refreshToken = new OAuth2RefreshToken("refresh-token", Instant.now());
 		OAuth2Authorization authorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
+				.id(ID)
 				.principalName(PRINCIPAL_NAME)
 				.authorizationGrantType(AUTHORIZATION_GRANT_TYPE)
 				.refreshToken(refreshToken)

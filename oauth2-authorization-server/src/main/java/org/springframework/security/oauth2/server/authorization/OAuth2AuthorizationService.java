@@ -44,6 +44,16 @@ public interface OAuth2AuthorizationService {
 	void remove(OAuth2Authorization authorization);
 
 	/**
+	 * Returns the {@link OAuth2Authorization} identified by the provided {@code id},
+	 * or {@code null} if not found.
+	 *
+	 * @param id the authorization identifier
+	 * @return the {@link OAuth2Authorization} if found, otherwise {@code null}
+	 */
+	@Nullable
+	OAuth2Authorization findById(String id);
+
+	/**
 	 * Returns the {@link OAuth2Authorization} containing the provided {@code token},
 	 * or {@code null} if not found.
 	 *

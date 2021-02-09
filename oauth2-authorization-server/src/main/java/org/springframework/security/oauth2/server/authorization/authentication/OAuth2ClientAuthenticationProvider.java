@@ -28,12 +28,12 @@ import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
+import org.springframework.security.oauth2.core.OAuth2TokenType;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.endpoint.PkceParameterNames;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
-import org.springframework.security.oauth2.server.authorization.TokenType;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.util.Assert;
@@ -53,6 +53,7 @@ import org.springframework.util.StringUtils;
  * @see OAuth2AuthorizationService
  */
 public class OAuth2ClientAuthenticationProvider implements AuthenticationProvider {
+	private static final OAuth2TokenType AUTHORIZATION_CODE_TOKEN_TYPE = new OAuth2TokenType(OAuth2ParameterNames.CODE);
 	private final RegisteredClientRepository registeredClientRepository;
 	private final OAuth2AuthorizationService authorizationService;
 
@@ -121,7 +122,7 @@ public class OAuth2ClientAuthenticationProvider implements AuthenticationProvide
 
 		OAuth2Authorization authorization = this.authorizationService.findByToken(
 				(String) parameters.get(OAuth2ParameterNames.CODE),
-				TokenType.AUTHORIZATION_CODE);
+				AUTHORIZATION_CODE_TOKEN_TYPE);
 		if (authorization == null) {
 			throwInvalidClient();
 		}

@@ -42,7 +42,7 @@ import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.TestOAuth2Authorizations;
-import org.springframework.security.oauth2.server.authorization.TokenType;
+import org.springframework.security.oauth2.core.OAuth2TokenType;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
 import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext;
@@ -119,7 +119,7 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();
 		when(this.authorizationService.findByToken(
 				eq(authorization.getRefreshToken().getToken().getTokenValue()),
-				eq(TokenType.REFRESH_TOKEN)))
+				eq(OAuth2TokenType.REFRESH_TOKEN)))
 				.thenReturn(authorization);
 
 		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient);
@@ -135,7 +135,7 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 		assertThat(jwtEncodingContext.getRegisteredClient()).isEqualTo(registeredClient);
 		assertThat(jwtEncodingContext.<Authentication>getPrincipal()).isEqualTo(authorization.getAttribute(Principal.class.getName()));
 		assertThat(jwtEncodingContext.getAuthorization()).isEqualTo(authorization);
-		assertThat(jwtEncodingContext.getTokenType()).isEqualTo(TokenType.ACCESS_TOKEN);
+		assertThat(jwtEncodingContext.getTokenType()).isEqualTo(OAuth2TokenType.ACCESS_TOKEN);
 		assertThat(jwtEncodingContext.getAuthorizationGrantType()).isEqualTo(AuthorizationGrantType.REFRESH_TOKEN);
 		assertThat(jwtEncodingContext.<OAuth2AuthorizationGrantAuthenticationToken>getAuthorizationGrant()).isEqualTo(authentication);
 		assertThat(jwtEncodingContext.getHeaders()).isNotNull();
@@ -162,7 +162,7 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();
 		when(this.authorizationService.findByToken(
 				eq(authorization.getRefreshToken().getToken().getTokenValue()),
-				eq(TokenType.REFRESH_TOKEN)))
+				eq(OAuth2TokenType.REFRESH_TOKEN)))
 				.thenReturn(authorization);
 
 		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient);
@@ -186,7 +186,7 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();
 		when(this.authorizationService.findByToken(
 				eq(authorization.getRefreshToken().getToken().getTokenValue()),
-				eq(TokenType.REFRESH_TOKEN)))
+				eq(OAuth2TokenType.REFRESH_TOKEN)))
 				.thenReturn(authorization);
 
 		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient);
@@ -208,7 +208,7 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();
 		when(this.authorizationService.findByToken(
 				eq(authorization.getRefreshToken().getToken().getTokenValue()),
-				eq(TokenType.REFRESH_TOKEN)))
+				eq(OAuth2TokenType.REFRESH_TOKEN)))
 				.thenReturn(authorization);
 
 		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient);
@@ -275,7 +275,7 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();
 		when(this.authorizationService.findByToken(
 				eq(authorization.getRefreshToken().getToken().getTokenValue()),
-				eq(TokenType.REFRESH_TOKEN)))
+				eq(OAuth2TokenType.REFRESH_TOKEN)))
 				.thenReturn(authorization);
 
 		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(
@@ -298,7 +298,7 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();
 		when(this.authorizationService.findByToken(
 				eq(authorization.getRefreshToken().getToken().getTokenValue()),
-				eq(TokenType.REFRESH_TOKEN)))
+				eq(OAuth2TokenType.REFRESH_TOKEN)))
 				.thenReturn(authorization);
 
 		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient);
@@ -321,7 +321,7 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 		authorization = OAuth2Authorization.from(authorization).token(expiredRefreshToken).build();
 		when(this.authorizationService.findByToken(
 				eq(authorization.getRefreshToken().getToken().getTokenValue()),
-				eq(TokenType.REFRESH_TOKEN)))
+				eq(OAuth2TokenType.REFRESH_TOKEN)))
 				.thenReturn(authorization);
 
 		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient);
@@ -345,7 +345,7 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 				.build();
 		when(this.authorizationService.findByToken(
 				eq(authorization.getRefreshToken().getToken().getTokenValue()),
-				eq(TokenType.REFRESH_TOKEN)))
+				eq(OAuth2TokenType.REFRESH_TOKEN)))
 				.thenReturn(authorization);
 
 		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient);

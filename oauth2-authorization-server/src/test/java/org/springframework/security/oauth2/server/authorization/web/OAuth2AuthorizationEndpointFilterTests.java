@@ -39,6 +39,7 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
+import org.springframework.security.oauth2.core.OAuth2TokenType;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationResponseType;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
@@ -47,7 +48,6 @@ import org.springframework.security.oauth2.core.oidc.OidcScopes;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.TestOAuth2Authorizations;
-import org.springframework.security.oauth2.server.authorization.TokenType;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
@@ -72,6 +72,7 @@ import static org.mockito.Mockito.when;
  * @since 0.0.1
  */
 public class OAuth2AuthorizationEndpointFilterTests {
+	private static final OAuth2TokenType STATE_TOKEN_TYPE = new OAuth2TokenType(OAuth2ParameterNames.STATE);
 	private static final String DEFAULT_ERROR_URI = "https://tools.ietf.org/html/rfc6749%23section-4.1.2.1";
 	private static final String PKCE_ERROR_URI = "https://tools.ietf.org/html/rfc7636%23section-4.4.1";
 	private RegisteredClientRepository registeredClientRepository;
@@ -620,7 +621,7 @@ public class OAuth2AuthorizationEndpointFilterTests {
 		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
 				.thenReturn(registeredClient);
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();
-		when(this.authorizationService.findByToken(eq("state"), eq(new TokenType(OAuth2ParameterNames.STATE))))
+		when(this.authorizationService.findByToken(eq("state"), eq(STATE_TOKEN_TYPE)))
 				.thenReturn(authorization);
 
 		this.authentication.setAuthenticated(false);
@@ -638,7 +639,7 @@ public class OAuth2AuthorizationEndpointFilterTests {
 		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
 				.thenReturn(registeredClient);
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();
-		when(this.authorizationService.findByToken(eq("state"), eq(new TokenType(OAuth2ParameterNames.STATE))))
+		when(this.authorizationService.findByToken(eq("state"), eq(STATE_TOKEN_TYPE)))
 				.thenReturn(authorization);
 
 		this.authentication = new TestingAuthenticationToken("other-principal", "password");
@@ -662,7 +663,7 @@ public class OAuth2AuthorizationEndpointFilterTests {
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient)
 				.principalName(this.authentication.getName())
 				.build();
-		when(this.authorizationService.findByToken(eq("state"), eq(new TokenType(OAuth2ParameterNames.STATE))))
+		when(this.authorizationService.findByToken(eq("state"), eq(STATE_TOKEN_TYPE)))
 				.thenReturn(authorization);
 
 		doFilterWhenUserConsentRequestInvalidParameterThenError(
@@ -680,7 +681,7 @@ public class OAuth2AuthorizationEndpointFilterTests {
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient)
 				.principalName(this.authentication.getName())
 				.build();
-		when(this.authorizationService.findByToken(eq("state"), eq(new TokenType(OAuth2ParameterNames.STATE))))
+		when(this.authorizationService.findByToken(eq("state"), eq(STATE_TOKEN_TYPE)))
 				.thenReturn(authorization);
 
 		doFilterWhenUserConsentRequestInvalidParameterThenError(
@@ -698,7 +699,7 @@ public class OAuth2AuthorizationEndpointFilterTests {
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient)
 				.principalName(this.authentication.getName())
 				.build();
-		when(this.authorizationService.findByToken(eq("state"), eq(new TokenType(OAuth2ParameterNames.STATE))))
+		when(this.authorizationService.findByToken(eq("state"), eq(STATE_TOKEN_TYPE)))
 				.thenReturn(authorization);
 
 		doFilterWhenUserConsentRequestInvalidParameterThenError(
@@ -717,7 +718,7 @@ public class OAuth2AuthorizationEndpointFilterTests {
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(otherRegisteredClient)
 				.principalName(this.authentication.getName())
 				.build();
-		when(this.authorizationService.findByToken(eq("state"), eq(new TokenType(OAuth2ParameterNames.STATE))))
+		when(this.authorizationService.findByToken(eq("state"), eq(STATE_TOKEN_TYPE)))
 				.thenReturn(authorization);
 
 		doFilterWhenUserConsentRequestInvalidParameterThenError(
@@ -735,7 +736,7 @@ public class OAuth2AuthorizationEndpointFilterTests {
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient)
 				.principalName(this.authentication.getName())
 				.build();
-		when(this.authorizationService.findByToken(eq("state"), eq(new TokenType(OAuth2ParameterNames.STATE))))
+		when(this.authorizationService.findByToken(eq("state"), eq(STATE_TOKEN_TYPE)))
 				.thenReturn(authorization);
 
 		doFilterWhenUserConsentRequestInvalidParameterThenRedirect(
@@ -756,7 +757,7 @@ public class OAuth2AuthorizationEndpointFilterTests {
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient)
 				.principalName(this.authentication.getName())
 				.build();
-		when(this.authorizationService.findByToken(eq("state"), eq(new TokenType(OAuth2ParameterNames.STATE))))
+		when(this.authorizationService.findByToken(eq("state"), eq(STATE_TOKEN_TYPE)))
 				.thenReturn(authorization);
 
 		doFilterWhenUserConsentRequestInvalidParameterThenRedirect(
@@ -777,7 +778,7 @@ public class OAuth2AuthorizationEndpointFilterTests {
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient)
 				.principalName(this.authentication.getName())
 				.build();
-		when(this.authorizationService.findByToken(eq("state"), eq(new TokenType(OAuth2ParameterNames.STATE))))
+		when(this.authorizationService.findByToken(eq("state"), eq(STATE_TOKEN_TYPE)))
 				.thenReturn(authorization);
 
 		MockHttpServletRequest request = createUserConsentRequest(registeredClient);

@@ -24,6 +24,7 @@ import org.junit.Test;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2RefreshToken;
+import org.springframework.security.oauth2.core.OAuth2TokenType;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
@@ -44,6 +45,8 @@ public class InMemoryOAuth2AuthorizationServiceTests {
 	private static final AuthorizationGrantType AUTHORIZATION_GRANT_TYPE = AuthorizationGrantType.AUTHORIZATION_CODE;
 	private static final OAuth2AuthorizationCode AUTHORIZATION_CODE = new OAuth2AuthorizationCode(
 			"code", Instant.now(), Instant.now().plus(5, ChronoUnit.MINUTES));
+	private static final OAuth2TokenType AUTHORIZATION_CODE_TOKEN_TYPE = new OAuth2TokenType(OAuth2ParameterNames.CODE);
+	private static final OAuth2TokenType STATE_TOKEN_TYPE = new OAuth2TokenType(OAuth2ParameterNames.STATE);
 	private InMemoryOAuth2AuthorizationService authorizationService;
 
 	@Before
@@ -68,7 +71,7 @@ public class InMemoryOAuth2AuthorizationServiceTests {
 		this.authorizationService.save(expectedAuthorization);
 
 		OAuth2Authorization authorization = this.authorizationService.findByToken(
-				AUTHORIZATION_CODE.getTokenValue(), TokenType.AUTHORIZATION_CODE);
+				AUTHORIZATION_CODE.getTokenValue(), AUTHORIZATION_CODE_TOKEN_TYPE);
 		assertThat(authorization).isEqualTo(expectedAuthorization);
 	}
 
@@ -89,18 +92,18 @@ public class InMemoryOAuth2AuthorizationServiceTests {
 
 		this.authorizationService.save(expectedAuthorization);
 		OAuth2Authorization authorization = this.authorizationService.findByToken(
-				AUTHORIZATION_CODE.getTokenValue(), TokenType.AUTHORIZATION_CODE);
+				AUTHORIZATION_CODE.getTokenValue(), AUTHORIZATION_CODE_TOKEN_TYPE);
 		assertThat(authorization).isEqualTo(expectedAuthorization);
 
 		this.authorizationService.remove(expectedAuthorization);
 		authorization = this.authorizationService.findByToken(
-				AUTHORIZATION_CODE.getTokenValue(), TokenType.AUTHORIZATION_CODE);
+				AUTHORIZATION_CODE.getTokenValue(), AUTHORIZATION_CODE_TOKEN_TYPE);
 		assertThat(authorization).isNull();
 	}
 
 	@Test
 	public void findByTokenWhenTokenNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> this.authorizationService.findByToken(null, TokenType.AUTHORIZATION_CODE))
+		assertThatThrownBy(() -> this.authorizationService.findByToken(null, AUTHORIZATION_CODE_TOKEN_TYPE))
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessage("token cannot be empty");
 	}
@@ -116,7 +119,7 @@ public class InMemoryOAuth2AuthorizationServiceTests {
 		this.authorizationService.save(authorization);
 
 		OAuth2Authorization result = this.authorizationService.findByToken(
-				state, new TokenType(OAuth2ParameterNames.STATE));
+				state, STATE_TOKEN_TYPE);
 		assertThat(authorization).isEqualTo(result);
 		result = this.authorizationService.findByToken(state, null);
 		assertThat(authorization).isEqualTo(result);
@@ -132,7 +135,7 @@ public class InMemoryOAuth2AuthorizationServiceTests {
 		this.authorizationService.save(authorization);
 
 		OAuth2Authorization result = this.authorizationService.findByToken(
-				AUTHORIZATION_CODE.getTokenValue(), TokenType.AUTHORIZATION_CODE);
+				AUTHORIZATION_CODE.getTokenValue(), AUTHORIZATION_CODE_TOKEN_TYPE);
 		assertThat(authorization).isEqualTo(result);
 		result = this.authorizationService.findByToken(AUTHORIZATION_CODE.getTokenValue(), null);
 		assertThat(authorization).isEqualTo(result);
@@ -151,7 +154,7 @@ public class InMemoryOAuth2AuthorizationServiceTests {
 		this.authorizationService.save(authorization);
 
 		OAuth2Authorization result = this.authorizationService.findByToken(
-				accessToken.getTokenValue(), TokenType.ACCESS_TOKEN);
+				accessToken.getTokenValue(), OAuth2TokenType.ACCESS_TOKEN);
 		assertThat(authorization).isEqualTo(result);
 		result = this.authorizationService.findByToken(accessToken.getTokenValue(), null);
 		assertThat(authorization).isEqualTo(result);
@@ -168,7 +171,7 @@ public class InMemoryOAuth2AuthorizationServiceTests {
 		this.authorizationService.save(authorization);
 
 		OAuth2Authorization result = this.authorizationService.findByToken(
-				refreshToken.getTokenValue(), TokenType.REFRESH_TOKEN);
+				refreshToken.getTokenValue(), OAuth2TokenType.REFRESH_TOKEN);
 		assertThat(authorization).isEqualTo(result);
 		result = this.authorizationService.findByToken(refreshToken.getTokenValue(), null);
 		assertThat(authorization).isEqualTo(result);
@@ -177,7 +180,7 @@ public class InMemoryOAuth2AuthorizationServiceTests {
 	@Test
 	public void findByTokenWhenTokenDoesNotExistThenNull() {
 		OAuth2Authorization result = this.authorizationService.findByToken(
-				"access-token", TokenType.ACCESS_TOKEN);
+				"access-token", OAuth2TokenType.ACCESS_TOKEN);
 		assertThat(result).isNull();
 	}
 }

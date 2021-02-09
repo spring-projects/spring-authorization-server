@@ -20,6 +20,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.Set;
 
+import org.springframework.security.oauth2.core.OAuth2TokenType;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.oidc.IdTokenClaimNames;
@@ -28,7 +29,6 @@ import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 import org.springframework.security.oauth2.jwt.JoseHeader;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
-import org.springframework.security.oauth2.server.authorization.TokenType;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext;
 import org.springframework.util.CollectionUtils;
@@ -39,6 +39,7 @@ import org.springframework.util.StringUtils;
  * @since 0.1.0
  */
 final class JwtEncodingContextUtils {
+	private static final OAuth2TokenType ID_TOKEN_TOKEN_TYPE = new OAuth2TokenType(OidcParameterNames.ID_TOKEN);
 
 	private JwtEncodingContextUtils() {
 	}
@@ -83,7 +84,7 @@ final class JwtEncodingContextUtils {
 		// @formatter:off
 		return JwtEncodingContext.with(headersBuilder, claimsBuilder)
 				.registeredClient(registeredClient)
-				.tokenType(TokenType.ACCESS_TOKEN);
+				.tokenType(OAuth2TokenType.ACCESS_TOKEN);
 		// @formatter:on
 	}
 
@@ -115,7 +116,7 @@ final class JwtEncodingContextUtils {
 		return JwtEncodingContext.with(headersBuilder, claimsBuilder)
 				.registeredClient(registeredClient)
 				.authorization(authorization)
-				.tokenType(new TokenType(OidcParameterNames.ID_TOKEN));
+				.tokenType(ID_TOKEN_TOKEN_TYPE);
 		// @formatter:on
 	}
 

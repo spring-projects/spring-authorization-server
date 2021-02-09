@@ -23,6 +23,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.springframework.lang.Nullable;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2RefreshToken;
+import org.springframework.security.oauth2.core.OAuth2TokenType;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2AuthorizationCode;
 import org.springframework.util.Assert;
@@ -59,7 +60,7 @@ public final class InMemoryOAuth2AuthorizationService implements OAuth2Authoriza
 
 	@Nullable
 	@Override
-	public OAuth2Authorization findByToken(String token, @Nullable TokenType tokenType) {
+	public OAuth2Authorization findByToken(String token, @Nullable OAuth2TokenType tokenType) {
 		Assert.hasText(token, "token cannot be empty");
 		return this.authorizations.values().stream()
 				.filter(authorization -> hasToken(authorization, token, tokenType))
@@ -67,7 +68,7 @@ public final class InMemoryOAuth2AuthorizationService implements OAuth2Authoriza
 				.orElse(null);
 	}
 
-	private static boolean hasToken(OAuth2Authorization authorization, String token, @Nullable TokenType tokenType) {
+	private static boolean hasToken(OAuth2Authorization authorization, String token, @Nullable OAuth2TokenType tokenType) {
 		if (tokenType == null) {
 			return matchesState(authorization, token) ||
 					matchesAuthorizationCode(authorization, token) ||
@@ -75,11 +76,11 @@ public final class InMemoryOAuth2AuthorizationService implements OAuth2Authoriza
 					matchesRefreshToken(authorization, token);
 		} else if (OAuth2ParameterNames.STATE.equals(tokenType.getValue())) {
 			return matchesState(authorization, token);
-		} else if (TokenType.AUTHORIZATION_CODE.equals(tokenType)) {
+		} else if (OAuth2ParameterNames.CODE.equals(tokenType.getValue())) {
 			return matchesAuthorizationCode(authorization, token);
-		} else if (TokenType.ACCESS_TOKEN.equals(tokenType)) {
+		} else if (OAuth2TokenType.ACCESS_TOKEN.equals(tokenType)) {
 			return matchesAccessToken(authorization, token);
-		} else if (TokenType.REFRESH_TOKEN.equals(tokenType)) {
+		} else if (OAuth2TokenType.REFRESH_TOKEN.equals(tokenType)) {
 			return matchesRefreshToken(authorization, token);
 		}
 		return false;

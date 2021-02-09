@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright 2020-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,27 +13,41 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.security.oauth2.server.authorization;
-
-import org.springframework.util.Assert;
+package org.springframework.security.oauth2.core;
 
 import java.io.Serializable;
 
+import org.springframework.security.oauth2.server.authorization.Version;
+import org.springframework.util.Assert;
+
 /**
+ * Standard token types defined in the OAuth Token Type Hints Registry.
+ *
  * @author Joe Grandja
+ * @since 0.0.1
+ * @see <a target="_blank" href="https://tools.ietf.org/html/rfc7009#section-4.1.2">4.1.2 OAuth Token Type Hints Registry</a>
  */
-public final class TokenType implements Serializable {
+public final class OAuth2TokenType implements Serializable {
 	private static final long serialVersionUID = Version.SERIAL_VERSION_UID;
-	public static final TokenType ACCESS_TOKEN = new TokenType("access_token");
-	public static final TokenType REFRESH_TOKEN = new TokenType("refresh_token");
-	public static final TokenType AUTHORIZATION_CODE = new TokenType("authorization_code");
+	public static final OAuth2TokenType ACCESS_TOKEN = new OAuth2TokenType("access_token");
+	public static final OAuth2TokenType REFRESH_TOKEN = new OAuth2TokenType("refresh_token");
 	private final String value;
 
-	public TokenType(String value) {
+	/**
+	 * Constructs an {@code OAuth2TokenType} using the provided value.
+	 *
+	 * @param value the value of the token type
+	 */
+	public OAuth2TokenType(String value) {
 		Assert.hasText(value, "value cannot be empty");
 		this.value = value;
 	}
 
+	/**
+	 * Returns the value of the token type.
+	 *
+	 * @return the value of the token type
+	 */
 	public String getValue() {
 		return this.value;
 	}
@@ -46,12 +60,12 @@ public final class TokenType implements Serializable {
 		if (obj == null || this.getClass() != obj.getClass()) {
 			return false;
 		}
-		TokenType that = (TokenType) obj;
-		return this.getValue().equals(that.getValue());
+		OAuth2TokenType that = (OAuth2TokenType) obj;
+		return getValue().equals(that.getValue());
 	}
 
 	@Override
 	public int hashCode() {
-		return this.getValue().hashCode();
+		return getValue().hashCode();
 	}
 }

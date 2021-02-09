@@ -32,7 +32,7 @@ import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames2;
 import org.springframework.security.oauth2.core.http.converter.OAuth2ErrorHttpMessageConverter;
-import org.springframework.security.oauth2.server.authorization.TokenType;
+import org.springframework.security.oauth2.core.OAuth2TokenType;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2TokenRevocationAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
@@ -139,7 +139,7 @@ public class OAuth2TokenRevocationEndpointFilterTests {
 		doFilterWhenTokenRevocationRequestInvalidParameterThenError(
 				OAuth2ParameterNames2.TOKEN_TYPE_HINT,
 				OAuth2ErrorCodes.INVALID_REQUEST,
-				request -> request.addParameter(OAuth2ParameterNames2.TOKEN_TYPE_HINT, TokenType.ACCESS_TOKEN.getValue()));
+				request -> request.addParameter(OAuth2ParameterNames2.TOKEN_TYPE_HINT, OAuth2TokenType.ACCESS_TOKEN.getValue()));
 	}
 
 	@Test
@@ -202,7 +202,7 @@ public class OAuth2TokenRevocationEndpointFilterTests {
 		request.setServletPath(requestUri);
 
 		request.addParameter(OAuth2ParameterNames2.TOKEN, "token");
-		request.addParameter(OAuth2ParameterNames2.TOKEN_TYPE_HINT, TokenType.ACCESS_TOKEN.getValue());
+		request.addParameter(OAuth2ParameterNames2.TOKEN_TYPE_HINT, OAuth2TokenType.ACCESS_TOKEN.getValue());
 
 		return request;
 	}

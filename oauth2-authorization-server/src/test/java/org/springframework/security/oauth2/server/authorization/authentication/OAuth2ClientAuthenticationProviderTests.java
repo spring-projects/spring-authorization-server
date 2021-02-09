@@ -15,24 +15,25 @@
  */
 package org.springframework.security.oauth2.server.authorization.authentication;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.junit.Before;
 import org.junit.Test;
+
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
+import org.springframework.security.oauth2.core.OAuth2TokenType;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.endpoint.PkceParameterNames;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.TestOAuth2Authorizations;
-import org.springframework.security.oauth2.server.authorization.TokenType;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
-
-import java.util.HashMap;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -58,6 +59,7 @@ public class OAuth2ClientAuthenticationProviderTests {
 	private static final String S256_CODE_CHALLENGE = "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM";
 
 	private static final String AUTHORIZATION_CODE = "code";
+	private static final OAuth2TokenType AUTHORIZATION_CODE_TOKEN_TYPE = new OAuth2TokenType(OAuth2ParameterNames.CODE);
 
 	private RegisteredClientRepository registeredClientRepository;
 	private OAuth2AuthorizationService authorizationService;
@@ -160,7 +162,7 @@ public class OAuth2ClientAuthenticationProviderTests {
 		OAuth2Authorization authorization = TestOAuth2Authorizations
 				.authorization(registeredClient, createPkceAuthorizationParametersPlain())
 				.build();
-		when(this.authorizationService.findByToken(eq(AUTHORIZATION_CODE), eq(TokenType.AUTHORIZATION_CODE)))
+		when(this.authorizationService.findByToken(eq(AUTHORIZATION_CODE), eq(AUTHORIZATION_CODE_TOKEN_TYPE)))
 				.thenReturn(authorization);
 
 		Map<String, Object> parameters = createPkceTokenParameters(PLAIN_CODE_VERIFIER);
@@ -187,7 +189,7 @@ public class OAuth2ClientAuthenticationProviderTests {
 		OAuth2Authorization authorization = TestOAuth2Authorizations
 				.authorization(registeredClient)
 				.build();
-		when(this.authorizationService.findByToken(eq(AUTHORIZATION_CODE), eq(TokenType.AUTHORIZATION_CODE)))
+		when(this.authorizationService.findByToken(eq(AUTHORIZATION_CODE), eq(AUTHORIZATION_CODE_TOKEN_TYPE)))
 				.thenReturn(authorization);
 
 		Map<String, Object> parameters = createPkceTokenParameters(PLAIN_CODE_VERIFIER);
@@ -211,7 +213,7 @@ public class OAuth2ClientAuthenticationProviderTests {
 		OAuth2Authorization authorization = TestOAuth2Authorizations
 				.authorization(registeredClient, createPkceAuthorizationParametersPlain())
 				.build();
-		when(this.authorizationService.findByToken(eq(AUTHORIZATION_CODE), eq(TokenType.AUTHORIZATION_CODE)))
+		when(this.authorizationService.findByToken(eq(AUTHORIZATION_CODE), eq(AUTHORIZATION_CODE_TOKEN_TYPE)))
 				.thenReturn(authorization);
 
 		Map<String, Object> parameters = createPkceTokenParameters(PLAIN_CODE_VERIFIER);
@@ -236,7 +238,7 @@ public class OAuth2ClientAuthenticationProviderTests {
 		OAuth2Authorization authorization = TestOAuth2Authorizations
 				.authorization(registeredClient, createPkceAuthorizationParametersPlain())
 				.build();
-		when(this.authorizationService.findByToken(eq(AUTHORIZATION_CODE), eq(TokenType.AUTHORIZATION_CODE)))
+		when(this.authorizationService.findByToken(eq(AUTHORIZATION_CODE), eq(AUTHORIZATION_CODE_TOKEN_TYPE)))
 				.thenReturn(authorization);
 
 		Map<String, Object> parameters = createPkceTokenParameters("invalid-code-verifier");
@@ -260,7 +262,7 @@ public class OAuth2ClientAuthenticationProviderTests {
 		OAuth2Authorization authorization = TestOAuth2Authorizations
 				.authorization(registeredClient, createPkceAuthorizationParametersS256())
 				.build();
-		when(this.authorizationService.findByToken(eq(AUTHORIZATION_CODE), eq(TokenType.AUTHORIZATION_CODE)))
+		when(this.authorizationService.findByToken(eq(AUTHORIZATION_CODE), eq(AUTHORIZATION_CODE_TOKEN_TYPE)))
 				.thenReturn(authorization);
 
 		Map<String, Object> parameters = createPkceTokenParameters("invalid-code-verifier");
@@ -284,7 +286,7 @@ public class OAuth2ClientAuthenticationProviderTests {
 		OAuth2Authorization authorization = TestOAuth2Authorizations
 				.authorization(registeredClient, createPkceAuthorizationParametersPlain())
 				.build();
-		when(this.authorizationService.findByToken(eq(AUTHORIZATION_CODE), eq(TokenType.AUTHORIZATION_CODE)))
+		when(this.authorizationService.findByToken(eq(AUTHORIZATION_CODE), eq(AUTHORIZATION_CODE_TOKEN_TYPE)))
 				.thenReturn(authorization);
 
 		Map<String, Object> parameters = createPkceTokenParameters(PLAIN_CODE_VERIFIER);
@@ -311,7 +313,7 @@ public class OAuth2ClientAuthenticationProviderTests {
 		OAuth2Authorization authorization = TestOAuth2Authorizations
 				.authorization(registeredClient, authorizationRequestAdditionalParameters)
 				.build();
-		when(this.authorizationService.findByToken(eq(AUTHORIZATION_CODE), eq(TokenType.AUTHORIZATION_CODE)))
+		when(this.authorizationService.findByToken(eq(AUTHORIZATION_CODE), eq(AUTHORIZATION_CODE_TOKEN_TYPE)))
 				.thenReturn(authorization);
 
 		Map<String, Object> parameters = createPkceTokenParameters(PLAIN_CODE_VERIFIER);
@@ -336,7 +338,7 @@ public class OAuth2ClientAuthenticationProviderTests {
 		OAuth2Authorization authorization = TestOAuth2Authorizations
 				.authorization(registeredClient, createPkceAuthorizationParametersS256())
 				.build();
-		when(this.authorizationService.findByToken(eq(AUTHORIZATION_CODE), eq(TokenType.AUTHORIZATION_CODE)))
+		when(this.authorizationService.findByToken(eq(AUTHORIZATION_CODE), eq(AUTHORIZATION_CODE_TOKEN_TYPE)))
 				.thenReturn(authorization);
 
 		Map<String, Object> parameters = createPkceTokenParameters(S256_CODE_VERIFIER);
@@ -364,7 +366,7 @@ public class OAuth2ClientAuthenticationProviderTests {
 		OAuth2Authorization authorization = TestOAuth2Authorizations
 				.authorization(registeredClient, authorizationRequestAdditionalParameters)
 				.build();
-		when(this.authorizationService.findByToken(eq(AUTHORIZATION_CODE), eq(TokenType.AUTHORIZATION_CODE)))
+		when(this.authorizationService.findByToken(eq(AUTHORIZATION_CODE), eq(AUTHORIZATION_CODE_TOKEN_TYPE)))
 				.thenReturn(authorization);
 
 		Map<String, Object> parameters = createPkceTokenParameters(PLAIN_CODE_VERIFIER);

@@ -24,7 +24,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.context.Context;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
-import org.springframework.security.oauth2.server.authorization.TokenType;
+import org.springframework.security.oauth2.core.OAuth2TokenType;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationGrantAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.util.Assert;
@@ -49,8 +49,8 @@ public interface OAuth2TokenContext extends Context {
 		return get(OAuth2Authorization.class);
 	}
 
-	default TokenType getTokenType() {
-		return get(TokenType.class);
+	default OAuth2TokenType getTokenType() {
+		return get(OAuth2TokenType.class);
 	}
 
 	default AuthorizationGrantType getAuthorizationGrantType() {
@@ -80,8 +80,8 @@ public interface OAuth2TokenContext extends Context {
 			return put(OAuth2Authorization.class, authorization);
 		}
 
-		public B tokenType(TokenType tokenType) {
-			return put(TokenType.class, tokenType);
+		public B tokenType(OAuth2TokenType tokenType) {
+			return put(OAuth2TokenType.class, tokenType);
 		}
 
 		public B authorizationGrantType(AuthorizationGrantType authorizationGrantType) {

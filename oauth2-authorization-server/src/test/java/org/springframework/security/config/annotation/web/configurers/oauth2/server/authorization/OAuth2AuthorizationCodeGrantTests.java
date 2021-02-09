@@ -46,6 +46,7 @@ import org.springframework.security.config.test.SpringTestRule;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
+import org.springframework.security.oauth2.core.OAuth2TokenType;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AccessTokenResponse;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationResponseType;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
@@ -60,7 +61,6 @@ import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.TestOAuth2Authorizations;
-import org.springframework.security.oauth2.server.authorization.TokenType;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
@@ -105,6 +105,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 	private static final String S256_CODE_VERIFIER = "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk";
 	private static final String S256_CODE_CHALLENGE = "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM";
 	private static final String AUTHORITIES_CLAIM = "authorities";
+	private static final OAuth2TokenType AUTHORIZATION_CODE_TOKEN_TYPE = new OAuth2TokenType(OAuth2ParameterNames.CODE);
 
 	private static RegisteredClientRepository registeredClientRepository;
 	private static OAuth2AuthorizationService authorizationService;
@@ -199,7 +200,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();
 		when(authorizationService.findByToken(
 				eq(authorization.getToken(OAuth2AuthorizationCode.class).getToken().getTokenValue()),
-				eq(TokenType.AUTHORIZATION_CODE)))
+				eq(AUTHORIZATION_CODE_TOKEN_TYPE)))
 				.thenReturn(authorization);
 
 		OAuth2AccessTokenResponse accessTokenResponse = assertTokenRequestReturnsAccessTokenResponse(
@@ -226,7 +227,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();
 		when(authorizationService.findByToken(
 				eq(authorization.getToken(OAuth2AuthorizationCode.class).getToken().getTokenValue()),
-				eq(TokenType.AUTHORIZATION_CODE)))
+				eq(AUTHORIZATION_CODE_TOKEN_TYPE)))
 				.thenReturn(authorization);
 
 		assertTokenRequestReturnsAccessTokenResponse(
@@ -253,7 +254,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 		verify(registeredClientRepository).findByClientId(eq(registeredClient.getClientId()));
 		verify(authorizationService).findByToken(
 				eq(authorization.getToken(OAuth2AuthorizationCode.class).getToken().getTokenValue()),
-				eq(TokenType.AUTHORIZATION_CODE));
+				eq(AUTHORIZATION_CODE_TOKEN_TYPE));
 		verify(authorizationService).save(any());
 
 		MockHttpServletResponse servletResponse = mvcResult.getResponse();
@@ -287,7 +288,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 
 		when(authorizationService.findByToken(
 				eq(authorization.getToken(OAuth2AuthorizationCode.class).getToken().getTokenValue()),
-				eq(TokenType.AUTHORIZATION_CODE)))
+				eq(AUTHORIZATION_CODE_TOKEN_TYPE)))
 				.thenReturn(authorization);
 
 		this.mvc.perform(post(OAuth2TokenEndpointFilter.DEFAULT_TOKEN_ENDPOINT_URI)
@@ -304,7 +305,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 		verify(registeredClientRepository, times(2)).findByClientId(eq(registeredClient.getClientId()));
 		verify(authorizationService, times(2)).findByToken(
 				eq(authorization.getToken(OAuth2AuthorizationCode.class).getToken().getTokenValue()),
-				eq(TokenType.AUTHORIZATION_CODE));
+				eq(AUTHORIZATION_CODE_TOKEN_TYPE));
 		verify(authorizationService, times(2)).save(any());
 	}
 
@@ -319,7 +320,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();
 		when(authorizationService.findByToken(
 				eq(authorization.getToken(OAuth2AuthorizationCode.class).getToken().getTokenValue()),
-				eq(TokenType.AUTHORIZATION_CODE)))
+				eq(AUTHORIZATION_CODE_TOKEN_TYPE)))
 				.thenReturn(authorization);
 
 		this.mvc.perform(post(OAuth2TokenEndpointFilter.DEFAULT_TOKEN_ENDPOINT_URI)
@@ -379,7 +380,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 		OAuth2TokenCustomizer<JwtEncodingContext> jwtCustomizer() {
 			return context -> {
 				if (AuthorizationGrantType.AUTHORIZATION_CODE.equals(context.getAuthorizationGrantType()) &&
-						TokenType.ACCESS_TOKEN.equals(context.getTokenType())) {
+						OAuth2TokenType.ACCESS_TOKEN.equals(context.getTokenType())) {
 					Authentication principal = context.getPrincipal();
 					Set<String> authorities = principal.getAuthorities().stream()
 							.map(GrantedAuthority::getAuthority)

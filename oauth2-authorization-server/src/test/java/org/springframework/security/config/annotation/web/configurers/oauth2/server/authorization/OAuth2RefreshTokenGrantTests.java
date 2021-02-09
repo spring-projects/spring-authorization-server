@@ -55,7 +55,7 @@ import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.TestOAuth2Authorizations;
-import org.springframework.security.oauth2.server.authorization.TokenType;
+import org.springframework.security.oauth2.core.OAuth2TokenType;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
@@ -127,7 +127,7 @@ public class OAuth2RefreshTokenGrantTests {
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();
 		when(authorizationService.findByToken(
 				eq(authorization.getRefreshToken().getToken().getTokenValue()),
-				eq(TokenType.REFRESH_TOKEN)))
+				eq(OAuth2TokenType.REFRESH_TOKEN)))
 				.thenReturn(authorization);
 
 		MvcResult mvcResult = this.mvc.perform(post(OAuth2TokenEndpointFilter.DEFAULT_TOKEN_ENDPOINT_URI)
@@ -147,7 +147,7 @@ public class OAuth2RefreshTokenGrantTests {
 		verify(registeredClientRepository).findByClientId(eq(registeredClient.getClientId()));
 		verify(authorizationService).findByToken(
 				eq(authorization.getRefreshToken().getToken().getTokenValue()),
-				eq(TokenType.REFRESH_TOKEN));
+				eq(OAuth2TokenType.REFRESH_TOKEN));
 		verify(authorizationService).save(any());
 
 		MockHttpServletResponse servletResponse = mvcResult.getResponse();

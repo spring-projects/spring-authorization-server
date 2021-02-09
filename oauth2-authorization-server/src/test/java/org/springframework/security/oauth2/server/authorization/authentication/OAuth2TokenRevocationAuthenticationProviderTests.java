@@ -28,7 +28,7 @@ import org.springframework.security.oauth2.core.OAuth2RefreshToken;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.TestOAuth2Authorizations;
-import org.springframework.security.oauth2.server.authorization.TokenType;
+import org.springframework.security.oauth2.core.OAuth2TokenType;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
 
@@ -76,7 +76,7 @@ public class OAuth2TokenRevocationAuthenticationProviderTests {
 		TestingAuthenticationToken clientPrincipal = new TestingAuthenticationToken(
 				registeredClient.getClientId(), registeredClient.getClientSecret());
 		OAuth2TokenRevocationAuthenticationToken authentication = new OAuth2TokenRevocationAuthenticationToken(
-				"token", clientPrincipal, TokenType.ACCESS_TOKEN.getValue());
+				"token", clientPrincipal, OAuth2TokenType.ACCESS_TOKEN.getValue());
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 				.isInstanceOf(OAuth2AuthenticationException.class)
 				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
@@ -90,7 +90,7 @@ public class OAuth2TokenRevocationAuthenticationProviderTests {
 		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(
 				registeredClient.getClientId(), registeredClient.getClientSecret(), ClientAuthenticationMethod.BASIC, null);
 		OAuth2TokenRevocationAuthenticationToken authentication = new OAuth2TokenRevocationAuthenticationToken(
-				"token", clientPrincipal, TokenType.ACCESS_TOKEN.getValue());
+				"token", clientPrincipal, OAuth2TokenType.ACCESS_TOKEN.getValue());
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 				.isInstanceOf(OAuth2AuthenticationException.class)
 				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
@@ -103,7 +103,7 @@ public class OAuth2TokenRevocationAuthenticationProviderTests {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient);
 		OAuth2TokenRevocationAuthenticationToken authentication = new OAuth2TokenRevocationAuthenticationToken(
-				"token", clientPrincipal, TokenType.ACCESS_TOKEN.getValue());
+				"token", clientPrincipal, OAuth2TokenType.ACCESS_TOKEN.getValue());
 		OAuth2TokenRevocationAuthenticationToken authenticationResult =
 				(OAuth2TokenRevocationAuthenticationToken) this.authenticationProvider.authenticate(authentication);
 		assertThat(authenticationResult.isAuthenticated()).isFalse();
@@ -122,7 +122,7 @@ public class OAuth2TokenRevocationAuthenticationProviderTests {
 
 		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient);
 		OAuth2TokenRevocationAuthenticationToken authentication = new OAuth2TokenRevocationAuthenticationToken(
-				"token", clientPrincipal, TokenType.ACCESS_TOKEN.getValue());
+				"token", clientPrincipal, OAuth2TokenType.ACCESS_TOKEN.getValue());
 
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 				.isInstanceOf(OAuth2AuthenticationException.class)
@@ -143,7 +143,7 @@ public class OAuth2TokenRevocationAuthenticationProviderTests {
 
 		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient);
 		OAuth2TokenRevocationAuthenticationToken authentication = new OAuth2TokenRevocationAuthenticationToken(
-				authorization.getRefreshToken().getToken().getTokenValue(), clientPrincipal, TokenType.REFRESH_TOKEN.getValue());
+				authorization.getRefreshToken().getToken().getTokenValue(), clientPrincipal, OAuth2TokenType.REFRESH_TOKEN.getValue());
 
 		OAuth2TokenRevocationAuthenticationToken authenticationResult =
 				(OAuth2TokenRevocationAuthenticationToken) this.authenticationProvider.authenticate(authentication);
@@ -171,7 +171,7 @@ public class OAuth2TokenRevocationAuthenticationProviderTests {
 
 		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient);
 		OAuth2TokenRevocationAuthenticationToken authentication = new OAuth2TokenRevocationAuthenticationToken(
-				authorization.getAccessToken().getToken().getTokenValue(), clientPrincipal, TokenType.ACCESS_TOKEN.getValue());
+				authorization.getAccessToken().getToken().getTokenValue(), clientPrincipal, OAuth2TokenType.ACCESS_TOKEN.getValue());
 
 		OAuth2TokenRevocationAuthenticationToken authenticationResult =
 				(OAuth2TokenRevocationAuthenticationToken) this.authenticationProvider.authenticate(authentication);

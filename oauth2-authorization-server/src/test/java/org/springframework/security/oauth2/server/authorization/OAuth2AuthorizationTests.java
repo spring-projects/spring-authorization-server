@@ -106,7 +106,7 @@ public class OAuth2AuthorizationTests {
 	public void attributeWhenValueNullThenThrowIllegalArgumentException() {
 		assertThatThrownBy(() ->
 				OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
-						.attribute(TokenType.AUTHORIZATION_CODE.getValue(), null))
+						.attribute("name", null))
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessage("value cannot be null");
 	}

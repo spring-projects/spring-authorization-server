@@ -46,6 +46,7 @@ import org.springframework.security.config.test.SpringTestRule;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
+import org.springframework.security.oauth2.core.OAuth2TokenType;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AccessTokenResponse;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationResponseType;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
@@ -58,7 +59,6 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
-import org.springframework.security.oauth2.server.authorization.TokenType;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
@@ -100,6 +100,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class OidcTests {
 	private static final String ISSUER_URL = "https://example.com/issuer1";
 	private static final String AUTHORITIES_CLAIM = "authorities";
+	private static final OAuth2TokenType AUTHORIZATION_CODE_TOKEN_TYPE = new OAuth2TokenType(OAuth2ParameterNames.CODE);
 	private static RegisteredClientRepository registeredClientRepository;
 	private static OAuth2AuthorizationService authorizationService;
 	private static JWKSource<SecurityContext> jwkSource;
@@ -184,7 +185,7 @@ public class OidcTests {
 
 		when(authorizationService.findByToken(
 				eq(authorization.getToken(OAuth2AuthorizationCode.class).getToken().getTokenValue()),
-				eq(TokenType.AUTHORIZATION_CODE)))
+				eq(AUTHORIZATION_CODE_TOKEN_TYPE)))
 				.thenReturn(authorization);
 
 		mvcResult = this.mvc.perform(post(OAuth2TokenEndpointFilter.DEFAULT_TOKEN_ENDPOINT_URI)
@@ -205,7 +206,7 @@ public class OidcTests {
 		verify(registeredClientRepository, times(2)).findByClientId(eq(registeredClient.getClientId()));
 		verify(authorizationService).findByToken(
 				eq(authorization.getToken(OAuth2AuthorizationCode.class).getToken().getTokenValue()),
-				eq(TokenType.AUTHORIZATION_CODE));
+				eq(AUTHORIZATION_CODE_TOKEN_TYPE));
 		verify(authorizationService, times(2)).save(any());
 
 		MockHttpServletResponse servletResponse = mvcResult.getResponse();

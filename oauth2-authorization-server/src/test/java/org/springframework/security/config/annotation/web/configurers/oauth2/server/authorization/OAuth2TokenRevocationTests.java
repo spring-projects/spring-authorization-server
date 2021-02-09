@@ -43,7 +43,7 @@ import org.springframework.security.oauth2.jose.TestJwks;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.TestOAuth2Authorizations;
-import org.springframework.security.oauth2.server.authorization.TokenType;
+import org.springframework.security.oauth2.core.OAuth2TokenType;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
@@ -105,7 +105,7 @@ public class OAuth2TokenRevocationTests {
 
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();
 		OAuth2RefreshToken token = authorization.getRefreshToken().getToken();
-		TokenType tokenType = TokenType.REFRESH_TOKEN;
+		OAuth2TokenType tokenType = OAuth2TokenType.REFRESH_TOKEN;
 		when(authorizationService.findByToken(eq(token.getTokenValue()), isNull())).thenReturn(authorization);
 
 		this.mvc.perform(post(OAuth2TokenRevocationEndpointFilter.DEFAULT_TOKEN_REVOCATION_ENDPOINT_URI)
@@ -148,7 +148,7 @@ public class OAuth2TokenRevocationTests {
 
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();
 		OAuth2AccessToken token = authorization.getAccessToken().getToken();
-		TokenType tokenType = TokenType.ACCESS_TOKEN;
+		OAuth2TokenType tokenType = OAuth2TokenType.ACCESS_TOKEN;
 		when(authorizationService.findByToken(eq(token.getTokenValue()), isNull())).thenReturn(authorization);
 
 		this.mvc.perform(post(tokenRevocationEndpointUri)
@@ -170,7 +170,7 @@ public class OAuth2TokenRevocationTests {
 		assertThat(refreshToken.isInvalidated()).isFalse();
 	}
 
-	private static MultiValueMap<String, String> getTokenRevocationRequestParameters(AbstractOAuth2Token token, TokenType tokenType) {
+	private static MultiValueMap<String, String> getTokenRevocationRequestParameters(AbstractOAuth2Token token, OAuth2TokenType tokenType) {
 		MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
 		parameters.set(OAuth2ParameterNames2.TOKEN, token.getTokenValue());
 		parameters.set(OAuth2ParameterNames2.TOKEN_TYPE_HINT, tokenType.getValue());

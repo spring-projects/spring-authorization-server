@@ -15,6 +15,7 @@
  */
 package org.springframework.security.oauth2.server.authorization.authentication;
 
+import java.security.Principal;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Base64;
@@ -139,7 +140,7 @@ public class OAuth2RefreshTokenAuthenticationProvider implements AuthenticationP
 
 		// @formatter:off
 		JwtEncodingContext context = JwtEncodingContextUtils.accessTokenContext(registeredClient, authorization, scopes)
-				.principal(authorization.getAttribute(OAuth2AuthorizationAttributeNames.PRINCIPAL))
+				.principal(authorization.getAttribute(Principal.class.getName()))
 				.authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
 				.authorizationGrant(refreshTokenAuthentication)
 				.build();

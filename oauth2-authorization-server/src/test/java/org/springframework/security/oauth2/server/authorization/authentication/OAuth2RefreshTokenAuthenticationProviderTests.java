@@ -15,6 +15,7 @@
  */
 package org.springframework.security.oauth2.server.authorization.authentication;
 
+import java.security.Principal;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
@@ -133,7 +134,7 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 		verify(this.jwtCustomizer).customize(jwtEncodingContextCaptor.capture());
 		JwtEncodingContext jwtEncodingContext = jwtEncodingContextCaptor.getValue();
 		assertThat(jwtEncodingContext.getRegisteredClient()).isEqualTo(registeredClient);
-		assertThat(jwtEncodingContext.<Authentication>getPrincipal()).isEqualTo(authorization.getAttribute(OAuth2AuthorizationAttributeNames.PRINCIPAL));
+		assertThat(jwtEncodingContext.<Authentication>getPrincipal()).isEqualTo(authorization.getAttribute(Principal.class.getName()));
 		assertThat(jwtEncodingContext.getAuthorization()).isEqualTo(authorization);
 		assertThat(jwtEncodingContext.getTokenType()).isEqualTo(TokenType.ACCESS_TOKEN);
 		assertThat(jwtEncodingContext.getAuthorizationGrantType()).isEqualTo(AuthorizationGrantType.REFRESH_TOKEN);

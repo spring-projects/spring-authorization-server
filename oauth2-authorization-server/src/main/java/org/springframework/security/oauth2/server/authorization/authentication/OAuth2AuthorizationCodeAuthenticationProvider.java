@@ -15,6 +15,7 @@
  */
 package org.springframework.security.oauth2.server.authorization.authentication;
 
+import java.security.Principal;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -128,7 +129,7 @@ public class OAuth2AuthorizationCodeAuthenticationProvider implements Authentica
 
 		// @formatter:off
 		JwtEncodingContext context = JwtEncodingContextUtils.accessTokenContext(registeredClient, authorization)
-				.principal(authorization.getAttribute(OAuth2AuthorizationAttributeNames.PRINCIPAL))
+				.principal(authorization.getAttribute(Principal.class.getName()))
 				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
 				.authorizationGrant(authorizationCodeAuthentication)
 				.build();
@@ -153,7 +154,7 @@ public class OAuth2AuthorizationCodeAuthenticationProvider implements Authentica
 		if (authorizationRequest.getScopes().contains(OidcScopes.OPENID)) {
 			// @formatter:off
 			context = JwtEncodingContextUtils.idTokenContext(registeredClient, authorization)
-					.principal(authorization.getAttribute(OAuth2AuthorizationAttributeNames.PRINCIPAL))
+					.principal(authorization.getAttribute(Principal.class.getName()))
 					.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
 					.authorizationGrant(authorizationCodeAuthentication)
 					.build();

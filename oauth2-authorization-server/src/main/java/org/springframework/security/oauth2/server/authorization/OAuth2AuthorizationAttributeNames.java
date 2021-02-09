@@ -38,9 +38,4 @@ public interface OAuth2AuthorizationAttributeNames {
 	 */
 	String AUTHORIZED_SCOPES = OAuth2Authorization.class.getName().concat(".AUTHORIZED_SCOPES");
 
-	/**
-	 * The name of the attribute used for the resource owner {@code Principal}.
-	 */
-	String PRINCIPAL = OAuth2Authorization.class.getName().concat(".PRINCIPAL");
-
 }

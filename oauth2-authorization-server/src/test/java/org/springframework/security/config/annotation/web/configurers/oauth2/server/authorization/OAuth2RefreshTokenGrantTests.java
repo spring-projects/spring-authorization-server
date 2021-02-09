@@ -17,6 +17,7 @@ package org.springframework.security.config.annotation.web.configurers.oauth2.se
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.security.Principal;
 import java.util.Base64;
 import java.util.List;
 import java.util.Set;
@@ -52,7 +53,6 @@ import org.springframework.security.oauth2.jose.TestKeys;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
-import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationAttributeNames;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.TestOAuth2Authorizations;
 import org.springframework.security.oauth2.server.authorization.TokenType;
@@ -159,7 +159,7 @@ public class OAuth2RefreshTokenGrantTests {
 		// Assert user authorities was propagated as claim in JWT
 		Jwt jwt = jwtDecoder.decode(accessTokenResponse.getAccessToken().getTokenValue());
 		List<String> authoritiesClaim = jwt.getClaim(AUTHORITIES_CLAIM);
-		Authentication principal = authorization.getAttribute(OAuth2AuthorizationAttributeNames.PRINCIPAL);
+		Authentication principal = authorization.getAttribute(Principal.class.getName());
 		Set<String> userAuthorities = principal.getAuthorities().stream()
 				.map(GrantedAuthority::getAuthority)
 				.collect(Collectors.toSet());

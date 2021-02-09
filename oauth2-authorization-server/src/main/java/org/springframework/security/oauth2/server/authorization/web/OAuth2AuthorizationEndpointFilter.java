@@ -17,6 +17,7 @@ package org.springframework.security.oauth2.server.authorization.web;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.security.Principal;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
@@ -194,7 +195,7 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 		OAuth2Authorization.Builder builder = OAuth2Authorization.withRegisteredClient(registeredClient)
 				.principalName(principal.getName())
 				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-				.attribute(OAuth2AuthorizationAttributeNames.PRINCIPAL, principal)
+				.attribute(Principal.class.getName(), principal)
 				.attribute(OAuth2AuthorizationAttributeNames.AUTHORIZATION_REQUEST, authorizationRequest);
 
 		if (registeredClient.getClientSettings().requireUserConsent()) {

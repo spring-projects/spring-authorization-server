@@ -15,6 +15,7 @@
  */
 package org.springframework.security.oauth2.server.authorization;
 
+import java.security.Principal;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
@@ -67,7 +68,7 @@ public class TestOAuth2Authorizations {
 				.accessToken(accessToken)
 				.refreshToken(refreshToken)
 				.attribute(OAuth2AuthorizationAttributeNames.AUTHORIZATION_REQUEST, authorizationRequest)
-				.attribute(OAuth2AuthorizationAttributeNames.PRINCIPAL,
+				.attribute(Principal.class.getName(),
 						new TestingAuthenticationToken("principal", null, "ROLE_A", "ROLE_B"))
 				.attribute(OAuth2AuthorizationAttributeNames.AUTHORIZED_SCOPES, authorizationRequest.getScopes());
 	}

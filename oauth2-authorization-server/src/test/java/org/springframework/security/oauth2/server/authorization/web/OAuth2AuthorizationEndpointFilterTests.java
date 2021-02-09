@@ -16,6 +16,7 @@
 package org.springframework.security.oauth2.server.authorization.web;
 
 import java.nio.charset.StandardCharsets;
+import java.security.Principal;
 import java.util.Set;
 import java.util.function.Consumer;
 
@@ -468,7 +469,7 @@ public class OAuth2AuthorizationEndpointFilterTests {
 		assertThat(authorization.getRegisteredClientId()).isEqualTo(registeredClient.getId());
 		assertThat(authorization.getPrincipalName()).isEqualTo(this.authentication.getPrincipal().toString());
 		assertThat(authorization.getAuthorizationGrantType()).isEqualTo(AuthorizationGrantType.AUTHORIZATION_CODE);
-		assertThat(authorization.<Authentication>getAttribute(OAuth2AuthorizationAttributeNames.PRINCIPAL))
+		assertThat(authorization.<Authentication>getAttribute(Principal.class.getName()))
 				.isEqualTo(this.authentication);
 
 		OAuth2Authorization.Token<OAuth2AuthorizationCode> authorizationCode = authorization.getToken(OAuth2AuthorizationCode.class);
@@ -518,7 +519,7 @@ public class OAuth2AuthorizationEndpointFilterTests {
 		assertThat(authorization.getRegisteredClientId()).isEqualTo(registeredClient.getId());
 		assertThat(authorization.getPrincipalName()).isEqualTo(this.authentication.getPrincipal().toString());
 		assertThat(authorization.getAuthorizationGrantType()).isEqualTo(AuthorizationGrantType.AUTHORIZATION_CODE);
-		assertThat(authorization.<Authentication>getAttribute(OAuth2AuthorizationAttributeNames.PRINCIPAL))
+		assertThat(authorization.<Authentication>getAttribute(Principal.class.getName()))
 				.isEqualTo(this.authentication);
 
 		OAuth2Authorization.Token<OAuth2AuthorizationCode> authorizationCode = authorization.getToken(OAuth2AuthorizationCode.class);
@@ -566,7 +567,7 @@ public class OAuth2AuthorizationEndpointFilterTests {
 		assertThat(authorization.getRegisteredClientId()).isEqualTo(registeredClient.getId());
 		assertThat(authorization.getPrincipalName()).isEqualTo(this.authentication.getPrincipal().toString());
 		assertThat(authorization.getAuthorizationGrantType()).isEqualTo(AuthorizationGrantType.AUTHORIZATION_CODE);
-		assertThat(authorization.<Authentication>getAttribute(OAuth2AuthorizationAttributeNames.PRINCIPAL))
+		assertThat(authorization.<Authentication>getAttribute(Principal.class.getName()))
 				.isEqualTo(this.authentication);
 
 		String state = authorization.getAttribute(OAuth2ParameterNames.STATE);

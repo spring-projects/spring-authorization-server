@@ -148,10 +148,11 @@ public class OAuth2RefreshTokenAuthenticationProvider implements AuthenticationP
 
 		JoseHeader headers = context.getHeaders().build();
 		JwtClaimsSet claims = context.getClaims().build();
-		Jwt jwt = this.jwtEncoder.encode(headers, claims);
+		Jwt jwtAccessToken = this.jwtEncoder.encode(headers, claims);
 
 		OAuth2AccessToken accessToken = new OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER,
-			jwt.getTokenValue(), jwt.getIssuedAt(), jwt.getExpiresAt(), jwt.getClaim(OAuth2ParameterNames.SCOPE));
+				jwtAccessToken.getTokenValue(), jwtAccessToken.getIssuedAt(),
+				jwtAccessToken.getExpiresAt(), jwtAccessToken.getClaim(OAuth2ParameterNames.SCOPE));
 
 		TokenSettings tokenSettings = registeredClient.getTokenSettings();
 
@@ -160,11 +161,15 @@ public class OAuth2RefreshTokenAuthenticationProvider implements AuthenticationP
 			currentRefreshToken = generateRefreshToken(tokenSettings.refreshTokenTimeToLive());
 		}
 
+		// @formatter:off
 		authorization = OAuth2Authorization.from(authorization)
-				.accessToken(accessToken)
+				.token(accessToken,
+						(metadata) ->
+								metadata.put(OAuth2Authorization.Token.CLAIMS_METADATA_NAME, jwtAccessToken.getClaims()))
 				.refreshToken(currentRefreshToken)
-				.attribute(OAuth2AuthorizationAttributeNames.ACCESS_TOKEN_ATTRIBUTES, jwt)
 				.build();
+		// @formatter:on
+
 		this.authorizationService.save(authorization);
 
 		return new OAuth2AccessTokenAuthenticationToken(

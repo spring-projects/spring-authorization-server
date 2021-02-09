@@ -16,7 +16,6 @@
 package org.springframework.security.oauth2.server.authorization;
 
 
-import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 
 /**
@@ -43,11 +42,6 @@ public interface OAuth2AuthorizationAttributeNames {
 	 * The name of the attribute used for the authorized scope(s).
 	 */
 	String AUTHORIZED_SCOPES = OAuth2Authorization.class.getName().concat(".AUTHORIZED_SCOPES");
-
-	/**
-	 * The name of the attribute used for the attributes/claims of the {@link OAuth2AccessToken}.
-	 */
-	String ACCESS_TOKEN_ATTRIBUTES = OAuth2Authorization.class.getName().concat(".ACCESS_TOKEN_ATTRIBUTES");
 
 	/**
 	 * The name of the attribute used for the resource owner {@code Principal}.

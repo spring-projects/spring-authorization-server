@@ -137,10 +137,11 @@ public class OAuth2AuthorizationCodeAuthenticationProvider implements Authentica
 
 		JoseHeader headers = context.getHeaders().build();
 		JwtClaimsSet claims = context.getClaims().build();
-		Jwt jwt = this.jwtEncoder.encode(headers, claims);
+		Jwt jwtAccessToken = this.jwtEncoder.encode(headers, claims);
 
 		OAuth2AccessToken accessToken = new OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER,
-				jwt.getTokenValue(), jwt.getIssuedAt(), jwt.getExpiresAt(), jwt.getClaim(OAuth2ParameterNames.SCOPE));
+				jwtAccessToken.getTokenValue(), jwtAccessToken.getIssuedAt(),
+				jwtAccessToken.getExpiresAt(), jwtAccessToken.getClaim(OAuth2ParameterNames.SCOPE));
 
 		OAuth2RefreshToken refreshToken = null;
 		if (registeredClient.getAuthorizationGrantTypes().contains(AuthorizationGrantType.REFRESH_TOKEN)) {
@@ -148,7 +149,7 @@ public class OAuth2AuthorizationCodeAuthenticationProvider implements Authentica
 					registeredClient.getTokenSettings().refreshTokenTimeToLive());
 		}
 
-		OidcIdToken idToken = null;
+		Jwt jwtIdToken = null;
 		if (authorizationRequest.getScopes().contains(OidcScopes.OPENID)) {
 			// @formatter:off
 			context = JwtEncodingContextUtils.idTokenContext(registeredClient, authorization)
@@ -161,22 +162,34 @@ public class OAuth2AuthorizationCodeAuthenticationProvider implements Authentica
 
 			headers = context.getHeaders().build();
 			claims = context.getClaims().build();
-			Jwt jwtIdToken = this.jwtEncoder.encode(headers, claims);
-
-			idToken = new OidcIdToken(jwtIdToken.getTokenValue(), jwtIdToken.getIssuedAt(),
-					jwtIdToken.getExpiresAt(), jwtIdToken.getClaims());
+			jwtIdToken = this.jwtEncoder.encode(headers, claims);
 		}
 
+		OidcIdToken idToken;
+		if (jwtIdToken != null) {
+			idToken = new OidcIdToken(jwtIdToken.getTokenValue(), jwtIdToken.getIssuedAt(),
+					jwtIdToken.getExpiresAt(), jwtIdToken.getClaims());
+		} else {
+			idToken = null;
+		}
+
+		// @formatter:off
 		OAuth2Authorization.Builder authorizationBuilder = OAuth2Authorization.from(authorization)
-				.accessToken(accessToken)
-				.attribute(OAuth2AuthorizationAttributeNames.ACCESS_TOKEN_ATTRIBUTES, jwt);
+				.token(accessToken,
+						(metadata) ->
+								metadata.put(OAuth2Authorization.Token.CLAIMS_METADATA_NAME, jwtAccessToken.getClaims())
+				);
 		if (refreshToken != null) {
 			authorizationBuilder.refreshToken(refreshToken);
 		}
 		if (idToken != null) {
-			authorizationBuilder.token(idToken);
+			authorizationBuilder
+					.token(idToken,
+							(metadata) ->
+									metadata.put(OAuth2Authorization.Token.CLAIMS_METADATA_NAME, idToken.getClaims()));
 		}
 		authorization = authorizationBuilder.build();
+		// @formatter:on
 
 		// Invalidate the authorization code as it can only be used once
 		authorization = OAuth2AuthenticationProviderUtils.invalidate(authorization, authorizationCode.getToken());

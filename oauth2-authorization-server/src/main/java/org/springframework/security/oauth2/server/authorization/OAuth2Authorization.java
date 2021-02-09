@@ -221,6 +221,11 @@ public class OAuth2Authorization implements Serializable {
 		 */
 		public static final String INVALIDATED_METADATA_NAME = TOKEN_METADATA_BASE.concat("invalidated");
 
+		/**
+		 * The name of the metadata used for the claims of the token.
+		 */
+		public static final String CLAIMS_METADATA_NAME = TOKEN_METADATA_BASE.concat("claims");
+
 		private final T token;
 		private final Map<String, Object> metadata;
 
@@ -250,6 +255,16 @@ public class OAuth2Authorization implements Serializable {
 		 */
 		public boolean isInvalidated() {
 			return Boolean.TRUE.equals(getMetadata(INVALIDATED_METADATA_NAME));
+		}
+
+		/**
+		 * Returns the claims associated to the token.
+		 *
+		 * @return a {@code Map} of the claims, or {@code null} if not available
+		 */
+		@Nullable
+		public Map<String, Object> getClaims() {
+			return getMetadata(CLAIMS_METADATA_NAME);
 		}
 
 		/**

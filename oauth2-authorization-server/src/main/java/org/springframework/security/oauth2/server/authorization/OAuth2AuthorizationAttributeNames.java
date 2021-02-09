@@ -29,11 +29,6 @@ import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequ
 public interface OAuth2AuthorizationAttributeNames {
 
 	/**
-	 * The name of the attribute used for correlating the user consent request/response.
-	 */
-	String STATE = OAuth2Authorization.class.getName().concat(".STATE");
-
-	/**
 	 * The name of the attribute used for the {@link OAuth2AuthorizationRequest}.
 	 */
 	String AUTHORIZATION_REQUEST = OAuth2Authorization.class.getName().concat(".AUTHORIZATION_REQUEST");

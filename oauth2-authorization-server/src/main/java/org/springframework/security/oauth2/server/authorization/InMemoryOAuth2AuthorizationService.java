@@ -23,6 +23,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.springframework.lang.Nullable;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2RefreshToken;
+import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2AuthorizationCode;
 import org.springframework.util.Assert;
 
@@ -72,7 +73,7 @@ public final class InMemoryOAuth2AuthorizationService implements OAuth2Authoriza
 					matchesAuthorizationCode(authorization, token) ||
 					matchesAccessToken(authorization, token) ||
 					matchesRefreshToken(authorization, token);
-		} else if (OAuth2AuthorizationAttributeNames.STATE.equals(tokenType.getValue())) {
+		} else if (OAuth2ParameterNames.STATE.equals(tokenType.getValue())) {
 			return matchesState(authorization, token);
 		} else if (TokenType.AUTHORIZATION_CODE.equals(tokenType)) {
 			return matchesAuthorizationCode(authorization, token);
@@ -85,7 +86,7 @@ public final class InMemoryOAuth2AuthorizationService implements OAuth2Authoriza
 	}
 
 	private static boolean matchesState(OAuth2Authorization authorization, String token) {
-		return token.equals(authorization.getAttribute(OAuth2AuthorizationAttributeNames.STATE));
+		return token.equals(authorization.getAttribute(OAuth2ParameterNames.STATE));
 	}
 
 	private static boolean matchesAuthorizationCode(OAuth2Authorization authorization, String token) {

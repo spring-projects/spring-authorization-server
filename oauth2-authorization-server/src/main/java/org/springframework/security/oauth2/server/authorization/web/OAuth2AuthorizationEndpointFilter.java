@@ -200,7 +200,7 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 		if (registeredClient.getClientSettings().requireUserConsent()) {
 			String state = this.stateGenerator.generateKey();
 			OAuth2Authorization authorization = builder
-					.attribute(OAuth2AuthorizationAttributeNames.STATE, state)
+					.attribute(OAuth2ParameterNames.STATE, state)
 					.build();
 			this.authorizationService.save(authorization);
 
@@ -266,7 +266,7 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 		OAuth2Authorization authorization = OAuth2Authorization.from(userConsentRequestContext.getAuthorization())
 				.token(authorizationCode)
 				.attributes(attrs -> {
-					attrs.remove(OAuth2AuthorizationAttributeNames.STATE);
+					attrs.remove(OAuth2ParameterNames.STATE);
 					attrs.put(OAuth2AuthorizationAttributeNames.AUTHORIZED_SCOPES, userConsentRequestContext.getScopes());
 				})
 				.build();
@@ -376,7 +376,7 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 			return;
 		}
 		OAuth2Authorization authorization = this.authorizationService.findByToken(
-				userConsentRequestContext.getState(), new TokenType(OAuth2AuthorizationAttributeNames.STATE));
+				userConsentRequestContext.getState(), new TokenType(OAuth2ParameterNames.STATE));
 		if (authorization == null) {
 			userConsentRequestContext.setError(
 					createError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.STATE));
@@ -661,7 +661,7 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 			OAuth2AuthorizationRequest authorizationRequest = authorization.getAttribute(
 					OAuth2AuthorizationAttributeNames.AUTHORIZATION_REQUEST);
 			String state = authorization.getAttribute(
-					OAuth2AuthorizationAttributeNames.STATE);
+					OAuth2ParameterNames.STATE);
 
 			StringBuilder builder = new StringBuilder();
 

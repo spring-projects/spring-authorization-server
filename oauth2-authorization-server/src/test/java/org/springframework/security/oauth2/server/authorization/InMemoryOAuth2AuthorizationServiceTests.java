@@ -24,6 +24,7 @@ import org.junit.Test;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2RefreshToken;
+import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2AuthorizationCode;
@@ -110,12 +111,12 @@ public class InMemoryOAuth2AuthorizationServiceTests {
 		OAuth2Authorization authorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
 				.principalName(PRINCIPAL_NAME)
 				.authorizationGrantType(AUTHORIZATION_GRANT_TYPE)
-				.attribute(OAuth2AuthorizationAttributeNames.STATE, state)
+				.attribute(OAuth2ParameterNames.STATE, state)
 				.build();
 		this.authorizationService.save(authorization);
 
 		OAuth2Authorization result = this.authorizationService.findByToken(
-				state, new TokenType(OAuth2AuthorizationAttributeNames.STATE));
+				state, new TokenType(OAuth2ParameterNames.STATE));
 		assertThat(authorization).isEqualTo(result);
 		result = this.authorizationService.findByToken(state, null);
 		assertThat(authorization).isEqualTo(result);

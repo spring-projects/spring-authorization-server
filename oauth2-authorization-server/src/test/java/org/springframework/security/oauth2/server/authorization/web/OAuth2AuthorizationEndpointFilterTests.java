@@ -569,7 +569,7 @@ public class OAuth2AuthorizationEndpointFilterTests {
 		assertThat(authorization.<Authentication>getAttribute(OAuth2AuthorizationAttributeNames.PRINCIPAL))
 				.isEqualTo(this.authentication);
 
-		String state = authorization.getAttribute(OAuth2AuthorizationAttributeNames.STATE);
+		String state = authorization.getAttribute(OAuth2ParameterNames.STATE);
 		assertThat(state).isNotNull();
 
 		Set<String> authorizedScopes = authorization.getAttribute(OAuth2AuthorizationAttributeNames.AUTHORIZED_SCOPES);
@@ -620,7 +620,7 @@ public class OAuth2AuthorizationEndpointFilterTests {
 		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
 				.thenReturn(registeredClient);
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();
-		when(this.authorizationService.findByToken(eq("state"), eq(new TokenType(OAuth2AuthorizationAttributeNames.STATE))))
+		when(this.authorizationService.findByToken(eq("state"), eq(new TokenType(OAuth2ParameterNames.STATE))))
 				.thenReturn(authorization);
 
 		this.authentication.setAuthenticated(false);
@@ -638,7 +638,7 @@ public class OAuth2AuthorizationEndpointFilterTests {
 		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
 				.thenReturn(registeredClient);
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();
-		when(this.authorizationService.findByToken(eq("state"), eq(new TokenType(OAuth2AuthorizationAttributeNames.STATE))))
+		when(this.authorizationService.findByToken(eq("state"), eq(new TokenType(OAuth2ParameterNames.STATE))))
 				.thenReturn(authorization);
 
 		this.authentication = new TestingAuthenticationToken("other-principal", "password");
@@ -662,7 +662,7 @@ public class OAuth2AuthorizationEndpointFilterTests {
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient)
 				.principalName(this.authentication.getName())
 				.build();
-		when(this.authorizationService.findByToken(eq("state"), eq(new TokenType(OAuth2AuthorizationAttributeNames.STATE))))
+		when(this.authorizationService.findByToken(eq("state"), eq(new TokenType(OAuth2ParameterNames.STATE))))
 				.thenReturn(authorization);
 
 		doFilterWhenUserConsentRequestInvalidParameterThenError(
@@ -680,7 +680,7 @@ public class OAuth2AuthorizationEndpointFilterTests {
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient)
 				.principalName(this.authentication.getName())
 				.build();
-		when(this.authorizationService.findByToken(eq("state"), eq(new TokenType(OAuth2AuthorizationAttributeNames.STATE))))
+		when(this.authorizationService.findByToken(eq("state"), eq(new TokenType(OAuth2ParameterNames.STATE))))
 				.thenReturn(authorization);
 
 		doFilterWhenUserConsentRequestInvalidParameterThenError(
@@ -698,7 +698,7 @@ public class OAuth2AuthorizationEndpointFilterTests {
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient)
 				.principalName(this.authentication.getName())
 				.build();
-		when(this.authorizationService.findByToken(eq("state"), eq(new TokenType(OAuth2AuthorizationAttributeNames.STATE))))
+		when(this.authorizationService.findByToken(eq("state"), eq(new TokenType(OAuth2ParameterNames.STATE))))
 				.thenReturn(authorization);
 
 		doFilterWhenUserConsentRequestInvalidParameterThenError(
@@ -717,7 +717,7 @@ public class OAuth2AuthorizationEndpointFilterTests {
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(otherRegisteredClient)
 				.principalName(this.authentication.getName())
 				.build();
-		when(this.authorizationService.findByToken(eq("state"), eq(new TokenType(OAuth2AuthorizationAttributeNames.STATE))))
+		when(this.authorizationService.findByToken(eq("state"), eq(new TokenType(OAuth2ParameterNames.STATE))))
 				.thenReturn(authorization);
 
 		doFilterWhenUserConsentRequestInvalidParameterThenError(
@@ -735,7 +735,7 @@ public class OAuth2AuthorizationEndpointFilterTests {
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient)
 				.principalName(this.authentication.getName())
 				.build();
-		when(this.authorizationService.findByToken(eq("state"), eq(new TokenType(OAuth2AuthorizationAttributeNames.STATE))))
+		when(this.authorizationService.findByToken(eq("state"), eq(new TokenType(OAuth2ParameterNames.STATE))))
 				.thenReturn(authorization);
 
 		doFilterWhenUserConsentRequestInvalidParameterThenRedirect(
@@ -756,7 +756,7 @@ public class OAuth2AuthorizationEndpointFilterTests {
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient)
 				.principalName(this.authentication.getName())
 				.build();
-		when(this.authorizationService.findByToken(eq("state"), eq(new TokenType(OAuth2AuthorizationAttributeNames.STATE))))
+		when(this.authorizationService.findByToken(eq("state"), eq(new TokenType(OAuth2ParameterNames.STATE))))
 				.thenReturn(authorization);
 
 		doFilterWhenUserConsentRequestInvalidParameterThenRedirect(
@@ -777,7 +777,7 @@ public class OAuth2AuthorizationEndpointFilterTests {
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient)
 				.principalName(this.authentication.getName())
 				.build();
-		when(this.authorizationService.findByToken(eq("state"), eq(new TokenType(OAuth2AuthorizationAttributeNames.STATE))))
+		when(this.authorizationService.findByToken(eq("state"), eq(new TokenType(OAuth2ParameterNames.STATE))))
 				.thenReturn(authorization);
 
 		MockHttpServletRequest request = createUserConsentRequest(registeredClient);
@@ -800,7 +800,7 @@ public class OAuth2AuthorizationEndpointFilterTests {
 		assertThat(updatedAuthorization.getPrincipalName()).isEqualTo(this.authentication.getPrincipal().toString());
 		assertThat(updatedAuthorization.getAuthorizationGrantType()).isEqualTo(AuthorizationGrantType.AUTHORIZATION_CODE);
 		assertThat(updatedAuthorization.getToken(OAuth2AuthorizationCode.class)).isNotNull();
-		assertThat(updatedAuthorization.<String>getAttribute(OAuth2AuthorizationAttributeNames.STATE)).isNull();
+		assertThat(updatedAuthorization.<String>getAttribute(OAuth2ParameterNames.STATE)).isNull();
 		assertThat(updatedAuthorization.<OAuth2AuthorizationRequest>getAttribute(OAuth2AuthorizationAttributeNames.AUTHORIZATION_REQUEST))
 				.isEqualTo(authorization.<OAuth2AuthorizationRequest>getAttribute(OAuth2AuthorizationAttributeNames.AUTHORIZATION_REQUEST));
 		assertThat(updatedAuthorization.<Set<String>>getAttribute(OAuth2AuthorizationAttributeNames.AUTHORIZED_SCOPES))

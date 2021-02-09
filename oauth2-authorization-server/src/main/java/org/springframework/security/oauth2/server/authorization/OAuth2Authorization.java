@@ -404,6 +404,10 @@ public class OAuth2Authorization implements Serializable {
 
 			Assert.notNull(token, "token cannot be null");
 			Map<String, Object> metadata = Token.defaultMetadata();
+			Token<?> existingToken = this.tokens.get(token.getClass());
+			if (existingToken != null) {
+				metadata.putAll(existingToken.getMetadata());
+			}
 			metadataConsumer.accept(metadata);
 			Class<? extends AbstractOAuth2Token> tokenClass = token.getClass();
 			if (tokenClass.equals(OAuth2RefreshToken2.class)) {

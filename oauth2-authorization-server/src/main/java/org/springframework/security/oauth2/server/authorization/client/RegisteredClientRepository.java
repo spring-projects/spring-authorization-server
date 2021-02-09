@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright 2020-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package org.springframework.security.oauth2.server.authorization.client;
 
+import org.springframework.lang.Nullable;
+
 /**
  * A repository for OAuth 2.0 {@link RegisteredClient}(s).
  *
@@ -26,19 +28,23 @@ package org.springframework.security.oauth2.server.authorization.client;
 public interface RegisteredClientRepository {
 
 	/**
-	 * Returns the registered client identified by the provided {@code id}, or {@code null} if not found.
+	 * Returns the registered client identified by the provided {@code id},
+	 * or {@code null} if not found.
 	 *
 	 * @param id the registration identifier
 	 * @return the {@link RegisteredClient} if found, otherwise {@code null}
 	 */
+	@Nullable
 	RegisteredClient findById(String id);
 
 	/**
-	 * Returns the registered client identified by the provided {@code clientId}, or {@code null} if not found.
+	 * Returns the registered client identified by the provided {@code clientId},
+	 * or {@code null} if not found.
 	 *
 	 * @param clientId the client identifier
 	 * @return the {@link RegisteredClient} if found, otherwise {@code null}
 	 */
+	@Nullable
 	RegisteredClient findByClientId(String clientId);
 
 }

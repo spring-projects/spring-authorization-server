@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright 2020-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,15 @@
  */
 package org.springframework.security.oauth2.server.authorization.client;
 
-import org.junit.Test;
-import org.springframework.security.oauth2.core.AuthorizationGrantType;
-import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
-
 import java.util.Collections;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import org.junit.Test;
+
+import org.springframework.security.oauth2.core.AuthorizationGrantType;
+import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -231,7 +232,7 @@ public class RegisteredClientTests {
 				.build();
 
 		assertThat(registration.getAuthorizationGrantTypes())
-				.containsExactly(AuthorizationGrantType.AUTHORIZATION_CODE, AuthorizationGrantType.CLIENT_CREDENTIALS);
+				.containsExactlyInAnyOrder(AuthorizationGrantType.AUTHORIZATION_CODE, AuthorizationGrantType.CLIENT_CREDENTIALS);
 	}
 
 	@Test
@@ -249,7 +250,7 @@ public class RegisteredClientTests {
 				.build();
 
 		assertThat(registration.getAuthorizationGrantTypes())
-				.containsExactly(AuthorizationGrantType.AUTHORIZATION_CODE, AuthorizationGrantType.CLIENT_CREDENTIALS);
+				.containsExactlyInAnyOrder(AuthorizationGrantType.AUTHORIZATION_CODE, AuthorizationGrantType.CLIENT_CREDENTIALS);
 	}
 
 	@Test
@@ -280,7 +281,7 @@ public class RegisteredClientTests {
 				.build();
 
 		assertThat(registration.getClientAuthenticationMethods())
-				.containsExactly(ClientAuthenticationMethod.BASIC, ClientAuthenticationMethod.POST);
+				.containsExactlyInAnyOrder(ClientAuthenticationMethod.BASIC, ClientAuthenticationMethod.POST);
 	}
 
 	@Test
@@ -298,7 +299,7 @@ public class RegisteredClientTests {
 				.build();
 
 		assertThat(registration.getClientAuthenticationMethods())
-				.containsExactly(ClientAuthenticationMethod.BASIC, ClientAuthenticationMethod.POST);
+				.containsExactlyInAnyOrder(ClientAuthenticationMethod.BASIC, ClientAuthenticationMethod.POST);
 	}
 
 	@Test
@@ -320,7 +321,7 @@ public class RegisteredClientTests {
 	@Test
 	public void buildWhenRegisteredClientProvidedThenMakesACopy() {
 		RegisteredClient registration = TestRegisteredClients.registeredClient().build();
-		RegisteredClient updated = RegisteredClient.withRegisteredClient(registration).build();
+		RegisteredClient updated = RegisteredClient.from(registration).build();
 
 		assertThat(registration.getId()).isEqualTo(updated.getId());
 		assertThat(registration.getClientId()).isEqualTo(updated.getClientId());
@@ -345,7 +346,7 @@ public class RegisteredClientTests {
 		String newSecret = "new-secret";
 		String newScope = "new-scope";
 		String newRedirectUri = "https://another-redirect-uri.com";
-		RegisteredClient updated = RegisteredClient.withRegisteredClient(registration)
+		RegisteredClient updated = RegisteredClient.from(registration)
 				.clientSecret(newSecret)
 				.scopes(scopes -> {
 					scopes.clear();

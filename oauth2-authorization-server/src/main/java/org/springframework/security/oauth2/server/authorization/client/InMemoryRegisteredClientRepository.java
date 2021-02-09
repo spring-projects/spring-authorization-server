@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright 2020-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,13 @@
  */
 package org.springframework.security.oauth2.server.authorization.client;
 
-import org.springframework.util.Assert;
-
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
+import org.springframework.lang.Nullable;
+import org.springframework.util.Assert;
 
 /**
  * A {@link RegisteredClientRepository} that stores {@link RegisteredClient}(s) in-memory.
@@ -74,12 +75,14 @@ public final class InMemoryRegisteredClientRepository implements RegisteredClien
 		this.clientIdRegistrationMap = clientIdRegistrationMapResult;
 	}
 
+	@Nullable
 	@Override
 	public RegisteredClient findById(String id) {
 		Assert.hasText(id, "id cannot be empty");
 		return this.idRegistrationMap.get(id);
 	}
 
+	@Nullable
 	@Override
 	public RegisteredClient findByClientId(String clientId) {
 		Assert.hasText(clientId, "clientId cannot be empty");

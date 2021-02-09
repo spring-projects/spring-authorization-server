@@ -49,7 +49,6 @@ import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.endpoint.PkceParameterNames;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
-import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationAttributeNames;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.TokenType;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
@@ -196,7 +195,7 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 				.principalName(principal.getName())
 				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
 				.attribute(Principal.class.getName(), principal)
-				.attribute(OAuth2AuthorizationAttributeNames.AUTHORIZATION_REQUEST, authorizationRequest);
+				.attribute(OAuth2AuthorizationRequest.class.getName(), authorizationRequest);
 
 		if (registeredClient.getClientSettings().requireUserConsent()) {
 			String state = this.stateGenerator.generateKey();
@@ -215,7 +214,7 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 					this.codeGenerator.generateKey(), issuedAt, expiresAt);
 			OAuth2Authorization authorization = builder
 					.token(authorizationCode)
-					.attribute(OAuth2AuthorizationAttributeNames.AUTHORIZED_SCOPES, authorizationRequest.getScopes())
+					.attribute(OAuth2Authorization.AUTHORIZED_SCOPE_ATTRIBUTE_NAME, authorizationRequest.getScopes())
 					.build();
 			this.authorizationService.save(authorization);
 
@@ -268,7 +267,7 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 				.token(authorizationCode)
 				.attributes(attrs -> {
 					attrs.remove(OAuth2ParameterNames.STATE);
-					attrs.put(OAuth2AuthorizationAttributeNames.AUTHORIZED_SCOPES, userConsentRequestContext.getScopes());
+					attrs.put(OAuth2Authorization.AUTHORIZED_SCOPE_ATTRIBUTE_NAME, userConsentRequestContext.getScopes());
 				})
 				.build();
 		this.authorizationService.save(authorization);
@@ -559,7 +558,7 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 		}
 
 		private OAuth2AuthorizationRequest getAuthorizationRequest() {
-			return getAuthorization().getAttribute(OAuth2AuthorizationAttributeNames.AUTHORIZATION_REQUEST);
+			return getAuthorization().getAttribute(OAuth2AuthorizationRequest.class.getName());
 		}
 	}
 
@@ -660,7 +659,7 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 				RegisteredClient registeredClient, OAuth2Authorization authorization) {
 
 			OAuth2AuthorizationRequest authorizationRequest = authorization.getAttribute(
-					OAuth2AuthorizationAttributeNames.AUTHORIZATION_REQUEST);
+					OAuth2AuthorizationRequest.class.getName());
 			String state = authorization.getAttribute(
 					OAuth2ParameterNames.STATE);
 

@@ -26,7 +26,6 @@ import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.TestJoseHeaders;
 import org.springframework.security.oauth2.jwt.TestJwtClaimsSets;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
-import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationAttributeNames;
 import org.springframework.security.oauth2.server.authorization.TestOAuth2Authorizations;
 import org.springframework.security.oauth2.server.authorization.TokenType;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeAuthenticationToken;
@@ -88,7 +87,7 @@ public class JwtEncodingContextTests {
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization().build();
 		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient);
 		OAuth2AuthorizationRequest authorizationRequest = authorization.getAttribute(
-				OAuth2AuthorizationAttributeNames.AUTHORIZATION_REQUEST);
+				OAuth2AuthorizationRequest.class.getName());
 		OAuth2AuthorizationCodeAuthenticationToken authorizationGrant =
 				new OAuth2AuthorizationCodeAuthenticationToken(
 						"code", clientPrincipal, authorizationRequest.getRedirectUri(), null);

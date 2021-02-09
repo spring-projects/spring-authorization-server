@@ -39,7 +39,6 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
-import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationAttributeNames;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.TokenType;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
@@ -107,7 +106,7 @@ public class OAuth2AuthorizationCodeAuthenticationProvider implements Authentica
 				authorization.getToken(OAuth2AuthorizationCode.class);
 
 		OAuth2AuthorizationRequest authorizationRequest = authorization.getAttribute(
-				OAuth2AuthorizationAttributeNames.AUTHORIZATION_REQUEST);
+				OAuth2AuthorizationRequest.class.getName());
 
 		if (!registeredClient.getClientId().equals(authorizationRequest.getClientId())) {
 			if (!authorizationCode.isInvalidated()) {

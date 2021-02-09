@@ -47,6 +47,14 @@ import org.springframework.util.Assert;
  */
 public class OAuth2Authorization implements Serializable {
 	private static final long serialVersionUID = Version.SERIAL_VERSION_UID;
+
+	/**
+	 * The name of the {@link #getAttribute(String) attribute} used for the authorized scope(s).
+	 * The value of the attribute is of type {@code Set<String>}.
+	 */
+	public static final String AUTHORIZED_SCOPE_ATTRIBUTE_NAME =
+			OAuth2Authorization.class.getName().concat(".AUTHORIZED_SCOPE");
+
 	private String registeredClientId;
 	private String principalName;
 	private AuthorizationGrantType authorizationGrantType;

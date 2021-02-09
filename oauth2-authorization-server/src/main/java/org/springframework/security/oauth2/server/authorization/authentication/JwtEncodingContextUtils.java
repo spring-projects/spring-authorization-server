@@ -27,11 +27,10 @@ import org.springframework.security.oauth2.core.oidc.endpoint.OidcParameterNames
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 import org.springframework.security.oauth2.jwt.JoseHeader;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
-import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
-import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationAttributeNames;
 import org.springframework.security.oauth2.server.authorization.TokenType;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
+import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
@@ -47,7 +46,7 @@ final class JwtEncodingContextUtils {
 	static JwtEncodingContext.Builder accessTokenContext(RegisteredClient registeredClient, OAuth2Authorization authorization) {
 		// @formatter:off
 		return accessTokenContext(registeredClient, authorization,
-				authorization.getAttribute(OAuth2AuthorizationAttributeNames.AUTHORIZED_SCOPES));
+				authorization.getAttribute(OAuth2Authorization.AUTHORIZED_SCOPE_ATTRIBUTE_NAME));
 		// @formatter:on
 	}
 
@@ -95,7 +94,7 @@ final class JwtEncodingContextUtils {
 		Instant issuedAt = Instant.now();
 		Instant expiresAt = issuedAt.plus(30, ChronoUnit.MINUTES);		// TODO Allow configuration for id token time-to-live
 		OAuth2AuthorizationRequest authorizationRequest = authorization.getAttribute(
-				OAuth2AuthorizationAttributeNames.AUTHORIZATION_REQUEST);
+				OAuth2AuthorizationRequest.class.getName());
 		String nonce = (String) authorizationRequest.getAdditionalParameters().get(OidcParameterNames.NONCE);
 
 		// @formatter:off

@@ -34,6 +34,7 @@ import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.OAuth2RefreshToken;
 import org.springframework.security.oauth2.core.OAuth2RefreshToken2;
+import org.springframework.security.oauth2.core.OAuth2TokenType;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 import org.springframework.security.oauth2.jwt.JoseHeaderNames;
@@ -42,7 +43,6 @@ import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.TestOAuth2Authorizations;
-import org.springframework.security.oauth2.core.OAuth2TokenType;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
 import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext;
@@ -182,7 +182,10 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 
 	@Test
 	public void authenticateWhenRequestedScopesAuthorizedThenAccessTokenIncludesScopes() {
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
+				.scope("scope2")
+				.scope("scope3")
+				.build();
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();
 		when(this.authorizationService.findByToken(
 				eq(authorization.getRefreshToken().getToken().getTokenValue()),
@@ -192,7 +195,7 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient);
 		Set<String> authorizedScopes = authorization.getAttribute(OAuth2Authorization.AUTHORIZED_SCOPE_ATTRIBUTE_NAME);
 		Set<String> requestedScopes = new HashSet<>(authorizedScopes);
-		requestedScopes.remove("email");
+		requestedScopes.remove("scope1");
 		OAuth2RefreshTokenAuthenticationToken authentication = new OAuth2RefreshTokenAuthenticationToken(
 				authorization.getRefreshToken().getToken().getTokenValue(), clientPrincipal, requestedScopes);
 

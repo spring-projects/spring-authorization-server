@@ -29,7 +29,6 @@ import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.OAuth2TokenType;
-import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.jwt.JoseHeader;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
@@ -138,7 +137,7 @@ public class OAuth2ClientCredentialsAuthenticationProvider implements Authentica
 
 		OAuth2AccessToken accessToken = new OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER,
 				jwtAccessToken.getTokenValue(), jwtAccessToken.getIssuedAt(),
-				jwtAccessToken.getExpiresAt(), jwtAccessToken.getClaim(OAuth2ParameterNames.SCOPE));
+				jwtAccessToken.getExpiresAt(), scopes);
 
 		// @formatter:off
 		OAuth2Authorization authorization = OAuth2Authorization.withRegisteredClient(registeredClient)

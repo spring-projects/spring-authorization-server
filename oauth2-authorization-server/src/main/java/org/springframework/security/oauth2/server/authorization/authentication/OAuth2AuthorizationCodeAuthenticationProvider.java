@@ -166,7 +166,7 @@ public class OAuth2AuthorizationCodeAuthenticationProvider implements Authentica
 
 		OAuth2AccessToken accessToken = new OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER,
 				jwtAccessToken.getTokenValue(), jwtAccessToken.getIssuedAt(),
-				jwtAccessToken.getExpiresAt(), jwtAccessToken.getClaim(OAuth2ParameterNames.SCOPE));
+				jwtAccessToken.getExpiresAt(), authorizedScopes);
 
 		OAuth2RefreshToken refreshToken = null;
 		if (registeredClient.getAuthorizationGrantTypes().contains(AuthorizationGrantType.REFRESH_TOKEN)) {

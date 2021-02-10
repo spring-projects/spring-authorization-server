@@ -15,6 +15,9 @@
  */
 package org.springframework.security.oauth2.server.authorization;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -40,11 +43,40 @@ import org.springframework.util.Assert;
 public final class InMemoryOAuth2AuthorizationService implements OAuth2AuthorizationService {
 	private final Map<String, OAuth2Authorization> authorizations = new ConcurrentHashMap<>();
 
+	/**
+	 * Constructs an {@code InMemoryOAuth2AuthorizationService}.
+	 */
+	public InMemoryOAuth2AuthorizationService() {
+		this(Collections.emptyList());
+	}
+
+	/**
+	 * Constructs an {@code InMemoryOAuth2AuthorizationService} using the provided parameters.
+	 *
+	 * @param authorizations the authorization(s)
+	 */
+	public InMemoryOAuth2AuthorizationService(OAuth2Authorization... authorizations) {
+		this(Arrays.asList(authorizations));
+	}
+
+	/**
+	 * Constructs an {@code InMemoryOAuth2AuthorizationService} using the provided parameters.
+	 *
+	 * @param authorizations the authorization(s)
+	 */
+	public InMemoryOAuth2AuthorizationService(List<OAuth2Authorization> authorizations) {
+		Assert.notNull(authorizations, "authorizations cannot be null");
+		authorizations.forEach(authorization -> {
+			Assert.notNull(authorization, "authorization cannot be null");
+			Assert.isTrue(!this.authorizations.containsKey(authorization.getId()),
+					"The authorization must be unique. Found duplicate identifier: " + authorization.getId());
+			this.authorizations.put(authorization.getId(), authorization);
+		});
+	}
+
 	@Override
 	public void save(OAuth2Authorization authorization) {
 		Assert.notNull(authorization, "authorization cannot be null");
-		Assert.isTrue(!this.authorizations.containsKey(authorization.getId()),
-				"The authorization must be unique. Found duplicate identifier: " + authorization.getId());
 		this.authorizations.put(authorization.getId(), authorization);
 	}
 

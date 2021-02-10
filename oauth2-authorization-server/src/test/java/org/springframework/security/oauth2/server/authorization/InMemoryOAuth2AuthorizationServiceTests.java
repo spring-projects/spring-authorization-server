@@ -17,6 +17,7 @@ package org.springframework.security.oauth2.server.authorization;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -56,6 +57,34 @@ public class InMemoryOAuth2AuthorizationServiceTests {
 	}
 
 	@Test
+	public void constructorVarargsWhenAuthorizationNullThenThrowIllegalArgumentException() {
+		assertThatThrownBy(() -> new InMemoryOAuth2AuthorizationService((OAuth2Authorization) null))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("authorization cannot be null");
+	}
+
+	@Test
+	public void constructorListWhenAuthorizationsNullThenThrowIllegalArgumentException() {
+		assertThatThrownBy(() -> new InMemoryOAuth2AuthorizationService((List<OAuth2Authorization>) null))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("authorizations cannot be null");
+	}
+
+	@Test
+	public void constructorWhenDuplicateAuthorizationsThenThrowIllegalArgumentException() {
+		OAuth2Authorization authorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
+				.id(ID)
+				.principalName(PRINCIPAL_NAME)
+				.authorizationGrantType(AUTHORIZATION_GRANT_TYPE)
+				.token(AUTHORIZATION_CODE)
+				.build();
+
+		assertThatThrownBy(() -> new InMemoryOAuth2AuthorizationService(authorization, authorization))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("The authorization must be unique. Found duplicate identifier: id");
+	}
+
+	@Test
 	public void saveWhenAuthorizationNullThenThrowIllegalArgumentException() {
 		assertThatThrownBy(() -> this.authorizationService.save(null))
 				.isInstanceOf(IllegalArgumentException.class)
@@ -63,7 +92,7 @@ public class InMemoryOAuth2AuthorizationServiceTests {
 	}
 
 	@Test
-	public void saveWhenAuthorizationProvidedThenSaved() {
+	public void saveWhenAuthorizationNewThenSaved() {
 		OAuth2Authorization expectedAuthorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
 				.id(ID)
 				.principalName(PRINCIPAL_NAME)
@@ -77,23 +106,30 @@ public class InMemoryOAuth2AuthorizationServiceTests {
 		assertThat(authorization).isEqualTo(expectedAuthorization);
 	}
 
+	// gh-222
 	@Test
-	public void saveWhenAuthorizationNotUniqueThenThrowIllegalArgumentException() {
-		OAuth2Authorization expectedAuthorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
+	public void saveWhenAuthorizationExistsThenUpdated() {
+		OAuth2Authorization originalAuthorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
 				.id(ID)
 				.principalName(PRINCIPAL_NAME)
 				.authorizationGrantType(AUTHORIZATION_GRANT_TYPE)
 				.token(AUTHORIZATION_CODE)
 				.build();
-		this.authorizationService.save(expectedAuthorization);
+		this.authorizationService.save(originalAuthorization);
 
 		OAuth2Authorization authorization = this.authorizationService.findById(
-				expectedAuthorization.getId());
-		assertThat(authorization).isEqualTo(expectedAuthorization);
+				originalAuthorization.getId());
+		assertThat(authorization).isEqualTo(originalAuthorization);
 
-		assertThatThrownBy(() -> this.authorizationService.save(authorization))
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("The authorization must be unique. Found duplicate identifier: " + ID);
+		OAuth2Authorization updatedAuthorization = OAuth2Authorization.from(authorization)
+				.attribute("custom-name-1", "custom-value-1")
+				.build();
+		this.authorizationService.save(updatedAuthorization);
+
+		authorization = this.authorizationService.findById(
+				updatedAuthorization.getId());
+		assertThat(authorization).isEqualTo(updatedAuthorization);
+		assertThat(authorization).isNotEqualTo(originalAuthorization);
 	}
 
 	@Test

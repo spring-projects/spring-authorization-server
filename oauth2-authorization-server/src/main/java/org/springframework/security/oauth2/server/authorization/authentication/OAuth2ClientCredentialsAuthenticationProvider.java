@@ -19,6 +19,7 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -27,6 +28,7 @@ import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
+import org.springframework.security.oauth2.core.OAuth2TokenType;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.jwt.JoseHeader;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -35,6 +37,7 @@ import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
+import org.springframework.security.oauth2.server.authorization.config.ProviderSettings;
 import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer;
 import org.springframework.util.Assert;
@@ -61,6 +64,7 @@ public class OAuth2ClientCredentialsAuthenticationProvider implements Authentica
 	private final OAuth2AuthorizationService authorizationService;
 	private final JwtEncoder jwtEncoder;
 	private OAuth2TokenCustomizer<JwtEncodingContext> jwtCustomizer = (context) -> {};
+	private ProviderSettings providerSettings;
 
 	/**
 	 * Constructs an {@code OAuth2ClientCredentialsAuthenticationProvider} using the provided parameters.
@@ -79,6 +83,11 @@ public class OAuth2ClientCredentialsAuthenticationProvider implements Authentica
 	public final void setJwtCustomizer(OAuth2TokenCustomizer<JwtEncodingContext> jwtCustomizer) {
 		Assert.notNull(jwtCustomizer, "jwtCustomizer cannot be null");
 		this.jwtCustomizer = jwtCustomizer;
+	}
+
+	@Autowired(required = false)
+	protected void setProviderSettings(ProviderSettings providerSettings) {
+		this.providerSettings = providerSettings;
 	}
 
 	@Override
@@ -105,13 +114,22 @@ public class OAuth2ClientCredentialsAuthenticationProvider implements Authentica
 			scopes = new LinkedHashSet<>(clientCredentialsAuthentication.getScopes());
 		}
 
+		String issuer = this.providerSettings != null ? this.providerSettings.issuer() : null;
+
+		JoseHeader.Builder headersBuilder = JwtUtils.headers();
+		JwtClaimsSet.Builder claimsBuilder = JwtUtils.accessTokenClaims(
+				registeredClient, issuer, clientPrincipal.getName(), scopes);
+
 		// @formatter:off
-		JwtEncodingContext context = JwtEncodingContextUtils.accessTokenContext(registeredClient, clientPrincipal.getName(), scopes)
+		JwtEncodingContext context = JwtEncodingContext.with(headersBuilder, claimsBuilder)
+				.registeredClient(registeredClient)
 				.principal(clientPrincipal)
+				.tokenType(OAuth2TokenType.ACCESS_TOKEN)
 				.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
 				.authorizationGrant(clientCredentialsAuthentication)
 				.build();
 		// @formatter:on
+
 		this.jwtCustomizer.customize(context);
 
 		JoseHeader headers = context.getHeaders().build();

@@ -19,7 +19,9 @@ import java.security.Principal;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -42,6 +44,7 @@ import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
+import org.springframework.security.oauth2.server.authorization.config.ProviderSettings;
 import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2AuthorizationCode;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer;
@@ -66,10 +69,14 @@ import static org.springframework.security.oauth2.server.authorization.authentic
  * @see <a target="_blank" href="https://tools.ietf.org/html/rfc6749#section-4.1.3">Section 4.1.3 Access Token Request</a>
  */
 public class OAuth2AuthorizationCodeAuthenticationProvider implements AuthenticationProvider {
-	private static final OAuth2TokenType AUTHORIZATION_CODE_TOKEN_TYPE = new OAuth2TokenType(OAuth2ParameterNames.CODE);
+	private static final OAuth2TokenType AUTHORIZATION_CODE_TOKEN_TYPE =
+			new OAuth2TokenType(OAuth2ParameterNames.CODE);
+	private static final OAuth2TokenType ID_TOKEN_TOKEN_TYPE =
+			new OAuth2TokenType(OidcParameterNames.ID_TOKEN);
 	private final OAuth2AuthorizationService authorizationService;
 	private final JwtEncoder jwtEncoder;
 	private OAuth2TokenCustomizer<JwtEncodingContext> jwtCustomizer = (context) -> {};
+	private ProviderSettings providerSettings;
 
 	/**
 	 * Constructs an {@code OAuth2AuthorizationCodeAuthenticationProvider} using the provided parameters.
@@ -87,6 +94,11 @@ public class OAuth2AuthorizationCodeAuthenticationProvider implements Authentica
 	public final void setJwtCustomizer(OAuth2TokenCustomizer<JwtEncodingContext> jwtCustomizer) {
 		Assert.notNull(jwtCustomizer, "jwtCustomizer cannot be null");
 		this.jwtCustomizer = jwtCustomizer;
+	}
+
+	@Autowired(required = false)
+	protected void setProviderSettings(ProviderSettings providerSettings) {
+		this.providerSettings = providerSettings;
 	}
 
 	@Override
@@ -127,13 +139,25 @@ public class OAuth2AuthorizationCodeAuthenticationProvider implements Authentica
 			throw new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_GRANT));
 		}
 
+		String issuer = this.providerSettings != null ? this.providerSettings.issuer() : null;
+		Set<String> authorizedScopes = authorization.getAttribute(
+				OAuth2Authorization.AUTHORIZED_SCOPE_ATTRIBUTE_NAME);
+
+		JoseHeader.Builder headersBuilder = JwtUtils.headers();
+		JwtClaimsSet.Builder claimsBuilder = JwtUtils.accessTokenClaims(
+				registeredClient, issuer, authorization.getPrincipalName(), authorizedScopes);
+
 		// @formatter:off
-		JwtEncodingContext context = JwtEncodingContextUtils.accessTokenContext(registeredClient, authorization)
+		JwtEncodingContext context = JwtEncodingContext.with(headersBuilder, claimsBuilder)
+				.registeredClient(registeredClient)
 				.principal(authorization.getAttribute(Principal.class.getName()))
+				.authorization(authorization)
+				.tokenType(OAuth2TokenType.ACCESS_TOKEN)
 				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
 				.authorizationGrant(authorizationCodeAuthentication)
 				.build();
 		// @formatter:on
+
 		this.jwtCustomizer.customize(context);
 
 		JoseHeader headers = context.getHeaders().build();
@@ -152,13 +176,23 @@ public class OAuth2AuthorizationCodeAuthenticationProvider implements Authentica
 
 		Jwt jwtIdToken = null;
 		if (authorizationRequest.getScopes().contains(OidcScopes.OPENID)) {
+			String nonce = (String) authorizationRequest.getAdditionalParameters().get(OidcParameterNames.NONCE);
+
+			headersBuilder = JwtUtils.headers();
+			claimsBuilder = JwtUtils.idTokenClaims(
+					registeredClient, issuer, authorization.getPrincipalName(), nonce);
+
 			// @formatter:off
-			context = JwtEncodingContextUtils.idTokenContext(registeredClient, authorization)
+			context = JwtEncodingContext.with(headersBuilder, claimsBuilder)
+					.registeredClient(registeredClient)
 					.principal(authorization.getAttribute(Principal.class.getName()))
+					.authorization(authorization)
+					.tokenType(ID_TOKEN_TOKEN_TYPE)
 					.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
 					.authorizationGrant(authorizationCodeAuthentication)
 					.build();
 			// @formatter:on
+
 			this.jwtCustomizer.customize(context);
 
 			headers = context.getHeaders().build();

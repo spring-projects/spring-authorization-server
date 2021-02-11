@@ -51,6 +51,7 @@ import org.springframework.security.oauth2.server.authorization.TestOAuth2Author
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
+import org.springframework.security.oauth2.server.authorization.config.ClientSettings;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2AuthorizationCode;
 import org.springframework.util.StringUtils;
 
@@ -445,6 +446,19 @@ public class OAuth2AuthorizationEndpointFilterTests {
 		doFilterWhenAuthorizationRequestThenAuthorizationResponse(registeredClient, request);
 	}
 
+	@Test
+	public void doFilterWhenAuthenticationRequestIncludesOnlyOpenidScopeThenDoesNotRequireConsent() throws Exception {
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
+				.scopes(scopes -> {
+					scopes.clear();
+					scopes.add(OidcScopes.OPENID);
+				})
+				.clientSettings(ClientSettings::requireUserConsent)
+				.build();
+		MockHttpServletRequest request = createAuthorizationRequest(registeredClient);
+		doFilterWhenAuthorizationRequestThenAuthorizationResponse(registeredClient, request);
+	}
+
 	private void doFilterWhenAuthorizationRequestThenAuthorizationResponse(
 			RegisteredClient registeredClient, MockHttpServletRequest request) throws Exception {
 
@@ -772,11 +786,12 @@ public class OAuth2AuthorizationEndpointFilterTests {
 
 	@Test
 	public void doFilterWhenUserConsentRequestApprovedThenAuthorizationResponse() throws Exception {
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().scope(OidcScopes.OPENID).build();
 		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
 				.thenReturn(registeredClient);
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient)
 				.principalName(this.authentication.getName())
+				.attributes(attrs -> attrs.remove(OAuth2Authorization.AUTHORIZED_SCOPE_ATTRIBUTE_NAME))
 				.build();
 		when(this.authorizationService.findByToken(eq("state"), eq(STATE_TOKEN_TYPE)))
 				.thenReturn(authorization);
@@ -908,7 +923,9 @@ public class OAuth2AuthorizationEndpointFilterTests {
 		request.addParameter(OAuth2ParameterNames.CLIENT_ID, registeredClient.getClientId());
 		request.addParameter(OAuth2ParameterNames.STATE, "state");
 		for (String scope : registeredClient.getScopes()) {
-			request.addParameter(OAuth2ParameterNames.SCOPE, scope);
+			if (!OidcScopes.OPENID.equals(scope)) {
+				request.addParameter(OAuth2ParameterNames.SCOPE, scope);
+			}
 		}
 		request.addParameter("consent_action", "approve");
 

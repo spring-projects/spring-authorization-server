@@ -18,6 +18,7 @@ package org.springframework.security.oauth2.server.authorization.authentication;
 import java.security.Principal;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -145,7 +146,8 @@ public class OAuth2AuthorizationCodeAuthenticationProvider implements Authentica
 
 		JoseHeader.Builder headersBuilder = JwtUtils.headers();
 		JwtClaimsSet.Builder claimsBuilder = JwtUtils.accessTokenClaims(
-				registeredClient, issuer, authorization.getPrincipalName(), authorizedScopes);
+				registeredClient, issuer, authorization.getPrincipalName(),
+				excludeOpenidIfNecessary(authorizedScopes));
 
 		// @formatter:off
 		JwtEncodingContext context = JwtEncodingContext.with(headersBuilder, claimsBuilder)
@@ -167,7 +169,7 @@ public class OAuth2AuthorizationCodeAuthenticationProvider implements Authentica
 
 		OAuth2AccessToken accessToken = new OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER,
 				jwtAccessToken.getTokenValue(), jwtAccessToken.getIssuedAt(),
-				jwtAccessToken.getExpiresAt(), authorizedScopes);
+				jwtAccessToken.getExpiresAt(), excludeOpenidIfNecessary(authorizedScopes));
 
 		OAuth2RefreshToken refreshToken = null;
 		if (registeredClient.getAuthorizationGrantTypes().contains(AuthorizationGrantType.REFRESH_TOKEN)) {
@@ -241,6 +243,15 @@ public class OAuth2AuthorizationCodeAuthenticationProvider implements Authentica
 
 		return new OAuth2AccessTokenAuthenticationToken(
 				registeredClient, clientPrincipal, accessToken, refreshToken, additionalParameters);
+	}
+
+	private static Set<String> excludeOpenidIfNecessary(Set<String> scopes) {
+		if (!scopes.contains(OidcScopes.OPENID)) {
+			return scopes;
+		}
+		scopes = new HashSet<>(scopes);
+		scopes.remove(OidcScopes.OPENID);
+		return scopes;
 	}
 
 	@Override

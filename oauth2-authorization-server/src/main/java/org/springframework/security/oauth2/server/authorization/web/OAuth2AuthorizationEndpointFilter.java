@@ -198,7 +198,7 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 				.attribute(Principal.class.getName(), principal)
 				.attribute(OAuth2AuthorizationRequest.class.getName(), authorizationRequest);
 
-		if (registeredClient.getClientSettings().requireUserConsent()) {
+		if (requireUserConsent(registeredClient, authorizationRequest)) {
 			String state = this.stateGenerator.generateKey();
 			OAuth2Authorization authorization = builder
 					.attribute(OAuth2ParameterNames.STATE, state)
@@ -230,6 +230,15 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 			sendAuthorizationResponse(request, response,
 					authorizationRequestContext.resolveRedirectUri(), authorizationCode, authorizationRequest.getState());
 		}
+	}
+
+	private static boolean requireUserConsent(RegisteredClient registeredClient, OAuth2AuthorizationRequest authorizationRequest) {
+		// openid scope does not require consent
+		if (authorizationRequest.getScopes().contains(OidcScopes.OPENID) &&
+				authorizationRequest.getScopes().size() == 1) {
+			return false;
+		}
+		return registeredClient.getClientSettings().requireUserConsent();
 	}
 
 	private void processUserConsent(HttpServletRequest request, HttpServletResponse response)
@@ -264,11 +273,16 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 		Instant expiresAt = issuedAt.plus(5, ChronoUnit.MINUTES);		// TODO Allow configuration for authorization code time-to-live
 		OAuth2AuthorizationCode authorizationCode = new OAuth2AuthorizationCode(
 				this.codeGenerator.generateKey(), issuedAt, expiresAt);
+		Set<String> authorizedScopes = userConsentRequestContext.getScopes();
+		if (userConsentRequestContext.getAuthorizationRequest().getScopes().contains(OidcScopes.OPENID)) {
+			// openid scope is auto-approved as it does not require consent
+			authorizedScopes.add(OidcScopes.OPENID);
+		}
 		OAuth2Authorization authorization = OAuth2Authorization.from(userConsentRequestContext.getAuthorization())
 				.token(authorizationCode)
 				.attributes(attrs -> {
 					attrs.remove(OAuth2ParameterNames.STATE);
-					attrs.put(OAuth2Authorization.AUTHORIZED_SCOPE_ATTRIBUTE_NAME, userConsentRequestContext.getScopes());
+					attrs.put(OAuth2Authorization.AUTHORIZED_SCOPE_ATTRIBUTE_NAME, authorizedScopes);
 				})
 				.build();
 		this.authorizationService.save(authorization);
@@ -661,6 +675,8 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 
 			OAuth2AuthorizationRequest authorizationRequest = authorization.getAttribute(
 					OAuth2AuthorizationRequest.class.getName());
+			Set<String> scopes = new HashSet<>(authorizationRequest.getScopes());
+			scopes.remove(OidcScopes.OPENID);		// openid scope does not require consent
 			String state = authorization.getAttribute(
 					OAuth2ParameterNames.STATE);
 
@@ -695,7 +711,7 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 			builder.append("                <input type=\"hidden\" name=\"client_id\" value=\"" + registeredClient.getClientId() + "\">");
 			builder.append("                <input type=\"hidden\" name=\"state\" value=\"" + state + "\">");
 
-			for (String scope : authorizationRequest.getScopes()) {
+			for (String scope : scopes) {
 				builder.append("                <div class=\"form-group form-check py-1\">");
 				builder.append("                    <input class=\"form-check-input\" type=\"checkbox\" name=\"scope\" value=\"" + scope + "\" id=\"" + scope + "\" checked>");
 				builder.append("                    <label class=\"form-check-label\" for=\"" + scope + "\">" + scope + "</label>");

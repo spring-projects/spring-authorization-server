@@ -19,7 +19,7 @@ import org.springframework.lang.Nullable;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.AbstractOAuth2Token;
-import org.springframework.security.oauth2.server.authorization.Version;
+import org.springframework.security.oauth2.core.Version;
 import org.springframework.util.Assert;
 
 import java.util.Collections;

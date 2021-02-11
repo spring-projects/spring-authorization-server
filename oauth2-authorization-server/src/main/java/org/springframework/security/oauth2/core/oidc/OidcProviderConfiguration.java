@@ -16,7 +16,7 @@
 package org.springframework.security.oauth2.core.oidc;
 
 import org.springframework.security.oauth2.jose.jws.JwsAlgorithm;
-import org.springframework.security.oauth2.server.authorization.Version;
+import org.springframework.security.oauth2.core.Version;
 import org.springframework.util.Assert;
 
 import java.io.Serializable;

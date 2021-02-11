@@ -13,16 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.security.oauth2.server.authorization.token;
+package org.springframework.security.oauth2.core;
 
 /**
- * @author Joe Grandja
- * @since 0.1.0
- * @see OAuth2TokenContext
+ * Internal class used for serialization across Spring Security Authorization Server classes.
+ *
+ * @author Anoop Garlapati
+ * @since 0.0.1
  */
-@FunctionalInterface
-public interface OAuth2TokenCustomizer<C extends OAuth2TokenContext> {
+public final class Version {
+	private static final int MAJOR = 0;
+	private static final int MINOR = 1;
+	private static final int PATCH = 0;
 
-	void customize(C context);
+	/**
+	 * Global Serialization value for Spring Security Authorization Server classes.
+	 */
+	public static final long SERIAL_VERSION_UID = getVersion().hashCode();
 
+	public static String getVersion() {
+		return MAJOR + "." + MINOR + "." + PATCH;
+	}
 }

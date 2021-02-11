@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.security.oauth2.server.authorization.token;
+package org.springframework.security.oauth2.server.authorization;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -26,8 +26,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.OAuth2TokenType;
 import org.springframework.security.oauth2.core.context.Context;
-import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
-import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationGrantAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.util.Assert;
 
@@ -65,7 +63,7 @@ public interface OAuth2TokenContext extends Context {
 		return get(AuthorizationGrantType.class);
 	}
 
-	default <T extends OAuth2AuthorizationGrantAuthenticationToken> T getAuthorizationGrant() {
+	default <T extends Authentication> T getAuthorizationGrant() {
 		return get(AbstractBuilder.AUTHORIZATION_GRANT_AUTHENTICATION_KEY);
 	}
 
@@ -100,7 +98,7 @@ public interface OAuth2TokenContext extends Context {
 			return put(AuthorizationGrantType.class, authorizationGrantType);
 		}
 
-		public B authorizationGrant(OAuth2AuthorizationGrantAuthenticationToken authorizationGrant) {
+		public B authorizationGrant(Authentication authorizationGrant) {
 			return put(AUTHORIZATION_GRANT_AUTHENTICATION_KEY, authorizationGrant);
 		}
 

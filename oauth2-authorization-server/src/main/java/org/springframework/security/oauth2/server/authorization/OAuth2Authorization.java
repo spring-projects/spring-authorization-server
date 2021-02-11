@@ -24,6 +24,7 @@ import java.util.UUID;
 import java.util.function.Consumer;
 
 import org.springframework.lang.Nullable;
+import org.springframework.security.oauth2.core.Version;
 import org.springframework.security.oauth2.core.AbstractOAuth2Token;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;

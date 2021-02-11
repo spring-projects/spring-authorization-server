@@ -102,7 +102,7 @@ public class OAuth2ClientCredentialsAuthenticationProvider implements Authentica
 			throw new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.UNAUTHORIZED_CLIENT));
 		}
 
-		Set<String> scopes = registeredClient.getScopes();		// Default to configured scopes
+		Set<String> authorizedScopes = registeredClient.getScopes();		// Default to configured scopes
 		if (!CollectionUtils.isEmpty(clientCredentialsAuthentication.getScopes())) {
 			Set<String> unauthorizedScopes = clientCredentialsAuthentication.getScopes().stream()
 					.filter(requestedScope -> !registeredClient.getScopes().contains(requestedScope))
@@ -110,14 +110,14 @@ public class OAuth2ClientCredentialsAuthenticationProvider implements Authentica
 			if (!CollectionUtils.isEmpty(unauthorizedScopes)) {
 				throw new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_SCOPE));
 			}
-			scopes = new LinkedHashSet<>(clientCredentialsAuthentication.getScopes());
+			authorizedScopes = new LinkedHashSet<>(clientCredentialsAuthentication.getScopes());
 		}
 
 		String issuer = this.providerSettings != null ? this.providerSettings.issuer() : null;
 
 		JoseHeader.Builder headersBuilder = JwtUtils.headers();
 		JwtClaimsSet.Builder claimsBuilder = JwtUtils.accessTokenClaims(
-				registeredClient, issuer, clientPrincipal.getName(), scopes);
+				registeredClient, issuer, clientPrincipal.getName(), authorizedScopes);
 
 		// @formatter:off
 		JwtEncodingContext context = JwtEncodingContext.with(headersBuilder, claimsBuilder)
@@ -137,7 +137,7 @@ public class OAuth2ClientCredentialsAuthenticationProvider implements Authentica
 
 		OAuth2AccessToken accessToken = new OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER,
 				jwtAccessToken.getTokenValue(), jwtAccessToken.getIssuedAt(),
-				jwtAccessToken.getExpiresAt(), scopes);
+				jwtAccessToken.getExpiresAt(), authorizedScopes);
 
 		// @formatter:off
 		OAuth2Authorization authorization = OAuth2Authorization.withRegisteredClient(registeredClient)
@@ -146,6 +146,7 @@ public class OAuth2ClientCredentialsAuthenticationProvider implements Authentica
 				.token(accessToken,
 						(metadata) ->
 								metadata.put(OAuth2Authorization.Token.CLAIMS_METADATA_NAME, jwtAccessToken.getClaims()))
+				.attribute(OAuth2Authorization.AUTHORIZED_SCOPE_ATTRIBUTE_NAME, authorizedScopes)
 				.build();
 		// @formatter:on
 

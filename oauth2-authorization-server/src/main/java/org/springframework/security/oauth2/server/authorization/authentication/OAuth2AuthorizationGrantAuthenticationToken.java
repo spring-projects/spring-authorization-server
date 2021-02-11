@@ -16,6 +16,7 @@
 package org.springframework.security.oauth2.server.authorization.authentication;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.springframework.lang.Nullable;
@@ -57,7 +58,7 @@ public class OAuth2AuthorizationGrantAuthenticationToken extends AbstractAuthent
 		this.clientPrincipal = clientPrincipal;
 		this.additionalParameters = Collections.unmodifiableMap(
 				additionalParameters != null ?
-						additionalParameters :
+						new HashMap<>(additionalParameters) :
 						Collections.emptyMap());
 	}
 

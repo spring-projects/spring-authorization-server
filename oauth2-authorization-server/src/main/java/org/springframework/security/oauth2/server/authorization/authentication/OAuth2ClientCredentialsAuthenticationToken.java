@@ -16,12 +16,13 @@
 package org.springframework.security.oauth2.server.authorization.authentication;
 
 import java.util.Collections;
-import java.util.LinkedHashSet;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
+import org.springframework.lang.Nullable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
-import org.springframework.util.Assert;
 
 /**
  * An {@link Authentication} implementation used for the OAuth 2.0 Client Credentials Grant.
@@ -38,21 +39,14 @@ public class OAuth2ClientCredentialsAuthenticationToken extends OAuth2Authorizat
 	 * Constructs an {@code OAuth2ClientCredentialsAuthenticationToken} using the provided parameters.
 	 *
 	 * @param clientPrincipal the authenticated client principal
-	 */
-	public OAuth2ClientCredentialsAuthenticationToken(Authentication clientPrincipal) {
-		this(clientPrincipal, Collections.emptySet());
-	}
-
-	/**
-	 * Constructs an {@code OAuth2ClientCredentialsAuthenticationToken} using the provided parameters.
-	 *
-	 * @param clientPrincipal the authenticated client principal
 	 * @param scopes the requested scope(s)
+	 * @param additionalParameters the additional parameters
 	 */
-	public OAuth2ClientCredentialsAuthenticationToken(Authentication clientPrincipal, Set<String> scopes) {
-		super(AuthorizationGrantType.CLIENT_CREDENTIALS, clientPrincipal, null);
-		Assert.notNull(scopes, "scopes cannot be null");
-		this.scopes = Collections.unmodifiableSet(new LinkedHashSet<>(scopes));
+	public OAuth2ClientCredentialsAuthenticationToken(Authentication clientPrincipal,
+			@Nullable Set<String> scopes, @Nullable Map<String, Object> additionalParameters) {
+		super(AuthorizationGrantType.CLIENT_CREDENTIALS, clientPrincipal, additionalParameters);
+		this.scopes = Collections.unmodifiableSet(
+				scopes != null ? new HashSet<>(scopes) : Collections.emptySet());
 	}
 
 	/**

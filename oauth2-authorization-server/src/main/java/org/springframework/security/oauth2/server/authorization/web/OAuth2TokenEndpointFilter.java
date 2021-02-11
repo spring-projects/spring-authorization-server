@@ -229,6 +229,7 @@ public class OAuth2TokenEndpointFilter extends OncePerRequestFilter {
 				throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.REDIRECT_URI);
 			}
 
+			// @formatter:off
 			Map<String, Object> additionalParameters = parameters
 					.entrySet()
 					.stream()
@@ -237,8 +238,10 @@ public class OAuth2TokenEndpointFilter extends OncePerRequestFilter {
 							!e.getKey().equals(OAuth2ParameterNames.CODE) &&
 							!e.getKey().equals(OAuth2ParameterNames.REDIRECT_URI))
 					.collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().get(0)));
+			// @formatter:on
 
-			return new OAuth2AuthorizationCodeAuthenticationToken(code, clientPrincipal, redirectUri, additionalParameters);
+			return new OAuth2AuthorizationCodeAuthenticationToken(
+					code, clientPrincipal, redirectUri, additionalParameters);
 		}
 	}
 
@@ -269,13 +272,24 @@ public class OAuth2TokenEndpointFilter extends OncePerRequestFilter {
 					parameters.get(OAuth2ParameterNames.SCOPE).size() != 1) {
 				throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.SCOPE);
 			}
+			Set<String> requestedScopes = null;
 			if (StringUtils.hasText(scope)) {
-				Set<String> requestedScopes = new HashSet<>(
+				requestedScopes = new HashSet<>(
 						Arrays.asList(StringUtils.delimitedListToStringArray(scope, " ")));
-				return new OAuth2RefreshTokenAuthenticationToken(refreshToken, clientPrincipal, requestedScopes);
 			}
 
-			return new OAuth2RefreshTokenAuthenticationToken(refreshToken, clientPrincipal);
+			// @formatter:off
+			Map<String, Object> additionalParameters = parameters
+					.entrySet()
+					.stream()
+					.filter(e -> !e.getKey().equals(OAuth2ParameterNames.GRANT_TYPE) &&
+							!e.getKey().equals(OAuth2ParameterNames.REFRESH_TOKEN) &&
+							!e.getKey().equals(OAuth2ParameterNames.SCOPE))
+					.collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().get(0)));
+			// @formatter:on
+
+			return new OAuth2RefreshTokenAuthenticationToken(
+					refreshToken, clientPrincipal, requestedScopes, additionalParameters);
 		}
 	}
 
@@ -299,13 +313,23 @@ public class OAuth2TokenEndpointFilter extends OncePerRequestFilter {
 					parameters.get(OAuth2ParameterNames.SCOPE).size() != 1) {
 				throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.SCOPE);
 			}
+			Set<String> requestedScopes = null;
 			if (StringUtils.hasText(scope)) {
-				Set<String> requestedScopes = new HashSet<>(
+				requestedScopes = new HashSet<>(
 						Arrays.asList(StringUtils.delimitedListToStringArray(scope, " ")));
-				return new OAuth2ClientCredentialsAuthenticationToken(clientPrincipal, requestedScopes);
 			}
 
-			return new OAuth2ClientCredentialsAuthenticationToken(clientPrincipal);
+			// @formatter:off
+			Map<String, Object> additionalParameters = parameters
+					.entrySet()
+					.stream()
+					.filter(e -> !e.getKey().equals(OAuth2ParameterNames.GRANT_TYPE) &&
+							!e.getKey().equals(OAuth2ParameterNames.SCOPE))
+					.collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().get(0)));
+			// @formatter:on
+
+			return new OAuth2ClientCredentialsAuthenticationToken(
+					clientPrincipal, requestedScopes, additionalParameters);
 		}
 	}
 }

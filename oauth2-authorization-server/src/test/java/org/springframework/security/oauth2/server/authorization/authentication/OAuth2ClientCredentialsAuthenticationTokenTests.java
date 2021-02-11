@@ -16,6 +16,7 @@
 package org.springframework.security.oauth2.server.authorization.authentication;
 
 import java.util.Collections;
+import java.util.Map;
 import java.util.Set;
 
 import org.junit.Test;
@@ -34,42 +35,39 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 public class OAuth2ClientCredentialsAuthenticationTokenTests {
 	private final OAuth2ClientAuthenticationToken clientPrincipal =
 			new OAuth2ClientAuthenticationToken(TestRegisteredClients.registeredClient().build());
+	private Set<String> scopes = Collections.singleton("scope1");
+	private Map<String, Object> additionalParameters = Collections.singletonMap("param1", "value1");
 
 	@Test
 	public void constructorWhenClientPrincipalNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> new OAuth2ClientCredentialsAuthenticationToken(null))
+		assertThatThrownBy(() -> new OAuth2ClientCredentialsAuthenticationToken(null, this.scopes, this.additionalParameters))
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessage("clientPrincipal cannot be null");
 	}
 
 	@Test
-	public void constructorWhenScopesNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> new OAuth2ClientCredentialsAuthenticationToken(this.clientPrincipal, null))
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("scopes cannot be null");
-	}
-
-	@Test
 	public void constructorWhenClientPrincipalProvidedThenCreated() {
-		OAuth2ClientCredentialsAuthenticationToken authentication =
-				new OAuth2ClientCredentialsAuthenticationToken(this.clientPrincipal);
+		OAuth2ClientCredentialsAuthenticationToken authentication = new OAuth2ClientCredentialsAuthenticationToken(
+				this.clientPrincipal, this.scopes, this.additionalParameters);
 
 		assertThat(authentication.getGrantType()).isEqualTo(AuthorizationGrantType.CLIENT_CREDENTIALS);
 		assertThat(authentication.getPrincipal()).isEqualTo(this.clientPrincipal);
 		assertThat(authentication.getCredentials().toString()).isEmpty();
-		assertThat(authentication.getScopes()).isEmpty();
+		assertThat(authentication.getScopes()).isEqualTo(this.scopes);
+		assertThat(authentication.getAdditionalParameters()).isEqualTo(this.additionalParameters);
 	}
 
 	@Test
 	public void constructorWhenScopesProvidedThenCreated() {
 		Set<String> expectedScopes = Collections.singleton("test-scope");
 
-		OAuth2ClientCredentialsAuthenticationToken authentication =
-				new OAuth2ClientCredentialsAuthenticationToken(this.clientPrincipal, expectedScopes);
+		OAuth2ClientCredentialsAuthenticationToken authentication = new OAuth2ClientCredentialsAuthenticationToken(
+				this.clientPrincipal, expectedScopes, this.additionalParameters);
 
 		assertThat(authentication.getGrantType()).isEqualTo(AuthorizationGrantType.CLIENT_CREDENTIALS);
 		assertThat(authentication.getPrincipal()).isEqualTo(this.clientPrincipal);
 		assertThat(authentication.getCredentials().toString()).isEmpty();
 		assertThat(authentication.getScopes()).isEqualTo(expectedScopes);
+		assertThat(authentication.getAdditionalParameters()).isEqualTo(this.additionalParameters);
 	}
 }

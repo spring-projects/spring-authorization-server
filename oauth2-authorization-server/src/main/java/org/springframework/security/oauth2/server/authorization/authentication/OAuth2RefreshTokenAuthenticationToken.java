@@ -16,8 +16,11 @@
 package org.springframework.security.oauth2.server.authorization.authentication;
 
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
+import org.springframework.lang.Nullable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.util.Assert;
@@ -39,25 +42,16 @@ public class OAuth2RefreshTokenAuthenticationToken extends OAuth2AuthorizationGr
 	 *
 	 * @param refreshToken the refresh token
 	 * @param clientPrincipal the authenticated client principal
-	 */
-	public OAuth2RefreshTokenAuthenticationToken(String refreshToken, Authentication clientPrincipal) {
-		this(refreshToken, clientPrincipal, Collections.emptySet());
-	}
-
-	/**
-	 * Constructs an {@code OAuth2RefreshTokenAuthenticationToken} using the provided parameters.
-	 *
-	 * @param refreshToken the refresh token
-	 * @param clientPrincipal the authenticated client principal
 	 * @param scopes the requested scope(s)
+	 * @param additionalParameters the additional parameters
 	 */
 	public OAuth2RefreshTokenAuthenticationToken(String refreshToken, Authentication clientPrincipal,
-			Set<String> scopes) {
-		super(AuthorizationGrantType.REFRESH_TOKEN, clientPrincipal, null);
+			@Nullable Set<String> scopes, @Nullable Map<String, Object> additionalParameters) {
+		super(AuthorizationGrantType.REFRESH_TOKEN, clientPrincipal, additionalParameters);
 		Assert.hasText(refreshToken, "refreshToken cannot be empty");
-		Assert.notNull(scopes, "scopes cannot be null");
 		this.refreshToken = refreshToken;
-		this.scopes = scopes;
+		this.scopes = Collections.unmodifiableSet(
+				scopes != null ? new HashSet<>(scopes) : Collections.emptySet());
 	}
 
 	/**

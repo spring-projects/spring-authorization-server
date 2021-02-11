@@ -15,16 +15,18 @@
  */
 package org.springframework.security.oauth2.server.authorization.token;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Consumer;
 
 import org.springframework.lang.Nullable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
+import org.springframework.security.oauth2.core.OAuth2TokenType;
 import org.springframework.security.oauth2.core.context.Context;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
-import org.springframework.security.oauth2.core.OAuth2TokenType;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationGrantAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.util.Assert;
@@ -47,6 +49,12 @@ public interface OAuth2TokenContext extends Context {
 	@Nullable
 	default OAuth2Authorization getAuthorization() {
 		return get(OAuth2Authorization.class);
+	}
+
+	default Set<String> getAuthorizedScopes() {
+		return hasKey(OAuth2Authorization.AUTHORIZED_SCOPE_ATTRIBUTE_NAME) ?
+				get(OAuth2Authorization.AUTHORIZED_SCOPE_ATTRIBUTE_NAME) :
+				Collections.emptySet();
 	}
 
 	default OAuth2TokenType getTokenType() {
@@ -78,6 +86,10 @@ public interface OAuth2TokenContext extends Context {
 
 		public B authorization(OAuth2Authorization authorization) {
 			return put(OAuth2Authorization.class, authorization);
+		}
+
+		public B authorizedScopes(Set<String> authorizedScopes) {
+			return put(OAuth2Authorization.AUTHORIZED_SCOPE_ATTRIBUTE_NAME, authorizedScopes);
 		}
 
 		public B tokenType(OAuth2TokenType tokenType) {

@@ -123,6 +123,7 @@ public class OAuth2ClientCredentialsAuthenticationProvider implements Authentica
 		JwtEncodingContext context = JwtEncodingContext.with(headersBuilder, claimsBuilder)
 				.registeredClient(registeredClient)
 				.principal(clientPrincipal)
+				.authorizedScopes(authorizedScopes)
 				.tokenType(OAuth2TokenType.ACCESS_TOKEN)
 				.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
 				.authorizationGrant(clientCredentialsAuthentication)

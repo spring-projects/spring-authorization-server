@@ -155,6 +155,7 @@ public class OAuth2RefreshTokenAuthenticationProvider implements AuthenticationP
 				.registeredClient(registeredClient)
 				.principal(authorization.getAttribute(Principal.class.getName()))
 				.authorization(authorization)
+				.authorizedScopes(authorizedScopes)
 				.tokenType(OAuth2TokenType.ACCESS_TOKEN)
 				.authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
 				.authorizationGrant(refreshTokenAuthentication)

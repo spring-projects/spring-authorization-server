@@ -203,6 +203,9 @@ public class OAuth2ClientCredentialsAuthenticationProviderTests {
 		verify(this.authorizationService).save(authorizationCaptor.capture());
 		OAuth2Authorization authorization = authorizationCaptor.getValue();
 
+		assertThat(jwtEncodingContext.getAuthorizedScopes())
+				.isEqualTo(authorization.getAttribute(OAuth2Authorization.AUTHORIZED_SCOPE_ATTRIBUTE_NAME));
+
 		assertThat(authorization.getRegisteredClientId()).isEqualTo(clientPrincipal.getRegisteredClient().getId());
 		assertThat(authorization.getPrincipalName()).isEqualTo(clientPrincipal.getName());
 		assertThat(authorization.getAuthorizationGrantType()).isEqualTo(AuthorizationGrantType.CLIENT_CREDENTIALS);

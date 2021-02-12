@@ -29,7 +29,7 @@ dependencyManagement {
 		dependency "com.nimbusds:nimbus-jose-jwt:9.1.3"
 		dependency "javax.servlet:javax.servlet-api:4.0.1"
 		dependency 'junit:junit:4.13.1'
-		dependency 'org.assertj:assertj-core:latest.release'
+		dependency 'org.assertj:assertj-core:3.18.1'
 		dependency 'org.mockito:mockito-core:latest.release'
 		dependency "com.squareup.okhttp3:mockwebserver:3.+"
 		dependency "com.squareup.okhttp3:okhttp:3.+"

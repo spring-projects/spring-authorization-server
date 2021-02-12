@@ -28,7 +28,7 @@ dependencyManagement {
 		dependency "com.nimbusds:oauth2-oidc-sdk:8.23.1"
 		dependency "com.nimbusds:nimbus-jose-jwt:9.1.3"
 		dependency "javax.servlet:javax.servlet-api:4.0.1"
-		dependency 'junit:junit:latest.release'
+		dependency 'junit:junit:4.13.1'
 		dependency 'org.assertj:assertj-core:latest.release'
 		dependency 'org.mockito:mockito-core:latest.release'
 		dependency "com.squareup.okhttp3:mockwebserver:3.+"

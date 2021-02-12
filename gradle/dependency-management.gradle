@@ -33,6 +33,6 @@ dependencyManagement {
 		dependency 'org.mockito:mockito-core:3.6.28'
 		dependency "com.squareup.okhttp3:mockwebserver:3.14.9"
 		dependency "com.squareup.okhttp3:okhttp:3.14.9"
-		dependency "com.jayway.jsonpath:json-path:2.+"
+		dependency "com.jayway.jsonpath:json-path:2.4.0"
 	}
 }

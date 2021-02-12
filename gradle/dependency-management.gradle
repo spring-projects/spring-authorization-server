@@ -3,7 +3,7 @@ if (!project.hasProperty("springVersion")) {
 }
 
 if (!project.hasProperty("springSecurityVersion")) {
-	ext.springSecurityVersion = "5.4.+"
+	ext.springSecurityVersion = "5.4.2"
 }
 
 if (!project.hasProperty("reactorVersion")) {

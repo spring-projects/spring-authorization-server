@@ -30,7 +30,7 @@ dependencyManagement {
 		dependency "javax.servlet:javax.servlet-api:4.0.1"
 		dependency 'junit:junit:4.13.1'
 		dependency 'org.assertj:assertj-core:3.18.1'
-		dependency 'org.mockito:mockito-core:latest.release'
+		dependency 'org.mockito:mockito-core:3.6.28'
 		dependency "com.squareup.okhttp3:mockwebserver:3.+"
 		dependency "com.squareup.okhttp3:okhttp:3.+"
 		dependency "com.jayway.jsonpath:json-path:2.+"

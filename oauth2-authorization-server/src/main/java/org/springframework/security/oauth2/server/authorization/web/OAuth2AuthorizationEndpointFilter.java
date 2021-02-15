@@ -99,6 +99,7 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 	private final StringKeyGenerator codeGenerator = new Base64StringKeyGenerator(Base64.getUrlEncoder().withoutPadding(), 96);
 	private final StringKeyGenerator stateGenerator = new Base64StringKeyGenerator(Base64.getUrlEncoder());
 	private final RedirectStrategy redirectStrategy = new DefaultRedirectStrategy();
+	private final RedirectValidator redirectValidator = new DefaultRedirectValidator();
 
 	/**
 	 * Constructs an {@code OAuth2AuthorizationEndpointFilter} using the provided parameters.
@@ -318,7 +319,7 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 
 		// redirect_uri (OPTIONAL)
 		if (StringUtils.hasText(authorizationRequestContext.getRedirectUri())) {
-			if (!registeredClient.getRedirectUris().contains(authorizationRequestContext.getRedirectUri()) ||
+			if (!redirectValidator.validate(authorizationRequestContext.getRedirectUri(), registeredClient) ||
 					authorizationRequestContext.getParameters().get(OAuth2ParameterNames.REDIRECT_URI).size() != 1) {
 				authorizationRequestContext.setError(
 						createError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.REDIRECT_URI));

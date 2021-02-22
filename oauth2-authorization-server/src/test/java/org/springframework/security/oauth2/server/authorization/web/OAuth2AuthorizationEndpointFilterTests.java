@@ -70,6 +70,7 @@ import static org.mockito.Mockito.when;
  * @author Paurav Munshi
  * @author Joe Grandja
  * @author Daniel Garnier-Moiroux
+ * @author Anoop Garlapati
  * @since 0.0.1
  */
 public class OAuth2AuthorizationEndpointFilterTests {
@@ -189,7 +190,7 @@ public class OAuth2AuthorizationEndpointFilterTests {
 	}
 
 	@Test
-	public void doFilterWhenAuthorizationRequestInvalidRedirectUriThenInvalidRequestError() throws Exception {
+	public void doFilterWhenAuthorizationRequestUnregisteredRedirectUriThenInvalidRequestError() throws Exception {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 		when(this.registeredClientRepository.findByClientId((eq(registeredClient.getClientId()))))
 				.thenReturn(registeredClient);
@@ -199,6 +200,20 @@ public class OAuth2AuthorizationEndpointFilterTests {
 				OAuth2ParameterNames.REDIRECT_URI,
 				OAuth2ErrorCodes.INVALID_REQUEST,
 				request -> request.setParameter(OAuth2ParameterNames.REDIRECT_URI, "https://invalid-example.com"));
+	}
+
+	// gh-243
+	@Test
+	public void doFilterWhenAuthorizationRequestInvalidRedirectUriHostThenInvalidRequestError() throws Exception {
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+		when(this.registeredClientRepository.findByClientId((eq(registeredClient.getClientId()))))
+				.thenReturn(registeredClient);
+
+		doFilterWhenAuthorizationRequestInvalidParameterThenError(
+				registeredClient,
+				OAuth2ParameterNames.REDIRECT_URI,
+				OAuth2ErrorCodes.INVALID_REQUEST,
+				request -> request.setParameter(OAuth2ParameterNames.REDIRECT_URI, "https:///invalid"));
 	}
 
 	@Test
@@ -821,6 +836,84 @@ public class OAuth2AuthorizationEndpointFilterTests {
 				.isEqualTo(authorization.<OAuth2AuthorizationRequest>getAttribute(OAuth2AuthorizationRequest.class.getName()));
 		assertThat(updatedAuthorization.<Set<String>>getAttribute(OAuth2Authorization.AUTHORIZED_SCOPE_ATTRIBUTE_NAME))
 				.isEqualTo(registeredClient.getScopes());
+	}
+
+	// gh-243
+	@Test
+	public void doFilterWhenAuthorizationRequestIPv4LoopbackRedirectUriAndDifferentPortThenAuthorizationResponse()
+			throws Exception {
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
+				.redirectUri("http://127.0.0.1:8080")
+				.build();
+		MockHttpServletRequest request = createAuthorizationRequest(registeredClient);
+		request.removeParameter(OAuth2ParameterNames.REDIRECT_URI);
+		request.addParameter(OAuth2ParameterNames.REDIRECT_URI, "http://127.0.0.1:5000");
+
+		when(this.registeredClientRepository.findByClientId((eq(registeredClient.getClientId()))))
+				.thenReturn(registeredClient);
+
+		MockHttpServletResponse response = new MockHttpServletResponse();
+		FilterChain filterChain = mock(FilterChain.class);
+
+		this.filter.doFilter(request, response, filterChain);
+
+		verifyNoInteractions(filterChain);
+
+		assertThat(response.getStatus()).isEqualTo(HttpStatus.FOUND.value());
+		assertThat(response.getRedirectedUrl()).matches("http://127.0.0.1:5000\\?code=.{15,}&state=state");
+	}
+
+	// gh-243
+	@Test
+	public void doFilterWhenAuthorizationRequestIPv6LoopbackRedirectUriAndDifferentPortThenAuthorizationResponse()
+			throws Exception {
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
+				.redirectUri("http://[::1]:8080")
+				.build();
+		MockHttpServletRequest request = createAuthorizationRequest(registeredClient);
+		request.removeParameter(OAuth2ParameterNames.REDIRECT_URI);
+		request.addParameter(OAuth2ParameterNames.REDIRECT_URI, "http://[::1]:5000");
+
+		when(this.registeredClientRepository.findByClientId((eq(registeredClient.getClientId()))))
+				.thenReturn(registeredClient);
+
+		MockHttpServletResponse response = new MockHttpServletResponse();
+		FilterChain filterChain = mock(FilterChain.class);
+
+		this.filter.doFilter(request, response, filterChain);
+
+		verifyNoInteractions(filterChain);
+
+		assertThat(response.getStatus()).isEqualTo(HttpStatus.FOUND.value());
+		assertThat(response.getRedirectedUrl()).matches("http://\\[::1]:5000\\?code=.{15,}&state=state");
+	}
+
+	// gh-243
+	@Test
+	public void doFilterWhenAuthorizationRequestInvalidRedirectUriFragmentThenInvalidRequestError() throws Exception {
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+		when(this.registeredClientRepository.findByClientId((eq(registeredClient.getClientId()))))
+				.thenReturn(registeredClient);
+
+		doFilterWhenAuthorizationRequestInvalidParameterThenError(
+				registeredClient,
+				OAuth2ParameterNames.REDIRECT_URI,
+				OAuth2ErrorCodes.INVALID_REQUEST,
+				request -> request.setParameter(OAuth2ParameterNames.REDIRECT_URI, "https://example.com#fragment"));
+	}
+
+	// gh-243
+	@Test
+	public void doFilterWhenAuthorizationRequestLocalhostRedirectUriThenInvalidRequestError() throws Exception {
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+		when(this.registeredClientRepository.findByClientId((eq(registeredClient.getClientId()))))
+				.thenReturn(registeredClient);
+
+		doFilterWhenAuthorizationRequestInvalidParameterThenError(
+				registeredClient,
+				OAuth2ParameterNames.REDIRECT_URI,
+				OAuth2ErrorCodes.INVALID_REQUEST,
+				request -> request.setParameter(OAuth2ParameterNames.REDIRECT_URI, "http://localhost:5000"));
 	}
 
 	private void doFilterWhenAuthorizationRequestInvalidParameterThenError(RegisteredClient registeredClient,

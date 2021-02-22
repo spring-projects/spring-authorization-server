@@ -26,6 +26,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
@@ -50,10 +51,10 @@ import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.endpoint.PkceParameterNames;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
+import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationCode;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
-import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationCode;
 import org.springframework.security.web.DefaultRedirectStrategy;
 import org.springframework.security.web.RedirectStrategy;
 import org.springframework.security.web.util.matcher.AndRequestMatcher;
@@ -66,6 +67,7 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 
 /**
@@ -75,6 +77,7 @@ import org.springframework.web.util.UriComponentsBuilder;
  * @author Joe Grandja
  * @author Paurav Munshi
  * @author Daniel Garnier-Moiroux
+ * @author Anoop Garlapati
  * @since 0.0.1
  * @see RegisteredClientRepository
  * @see OAuth2AuthorizationService
@@ -91,6 +94,8 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 
 	private static final OAuth2TokenType STATE_TOKEN_TYPE = new OAuth2TokenType(OAuth2ParameterNames.STATE);
 	private static final String PKCE_ERROR_URI = "https://tools.ietf.org/html/rfc7636#section-4.4.1";
+	private static final Pattern LOOPBACK_ADDRESS_PATTERN =
+			Pattern.compile("^127(?:\\.[0-9]+){0,2}\\.[0-9]+$|^\\[(?:0*:)*?:?0*1]$");
 
 	private final RegisteredClientRepository registeredClientRepository;
 	private final OAuth2AuthorizationService authorizationService;
@@ -318,7 +323,7 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 
 		// redirect_uri (OPTIONAL)
 		if (StringUtils.hasText(authorizationRequestContext.getRedirectUri())) {
-			if (!registeredClient.getRedirectUris().contains(authorizationRequestContext.getRedirectUri()) ||
+			if (!isValidRedirectUri(authorizationRequestContext.getRedirectUri(), registeredClient) ||
 					authorizationRequestContext.getParameters().get(OAuth2ParameterNames.REDIRECT_URI).size() != 1) {
 				authorizationRequestContext.setError(
 						createError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.REDIRECT_URI));
@@ -481,6 +486,47 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 		return principal != null &&
 				!AnonymousAuthenticationToken.class.isAssignableFrom(principal.getClass()) &&
 				principal.isAuthenticated();
+	}
+
+	private static boolean isValidRedirectUri(String requestedRedirectUri, RegisteredClient registeredClient) {
+		UriComponents requestedRedirect;
+		try {
+			requestedRedirect = UriComponentsBuilder.fromUriString(requestedRedirectUri).build();
+			if (requestedRedirect.getFragment() != null) {
+				return false;
+			}
+		} catch (Exception ex) {
+			return false;
+		}
+
+		String requestedRedirectHost = requestedRedirect.getHost();
+		if (requestedRedirectHost == null || requestedRedirectHost.equals("localhost")) {
+			// As per https://tools.ietf.org/html/draft-ietf-oauth-v2-1-01#section-9.7.1
+			// While redirect URIs using localhost (i.e.,
+			// "http://localhost:{port}/{path}") function similarly to loopback IP
+			// redirects described in Section 10.3.3, the use of "localhost" is NOT RECOMMENDED.
+			return false;
+		}
+		if (!LOOPBACK_ADDRESS_PATTERN.matcher(requestedRedirectHost).matches()) {
+			// As per https://tools.ietf.org/html/draft-ietf-oauth-v2-1-01#section-9.7
+			// When comparing client redirect URIs against pre-registered URIs,
+			// authorization servers MUST utilize exact string matching.
+			return registeredClient.getRedirectUris().contains(requestedRedirectUri);
+		}
+
+		// As per https://tools.ietf.org/html/draft-ietf-oauth-v2-1-01#section-10.3.3
+		// The authorization server MUST allow any port to be specified at the
+		// time of the request for loopback IP redirect URIs, to accommodate
+		// clients that obtain an available ephemeral port from the operating
+		// system at the time of the request.
+		for (String registeredRedirectUri : registeredClient.getRedirectUris()) {
+			UriComponentsBuilder registeredRedirect = UriComponentsBuilder.fromUriString(registeredRedirectUri);
+			registeredRedirect.port(requestedRedirect.getPort());
+			if (registeredRedirect.build().toString().equals(requestedRedirect.toString())) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private static class OAuth2AuthorizationRequestContext extends AbstractRequestContext {

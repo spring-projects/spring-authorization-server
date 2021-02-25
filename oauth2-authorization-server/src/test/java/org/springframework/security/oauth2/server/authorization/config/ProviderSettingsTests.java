@@ -66,7 +66,7 @@ public class ProviderSettingsTests {
 				.setting("name1", "value1")
 				.settings(settings -> settings.put("name2", "value2"));
 
-		assertThat(providerSettings.settings()).hasSize(6);
+		assertThat(providerSettings.settings()).hasSize(7);
 		assertThat(providerSettings.<String>setting("name1")).isEqualTo("value1");
 		assertThat(providerSettings.<String>setting("name2")).isEqualTo("value2");
 	}

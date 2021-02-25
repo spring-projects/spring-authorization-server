@@ -15,18 +15,22 @@
  */
 package org.springframework.security.oauth2.jose;
 
-import java.security.interfaces.ECPrivateKey;
-import java.security.interfaces.ECPublicKey;
-import java.security.interfaces.RSAPrivateKey;
-import java.security.interfaces.RSAPublicKey;
-
 import javax.crypto.SecretKey;
 
+import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
+
+import com.nimbusds.jose.Algorithm;
 import com.nimbusds.jose.jwk.Curve;
 import com.nimbusds.jose.jwk.ECKey;
 import com.nimbusds.jose.jwk.KeyUse;
 import com.nimbusds.jose.jwk.OctetSequenceKey;
 import com.nimbusds.jose.jwk.RSAKey;
+import com.nimbusds.jose.util.Base64URL;
+
+import java.security.interfaces.ECPrivateKey;
+import java.security.interfaces.ECPublicKey;
+import java.security.interfaces.RSAPrivateKey;
+import java.security.interfaces.RSAPublicKey;
 
 /**
  * @author Joe Grandja
@@ -62,6 +66,8 @@ public final class TestJwks {
 	public static RSAKey.Builder jwk(RSAPublicKey publicKey, RSAPrivateKey privateKey) {
 		// @formatter:off
 		return new RSAKey.Builder(publicKey)
+				.algorithm(Algorithm.parse(SignatureAlgorithm.RS256.getName()))
+				.x509CertSHA256Thumbprint(Base64URL.from("x509SHA256Thumbprint"))
 				.privateKey(privateKey)
 				.keyUse(KeyUse.SIGNATURE)
 				.keyID("rsa-jwk-kid");

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright 2020-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ public class ProviderSettings extends Settings {
 	public static final String TOKEN_ENDPOINT = PROVIDER_SETTING_BASE.concat("token-endpoint");
 	public static final String JWK_SET_ENDPOINT = PROVIDER_SETTING_BASE.concat("jwk-set-endpoint");
 	public static final String TOKEN_REVOCATION_ENDPOINT = PROVIDER_SETTING_BASE.concat("token-revocation-endpoint");
+	public static final String TOKEN_INTROSPECTION_ENDPOINT = PROVIDER_SETTING_BASE.concat("token-introspection-endpoint");
 
 	/**
 	 * Constructs a {@code ProviderSettings}.
@@ -144,12 +145,32 @@ public class ProviderSettings extends Settings {
 		return setting(TOKEN_REVOCATION_ENDPOINT, tokenRevocationEndpoint);
 	}
 
+	/**
+	 * Returns the Provider's OAuth 2.0 Token Introspection endpoint. The default is {@code /oauth2/introspect}.
+	 *
+	 * @return the Token Introspection endpoint
+	 */
+	public String tokenIntrospectionEndpoint() {
+		return setting(TOKEN_INTROSPECTION_ENDPOINT);
+	}
+
+	/**
+	 * Sets the Provider's OAuth 2.0 Token Introspection endpoint.
+	 *
+	 * @param tokenIntrospectionEndpoint the Token Introspection endpoint
+	 * @return the {@link ProviderSettings} for further configuration
+	 */
+	public ProviderSettings tokenIntrospectionEndpoint(String tokenIntrospectionEndpoint) {
+		return setting(TOKEN_INTROSPECTION_ENDPOINT, tokenIntrospectionEndpoint);
+	}
+
 	protected static Map<String, Object> defaultSettings() {
 		Map<String, Object> settings = new HashMap<>();
 		settings.put(AUTHORIZATION_ENDPOINT, "/oauth2/authorize");
 		settings.put(TOKEN_ENDPOINT, "/oauth2/token");
 		settings.put(JWK_SET_ENDPOINT, "/oauth2/jwks");
 		settings.put(TOKEN_REVOCATION_ENDPOINT, "/oauth2/revoke");
+		settings.put(TOKEN_INTROSPECTION_ENDPOINT, "/oauth2/introspect");
 		return settings;
 	}
 }

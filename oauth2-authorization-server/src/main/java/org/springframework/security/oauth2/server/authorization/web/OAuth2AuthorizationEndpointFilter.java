@@ -15,23 +15,6 @@
  */
 package org.springframework.security.oauth2.server.authorization.web;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.security.Principal;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.Arrays;
-import java.util.Base64;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
-import javax.servlet.FilterChain;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -50,10 +33,13 @@ import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.endpoint.PkceParameterNames;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
+import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationCode;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
-import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationCode;
+import org.springframework.security.oauth2.server.authorization.consent.InMemoryUserConsentRepository;
+import org.springframework.security.oauth2.server.authorization.consent.UserConsentRecord;
+import org.springframework.security.oauth2.server.authorization.consent.UserConsentRepository;
 import org.springframework.security.web.DefaultRedirectStrategy;
 import org.springframework.security.web.RedirectStrategy;
 import org.springframework.security.web.util.matcher.AndRequestMatcher;
@@ -67,6 +53,23 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.util.UriComponentsBuilder;
+
+import javax.servlet.FilterChain;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.security.Principal;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
+import java.util.Base64;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * A {@code Filter} for the OAuth 2.0 Authorization Code Grant,
@@ -99,6 +102,7 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 	private final StringKeyGenerator codeGenerator = new Base64StringKeyGenerator(Base64.getUrlEncoder().withoutPadding(), 96);
 	private final StringKeyGenerator stateGenerator = new Base64StringKeyGenerator(Base64.getUrlEncoder());
 	private final RedirectStrategy redirectStrategy = new DefaultRedirectStrategy();
+	private final UserConsentRepository userConsentRepository = new InMemoryUserConsentRepository();
 
 	/**
 	 * Constructs an {@code OAuth2AuthorizationEndpointFilter} using the provided parameters.
@@ -198,7 +202,17 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 				.attribute(Principal.class.getName(), principal)
 				.attribute(OAuth2AuthorizationRequest.class.getName(), authorizationRequest);
 
-		if (requireUserConsent(registeredClient, authorizationRequest)) {
+		final Set<String> alreadyAuthorizedScopes = new HashSet<>(this.userConsentRepository.findBySubjectAndClientId(
+						principal.getName(),
+						registeredClient.getClientId()))
+				.stream()
+				.map(UserConsentRecord::getAuthorizedScope)
+				.collect(Collectors.toSet());
+		Set<String> scopesRequiringConsent = new HashSet<>(authorizationRequest.getScopes());
+		scopesRequiringConsent.removeAll(alreadyAuthorizedScopes);
+		scopesRequiringConsent.remove(OidcScopes.OPENID);		// openid scope does not require consent
+
+		if (requireUserConsent(registeredClient, authorizationRequest) && !scopesRequiringConsent.isEmpty()) {
 			String state = this.stateGenerator.generateKey();
 			OAuth2Authorization authorization = builder
 					.attribute(OAuth2ParameterNames.STATE, state)
@@ -207,7 +221,8 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 
 			// TODO Need to remove 'in-flight' authorization if consent step is not completed (e.g. approved or cancelled)
 
-			UserConsentPage.displayConsent(request, response, registeredClient, authorization);
+			UserConsentPage.displayConsent(request, response, registeredClient, authorization,
+					scopesRequiringConsent, alreadyAuthorizedScopes);
 		} else {
 			Instant issuedAt = Instant.now();
 			Instant expiresAt = issuedAt.plus(5, ChronoUnit.MINUTES);		// TODO Allow configuration for authorization code time-to-live
@@ -269,15 +284,30 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 			return;
 		}
 
-		Instant issuedAt = Instant.now();
-		Instant expiresAt = issuedAt.plus(5, ChronoUnit.MINUTES);		// TODO Allow configuration for authorization code time-to-live
-		OAuth2AuthorizationCode authorizationCode = new OAuth2AuthorizationCode(
-				this.codeGenerator.generateKey(), issuedAt, expiresAt);
-		Set<String> authorizedScopes = userConsentRequestContext.getScopes();
+		Set<String> authorizedScopes = new HashSet<>(userConsentRequestContext.getScopes());
 		if (userConsentRequestContext.getAuthorizationRequest().getScopes().contains(OidcScopes.OPENID)) {
 			// openid scope is auto-approved as it does not require consent
 			authorizedScopes.add(OidcScopes.OPENID);
 		}
+
+		this.userConsentRepository.saveAll(
+				userConsentRequestContext.getAuthorization().getPrincipalName(),
+				userConsentRequestContext.getClientId(),
+				authorizedScopes);
+
+		Set<String> deniedScopes = new HashSet<>(userConsentRequestContext.getAuthorizationRequest().getScopes());
+		deniedScopes.removeAll(authorizedScopes);
+		deniedScopes.remove(OidcScopes.OPENID);
+
+		this.userConsentRepository.revokeAll(
+				userConsentRequestContext.getAuthorization().getPrincipalName(),
+				userConsentRequestContext.getClientId(),
+				deniedScopes);
+
+		Instant issuedAt = Instant.now();
+		Instant expiresAt = issuedAt.plus(5, ChronoUnit.MINUTES);		// TODO Allow configuration for authorization code time-to-live
+		OAuth2AuthorizationCode authorizationCode = new OAuth2AuthorizationCode(
+				this.codeGenerator.generateKey(), issuedAt, expiresAt);
 		OAuth2Authorization authorization = OAuth2Authorization.from(userConsentRequestContext.getAuthorization())
 				.token(authorizationCode)
 				.attributes(attrs -> {
@@ -654,9 +684,11 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 		private static final String CONSENT_ACTION_CANCEL = "cancel";
 
 		private static void displayConsent(HttpServletRequest request, HttpServletResponse response,
-				RegisteredClient registeredClient, OAuth2Authorization authorization) throws IOException {
+				RegisteredClient registeredClient, OAuth2Authorization authorization,
+				Set<String> scopesRequiringConsent, Set<String> alreadyAuthorizedScopes) throws IOException {
 
-			String consentPage = generateConsentPage(request, registeredClient, authorization);
+			String consentPage = generateConsentPage(request, registeredClient, authorization,
+					scopesRequiringConsent, alreadyAuthorizedScopes);
 			response.setContentType(TEXT_HTML_UTF8.toString());
 			response.setContentLength(consentPage.getBytes(StandardCharsets.UTF_8).length);
 			response.getWriter().write(consentPage);
@@ -671,12 +703,9 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 		}
 
 		private static String generateConsentPage(HttpServletRequest request,
-				RegisteredClient registeredClient, OAuth2Authorization authorization) {
+				RegisteredClient registeredClient, OAuth2Authorization authorization,
+				Set<String> scopesRequiringConsent, Set<String> alreadyAuthorizedScopes) {
 
-			OAuth2AuthorizationRequest authorizationRequest = authorization.getAttribute(
-					OAuth2AuthorizationRequest.class.getName());
-			Set<String> scopes = new HashSet<>(authorizationRequest.getScopes());
-			scopes.remove(OidcScopes.OPENID);		// openid scope does not require consent
 			String state = authorization.getAttribute(
 					OAuth2ParameterNames.STATE);
 
@@ -711,7 +740,14 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 			builder.append("                <input type=\"hidden\" name=\"client_id\" value=\"" + registeredClient.getClientId() + "\">");
 			builder.append("                <input type=\"hidden\" name=\"state\" value=\"" + state + "\">");
 
-			for (String scope : scopes) {
+			for (String scope : scopesRequiringConsent) {
+				builder.append("                <div class=\"form-group form-check py-1\">");
+				builder.append("                    <input class=\"form-check-input\" type=\"checkbox\" name=\"scope\" value=\"" + scope + "\" id=\"" + scope + "\">");
+				builder.append("                    <label class=\"form-check-label\" for=\"" + scope + "\">" + scope + "</label>");
+				builder.append("                </div>");
+			}
+
+			for (String scope : alreadyAuthorizedScopes) {
 				builder.append("                <div class=\"form-group form-check py-1\">");
 				builder.append("                    <input class=\"form-check-input\" type=\"checkbox\" name=\"scope\" value=\"" + scope + "\" id=\"" + scope + "\" checked>");
 				builder.append("                    <label class=\"form-check-label\" for=\"" + scope + "\">" + scope + "</label>");

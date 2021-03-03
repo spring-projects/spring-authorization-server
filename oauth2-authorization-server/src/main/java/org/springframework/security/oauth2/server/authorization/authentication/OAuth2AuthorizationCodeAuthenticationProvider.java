@@ -167,9 +167,11 @@ public class OAuth2AuthorizationCodeAuthenticationProvider implements Authentica
 		JwtClaimsSet claims = context.getClaims().build();
 		Jwt jwtAccessToken = this.jwtEncoder.encode(headers, claims);
 
+		Set<String> customizedScopes = new HashSet<>(claims.getClaimAsStringList(OAuth2ParameterNames.SCOPE));
+
 		OAuth2AccessToken accessToken = new OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER,
 				jwtAccessToken.getTokenValue(), jwtAccessToken.getIssuedAt(),
-				jwtAccessToken.getExpiresAt(), excludeOpenidIfNecessary(authorizedScopes));
+				jwtAccessToken.getExpiresAt(), excludeOpenidIfNecessary(customizedScopes));
 
 		OAuth2RefreshToken refreshToken = null;
 		if (registeredClient.getAuthorizationGrantTypes().contains(AuthorizationGrantType.REFRESH_TOKEN)) {

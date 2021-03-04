@@ -72,8 +72,6 @@ import static org.springframework.security.oauth2.server.authorization.authentic
 public class OAuth2AuthorizationCodeAuthenticationProvider implements AuthenticationProvider {
 	private static final OAuth2TokenType AUTHORIZATION_CODE_TOKEN_TYPE =
 			new OAuth2TokenType(OAuth2ParameterNames.CODE);
-	private static final OAuth2TokenType ID_TOKEN_TOKEN_TYPE =
-			new OAuth2TokenType(OidcParameterNames.ID_TOKEN);
 	private final OAuth2AuthorizationService authorizationService;
 	private final JwtEncoder jwtEncoder;
 	private OAuth2TokenCustomizer<JwtEncodingContext> jwtCustomizer = (context) -> {};
@@ -191,7 +189,7 @@ public class OAuth2AuthorizationCodeAuthenticationProvider implements Authentica
 					.principal(authorization.getAttribute(Principal.class.getName()))
 					.authorization(authorization)
 					.authorizedScopes(authorizedScopes)
-					.tokenType(ID_TOKEN_TOKEN_TYPE)
+					.tokenType(OAuth2TokenType.ID_TOKEN)
 					.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
 					.authorizationGrant(authorizationCodeAuthentication)
 					.build();

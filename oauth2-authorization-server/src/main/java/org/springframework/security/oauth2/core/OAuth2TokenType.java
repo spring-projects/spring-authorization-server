@@ -17,6 +17,8 @@ package org.springframework.security.oauth2.core;
 
 import java.io.Serializable;
 
+import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
+import org.springframework.security.oauth2.core.oidc.endpoint.OidcParameterNames;
 import org.springframework.util.Assert;
 
 /**
@@ -28,8 +30,9 @@ import org.springframework.util.Assert;
  */
 public final class OAuth2TokenType implements Serializable {
 	private static final long serialVersionUID = Version.SERIAL_VERSION_UID;
-	public static final OAuth2TokenType ACCESS_TOKEN = new OAuth2TokenType("access_token");
-	public static final OAuth2TokenType REFRESH_TOKEN = new OAuth2TokenType("refresh_token");
+	public static final OAuth2TokenType ACCESS_TOKEN = new OAuth2TokenType(OAuth2ParameterNames.ACCESS_TOKEN);
+	public static final OAuth2TokenType REFRESH_TOKEN = new OAuth2TokenType(OAuth2ParameterNames.REFRESH_TOKEN);
+	public static final OAuth2TokenType ID_TOKEN = new OAuth2TokenType(OidcParameterNames.ID_TOKEN);
 	private final String value;
 
 	/**

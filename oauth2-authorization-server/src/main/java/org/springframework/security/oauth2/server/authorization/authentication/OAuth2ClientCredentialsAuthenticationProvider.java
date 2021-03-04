@@ -20,6 +20,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -39,6 +41,7 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 import org.springframework.security.oauth2.server.authorization.config.ProviderSettings;
 import org.springframework.security.oauth2.server.authorization.JwtEncodingContext;
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenCustomizer;
+import org.springframework.security.oauth2.server.authorization.event.OAuth2ClientCredentialsTokenIssuedEvent;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 
@@ -59,9 +62,11 @@ import static org.springframework.security.oauth2.server.authorization.authentic
  * @see <a target="_blank" href="https://tools.ietf.org/html/rfc6749#section-4.4">Section 4.4 Client Credentials Grant</a>
  * @see <a target="_blank" href="https://tools.ietf.org/html/rfc6749#section-4.4.2">Section 4.4.2 Access Token Request</a>
  */
-public class OAuth2ClientCredentialsAuthenticationProvider implements AuthenticationProvider {
+public class OAuth2ClientCredentialsAuthenticationProvider implements AuthenticationProvider,
+		ApplicationEventPublisherAware {
 	private final OAuth2AuthorizationService authorizationService;
 	private final JwtEncoder jwtEncoder;
+	private ApplicationEventPublisher publisher = event -> {};
 	private OAuth2TokenCustomizer<JwtEncodingContext> jwtCustomizer = (context) -> {};
 	private ProviderSettings providerSettings;
 
@@ -152,12 +157,24 @@ public class OAuth2ClientCredentialsAuthenticationProvider implements Authentica
 		// @formatter:on
 
 		this.authorizationService.save(authorization);
-
-		return new OAuth2AccessTokenAuthenticationToken(registeredClient, clientPrincipal, accessToken);
+		OAuth2AccessTokenAuthenticationToken token =
+				new OAuth2AccessTokenAuthenticationToken(registeredClient, clientPrincipal, accessToken);
+		this.publishTokenIssuedEvent(token);
+		return token;
 	}
 
 	@Override
 	public boolean supports(Class<?> authentication) {
 		return OAuth2ClientCredentialsAuthenticationToken.class.isAssignableFrom(authentication);
+	}
+
+	@Override
+	public void setApplicationEventPublisher(ApplicationEventPublisher applicationEventPublisher) {
+		Assert.notNull(publisher, "ApplicationEventPublisher must not be null");
+		this.publisher = applicationEventPublisher;
+	}
+
+	private void publishTokenIssuedEvent(OAuth2AccessTokenAuthenticationToken token) {
+		this.publisher.publishEvent(new OAuth2ClientCredentialsTokenIssuedEvent(token));
 	}
 }

@@ -43,6 +43,7 @@ import com.nimbusds.jose.util.Base64URL;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 
+import net.minidev.json.JSONObject;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
@@ -197,7 +198,7 @@ public final class NimbusJwsEncoder implements JwtEncoder {
 			Map<String, Object> jwk = headers.getJwk();
 			if (!CollectionUtils.isEmpty(jwk)) {
 				try {
-					builder.jwk(JWK.parse(jwk));
+					builder.jwk(JWK.parse(new JSONObject(jwk)));
 				}
 				catch (Exception ex) {
 					throw new JwtEncodingException(String.format(ENCODING_ERROR_MESSAGE_TEMPLATE,

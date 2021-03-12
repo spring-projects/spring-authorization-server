@@ -3,7 +3,7 @@ if (!project.hasProperty("springVersion")) {
 }
 
 if (!project.hasProperty("springSecurityVersion")) {
-	ext.springSecurityVersion = "5.4.2"
+	ext.springSecurityVersion = "5.4.5"
 }
 
 if (!project.hasProperty("reactorVersion")) {
@@ -25,8 +25,6 @@ dependencyManagement {
 	}
 
 	dependencies {
-		dependency "com.nimbusds:oauth2-oidc-sdk:8.23.1"
-		dependency "com.nimbusds:nimbus-jose-jwt:9.1.3"
 		dependency "javax.servlet:javax.servlet-api:4.0.1"
 		dependency 'junit:junit:4.13.1'
 		dependency 'org.assertj:assertj-core:3.18.1'

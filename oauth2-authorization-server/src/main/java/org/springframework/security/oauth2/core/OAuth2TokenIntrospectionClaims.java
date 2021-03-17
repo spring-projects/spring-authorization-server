@@ -16,7 +16,6 @@
 
 package org.springframework.security.oauth2.core;
 
-import static java.util.Collections.emptyMap;
 import static java.util.stream.Collectors.toMap;
 import static org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames.CLIENT_ID;
 import static org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames.SCOPE;
@@ -30,16 +29,19 @@ import static org.springframework.security.oauth2.jwt.JwtClaimNames.JTI;
 import static org.springframework.security.oauth2.jwt.JwtClaimNames.NBF;
 import static org.springframework.security.oauth2.jwt.JwtClaimNames.SUB;
 
-import org.springframework.lang.Nullable;
 import org.springframework.security.oauth2.core.OAuth2AccessToken.TokenType;
+import org.springframework.util.Assert;
 
+import java.io.Serializable;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 /**
  * A representation of an OAuth 2.0 Introspection Token Response Claims.
@@ -48,42 +50,42 @@ import java.util.Optional;
  * @since 0.1.1
  * @see <a target="_blank" href="https://tools.ietf.org/html/rfc7662#section-2.2">Section 2.2 - Introspection Response</a>
  */
-public class OAuth2TokenIntrospectionClaims {
-
-	public static final String ACTIVE = "active";
+public class OAuth2TokenIntrospectionClaims implements OAuth2TokenIntrospectionClaimAccessor, Serializable {
+	private static final long serialVersionUID = Version.SERIAL_VERSION_UID;
 	private static final Collection<String> SUPPORTED_FIELDS = Arrays
 			.asList(ACTIVE, CLIENT_ID, SCOPE, TOKEN_TYPE, USERNAME, AUD, EXP, IAT, ISS, JTI, NBF, SUB);
 
-	private final Map<String, Object> parameters;
+	private final Map<String, Object> claims;
 
-	private OAuth2TokenIntrospectionClaims(Map<String, Object> params) {
-		this.parameters = params;
+	private OAuth2TokenIntrospectionClaims(Map<String, Object> claims) {
+		this.claims = Collections.unmodifiableMap(new LinkedHashMap<>(claims));
 	}
 
 	/**
-	 * Returns the populated parameters.
+	 * Returns the populated Token Introspection Response claims.
 	 *
-	 * @return the parameters
+	 * @return the claims
 	 */
-	public Map<String, Object> getParameters() {
-		return this.parameters;
+	@Override
+	public Map<String, Object> getClaims() {
+		return this.claims;
 	}
 
 	/**
 	 * Constructs a new {@link Builder} with the provided parameters.
 	 *
-	 * @param parameters the params to initialize the builder
+	 * @param claims the params to initialize the builder
 	 */
-	public static Builder withClaims(@Nullable Map<String, Object> parameters) {
-		Map<String, Object> params = parameters != null ? parameters : emptyMap();
-		Builder builder = new Builder(params);
-		Optional.ofNullable(parameters.get(IAT)).filter(Instant.class::isInstance).map(Instant.class::cast)
+	public static Builder withClaims(Map<String, Object> claims) {
+		Assert.notEmpty(claims, "claims cannot be empty");
+		Builder builder = new Builder().claims(c -> c.putAll(claims));
+		Optional.ofNullable(claims.get(IAT)).filter(Instant.class::isInstance).map(Instant.class::cast)
 				.ifPresent(builder::issuedAt);
-		Optional.ofNullable(parameters.get(EXP)).filter(Instant.class::isInstance).map(Instant.class::cast)
+		Optional.ofNullable(claims.get(EXP)).filter(Instant.class::isInstance).map(Instant.class::cast)
 				.ifPresent(builder::expirationTime);
-		Optional.ofNullable(parameters.get(NBF)).filter(Instant.class::isInstance).map(Instant.class::cast)
+		Optional.ofNullable(claims.get(NBF)).filter(Instant.class::isInstance).map(Instant.class::cast)
 				.ifPresent(builder::notBefore);
-		Optional.ofNullable(parameters.get(TOKEN_TYPE)).filter(TokenType.class::isInstance).map(TokenType.class::cast)
+		Optional.ofNullable(claims.get(TOKEN_TYPE)).filter(TokenType.class::isInstance).map(TokenType.class::cast)
 				.ifPresent(builder::tokenType);
 		return builder;
 	}
@@ -102,10 +104,9 @@ public class OAuth2TokenIntrospectionClaims {
 	 */
 	public static final class Builder {
 
-		private final Map<String, Object> params = new HashMap<>();
+		private final Map<String, Object> claims = new LinkedHashMap<>();
 
-		private Builder(Map<String, Object> params) {
-			this.params.putAll(params);
+		private Builder() {
 		}
 
 		/**
@@ -114,21 +115,7 @@ public class OAuth2TokenIntrospectionClaims {
 		 * @param active boolean indicating whether the introspected token is active or not
 		 */
 		public Builder(boolean active) {
-			this.params.put(ACTIVE, active);
-		}
-
-		/**
-		 * Adds a param field. If null is passed as value, then it removes the entry.
-		 *
-		 * @param key
-		 * @param value
-		 */
-		public void addParam(String key, @Nullable Object value) {
-			if (value != null) {
-				this.params.put(key, value);
-			} else {
-				this.params.remove(key);
-			}
+			claim(ACTIVE, active);
 		}
 
 		/**
@@ -138,7 +125,7 @@ public class OAuth2TokenIntrospectionClaims {
 		 * @return the {@link Builder} for further configurations
 		 */
 		public Builder active(boolean active) {
-			this.addParam(ACTIVE, active);
+			claim(ACTIVE, active);
 			return this;
 		}
 
@@ -149,7 +136,7 @@ public class OAuth2TokenIntrospectionClaims {
 		 * @return the {@link Builder} for further configurations
 		 */
 		public Builder scope(String scope) {
-			this.addParam(SCOPE, scope);
+			claim(SCOPE, scope);
 			return this;
 		}
 
@@ -160,7 +147,7 @@ public class OAuth2TokenIntrospectionClaims {
 		 * @return the {@link Builder} for further configurations
 		 */
 		public Builder clientId(String clientId) {
-			this.addParam(CLIENT_ID, clientId);
+			claim(CLIENT_ID, clientId);
 			return this;
 		}
 
@@ -171,7 +158,7 @@ public class OAuth2TokenIntrospectionClaims {
 		 * @return the {@link Builder} for further configurations
 		 */
 		public Builder username(String username) {
-			this.addParam(USERNAME, username);
+			claim(USERNAME, username);
 			return this;
 		}
 
@@ -182,7 +169,7 @@ public class OAuth2TokenIntrospectionClaims {
 		 * @return the {@link Builder} for further configurations
 		 */
 		public Builder tokenType(OAuth2AccessToken.TokenType tokenType) {
-			this.addParam(TOKEN_TYPE, tokenType.getValue());
+			claim(TOKEN_TYPE, tokenType.getValue());
 			return this;
 		}
 
@@ -193,7 +180,7 @@ public class OAuth2TokenIntrospectionClaims {
 		 * @return the {@link Builder} for further configurations
 		 */
 		public Builder expirationTime(Instant expirationTime) {
-			this.addParam(EXP, expirationTime.getEpochSecond());
+			claim(EXP, expirationTime.getEpochSecond());
 			return this;
 		}
 
@@ -204,7 +191,7 @@ public class OAuth2TokenIntrospectionClaims {
 		 * @return the {@link Builder} for further configurations
 		 */
 		public Builder issuedAt(Instant issuedAt) {
-			this.addParam(IAT, issuedAt.getEpochSecond());
+			claim(IAT, issuedAt.getEpochSecond());
 			return this;
 		}
 
@@ -215,7 +202,7 @@ public class OAuth2TokenIntrospectionClaims {
 		 * @return the {@link Builder} for further configurations
 		 */
 		public Builder notBefore(Instant notBefore) {
-			this.addParam(NBF, notBefore.getEpochSecond());
+			claim(NBF, notBefore.getEpochSecond());
 			return this;
 		}
 
@@ -226,7 +213,7 @@ public class OAuth2TokenIntrospectionClaims {
 		 * @return the {@link Builder} for further configurations
 		 */
 		public Builder subject(String subject) {
-			this.addParam(SUB, subject);
+			claim(SUB, subject);
 			return this;
 		}
 
@@ -238,7 +225,7 @@ public class OAuth2TokenIntrospectionClaims {
 		 * @return the {@link Builder} for further configurations
 		 */
 		public Builder audience(List<String> audience) {
-			this.addParam(AUD, audience);
+			claim(AUD, audience);
 			return this;
 		}
 
@@ -249,7 +236,7 @@ public class OAuth2TokenIntrospectionClaims {
 		 * @return the {@link Builder} for further configurations
 		 */
 		public Builder issuer(String issuer) {
-			this.addParam(ISS, issuer);
+			claim(ISS, issuer);
 			return this;
 		}
 
@@ -260,8 +247,37 @@ public class OAuth2TokenIntrospectionClaims {
 		 * @return the {@link Builder} for further configurations
 		 */
 		public Builder jwtId(String jwtId) {
-			this.addParam(JTI, jwtId);
+			claim(JTI, jwtId);
 			return this;
+		}
+
+		/**
+		 * Use this claim in the resulting {@link OAuth2TokenIntrospectionClaims}.
+		 *
+		 * @param name the claim name
+		 * @param value the claim value
+		 * @return the {@link Builder} for further configuration
+		 */
+		public Builder claim(String name, Object value) {
+			Assert.hasText(name, "name cannot be empty");
+			Assert.notNull(value, "value cannot be null");
+			this.claims.put(name, value);
+			return this;
+		}
+
+		/**
+		 * Provides access to every {@link #claim(String, Object)} declared so far with the possibility to add, replace, or remove.
+		 *
+		 * @param claimsConsumer a {@code Consumer} of the claims
+		 * @return the {@link Builder} for further configurations
+		 */
+		public Builder claims(Consumer<Map<String, Object>> claimsConsumer) {
+			claimsConsumer.accept(this.claims);
+			return this;
+		}
+
+		private void validateClaims() {
+			Assert.notNull(this.claims.get(ACTIVE), "active cannot be null");
 		}
 
 		/**
@@ -270,10 +286,11 @@ public class OAuth2TokenIntrospectionClaims {
 		 * @return The constructed {@link OAuth2TokenIntrospectionClaims}
 		 */
 		public OAuth2TokenIntrospectionClaims build() {
-			Map<String, Object> responseParams = this.params.entrySet().stream()
+			Map<String, Object> responseClaims = this.claims.entrySet().stream()
 					.filter(entry -> SUPPORTED_FIELDS.contains(entry.getKey()))
 					.collect(toMap(Map.Entry::getKey, Map.Entry::getValue));
-			return new OAuth2TokenIntrospectionClaims(responseParams);
+			validateClaims();
+			return new OAuth2TokenIntrospectionClaims(responseClaims);
 		}
 	}
 }

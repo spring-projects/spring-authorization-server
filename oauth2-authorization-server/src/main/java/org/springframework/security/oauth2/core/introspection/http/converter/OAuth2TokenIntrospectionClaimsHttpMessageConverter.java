@@ -16,7 +16,7 @@
 
 package org.springframework.security.oauth2.core.introspection.http.converter;
 
-import static org.springframework.security.oauth2.core.OAuth2TokenIntrospectionClaims.ACTIVE;
+import static org.springframework.security.oauth2.core.OAuth2TokenIntrospectionClaimAccessor.ACTIVE;
 import static org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames.CLIENT_ID;
 import static org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames.SCOPE;
 import static org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames.TOKEN_TYPE;
@@ -58,7 +58,7 @@ import java.util.Map;
  * @see AbstractHttpMessageConverter
  * @see OAuth2TokenIntrospectionClaims
  */
-public class OAuth2TokenIntrospectionResponseHttpMessageConverter
+public class OAuth2TokenIntrospectionClaimsHttpMessageConverter
 		extends AbstractHttpMessageConverter<OAuth2TokenIntrospectionClaims> {
 
 	private static final ParameterizedTypeReference<Map<String, Object>> STRING_OBJECT_MAP = new ParameterizedTypeReference<Map<String, Object>>() {
@@ -67,9 +67,9 @@ public class OAuth2TokenIntrospectionResponseHttpMessageConverter
 	private GenericHttpMessageConverter<Object> jsonMessageConverter = HttpMessageConverters.getJsonMessageConverter();
 
 	private Converter<Map<String, Object>, OAuth2TokenIntrospectionClaims> tokenIntrospectionResponseConverter = new OAuth2TokenIntrospectionResponseConverter();
-	private Converter<OAuth2TokenIntrospectionClaims, Map<String, Object>> tokenIntrospectionResponseParametersConverter = OAuth2TokenIntrospectionClaims::getParameters;
+	private Converter<OAuth2TokenIntrospectionClaims, Map<String, Object>> tokenIntrospectionResponseParametersConverter = OAuth2TokenIntrospectionClaims::getClaims;
 
-	public OAuth2TokenIntrospectionResponseHttpMessageConverter() {
+	public OAuth2TokenIntrospectionClaimsHttpMessageConverter() {
 		super(MediaType.APPLICATION_JSON, new MediaType("application", "*+json"));
 	}
 
@@ -109,8 +109,7 @@ public class OAuth2TokenIntrospectionResponseHttpMessageConverter
 	}
 
 	/**
-	 * Sets the {@link Converter} used for converting the Token Introspection parameters to an
-	 * {@link OAuth2TokenIntrospectionClaims}.
+	 * Sets the {@link Converter} used for converting the Token Introspection parameters to an {@link OAuth2TokenIntrospectionClaims}.
 	 *
 	 * @param tokenIntrospectionResponseConverter the {@link Converter} used for converting to an
 	 * {@link OAuth2TokenIntrospectionClaims}

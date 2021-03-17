@@ -19,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.springframework.security.oauth2.core.OAuth2TokenIntrospectionClaims.ACTIVE;
+import static org.springframework.security.oauth2.core.OAuth2TokenIntrospectionClaimAccessor.ACTIVE;
 import static org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames.CLIENT_ID;
 import static org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames.SCOPE;
 import static org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames.TOKEN_TYPE;
@@ -40,8 +40,8 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.http.converter.HttpMessageNotWritableException;
 import org.springframework.mock.http.MockHttpOutputMessage;
 import org.springframework.mock.http.client.MockClientHttpResponse;
-import org.springframework.security.oauth2.core.OAuth2TokenIntrospectionClaims;
 import org.springframework.security.oauth2.core.OAuth2AccessToken.TokenType;
+import org.springframework.security.oauth2.core.OAuth2TokenIntrospectionClaims;
 
 import java.time.Instant;
 import java.util.Arrays;
@@ -49,12 +49,12 @@ import java.util.Collection;
 import java.util.Map;
 
 /**
- * Tests for {@link OAuth2TokenIntrospectionResponseHttpMessageConverter}
+ * Tests for {@link OAuth2TokenIntrospectionClaimsHttpMessageConverter}
  *
  * @author Gerardo Roza
  */
-public class OAuth2TokenIntrospectionResponseHttpMessageConverterTests {
-	private final OAuth2TokenIntrospectionResponseHttpMessageConverter messageConverter = new OAuth2TokenIntrospectionResponseHttpMessageConverter();
+public class OAuth2TokenIntrospectionClaimsHttpMessageConverterTests {
+	private final OAuth2TokenIntrospectionClaimsHttpMessageConverter messageConverter = new OAuth2TokenIntrospectionClaimsHttpMessageConverter();
 
 	@Test
 	public void supportsWhenOidcProviderConfigurationThenTrue() {
@@ -96,7 +96,7 @@ public class OAuth2TokenIntrospectionResponseHttpMessageConverterTests {
 				tokenIntrospectionResponseBody.getBytes(), HttpStatus.OK);
 		OAuth2TokenIntrospectionClaims tokenIntrospectionResponse = this.messageConverter
 				.readInternal(OAuth2TokenIntrospectionClaims.class, response);
-		Map<String, Object> responseParameters = tokenIntrospectionResponse.getParameters();
+		Map<String, Object> responseParameters = tokenIntrospectionResponse.getClaims();
 		Condition<Object> collectionContainsCondition = new Condition<>(
 				collection -> Collection.class.isAssignableFrom(collection.getClass())
 						&& ((Collection<String>) collection).contains("audience1")

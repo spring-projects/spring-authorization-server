@@ -34,7 +34,7 @@ import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.OAuth2TokenIntrospectionClaims;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames2;
 import org.springframework.security.oauth2.core.http.converter.OAuth2ErrorHttpMessageConverter;
-import org.springframework.security.oauth2.core.introspection.http.converter.OAuth2TokenIntrospectionResponseHttpMessageConverter;
+import org.springframework.security.oauth2.core.introspection.http.converter.OAuth2TokenIntrospectionClaimsHttpMessageConverter;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2TokenIntrospectionAuthenticationToken;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
@@ -63,7 +63,7 @@ public class OAuth2TokenIntrospectionEndpointFilter extends OncePerRequestFilter
 	private final AuthenticationManager authenticationManager;
 	private final RequestMatcher tokenIntrospectionEndpointMatcher;
 	private final Converter<HttpServletRequest, Authentication> tokenIntrospectionAuthenticationConverter = new DefaultTokenIntrospectionAuthenticationConverter();
-	private final HttpMessageConverter<OAuth2TokenIntrospectionClaims> tokenIntrospectionHttpResponseConverter = new OAuth2TokenIntrospectionResponseHttpMessageConverter();
+	private final HttpMessageConverter<OAuth2TokenIntrospectionClaims> tokenIntrospectionHttpResponseConverter = new OAuth2TokenIntrospectionClaimsHttpMessageConverter();
 
 	private final HttpMessageConverter<OAuth2Error> errorHttpResponseConverter = new OAuth2ErrorHttpMessageConverter();
 

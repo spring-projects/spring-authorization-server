@@ -23,7 +23,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
-import static org.springframework.security.oauth2.core.OAuth2TokenIntrospectionClaims.ACTIVE;
+import static org.springframework.security.oauth2.core.OAuth2TokenIntrospectionClaimAccessor.ACTIVE;
 import static org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames.CLIENT_ID;
 import static org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames.SCOPE;
 import static org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames.TOKEN_TYPE;
@@ -55,7 +55,7 @@ import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.OAuth2TokenIntrospectionClaims;
 import org.springframework.security.oauth2.core.OAuth2TokenType;
 import org.springframework.security.oauth2.core.http.converter.OAuth2ErrorHttpMessageConverter;
-import org.springframework.security.oauth2.core.introspection.http.converter.OAuth2TokenIntrospectionResponseHttpMessageConverter;
+import org.springframework.security.oauth2.core.introspection.http.converter.OAuth2TokenIntrospectionClaimsHttpMessageConverter;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2TokenIntrospectionAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
@@ -76,7 +76,7 @@ public class OAuth2TokenIntrospectionEndpointFilterTests {
 	private AuthenticationManager authenticationManager;
 	private OAuth2TokenIntrospectionEndpointFilter filter;
 	private final HttpMessageConverter<OAuth2Error> errorHttpResponseConverter = new OAuth2ErrorHttpMessageConverter();
-	private final HttpMessageConverter<OAuth2TokenIntrospectionClaims> tokenIntrospectionHttpResponseConverter = new OAuth2TokenIntrospectionResponseHttpMessageConverter();
+	private final HttpMessageConverter<OAuth2TokenIntrospectionClaims> tokenIntrospectionHttpResponseConverter = new OAuth2TokenIntrospectionClaimsHttpMessageConverter();
 	private final Condition<Object> scopesMatchesInAnyOrder = new Condition<>(
 			scopes -> scopes.equals("scope1 Scope2") || scopes.equals("Scope2 scope1"), "scopes match");
 	private final String tokenValue = "token.123";
@@ -207,7 +207,7 @@ public class OAuth2TokenIntrospectionEndpointFilterTests {
 		assertThat(response.getStatus()).isEqualTo(HttpStatus.OK.value());
 		OAuth2TokenIntrospectionClaims tokenIntrospectionResponse = readTokenIntrospectionResponse(response);
 
-		Map<String, Object> responseMap = tokenIntrospectionResponse.getParameters();
+		Map<String, Object> responseMap = tokenIntrospectionResponse.getClaims();
 		// @formatter:off
 		assertThat(responseMap).contains(
 				entry(ACTIVE, true),
@@ -223,7 +223,7 @@ public class OAuth2TokenIntrospectionEndpointFilterTests {
 	private void assertNotActiveTokenResponse(MockHttpServletResponse response) throws Exception {
 		assertThat(response.getStatus()).isEqualTo(HttpStatus.OK.value());
 		OAuth2TokenIntrospectionClaims tokenIntrospectionResponse = readTokenIntrospectionResponse(response);
-		assertThat(tokenIntrospectionResponse.getParameters()).containsEntry("active", false).hasSize(1);
+		assertThat(tokenIntrospectionResponse.getClaims()).containsEntry("active", false).hasSize(1);
 	}
 
 	private OAuth2Error readError(MockHttpServletResponse response) throws Exception {

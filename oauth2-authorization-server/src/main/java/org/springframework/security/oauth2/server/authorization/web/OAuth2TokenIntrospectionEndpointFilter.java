@@ -61,7 +61,7 @@ public class OAuth2TokenIntrospectionEndpointFilter extends OncePerRequestFilter
 	public static final String DEFAULT_TOKEN_INTROSPECTION_ENDPOINT_URI = "/oauth2/introspect";
 
 	private final AuthenticationManager authenticationManager;
-	private final RequestMatcher tokenEndpointMatcher;
+	private final RequestMatcher tokenIntrospectionEndpointMatcher;
 	private final Converter<HttpServletRequest, Authentication> tokenIntrospectionAuthenticationConverter = new DefaultTokenIntrospectionAuthenticationConverter();
 	private final HttpMessageConverter<OAuth2TokenIntrospectionResponse> tokenIntrospectionHttpResponseConverter = new OAuth2TokenIntrospectionResponseHttpMessageConverter();
 
@@ -87,30 +87,33 @@ public class OAuth2TokenIntrospectionEndpointFilter extends OncePerRequestFilter
 		Assert.notNull(authenticationManager, "authenticationManager cannot be null");
 		Assert.hasText(tokenIntrospectionEndpointUri, "tokenIntrospectionEndpointUri cannot be empty");
 		this.authenticationManager = authenticationManager;
-		this.tokenEndpointMatcher = new AntPathRequestMatcher(tokenIntrospectionEndpointUri, HttpMethod.POST.name());
+		this.tokenIntrospectionEndpointMatcher = new AntPathRequestMatcher(
+				tokenIntrospectionEndpointUri, HttpMethod.POST.name());
 	}
 
 	@Override
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
 			throws ServletException, IOException {
 
-		if (!this.tokenEndpointMatcher.matches(request)) {
+		if (!this.tokenIntrospectionEndpointMatcher.matches(request)) {
 			filterChain.doFilter(request, response);
 			return;
 		}
 
 		try {
 
-			OAuth2TokenIntrospectionAuthenticationToken introspectionTokenAuthentication = (OAuth2TokenIntrospectionAuthenticationToken) this.authenticationManager
-					.authenticate(this.tokenIntrospectionAuthenticationConverter.convert(request));
+			Authentication authentication = this.tokenIntrospectionAuthenticationConverter.convert(request);
 
-			OAuth2TokenIntrospectionResponse tokenIntrospectionResponse = introspectionTokenAuthentication
+			OAuth2TokenIntrospectionAuthenticationToken tokenIntrospectionAuthentication = (OAuth2TokenIntrospectionAuthenticationToken) this.authenticationManager
+					.authenticate(authentication);
+
+			OAuth2TokenIntrospectionResponse tokenIntrospectionResponse = tokenIntrospectionAuthentication
 					.isTokenActive()
-							? OAuth2TokenIntrospectionResponse.withClaims(introspectionTokenAuthentication.getClaims())
+							? OAuth2TokenIntrospectionResponse.withClaims(tokenIntrospectionAuthentication.getClaims())
 									.build()
 							: OAuth2TokenIntrospectionResponse.builder(false).build();
 
-			this.sendTokenIntrospectionResponse(response, tokenIntrospectionResponse);
+			sendTokenIntrospectionResponse(response, tokenIntrospectionResponse);
 		} catch (OAuth2AuthenticationException ex) {
 			SecurityContextHolder.clearContext();
 			sendErrorResponse(response, ex.getError());

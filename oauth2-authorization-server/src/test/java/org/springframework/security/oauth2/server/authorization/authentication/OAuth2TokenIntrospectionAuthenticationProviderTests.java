@@ -129,23 +129,6 @@ public class OAuth2TokenIntrospectionAuthenticationProviderTests {
 	}
 
 	@Test
-	public void authenticateWhenTokenIssuedToAnotherClientThenAuthenticatedButTokenNotActive() {
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
-		OAuth2Authorization authorization = TestOAuth2Authorizations
-				.authorization(TestRegisteredClients.registeredClient2().build()).build();
-		when(this.authorizationService.findByToken(eq("token"), isNull())).thenReturn(authorization);
-
-		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient);
-		OAuth2TokenIntrospectionAuthenticationToken authentication = new OAuth2TokenIntrospectionAuthenticationToken(
-				"token", clientPrincipal, OAuth2TokenType.ACCESS_TOKEN.getValue());
-
-		OAuth2TokenIntrospectionAuthenticationToken authenticationResult = (OAuth2TokenIntrospectionAuthenticationToken) this.authenticationProvider
-				.authenticate(authentication);
-		assertThat(authenticationResult.isAuthenticated()).isTrue();
-		assertThat(authenticationResult.isTokenActive()).isFalse();
-	}
-
-	@Test
 	public void authenticateWhenInvalidatedTokenThenAuthenticatedButTokenNotActive() {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();

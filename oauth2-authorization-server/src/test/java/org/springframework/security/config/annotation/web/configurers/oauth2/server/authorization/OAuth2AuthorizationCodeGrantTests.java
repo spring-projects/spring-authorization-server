@@ -35,11 +35,14 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.mock.http.client.MockClientHttpResponse;
 import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
 import org.springframework.security.config.test.SpringTestRule;
@@ -70,6 +73,10 @@ import org.springframework.security.oauth2.server.authorization.OAuth2Authorizat
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenCustomizer;
 import org.springframework.security.oauth2.server.authorization.web.OAuth2AuthorizationEndpointFilter;
 import org.springframework.security.oauth2.server.authorization.web.OAuth2TokenEndpointFilter;
+import org.springframework.security.web.AuthenticationEntryPoint;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
+import org.springframework.security.web.authentication.ui.DefaultLoginPageGeneratingFilter;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.util.LinkedMultiValueMap;
@@ -154,6 +161,24 @@ public class OAuth2AuthorizationCodeGrantTests {
 				.andExpect(status().is3xxRedirection())
 				.andReturn();
 		assertThat(mvcResult.getResponse().getRedirectedUrl()).endsWith("/login");
+
+		verify(registeredClientRepository).findByClientId(eq(registeredClient.getClientId()));
+		verifyNoInteractions(authorizationService);
+	}
+
+	@Test
+	public void requestWhenAuthorizationRequestNotAuthenticatedThenRedirectToCustomLogin() throws Exception {
+		this.spring.register(AuthorizationServerConfigurationCustomAuthenticationEntryPoint.class).autowire();
+
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+		when(registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
+				.thenReturn(registeredClient);
+
+		MvcResult mvcResult = this.mvc.perform(get(OAuth2AuthorizationEndpointFilter.DEFAULT_AUTHORIZATION_ENDPOINT_URI)
+				.params(getAuthorizationRequestParameters(registeredClient)))
+				.andExpect(status().is3xxRedirection())
+				.andReturn();
+		assertThat(mvcResult.getResponse().getRedirectedUrl()).endsWith("/login/custom");
 
 		verify(registeredClientRepository).findByClientId(eq(registeredClient.getClientId()));
 		verifyNoInteractions(authorizationService);
@@ -411,4 +436,23 @@ public class OAuth2AuthorizationCodeGrantTests {
 		}
 	}
 
+	@EnableWebSecurity
+	static class AuthorizationServerConfigurationCustomAuthenticationEntryPoint extends AuthorizationServerConfiguration {
+
+		@Bean
+		@Order(Ordered.HIGHEST_PRECEDENCE)
+		public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
+			OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http);
+
+			http.exceptionHandling()
+					.authenticationEntryPoint(authenticationEntryPoint());
+
+			return http.build();
+		}
+
+		@Bean
+		AuthenticationEntryPoint authenticationEntryPoint() {
+			return new LoginUrlAuthenticationEntryPoint("/login/custom");
+		}
+	}
 }

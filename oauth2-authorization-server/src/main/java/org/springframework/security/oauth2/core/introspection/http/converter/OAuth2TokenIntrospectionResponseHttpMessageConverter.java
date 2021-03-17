@@ -16,11 +16,11 @@
 
 package org.springframework.security.oauth2.core.introspection.http.converter;
 
+import static org.springframework.security.oauth2.core.OAuth2TokenIntrospectionClaims.ACTIVE;
 import static org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames.CLIENT_ID;
 import static org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames.SCOPE;
 import static org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames.TOKEN_TYPE;
 import static org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames.USERNAME;
-import static org.springframework.security.oauth2.core.endpoint.OAuth2TokenIntrospectionResponse.ACTIVE;
 import static org.springframework.security.oauth2.jwt.JwtClaimNames.AUD;
 import static org.springframework.security.oauth2.jwt.JwtClaimNames.EXP;
 import static org.springframework.security.oauth2.jwt.JwtClaimNames.IAT;
@@ -40,9 +40,9 @@ import org.springframework.http.converter.GenericHttpMessageConverter;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.http.converter.HttpMessageNotWritableException;
+import org.springframework.security.oauth2.core.OAuth2TokenIntrospectionClaims;
 import org.springframework.security.oauth2.core.converter.ClaimConversionService;
 import org.springframework.security.oauth2.core.converter.ClaimTypeConverter;
-import org.springframework.security.oauth2.core.endpoint.OAuth2TokenIntrospectionResponse;
 import org.springframework.util.Assert;
 
 import java.time.Instant;
@@ -51,23 +51,23 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * A {@link HttpMessageConverter} for an {@link OAuth2TokenIntrospectionResponse} Token Introspection Response.
+ * A {@link HttpMessageConverter} for an {@link OAuth2TokenIntrospectionClaims} Token Introspection Response.
  *
  * @author Gerardo Roza
  * @since 0.1.1
  * @see AbstractHttpMessageConverter
- * @see OAuth2TokenIntrospectionResponse
+ * @see OAuth2TokenIntrospectionClaims
  */
 public class OAuth2TokenIntrospectionResponseHttpMessageConverter
-		extends AbstractHttpMessageConverter<OAuth2TokenIntrospectionResponse> {
+		extends AbstractHttpMessageConverter<OAuth2TokenIntrospectionClaims> {
 
 	private static final ParameterizedTypeReference<Map<String, Object>> STRING_OBJECT_MAP = new ParameterizedTypeReference<Map<String, Object>>() {
 	};
 
 	private GenericHttpMessageConverter<Object> jsonMessageConverter = HttpMessageConverters.getJsonMessageConverter();
 
-	private Converter<Map<String, Object>, OAuth2TokenIntrospectionResponse> tokenIntrospectionResponseConverter = new OAuth2TokenIntrospectionResponseConverter();
-	private Converter<OAuth2TokenIntrospectionResponse, Map<String, Object>> tokenIntrospectionResponseParametersConverter = OAuth2TokenIntrospectionResponse::getParameters;
+	private Converter<Map<String, Object>, OAuth2TokenIntrospectionClaims> tokenIntrospectionResponseConverter = new OAuth2TokenIntrospectionResponseConverter();
+	private Converter<OAuth2TokenIntrospectionClaims, Map<String, Object>> tokenIntrospectionResponseParametersConverter = OAuth2TokenIntrospectionClaims::getParameters;
 
 	public OAuth2TokenIntrospectionResponseHttpMessageConverter() {
 		super(MediaType.APPLICATION_JSON, new MediaType("application", "*+json"));
@@ -75,12 +75,12 @@ public class OAuth2TokenIntrospectionResponseHttpMessageConverter
 
 	@Override
 	protected boolean supports(Class<?> clazz) {
-		return OAuth2TokenIntrospectionResponse.class.isAssignableFrom(clazz);
+		return OAuth2TokenIntrospectionClaims.class.isAssignableFrom(clazz);
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
-	protected OAuth2TokenIntrospectionResponse readInternal(Class<? extends OAuth2TokenIntrospectionResponse> clazz,
+	protected OAuth2TokenIntrospectionClaims readInternal(Class<? extends OAuth2TokenIntrospectionClaims> clazz,
 			HttpInputMessage inputMessage) throws HttpMessageNotReadableException {
 		try {
 			Map<String, Object> tokenIntrospectionResponseParameters = (Map<String, Object>) this.jsonMessageConverter
@@ -93,7 +93,7 @@ public class OAuth2TokenIntrospectionResponseHttpMessageConverter
 	}
 
 	@Override
-	protected void writeInternal(OAuth2TokenIntrospectionResponse tokenIntrospectionResponse,
+	protected void writeInternal(OAuth2TokenIntrospectionClaims tokenIntrospectionResponse,
 			HttpOutputMessage outputMessage) {
 		try {
 
@@ -110,26 +110,26 @@ public class OAuth2TokenIntrospectionResponseHttpMessageConverter
 
 	/**
 	 * Sets the {@link Converter} used for converting the Token Introspection parameters to an
-	 * {@link OAuth2TokenIntrospectionResponse}.
+	 * {@link OAuth2TokenIntrospectionClaims}.
 	 *
 	 * @param tokenIntrospectionResponseConverter the {@link Converter} used for converting to an
-	 * {@link OAuth2TokenIntrospectionResponse}
+	 * {@link OAuth2TokenIntrospectionClaims}
 	 */
 	public void setTokenIntrospectionResponseConverter(
-			Converter<Map<String, Object>, OAuth2TokenIntrospectionResponse> tokenIntrospectionResponseConverter) {
+			Converter<Map<String, Object>, OAuth2TokenIntrospectionClaims> tokenIntrospectionResponseConverter) {
 		Assert.notNull(tokenIntrospectionResponseConverter, "tokenIntrospectionResponseConverter cannot be null");
 		this.tokenIntrospectionResponseConverter = tokenIntrospectionResponseConverter;
 	}
 
 	/**
-	 * Sets the {@link Converter} used for converting the {@link OAuth2TokenIntrospectionResponse} to a {@code Map} representation of
+	 * Sets the {@link Converter} used for converting the {@link OAuth2TokenIntrospectionClaims} to a {@code Map} representation of
 	 * the Token Introspection Response.
 	 *
 	 * @param tokenIntrospectionResponseParametersConverter the {@link Converter} used for converting to a {@code Map} representation
 	 * of the Token Introspection Response
 	 */
 	public void setTokenIntrospectionResponseParametersConverter(
-			Converter<OAuth2TokenIntrospectionResponse, Map<String, Object>> tokenIntrospectionResponseParametersConverter) {
+			Converter<OAuth2TokenIntrospectionClaims, Map<String, Object>> tokenIntrospectionResponseParametersConverter) {
 		Assert.notNull(
 				tokenIntrospectionResponseParametersConverter,
 				"tokenIntrospectionResponseParametersConverter cannot be null");
@@ -137,7 +137,7 @@ public class OAuth2TokenIntrospectionResponseHttpMessageConverter
 	}
 
 	private static final class OAuth2TokenIntrospectionResponseConverter
-			implements Converter<Map<String, Object>, OAuth2TokenIntrospectionResponse> {
+			implements Converter<Map<String, Object>, OAuth2TokenIntrospectionClaims> {
 		private static final ClaimConversionService CLAIM_CONVERSION_SERVICE = ClaimConversionService
 				.getSharedInstance();
 		private static final TypeDescriptor OBJECT_TYPE_DESCRIPTOR = TypeDescriptor.valueOf(Object.class);
@@ -170,9 +170,9 @@ public class OAuth2TokenIntrospectionResponseHttpMessageConverter
 		}
 
 		@Override
-		public OAuth2TokenIntrospectionResponse convert(Map<String, Object> source) {
+		public OAuth2TokenIntrospectionClaims convert(Map<String, Object> source) {
 			Map<String, Object> parsedClaims = this.parameterTypeConverter.convert(source);
-			return OAuth2TokenIntrospectionResponse.withClaims(parsedClaims).build();
+			return OAuth2TokenIntrospectionClaims.withClaims(parsedClaims).build();
 		}
 
 		private static Converter<Object, ?> getConverter(TypeDescriptor targetDescriptor) {

@@ -31,8 +31,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
+import org.springframework.security.oauth2.core.OAuth2TokenIntrospectionClaims;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames2;
-import org.springframework.security.oauth2.core.endpoint.OAuth2TokenIntrospectionResponse;
 import org.springframework.security.oauth2.core.http.converter.OAuth2ErrorHttpMessageConverter;
 import org.springframework.security.oauth2.core.introspection.http.converter.OAuth2TokenIntrospectionResponseHttpMessageConverter;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2TokenIntrospectionAuthenticationToken;
@@ -63,7 +63,7 @@ public class OAuth2TokenIntrospectionEndpointFilter extends OncePerRequestFilter
 	private final AuthenticationManager authenticationManager;
 	private final RequestMatcher tokenIntrospectionEndpointMatcher;
 	private final Converter<HttpServletRequest, Authentication> tokenIntrospectionAuthenticationConverter = new DefaultTokenIntrospectionAuthenticationConverter();
-	private final HttpMessageConverter<OAuth2TokenIntrospectionResponse> tokenIntrospectionHttpResponseConverter = new OAuth2TokenIntrospectionResponseHttpMessageConverter();
+	private final HttpMessageConverter<OAuth2TokenIntrospectionClaims> tokenIntrospectionHttpResponseConverter = new OAuth2TokenIntrospectionResponseHttpMessageConverter();
 
 	private final HttpMessageConverter<OAuth2Error> errorHttpResponseConverter = new OAuth2ErrorHttpMessageConverter();
 
@@ -107,11 +107,11 @@ public class OAuth2TokenIntrospectionEndpointFilter extends OncePerRequestFilter
 			OAuth2TokenIntrospectionAuthenticationToken tokenIntrospectionAuthentication = (OAuth2TokenIntrospectionAuthenticationToken) this.authenticationManager
 					.authenticate(authentication);
 
-			OAuth2TokenIntrospectionResponse tokenIntrospectionResponse = tokenIntrospectionAuthentication
+			OAuth2TokenIntrospectionClaims tokenIntrospectionResponse = tokenIntrospectionAuthentication
 					.isTokenActive()
-							? OAuth2TokenIntrospectionResponse.withClaims(tokenIntrospectionAuthentication.getClaims())
+							? OAuth2TokenIntrospectionClaims.withClaims(tokenIntrospectionAuthentication.getClaims())
 									.build()
-							: OAuth2TokenIntrospectionResponse.builder(false).build();
+							: OAuth2TokenIntrospectionClaims.builder(false).build();
 
 			sendTokenIntrospectionResponse(response, tokenIntrospectionResponse);
 		} catch (OAuth2AuthenticationException ex) {
@@ -127,7 +127,7 @@ public class OAuth2TokenIntrospectionEndpointFilter extends OncePerRequestFilter
 	}
 
 	private void sendTokenIntrospectionResponse(HttpServletResponse response,
-			OAuth2TokenIntrospectionResponse tokenIntrospectionResponse) throws IOException {
+			OAuth2TokenIntrospectionClaims tokenIntrospectionResponse) throws IOException {
 		ServletServerHttpResponse httpResponse = new ServletServerHttpResponse(response);
 		this.tokenIntrospectionHttpResponseConverter.write(tokenIntrospectionResponse, null, httpResponse);
 	}

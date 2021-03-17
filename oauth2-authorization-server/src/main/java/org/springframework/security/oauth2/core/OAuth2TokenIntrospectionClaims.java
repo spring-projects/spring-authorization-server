@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.springframework.security.oauth2.core.endpoint;
+package org.springframework.security.oauth2.core;
 
 import static java.util.Collections.emptyMap;
 import static java.util.stream.Collectors.toMap;
@@ -31,7 +31,6 @@ import static org.springframework.security.oauth2.jwt.JwtClaimNames.NBF;
 import static org.springframework.security.oauth2.jwt.JwtClaimNames.SUB;
 
 import org.springframework.lang.Nullable;
-import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2AccessToken.TokenType;
 
 import java.time.Instant;
@@ -43,13 +42,13 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * A representation of an OAuth 2.0 Introspection Token Response.
+ * A representation of an OAuth 2.0 Introspection Token Response Claims.
  *
  * @author Gerardo Roza
  * @since 0.1.1
  * @see <a target="_blank" href="https://tools.ietf.org/html/rfc7662#section-2.2">Section 2.2 - Introspection Response</a>
  */
-public class OAuth2TokenIntrospectionResponse {
+public class OAuth2TokenIntrospectionClaims {
 
 	public static final String ACTIVE = "active";
 	private static final Collection<String> SUPPORTED_FIELDS = Arrays
@@ -57,7 +56,7 @@ public class OAuth2TokenIntrospectionResponse {
 
 	private final Map<String, Object> parameters;
 
-	private OAuth2TokenIntrospectionResponse(Map<String, Object> params) {
+	private OAuth2TokenIntrospectionClaims(Map<String, Object> params) {
 		this.parameters = params;
 	}
 
@@ -99,7 +98,7 @@ public class OAuth2TokenIntrospectionResponse {
 	}
 
 	/**
-	 * A builder for {@link OAuth2TokenIntrospectionResponse}.
+	 * A builder for {@link OAuth2TokenIntrospectionClaims}.
 	 */
 	public static final class Builder {
 
@@ -110,7 +109,7 @@ public class OAuth2TokenIntrospectionResponse {
 		}
 
 		/**
-		 * Helps configure a basic {@link OAuth2TokenIntrospectionResponse}.
+		 * Helps configure a basic {@link OAuth2TokenIntrospectionClaims}.
 		 *
 		 * @param active boolean indicating whether the introspected token is active or not
 		 */
@@ -266,15 +265,15 @@ public class OAuth2TokenIntrospectionResponse {
 		}
 
 		/**
-		 * Build the {@link OAuth2TokenIntrospectionResponse}
+		 * Build the {@link OAuth2TokenIntrospectionClaims}
 		 *
-		 * @return The constructed {@link OAuth2TokenIntrospectionResponse}
+		 * @return The constructed {@link OAuth2TokenIntrospectionClaims}
 		 */
-		public OAuth2TokenIntrospectionResponse build() {
+		public OAuth2TokenIntrospectionClaims build() {
 			Map<String, Object> responseParams = this.params.entrySet().stream()
 					.filter(entry -> SUPPORTED_FIELDS.contains(entry.getKey()))
 					.collect(toMap(Map.Entry::getKey, Map.Entry::getValue));
-			return new OAuth2TokenIntrospectionResponse(responseParams);
+			return new OAuth2TokenIntrospectionClaims(responseParams);
 		}
 	}
 }

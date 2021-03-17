@@ -23,10 +23,10 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.oauth2.core.OAuth2TokenIntrospectionClaims.ACTIVE;
 import static org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames.CLIENT_ID;
 import static org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames.SCOPE;
 import static org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames.TOKEN_TYPE;
-import static org.springframework.security.oauth2.core.endpoint.OAuth2TokenIntrospectionResponse.ACTIVE;
 import static org.springframework.security.oauth2.jwt.JwtClaimNames.EXP;
 import static org.springframework.security.oauth2.jwt.JwtClaimNames.IAT;
 

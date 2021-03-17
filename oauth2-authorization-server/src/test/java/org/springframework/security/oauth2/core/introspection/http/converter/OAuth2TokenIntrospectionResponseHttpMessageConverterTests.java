@@ -19,11 +19,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.springframework.security.oauth2.core.OAuth2TokenIntrospectionClaims.ACTIVE;
 import static org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames.CLIENT_ID;
 import static org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames.SCOPE;
 import static org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames.TOKEN_TYPE;
 import static org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames.USERNAME;
-import static org.springframework.security.oauth2.core.endpoint.OAuth2TokenIntrospectionResponse.ACTIVE;
 import static org.springframework.security.oauth2.jwt.JwtClaimNames.AUD;
 import static org.springframework.security.oauth2.jwt.JwtClaimNames.EXP;
 import static org.springframework.security.oauth2.jwt.JwtClaimNames.IAT;
@@ -40,8 +40,8 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.http.converter.HttpMessageNotWritableException;
 import org.springframework.mock.http.MockHttpOutputMessage;
 import org.springframework.mock.http.client.MockClientHttpResponse;
+import org.springframework.security.oauth2.core.OAuth2TokenIntrospectionClaims;
 import org.springframework.security.oauth2.core.OAuth2AccessToken.TokenType;
-import org.springframework.security.oauth2.core.endpoint.OAuth2TokenIntrospectionResponse;
 
 import java.time.Instant;
 import java.util.Arrays;
@@ -58,7 +58,7 @@ public class OAuth2TokenIntrospectionResponseHttpMessageConverterTests {
 
 	@Test
 	public void supportsWhenOidcProviderConfigurationThenTrue() {
-		assertThat(this.messageConverter.supports(OAuth2TokenIntrospectionResponse.class)).isTrue();
+		assertThat(this.messageConverter.supports(OAuth2TokenIntrospectionClaims.class)).isTrue();
 	}
 
 	@Test
@@ -94,8 +94,8 @@ public class OAuth2TokenIntrospectionResponseHttpMessageConverterTests {
 		// @formatter:on
 		MockClientHttpResponse response = new MockClientHttpResponse(
 				tokenIntrospectionResponseBody.getBytes(), HttpStatus.OK);
-		OAuth2TokenIntrospectionResponse tokenIntrospectionResponse = this.messageConverter
-				.readInternal(OAuth2TokenIntrospectionResponse.class, response);
+		OAuth2TokenIntrospectionClaims tokenIntrospectionResponse = this.messageConverter
+				.readInternal(OAuth2TokenIntrospectionClaims.class, response);
 		Map<String, Object> responseParameters = tokenIntrospectionResponse.getParameters();
 		Condition<Object> collectionContainsCondition = new Condition<>(
 				collection -> Collection.class.isAssignableFrom(collection.getClass())
@@ -129,7 +129,7 @@ public class OAuth2TokenIntrospectionResponseHttpMessageConverterTests {
 		MockClientHttpResponse response = new MockClientHttpResponse("{}".getBytes(), HttpStatus.OK);
 
 		assertThatExceptionOfType(HttpMessageNotReadableException.class)
-				.isThrownBy(() -> this.messageConverter.readInternal(OAuth2TokenIntrospectionResponse.class, response))
+				.isThrownBy(() -> this.messageConverter.readInternal(OAuth2TokenIntrospectionClaims.class, response))
 				.withMessageContaining("An error occurred reading the Token Introspection Response")
 				.withMessageContaining(errorMessage);
 	}
@@ -137,7 +137,7 @@ public class OAuth2TokenIntrospectionResponseHttpMessageConverterTests {
 	@Test
 	public void writeInternalWhenTokenIntrospectionResponseThenSuccess() {
 		// @formatter:off
-		OAuth2TokenIntrospectionResponse providerConfiguration = OAuth2TokenIntrospectionResponse.builder(true)
+		OAuth2TokenIntrospectionClaims providerConfiguration = OAuth2TokenIntrospectionClaims.builder(true)
 				.issuer("https://example.com/issuer1")
 				.scope("scope1 Scope2")
 				.clientId("clientId1")
@@ -175,12 +175,12 @@ public class OAuth2TokenIntrospectionResponseHttpMessageConverterTests {
 	@Test
 	public void writeInternalWhenWriteFailsThenThrowsException() {
 		String errorMessage = "this is not a valid converter";
-		Converter<OAuth2TokenIntrospectionResponse, Map<String, Object>> failingConverter = source -> {
+		Converter<OAuth2TokenIntrospectionClaims, Map<String, Object>> failingConverter = source -> {
 			throw new RuntimeException(errorMessage);
 		};
 		this.messageConverter.setTokenIntrospectionResponseParametersConverter(failingConverter);
 
-		OAuth2TokenIntrospectionResponse providerConfiguration = OAuth2TokenIntrospectionResponse.builder(true).build();
+		OAuth2TokenIntrospectionClaims providerConfiguration = OAuth2TokenIntrospectionClaims.builder(true).build();
 
 		MockHttpOutputMessage outputMessage = new MockHttpOutputMessage();
 

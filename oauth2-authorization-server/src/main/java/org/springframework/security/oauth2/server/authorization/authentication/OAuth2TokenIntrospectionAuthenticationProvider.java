@@ -15,12 +15,19 @@
  */
 package org.springframework.security.oauth2.server.authorization.authentication;
 
+import static org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames.CLIENT_ID;
+import static org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames.SCOPE;
+import static org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames.TOKEN_TYPE;
+import static org.springframework.security.oauth2.core.endpoint.OAuth2TokenIntrospectionResponse.ACTIVE;
+import static org.springframework.security.oauth2.jwt.JwtClaimNames.EXP;
+import static org.springframework.security.oauth2.jwt.JwtClaimNames.IAT;
 import static org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthenticationProviderUtils.getAuthenticatedClientElseThrowInvalidClient;
 
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.oauth2.core.AbstractOAuth2Token;
+import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.jwt.JwtClaimNames;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization.Token;
@@ -29,7 +36,10 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 import org.springframework.util.Assert;
 
 import java.time.Instant;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * An {@link AuthenticationProvider} implementation for OAuth 2.0 Token Introspection.
@@ -83,8 +93,9 @@ public class OAuth2TokenIntrospectionAuthenticationProvider implements Authentic
 			return generateAuthenticationTokenForInvalidToken(clientPrincipal, registeredClient);
 		}
 
-		return new OAuth2TokenIntrospectionAuthenticationToken(
-				clientPrincipal, registeredClient.getClientId(), tokenHolder);
+		Map<String, Object> claims = generateTokenIntrospectionClaims(tokenHolder, registeredClient.getClientId());
+
+		return new OAuth2TokenIntrospectionAuthenticationToken(clientPrincipal, claims);
 	}
 
 	@Override
@@ -106,8 +117,26 @@ public class OAuth2TokenIntrospectionAuthenticationProvider implements Authentic
 		return false;
 	}
 
+	private Map<String, Object> generateTokenIntrospectionClaims(Token<? extends AbstractOAuth2Token> tokenHolder,
+			String clientId) {
+		Map<String, Object> claims = Optional.ofNullable(tokenHolder.getClaims()).orElse(new HashMap<>());
+		AbstractOAuth2Token token = tokenHolder.getToken();
+		claims.put(ACTIVE, true);
+		claims.put(CLIENT_ID, clientId);
+		Optional.ofNullable(token.getIssuedAt()).ifPresent(iat -> claims.put(IAT, iat));
+		Optional.ofNullable(token.getExpiresAt()).ifPresent(exp -> claims.put(EXP, exp));
+		if (OAuth2AccessToken.class.isAssignableFrom(token.getClass())) {
+			Collection<String> scopes = ((OAuth2AccessToken) token).getScopes();
+			if (!scopes.isEmpty()) {
+				claims.put(SCOPE, String.join(" ", scopes));
+			}
+			claims.put(TOKEN_TYPE, OAuth2AccessToken.TokenType.BEARER);
+		}
+		return claims;
+	}
+
 	private OAuth2TokenIntrospectionAuthenticationToken generateAuthenticationTokenForInvalidToken(
 			Authentication clientPrincipal, RegisteredClient registeredClient) {
-		return new OAuth2TokenIntrospectionAuthenticationToken(clientPrincipal, registeredClient.getClientId(), null);
+		return new OAuth2TokenIntrospectionAuthenticationToken(clientPrincipal, null);
 	}
 }

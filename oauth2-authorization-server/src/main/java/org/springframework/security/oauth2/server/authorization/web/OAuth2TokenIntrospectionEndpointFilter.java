@@ -28,8 +28,6 @@ import org.springframework.http.server.ServletServerHttpResponse;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.core.AbstractOAuth2Token;
-import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
@@ -37,7 +35,6 @@ import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames2;
 import org.springframework.security.oauth2.core.endpoint.OAuth2TokenIntrospectionResponse;
 import org.springframework.security.oauth2.core.http.converter.OAuth2ErrorHttpMessageConverter;
 import org.springframework.security.oauth2.core.introspection.http.converter.OAuth2TokenIntrospectionResponseHttpMessageConverter;
-import org.springframework.security.oauth2.server.authorization.OAuth2Authorization.Token;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2TokenIntrospectionAuthenticationToken;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
@@ -47,12 +44,6 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.function.BiConsumer;
 
 /**
  * A {@code Filter} for the OAuth 2.0 Token Introspection endpoint.
@@ -115,9 +106,8 @@ public class OAuth2TokenIntrospectionEndpointFilter extends OncePerRequestFilter
 
 			OAuth2TokenIntrospectionResponse tokenIntrospectionResponse = introspectionTokenAuthentication
 					.isTokenActive()
-							? generateTokenIntrospectionResponse(
-									introspectionTokenAuthentication.getTokenHolder(),
-									introspectionTokenAuthentication.getClientId())
+							? OAuth2TokenIntrospectionResponse.withClaims(introspectionTokenAuthentication.getClaims())
+									.build()
 							: OAuth2TokenIntrospectionResponse.builder(false).build();
 
 			this.sendTokenIntrospectionResponse(response, tokenIntrospectionResponse);
@@ -125,18 +115,6 @@ public class OAuth2TokenIntrospectionEndpointFilter extends OncePerRequestFilter
 			SecurityContextHolder.clearContext();
 			sendErrorResponse(response, ex.getError());
 		}
-	}
-
-	private OAuth2TokenIntrospectionResponse generateTokenIntrospectionResponse(
-			Token<? extends AbstractOAuth2Token> tokenHolder, String clientId) {
-		AbstractOAuth2Token token = tokenHolder.getToken();
-		OAuth2TokenIntrospectionResponse.Builder builder = OAuth2TokenIntrospectionResponse
-				.withClaims(tokenHolder.getClaims());
-		builder.active(true).clientId(clientId);
-		Optional.ofNullable(token.getIssuedAt()).ifPresent(builder::issuedAt);
-		Optional.ofNullable(token.getExpiresAt()).ifPresent(builder::expirationTime);
-		TokenToIntrospectionResponseFieldsMapper.extractFromToken(token, builder);
-		return builder.build();
 	}
 
 	private void sendErrorResponse(HttpServletResponse response, OAuth2Error error) throws IOException {
@@ -156,60 +134,6 @@ public class OAuth2TokenIntrospectionEndpointFilter extends OncePerRequestFilter
 				errorCode, "OAuth 2.0 Token Introspection Parameter: " + parameterName,
 				"https://tools.ietf.org/html/rfc7662#section-2.1");
 		throw new OAuth2AuthenticationException(error);
-	}
-
-	/**
-	 * Mapper that helps populate {@code OAuth2TokenIntrospectionResponse} fields from different {@code AbstractOAuth2Token}
-	 * implementations.
-	 *
-	 * @see OAuth2AccessToken
-	 *
-	 * @author Gerardo Roza
-	 */
-	private static final class TokenToIntrospectionResponseFieldsMapper {
-
-		private static final Map<Class<? extends AbstractOAuth2Token>, BiConsumer<AbstractOAuth2Token, OAuth2TokenIntrospectionResponse.Builder>> supportedTokens;
-		static {
-			Map<Class<? extends AbstractOAuth2Token>, BiConsumer<AbstractOAuth2Token, OAuth2TokenIntrospectionResponse.Builder>> tokenMap = new HashMap<>();
-			tokenMap.put(
-					OAuth2AccessToken.class,
-					(token, builder) -> extractFromOAuth2AccessToken((OAuth2AccessToken) token, builder));
-			supportedTokens = Collections.unmodifiableMap(tokenMap);
-		}
-
-		private TokenToIntrospectionResponseFieldsMapper() {
-		}
-
-		/**
-		 * Extracts all the corresponding fields from an {@code OAuth2AccessToken}.
-		 *
-		 * @param scope The token scope, {@code null} if not specified.
-		 *
-		 * @return This builder.
-		 */
-		private static OAuth2TokenIntrospectionResponse.Builder extractFromOAuth2AccessToken(
-				final OAuth2AccessToken accessToken, OAuth2TokenIntrospectionResponse.Builder builder) {
-			Collection<String> scopes = accessToken.getScopes();
-			if (!scopes.isEmpty()) {
-				builder.scope(String.join(" ", scopes));
-			}
-			builder.tokenType(OAuth2AccessToken.TokenType.BEARER);
-			return builder;
-		}
-
-		/**
-		 * Extracts all the corresponding fields from an {@code OAuth2AccessToken}.
-		 *
-		 * @param scope The token scope, {@code null} if not specified.
-		 *
-		 * @return This builder.
-		 */
-		public static OAuth2TokenIntrospectionResponse.Builder extractFromToken(final AbstractOAuth2Token token,
-				OAuth2TokenIntrospectionResponse.Builder builder) {
-			Optional.ofNullable(supportedTokens.get(token.getClass()))
-					.ifPresent(consumer -> consumer.accept(token, builder));
-			return builder;
-		}
 	}
 
 	private static class DefaultTokenIntrospectionAuthenticationConverter

@@ -111,9 +111,9 @@ public class OAuth2TokenIntrospectionResponseHttpMessageConverterTests {
 			.containsEntry(TOKEN_TYPE, "Bearer")
 			.containsEntry(USERNAME, "username1")
 			.hasEntrySatisfying(AUD, collectionContainsCondition)
-			.containsEntry(EXP, Instant.ofEpochSecond(1607637467))
-			.containsEntry(IAT, Instant.ofEpochSecond(1607633867))
-			.containsEntry(NBF, Instant.ofEpochSecond(1607633867))
+			.containsEntry(EXP, 1607637467L)
+			.containsEntry(IAT, 1607633867L)
+			.containsEntry(NBF, 1607633867L)
 			.containsEntry(ISS, "https://example.com/issuer1")
 			.containsEntry(JTI, "jwtId1")
 			.containsEntry(SUB, "subject1");

@@ -40,6 +40,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * A representation of an OAuth 2.0 Introspection Token Response.
@@ -76,7 +77,16 @@ public class OAuth2TokenIntrospectionResponse {
 	 */
 	public static Builder withClaims(@Nullable Map<String, Object> parameters) {
 		Map<String, Object> params = parameters != null ? parameters : emptyMap();
-		return new Builder(params);
+		Builder builder = new Builder(params);
+		Optional.ofNullable(parameters.get(IAT)).filter(Instant.class::isInstance).map(Instant.class::cast)
+				.ifPresent(builder::issuedAt);
+		Optional.ofNullable(parameters.get(EXP)).filter(Instant.class::isInstance).map(Instant.class::cast)
+				.ifPresent(builder::expirationTime);
+		Optional.ofNullable(parameters.get(NBF)).filter(Instant.class::isInstance).map(Instant.class::cast)
+				.ifPresent(builder::notBefore);
+		Optional.ofNullable(parameters.get(TOKEN_TYPE)).filter(TokenType.class::isInstance).map(TokenType.class::cast)
+				.ifPresent(builder::tokenType);
+		return builder;
 	}
 
 	/**

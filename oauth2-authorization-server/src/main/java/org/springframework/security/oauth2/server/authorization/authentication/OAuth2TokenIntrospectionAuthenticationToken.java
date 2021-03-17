@@ -18,12 +18,11 @@ package org.springframework.security.oauth2.server.authorization.authentication;
 import org.springframework.lang.Nullable;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.oauth2.core.AbstractOAuth2Token;
 import org.springframework.security.oauth2.core.Version;
-import org.springframework.security.oauth2.server.authorization.OAuth2Authorization.Token;
 import org.springframework.util.Assert;
 
 import java.util.Collections;
+import java.util.Map;
 
 /**
  * An {@link Authentication} implementation used for OAuth 2.0 Token Introspection.
@@ -38,8 +37,7 @@ public class OAuth2TokenIntrospectionAuthenticationToken extends AbstractAuthent
 	private final String tokenValue;
 	private final Authentication clientPrincipal;
 	private final String tokenTypeHint;
-	private final String clientId;
-	private final Token<? extends AbstractOAuth2Token> tokenHolder;
+	private Map<String, Object> claims;
 
 	/**
 	 * Constructs an {@code OAuth2TokenIntrospectionAuthenticationToken} using the provided parameters.
@@ -56,29 +54,25 @@ public class OAuth2TokenIntrospectionAuthenticationToken extends AbstractAuthent
 		this.tokenValue = tokenValue;
 		this.clientPrincipal = clientPrincipal;
 		this.tokenTypeHint = tokenTypeHint;
-		this.tokenHolder = null;
-		this.clientId = null;
+		this.claims = null;
 	}
 
 	/**
 	 * Constructs an {@code OAuth2TokenIntrospectionAuthenticationToken} using the provided parameters.
 	 *
-	 * A {@code token} should be provided only if it is active.
+	 * The {@code claims} should be provided only if the token is active.
 	 *
-	 * @param tokenHolder the introspected active token holder
+	 * @param claims the claims obtained from the introspected active token
 	 * @param clientPrincipal the authenticated client principal
-	 * @param clientId the authenticated client id
 	 */
-	public OAuth2TokenIntrospectionAuthenticationToken(Authentication clientPrincipal, String clientId,
-			@Nullable Token<? extends AbstractOAuth2Token> tokenHolder) {
+	public OAuth2TokenIntrospectionAuthenticationToken(Authentication clientPrincipal,
+			@Nullable Map<String, Object> claims) {
 		super(Collections.emptyList());
 		Assert.notNull(clientPrincipal, "clientPrincipal cannot be null");
-		Assert.hasText(clientId, "clientId cannot be empty");
-		this.tokenValue = tokenHolder != null ? tokenHolder.getToken().getTokenValue() : null;
-		this.tokenHolder = tokenHolder;
+		this.claims = claims;
 		this.clientPrincipal = clientPrincipal;
-		this.clientId = clientId;
 		this.tokenTypeHint = null;
+		this.tokenValue = null;
 		setAuthenticated(true); // Indicates that the request was authenticated, even though the introspected token might not be
 								// active
 	}
@@ -113,30 +107,22 @@ public class OAuth2TokenIntrospectionAuthenticationToken extends AbstractAuthent
 	}
 
 	/**
-	 * Returns the token.
+	 * Returns the introspection claims.
 	 *
-	 * @return the token
+	 * @return the claims
 	 */
-	public Token<? extends AbstractOAuth2Token> getTokenHolder() {
-		return tokenHolder;
+	public Map<String, Object> getClaims() {
+		return claims;
 	}
 
 	/**
-	 * Returns whether the introspected token is active, having in mind only active tokens should be passed to the constructor.
+	 * Returns whether the introspected token is active, having in mind only active tokens' claims should be passed to the
+	 * constructor.
 	 *
 	 * @return whether the introspected token is active or not
 	 */
 	public boolean isTokenActive() {
-		return this.tokenHolder != null;
-	}
-
-	/**
-	 * Returns the clientId.
-	 *
-	 * @return the clientId
-	 */
-	public String getClientId() {
-		return clientId;
+		return this.claims != null;
 	}
 
 }

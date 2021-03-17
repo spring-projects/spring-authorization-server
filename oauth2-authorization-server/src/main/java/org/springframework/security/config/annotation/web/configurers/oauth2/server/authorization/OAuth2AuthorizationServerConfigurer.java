@@ -33,12 +33,12 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.web.HttpSecurityBuilder;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.ExceptionHandlingConfigurer;
-import org.springframework.security.oauth2.server.authorization.OAuth2TokenCustomizer;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
-import org.springframework.security.oauth2.server.authorization.JwtEncodingContext;
 import org.springframework.security.oauth2.jwt.NimbusJwsEncoder;
 import org.springframework.security.oauth2.server.authorization.InMemoryOAuth2AuthorizationService;
+import org.springframework.security.oauth2.server.authorization.JwtEncodingContext;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
+import org.springframework.security.oauth2.server.authorization.OAuth2TokenCustomizer;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientCredentialsAuthenticationProvider;
@@ -199,10 +199,7 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 			DelegatingAuthenticationEntryPoint authenticationEntryPoint =
 					new DelegatingAuthenticationEntryPoint(entryPoints);
 
-			// TODO This needs to change as the login page could be customized with a different URL
-			authenticationEntryPoint.setDefaultEntryPoint(
-					new LoginUrlAuthenticationEntryPoint(
-							DefaultLoginPageGeneratingFilter.DEFAULT_LOGIN_PAGE_URL));
+			authenticationEntryPoint.setDefaultEntryPoint(getAuthenticationEntryPoint(builder));
 
 			exceptionHandling.authenticationEntryPoint(authenticationEntryPoint);
 		}
@@ -288,6 +285,18 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 			builder.setSharedObject(RegisteredClientRepository.class, registeredClientRepository);
 		}
 		return registeredClientRepository;
+	}
+
+	private static <B extends HttpSecurityBuilder<B>> AuthenticationEntryPoint getAuthenticationEntryPoint(B builder) {
+		AuthenticationEntryPoint entryPoint = builder.getSharedObject(AuthenticationEntryPoint.class);
+		if (entryPoint == null) {
+			entryPoint = getOptionalBean(builder, AuthenticationEntryPoint.class);
+			if (entryPoint == null) {
+				entryPoint = new LoginUrlAuthenticationEntryPoint(DefaultLoginPageGeneratingFilter.DEFAULT_LOGIN_PAGE_URL);
+			}
+			builder.setSharedObject(AuthenticationEntryPoint.class, entryPoint);
+		}
+		return entryPoint;
 	}
 
 	private static <B extends HttpSecurityBuilder<B>> OAuth2AuthorizationService getAuthorizationService(B builder) {

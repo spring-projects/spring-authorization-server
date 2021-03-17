@@ -35,14 +35,11 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
-import org.springframework.core.Ordered;
-import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.mock.http.client.MockClientHttpResponse;
 import org.springframework.mock.web.MockHttpServletResponse;
-import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
 import org.springframework.security.config.test.SpringTestRule;
@@ -74,9 +71,7 @@ import org.springframework.security.oauth2.server.authorization.OAuth2TokenCusto
 import org.springframework.security.oauth2.server.authorization.web.OAuth2AuthorizationEndpointFilter;
 import org.springframework.security.oauth2.server.authorization.web.OAuth2TokenEndpointFilter;
 import org.springframework.security.web.AuthenticationEntryPoint;
-import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
-import org.springframework.security.web.authentication.ui.DefaultLoginPageGeneratingFilter;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.util.LinkedMultiValueMap;
@@ -437,18 +432,8 @@ public class OAuth2AuthorizationCodeGrantTests {
 	}
 
 	@EnableWebSecurity
+	@Import(OAuth2AuthorizationServerConfiguration.class)
 	static class AuthorizationServerConfigurationCustomAuthenticationEntryPoint extends AuthorizationServerConfiguration {
-
-		@Bean
-		@Order(Ordered.HIGHEST_PRECEDENCE)
-		public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
-			OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http);
-
-			http.exceptionHandling()
-					.authenticationEntryPoint(authenticationEntryPoint());
-
-			return http.build();
-		}
 
 		@Bean
 		AuthenticationEntryPoint authenticationEntryPoint() {

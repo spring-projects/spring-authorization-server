@@ -77,10 +77,6 @@ public class OAuth2TokenIntrospectionAuthenticationProvider implements Authentic
 			return generateAuthenticationTokenForInvalidToken(clientPrincipal, registeredClient);
 		}
 
-		if (!registeredClient.getId().equals(authorization.getRegisteredClientId())) {
-			return generateAuthenticationTokenForInvalidToken(clientPrincipal, registeredClient);
-		}
-
 		Token<AbstractOAuth2Token> tokenHolder = authorization
 				.getToken(tokenIntrospectionAuthentication.getTokenValue());
 

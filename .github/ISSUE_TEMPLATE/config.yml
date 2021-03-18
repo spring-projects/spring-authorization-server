@@ -3,6 +3,3 @@ contact_links:
   - name: Community Support
     url: https://stackoverflow.com/questions/tagged/spring-security
     about: Please ask and answer questions on StackOverflow with the tag `spring-security`.
-  - name: Security Issues
-    url: https://pivotal.io/security#reporting
-    about: Please report security vulnerabilities here.

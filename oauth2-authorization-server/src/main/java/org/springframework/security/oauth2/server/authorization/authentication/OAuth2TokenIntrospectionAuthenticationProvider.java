@@ -38,7 +38,7 @@ import org.springframework.util.Assert;
 
 import java.time.Instant;
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -117,7 +117,8 @@ public class OAuth2TokenIntrospectionAuthenticationProvider implements Authentic
 
 	private Map<String, Object> generateTokenIntrospectionClaims(Token<? extends AbstractOAuth2Token> tokenHolder,
 			String clientId, String username) {
-		Map<String, Object> claims = Optional.ofNullable(tokenHolder.getClaims()).orElse(new HashMap<>());
+		Map<String, Object> claims = Optional.ofNullable(tokenHolder.getClaims()).map(LinkedHashMap::new)
+				.orElse(new LinkedHashMap<>());
 		AbstractOAuth2Token token = tokenHolder.getToken();
 		claims.put(ACTIVE, true);
 		claims.put(CLIENT_ID, clientId);

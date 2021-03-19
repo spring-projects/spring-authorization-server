@@ -49,7 +49,7 @@ import java.util.List;
  */
 public interface OAuth2TokenIntrospectionClaimAccessor extends ClaimAccessor {
 
-	final String ACTIVE = "active";
+	String ACTIVE = "active";
 
 	/**
 	 * Returns the indicator {@code (active)} whether or not the token is currently active

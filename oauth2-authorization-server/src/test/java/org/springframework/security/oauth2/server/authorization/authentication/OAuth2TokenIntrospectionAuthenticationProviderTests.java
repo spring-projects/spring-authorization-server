@@ -23,10 +23,11 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.springframework.security.oauth2.core.OAuth2TokenIntrospectionClaims.ACTIVE;
+import static org.springframework.security.oauth2.core.OAuth2TokenIntrospectionClaimAccessor.ACTIVE;
 import static org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames.CLIENT_ID;
 import static org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames.SCOPE;
 import static org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames.TOKEN_TYPE;
+import static org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames.USERNAME;
 import static org.springframework.security.oauth2.jwt.JwtClaimNames.EXP;
 import static org.springframework.security.oauth2.jwt.JwtClaimNames.IAT;
 
@@ -169,7 +170,8 @@ public class OAuth2TokenIntrospectionAuthenticationProviderTests {
 		assertThat(authenticationResult.getClaims()).containsEntry(ACTIVE, true)
 				.containsEntry(IAT, accessToken.getIssuedAt()).containsEntry(EXP, accessToken.getExpiresAt())
 				.containsEntry(TOKEN_TYPE, OAuth2AccessToken.TokenType.BEARER).containsEntry(CLIENT_ID, "client-1")
-				.containsKey(SCOPE).containsAllEntriesOf(authorization.getAccessToken().getClaims());
+				.containsEntry(USERNAME, "principal").containsKey(SCOPE)
+				.containsAllEntriesOf(authorization.getAccessToken().getClaims());
 
 	}
 
@@ -191,7 +193,7 @@ public class OAuth2TokenIntrospectionAuthenticationProviderTests {
 		assertThat(authenticationResult.isTokenActive()).isTrue();
 		assertThat(authenticationResult.getClaims()).containsEntry(ACTIVE, true)
 				.containsEntry(IAT, refreshToken.getIssuedAt()).containsEntry(EXP, refreshToken.getExpiresAt())
-				.containsEntry(CLIENT_ID, "client-1").hasSize(4);
+				.containsEntry(USERNAME, "principal").containsEntry(CLIENT_ID, "client-1").hasSize(5);
 	}
 
 	@Test

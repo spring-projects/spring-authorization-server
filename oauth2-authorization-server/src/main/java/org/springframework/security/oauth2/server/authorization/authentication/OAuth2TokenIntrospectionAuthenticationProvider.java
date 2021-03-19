@@ -15,10 +15,11 @@
  */
 package org.springframework.security.oauth2.server.authorization.authentication;
 
-import static org.springframework.security.oauth2.core.OAuth2TokenIntrospectionClaims.ACTIVE;
+import static org.springframework.security.oauth2.core.OAuth2TokenIntrospectionClaimAccessor.ACTIVE;
 import static org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames.CLIENT_ID;
 import static org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames.SCOPE;
 import static org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames.TOKEN_TYPE;
+import static org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames.USERNAME;
 import static org.springframework.security.oauth2.jwt.JwtClaimNames.EXP;
 import static org.springframework.security.oauth2.jwt.JwtClaimNames.IAT;
 import static org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthenticationProviderUtils.getAuthenticatedClientElseThrowInvalidClient;
@@ -89,7 +90,8 @@ public class OAuth2TokenIntrospectionAuthenticationProvider implements Authentic
 			return generateAuthenticationTokenForInvalidToken(clientPrincipal, registeredClient);
 		}
 
-		Map<String, Object> claims = generateTokenIntrospectionClaims(tokenHolder, registeredClient.getClientId());
+		Map<String, Object> claims = generateTokenIntrospectionClaims(
+				tokenHolder, registeredClient.getClientId(), authorization.getPrincipalName());
 
 		return new OAuth2TokenIntrospectionAuthenticationToken(clientPrincipal, claims);
 	}
@@ -114,11 +116,12 @@ public class OAuth2TokenIntrospectionAuthenticationProvider implements Authentic
 	}
 
 	private Map<String, Object> generateTokenIntrospectionClaims(Token<? extends AbstractOAuth2Token> tokenHolder,
-			String clientId) {
+			String clientId, String username) {
 		Map<String, Object> claims = Optional.ofNullable(tokenHolder.getClaims()).orElse(new HashMap<>());
 		AbstractOAuth2Token token = tokenHolder.getToken();
 		claims.put(ACTIVE, true);
 		claims.put(CLIENT_ID, clientId);
+		claims.put(USERNAME, username);
 		Optional.ofNullable(token.getIssuedAt()).ifPresent(iat -> claims.put(IAT, iat));
 		Optional.ofNullable(token.getExpiresAt()).ifPresent(exp -> claims.put(EXP, exp));
 		if (OAuth2AccessToken.class.isAssignableFrom(token.getClass())) {

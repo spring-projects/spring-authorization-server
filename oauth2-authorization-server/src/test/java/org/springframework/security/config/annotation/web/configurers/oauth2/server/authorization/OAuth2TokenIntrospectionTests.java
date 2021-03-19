@@ -114,7 +114,8 @@ public class OAuth2TokenIntrospectionTests {
 				.andExpect(jsonPath("$.active").value(true))
 				.andExpect(jsonPath("$.client_id").value("client-1"))
 				.andExpect(jsonPath("$.iat").isNotEmpty())
-				.andExpect(jsonPath("$.exp").isNotEmpty());
+				.andExpect(jsonPath("$.exp").isNotEmpty())
+				.andExpect(jsonPath("$.username").value("principal"));
 		// @formatter:on
 
 		verify(registeredClientRepository).findByClientId(eq(registeredClient.getClientId()));
@@ -151,7 +152,8 @@ public class OAuth2TokenIntrospectionTests {
 				.andExpect(jsonPath("$.scope").isNotEmpty())
 				.andExpect(jsonPath("$.token_type").value(OAuth2AccessToken.TokenType.BEARER.getValue()))
 				.andExpect(jsonPath("$.iat").isNotEmpty())
-				.andExpect(jsonPath("$.exp").isNotEmpty());
+				.andExpect(jsonPath("$.exp").isNotEmpty())
+				.andExpect(jsonPath("$.username").value("principal"));
 		// @formatter:on
 
 		verify(registeredClientRepository).findByClientId(eq(registeredClient.getClientId()));

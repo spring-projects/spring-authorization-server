@@ -45,7 +45,7 @@ This project adheres to the Contributor Covenant link:CODE_OF_CONDUCT.adoc[code 
 By participating, you are expected to uphold this code. Please report unacceptable behavior to spring-code-of-conduct@pivotal.io.
 
 == Downloading Artifacts
-See https://github.com/spring-projects/spring-framework/wiki/Downloading-Spring-artifacts[downloading Spring artifacts] for Maven repository information.
+See https://github.com/spring-projects/spring-framework/wiki/Spring-Framework-Artifacts[downloading Spring artifacts] for Maven repository information.
 
 == Building from Source
 Spring Authorization Server uses a https://gradle.org[Gradle]-based build system.

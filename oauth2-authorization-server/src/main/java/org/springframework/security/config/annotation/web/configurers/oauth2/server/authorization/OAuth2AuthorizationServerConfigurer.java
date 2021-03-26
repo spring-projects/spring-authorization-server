@@ -16,7 +16,6 @@
 package org.springframework.security.config.annotation.web.configurers.oauth2.server.authorization;
 
 import java.net.URI;
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 import com.nimbusds.jose.jwk.source.JWKSource;
@@ -33,12 +32,12 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.web.HttpSecurityBuilder;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.ExceptionHandlingConfigurer;
-import org.springframework.security.oauth2.server.authorization.OAuth2TokenCustomizer;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
-import org.springframework.security.oauth2.server.authorization.JwtEncodingContext;
 import org.springframework.security.oauth2.jwt.NimbusJwsEncoder;
 import org.springframework.security.oauth2.server.authorization.InMemoryOAuth2AuthorizationService;
+import org.springframework.security.oauth2.server.authorization.JwtEncodingContext;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
+import org.springframework.security.oauth2.server.authorization.OAuth2TokenCustomizer;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientCredentialsAuthenticationProvider;
@@ -52,13 +51,9 @@ import org.springframework.security.oauth2.server.authorization.web.OAuth2Author
 import org.springframework.security.oauth2.server.authorization.web.OAuth2ClientAuthenticationFilter;
 import org.springframework.security.oauth2.server.authorization.web.OAuth2TokenEndpointFilter;
 import org.springframework.security.oauth2.server.authorization.web.OAuth2TokenRevocationEndpointFilter;
-import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.access.intercept.FilterSecurityInterceptor;
-import org.springframework.security.web.authentication.DelegatingAuthenticationEntryPoint;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
-import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.authentication.preauth.AbstractPreAuthenticatedProcessingFilter;
-import org.springframework.security.web.authentication.ui.DefaultLoginPageGeneratingFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.OrRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
@@ -190,21 +185,12 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 
 		ExceptionHandlingConfigurer<B> exceptionHandling = builder.getConfigurer(ExceptionHandlingConfigurer.class);
 		if (exceptionHandling != null) {
-			LinkedHashMap<RequestMatcher, AuthenticationEntryPoint> entryPoints = new LinkedHashMap<>();
-			entryPoints.put(
+			exceptionHandling.defaultAuthenticationEntryPointFor(
+					new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED),
 					new OrRequestMatcher(
 							this.tokenEndpointMatcher,
-							this.tokenRevocationEndpointMatcher),
-					new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED));
-			DelegatingAuthenticationEntryPoint authenticationEntryPoint =
-					new DelegatingAuthenticationEntryPoint(entryPoints);
-
-			// TODO This needs to change as the login page could be customized with a different URL
-			authenticationEntryPoint.setDefaultEntryPoint(
-					new LoginUrlAuthenticationEntryPoint(
-							DefaultLoginPageGeneratingFilter.DEFAULT_LOGIN_PAGE_URL));
-
-			exceptionHandling.authenticationEntryPoint(authenticationEntryPoint);
+							this.tokenRevocationEndpointMatcher)
+			);
 		}
 	}
 

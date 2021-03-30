@@ -1,5 +1,6 @@
 package sample.config;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
@@ -20,6 +21,7 @@ import org.springframework.security.web.util.matcher.RequestMatcher;
 public class CustomOAuth2AuthorizationServerConfiguration {
 
 	@Bean
+	@ConditionalOnMissingBean
 	@Order(Ordered.HIGHEST_PRECEDENCE)
 	public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
 		applyDefaultSecurity(http);

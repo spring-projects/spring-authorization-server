@@ -40,7 +40,7 @@ import org.springframework.security.oauth2.server.authorization.config.ProviderS
  * @since 0.0.1
  */
 @Configuration(proxyBeanMethods = false)
-@Import(OAuth2AuthorizationServerConfiguration.class)
+@Import(CustomOAuth2AuthorizationServerConfiguration.class)
 public class AuthorizationServerConfig {
 
 	// @formatter:off

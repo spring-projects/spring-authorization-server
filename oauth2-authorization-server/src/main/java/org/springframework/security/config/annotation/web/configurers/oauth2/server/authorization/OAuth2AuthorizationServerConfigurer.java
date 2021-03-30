@@ -46,11 +46,7 @@ import org.springframework.security.oauth2.server.authorization.authentication.O
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.config.ProviderSettings;
 import org.springframework.security.oauth2.server.authorization.oidc.web.OidcProviderConfigurationEndpointFilter;
-import org.springframework.security.oauth2.server.authorization.web.NimbusJwkSetEndpointFilter;
-import org.springframework.security.oauth2.server.authorization.web.OAuth2AuthorizationEndpointFilter;
-import org.springframework.security.oauth2.server.authorization.web.OAuth2ClientAuthenticationFilter;
-import org.springframework.security.oauth2.server.authorization.web.OAuth2TokenEndpointFilter;
-import org.springframework.security.oauth2.server.authorization.web.OAuth2TokenRevocationEndpointFilter;
+import org.springframework.security.oauth2.server.authorization.web.*;
 import org.springframework.security.web.access.intercept.FilterSecurityInterceptor;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.preauth.AbstractPreAuthenticatedProcessingFilter;
@@ -90,6 +86,7 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 			this.tokenRevocationEndpointMatcher.matches(request) ||
 			this.jwkSetEndpointMatcher.matches(request) ||
 			this.oidcProviderConfigurationEndpointMatcher.matches(request);
+	private UserConsentPage userConsentPage;
 
 	/**
 	 * Sets the repository of registered clients.
@@ -224,6 +221,10 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 						getRegisteredClientRepository(builder),
 						getAuthorizationService(builder),
 						providerSettings.authorizationEndpoint());
+
+		if(this.userConsentPage != null)
+			authorizationEndpointFilter.setUserConsentPage(userConsentPage);
+
 		builder.addFilterBefore(postProcess(authorizationEndpointFilter), AbstractPreAuthenticatedProcessingFilter.class);
 
 		OAuth2TokenEndpointFilter tokenEndpointFilter =
@@ -374,4 +375,13 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 		}
 		return names.length == 1 ? (T) context.getBean(names[0]) : null;
 	}
+
+	public void setUserConsentPage(UserConsentPage userConsentPage){
+		this.userConsentPage = userConsentPage;
+	}
+
+	public UserConsentPage getUserConsentPage(){
+		return this.userConsentPage;
+	}
+
 }

@@ -28,7 +28,7 @@ public class CustomUserConsentPage implements UserConsentPage {
 	@Override
 	public String generateConsentPage(HttpServletRequest request, RegisteredClient registeredClient, OAuth2Authorization authorization) {
 		// This is the default. You can customize the content you need
-		return this.generateConsentPage(request, registeredClient, authorization);
+		return "<html><head>CustomUserConsentPage</head><body>This is custom userConsentPage.</body></html>";
 	}
 
 }

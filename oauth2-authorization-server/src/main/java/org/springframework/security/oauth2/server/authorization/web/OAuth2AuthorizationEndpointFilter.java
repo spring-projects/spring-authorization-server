@@ -104,7 +104,7 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 	private final StringKeyGenerator codeGenerator = new Base64StringKeyGenerator(Base64.getUrlEncoder().withoutPadding(), 96);
 	private final StringKeyGenerator stateGenerator = new Base64StringKeyGenerator(Base64.getUrlEncoder());
 	private final RedirectStrategy redirectStrategy = new DefaultRedirectStrategy();
-	private UserConsentPage userConsentPage = new UserConsentPage(){};
+	private UserConsentPage userConsentPage = new DefaultGenerateUserConsentPage();
 
 	/**
 	 * Constructs an {@code OAuth2AuthorizationEndpointFilter} using the provided parameters.

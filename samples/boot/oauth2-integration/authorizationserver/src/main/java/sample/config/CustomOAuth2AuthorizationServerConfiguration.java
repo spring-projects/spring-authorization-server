@@ -7,7 +7,6 @@ import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.oauth2.server.authorization.OAuth2AuthorizationServerConfigurer;
-import org.springframework.security.oauth2.server.authorization.web.UserConsentPage;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 
@@ -34,7 +33,7 @@ public class CustomOAuth2AuthorizationServerConfiguration {
 				new OAuth2AuthorizationServerConfigurer<>();
 
 		// Setting CustomUserConsentPage
-		authorizationServerConfigurer.setUserConsentPage(new CustomUserConsentPage());
+		authorizationServerConfigurer.setUserConsentPage(new CustomGenerateUserConsentPage());
 
 		RequestMatcher endpointsMatcher = authorizationServerConfigurer
 				.getEndpointsMatcher();

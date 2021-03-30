@@ -12,7 +12,7 @@ import javax.servlet.http.HttpServletRequest;
  * @author shanhy
  * @date 2021/3/30 15:55
  */
-public class CustomUserConsentPage implements UserConsentPage {
+public class CustomGenerateUserConsentPage implements UserConsentPage {
 
 	/**
 	 * Returns the HTML content of a custom authorization page

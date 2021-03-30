@@ -33,14 +33,6 @@ public class DefaultGenerateUserConsentPage implements UserConsentPage{
 		response.getWriter().write(consentPage);
 	}
 
-	public boolean isConsentApproved(HttpServletRequest request) {
-		return CONSENT_ACTION_APPROVE.equalsIgnoreCase(request.getParameter(CONSENT_ACTION_PARAMETER_NAME));
-	}
-
-	public boolean isConsentCancelled(HttpServletRequest request) {
-		return CONSENT_ACTION_CANCEL.equalsIgnoreCase(request.getParameter(CONSENT_ACTION_PARAMETER_NAME));
-	}
-
 	public String generateConsentPage(HttpServletRequest request,
 			RegisteredClient registeredClient, OAuth2Authorization authorization) {
 

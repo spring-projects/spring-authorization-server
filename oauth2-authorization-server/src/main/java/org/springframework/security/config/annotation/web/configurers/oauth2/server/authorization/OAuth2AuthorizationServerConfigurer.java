@@ -222,7 +222,7 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 						getAuthorizationService(builder),
 						providerSettings.authorizationEndpoint());
 
-		if(this.userConsentPage != null)
+		if (this.userConsentPage != null)
 			authorizationEndpointFilter.setUserConsentPage(userConsentPage);
 
 		builder.addFilterBefore(postProcess(authorizationEndpointFilter), AbstractPreAuthenticatedProcessingFilter.class);

@@ -1,10 +1,14 @@
 package sample.config;
 
+import org.springframework.http.MediaType;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.web.UserConsentPage;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 /**
  * User defined consent authorization return page content
@@ -13,6 +17,17 @@ import javax.servlet.http.HttpServletRequest;
  * @date 2021/3/30 15:55
  */
 public class CustomGenerateUserConsentPage implements UserConsentPage {
+
+	private static final MediaType TEXT_HTML_UTF8 = new MediaType("text", "html", StandardCharsets.UTF_8);
+
+	public void displayConsent(HttpServletRequest request, HttpServletResponse response,
+			RegisteredClient registeredClient, OAuth2Authorization authorization) throws IOException {
+
+		String consentPage = generateConsentPage(request, registeredClient, authorization);
+		response.setContentType(TEXT_HTML_UTF8.toString());
+		response.setContentLength(consentPage.getBytes(StandardCharsets.UTF_8).length);
+		response.getWriter().write(consentPage);
+	}
 
 	/**
 	 * Returns the HTML content of a custom authorization page

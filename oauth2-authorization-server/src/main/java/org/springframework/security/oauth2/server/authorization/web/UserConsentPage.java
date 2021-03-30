@@ -15,6 +15,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
+ * User Consent Page
+ *
  * @author shanhy
  * @date 2021/3/30 15:42
  */

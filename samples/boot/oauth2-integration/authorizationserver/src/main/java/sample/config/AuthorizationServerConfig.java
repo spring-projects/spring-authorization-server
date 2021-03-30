@@ -36,11 +36,14 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 import org.springframework.security.oauth2.server.authorization.config.ProviderSettings;
 
 /**
+ * The custom authorization page can be used @Import(CustomOAuth2AuthorizationServerConfiguration.class)
+ *
  * @author Joe Grandja
+ * @author shanhy
  * @since 0.0.1
  */
 @Configuration(proxyBeanMethods = false)
-@Import(CustomOAuth2AuthorizationServerConfiguration.class)
+@Import(OAuth2AuthorizationServerConfiguration.class)
 public class AuthorizationServerConfig {
 
 	// @formatter:off

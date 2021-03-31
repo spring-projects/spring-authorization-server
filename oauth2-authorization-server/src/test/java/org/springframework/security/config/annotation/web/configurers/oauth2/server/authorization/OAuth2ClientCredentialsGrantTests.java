@@ -116,7 +116,7 @@ public class OAuth2ClientCredentialsGrantTests {
 				.param(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
 				.param(OAuth2ParameterNames.SCOPE, "scope1 scope2")
 				.header(HttpHeaders.AUTHORIZATION, "Basic " + encodeBasicAuth(
-						registeredClient.getClientId(), registeredClient.getClientSecret())))
+						registeredClient.getClientId(), TestRegisteredClients.CLIENT_SECRET)))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.access_token").isNotEmpty())
 				.andExpect(jsonPath("$.scope").value("scope1 scope2"));
@@ -138,7 +138,7 @@ public class OAuth2ClientCredentialsGrantTests {
 				.param(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
 				.param(OAuth2ParameterNames.SCOPE, "scope1 scope2")
 				.param(OAuth2ParameterNames.CLIENT_ID, registeredClient.getClientId())
-				.param(OAuth2ParameterNames.CLIENT_SECRET, registeredClient.getClientSecret()))
+				.param(OAuth2ParameterNames.CLIENT_SECRET, TestRegisteredClients.CLIENT_SECRET))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.access_token").isNotEmpty())
 				.andExpect(jsonPath("$.scope").value("scope1 scope2"));

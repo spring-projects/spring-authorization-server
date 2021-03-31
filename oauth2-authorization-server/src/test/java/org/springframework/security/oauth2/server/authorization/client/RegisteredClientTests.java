@@ -27,6 +27,7 @@ import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients.CLIENT_SECRET;
 
 /**
  * Tests for {@link RegisteredClient}.
@@ -36,7 +37,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 public class RegisteredClientTests {
 	private static final String ID = "registration-1";
 	private static final String CLIENT_ID = "client-1";
-	private static final String CLIENT_SECRET = "secret";
 	private static final Set<String> REDIRECT_URIS = Collections.singleton("https://example.com");
 	private static final Set<String> SCOPES = Collections.unmodifiableSet(
 			Stream.of("openid", "profile", "email").collect(Collectors.toSet()));

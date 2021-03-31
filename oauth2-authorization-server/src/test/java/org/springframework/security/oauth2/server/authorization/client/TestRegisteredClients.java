@@ -23,10 +23,12 @@ import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
  */
 public class TestRegisteredClients {
 
+	public static String CLIENT_SECRET = "secret";
+
 	public static RegisteredClient.Builder registeredClient() {
 		return RegisteredClient.withId("registration-1")
 				.clientId("client-1")
-				.clientSecret("secret")
+				.clientSecret("{noop}" + CLIENT_SECRET)
 				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
 				.authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
 				.clientAuthenticationMethod(ClientAuthenticationMethod.BASIC)
@@ -37,7 +39,7 @@ public class TestRegisteredClients {
 	public static RegisteredClient.Builder registeredClient2() {
 		return RegisteredClient.withId("registration-2")
 				.clientId("client-2")
-				.clientSecret("secret")
+				.clientSecret("{noop}" + CLIENT_SECRET)
 				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
 				.authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
 				.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)

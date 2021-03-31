@@ -132,7 +132,7 @@ public class OAuth2TokenIntrospectionTests {
 		// @formatter:off
 		MvcResult mvcResult = this.mvc.perform(post(providerSettings.tokenIntrospectionEndpoint())
 				.params(getTokenIntrospectionRequestParameters(accessToken, OAuth2TokenType.ACCESS_TOKEN))
-				.with(httpBasic(introspectRegisteredClient.getClientId(), introspectRegisteredClient.getClientSecret())))
+				.with(httpBasic(introspectRegisteredClient.getClientId(), TestRegisteredClients.CLIENT_SECRET)))
 				.andExpect(status().isOk())
 				.andReturn();
 		// @formatter:on
@@ -178,7 +178,7 @@ public class OAuth2TokenIntrospectionTests {
 		// @formatter:off
 		MvcResult mvcResult = this.mvc.perform(post(providerSettings.tokenIntrospectionEndpoint())
 				.params(getTokenIntrospectionRequestParameters(refreshToken, OAuth2TokenType.REFRESH_TOKEN))
-				.with(httpBasic(introspectRegisteredClient.getClientId(), introspectRegisteredClient.getClientSecret())))
+				.with(httpBasic(introspectRegisteredClient.getClientId(), TestRegisteredClients.CLIENT_SECRET)))
 				.andExpect(status().isOk())
 				.andReturn();
 		// @formatter:on

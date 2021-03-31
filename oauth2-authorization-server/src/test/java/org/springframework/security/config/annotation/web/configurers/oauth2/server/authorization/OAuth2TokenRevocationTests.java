@@ -111,7 +111,7 @@ public class OAuth2TokenRevocationTests {
 		this.mvc.perform(post(OAuth2TokenRevocationEndpointFilter.DEFAULT_TOKEN_REVOCATION_ENDPOINT_URI)
 				.params(getTokenRevocationRequestParameters(token, tokenType))
 				.header(HttpHeaders.AUTHORIZATION, "Basic " + encodeBasicAuth(
-						registeredClient.getClientId(), registeredClient.getClientSecret())))
+						registeredClient.getClientId(), TestRegisteredClients.CLIENT_SECRET)))
 				.andExpect(status().isOk());
 
 		verify(registeredClientRepository).findByClientId(eq(registeredClient.getClientId()));
@@ -154,7 +154,7 @@ public class OAuth2TokenRevocationTests {
 		this.mvc.perform(post(tokenRevocationEndpointUri)
 				.params(getTokenRevocationRequestParameters(token, tokenType))
 				.header(HttpHeaders.AUTHORIZATION, "Basic " + encodeBasicAuth(
-						registeredClient.getClientId(), registeredClient.getClientSecret())))
+						registeredClient.getClientId(), TestRegisteredClients.CLIENT_SECRET)))
 				.andExpect(status().isOk());
 
 		verify(registeredClientRepository).findByClientId(eq(registeredClient.getClientId()));

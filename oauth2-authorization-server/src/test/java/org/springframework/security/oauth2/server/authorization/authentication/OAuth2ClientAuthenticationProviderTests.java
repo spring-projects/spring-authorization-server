@@ -88,6 +88,13 @@ public class OAuth2ClientAuthenticationProviderTests {
 	}
 
 	@Test
+	public void constructorWhenPasswordEncoderNullThenThrowIllegalArgumentException() {
+		assertThatThrownBy(() -> authenticationProvider.setPasswordEncoder(null))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("passwordEncoder cannot be null");
+	}
+
+	@Test
 	public void supportsWhenTypeOAuth2ClientAuthenticationTokenThenReturnTrue() {
 		assertThat(this.authenticationProvider.supports(OAuth2ClientAuthenticationToken.class)).isTrue();
 	}
@@ -144,7 +151,7 @@ public class OAuth2ClientAuthenticationProviderTests {
 				.thenReturn(registeredClient);
 
 		OAuth2ClientAuthenticationToken authentication = new OAuth2ClientAuthenticationToken(
-				registeredClient.getClientId(), registeredClient.getClientSecret(), ClientAuthenticationMethod.BASIC, null);
+				registeredClient.getClientId(), TestRegisteredClients.CLIENT_SECRET, ClientAuthenticationMethod.BASIC, null);
 		OAuth2ClientAuthenticationToken authenticationResult =
 				(OAuth2ClientAuthenticationToken) this.authenticationProvider.authenticate(authentication);
 		assertThat(authenticationResult.isAuthenticated()).isTrue();

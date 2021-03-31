@@ -239,7 +239,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 		MvcResult mvcResult = this.mvc.perform(post(tokenEndpointUri)
 				.params(getTokenRequestParameters(registeredClient, authorization))
 				.header(HttpHeaders.AUTHORIZATION, "Basic " + encodeBasicAuth(
-						registeredClient.getClientId(), registeredClient.getClientSecret())))
+						registeredClient.getClientId(), TestRegisteredClients.CLIENT_SECRET)))
 				.andExpect(status().isOk())
 				.andExpect(header().string(HttpHeaders.CACHE_CONTROL, containsString("no-store")))
 				.andExpect(header().string(HttpHeaders.PRAGMA, containsString("no-cache")))

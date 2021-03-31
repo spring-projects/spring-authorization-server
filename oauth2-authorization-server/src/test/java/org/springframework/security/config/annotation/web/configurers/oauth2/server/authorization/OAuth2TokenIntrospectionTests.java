@@ -159,6 +159,45 @@ public class OAuth2TokenIntrospectionTests {
 		verify(registeredClientRepository).findByClientId(eq(registeredClient.getClientId()));
 		verify(authorizationService).findByToken(eq(accessToken.getTokenValue()), isNull());
 	}
+	
+	@Test
+	public void requestWhenIntrospectTokenIssuedToDifferentClientThenActiveResponse() throws Exception {
+		this.spring.register(AuthorizationServerConfiguration.class).autowire();
+
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+		when(registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
+				.thenReturn(registeredClient);
+
+		RegisteredClient registeredClient2 = TestRegisteredClients.registeredClient2().build();
+		Instant issuedAt = Instant.now();
+		Instant expiresAt = issuedAt.plus(Duration.ofHours(1));
+		OAuth2AccessToken accessToken = new OAuth2AccessToken(
+				OAuth2AccessToken.TokenType.BEARER, "token", issuedAt, expiresAt,
+				new HashSet<>(Arrays.asList("scope1", "Scope2")));
+		OAuth2TokenType tokenType = OAuth2TokenType.ACCESS_TOKEN;
+		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient2).token(accessToken)
+				.build();
+
+		when(authorizationService.findByToken(eq(accessToken.getTokenValue()), isNull())).thenReturn(authorization);
+
+		// @formatter:off
+		this.mvc.perform(
+				MockMvcRequestBuilders.post(OAuth2TokenIntrospectionEndpointFilter.DEFAULT_TOKEN_INTROSPECTION_ENDPOINT_URI)
+						.params(getTokenIntrospectionRequestParameters(accessToken, tokenType))
+						.with(httpBasic(registeredClient.getClientId(), registeredClient.getClientSecret())))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.active").value(true))
+				.andExpect(jsonPath("$.client_id").value("client-1"))
+				.andExpect(jsonPath("$.scope").isNotEmpty())
+				.andExpect(jsonPath("$.token_type").value(OAuth2AccessToken.TokenType.BEARER.getValue()))
+				.andExpect(jsonPath("$.iat").isNotEmpty())
+				.andExpect(jsonPath("$.exp").isNotEmpty())
+				.andExpect(jsonPath("$.username").value("principal"));
+		// @formatter:on
+
+		verify(registeredClientRepository).findByClientId(eq(registeredClient.getClientId()));
+		verify(authorizationService).findByToken(eq(accessToken.getTokenValue()), isNull());
+	}
 
 	private static MultiValueMap<String, String> getTokenIntrospectionRequestParameters(AbstractOAuth2Token token,
 			OAuth2TokenType tokenType) {

@@ -32,6 +32,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.web.HttpSecurityBuilder;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.ExceptionHandlingConfigurer;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.NimbusJwsEncoder;
 import org.springframework.security.oauth2.server.authorization.InMemoryOAuth2AuthorizationService;
@@ -158,10 +159,14 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 		validateProviderSettings(providerSettings);
 		initEndpointMatchers(providerSettings);
 
+		PasswordEncoder passwordEncoder = getOptionalBean(builder, PasswordEncoder.class);
 		OAuth2ClientAuthenticationProvider clientAuthenticationProvider =
 				new OAuth2ClientAuthenticationProvider(
 						getRegisteredClientRepository(builder),
 						getAuthorizationService(builder));
+		if (passwordEncoder != null) {
+			clientAuthenticationProvider.setPasswordEncoder(passwordEncoder);
+		}
 		builder.authenticationProvider(postProcess(clientAuthenticationProvider));
 
 		JwtEncoder jwtEncoder = getJwtEncoder(builder);

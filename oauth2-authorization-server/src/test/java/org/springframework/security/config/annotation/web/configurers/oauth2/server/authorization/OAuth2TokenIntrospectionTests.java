@@ -159,7 +159,7 @@ public class OAuth2TokenIntrospectionTests {
 		verify(registeredClientRepository).findByClientId(eq(registeredClient.getClientId()));
 		verify(authorizationService).findByToken(eq(accessToken.getTokenValue()), isNull());
 	}
-	
+
 	@Test
 	public void requestWhenIntrospectTokenIssuedToDifferentClientThenActiveResponse() throws Exception {
 		this.spring.register(AuthorizationServerConfiguration.class).autowire();

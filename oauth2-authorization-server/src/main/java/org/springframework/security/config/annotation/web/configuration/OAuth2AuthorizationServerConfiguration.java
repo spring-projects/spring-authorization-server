@@ -37,24 +37,33 @@ public class OAuth2AuthorizationServerConfiguration {
 	@Bean
 	@Order(Ordered.HIGHEST_PRECEDENCE)
 	public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
-		applyDefaultSecurity(http);
+		applyDefaultSecurity(http, true);
 		return http.build();
 	}
 
 	// @formatter:off
 	public static void applyDefaultSecurity(HttpSecurity http) throws Exception {
+		applyDefaultSecurity(http, false);
+	}
+	// @formatter:on
+
+	// @formatter:off
+	private static void applyDefaultSecurity(HttpSecurity http, boolean onlyApplyToAuthorizationServerEndpoints) throws Exception {
 		OAuth2AuthorizationServerConfigurer<HttpSecurity> authorizationServerConfigurer =
 				new OAuth2AuthorizationServerConfigurer<>();
 		RequestMatcher endpointsMatcher = authorizationServerConfigurer
 				.getEndpointsMatcher();
 
 		http
-			.requestMatcher(endpointsMatcher)
 			.authorizeRequests(authorizeRequests ->
-				authorizeRequests.anyRequest().authenticated()
+					authorizeRequests.requestMatchers(endpointsMatcher).authenticated()
 			)
 			.csrf(csrf -> csrf.ignoringRequestMatchers(endpointsMatcher))
 			.apply(authorizationServerConfigurer);
+
+		if (onlyApplyToAuthorizationServerEndpoints) {
+			http.requestMatcher(endpointsMatcher);
+		}
 	}
 	// @formatter:on
 }

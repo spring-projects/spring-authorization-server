@@ -15,9 +15,11 @@
  */
 package org.springframework.security.config.annotation.web.configurers.oauth2.server.authorization;
 
+import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.security.Principal;
+import java.text.MessageFormat;
 import java.util.Base64;
 import java.util.List;
 import java.util.Set;
@@ -40,6 +42,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.mock.http.client.MockClientHttpResponse;
 import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
 import org.springframework.security.config.test.SpringTestRule;
@@ -71,11 +74,15 @@ import org.springframework.security.oauth2.server.authorization.client.TestRegis
 import org.springframework.security.oauth2.server.authorization.config.ProviderSettings;
 import org.springframework.security.oauth2.server.authorization.web.OAuth2AuthorizationEndpointFilter;
 import org.springframework.security.oauth2.server.authorization.web.OAuth2TokenEndpointFilter;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
+import org.springframework.web.util.UriComponents;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.containsString;
@@ -115,6 +122,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 	private static ProviderSettings providerSettings;
 	private static HttpMessageConverter<OAuth2AccessTokenResponse> accessTokenHttpResponseConverter =
 			new OAuth2AccessTokenResponseHttpMessageConverter();
+	private static String consentPage = "/custom-consent";
 
 	@Rule
 	public final SpringTestRule spring = new SpringTestRule();
@@ -237,11 +245,9 @@ public class OAuth2AuthorizationCodeGrantTests {
 
 	private OAuth2AccessTokenResponse assertTokenRequestReturnsAccessTokenResponse(RegisteredClient registeredClient,
 			OAuth2Authorization authorization, String tokenEndpointUri) throws Exception {
-
 		MvcResult mvcResult = this.mvc.perform(post(tokenEndpointUri)
 				.params(getTokenRequestParameters(registeredClient, authorization))
-				.header(HttpHeaders.AUTHORIZATION, "Basic " + encodeBasicAuth(
-						registeredClient.getClientId(), registeredClient.getClientSecret())))
+				.header(HttpHeaders.AUTHORIZATION, getAuthorizationHeader(registeredClient)))
 				.andExpect(status().isOk())
 				.andExpect(header().string(HttpHeaders.CACHE_CONTROL, containsString("no-store")))
 				.andExpect(header().string(HttpHeaders.PRAGMA, containsString("no-cache")))
@@ -296,6 +302,8 @@ public class OAuth2AuthorizationCodeGrantTests {
 				.params(getTokenRequestParameters(registeredClient, authorization))
 				.param(OAuth2ParameterNames.CLIENT_ID, registeredClient.getClientId())
 				.param(PkceParameterNames.CODE_VERIFIER, S256_CODE_VERIFIER))
+				.andExpect(header().string(HttpHeaders.CACHE_CONTROL, containsString("no-store")))
+				.andExpect(header().string(HttpHeaders.PRAGMA, containsString("no-cache")))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.access_token").isNotEmpty())
 				.andExpect(jsonPath("$.token_type").isNotEmpty())
@@ -326,8 +334,128 @@ public class OAuth2AuthorizationCodeGrantTests {
 
 		this.mvc.perform(post(OAuth2TokenEndpointFilter.DEFAULT_TOKEN_ENDPOINT_URI)
 				.params(getTokenRequestParameters(registeredClient, authorization))
-				.header(HttpHeaders.AUTHORIZATION, "Basic " + encodeBasicAuth(
-						registeredClient.getClientId(), registeredClient.getClientSecret())));
+				.header(HttpHeaders.AUTHORIZATION, getAuthorizationHeader(registeredClient)));
+	}
+
+	@Test
+	public void requestWhenRequiresConsentThenDisplaysConsentPage() throws Exception {
+		this.spring.register(AuthorizationServerConfiguration.class).autowire();
+
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
+				.scopes(scopes -> {
+					scopes.clear();
+					scopes.add("message.read");
+					scopes.add("message.write");
+				})
+				.clientSettings(settings -> settings.requireUserConsent(true))
+				.build();
+		when(registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
+				.thenReturn(registeredClient);
+
+		String consentPage = this.mvc.perform(get(OAuth2AuthorizationEndpointFilter.DEFAULT_AUTHORIZATION_ENDPOINT_URI)
+				.params(getAuthorizationRequestParameters(registeredClient))
+				.with(user("user")))
+				.andExpect(status().is2xxSuccessful())
+				.andReturn()
+				.getResponse()
+				.getContentAsString();
+
+
+		assertThat(consentPage).contains("Consent required");
+		assertThat(consentPage).contains(scopeCheckbox("message.read"));
+		assertThat(consentPage).contains(scopeCheckbox("message.write"));
+	}
+
+	@Test
+	public void requestWhenConsentRequestReturnAccessTokenResponse() throws Exception {
+		final String stateParameter = "consent-state";
+		this.spring.register(AuthorizationServerConfiguration.class).autowire();
+
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
+				.scopes(scopes -> {
+					scopes.clear();
+					scopes.add("message.read");
+					scopes.add("message.write");
+				})
+				.clientSettings(settings -> settings.requireUserConsent(true))
+				.build();
+		when(registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
+				.thenReturn(registeredClient);
+		OAuth2Authorization stateTokenAuthorization = TestOAuth2Authorizations.authorization(registeredClient)
+				.principalName("user")
+				.build();
+
+		when(authorizationService.findByToken(
+				eq(stateParameter),
+				eq(new OAuth2TokenType(OAuth2ParameterNames.STATE))))
+				.thenReturn(stateTokenAuthorization);
+
+		MvcResult mvcResult = this.mvc.perform(post(OAuth2AuthorizationEndpointFilter.DEFAULT_AUTHORIZATION_ENDPOINT_URI)
+				.param(OAuth2ParameterNames.CLIENT_ID, registeredClient.getClientId())
+				.param(OAuth2ParameterNames.SCOPE, "message.read")
+				.param(OAuth2ParameterNames.SCOPE, "message.write")
+				.param(OAuth2ParameterNames.STATE, stateParameter)
+				.param("consent_action", "approve")
+				.with(user("user")))
+				.andExpect(status().is3xxRedirection())
+				.andReturn();
+
+		assertThat(mvcResult.getResponse().getRedirectedUrl()).matches("https://example.com\\?code=.{15,}&state=state");
+		ArgumentCaptor<OAuth2Authorization> authorizationCaptor = ArgumentCaptor.forClass(OAuth2Authorization.class);
+		verify(authorizationService).save(authorizationCaptor.capture());
+		OAuth2Authorization authorizationCodeAuthorization = authorizationCaptor.getValue();
+		when(authorizationService.findByToken(
+				eq(authorizationCodeAuthorization.getToken(OAuth2AuthorizationCode.class).getToken().getTokenValue()),
+				eq(AUTHORIZATION_CODE_TOKEN_TYPE)))
+				.thenReturn(authorizationCodeAuthorization);
+
+		this.mvc.perform(post(OAuth2TokenEndpointFilter.DEFAULT_TOKEN_ENDPOINT_URI)
+				.params(getTokenRequestParameters(registeredClient, authorizationCodeAuthorization))
+				.header(HttpHeaders.AUTHORIZATION, getAuthorizationHeader(registeredClient)))
+				.andExpect(status().isOk())
+				.andExpect(header().string(HttpHeaders.CACHE_CONTROL, containsString("no-store")))
+				.andExpect(header().string(HttpHeaders.PRAGMA, containsString("no-cache")))
+				.andExpect(jsonPath("$.access_token").isNotEmpty())
+				.andExpect(jsonPath("$.token_type").isNotEmpty())
+				.andExpect(jsonPath("$.expires_in").isNotEmpty())
+				.andExpect(jsonPath("$.refresh_token").isNotEmpty())
+				.andExpect(jsonPath("$.scope").isNotEmpty())
+				.andReturn();
+	}
+
+	@Test
+	public void requestWhenCustomConsentPageConfiguredThenRedirect() throws Exception {
+		this.spring.register(AuthorizationServerConfigurationCustomConsentPage.class).autowire();
+
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
+				.scopes(scopes -> {
+					scopes.clear();
+					scopes.add("message.read");
+					scopes.add("message.write");
+				})
+				.clientSettings(settings -> settings.requireUserConsent(true))
+				.build();
+		when(registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
+				.thenReturn(registeredClient);
+
+		MvcResult mvcResult = this.mvc.perform(get(OAuth2AuthorizationEndpointFilter.DEFAULT_AUTHORIZATION_ENDPOINT_URI)
+				.params(getAuthorizationRequestParameters(registeredClient))
+				.with(user("user")))
+				.andExpect(status().is3xxRedirection())
+				.andReturn();
+
+		String locationHeader = URLDecoder.decode(mvcResult.getResponse().getRedirectedUrl(), StandardCharsets.UTF_8.name());
+		UriComponents redirectedUrl = UriComponentsBuilder.fromUriString(locationHeader).build();
+		MultiValueMap<String, String> redirectQueryParams = redirectedUrl.getQueryParams();
+
+		assertThat(redirectedUrl.getPath()).isEqualTo(consentPage);
+		assertThat(redirectQueryParams.getFirst(OAuth2ParameterNames.SCOPE)).isEqualTo("message.read message.write");
+		assertThat(redirectQueryParams.getFirst(OAuth2ParameterNames.CLIENT_ID)).isEqualTo(registeredClient.getClientId());
+
+		ArgumentCaptor<OAuth2Authorization> authorizationCaptor = ArgumentCaptor.forClass(OAuth2Authorization.class);
+		verify(authorizationService).save(authorizationCaptor.capture());
+		OAuth2Authorization authorization = authorizationCaptor.getValue();
+		assertThat(redirectQueryParams.getFirst(OAuth2ParameterNames.STATE)).isEqualTo(authorization.getAttribute(OAuth2ParameterNames.STATE));
 	}
 
 	private static MultiValueMap<String, String> getAuthorizationRequestParameters(RegisteredClient registeredClient) {
@@ -350,12 +478,21 @@ public class OAuth2AuthorizationCodeGrantTests {
 		return parameters;
 	}
 
-	private static String encodeBasicAuth(String clientId, String secret) throws Exception {
+	private static String getAuthorizationHeader(RegisteredClient registeredClient) throws Exception {
+		String clientId = registeredClient.getClientId();
+		String secret = registeredClient.getClientSecret();
 		clientId = URLEncoder.encode(clientId, StandardCharsets.UTF_8.name());
 		secret = URLEncoder.encode(secret, StandardCharsets.UTF_8.name());
 		String credentialsString = clientId + ":" + secret;
 		byte[] encodedBytes = Base64.getEncoder().encode(credentialsString.getBytes(StandardCharsets.UTF_8));
-		return new String(encodedBytes, StandardCharsets.UTF_8);
+		return "Basic " + new String(encodedBytes, StandardCharsets.UTF_8);
+	}
+
+	private static String scopeCheckbox(String scope) {
+		return MessageFormat.format(
+				"<input class=\"form-check-input\" type=\"checkbox\" name=\"scope\" value=\"{0}\" id=\"{0}\" checked>",
+				scope
+		);
 	}
 
 	@EnableWebSecurity
@@ -418,4 +555,25 @@ public class OAuth2AuthorizationCodeGrantTests {
 		}
 	}
 
+	@EnableWebSecurity
+	static class AuthorizationServerConfigurationCustomConsentPage extends AuthorizationServerConfiguration {
+		// @formatter:off
+		@Bean
+		public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
+			OAuth2AuthorizationServerConfigurer<HttpSecurity> authorizationServerConfigurer =
+					new OAuth2AuthorizationServerConfigurer<>();
+			authorizationServerConfigurer.consentPage(consentPage);
+			RequestMatcher endpointsMatcher = authorizationServerConfigurer.getEndpointsMatcher();
+
+			http
+					.requestMatcher(endpointsMatcher)
+					.authorizeRequests(authorizeRequests ->
+							authorizeRequests.anyRequest().authenticated()
+					)
+					.csrf(csrf -> csrf.ignoringRequestMatchers(endpointsMatcher))
+					.apply(authorizationServerConfigurer);
+			return http.build();
+		}
+		// @formatter:on
+	}
 }

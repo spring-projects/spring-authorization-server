@@ -36,9 +36,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.NimbusJwsEncoder;
 import org.springframework.security.oauth2.server.authorization.InMemoryOAuth2AuthorizationService;
+import org.springframework.security.oauth2.server.authorization.InMemoryOAuth2AuthorizationConsentService;
 import org.springframework.security.oauth2.server.authorization.JwtEncodingContext;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenCustomizer;
+import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsentService;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientCredentialsAuthenticationProvider;
@@ -107,6 +109,7 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 			this.oidcProviderConfigurationEndpointMatcher.matches(request) ||
 			this.authorizationServerMetadataEndpointMatcher.matches(request) ||
 			this.oidcClientRegistrationEndpointMatcher.matches(request);
+	private String consentPage;
 
 	/**
 	 * Sets the repository of registered clients.
@@ -133,6 +136,18 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 	}
 
 	/**
+	 * Sets the authorization consent service.
+	 *
+	 * @param authorizationConsentService the authorization service
+	 * @return the {@link OAuth2AuthorizationServerConfigurer} for further configuration
+	 */
+	public OAuth2AuthorizationServerConfigurer<B> authorizationConsentService(OAuth2AuthorizationConsentService authorizationConsentService) {
+		Assert.notNull(authorizationConsentService, "authorizationConsentService cannot be null");
+		this.getBuilder().setSharedObject(OAuth2AuthorizationConsentService.class, authorizationConsentService);
+		return this;
+	}
+
+	/**
 	 * Sets the provider settings.
 	 *
 	 * @param providerSettings the provider settings
@@ -141,6 +156,43 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 	public OAuth2AuthorizationServerConfigurer<B> providerSettings(ProviderSettings providerSettings) {
 		Assert.notNull(providerSettings, "providerSettings cannot be null");
 		this.getBuilder().setSharedObject(ProviderSettings.class, providerSettings);
+		return this;
+	}
+
+	/**
+	 * Specify the URL to redirect Resource Owners to if consent is required during
+	 * the {@code authorization_code} flow. A default consent page will be generated when
+	 * this attribute is not specified.
+	 *
+	 * If a URL is specified, users are required to process the specified URL to generate
+	 * a consent page. The query string will contain the following parameters:
+	 *
+	 * <ul>
+	 * <li>{@code client_id} the client identifier</li>
+	 * <li>{@code scope} the space separated list of scopes present in the authorization request</li>
+	 * <li>{@code state} a CSRF protection token</li>
+	 * </ul>
+	 *
+	 * In general, the consent page should create a form that submits
+	 * a request with the following requirements:
+	 *
+	 * <ul>
+	 * <li>It must be an HTTP POST</li>
+	 * <li>It must be submitted to {@link ProviderSettings#authorizationEndpoint()}</li>
+	 * <li>It must include the received {@code client_id} as an HTTP parameter</li>
+	 * <li>It must include the received {@code state} as an HTTP parameter</li>
+	 * <li>It must include the list of {@code scope}s the {@code Resource Owners}
+	 * consents to as an HTTP parameter</li>
+	 * <li>It must include the {@code consent_action} parameter, with value either
+	 * {@code approve} or {@code cancel} as an HTTP parameter</li>
+	 * </ul>
+	 *
+	 *
+	 * @param consentPage the consent page to redirect to if consent is required (e.g. "/consent")
+	 * @return the {@link OAuth2AuthorizationServerConfigurer} for further configuration
+	 */
+	public OAuth2AuthorizationServerConfigurer<B> consentPage(String consentPage) {
+		this.consentPage = consentPage;
 		return this;
 	}
 
@@ -263,7 +315,12 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 				new OAuth2AuthorizationEndpointFilter(
 						getRegisteredClientRepository(builder),
 						getAuthorizationService(builder),
-						providerSettings.authorizationEndpoint());
+						getAuthorizationConsentService(builder),
+						providerSettings.authorizationEndpoint()
+				);
+		if (this.consentPage != null) {
+			authorizationEndpointFilter.setUserConsentUri(this.consentPage);
+		}
 		builder.addFilterBefore(postProcess(authorizationEndpointFilter), AbstractPreAuthenticatedProcessingFilter.class);
 
 		OAuth2TokenEndpointFilter tokenEndpointFilter =
@@ -345,6 +402,18 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 			builder.setSharedObject(OAuth2AuthorizationService.class, authorizationService);
 		}
 		return authorizationService;
+	}
+
+	private static <B extends HttpSecurityBuilder<B>> OAuth2AuthorizationConsentService getAuthorizationConsentService(B builder) {
+		OAuth2AuthorizationConsentService authorizationConsentService = builder.getSharedObject(OAuth2AuthorizationConsentService.class);
+		if (authorizationConsentService == null) {
+			authorizationConsentService = getOptionalBean(builder, OAuth2AuthorizationConsentService.class);
+			if (authorizationConsentService == null) {
+				authorizationConsentService = new InMemoryOAuth2AuthorizationConsentService();
+			}
+			builder.setSharedObject(OAuth2AuthorizationConsentService.class, authorizationConsentService);
+		}
+		return authorizationConsentService;
 	}
 
 	private static <B extends HttpSecurityBuilder<B>> JwtEncoder getJwtEncoder(B builder) {

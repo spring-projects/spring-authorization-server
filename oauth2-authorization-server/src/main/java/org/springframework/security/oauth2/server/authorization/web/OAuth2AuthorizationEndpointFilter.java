@@ -50,8 +50,11 @@ import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationResp
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.endpoint.PkceParameterNames;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
+import org.springframework.security.oauth2.server.authorization.InMemoryOAuth2AuthorizationConsentService;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationCode;
+import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsent;
+import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsentService;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
@@ -81,6 +84,7 @@ import org.springframework.web.util.UriComponentsBuilder;
  * @since 0.0.1
  * @see RegisteredClientRepository
  * @see OAuth2AuthorizationService
+ * @see OAuth2AuthorizationConsentService
  * @see OAuth2Authorization
  * @see <a target="_blank" href="https://tools.ietf.org/html/rfc6749#section-4.1">Section 4.1 Authorization Code Grant</a>
  * @see <a target="_blank" href="https://tools.ietf.org/html/rfc6749#section-4.1.1">Section 4.1.1 Authorization Request</a>
@@ -99,21 +103,27 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 
 	private final RegisteredClientRepository registeredClientRepository;
 	private final OAuth2AuthorizationService authorizationService;
+	private final OAuth2AuthorizationConsentService authorizationConsentService;
 	private final RequestMatcher authorizationRequestMatcher;
 	private final RequestMatcher userConsentMatcher;
 	private final StringKeyGenerator codeGenerator = new Base64StringKeyGenerator(Base64.getUrlEncoder().withoutPadding(), 96);
 	private final StringKeyGenerator stateGenerator = new Base64StringKeyGenerator(Base64.getUrlEncoder());
 	private final RedirectStrategy redirectStrategy = new DefaultRedirectStrategy();
+	private String userConsentUri;
 
 	/**
 	 * Constructs an {@code OAuth2AuthorizationEndpointFilter} using the provided parameters.
 	 *
 	 * @param registeredClientRepository the repository of registered clients
 	 * @param authorizationService the authorization service
+	 * @deprecated use
+	 * {@link #OAuth2AuthorizationEndpointFilter(RegisteredClientRepository, OAuth2AuthorizationService, OAuth2AuthorizationConsentService)}
+	 * instead.
 	 */
+	@Deprecated
 	public OAuth2AuthorizationEndpointFilter(RegisteredClientRepository registeredClientRepository,
 			OAuth2AuthorizationService authorizationService) {
-		this(registeredClientRepository, authorizationService, DEFAULT_AUTHORIZATION_ENDPOINT_URI);
+		this(registeredClientRepository, authorizationService, new InMemoryOAuth2AuthorizationConsentService());
 	}
 
 	/**
@@ -122,14 +132,49 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 	 * @param registeredClientRepository the repository of registered clients
 	 * @param authorizationService the authorization service
 	 * @param authorizationEndpointUri the endpoint {@code URI} for authorization requests
+	 * @deprecated use
+	 * {@link #OAuth2AuthorizationEndpointFilter(RegisteredClientRepository, OAuth2AuthorizationService, OAuth2AuthorizationConsentService, String)}
+	 * instead.
 	 */
+	@Deprecated
 	public OAuth2AuthorizationEndpointFilter(RegisteredClientRepository registeredClientRepository,
 			OAuth2AuthorizationService authorizationService, String authorizationEndpointUri) {
+		this(registeredClientRepository,
+				authorizationService,
+				new InMemoryOAuth2AuthorizationConsentService(),
+				authorizationEndpointUri);
+	}
+
+	/**
+	 * Constructs an {@code OAuth2AuthorizationEndpointFilter} using the provided parameters.
+	 *
+	 * @param registeredClientRepository the repository of registered clients
+	 * @param authorizationService the authorization service
+	 * @param authorizationConsentService the authorization consent service
+	 */
+	public OAuth2AuthorizationEndpointFilter(RegisteredClientRepository registeredClientRepository,
+			OAuth2AuthorizationService authorizationService, OAuth2AuthorizationConsentService authorizationConsentService) {
+		this(registeredClientRepository, authorizationService, authorizationConsentService, DEFAULT_AUTHORIZATION_ENDPOINT_URI);
+	}
+
+	/**
+	 * Constructs an {@code OAuth2AuthorizationEndpointFilter} using the provided parameters.
+	 *
+	 * @param registeredClientRepository the repository of registered clients
+	 * @param authorizationService the authorization service
+	 * @param consentService the consent service
+	 * @param authorizationEndpointUri the endpoint {@code URI} for authorization requests
+	 */
+	public OAuth2AuthorizationEndpointFilter(RegisteredClientRepository registeredClientRepository,
+			OAuth2AuthorizationService authorizationService, OAuth2AuthorizationConsentService consentService,
+			String authorizationEndpointUri) {
 		Assert.notNull(registeredClientRepository, "registeredClientRepository cannot be null");
 		Assert.notNull(authorizationService, "authorizationService cannot be null");
+		Assert.notNull(consentService, "consentService cannot be null");
 		Assert.hasText(authorizationEndpointUri, "authorizationEndpointUri cannot be empty");
 		this.registeredClientRepository = registeredClientRepository;
 		this.authorizationService = authorizationService;
+		this.authorizationConsentService = consentService;
 
 		RequestMatcher authorizationRequestGetMatcher = new AntPathRequestMatcher(
 				authorizationEndpointUri, HttpMethod.GET.name());
@@ -148,6 +193,17 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 						new NegatedRequestMatcher(consentActionMatcher)));
 		this.userConsentMatcher = new AndRequestMatcher(
 				authorizationRequestPostMatcher, consentActionMatcher);
+	}
+
+	/**
+	 * Specify the URL to redirect Resource Owners to if consent is required. A default consent
+	 * page will be generated when this attribute is not specified.
+	 *
+	 * @param customConsentUri the URI of the custom consent page to redirect to if consent is required (e.g. "/consent")
+	 * @see org.springframework.security.config.annotation.web.configurers.oauth2.server.authorization.OAuth2AuthorizationServerConfigurer#consentPage(String)
+	 */
+	public final void setUserConsentUri(String customConsentUri) {
+		this.userConsentUri = customConsentUri;
 	}
 
 	@Override
@@ -203,7 +259,8 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 				.attribute(Principal.class.getName(), principal)
 				.attribute(OAuth2AuthorizationRequest.class.getName(), authorizationRequest);
 
-		if (requireUserConsent(registeredClient, authorizationRequest)) {
+		OAuth2AuthorizationConsent previousConsent = this.authorizationConsentService.findById(registeredClient.getClientId(), principal.getName());
+		if (requireUserConsent(registeredClient, authorizationRequest, previousConsent)) {
 			String state = this.stateGenerator.generateKey();
 			OAuth2Authorization authorization = builder
 					.attribute(OAuth2ParameterNames.STATE, state)
@@ -212,7 +269,17 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 
 			// TODO Need to remove 'in-flight' authorization if consent step is not completed (e.g. approved or cancelled)
 
-			UserConsentPage.displayConsent(request, response, registeredClient, authorization);
+			if (this.hasCustomUserConsentPage()) {
+				String redirect = UriComponentsBuilder
+						.fromUriString(this.userConsentUri)
+						.queryParam(OAuth2ParameterNames.SCOPE, String.join(" ", authorizationRequest.getScopes()))
+						.queryParam(OAuth2ParameterNames.CLIENT_ID, registeredClient.getClientId())
+						.queryParam(OAuth2ParameterNames.STATE, state)
+						.toUriString();
+				this.redirectStrategy.sendRedirect(request, response, redirect);
+			} else {
+				UserConsentPage.displayConsent(request, response, registeredClient, authorization, previousConsent);
+			}
 		} else {
 			Instant issuedAt = Instant.now();
 			Instant expiresAt = issuedAt.plus(5, ChronoUnit.MINUTES);		// TODO Allow configuration for authorization code time-to-live
@@ -237,13 +304,26 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 		}
 	}
 
-	private static boolean requireUserConsent(RegisteredClient registeredClient, OAuth2AuthorizationRequest authorizationRequest) {
+	private boolean hasCustomUserConsentPage() {
+		return this.userConsentUri != null;
+	}
+
+	private boolean requireUserConsent(RegisteredClient registeredClient, OAuth2AuthorizationRequest authorizationRequest, OAuth2AuthorizationConsent previousConsent) {
+		if (!registeredClient.getClientSettings().requireUserConsent()) {
+			return false;
+		}
 		// openid scope does not require consent
 		if (authorizationRequest.getScopes().contains(OidcScopes.OPENID) &&
 				authorizationRequest.getScopes().size() == 1) {
 			return false;
 		}
-		return registeredClient.getClientSettings().requireUserConsent();
+
+		if (previousConsent != null &&
+				previousConsent.getScopes().containsAll(authorizationRequest.getScopes())) {
+			return false;
+		}
+
+		return true;
 	}
 
 	private void processUserConsent(HttpServletRequest request, HttpServletResponse response)
@@ -283,6 +363,18 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 			// openid scope is auto-approved as it does not require consent
 			authorizedScopes.add(OidcScopes.OPENID);
 		}
+
+		OAuth2AuthorizationConsent previousConsent = this.authorizationConsentService.findById(
+				userConsentRequestContext.getClientId(),
+				userConsentRequestContext.getAuthorization().getPrincipalName()
+		);
+		for (String requestedScope : userConsentRequestContext.getAuthorizationRequest().getScopes()) {
+			if (previousConsent != null && previousConsent.getScopes().contains(requestedScope)) {
+				authorizedScopes.add(requestedScope);
+			}
+		}
+		saveAuthorizationConsent(previousConsent, userConsentRequestContext);
+
 		OAuth2Authorization authorization = OAuth2Authorization.from(userConsentRequestContext.getAuthorization())
 				.token(authorizationCode)
 				.attributes(attrs -> {
@@ -294,6 +386,28 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 
 		sendAuthorizationResponse(request, response, userConsentRequestContext.resolveRedirectUri(),
 				authorizationCode, userConsentRequestContext.getAuthorizationRequest().getState());
+	}
+
+	private void saveAuthorizationConsent(OAuth2AuthorizationConsent previousConsent, UserConsentRequestContext userConsentRequestContext) {
+		if (CollectionUtils.isEmpty(userConsentRequestContext.getScopes())) {
+			return;
+		}
+
+		OAuth2AuthorizationConsent.Builder userConsentBuilder;
+		if (previousConsent == null) {
+			userConsentBuilder = OAuth2AuthorizationConsent.withId(
+					userConsentRequestContext.getClientId(),
+					userConsentRequestContext.getAuthorization().getPrincipalName()
+			);
+		} else {
+			userConsentBuilder = OAuth2AuthorizationConsent.from(previousConsent);
+		}
+
+		for (String authorizedScope : userConsentRequestContext.getScopes()) {
+			userConsentBuilder.scope(authorizedScope);
+		}
+		OAuth2AuthorizationConsent userConsent = userConsentBuilder.build();
+		this.authorizationConsentService.save(userConsent);
 	}
 
 	private void validateAuthorizationRequest(OAuth2AuthorizationRequestContext authorizationRequestContext) {
@@ -600,7 +714,7 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 
 		private static Set<String> extractScopes(MultiValueMap<String, String> parameters) {
 			List<String> scope = parameters.get(OAuth2ParameterNames.SCOPE);
-			return !CollectionUtils.isEmpty(scope) ? new HashSet<>(scope) : Collections.emptySet();
+			return !CollectionUtils.isEmpty(scope) ? new HashSet<>(scope) : new HashSet<>();
 		}
 
 		private OAuth2Authorization getAuthorization() {
@@ -700,9 +814,10 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 		private static final String CONSENT_ACTION_CANCEL = "cancel";
 
 		private static void displayConsent(HttpServletRequest request, HttpServletResponse response,
-				RegisteredClient registeredClient, OAuth2Authorization authorization) throws IOException {
+				RegisteredClient registeredClient, OAuth2Authorization authorization,
+				OAuth2AuthorizationConsent previousConsent) throws IOException {
 
-			String consentPage = generateConsentPage(request, registeredClient, authorization);
+			String consentPage = generateConsentPage(request, registeredClient, authorization, previousConsent);
 			response.setContentType(TEXT_HTML_UTF8.toString());
 			response.setContentLength(consentPage.getBytes(StandardCharsets.UTF_8).length);
 			response.getWriter().write(consentPage);
@@ -717,14 +832,21 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 		}
 
 		private static String generateConsentPage(HttpServletRequest request,
-				RegisteredClient registeredClient, OAuth2Authorization authorization) {
-
+				RegisteredClient registeredClient, OAuth2Authorization authorization, OAuth2AuthorizationConsent previousConsent) {
 			OAuth2AuthorizationRequest authorizationRequest = authorization.getAttribute(
 					OAuth2AuthorizationRequest.class.getName());
-			Set<String> scopes = new HashSet<>(authorizationRequest.getScopes());
-			scopes.remove(OidcScopes.OPENID);		// openid scope does not require consent
-			String state = authorization.getAttribute(
-					OAuth2ParameterNames.STATE);
+
+			Set<String> scopes = new HashSet<>();
+			Set<String> previouslyApprovedScopes = new HashSet<>();
+			for (String scope : authorizationRequest.getScopes()) {
+				if (previousConsent != null && previousConsent.getScopes().contains(scope)) {
+					previouslyApprovedScopes.add(scope);
+				} else if (!scope.equals(OidcScopes.OPENID)) { // openid scope does not require consent
+					scopes.add(scope);
+				}
+			}
+
+			String state = authorization.getAttribute(OAuth2ParameterNames.STATE);
 
 			StringBuilder builder = new StringBuilder();
 
@@ -762,6 +884,16 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 				builder.append("                    <input class=\"form-check-input\" type=\"checkbox\" name=\"scope\" value=\"" + scope + "\" id=\"" + scope + "\" checked>");
 				builder.append("                    <label class=\"form-check-label\" for=\"" + scope + "\">" + scope + "</label>");
 				builder.append("                </div>");
+			}
+
+			if (!previouslyApprovedScopes.isEmpty()) {
+				builder.append("                <p>You have already granted the following permissions to the above app:</p>");
+				for (String scope : previouslyApprovedScopes) {
+					builder.append("                <div class=\"form-group form-check py-1\">");
+					builder.append("                    <input class=\"form-check-input\" type=\"checkbox\" name=\"scope\" id=\"" + scope + "\" checked disabled>");
+					builder.append("                    <label class=\"form-check-label\" for=\"" + scope + "\">" + scope + "</label>");
+					builder.append("                </div>");
+				}
 			}
 
 			builder.append("                <div class=\"form-group pt-3\">");

@@ -26,6 +26,7 @@ import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.endpoint.PkceParameterNames;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientAuthenticationToken;
+import org.springframework.security.web.authentication.WebAuthenticationDetails;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -34,6 +35,7 @@ import java.util.Base64;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.entry;
+import static org.assertj.core.api.InstanceOfAssertFactories.type;
 
 /**
  * Tests for {@link ClientSecretBasicAuthenticationConverter}.
@@ -115,6 +117,18 @@ public class ClientSecretBasicAuthenticationConverterTests {
 						entry(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.AUTHORIZATION_CODE.getValue()),
 						entry(OAuth2ParameterNames.CODE, "code"),
 						entry(PkceParameterNames.CODE_VERIFIER, "code-verifier-1"));
+	}
+
+	@Test
+	public void convertIncludesWebAuthenticationDetailsAsAuthenticationDetails() throws Exception {
+		MockHttpServletRequest request = new MockHttpServletRequest();
+		request.addHeader(HttpHeaders.AUTHORIZATION, "Basic " + encodeBasicAuth("clientId", "secret"));
+		request.setRemoteAddr("remote address");
+		OAuth2ClientAuthenticationToken authentication = (OAuth2ClientAuthenticationToken) this.converter.convert(request);
+		assertThat(authentication.getDetails())
+				.asInstanceOf(type(WebAuthenticationDetails.class))
+				.extracting(WebAuthenticationDetails::getRemoteAddress)
+				.isEqualTo("remote address");
 	}
 
 	private static String encodeBasicAuth(String clientId, String secret) throws Exception {

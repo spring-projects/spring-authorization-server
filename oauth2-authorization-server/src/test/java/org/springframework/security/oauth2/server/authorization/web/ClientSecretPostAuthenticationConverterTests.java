@@ -25,10 +25,12 @@ import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.endpoint.PkceParameterNames;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientAuthenticationToken;
+import org.springframework.security.web.authentication.WebAuthenticationDetails;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.entry;
+import static org.assertj.core.api.InstanceOfAssertFactories.type;
 
 /**
  * Tests for {@link ClientSecretPostAuthenticationConverter}.
@@ -103,6 +105,19 @@ public class ClientSecretPostAuthenticationConverterTests {
 						entry(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.AUTHORIZATION_CODE.getValue()),
 						entry(OAuth2ParameterNames.CODE, "code"),
 						entry(PkceParameterNames.CODE_VERIFIER, "code-verifier-1"));
+	}
+
+	@Test
+	public void convertIncludesWebAuthenticationDetailsAsAuthenticationDetails() {
+		MockHttpServletRequest request = new MockHttpServletRequest();
+		request.addParameter(OAuth2ParameterNames.CLIENT_ID, "client-1");
+		request.addParameter(OAuth2ParameterNames.CLIENT_SECRET, "client-secret");
+		request.setRemoteAddr("remote address");
+		OAuth2ClientAuthenticationToken authentication = (OAuth2ClientAuthenticationToken) this.converter.convert(request);
+		assertThat(authentication.getDetails())
+				.asInstanceOf(type(WebAuthenticationDetails.class))
+				.extracting(WebAuthenticationDetails::getRemoteAddress)
+				.isEqualTo("remote address");
 	}
 
 	private static MockHttpServletRequest createPkceTokenRequest() {

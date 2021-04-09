@@ -15,6 +15,7 @@
  */
 package org.springframework.security.oauth2.server.authorization.web;
 
+import org.springframework.security.authentication.AuthenticationDetailsSource;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
@@ -23,6 +24,7 @@ import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.endpoint.PkceParameterNames;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientAuthenticationToken;
 import org.springframework.security.web.authentication.AuthenticationConverter;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
 
@@ -41,6 +43,8 @@ import java.util.HashMap;
  * @see <a target="_blank" href="https://tools.ietf.org/html/rfc7636">Proof Key for Code Exchange by OAuth Public Clients</a>
  */
 public class PublicClientAuthenticationConverter implements AuthenticationConverter {
+
+	private static final AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource = new WebAuthenticationDetailsSource();
 
 	@Override
 	public Authentication convert(HttpServletRequest request) {
@@ -64,7 +68,9 @@ public class PublicClientAuthenticationConverter implements AuthenticationConver
 
 		parameters.remove(OAuth2ParameterNames.CLIENT_ID);
 
-		return new OAuth2ClientAuthenticationToken(
+		OAuth2ClientAuthenticationToken oAuth2ClientAuthenticationToken = new OAuth2ClientAuthenticationToken(
 				clientId, new HashMap<>(parameters.toSingleValueMap()));
+		oAuth2ClientAuthenticationToken.setDetails(authenticationDetailsSource.buildDetails(request));
+		return oAuth2ClientAuthenticationToken;
 	}
 }

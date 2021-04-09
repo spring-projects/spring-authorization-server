@@ -16,6 +16,7 @@
 package org.springframework.security.oauth2.server.authorization.web;
 
 import org.springframework.http.HttpHeaders;
+import org.springframework.security.authentication.AuthenticationDetailsSource;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
@@ -23,6 +24,7 @@ import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientAuthenticationToken;
 import org.springframework.security.web.authentication.AuthenticationConverter;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.util.StringUtils;
 
 import javax.servlet.http.HttpServletRequest;
@@ -44,6 +46,8 @@ import java.util.Map;
  * @see OAuth2ClientAuthenticationFilter
  */
 public class ClientSecretBasicAuthenticationConverter implements AuthenticationConverter {
+
+	private static final AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource = new WebAuthenticationDetailsSource();
 
 	@Override
 	public Authentication convert(HttpServletRequest request) {
@@ -86,8 +90,10 @@ public class ClientSecretBasicAuthenticationConverter implements AuthenticationC
 			throw new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_REQUEST), ex);
 		}
 
-		return new OAuth2ClientAuthenticationToken(clientID, clientSecret, ClientAuthenticationMethod.BASIC,
+		OAuth2ClientAuthenticationToken oAuth2ClientAuthenticationToken = new OAuth2ClientAuthenticationToken(clientID, clientSecret, ClientAuthenticationMethod.BASIC,
 				extractAdditionalParameters(request));
+		oAuth2ClientAuthenticationToken.setDetails(authenticationDetailsSource.buildDetails(request));
+		return oAuth2ClientAuthenticationToken;
 	}
 
 	private static Map<String, Object> extractAdditionalParameters(HttpServletRequest request) {

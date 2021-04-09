@@ -34,6 +34,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.server.ServletServerHttpResponse;
+import org.springframework.security.authentication.AuthenticationDetailsSource;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -55,6 +56,7 @@ import org.springframework.security.oauth2.server.authorization.authentication.O
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2RefreshTokenAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2RefreshTokenAuthenticationToken;
 import org.springframework.security.web.authentication.AuthenticationConverter;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
@@ -202,6 +204,8 @@ public class OAuth2TokenEndpointFilter extends OncePerRequestFilter {
 
 	private static class AuthorizationCodeAuthenticationConverter implements AuthenticationConverter {
 
+		private static final AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource = new WebAuthenticationDetailsSource();
+
 		@Override
 		public Authentication convert(HttpServletRequest request) {
 			// grant_type (REQUIRED)
@@ -240,12 +244,16 @@ public class OAuth2TokenEndpointFilter extends OncePerRequestFilter {
 					.collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().get(0)));
 			// @formatter:on
 
-			return new OAuth2AuthorizationCodeAuthenticationToken(
+			OAuth2AuthorizationCodeAuthenticationToken oAuth2AuthorizationCodeAuthenticationToken = new OAuth2AuthorizationCodeAuthenticationToken(
 					code, clientPrincipal, redirectUri, additionalParameters);
+			oAuth2AuthorizationCodeAuthenticationToken.setDetails(authenticationDetailsSource.buildDetails(request));
+			return oAuth2AuthorizationCodeAuthenticationToken;
 		}
 	}
 
 	private static class RefreshTokenAuthenticationConverter implements AuthenticationConverter {
+
+		private static final AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource = new WebAuthenticationDetailsSource();
 
 		@Override
 		public Authentication convert(HttpServletRequest request) {
@@ -288,12 +296,16 @@ public class OAuth2TokenEndpointFilter extends OncePerRequestFilter {
 					.collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().get(0)));
 			// @formatter:on
 
-			return new OAuth2RefreshTokenAuthenticationToken(
+			OAuth2RefreshTokenAuthenticationToken oAuth2RefreshTokenAuthenticationToken = new OAuth2RefreshTokenAuthenticationToken(
 					refreshToken, clientPrincipal, requestedScopes, additionalParameters);
+			oAuth2RefreshTokenAuthenticationToken.setDetails(authenticationDetailsSource.buildDetails(request));
+			return oAuth2RefreshTokenAuthenticationToken;
 		}
 	}
 
 	private static class ClientCredentialsAuthenticationConverter implements AuthenticationConverter {
+
+		private static final AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource = new WebAuthenticationDetailsSource();
 
 		@Override
 		public Authentication convert(HttpServletRequest request) {
@@ -328,8 +340,10 @@ public class OAuth2TokenEndpointFilter extends OncePerRequestFilter {
 					.collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().get(0)));
 			// @formatter:on
 
-			return new OAuth2ClientCredentialsAuthenticationToken(
+			OAuth2ClientCredentialsAuthenticationToken oAuth2ClientCredentialsAuthenticationToken = new OAuth2ClientCredentialsAuthenticationToken(
 					clientPrincipal, requestedScopes, additionalParameters);
+			oAuth2ClientCredentialsAuthenticationToken.setDetails(authenticationDetailsSource.buildDetails(request));
+			return oAuth2ClientCredentialsAuthenticationToken;
 		}
 	}
 }

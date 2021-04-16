@@ -15,66 +15,76 @@
  */
 package org.springframework.security.oauth2.server.authorization.authentication;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.springframework.lang.Nullable;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.core.OAuth2TokenIntrospection;
 import org.springframework.security.oauth2.core.Version;
 import org.springframework.util.Assert;
-
-import java.util.Collections;
-import java.util.Map;
 
 /**
  * An {@link Authentication} implementation used for OAuth 2.0 Token Introspection.
  *
  * @author Gerardo Roza
+ * @author Joe Grandja
  * @since 0.1.1
  * @see AbstractAuthenticationToken
+ * @see OAuth2TokenIntrospection
  * @see OAuth2TokenIntrospectionAuthenticationProvider
  */
 public class OAuth2TokenIntrospectionAuthenticationToken extends AbstractAuthenticationToken {
 	private static final long serialVersionUID = Version.SERIAL_VERSION_UID;
-	private final String tokenValue;
+	private final String token;
 	private final Authentication clientPrincipal;
 	private final String tokenTypeHint;
-	private Map<String, Object> claims;
+	private final Map<String, Object> additionalParameters;
+	private final OAuth2TokenIntrospection tokenClaims;
 
 	/**
 	 * Constructs an {@code OAuth2TokenIntrospectionAuthenticationToken} using the provided parameters.
 	 *
-	 * @param tokenValue the token
+	 * @param token the token
 	 * @param clientPrincipal the authenticated client principal
 	 * @param tokenTypeHint the token type hint
+	 * @param additionalParameters the additional parameters
 	 */
-	public OAuth2TokenIntrospectionAuthenticationToken(String tokenValue, Authentication clientPrincipal,
-			@Nullable String tokenTypeHint) {
+	public OAuth2TokenIntrospectionAuthenticationToken(String token, Authentication clientPrincipal,
+			@Nullable String tokenTypeHint, @Nullable Map<String, Object> additionalParameters) {
 		super(Collections.emptyList());
-		Assert.hasText(tokenValue, "token cannot be empty");
+		Assert.hasText(token, "token cannot be empty");
 		Assert.notNull(clientPrincipal, "clientPrincipal cannot be null");
-		this.tokenValue = tokenValue;
+		this.token = token;
 		this.clientPrincipal = clientPrincipal;
 		this.tokenTypeHint = tokenTypeHint;
-		this.claims = null;
+		this.additionalParameters = Collections.unmodifiableMap(
+				additionalParameters != null ? new HashMap<>(additionalParameters) : Collections.emptyMap());
+		this.tokenClaims = OAuth2TokenIntrospection.builder().build();
 	}
 
 	/**
 	 * Constructs an {@code OAuth2TokenIntrospectionAuthenticationToken} using the provided parameters.
 	 *
-	 * The {@code claims} should be provided only if the token is active.
-	 *
-	 * @param claims the claims obtained from the introspected active token
+	 * @param token the token
 	 * @param clientPrincipal the authenticated client principal
+	 * @param tokenClaims the token claims
 	 */
-	public OAuth2TokenIntrospectionAuthenticationToken(Authentication clientPrincipal,
-			@Nullable Map<String, Object> claims) {
+	public OAuth2TokenIntrospectionAuthenticationToken(String token, Authentication clientPrincipal,
+			OAuth2TokenIntrospection tokenClaims) {
 		super(Collections.emptyList());
+		Assert.hasText(token, "token cannot be empty");
 		Assert.notNull(clientPrincipal, "clientPrincipal cannot be null");
-		this.claims = claims;
+		Assert.notNull(tokenClaims, "tokenClaims cannot be null");
+		this.token = token;
 		this.clientPrincipal = clientPrincipal;
 		this.tokenTypeHint = null;
-		this.tokenValue = null;
-		setAuthenticated(true); // Indicates that the request was authenticated, even though the introspected token might not be
-								// active
+		this.additionalParameters = Collections.emptyMap();
+		this.tokenClaims = tokenClaims;
+		// Indicates that the request was authenticated, even though the token might not be active
+		setAuthenticated(true);
 	}
 
 	@Override
@@ -88,12 +98,12 @@ public class OAuth2TokenIntrospectionAuthenticationToken extends AbstractAuthent
 	}
 
 	/**
-	 * Returns the token value.
+	 * Returns the token.
 	 *
-	 * @return the token value
+	 * @return the token
 	 */
-	public String getTokenValue() {
-		return this.tokenValue;
+	public String getToken() {
+		return this.token;
 	}
 
 	/**
@@ -107,22 +117,21 @@ public class OAuth2TokenIntrospectionAuthenticationToken extends AbstractAuthent
 	}
 
 	/**
-	 * Returns the introspection claims.
+	 * Returns the additional parameters.
 	 *
-	 * @return the claims
+	 * @return the additional parameters
 	 */
-	public Map<String, Object> getClaims() {
-		return claims;
+	public Map<String, Object> getAdditionalParameters() {
+		return this.additionalParameters;
 	}
 
 	/**
-	 * Returns whether the introspected token is active, having in mind only active tokens' claims should be passed to the
-	 * constructor.
+	 * Returns the token claims.
 	 *
-	 * @return whether the introspected token is active or not
+	 * @return the {@link OAuth2TokenIntrospection}
 	 */
-	public boolean isTokenActive() {
-		return this.claims != null;
+	public OAuth2TokenIntrospection getTokenClaims() {
+		return this.tokenClaims;
 	}
 
 }

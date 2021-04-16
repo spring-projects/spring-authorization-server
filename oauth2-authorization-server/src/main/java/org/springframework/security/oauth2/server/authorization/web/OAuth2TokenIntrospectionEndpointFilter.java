@@ -15,6 +15,10 @@
  */
 package org.springframework.security.oauth2.server.authorization.web;
 
+import java.io.IOException;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -31,10 +35,11 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
-import org.springframework.security.oauth2.core.OAuth2TokenIntrospectionClaims;
+import org.springframework.security.oauth2.core.OAuth2TokenIntrospection;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames2;
 import org.springframework.security.oauth2.core.http.converter.OAuth2ErrorHttpMessageConverter;
-import org.springframework.security.oauth2.core.http.converter.OAuth2TokenIntrospectionClaimsHttpMessageConverter;
+import org.springframework.security.oauth2.core.http.converter.OAuth2TokenIntrospectionHttpMessageConverter;
+import org.springframework.security.oauth2.server.authorization.authentication.OAuth2TokenIntrospectionAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2TokenIntrospectionAuthenticationToken;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
@@ -43,18 +48,17 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import java.io.IOException;
-
 /**
  * A {@code Filter} for the OAuth 2.0 Token Introspection endpoint.
  *
  * @author Gerardo Roza
- * @see <a target="_blank" href="https://tools.ietf.org/html/rfc7662#section-2">Section 2 - Introspection Endpoint</a>
- * @see <a target="_blank" href="https://tools.ietf.org/html/rfc7662#section-2.1">Section 2.1 - Introspection Request</a>
+ * @author Joe Grandja
+ * @see OAuth2TokenIntrospectionAuthenticationProvider
+ * @see <a target="_blank" href="https://tools.ietf.org/html/rfc7662#section-2">Section 2 Introspection Endpoint</a>
+ * @see <a target="_blank" href="https://tools.ietf.org/html/rfc7662#section-2.1">Section 2.1 Introspection Request</a>
  * @since 0.1.1
  */
 public class OAuth2TokenIntrospectionEndpointFilter extends OncePerRequestFilter {
-
 	/**
 	 * The default endpoint {@code URI} for token introspection requests.
 	 */
@@ -62,9 +66,10 @@ public class OAuth2TokenIntrospectionEndpointFilter extends OncePerRequestFilter
 
 	private final AuthenticationManager authenticationManager;
 	private final RequestMatcher tokenIntrospectionEndpointMatcher;
-	private final Converter<HttpServletRequest, Authentication> tokenIntrospectionAuthenticationConverter = new DefaultTokenIntrospectionAuthenticationConverter();
-	private final HttpMessageConverter<OAuth2TokenIntrospectionClaims> tokenIntrospectionHttpResponseConverter = new OAuth2TokenIntrospectionClaimsHttpMessageConverter();
-
+	private final Converter<HttpServletRequest, Authentication> tokenIntrospectionAuthenticationConverter =
+			new DefaultTokenIntrospectionAuthenticationConverter();
+	private final HttpMessageConverter<OAuth2TokenIntrospection> tokenIntrospectionHttpResponseConverter =
+			new OAuth2TokenIntrospectionHttpMessageConverter();
 	private final HttpMessageConverter<OAuth2Error> errorHttpResponseConverter = new OAuth2ErrorHttpMessageConverter();
 
 	/**
@@ -101,23 +106,24 @@ public class OAuth2TokenIntrospectionEndpointFilter extends OncePerRequestFilter
 		}
 
 		try {
+			OAuth2TokenIntrospectionAuthenticationToken tokenIntrospectionAuthentication =
+					(OAuth2TokenIntrospectionAuthenticationToken) this.tokenIntrospectionAuthenticationConverter.convert(request);
 
-			Authentication authentication = this.tokenIntrospectionAuthenticationConverter.convert(request);
+			OAuth2TokenIntrospectionAuthenticationToken tokenIntrospectionAuthenticationResult =
+					(OAuth2TokenIntrospectionAuthenticationToken) this.authenticationManager.authenticate(tokenIntrospectionAuthentication);
 
-			OAuth2TokenIntrospectionAuthenticationToken tokenIntrospectionAuthentication = (OAuth2TokenIntrospectionAuthenticationToken) this.authenticationManager
-					.authenticate(authentication);
+			OAuth2TokenIntrospection tokenClaims = tokenIntrospectionAuthenticationResult.getTokenClaims();
+			sendTokenIntrospectionResponse(response, tokenClaims);
 
-			OAuth2TokenIntrospectionClaims tokenIntrospectionResponse = tokenIntrospectionAuthentication
-					.isTokenActive()
-							? OAuth2TokenIntrospectionClaims.withClaims(tokenIntrospectionAuthentication.getClaims())
-									.build()
-							: OAuth2TokenIntrospectionClaims.builder(false).build();
-
-			sendTokenIntrospectionResponse(response, tokenIntrospectionResponse);
 		} catch (OAuth2AuthenticationException ex) {
 			SecurityContextHolder.clearContext();
 			sendErrorResponse(response, ex.getError());
 		}
+	}
+
+	private void sendTokenIntrospectionResponse(HttpServletResponse response, OAuth2TokenIntrospection tokenClaims) throws IOException {
+		ServletServerHttpResponse httpResponse = new ServletServerHttpResponse(response);
+		this.tokenIntrospectionHttpResponseConverter.write(tokenClaims, null, httpResponse);
 	}
 
 	private void sendErrorResponse(HttpServletResponse response, OAuth2Error error) throws IOException {
@@ -126,15 +132,8 @@ public class OAuth2TokenIntrospectionEndpointFilter extends OncePerRequestFilter
 		this.errorHttpResponseConverter.write(error, null, httpResponse);
 	}
 
-	private void sendTokenIntrospectionResponse(HttpServletResponse response,
-			OAuth2TokenIntrospectionClaims tokenIntrospectionResponse) throws IOException {
-		ServletServerHttpResponse httpResponse = new ServletServerHttpResponse(response);
-		this.tokenIntrospectionHttpResponseConverter.write(tokenIntrospectionResponse, null, httpResponse);
-	}
-
 	private static void throwError(String errorCode, String parameterName) {
-		OAuth2Error error = new OAuth2Error(
-				errorCode, "OAuth 2.0 Token Introspection Parameter: " + parameterName,
+		OAuth2Error error = new OAuth2Error(errorCode, "OAuth 2.0 Token Introspection Parameter: " + parameterName,
 				"https://tools.ietf.org/html/rfc7662#section-2.1");
 		throw new OAuth2AuthenticationException(error);
 	}
@@ -150,18 +149,29 @@ public class OAuth2TokenIntrospectionEndpointFilter extends OncePerRequestFilter
 
 			// token (REQUIRED)
 			String token = parameters.getFirst(OAuth2ParameterNames2.TOKEN);
-			if (!StringUtils.hasText(token) || parameters.get(OAuth2ParameterNames2.TOKEN).size() != 1) {
+			if (!StringUtils.hasText(token) ||
+					parameters.get(OAuth2ParameterNames2.TOKEN).size() != 1) {
 				throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames2.TOKEN);
 			}
 
 			// token_type_hint (OPTIONAL)
 			String tokenTypeHint = parameters.getFirst(OAuth2ParameterNames2.TOKEN_TYPE_HINT);
-			if (StringUtils.hasText(tokenTypeHint)
-					&& parameters.get(OAuth2ParameterNames2.TOKEN_TYPE_HINT).size() != 1) {
+			if (StringUtils.hasText(tokenTypeHint) &&
+					parameters.get(OAuth2ParameterNames2.TOKEN_TYPE_HINT).size() != 1) {
 				throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames2.TOKEN_TYPE_HINT);
 			}
 
-			return new OAuth2TokenIntrospectionAuthenticationToken(token, clientPrincipal, tokenTypeHint);
+			// @formatter:off
+			Map<String, Object> additionalParameters = parameters
+					.entrySet()
+					.stream()
+					.filter(e -> !e.getKey().equals(OAuth2ParameterNames2.TOKEN) &&
+							!e.getKey().equals(OAuth2ParameterNames2.TOKEN_TYPE_HINT))
+					.collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().get(0)));
+			// @formatter:on
+
+			return new OAuth2TokenIntrospectionAuthenticationToken(
+					token, clientPrincipal, tokenTypeHint, additionalParameters);
 		}
 	}
 }

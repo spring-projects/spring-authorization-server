@@ -184,15 +184,16 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 		}
 		builder.authenticationProvider(postProcess(clientCredentialsAuthenticationProvider));
 
+		OAuth2TokenIntrospectionAuthenticationProvider tokenIntrospectionAuthenticationProvider =
+				new OAuth2TokenIntrospectionAuthenticationProvider(
+						getRegisteredClientRepository(builder),
+						getAuthorizationService(builder));
+		builder.authenticationProvider(postProcess(tokenIntrospectionAuthenticationProvider));
+
 		OAuth2TokenRevocationAuthenticationProvider tokenRevocationAuthenticationProvider =
 				new OAuth2TokenRevocationAuthenticationProvider(
 						getAuthorizationService(builder));
 		builder.authenticationProvider(postProcess(tokenRevocationAuthenticationProvider));
-
-		OAuth2TokenIntrospectionAuthenticationProvider tokenIntrospectionAuthenticationProvider =
-				new OAuth2TokenIntrospectionAuthenticationProvider(
-						getAuthorizationService(builder));
-		builder.authenticationProvider(postProcess(tokenIntrospectionAuthenticationProvider));
 
 		ExceptionHandlingConfigurer<B> exceptionHandling = builder.getConfigurer(ExceptionHandlingConfigurer.class);
 		if (exceptionHandling != null) {
@@ -245,17 +246,17 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 						providerSettings.tokenEndpoint());
 		builder.addFilterAfter(postProcess(tokenEndpointFilter), FilterSecurityInterceptor.class);
 
-		OAuth2TokenRevocationEndpointFilter tokenRevocationEndpointFilter =
-				new OAuth2TokenRevocationEndpointFilter(
-						authenticationManager,
-						providerSettings.tokenRevocationEndpoint());
-		builder.addFilterAfter(postProcess(tokenRevocationEndpointFilter), OAuth2TokenEndpointFilter.class);
-
 		OAuth2TokenIntrospectionEndpointFilter tokenIntrospectionEndpointFilter =
 				new OAuth2TokenIntrospectionEndpointFilter(
 						authenticationManager,
 						providerSettings.tokenIntrospectionEndpoint());
 		builder.addFilterAfter(postProcess(tokenIntrospectionEndpointFilter), OAuth2TokenEndpointFilter.class);
+
+		OAuth2TokenRevocationEndpointFilter tokenRevocationEndpointFilter =
+				new OAuth2TokenRevocationEndpointFilter(
+						authenticationManager,
+						providerSettings.tokenRevocationEndpoint());
+		builder.addFilterAfter(postProcess(tokenRevocationEndpointFilter), OAuth2TokenIntrospectionEndpointFilter.class);
 	}
 
 	private void initEndpointMatchers(ProviderSettings providerSettings) {

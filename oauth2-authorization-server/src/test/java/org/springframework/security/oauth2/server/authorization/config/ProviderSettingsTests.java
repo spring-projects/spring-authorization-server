@@ -36,6 +36,7 @@ public class ProviderSettingsTests {
 		assertThat(providerSettings.tokenEndpoint()).isEqualTo("/oauth2/token");
 		assertThat(providerSettings.jwkSetEndpoint()).isEqualTo("/oauth2/jwks");
 		assertThat(providerSettings.tokenRevocationEndpoint()).isEqualTo("/oauth2/revoke");
+		assertThat(providerSettings.tokenIntrospectionEndpoint()).isEqualTo("/oauth2/introspect");
 	}
 
 	@Test
@@ -44,6 +45,7 @@ public class ProviderSettingsTests {
 		String tokenEndpoint = "/oauth2/v1/token";
 		String jwkSetEndpoint = "/oauth2/v1/jwks";
 		String tokenRevocationEndpoint = "/oauth2/v1/revoke";
+		String tokenIntrospectionEndpoint = "/oauth2/v1/introspect";
 		String issuer = "https://example.com:9000";
 
 		ProviderSettings providerSettings = new ProviderSettings()
@@ -51,13 +53,15 @@ public class ProviderSettingsTests {
 				.authorizationEndpoint(authorizationEndpoint)
 				.tokenEndpoint(tokenEndpoint)
 				.jwkSetEndpoint(jwkSetEndpoint)
-				.tokenRevocationEndpoint(tokenRevocationEndpoint);
+				.tokenRevocationEndpoint(tokenRevocationEndpoint)
+				.tokenIntrospectionEndpoint(tokenIntrospectionEndpoint);
 
 		assertThat(providerSettings.issuer()).isEqualTo(issuer);
 		assertThat(providerSettings.authorizationEndpoint()).isEqualTo(authorizationEndpoint);
 		assertThat(providerSettings.tokenEndpoint()).isEqualTo(tokenEndpoint);
 		assertThat(providerSettings.jwkSetEndpoint()).isEqualTo(jwkSetEndpoint);
 		assertThat(providerSettings.tokenRevocationEndpoint()).isEqualTo(tokenRevocationEndpoint);
+		assertThat(providerSettings.tokenIntrospectionEndpoint()).isEqualTo(tokenIntrospectionEndpoint);
 	}
 
 	@Test
@@ -99,6 +103,14 @@ public class ProviderSettingsTests {
 	public void tokenRevocationEndpointWhenNullThenThrowIllegalArgumentException() {
 		ProviderSettings settings = new ProviderSettings();
 		assertThatThrownBy(() -> settings.tokenRevocationEndpoint(null))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("value cannot be null");
+	}
+
+	@Test
+	public void tokenIntrospectionEndpointWhenNullThenThrowIllegalArgumentException() {
+		ProviderSettings settings = new ProviderSettings();
+		assertThatThrownBy(() -> settings.tokenIntrospectionEndpoint(null))
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessage("value cannot be null");
 	}

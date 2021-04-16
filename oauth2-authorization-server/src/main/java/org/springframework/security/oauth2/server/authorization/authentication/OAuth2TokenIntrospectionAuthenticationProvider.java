@@ -15,85 +15,83 @@
  */
 package org.springframework.security.oauth2.server.authorization.authentication;
 
-import static org.springframework.security.oauth2.core.OAuth2TokenIntrospectionClaimAccessor.ACTIVE;
-import static org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames.CLIENT_ID;
-import static org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames.SCOPE;
-import static org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames.TOKEN_TYPE;
-import static org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames.USERNAME;
-import static org.springframework.security.oauth2.jwt.JwtClaimNames.EXP;
-import static org.springframework.security.oauth2.jwt.JwtClaimNames.IAT;
-import static org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthenticationProviderUtils.getAuthenticatedClientElseThrowInvalidClient;
+import java.time.Instant;
+import java.util.List;
+import java.util.Map;
 
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.oauth2.core.AbstractOAuth2Token;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
-import org.springframework.security.oauth2.jwt.JwtClaimNames;
+import org.springframework.security.oauth2.core.OAuth2TokenIntrospection;
+import org.springframework.security.oauth2.jwt.JwtClaimAccessor;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
-import org.springframework.security.oauth2.server.authorization.OAuth2Authorization.Token;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
+import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.util.Assert;
+import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
-import java.time.Instant;
-import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Optional;
+import static org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthenticationProviderUtils.getAuthenticatedClientElseThrowInvalidClient;
 
 /**
  * An {@link AuthenticationProvider} implementation for OAuth 2.0 Token Introspection.
  *
  * @author Gerardo Roza
+ * @author Joe Grandja
  * @since 0.1.1
  * @see OAuth2TokenIntrospectionAuthenticationToken
+ * @see RegisteredClientRepository
  * @see OAuth2AuthorizationService
- * @see <a target="_blank" href="https://tools.ietf.org/html/rfc7662#section-2.1">Section 2.1 - Introspection Request</a>
+ * @see <a target="_blank" href="https://tools.ietf.org/html/rfc7662#section-2.1">Section 2.1 Introspection Request</a>
  */
 public class OAuth2TokenIntrospectionAuthenticationProvider implements AuthenticationProvider {
+	private final RegisteredClientRepository registeredClientRepository;
 	private final OAuth2AuthorizationService authorizationService;
 
 	/**
 	 * Constructs an {@code OAuth2TokenIntrospectionAuthenticationProvider} using the provided parameters.
 	 *
+	 * @param registeredClientRepository the repository of registered clients
 	 * @param authorizationService the authorization service
 	 */
-	public OAuth2TokenIntrospectionAuthenticationProvider(OAuth2AuthorizationService authorizationService) {
+	public OAuth2TokenIntrospectionAuthenticationProvider(RegisteredClientRepository registeredClientRepository,
+			OAuth2AuthorizationService authorizationService) {
+		Assert.notNull(registeredClientRepository, "registeredClientRepository cannot be null");
 		Assert.notNull(authorizationService, "authorizationService cannot be null");
+		this.registeredClientRepository = registeredClientRepository;
 		this.authorizationService = authorizationService;
 	}
 
 	@Override
 	public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-		OAuth2TokenIntrospectionAuthenticationToken tokenIntrospectionAuthentication = (OAuth2TokenIntrospectionAuthenticationToken) authentication;
+		OAuth2TokenIntrospectionAuthenticationToken tokenIntrospectionAuthentication =
+				(OAuth2TokenIntrospectionAuthenticationToken) authentication;
 
-		OAuth2ClientAuthenticationToken clientPrincipal = getAuthenticatedClientElseThrowInvalidClient(
-				tokenIntrospectionAuthentication);
-		RegisteredClient registeredClient = clientPrincipal.getRegisteredClient();
+		OAuth2ClientAuthenticationToken clientPrincipal =
+				getAuthenticatedClientElseThrowInvalidClient(tokenIntrospectionAuthentication);
 
-		OAuth2Authorization authorization = this.authorizationService
-				.findByToken(tokenIntrospectionAuthentication.getTokenValue(), null);
+		OAuth2Authorization authorization = this.authorizationService.findByToken(
+				tokenIntrospectionAuthentication.getToken(), null);
 		if (authorization == null) {
-			return generateAuthenticationTokenForInvalidToken(clientPrincipal, registeredClient);
+			// Return the authentication request when token not found
+			return tokenIntrospectionAuthentication;
 		}
 
-		Token<AbstractOAuth2Token> tokenHolder = authorization
-				.getToken(tokenIntrospectionAuthentication.getTokenValue());
-
-		if (tokenHolder.isInvalidated()) {
-			return generateAuthenticationTokenForInvalidToken(clientPrincipal, registeredClient);
+		OAuth2Authorization.Token<AbstractOAuth2Token> authorizedToken =
+				authorization.getToken(tokenIntrospectionAuthentication.getToken());
+		if (!authorizedToken.isActive()) {
+			return new OAuth2TokenIntrospectionAuthenticationToken(tokenIntrospectionAuthentication.getToken(),
+					clientPrincipal, OAuth2TokenIntrospection.builder().build());
 		}
 
-		if (isExpired(tokenHolder.getToken())
-				|| (tokenHolder.getClaims() != null && hasInvalidClaims(tokenHolder.getClaims()))) {
-			return generateAuthenticationTokenForInvalidToken(clientPrincipal, registeredClient);
-		}
+		RegisteredClient authorizedClient = this.registeredClientRepository.findById(authorization.getRegisteredClientId());
+		OAuth2TokenIntrospection tokenClaims = withActiveTokenClaims(authorizedToken, authorizedClient);
 
-		Map<String, Object> claims = generateTokenIntrospectionClaims(
-				tokenHolder, registeredClient.getClientId(), authorization.getPrincipalName());
-
-		return new OAuth2TokenIntrospectionAuthenticationToken(clientPrincipal, claims);
+		return new OAuth2TokenIntrospectionAuthenticationToken(authorizedToken.getToken().getTokenValue(),
+				clientPrincipal, tokenClaims);
 	}
 
 	@Override
@@ -101,42 +99,49 @@ public class OAuth2TokenIntrospectionAuthenticationProvider implements Authentic
 		return OAuth2TokenIntrospectionAuthenticationToken.class.isAssignableFrom(authentication);
 	}
 
-	private boolean isExpired(AbstractOAuth2Token token) {
-		Instant expiry = token.getExpiresAt();
-		return (expiry != null && Instant.now().isAfter(expiry));
-	}
+	private static OAuth2TokenIntrospection withActiveTokenClaims(
+			OAuth2Authorization.Token<AbstractOAuth2Token> authorizedToken, RegisteredClient authorizedClient) {
 
-	private boolean hasInvalidClaims(Map<String, Object> claims) {
-		Object notBeforeValue = claims.get(JwtClaimNames.NBF);
-		if (notBeforeValue != null && Instant.class.isAssignableFrom(notBeforeValue.getClass())) {
-			Instant notBefore = (Instant) notBeforeValue;
-			return Instant.now().isBefore(notBefore);
+		OAuth2TokenIntrospection.Builder tokenClaims = OAuth2TokenIntrospection.builder(true)
+				.clientId(authorizedClient.getClientId());
+
+		// TODO Set "username"
+
+		AbstractOAuth2Token token = authorizedToken.getToken();
+		if (token.getIssuedAt() != null) {
+			tokenClaims.issuedAt(token.getIssuedAt());
 		}
-		return false;
-	}
+		if (token.getExpiresAt() != null) {
+			tokenClaims.expiresAt(token.getExpiresAt());
+		}
 
-	private Map<String, Object> generateTokenIntrospectionClaims(Token<? extends AbstractOAuth2Token> tokenHolder,
-			String clientId, String username) {
-		Map<String, Object> claims = Optional.ofNullable(tokenHolder.getClaims()).map(LinkedHashMap::new)
-				.orElse(new LinkedHashMap<>());
-		AbstractOAuth2Token token = tokenHolder.getToken();
-		claims.put(ACTIVE, true);
-		claims.put(CLIENT_ID, clientId);
-		claims.put(USERNAME, username);
-		Optional.ofNullable(token.getIssuedAt()).ifPresent(iat -> claims.put(IAT, iat));
-		Optional.ofNullable(token.getExpiresAt()).ifPresent(exp -> claims.put(EXP, exp));
 		if (OAuth2AccessToken.class.isAssignableFrom(token.getClass())) {
-			Collection<String> scopes = ((OAuth2AccessToken) token).getScopes();
-			if (!scopes.isEmpty()) {
-				claims.put(SCOPE, String.join(" ", scopes));
-			}
-			claims.put(TOKEN_TYPE, OAuth2AccessToken.TokenType.BEARER);
-		}
-		return claims;
-	}
+			OAuth2AccessToken accessToken = (OAuth2AccessToken) token;
+			tokenClaims.scopes(scopes -> scopes.addAll(accessToken.getScopes()));
+			tokenClaims.tokenType(accessToken.getTokenType().getValue());
 
-	private OAuth2TokenIntrospectionAuthenticationToken generateAuthenticationTokenForInvalidToken(
-			Authentication clientPrincipal, RegisteredClient registeredClient) {
-		return new OAuth2TokenIntrospectionAuthenticationToken(clientPrincipal, null);
+			Map<String, Object> claims = authorizedToken.getClaims();
+			if (!CollectionUtils.isEmpty(claims)) {
+				// Assuming JWT as it's the only (currently) supported access token format
+				JwtClaimAccessor jwtClaims = () -> claims;
+
+				Instant notBefore = jwtClaims.getNotBefore();
+				if (notBefore != null) {
+					tokenClaims.notBefore(notBefore);
+				}
+				tokenClaims.subject(jwtClaims.getSubject());
+				List<String> audience = jwtClaims.getAudience();
+				if (!CollectionUtils.isEmpty(audience)) {
+					tokenClaims.audiences(audiences -> audiences.addAll(audience));
+				}
+				tokenClaims.issuer(jwtClaims.getIssuer().toExternalForm());
+				String jti = jwtClaims.getId();
+				if (StringUtils.hasText(jti)) {
+					tokenClaims.id(jti);
+				}
+			}
+		}
+
+		return tokenClaims.build();
 	}
 }

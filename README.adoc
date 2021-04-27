@@ -1,6 +1,6 @@
 image::https://badges.gitter.im/Join%20Chat.svg[Gitter,link=https://gitter.im/spring-projects/spring-security?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge]
 
-image:https://github.com/spring-projects-experimental/spring-authorization-server/workflows/CI/badge.svg?branch=master["Build Status", link="https://github.com/spring-projects-experimental/spring-authorization-server/actions?query=workflow%3ACI"]
+image:https://github.com/spring-projects-experimental/spring-authorization-server/workflows/CI/badge.svg?branch=main["Build Status", link="https://github.com/spring-projects-experimental/spring-authorization-server/actions?query=workflow%3ACI"]
 
 = Spring Authorization Server
 
@@ -25,10 +25,10 @@ It is a critically important first step as the implementation must conform to th
 
 The second place to start is to become very familiar with the codebase in the following Spring Security modules:
 
-- https://github.com/spring-projects/spring-security/tree/master/oauth2/oauth2-core[OAuth 2.0 Core]
-- https://github.com/spring-projects/spring-security/tree/master/oauth2/oauth2-client[OAuth 2.0 Client]
-- https://github.com/spring-projects/spring-security/tree/master/oauth2/oauth2-resource-server[OAuth 2.0 Resource Server]
-- https://github.com/spring-projects/spring-security/tree/master/oauth2/oauth2-jose[OAuth 2.0 JOSE] (Javascript Object Signing and Encryption)
+- https://github.com/spring-projects/spring-security/tree/main/oauth2/oauth2-core[OAuth 2.0 Core]
+- https://github.com/spring-projects/spring-security/tree/main/oauth2/oauth2-client[OAuth 2.0 Client]
+- https://github.com/spring-projects/spring-security/tree/main/oauth2/oauth2-resource-server[OAuth 2.0 Resource Server]
+- https://github.com/spring-projects/spring-security/tree/main/oauth2/oauth2-jose[OAuth 2.0 JOSE] (Javascript Object Signing and Encryption)
 
 A significant amount of effort was put into developing the https://spring.io/blog/2018/01/30/next-generation-oauth-2-0-support-with-spring-security[Next Generation OAuth 2.0 Support in Spring Security].
 The goal is to leverage all the knowledge learned thus far and apply the same to the development of Spring Authorization Server.

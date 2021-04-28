@@ -48,7 +48,6 @@ import org.springframework.security.oauth2.core.OAuth2TokenType;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationResponseType;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
-import org.springframework.security.oauth2.core.endpoint.PkceCodeChallengeMethod2;
 import org.springframework.security.oauth2.core.endpoint.PkceParameterNames;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
@@ -371,7 +370,7 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 			String codeChallengeMethod = authorizationRequestContext.getParameters().getFirst(PkceParameterNames.CODE_CHALLENGE_METHOD);
 			if (StringUtils.hasText(codeChallengeMethod)) {
 				if (authorizationRequestContext.getParameters().get(PkceParameterNames.CODE_CHALLENGE_METHOD).size() != 1 ||
-						(!PkceCodeChallengeMethod2.S256.getValue().equals(codeChallengeMethod) && !PkceCodeChallengeMethod2.PLAIN.getValue().equals(codeChallengeMethod))) {
+						(!"S256".equals(codeChallengeMethod) && !"plain".equals(codeChallengeMethod))) {
 					authorizationRequestContext.setError(
 							createError(OAuth2ErrorCodes.INVALID_REQUEST, PkceParameterNames.CODE_CHALLENGE_METHOD, PKCE_ERROR_URI));
 					return;

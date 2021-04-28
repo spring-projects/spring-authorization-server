@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright 2020-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,12 @@
 package org.springframework.security.oauth2.core.oidc;
 
 
-import org.springframework.security.oauth2.core.OAuth2AuthorizationServerMetadataClaimAccessor;
+import java.util.List;
+
 import org.springframework.security.oauth2.core.ClaimAccessor;
+import org.springframework.security.oauth2.core.OAuth2AuthorizationServerMetadataClaimAccessor;
 import org.springframework.security.oauth2.jose.jws.JwsAlgorithm;
 import org.springframework.security.oauth2.jwt.Jwt;
-
-
-import java.util.List;
 
 /**
  * A {@link ClaimAccessor} for the "claims" that can be returned

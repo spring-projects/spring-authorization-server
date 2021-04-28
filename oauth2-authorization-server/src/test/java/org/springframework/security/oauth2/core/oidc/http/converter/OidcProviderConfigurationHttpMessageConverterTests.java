@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright 2020-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,12 @@
  */
 package org.springframework.security.oauth2.core.oidc.http.converter;
 
+import java.net.URL;
+import java.util.Arrays;
+import java.util.Map;
+
 import org.junit.Test;
+
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -23,10 +28,6 @@ import org.springframework.http.converter.HttpMessageNotWritableException;
 import org.springframework.mock.http.MockHttpOutputMessage;
 import org.springframework.mock.http.client.MockClientHttpResponse;
 import org.springframework.security.oauth2.core.oidc.OidcProviderConfiguration;
-
-import java.net.URL;
-import java.util.Arrays;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
@@ -75,7 +76,7 @@ public class OidcProviderConfigurationHttpMessageConverterTests {
 		assertThat(providerConfiguration.getIssuer()).isEqualTo(new URL("https://example.com/issuer1"));
 		assertThat(providerConfiguration.getAuthorizationEndpoint()).isEqualTo(new URL("https://example.com/issuer1/oauth2/authorize"));
 		assertThat(providerConfiguration.getTokenEndpoint()).isEqualTo(new URL("https://example.com/issuer1/oauth2/token"));
-		assertThat(providerConfiguration.getJwkSetUri()).isEqualTo(new URL("https://example.com/issuer1/oauth2/jwks"));
+		assertThat(providerConfiguration.getJwkSetUrl()).isEqualTo(new URL("https://example.com/issuer1/oauth2/jwks"));
 		assertThat(providerConfiguration.getResponseTypes()).containsExactly("code");
 		assertThat(providerConfiguration.getSubjectTypes()).containsExactly("public");
 		assertThat(providerConfiguration.getIdTokenSigningAlgorithms()).containsExactly("RS256");
@@ -109,7 +110,7 @@ public class OidcProviderConfigurationHttpMessageConverterTests {
 		assertThat(providerConfiguration.getIssuer()).isEqualTo(new URL("https://example.com/issuer1"));
 		assertThat(providerConfiguration.getAuthorizationEndpoint()).isEqualTo(new URL("https://example.com/issuer1/oauth2/authorize"));
 		assertThat(providerConfiguration.getTokenEndpoint()).isEqualTo(new URL("https://example.com/issuer1/oauth2/token"));
-		assertThat(providerConfiguration.getJwkSetUri()).isEqualTo(new URL("https://example.com/issuer1/oauth2/jwks"));
+		assertThat(providerConfiguration.getJwkSetUrl()).isEqualTo(new URL("https://example.com/issuer1/oauth2/jwks"));
 		assertThat(providerConfiguration.getScopes()).containsExactly("openid");
 		assertThat(providerConfiguration.getResponseTypes()).containsExactly("code");
 		assertThat(providerConfiguration.getGrantTypes()).containsExactlyInAnyOrder("authorization_code", "client_credentials");
@@ -152,7 +153,7 @@ public class OidcProviderConfigurationHttpMessageConverterTests {
 						.issuer("https://example.com/issuer1")
 						.authorizationEndpoint("https://example.com/issuer1/oauth2/authorize")
 						.tokenEndpoint("https://example.com/issuer1/oauth2/token")
-						.jwkSetUri("https://example.com/issuer1/oauth2/jwks")
+						.jwkSetUrl("https://example.com/issuer1/oauth2/jwks")
 						.scope("openid")
 						.responseType("code")
 						.grantType("authorization_code")
@@ -196,7 +197,7 @@ public class OidcProviderConfigurationHttpMessageConverterTests {
 						.issuer("https://example.com/issuer1")
 						.authorizationEndpoint("https://example.com/issuer1/oauth2/authorize")
 						.tokenEndpoint("https://example.com/issuer1/oauth2/token")
-						.jwkSetUri("https://example.com/issuer1/oauth2/jwks")
+						.jwkSetUrl("https://example.com/issuer1/oauth2/jwks")
 						.responseType("code")
 						.subjectType("public")
 						.idTokenSigningAlgorithm("RS256")

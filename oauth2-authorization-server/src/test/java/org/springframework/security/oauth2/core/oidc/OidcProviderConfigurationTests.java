@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright 2020-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,14 @@
  */
 package org.springframework.security.oauth2.core.oidc;
 
-import org.junit.Test;
-
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
+
+import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
@@ -38,7 +38,7 @@ public class OidcProviderConfigurationTests {
 					.issuer("https://example.com/issuer1")
 					.authorizationEndpoint("https://example.com/issuer1/oauth2/authorize")
 					.tokenEndpoint("https://example.com/issuer1/oauth2/token")
-					.jwkSetUri("https://example.com/issuer1/oauth2/jwks")
+					.jwkSetUrl("https://example.com/issuer1/oauth2/jwks")
 					.scope("openid")
 					.responseType("code")
 					.subjectType("public")
@@ -50,7 +50,7 @@ public class OidcProviderConfigurationTests {
 				.issuer("https://example.com/issuer1")
 				.authorizationEndpoint("https://example.com/issuer1/oauth2/authorize")
 				.tokenEndpoint("https://example.com/issuer1/oauth2/token")
-				.jwkSetUri("https://example.com/issuer1/oauth2/jwks")
+				.jwkSetUrl("https://example.com/issuer1/oauth2/jwks")
 				.scope("openid")
 				.responseType("code")
 				.grantType("authorization_code")
@@ -64,7 +64,7 @@ public class OidcProviderConfigurationTests {
 		assertThat(providerConfiguration.getIssuer()).isEqualTo(url("https://example.com/issuer1"));
 		assertThat(providerConfiguration.getAuthorizationEndpoint()).isEqualTo(url("https://example.com/issuer1/oauth2/authorize"));
 		assertThat(providerConfiguration.getTokenEndpoint()).isEqualTo(url("https://example.com/issuer1/oauth2/token"));
-		assertThat(providerConfiguration.getJwkSetUri()).isEqualTo(url("https://example.com/issuer1/oauth2/jwks"));
+		assertThat(providerConfiguration.getJwkSetUrl()).isEqualTo(url("https://example.com/issuer1/oauth2/jwks"));
 		assertThat(providerConfiguration.getScopes()).containsExactly("openid");
 		assertThat(providerConfiguration.getResponseTypes()).containsExactly("code");
 		assertThat(providerConfiguration.getGrantTypes()).containsExactlyInAnyOrder("authorization_code", "client_credentials");
@@ -80,7 +80,7 @@ public class OidcProviderConfigurationTests {
 				.issuer("https://example.com/issuer1")
 				.authorizationEndpoint("https://example.com/issuer1/oauth2/authorize")
 				.tokenEndpoint("https://example.com/issuer1/oauth2/token")
-				.jwkSetUri("https://example.com/issuer1/oauth2/jwks")
+				.jwkSetUrl("https://example.com/issuer1/oauth2/jwks")
 				.scope("openid")
 				.responseType("code")
 				.subjectType("public")
@@ -90,7 +90,7 @@ public class OidcProviderConfigurationTests {
 		assertThat(providerConfiguration.getIssuer()).isEqualTo(url("https://example.com/issuer1"));
 		assertThat(providerConfiguration.getAuthorizationEndpoint()).isEqualTo(url("https://example.com/issuer1/oauth2/authorize"));
 		assertThat(providerConfiguration.getTokenEndpoint()).isEqualTo(url("https://example.com/issuer1/oauth2/token"));
-		assertThat(providerConfiguration.getJwkSetUri()).isEqualTo(url("https://example.com/issuer1/oauth2/jwks"));
+		assertThat(providerConfiguration.getJwkSetUrl()).isEqualTo(url("https://example.com/issuer1/oauth2/jwks"));
 		assertThat(providerConfiguration.getScopes()).containsExactly("openid");
 		assertThat(providerConfiguration.getResponseTypes()).containsExactly("code");
 		assertThat(providerConfiguration.getGrantTypes()).isNull();
@@ -117,7 +117,7 @@ public class OidcProviderConfigurationTests {
 		assertThat(providerConfiguration.getIssuer()).isEqualTo(url("https://example.com/issuer1"));
 		assertThat(providerConfiguration.getAuthorizationEndpoint()).isEqualTo(url("https://example.com/issuer1/oauth2/authorize"));
 		assertThat(providerConfiguration.getTokenEndpoint()).isEqualTo(url("https://example.com/issuer1/oauth2/token"));
-		assertThat(providerConfiguration.getJwkSetUri()).isEqualTo(url("https://example.com/issuer1/oauth2/jwks"));
+		assertThat(providerConfiguration.getJwkSetUrl()).isEqualTo(url("https://example.com/issuer1/oauth2/jwks"));
 		assertThat(providerConfiguration.getScopes()).containsExactly("openid");
 		assertThat(providerConfiguration.getResponseTypes()).containsExactly("code");
 		assertThat(providerConfiguration.getGrantTypes()).isNull();
@@ -145,7 +145,7 @@ public class OidcProviderConfigurationTests {
 		assertThat(providerConfiguration.getIssuer()).isEqualTo(url("https://example.com/issuer1"));
 		assertThat(providerConfiguration.getAuthorizationEndpoint()).isEqualTo(url("https://example.com/issuer1/oauth2/authorize"));
 		assertThat(providerConfiguration.getTokenEndpoint()).isEqualTo(url("https://example.com/issuer1/oauth2/token"));
-		assertThat(providerConfiguration.getJwkSetUri()).isEqualTo(url("https://example.com/issuer1/oauth2/jwks"));
+		assertThat(providerConfiguration.getJwkSetUrl()).isEqualTo(url("https://example.com/issuer1/oauth2/jwks"));
 		assertThat(providerConfiguration.getScopes()).containsExactly("openid");
 		assertThat(providerConfiguration.getResponseTypes()).containsExactly("code");
 		assertThat(providerConfiguration.getGrantTypes()).isNull();
@@ -178,7 +178,7 @@ public class OidcProviderConfigurationTests {
 		OidcProviderConfiguration second = this.minimalConfigurationBuilder
 				.claims((claims) ->
 						{
-							Set<String> newGrantTypes = new LinkedHashSet<>();
+							List<String> newGrantTypes = new ArrayList<>();
 							newGrantTypes.add("authorization_code");
 							newGrantTypes.add("custom_grant");
 							claims.put(OidcProviderMetadataClaimNames.GRANT_TYPES_SUPPORTED, newGrantTypes);
@@ -188,17 +188,6 @@ public class OidcProviderConfigurationTests {
 
 		assertThat(first.getGrantTypes()).containsExactly("client_credentials");
 		assertThat(second.getGrantTypes()).containsExactlyInAnyOrder("authorization_code", "custom_grant");
-	}
-
-	@Test
-	public void buildWhenEmptyClaimsThenOmitted() {
-		OidcProviderConfiguration providerConfiguration = this.minimalConfigurationBuilder
-				.claim("some-claim", Collections.emptyList())
-				.claims(claims -> claims.put(OidcProviderMetadataClaimNames.GRANT_TYPES_SUPPORTED, Collections.emptyList()))
-				.build();
-
-		assertThat(providerConfiguration.getClaimAsStringList("some-claim")).isNull();
-		assertThat(providerConfiguration.getClaimAsStringList(OidcProviderMetadataClaimNames.GRANT_TYPES_SUPPORTED)).isNull();
 	}
 
 	@Test
@@ -505,9 +494,9 @@ public class OidcProviderConfigurationTests {
 	public void claimsWhenAddingClaimThenPresent() {
 		OidcProviderConfiguration configuration =
 				this.minimalConfigurationBuilder
-						.claims((claims) -> claims.put(OidcProviderMetadataClaimNames.GRANT_TYPES_SUPPORTED, "authorization_code"))
+						.claim("claim-name", "claim-value")
 						.build();
-		assertThat(configuration.getGrantTypes()).containsExactly("authorization_code");
+		assertThat(configuration.containsClaim("claim-name")).isTrue();
 	}
 
 	private static URL url(String urlString) {

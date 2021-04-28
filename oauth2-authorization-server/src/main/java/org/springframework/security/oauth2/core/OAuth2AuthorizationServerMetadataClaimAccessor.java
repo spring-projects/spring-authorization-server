@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright 2020-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,18 +15,17 @@
  */
 package org.springframework.security.oauth2.core;
 
-
 import java.net.URL;
 import java.util.List;
 
 /**
- * A base {@link ClaimAccessor} for the "claims" the Authorization Server can make about
- * its configuration, used either in OpenID Connect Discovery 1.0 or OAuth 2.0 Authorization
- * Server Metadata.
+ * A {@link ClaimAccessor} for the "claims" an Authorization Server describes about its configuration,
+ * used in OAuth 2.0 Authorization Server Metadata and OpenID Connect Discovery 1.0.
  *
  * @author Daniel Garnier-Moiroux
  * @since 0.1.1
  * @see ClaimAccessor
+ * @see OAuth2AuthorizationServerMetadataClaimNames
  * @see <a target="_blank" href="https://tools.ietf.org/html/rfc8414#section-2">2. Authorization Server Metadata</a>
  * @see <a target="_blank" href="https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderMetadata">3. OpenID Provider Metadata</a>
  */
@@ -73,8 +72,17 @@ public interface OAuth2AuthorizationServerMetadataClaimAccessor extends ClaimAcc
 	 *
 	 * @return the {@code URL} of the JSON Web Key Set
 	 */
-	default URL getJwkSetUri() {
+	default URL getJwkSetUrl() {
 		return getClaimAsURL(OAuth2AuthorizationServerMetadataClaimNames.JWKS_URI);
+	}
+
+	/**
+	 * Returns the OAuth 2.0 {@code scope} values supported {@code (scopes_supported)}.
+	 *
+	 * @return the OAuth 2.0 {@code scope} values supported
+	 */
+	default List<String> getScopes() {
+		return getClaimAsStringList(OAuth2AuthorizationServerMetadataClaimNames.SCOPES_SUPPORTED);
 	}
 
 	/**
@@ -96,21 +104,12 @@ public interface OAuth2AuthorizationServerMetadataClaimAccessor extends ClaimAcc
 	}
 
 	/**
-	 * Returns the OAuth 2.0 {@code scope} values supported {@code (scopes_supported)}.
-	 *
-	 * @return the OAuth 2.0 {@code scope} values supported
-	 */
-	default List<String> getScopes() {
-		return this.getClaimAsStringList(OAuth2AuthorizationServerMetadataClaimNames.SCOPES_SUPPORTED);
-	}
-
-	/**
 	 * Returns the {@code URL} of the OAuth 2.0 Token Revocation Endpoint {@code (revocation_endpoint)}.
 	 *
 	 * @return the {@code URL} of the OAuth 2.0 Token Revocation Endpoint
 	 */
 	default URL getTokenRevocationEndpoint() {
-		return this.getClaimAsURL(OAuth2AuthorizationServerMetadataClaimNames.REVOCATION_ENDPOINT);
+		return getClaimAsURL(OAuth2AuthorizationServerMetadataClaimNames.REVOCATION_ENDPOINT);
 	}
 
 	/**
@@ -119,16 +118,34 @@ public interface OAuth2AuthorizationServerMetadataClaimAccessor extends ClaimAcc
 	 * @return the client authentication methods supported by the OAuth 2.0 Token Revocation Endpoint
 	 */
 	default List<String> getTokenRevocationEndpointAuthenticationMethods() {
-		return this.getClaimAsStringList(OAuth2AuthorizationServerMetadataClaimNames.REVOCATION_ENDPOINT_AUTH_METHODS_SUPPORTED);
+		return getClaimAsStringList(OAuth2AuthorizationServerMetadataClaimNames.REVOCATION_ENDPOINT_AUTH_METHODS_SUPPORTED);
 	}
 
 	/**
-	 * Returns the Proof Key for Code Exchange (PKCE) code challenge methods supported by the
-	 * OAuth 2.0 Authorization Server {@code (code_challenge_methods_supported)}.
+	 * Returns the {@code URL} of the OAuth 2.0 Token Introspection Endpoint {@code (introspection_endpoint)}.
 	 *
-	 * @return the code challenge methods supported by the OAuth 2.0 Authorization Server
+	 * @return the {@code URL} of the OAuth 2.0 Token Introspection Endpoint
+	 */
+	default URL getTokenIntrospectionEndpoint() {
+		return getClaimAsURL(OAuth2AuthorizationServerMetadataClaimNames.INTROSPECTION_ENDPOINT);
+	}
+
+	/**
+	 * Returns the client authentication methods supported by the OAuth 2.0 Token Introspection Endpoint {@code (introspection_endpoint_auth_methods_supported)}.
+	 *
+	 * @return the client authentication methods supported by the OAuth 2.0 Token Introspection Endpoint
+	 */
+	default List<String> getTokenIntrospectionEndpointAuthenticationMethods() {
+		return getClaimAsStringList(OAuth2AuthorizationServerMetadataClaimNames.INTROSPECTION_ENDPOINT_AUTH_METHODS_SUPPORTED);
+	}
+
+	/**
+	 * Returns the Proof Key for Code Exchange (PKCE) {@code code_challenge_method} values supported {@code (code_challenge_methods_supported)}.
+	 *
+	 * @return the {@code code_challenge_method} values supported
 	 */
 	default List<String> getCodeChallengeMethods() {
-		return this.getClaimAsStringList(OAuth2AuthorizationServerMetadataClaimNames.CODE_CHALLENGE_METHODS_SUPPORTED);
+		return getClaimAsStringList(OAuth2AuthorizationServerMetadataClaimNames.CODE_CHALLENGE_METHODS_SUPPORTED);
 	}
+
 }

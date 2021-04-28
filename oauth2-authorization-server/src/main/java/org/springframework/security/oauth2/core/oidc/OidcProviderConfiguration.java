@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright 2020-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,14 @@
  */
 package org.springframework.security.oauth2.core.oidc;
 
-import org.springframework.security.oauth2.core.AbstractOAuth2AuthorizationServerConfiguration;
-import org.springframework.security.oauth2.core.Version;
-import org.springframework.security.oauth2.jose.jws.JwsAlgorithm;
-import org.springframework.util.Assert;
-
-import java.io.Serializable;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
+
+import org.springframework.security.oauth2.core.AbstractOAuth2AuthorizationServerMetadata;
+import org.springframework.security.oauth2.jose.jws.JwsAlgorithm;
+import org.springframework.util.Assert;
 
 /**
  * A representation of an OpenID Provider Configuration Response,
@@ -33,13 +32,12 @@ import java.util.function.Consumer;
  *
  * @author Daniel Garnier-Moiroux
  * @since 0.1.0
+ * @see AbstractOAuth2AuthorizationServerMetadata
  * @see OidcProviderMetadataClaimAccessor
- * @see AbstractOAuth2AuthorizationServerConfiguration
  * @see <a target="_blank" href="https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderConfigurationResponse">4.2. OpenID Provider Configuration Response</a>
  */
-public final class OidcProviderConfiguration extends AbstractOAuth2AuthorizationServerConfiguration
-		implements OidcProviderMetadataClaimAccessor, Serializable {
-	private static final long serialVersionUID = Version.SERIAL_VERSION_UID;
+public final class OidcProviderConfiguration extends AbstractOAuth2AuthorizationServerMetadata
+		implements OidcProviderMetadataClaimAccessor {
 
 	private OidcProviderConfiguration(Map<String, Object> claims) {
 		super(claims);
@@ -66,9 +64,10 @@ public final class OidcProviderConfiguration extends AbstractOAuth2Authorization
 	}
 
 	/**
-	 * Helps configure an {@link OidcProviderConfiguration}
+	 * Helps configure an {@link OidcProviderConfiguration}.
 	 */
-	public static class Builder extends AbstractOAuth2AuthorizationServerConfiguration.AbstractBuilder<OidcProviderConfiguration, Builder> {
+	public static class Builder extends AbstractBuilder<OidcProviderConfiguration, Builder> {
+
 		private Builder() {
 		}
 
@@ -120,32 +119,6 @@ public final class OidcProviderConfiguration extends AbstractOAuth2Authorization
 		}
 
 		/**
-		 * Use this claim in the resulting {@link OidcProviderConfiguration}.
-		 *
-		 * @param name the claim name
-		 * @param value the claim value
-		 * @return the {@link Builder} for further configuration
-		 */
-		public Builder claim(String name, Object value) {
-			Assert.hasText(name, "name cannot be empty");
-			Assert.notNull(value, "value cannot be null");
-			this.claims.put(name, value);
-			return this;
-		}
-
-		/**
-		 * Provides access to every {@link #claim(String, Object)} declared so far with
-		 * the possibility to add, replace, or remove.
-		 *
-		 * @param claimsConsumer a {@code Consumer} of the claims
-		 * @return the {@link Builder} for further configurations
-		 */
-		public Builder claims(Consumer<Map<String, Object>> claimsConsumer) {
-			claimsConsumer.accept(this.claims);
-			return this;
-		}
-
-		/**
 		 * Validate the claims and build the {@link OidcProviderConfiguration}.
 		 * <p>
 		 * The following claims are REQUIRED:
@@ -157,19 +130,38 @@ public final class OidcProviderConfiguration extends AbstractOAuth2Authorization
 		 */
 		@Override
 		public OidcProviderConfiguration build() {
-			validateCommonClaims();
-			validateOidcSpecificClaims();
-			removeEmptyClaims();
-			return new OidcProviderConfiguration(this.claims);
+			validate();
+			return new OidcProviderConfiguration(getClaims());
 		}
 
-		private void validateOidcSpecificClaims() {
-			Assert.notNull(this.claims.get(OidcProviderMetadataClaimNames.SUBJECT_TYPES_SUPPORTED), "subjectTypes cannot be null");
-			Assert.isInstanceOf(List.class, this.claims.get(OidcProviderMetadataClaimNames.SUBJECT_TYPES_SUPPORTED), "subjectTypes must be of type List");
-			Assert.notEmpty((List<?>) this.claims.get(OidcProviderMetadataClaimNames.SUBJECT_TYPES_SUPPORTED), "subjectTypes cannot be empty");
-			Assert.notNull(this.claims.get(OidcProviderMetadataClaimNames.ID_TOKEN_SIGNING_ALG_VALUES_SUPPORTED), "idTokenSigningAlgorithms cannot be null");
-			Assert.isInstanceOf(List.class, this.claims.get(OidcProviderMetadataClaimNames.ID_TOKEN_SIGNING_ALG_VALUES_SUPPORTED), "idTokenSigningAlgorithms must be of type List");
-			Assert.notEmpty((List<?>) this.claims.get(OidcProviderMetadataClaimNames.ID_TOKEN_SIGNING_ALG_VALUES_SUPPORTED), "idTokenSigningAlgorithms cannot be empty");
+		@Override
+		protected void validate() {
+			super.validate();
+			Assert.notNull(getClaims().get(OidcProviderMetadataClaimNames.JWKS_URI), "jwksUri cannot be null");
+			Assert.notNull(getClaims().get(OidcProviderMetadataClaimNames.SUBJECT_TYPES_SUPPORTED), "subjectTypes cannot be null");
+			Assert.isInstanceOf(List.class, getClaims().get(OidcProviderMetadataClaimNames.SUBJECT_TYPES_SUPPORTED), "subjectTypes must be of type List");
+			Assert.notEmpty((List<?>) getClaims().get(OidcProviderMetadataClaimNames.SUBJECT_TYPES_SUPPORTED), "subjectTypes cannot be empty");
+			Assert.notNull(getClaims().get(OidcProviderMetadataClaimNames.ID_TOKEN_SIGNING_ALG_VALUES_SUPPORTED), "idTokenSigningAlgorithms cannot be null");
+			Assert.isInstanceOf(List.class, getClaims().get(OidcProviderMetadataClaimNames.ID_TOKEN_SIGNING_ALG_VALUES_SUPPORTED), "idTokenSigningAlgorithms must be of type List");
+			Assert.notEmpty((List<?>) getClaims().get(OidcProviderMetadataClaimNames.ID_TOKEN_SIGNING_ALG_VALUES_SUPPORTED), "idTokenSigningAlgorithms cannot be empty");
 		}
+
+		@SuppressWarnings("unchecked")
+		private void addClaimToClaimList(String name, String value) {
+			Assert.hasText(name, "name cannot be empty");
+			Assert.notNull(value, "value cannot be null");
+			getClaims().computeIfAbsent(name, k -> new LinkedList<String>());
+			((List<String>) getClaims().get(name)).add(value);
+		}
+
+		@SuppressWarnings("unchecked")
+		private void acceptClaimValues(String name, Consumer<List<String>> valuesConsumer) {
+			Assert.hasText(name, "name cannot be empty");
+			Assert.notNull(valuesConsumer, "valuesConsumer cannot be null");
+			getClaims().computeIfAbsent(name, k -> new LinkedList<String>());
+			List<String> values = (List<String>) getClaims().get(name);
+			valuesConsumer.accept(values);
+		}
+
 	}
 }

@@ -70,8 +70,7 @@ public class ProviderSettings extends Settings {
 	}
 
 	/**
-	 * Returns the Provider's OAuth 2.0 Authorization endpoint.
-	 * The default is {@code /oauth2/authorize}.
+	 * Returns the Provider's OAuth 2.0 Authorization endpoint. The default is {@code /oauth2/authorize}.
 	 *
 	 * @return the Authorization endpoint
 	 */
@@ -90,8 +89,7 @@ public class ProviderSettings extends Settings {
 	}
 
 	/**
-	 * Returns the Provider's OAuth 2.0 Token endpoint.
-	 * The default is {@code /oauth2/token}.
+	 * Returns the Provider's OAuth 2.0 Token endpoint. The default is {@code /oauth2/token}.
 	 *
 	 * @return the Token endpoint
 	 */

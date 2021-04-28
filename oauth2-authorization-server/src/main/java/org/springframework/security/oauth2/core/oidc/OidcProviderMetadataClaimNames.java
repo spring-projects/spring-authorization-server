@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright 2020-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import org.springframework.security.oauth2.jose.jws.JwsAlgorithm;
  *
  * @author Daniel Garnier-Moiroux
  * @since 0.1.0
+ * @see OAuth2AuthorizationServerMetadataClaimNames
  * @see <a target="_blank" href="https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderMetadata">3. OpenID Provider Metadata</a>
  */
 public interface OidcProviderMetadataClaimNames extends OAuth2AuthorizationServerMetadataClaimNames {

@@ -18,7 +18,7 @@ package org.springframework.security.oauth2.server.authorization.config;
 import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Tests for {@link ProviderSettings}.
@@ -78,48 +78,48 @@ public class ProviderSettingsTests {
 	@Test
 	public void issuerWhenNullThenThrowIllegalArgumentException() {
 		ProviderSettings settings = new ProviderSettings();
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> settings.issuer(null))
-				.withMessage("value cannot be null");
+		assertThatThrownBy(() -> settings.issuer(null))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("value cannot be null");
 	}
 
 	@Test
 	public void authorizationEndpointWhenNullThenThrowIllegalArgumentException() {
 		ProviderSettings settings = new ProviderSettings();
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> settings.authorizationEndpoint(null))
-				.withMessage("value cannot be null");
+		assertThatThrownBy(() -> settings.authorizationEndpoint(null))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("value cannot be null");
 	}
 
 	@Test
 	public void tokenEndpointWhenNullThenThrowIllegalArgumentException() {
 		ProviderSettings settings = new ProviderSettings();
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> settings.tokenEndpoint(null))
-				.withMessage("value cannot be null");
+		assertThatThrownBy(() -> settings.tokenEndpoint(null))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("value cannot be null");
 	}
 
 	@Test
 	public void tokenRevocationEndpointWhenNullThenThrowIllegalArgumentException() {
 		ProviderSettings settings = new ProviderSettings();
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> settings.tokenRevocationEndpoint(null))
-				.withMessage("value cannot be null");
+		assertThatThrownBy(() -> settings.tokenRevocationEndpoint(null))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("value cannot be null");
 	}
 
 	@Test
 	public void tokenIntrospectionEndpointWhenNullThenThrowIllegalArgumentException() {
 		ProviderSettings settings = new ProviderSettings();
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> settings.tokenIntrospectionEndpoint(null))
-				.withMessage("value cannot be null");
+		assertThatThrownBy(() -> settings.tokenIntrospectionEndpoint(null))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("value cannot be null");
 	}
 
 	@Test
 	public void jwksEndpointWhenNullThenThrowIllegalArgumentException() {
 		ProviderSettings settings = new ProviderSettings();
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> settings.jwkSetEndpoint(null))
-				.withMessage("value cannot be null");
+		assertThatThrownBy(() -> settings.jwkSetEndpoint(null))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("value cannot be null");
 	}
 }

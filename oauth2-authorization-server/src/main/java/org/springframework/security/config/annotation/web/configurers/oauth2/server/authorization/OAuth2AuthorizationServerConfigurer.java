@@ -49,7 +49,7 @@ import org.springframework.security.oauth2.server.authorization.config.ProviderS
 import org.springframework.security.oauth2.server.authorization.oidc.web.OidcProviderConfigurationEndpointFilter;
 import org.springframework.security.oauth2.server.authorization.web.NimbusJwkSetEndpointFilter;
 import org.springframework.security.oauth2.server.authorization.web.OAuth2AuthorizationEndpointFilter;
-import org.springframework.security.oauth2.server.authorization.web.OAuth2AuthorizationServerConfigurationEndpointFilter;
+import org.springframework.security.oauth2.server.authorization.web.OAuth2AuthorizationServerMetadataEndpointFilter;
 import org.springframework.security.oauth2.server.authorization.web.OAuth2ClientAuthenticationFilter;
 import org.springframework.security.oauth2.server.authorization.web.OAuth2TokenEndpointFilter;
 import org.springframework.security.oauth2.server.authorization.web.OAuth2TokenIntrospectionEndpointFilter;
@@ -79,6 +79,7 @@ import org.springframework.util.StringUtils;
  * @see OAuth2TokenRevocationEndpointFilter
  * @see NimbusJwkSetEndpointFilter
  * @see OidcProviderConfigurationEndpointFilter
+ * @see OAuth2AuthorizationServerMetadataEndpointFilter
  * @see OAuth2ClientAuthenticationFilter
  */
 public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBuilder<B>>
@@ -90,7 +91,7 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 	private RequestMatcher tokenRevocationEndpointMatcher;
 	private RequestMatcher jwkSetEndpointMatcher;
 	private RequestMatcher oidcProviderConfigurationEndpointMatcher;
-	private RequestMatcher oauth2ServerConfigurationEndpointMatcher;
+	private RequestMatcher authorizationServerMetadataEndpointMatcher;
 	private final RequestMatcher endpointsMatcher = (request) ->
 			this.authorizationEndpointMatcher.matches(request) ||
 			this.tokenEndpointMatcher.matches(request) ||
@@ -98,7 +99,7 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 			this.tokenRevocationEndpointMatcher.matches(request) ||
 			this.jwkSetEndpointMatcher.matches(request) ||
 			this.oidcProviderConfigurationEndpointMatcher.matches(request) ||
-			this.oauth2ServerConfigurationEndpointMatcher.matches(request);
+			this.authorizationServerMetadataEndpointMatcher.matches(request);
 
 	/**
 	 * Sets the repository of registered clients.
@@ -218,9 +219,9 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 					new OidcProviderConfigurationEndpointFilter(providerSettings);
 			builder.addFilterBefore(postProcess(oidcProviderConfigurationEndpointFilter), AbstractPreAuthenticatedProcessingFilter.class);
 
-			OAuth2AuthorizationServerConfigurationEndpointFilter authorizationServerConfigurationFilter
-					= new OAuth2AuthorizationServerConfigurationEndpointFilter(providerSettings);
-			builder.addFilterBefore(postProcess(authorizationServerConfigurationFilter), AbstractPreAuthenticatedProcessingFilter.class);
+			OAuth2AuthorizationServerMetadataEndpointFilter authorizationServerMetadataEndpointFilter =
+					new OAuth2AuthorizationServerMetadataEndpointFilter(providerSettings);
+			builder.addFilterBefore(postProcess(authorizationServerMetadataEndpointFilter), AbstractPreAuthenticatedProcessingFilter.class);
 		}
 
 		JWKSource<SecurityContext> jwkSource = getJwkSource(builder);
@@ -284,8 +285,8 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 				providerSettings.jwkSetEndpoint(), HttpMethod.GET.name());
 		this.oidcProviderConfigurationEndpointMatcher = new AntPathRequestMatcher(
 				OidcProviderConfigurationEndpointFilter.DEFAULT_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI, HttpMethod.GET.name());
-		this.oauth2ServerConfigurationEndpointMatcher = new AntPathRequestMatcher(
-				OAuth2AuthorizationServerConfigurationEndpointFilter.DEFAULT_OAUTH2_AUTHORIZATION_SERVER_CONFIGURATION_ENDPOINT_URI, HttpMethod.GET.name());
+		this.authorizationServerMetadataEndpointMatcher = new AntPathRequestMatcher(
+				OAuth2AuthorizationServerMetadataEndpointFilter.DEFAULT_OAUTH2_AUTHORIZATION_SERVER_METADATA_ENDPOINT_URI, HttpMethod.GET.name());
 	}
 
 	private static void validateProviderSettings(ProviderSettings providerSettings) {

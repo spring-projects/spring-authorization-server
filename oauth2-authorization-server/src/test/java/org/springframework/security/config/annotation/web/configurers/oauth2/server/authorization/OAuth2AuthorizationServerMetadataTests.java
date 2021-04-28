@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright 2020-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.nimbusds.jose.proc.SecurityContext;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
@@ -30,7 +31,7 @@ import org.springframework.security.config.test.SpringTestRule;
 import org.springframework.security.oauth2.jose.TestJwks;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.config.ProviderSettings;
-import org.springframework.security.oauth2.server.authorization.web.OAuth2AuthorizationServerConfigurationEndpointFilter;
+import org.springframework.security.oauth2.server.authorization.web.OAuth2AuthorizationServerMetadataEndpointFilter;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.Mockito.mock;
@@ -39,11 +40,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Integration tests for OAuth 2.0 Authorization Server Configuration.
+ * Integration tests for the OAuth 2.0 Authorization Server Metadata endpoint.
  *
  * @author Daniel Garnier-Moiroux
  */
-public class OAuth2AuthorizationServerConfigurationTests {
+public class OAuth2AuthorizationServerMetadataTests {
 	private static final String issuerUrl = "https://example.com/issuer1";
 	private static JWKSource<SecurityContext> jwkSource;
 
@@ -60,10 +61,10 @@ public class OAuth2AuthorizationServerConfigurationTests {
 	}
 
 	@Test
-	public void requestWhenServerConfigurationRequestAndIssuerSetThenReturnServerConfigurationResponse() throws Exception {
+	public void requestWhenAuthorizationServerMetadataRequestAndIssuerSetThenReturnMetadataResponse() throws Exception {
 		this.spring.register(AuthorizationServerConfiguration.class).autowire();
 
-		this.mvc.perform(get(OAuth2AuthorizationServerConfigurationEndpointFilter.DEFAULT_OAUTH2_AUTHORIZATION_SERVER_CONFIGURATION_ENDPOINT_URI))
+		this.mvc.perform(get(OAuth2AuthorizationServerMetadataEndpointFilter.DEFAULT_OAUTH2_AUTHORIZATION_SERVER_METADATA_ENDPOINT_URI))
 				.andExpect(status().is2xxSuccessful())
 				.andExpect(jsonPath("issuer").value(issuerUrl))
 				.andReturn();
@@ -88,4 +89,5 @@ public class OAuth2AuthorizationServerConfigurationTests {
 			return new ProviderSettings().issuer(issuerUrl);
 		}
 	}
+
 }

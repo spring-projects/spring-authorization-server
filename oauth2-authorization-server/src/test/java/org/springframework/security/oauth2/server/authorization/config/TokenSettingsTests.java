@@ -15,9 +15,11 @@
  */
 package org.springframework.security.oauth2.server.authorization.config;
 
+import java.time.Duration;
+
 import org.junit.Test;
 
-import java.time.Duration;
+import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -32,10 +34,11 @@ public class TokenSettingsTests {
 	@Test
 	public void constructorWhenDefaultThenDefaultsAreSet() {
 		TokenSettings tokenSettings = new TokenSettings();
-		assertThat(tokenSettings.settings()).hasSize(3);
+		assertThat(tokenSettings.settings()).hasSize(4);
 		assertThat(tokenSettings.accessTokenTimeToLive()).isEqualTo(Duration.ofMinutes(5));
 		assertThat(tokenSettings.reuseRefreshTokens()).isTrue();
 		assertThat(tokenSettings.refreshTokenTimeToLive()).isEqualTo(Duration.ofMinutes(60));
+		assertThat(tokenSettings.idTokenSignatureAlgorithm()).isEqualTo(SignatureAlgorithm.RS256);
 	}
 
 	@Test
@@ -102,16 +105,24 @@ public class TokenSettingsTests {
 	}
 
 	@Test
+	public void idTokenSignatureAlgorithmWhenProvidedThenSet() {
+		SignatureAlgorithm idTokenSignatureAlgorithm = SignatureAlgorithm.RS512;
+		TokenSettings tokenSettings = new TokenSettings().idTokenSignatureAlgorithm(idTokenSignatureAlgorithm);
+		assertThat(tokenSettings.idTokenSignatureAlgorithm()).isEqualTo(idTokenSignatureAlgorithm);
+	}
+
+	@Test
 	public void settingWhenCalledThenReturnTokenSettings() {
 		Duration accessTokenTimeToLive = Duration.ofMinutes(10);
 		TokenSettings tokenSettings = new TokenSettings()
 				.<TokenSettings>setting("name1", "value1")
 				.accessTokenTimeToLive(accessTokenTimeToLive)
-				.<TokenSettings>settings(settings -> settings.put("name2", "value2"));
-		assertThat(tokenSettings.settings()).hasSize(5);
+				.settings(settings -> settings.put("name2", "value2"));
+		assertThat(tokenSettings.settings()).hasSize(6);
 		assertThat(tokenSettings.accessTokenTimeToLive()).isEqualTo(accessTokenTimeToLive);
 		assertThat(tokenSettings.reuseRefreshTokens()).isTrue();
 		assertThat(tokenSettings.refreshTokenTimeToLive()).isEqualTo(Duration.ofMinutes(60));
+		assertThat(tokenSettings.idTokenSignatureAlgorithm()).isEqualTo(SignatureAlgorithm.RS256);
 		assertThat(tokenSettings.<String>setting("name1")).isEqualTo("value1");
 		assertThat(tokenSettings.<String>setting("name2")).isEqualTo("value2");
 	}

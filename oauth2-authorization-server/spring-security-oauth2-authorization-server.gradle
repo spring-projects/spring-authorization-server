@@ -16,7 +16,6 @@ dependencies {
 	testCompile 'org.assertj:assertj-core'
 	testCompile 'org.mockito:mockito-core'
 	testCompile 'com.jayway.jsonpath:json-path'
-	testCompile 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
 
 	provided 'javax.servlet:javax.servlet-api'
 }

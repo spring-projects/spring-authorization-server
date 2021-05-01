@@ -15,6 +15,8 @@
  */
 package org.springframework.security.oauth2.server.authorization.client;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -58,9 +60,14 @@ public class RegisteredClientTests {
 
 	@Test
 	public void buildWhenAllAttributesProvidedThenAllAttributesAreSet() {
+		Instant clientIdIssuedAt = Instant.now();
+		Instant clientSecretExpiresAt = clientIdIssuedAt.plus(30, ChronoUnit.DAYS);
 		RegisteredClient registration = RegisteredClient.withId(ID)
 				.clientId(CLIENT_ID)
+				.clientIdIssuedAt(clientIdIssuedAt)
 				.clientSecret(CLIENT_SECRET)
+				.clientSecretExpiresAt(clientSecretExpiresAt)
+				.clientName("client-name")
 				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
 				.clientAuthenticationMethod(ClientAuthenticationMethod.BASIC)
 				.redirectUris(redirectUris -> redirectUris.addAll(REDIRECT_URIS))
@@ -69,7 +76,10 @@ public class RegisteredClientTests {
 
 		assertThat(registration.getId()).isEqualTo(ID);
 		assertThat(registration.getClientId()).isEqualTo(CLIENT_ID);
+		assertThat(registration.getClientIdIssuedAt()).isEqualTo(clientIdIssuedAt);
 		assertThat(registration.getClientSecret()).isEqualTo(CLIENT_SECRET);
+		assertThat(registration.getClientSecretExpiresAt()).isEqualTo(clientSecretExpiresAt);
+		assertThat(registration.getClientName()).isEqualTo("client-name");
 		assertThat(registration.getAuthorizationGrantTypes())
 				.isEqualTo(Collections.singleton(AuthorizationGrantType.AUTHORIZATION_CODE));
 		assertThat(registration.getClientAuthenticationMethods()).isEqualTo(CLIENT_AUTHENTICATION_METHODS);
@@ -325,7 +335,10 @@ public class RegisteredClientTests {
 
 		assertThat(registration.getId()).isEqualTo(updated.getId());
 		assertThat(registration.getClientId()).isEqualTo(updated.getClientId());
+		assertThat(registration.getClientIdIssuedAt()).isEqualTo(updated.getClientIdIssuedAt());
 		assertThat(registration.getClientSecret()).isEqualTo(updated.getClientSecret());
+		assertThat(registration.getClientSecretExpiresAt()).isEqualTo(updated.getClientSecretExpiresAt());
+		assertThat(registration.getClientName()).isEqualTo(updated.getClientName());
 		assertThat(registration.getClientAuthenticationMethods()).isEqualTo(updated.getClientAuthenticationMethods());
 		assertThat(registration.getClientAuthenticationMethods()).isNotSameAs(updated.getClientAuthenticationMethods());
 		assertThat(registration.getAuthorizationGrantTypes()).isEqualTo(updated.getAuthorizationGrantTypes());
@@ -343,10 +356,12 @@ public class RegisteredClientTests {
 	@Test
 	public void buildWhenRegisteredClientValuesOverriddenThenPropagated() {
 		RegisteredClient registration = TestRegisteredClients.registeredClient().build();
+		String newName = "client-name";
 		String newSecret = "new-secret";
 		String newScope = "new-scope";
 		String newRedirectUri = "https://another-redirect-uri.com";
 		RegisteredClient updated = RegisteredClient.from(registration)
+				.clientName(newName)
 				.clientSecret(newSecret)
 				.scopes(scopes -> {
 					scopes.clear();
@@ -358,6 +373,8 @@ public class RegisteredClientTests {
 				})
 				.build();
 
+		assertThat(registration.getClientName()).isNotEqualTo(newName);
+		assertThat(updated.getClientName()).isEqualTo(newName);
 		assertThat(registration.getClientSecret()).isNotEqualTo(newSecret);
 		assertThat(updated.getClientSecret()).isEqualTo(newSecret);
 		assertThat(registration.getScopes()).doesNotContain(newScope);

@@ -15,65 +15,72 @@
  */
 package org.springframework.security.oauth2.core.oidc;
 
+import org.springframework.security.oauth2.jose.jws.JwsAlgorithm;
+
 /**
- * The names of the "claims" defined by OpenID Client Registration 1.0 that can be returned
- * in the OpenID Client Registration Response.
+ * The names of the "claims" defined by OpenID Connect Dynamic Client Registration 1.0
+ * that are contained in the OpenID Client Registration Request and Response.
  *
  * @author Ovidiu Popa
+ * @author Joe Grandja
  * @since 0.1.1
  * @see <a target="_blank" href="https://openid.net/specs/openid-connect-registration-1_0.html#ClientMetadata">2. Client Metadata</a>
  */
 public interface OidcClientMetadataClaimNames {
 
-	//request
 	/**
-	 * {@code redirect_uris} - the redirect URI(s) that the client may use in redirect-based flows
-	 */
-	String REDIRECT_URIS = "redirect_uris";
-
-	/**
-	 * {@code response_types} - the OAuth 2.0 {@code response_type} values that the client may use
-	 */
-	String RESPONSE_TYPES = "response_types";
-
-	/**
-	 * {@code grant_types} - the OAuth 2.0 authorization {@code grant_types} that the client may use
-	 */
-	String GRANT_TYPES = "grant_types";
-
-	/**
-	 * {@code client_name} - the {@code client_name}
-	 */
-	String CLIENT_NAME = "client_name";
-
-	/**
-	 * {@code scope} - the scope(s) that the client may use
-	 */
-	String SCOPE = "scope";
-
-	/**
-	 * {@code token_endpoint_auth_method} - the {@link org.springframework.security.oauth2.core.ClientAuthenticationMethod authentication method} that the client may use.
-	 */
-	String TOKEN_ENDPOINT_AUTH_METHOD = "token_endpoint_auth_method";
-
-	//response
-	/**
-	 * {@code client_id} - the {@code client_id}
+	 * {@code client_id} - the Client Identifier
 	 */
 	String CLIENT_ID = "client_id";
 
 	/**
-	 * {@code client_secret} - the {@code client_secret}
-	 */
-	String CLIENT_SECRET = "client_secret";
-
-	/**
-	 * {@code client_id_issued_at} - the timestamp when the client id was issued
+	 * {@code client_id_issued_at} - the time at which the Client Identifier was issued
 	 */
 	String CLIENT_ID_ISSUED_AT = "client_id_issued_at";
 
 	/**
-	 * {@code client_secret_expires_at} - the timestamp when the client secret expires
+	 * {@code client_secret} - the Client Secret
+	 */
+	String CLIENT_SECRET = "client_secret";
+
+	/**
+	 * {@code client_secret_expires_at} - the time at which the {@code client_secret} will expire or 0 if it will not expire
 	 */
 	String CLIENT_SECRET_EXPIRES_AT = "client_secret_expires_at";
+
+	/**
+	 * {@code client_name} - the name of the Client to be presented to the End-User
+	 */
+	String CLIENT_NAME = "client_name";
+
+	/**
+	 * {@code redirect_uris} - the redirection {@code URI} values used by the Client
+	 */
+	String REDIRECT_URIS = "redirect_uris";
+
+	/**
+	 * {@code token_endpoint_auth_method} - the authentication method used by the Client for the Token Endpoint
+	 */
+	String TOKEN_ENDPOINT_AUTH_METHOD = "token_endpoint_auth_method";
+
+	/**
+	 * {@code grant_types} - the OAuth 2.0 {@code grant_type} values that the Client will restrict itself to using
+	 */
+	String GRANT_TYPES = "grant_types";
+
+	/**
+	 * {@code response_types} - the OAuth 2.0 {@code response_type} values that the Client will restrict itself to using
+	 */
+	String RESPONSE_TYPES = "response_types";
+
+	/**
+	 * {@code scope} - a space-separated list of OAuth 2.0 {@code scope} values that the Client will restrict itself to using
+	 */
+	String SCOPE = "scope";
+
+	/**
+	 * {@code id_token_signed_response_alg} - the {@link JwsAlgorithm JWS} algorithm required for signing the {@link OidcIdToken ID Token} issued to the Client
+	 */
+	String ID_TOKEN_SIGNED_RESPONSE_ALG = "id_token_signed_response_alg";
+
 }

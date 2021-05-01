@@ -15,8 +15,10 @@
  */
 package org.springframework.security.config.annotation.web.configurers.oauth2.server.authorization;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
@@ -25,6 +27,7 @@ import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
@@ -32,6 +35,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageConverter;
+import org.springframework.mock.http.MockHttpOutputMessage;
 import org.springframework.mock.http.client.MockClientHttpResponse;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -48,25 +52,19 @@ import org.springframework.security.oauth2.core.http.converter.OAuth2AccessToken
 import org.springframework.security.oauth2.core.oidc.OidcClientRegistration;
 import org.springframework.security.oauth2.core.oidc.http.converter.OidcClientRegistrationHttpMessageConverter;
 import org.springframework.security.oauth2.jose.TestJwks;
-import org.springframework.security.oauth2.jose.TestKeys;
-import org.springframework.security.oauth2.jwt.JwtDecoder;
-import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
+import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
-import org.springframework.security.oauth2.server.authorization.config.ProviderSettings;
+import org.springframework.security.oauth2.server.authorization.oidc.web.OidcClientRegistrationEndpointFilter;
 import org.springframework.security.oauth2.server.authorization.web.OAuth2TokenEndpointFilter;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
-import java.util.Map;
-
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
@@ -75,35 +73,24 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Integration tests for OpenID Connect 1.0 Client Registration Endpoint.
+ * Integration tests for OpenID Connect Dynamic Client Registration 1.0.
  *
  * @author Ovidiu Popa
- * @since 0.1.1
+ * @author Joe Grandja
  */
 public class OidcClientRegistrationTests {
-	private static final OidcClientRegistration.Builder OIDC_CLIENT_REGISTRATION = OidcClientRegistration.builder()
-			.redirectUri("https://localhost:8080/client")
-			.responseType(OAuth2AuthorizationResponseType.CODE.getValue())
-			.grantType(AuthorizationGrantType.AUTHORIZATION_CODE.getValue())
-			.tokenEndpointAuthenticationMethod(ClientAuthenticationMethod.BASIC.getValue())
-			.scope("test");
-
 	private static final HttpMessageConverter<OAuth2AccessTokenResponse> accessTokenHttpResponseConverter =
 			new OAuth2AccessTokenResponseHttpMessageConverter();
-
-	private static final OidcClientRegistrationHttpMessageConverter clientRegistrationHttpMessageConverter =
+	private static final HttpMessageConverter<OidcClientRegistration> clientRegistrationHttpMessageConverter =
 			new OidcClientRegistrationHttpMessageConverter();
-
-	private static final OAuth2TokenType ACCESS_TOKEN_TOKEN_TYPE = new OAuth2TokenType(OAuth2ParameterNames.ACCESS_TOKEN);
-
 	private static RegisteredClientRepository registeredClientRepository;
 	private static OAuth2AuthorizationService authorizationService;
 	private static JWKSource<SecurityContext> jwkSource;
-	private static NimbusJwtDecoder jwtDecoder;
 
 	@Rule
 	public final SpringTestRule spring = new SpringTestRule();
@@ -117,7 +104,6 @@ public class OidcClientRegistrationTests {
 		authorizationService = mock(OAuth2AuthorizationService.class);
 		JWKSet jwkSet = new JWKSet(TestJwks.DEFAULT_RSA_JWK);
 		jwkSource = (jwkSelector, securityContext) -> jwkSelector.select(jwkSet);
-		jwtDecoder = NimbusJwtDecoder.withPublicKey(TestKeys.DEFAULT_PUBLIC_KEY).build();
 	}
 
 	@Before
@@ -127,63 +113,83 @@ public class OidcClientRegistrationTests {
 	}
 
 	@Test
-	public void requestWhenAuthenticatedThenResponseIncludesRegisteredClientDetails() throws Exception {
-		this.spring.register(AuthorizationServerConfigurationEnabledClientRegistration.class).autowire();
+	public void requestWhenClientRegistrationRequestAuthorizedThenClientRegistrationResponse() throws Exception {
+		this.spring.register(AuthorizationServerConfiguration.class).autowire();
+
+		// ***** (1) Obtain the "initial" access token used for registering the client
+
+		String clientRegistrationScope = "client.create";
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient2()
-				.scope("client.create").build();
+				.scope(clientRegistrationScope)
+				.build();
 		when(registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
 				.thenReturn(registeredClient);
-		// get access token
+
 		MvcResult mvcResult = this.mvc.perform(post(OAuth2TokenEndpointFilter.DEFAULT_TOKEN_ENDPOINT_URI)
 				.param(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
-				.param(OAuth2ParameterNames.SCOPE, "client.create")
+				.param(OAuth2ParameterNames.SCOPE, clientRegistrationScope)
 				.header(HttpHeaders.AUTHORIZATION, "Basic " + encodeBasicAuth(
 						registeredClient.getClientId(), registeredClient.getClientSecret())))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.access_token").isNotEmpty())
-				.andExpect(jsonPath("$.scope").value("client.create"))
+				.andExpect(jsonPath("$.scope").value(clientRegistrationScope))
 				.andReturn();
 
-		//assert get access token
+		OAuth2AccessToken accessToken = readAccessTokenResponse(mvcResult.getResponse()).getAccessToken();
+
 		verify(registeredClientRepository).findByClientId(eq(registeredClient.getClientId()));
 		ArgumentCaptor<OAuth2Authorization> authorizationCaptor = ArgumentCaptor.forClass(OAuth2Authorization.class);
 		verify(authorizationService).save(authorizationCaptor.capture());
 		OAuth2Authorization authorization = authorizationCaptor.getValue();
-		MockHttpServletResponse servletResponse = mvcResult.getResponse();
-		MockClientHttpResponse httpResponse = new MockClientHttpResponse(
-				servletResponse.getContentAsByteArray(), HttpStatus.valueOf(servletResponse.getStatus()));
-		OAuth2AccessTokenResponse accessTokenResponse = accessTokenHttpResponseConverter.read(OAuth2AccessTokenResponse.class, httpResponse);
-		String tokenValue = accessTokenResponse.getAccessToken().getTokenValue();
 
-		// prepare register client request
-		when(authorizationService.findByToken(
-				eq(authorization.getToken(OAuth2AccessToken.class).getToken().getTokenValue()),
-				eq(ACCESS_TOKEN_TOKEN_TYPE)))
+		// ***** (2) Register the client
+
+		when(authorizationService.findByToken(eq(accessToken.getTokenValue()), eq(OAuth2TokenType.ACCESS_TOKEN)))
 				.thenReturn(authorization);
-		doNothing().when(registeredClientRepository).saveClient(any(RegisteredClient.class));
-		mvcResult = this.mvc.perform(post("/connect/register")
-				.header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenValue)
+		doNothing().when(registeredClientRepository).save(any(RegisteredClient.class));
+
+		// @formatter:off
+		OidcClientRegistration clientRegistration = OidcClientRegistration.builder()
+				.clientName("client-name")
+				.redirectUri("https://client.example.com")
+				.grantType(AuthorizationGrantType.AUTHORIZATION_CODE.getValue())
+				.grantType(AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
+				.scope("scope1")
+				.scope("scope2")
+				.build();
+		// @formatter:on
+
+		HttpHeaders httpHeaders = new HttpHeaders();
+		httpHeaders.setBearerAuth(accessToken.getTokenValue());
+
+		// Register the client
+		mvcResult = this.mvc.perform(post(OidcClientRegistrationEndpointFilter.DEFAULT_OIDC_CLIENT_REGISTRATION_ENDPOINT_URI)
+				.headers(httpHeaders)
 				.contentType(MediaType.APPLICATION_JSON)
-				.content(convertToByteArray(OIDC_CLIENT_REGISTRATION.build())))
-				.andExpect(status().isCreated()).andReturn();
+				.content(getClientRegistrationRequestContent(clientRegistration)))
+				.andExpect(status().isCreated())
+				.andExpect(header().string(HttpHeaders.CACHE_CONTROL, containsString("no-store")))
+				.andExpect(header().string(HttpHeaders.PRAGMA, containsString("no-cache")))
+				.andReturn();
 
-		servletResponse = mvcResult.getResponse();
-		httpResponse = new MockClientHttpResponse(
-				servletResponse.getContentAsByteArray(), HttpStatus.valueOf(servletResponse.getStatus()));
-
-		OidcClientRegistration result = clientRegistrationHttpMessageConverter.read(OidcClientRegistration.class, httpResponse);
-
-
-		assertThat(result).isNotNull();
-		assertThat(result.getClaimAsString("client_id")).isNotEmpty();
-		assertThat(result.getClaimAsString("client_id_issued_at")).isNotEmpty();
-		assertThat(result.getClaimAsString("client_secret")).isNotEmpty();
-		assertThat(result.getClaimAsString("client_secret_expires_at")).isNotNull().isEqualTo("0.0");
-		assertThat(result.getRedirectUris()).isNotEmpty().containsExactly("https://localhost:8080/client");
-		assertThat(result.getResponseTypes()).isNotEmpty().containsExactly(OAuth2AuthorizationResponseType.CODE.getValue());
-		assertThat(result.getGrantTypes()).isNotEmpty().containsExactly(AuthorizationGrantType.AUTHORIZATION_CODE.getValue());
-		assertThat(result.getTokenEndpointAuthenticationMethod()).isNotEmpty().isEqualTo(ClientAuthenticationMethod.BASIC.getValue());
-		assertThat(result.getScope()).isNotEmpty().isEqualTo("test");
+		OidcClientRegistration clientRegistrationResponse = readClientRegistrationResponse(mvcResult.getResponse());
+		assertThat(clientRegistrationResponse.getClientId()).isNotNull();
+		assertThat(clientRegistrationResponse.getClientIdIssuedAt()).isNotNull();
+		assertThat(clientRegistrationResponse.getClientSecret()).isNotNull();
+		assertThat(clientRegistrationResponse.getClientSecretExpiresAt()).isNull();
+		assertThat(clientRegistrationResponse.getClientName()).isEqualTo(clientRegistration.getClientName());
+		assertThat(clientRegistrationResponse.getRedirectUris())
+				.containsExactlyInAnyOrderElementsOf(clientRegistration.getRedirectUris());
+		assertThat(clientRegistrationResponse.getGrantTypes())
+				.containsExactlyInAnyOrderElementsOf(clientRegistration.getGrantTypes());
+		assertThat(clientRegistrationResponse.getResponseTypes())
+				.containsExactly(OAuth2AuthorizationResponseType.CODE.getValue());
+		assertThat(clientRegistrationResponse.getScopes())
+				.containsExactlyInAnyOrderElementsOf(clientRegistration.getScopes());
+		assertThat(clientRegistrationResponse.getTokenEndpointAuthenticationMethod())
+				.isEqualTo(ClientAuthenticationMethod.BASIC.getValue());
+		assertThat(clientRegistrationResponse.getIdTokenSignedResponseAlgorithm())
+				.isEqualTo(SignatureAlgorithm.RS256.getName());
 	}
 
 	private static String encodeBasicAuth(String clientId, String secret) throws Exception {
@@ -194,12 +200,22 @@ public class OidcClientRegistrationTests {
 		return new String(encodedBytes, StandardCharsets.UTF_8);
 	}
 
-	private static byte[] convertToByteArray(OidcClientRegistration clientRegistration) throws JsonProcessingException {
-		ObjectMapper objectMapper = new ObjectMapper();
+	private static OAuth2AccessTokenResponse readAccessTokenResponse(MockHttpServletResponse response) throws Exception {
+		MockClientHttpResponse httpResponse = new MockClientHttpResponse(
+				response.getContentAsByteArray(), HttpStatus.valueOf(response.getStatus()));
+		return accessTokenHttpResponseConverter.read(OAuth2AccessTokenResponse.class, httpResponse);
+	}
 
-		return objectMapper
-				.writerFor(Map.class)
-				.writeValueAsBytes(clientRegistration.getClaims());
+	private static byte[] getClientRegistrationRequestContent(OidcClientRegistration clientRegistration) throws Exception {
+		MockHttpOutputMessage httpRequest = new MockHttpOutputMessage();
+		clientRegistrationHttpMessageConverter.write(clientRegistration, null, httpRequest);
+		return httpRequest.getBodyAsBytes();
+	}
+
+	private static OidcClientRegistration readClientRegistrationResponse(MockHttpServletResponse response) throws Exception {
+		MockClientHttpResponse httpResponse = new MockClientHttpResponse(
+				response.getContentAsByteArray(), HttpStatus.valueOf(response.getStatus()));
+		return clientRegistrationHttpMessageConverter.read(OidcClientRegistration.class, httpResponse);
 	}
 
 	@EnableWebSecurity
@@ -221,21 +237,5 @@ public class OidcClientRegistrationTests {
 			return jwkSource;
 		}
 
-
-	}
-
-	@EnableWebSecurity
-	@Import(OAuth2AuthorizationServerConfiguration.class)
-	static class AuthorizationServerConfigurationEnabledClientRegistration extends AuthorizationServerConfiguration{
-
-		@Bean
-		JwtDecoder jwtDecoder() {
-			return jwtDecoder;
-		}
-
-		@Bean
-		ProviderSettings providerSettings() {
-			return new ProviderSettings().isOidClientRegistrationEndpointEnabled(true);
-		}
 	}
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright 2020-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,21 +15,24 @@
  */
 package org.springframework.security.oauth2.server.authorization.client;
 
-import org.junit.Test;
-import org.springframework.security.oauth2.core.AuthorizationGrantType;
-import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
-
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import org.junit.Test;
+
+import org.springframework.security.oauth2.core.AuthorizationGrantType;
+import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
+
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 /**
  * Tests for {@link InMemoryRegisteredClientRepository}.
  *
  * @author Anoop Garlapati
+ * @author Ovidiu Popa
+ * @author Joe Grandja
  */
 public class InMemoryRegisteredClientRepositoryTests {
 	private RegisteredClient registration = TestRegisteredClients.registeredClient().build();
@@ -38,47 +41,70 @@ public class InMemoryRegisteredClientRepositoryTests {
 
 	@Test
 	public void constructorVarargsRegisteredClientWhenNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> {
-			RegisteredClient registration = null;
-			new InMemoryRegisteredClientRepository(registration);
-		}).isInstanceOf(IllegalArgumentException.class);
+		assertThatIllegalArgumentException()
+				.isThrownBy(() -> {
+					RegisteredClient registration = null;
+					new InMemoryRegisteredClientRepository(registration);
+				})
+				.withMessageContaining("registration cannot be null");
 	}
 
 	@Test
 	public void constructorListRegisteredClientWhenNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> {
-			List<RegisteredClient> registrations = null;
-			new InMemoryRegisteredClientRepository(registrations);
-		}).isInstanceOf(IllegalArgumentException.class);
+		assertThatIllegalArgumentException()
+				.isThrownBy(() -> {
+					List<RegisteredClient> registrations = null;
+					new InMemoryRegisteredClientRepository(registrations);
+				})
+				.withMessageContaining("registrations cannot be empty");
 	}
 
 	@Test
 	public void constructorListRegisteredClientWhenEmptyThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> {
-			List<RegisteredClient> registrations = Collections.emptyList();
-			new InMemoryRegisteredClientRepository(registrations);
-		}).isInstanceOf(IllegalArgumentException.class);
+		assertThatIllegalArgumentException()
+				.isThrownBy(() -> {
+					List<RegisteredClient> registrations = Collections.emptyList();
+					new InMemoryRegisteredClientRepository(registrations);
+				})
+				.withMessageContaining("registrations cannot be empty");
 	}
 
 	@Test
 	public void constructorListRegisteredClientWhenDuplicateIdThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> {
-			RegisteredClient anotherRegistrationWithSameId = TestRegisteredClients.registeredClient2()
-					.id(this.registration.getId()).build();
-			List<RegisteredClient> registrations = Arrays.asList(this.registration, anotherRegistrationWithSameId);
-			new InMemoryRegisteredClientRepository(registrations);
-		}).isInstanceOf(IllegalArgumentException.class);
+		assertThatIllegalArgumentException()
+				.isThrownBy(() -> {
+					RegisteredClient anotherRegistrationWithSameId = TestRegisteredClients.registeredClient2()
+							.id(this.registration.getId()).build();
+					List<RegisteredClient> registrations = Arrays.asList(this.registration, anotherRegistrationWithSameId);
+					new InMemoryRegisteredClientRepository(registrations);
+				})
+				.withMessageStartingWith("Registered client must be unique. Found duplicate identifier:");
 	}
 
 	@Test
 	public void constructorListRegisteredClientWhenDuplicateClientIdThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> {
-			RegisteredClient anotherRegistrationWithSameClientId = TestRegisteredClients.registeredClient2()
-					.clientId(this.registration.getClientId()).build();
-			List<RegisteredClient> registrations = Arrays.asList(this.registration,
-					anotherRegistrationWithSameClientId);
-			new InMemoryRegisteredClientRepository(registrations);
-		}).isInstanceOf(IllegalArgumentException.class);
+		assertThatIllegalArgumentException()
+				.isThrownBy(() -> {
+					RegisteredClient anotherRegistrationWithSameClientId = TestRegisteredClients.registeredClient2()
+							.clientId(this.registration.getClientId()).build();
+					List<RegisteredClient> registrations = Arrays.asList(this.registration,
+							anotherRegistrationWithSameClientId);
+					new InMemoryRegisteredClientRepository(registrations);
+				})
+				.withMessageStartingWith("Registered client must be unique. Found duplicate client identifier:");
+	}
+
+	@Test
+	public void constructorListRegisteredClientWhenDuplicateClientSecretThenThrowIllegalArgumentException() {
+		assertThatIllegalArgumentException()
+				.isThrownBy(() -> {
+					RegisteredClient anotherRegistrationWithSameClientSecret = TestRegisteredClients.registeredClient2()
+							.clientSecret(this.registration.getClientSecret()).build();
+					List<RegisteredClient> registrations = Arrays.asList(this.registration,
+							anotherRegistrationWithSameClientSecret);
+					new InMemoryRegisteredClientRepository(registrations);
+				})
+				.withMessageStartingWith("Registered client must be unique. Found duplicate client secret for identifier:");
 	}
 
 	@Test
@@ -95,7 +121,9 @@ public class InMemoryRegisteredClientRepositoryTests {
 
 	@Test
 	public void findByIdWhenNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> this.clients.findById(null)).isInstanceOf(IllegalArgumentException.class);
+		assertThatIllegalArgumentException()
+				.isThrownBy(() -> this.clients.findById(null))
+				.withMessageContaining("id cannot be empty");
 	}
 
 	@Test
@@ -112,79 +140,76 @@ public class InMemoryRegisteredClientRepositoryTests {
 
 	@Test
 	public void findByClientIdWhenNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> this.clients.findByClientId(null)).isInstanceOf(IllegalArgumentException.class);
+		assertThatIllegalArgumentException()
+				.isThrownBy(() -> this.clients.findByClientId(null))
+				.withMessageContaining("clientId cannot be empty");
 	}
 
 	@Test
-	public void saveNullRegisteredClientThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> this.clients.saveClient(null))
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessageContaining("registeredClient cannot be null");
+	public void saveWhenNullThenThrowIllegalArgumentException() {
+		assertThatIllegalArgumentException()
+				.isThrownBy(() -> this.clients.save(null))
+				.withMessageContaining("registeredClient cannot be null");
 	}
 
 	@Test
-	public void saveRegisteredClientThenReturnsSavedRegisteredClientWhenSearchedById() {
-		RegisteredClient registeredClient = RegisteredClient.withId("new-client")
-				.clientId("new-client")
-				.clientSecret("secret")
+	public void saveWhenExistingIdThenThrowIllegalArgumentException() {
+		RegisteredClient registeredClient = createRegisteredClient(
+				this.registration.getId(), "client-id-2", "client-secret-2");
+		assertThatIllegalArgumentException()
+				.isThrownBy(() -> this.clients.save(registeredClient))
+				.withMessage("Registered client must be unique. Found duplicate identifier: " + registeredClient.getId());
+	}
+
+	@Test
+	public void saveWhenExistingClientIdThenThrowIllegalArgumentException() {
+		RegisteredClient registeredClient = createRegisteredClient(
+				"client-2", this.registration.getClientId(), "client-secret-2");
+		assertThatIllegalArgumentException()
+				.isThrownBy(() -> this.clients.save(registeredClient))
+				.withMessage("Registered client must be unique. Found duplicate client identifier: " + registeredClient.getClientId());
+	}
+
+	@Test
+	public void saveWhenExistingClientSecretThenThrowIllegalArgumentException() {
+		RegisteredClient registeredClient = createRegisteredClient(
+				"client-2", "client-id-2", this.registration.getClientSecret());
+		assertThatIllegalArgumentException()
+				.isThrownBy(() -> this.clients.save(registeredClient))
+				.withMessage("Registered client must be unique. Found duplicate client secret for identifier: " + registeredClient.getId());
+	}
+
+	@Test
+	public void saveWhenSavedAndFindByIdThenFound() {
+		RegisteredClient registeredClient = createRegisteredClient();
+		this.clients.save(registeredClient);
+		RegisteredClient savedClient = this.clients.findById(registeredClient.getId());
+		assertThat(savedClient).isEqualTo(registeredClient);
+	}
+
+	@Test
+	public void saveWhenSavedAndFindByClientIdThenFound() {
+		RegisteredClient registeredClient = createRegisteredClient();
+		this.clients.save(registeredClient);
+		RegisteredClient savedClient = this.clients.findByClientId(registeredClient.getClientId());
+		assertThat(savedClient).isEqualTo(registeredClient);
+	}
+
+	private static RegisteredClient createRegisteredClient() {
+		return createRegisteredClient("client-2", "client-id-2", "client-secret-2");
+	}
+
+	private static RegisteredClient createRegisteredClient(String id, String clientId, String clientSecret) {
+		// @formatter:off
+		return RegisteredClient.withId(id)
+				.clientId(clientId)
+				.clientSecret(clientSecret)
 				.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
 				.clientAuthenticationMethod(ClientAuthenticationMethod.BASIC)
-				.redirectUri("https://newclient.com")
-				.scope("scope1").build();
-
-		this.clients.saveClient(registeredClient);
-
-		RegisteredClient savedClient = this.clients.findById("new-client");
-
-		assertThat(savedClient).isNotNull().isEqualTo(registeredClient);
+				.redirectUri("https://client.example.com")
+				.scope("scope1")
+				.build();
+		// @formatter:on
 	}
 
-	@Test
-	public void saveRegisteredClientThenReturnsSavedRegisteredClientWhenSearchedByClientId() {
-		RegisteredClient registeredClient = RegisteredClient.withId("id1")
-				.clientId("new-client-id")
-				.clientSecret("secret")
-				.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
-				.clientAuthenticationMethod(ClientAuthenticationMethod.BASIC)
-				.redirectUri("https://newclient.com")
-				.scope("scope1").build();
-
-		this.clients.saveClient(registeredClient);
-
-		RegisteredClient savedClient = this.clients.findByClientId("new-client-id");
-
-		assertThat(savedClient).isNotNull().isEqualTo(registeredClient);
-	}
-
-	@Test
-	public void saveRegisteredClientWithExistingIdThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> {
-			RegisteredClient registeredClient = RegisteredClient.withId("registration-1")
-					.clientId("new-client")
-					.clientSecret("secret")
-					.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
-					.clientAuthenticationMethod(ClientAuthenticationMethod.BASIC)
-					.redirectUri("https://newclient.com")
-					.scope("scope1").build();
-
-			this.clients.saveClient(registeredClient);
-		}).isInstanceOf(IllegalArgumentException.class)
-		.hasMessageContaining("Registered client must be unique. Found duplicate identifier");
-	}
-
-	@Test
-	public void saveRegisteredClientWithExistingClientIdThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> {
-			RegisteredClient registeredClient = RegisteredClient.withId("new-client")
-					.clientId("client-1")
-					.clientSecret("secret")
-					.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
-					.clientAuthenticationMethod(ClientAuthenticationMethod.BASIC)
-					.redirectUri("https://newclient.com")
-					.scope("scope1").build();
-
-			this.clients.saveClient(registeredClient);
-		}).isInstanceOf(IllegalArgumentException.class)
-		.hasMessageContaining("Registered client must be unique. Found duplicate client identifier");
-	}
 }

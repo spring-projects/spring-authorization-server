@@ -22,10 +22,18 @@ import org.springframework.lang.Nullable;
  *
  * @author Joe Grandja
  * @author Anoop Garlapati
+ * @author Ovidiu Popa
  * @see RegisteredClient
  * @since 0.0.1
  */
 public interface RegisteredClientRepository {
+
+	/**
+	 * Saves the registered client.
+	 *
+	 * @param registeredClient the {@link RegisteredClient}
+	 */
+	void save(RegisteredClient registeredClient);
 
 	/**
 	 * Returns the registered client identified by the provided {@code id},
@@ -46,12 +54,5 @@ public interface RegisteredClientRepository {
 	 */
 	@Nullable
 	RegisteredClient findByClientId(String clientId);
-
-	/**
-	 * Saves a new registered client
-	 *
-	 * @param registeredClient the {@link RegisteredClient} to be saved
-	 */
-	void saveClient(RegisteredClient registeredClient);
 
 }

@@ -22,6 +22,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
+import org.springframework.util.StringUtils;
 
 /**
  * A {@link RegisteredClientRepository} that stores {@link RegisteredClient}(s) in-memory.
@@ -30,6 +31,8 @@ import org.springframework.util.Assert;
  * <b>NOTE:</b> This implementation is recommended ONLY to be used during development/testing.
  *
  * @author Anoop Garlapati
+ * @author Ovidiu Popa
+ * @author Joe Grandja
  * @see RegisteredClientRepository
  * @see RegisteredClient
  * @since 0.0.1
@@ -58,21 +61,20 @@ public final class InMemoryRegisteredClientRepository implements RegisteredClien
 		ConcurrentHashMap<String, RegisteredClient> clientIdRegistrationMapResult = new ConcurrentHashMap<>();
 		for (RegisteredClient registration : registrations) {
 			Assert.notNull(registration, "registration cannot be null");
-			String id = registration.getId();
-			if (idRegistrationMapResult.containsKey(id)) {
-				throw new IllegalArgumentException("Registered client must be unique. " +
-						"Found duplicate identifier: " + id);
-			}
-			String clientId = registration.getClientId();
-			if (clientIdRegistrationMapResult.containsKey(clientId)) {
-				throw new IllegalArgumentException("Registered client must be unique. " +
-						"Found duplicate client identifier: " + clientId);
-			}
-			idRegistrationMapResult.put(id, registration);
-			clientIdRegistrationMapResult.put(clientId, registration);
+			assertUniqueIdentifiers(registration, idRegistrationMapResult);
+			idRegistrationMapResult.put(registration.getId(), registration);
+			clientIdRegistrationMapResult.put(registration.getClientId(), registration);
 		}
 		this.idRegistrationMap = idRegistrationMapResult;
 		this.clientIdRegistrationMap = clientIdRegistrationMapResult;
+	}
+
+	@Override
+	public void save(RegisteredClient registeredClient) {
+		Assert.notNull(registeredClient, "registeredClient cannot be null");
+		assertUniqueIdentifiers(registeredClient, this.idRegistrationMap);
+		this.idRegistrationMap.put(registeredClient.getId(), registeredClient);
+		this.clientIdRegistrationMap.put(registeredClient.getClientId(), registeredClient);
 	}
 
 	@Nullable
@@ -89,20 +91,22 @@ public final class InMemoryRegisteredClientRepository implements RegisteredClien
 		return this.clientIdRegistrationMap.get(clientId);
 	}
 
-	@Override
-	public void saveClient(RegisteredClient registeredClient) {
-		Assert.notNull(registeredClient, "registeredClient cannot be null");
-		String id = registeredClient.getId();
-		if (idRegistrationMap.containsKey(id)) {
-			throw new IllegalArgumentException("Registered client must be unique. " +
-					"Found duplicate identifier: " + id);
-		}
-		String clientId = registeredClient.getClientId();
-		if (clientIdRegistrationMap.containsKey(clientId)) {
-			throw new IllegalArgumentException("Registered client must be unique. " +
-					"Found duplicate client identifier: " + clientId);
-		}
-		this.idRegistrationMap.put(registeredClient.getId(), registeredClient);
-		this.clientIdRegistrationMap.put(registeredClient.getClientId(), registeredClient);
+	private void assertUniqueIdentifiers(RegisteredClient registeredClient, Map<String, RegisteredClient> registrations) {
+		registrations.values().forEach(registration -> {
+			if (registeredClient.getId().equals(registration.getId())) {
+				throw new IllegalArgumentException("Registered client must be unique. " +
+						"Found duplicate identifier: " + registeredClient.getId());
+			}
+			if (registeredClient.getClientId().equals(registration.getClientId())) {
+				throw new IllegalArgumentException("Registered client must be unique. " +
+						"Found duplicate client identifier: " + registeredClient.getClientId());
+			}
+			if (StringUtils.hasText(registeredClient.getClientSecret()) &&
+					registeredClient.getClientSecret().equals(registration.getClientSecret())) {
+				throw new IllegalArgumentException("Registered client must be unique. " +
+						"Found duplicate client secret for identifier: " + registeredClient.getId());
+			}
+		});
 	}
+
 }

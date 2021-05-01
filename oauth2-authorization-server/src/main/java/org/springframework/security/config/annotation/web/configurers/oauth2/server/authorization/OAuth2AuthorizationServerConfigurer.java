@@ -44,9 +44,9 @@ import org.springframework.security.oauth2.server.authorization.authentication.O
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2RefreshTokenAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2TokenIntrospectionAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2TokenRevocationAuthenticationProvider;
-import org.springframework.security.oauth2.server.authorization.authentication.OidcClientRegistrationAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.config.ProviderSettings;
+import org.springframework.security.oauth2.server.authorization.oidc.authentication.OidcClientRegistrationAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.oidc.web.OidcClientRegistrationEndpointFilter;
 import org.springframework.security.oauth2.server.authorization.oidc.web.OidcProviderConfigurationEndpointFilter;
 import org.springframework.security.oauth2.server.authorization.web.NimbusJwkSetEndpointFilter;
@@ -152,17 +152,6 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 		return this.endpointsMatcher;
 	}
 
-	/**
-	 * Returns {@code true} if the OIDC Client Registration endpoint is enabled.
-	 * The default is {@code false}.
-	 *
-	 * @return {@code true} if the OIDC Client Registration endpoint is enabled, {@code false} otherwise
-	 */
-	public boolean isOidcClientRegistrationEnabled() {
-		ProviderSettings providerSettings = getProviderSettings(this.getBuilder());
-		return providerSettings.isOidClientRegistrationEndpointEnabled();
-	}
-
 	@Override
 	public void init(B builder) {
 		ProviderSettings providerSettings = getProviderSettings(builder);
@@ -216,10 +205,12 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 						getAuthorizationService(builder));
 		builder.authenticationProvider(postProcess(tokenRevocationAuthenticationProvider));
 
-		OidcClientRegistrationAuthenticationProvider clientRegistrationAuthenticationProvider =
+		// TODO Make OpenID Client Registration an "opt-in" feature
+		OidcClientRegistrationAuthenticationProvider oidcClientRegistrationAuthenticationProvider =
 				new OidcClientRegistrationAuthenticationProvider(
+						getRegisteredClientRepository(builder),
 						getAuthorizationService(builder));
-		builder.authenticationProvider(postProcess(clientRegistrationAuthenticationProvider));
+		builder.authenticationProvider(postProcess(oidcClientRegistrationAuthenticationProvider));
 
 		ExceptionHandlingConfigurer<B> exceptionHandling = builder.getConfigurer(ExceptionHandlingConfigurer.class);
 		if (exceptionHandling != null) {
@@ -246,9 +237,6 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 			builder.addFilterBefore(postProcess(authorizationServerMetadataEndpointFilter), AbstractPreAuthenticatedProcessingFilter.class);
 		}
 
-		RegisteredClientRepository registeredClientRepository = getRegisteredClientRepository(builder);
-		OAuth2AuthorizationService authorizationService = getAuthorizationService(builder);
-
 		JWKSource<SecurityContext> jwkSource = getJwkSource(builder);
 		NimbusJwkSetEndpointFilter jwkSetEndpointFilter = new NimbusJwkSetEndpointFilter(
 				jwkSource,
@@ -268,8 +256,8 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 
 		OAuth2AuthorizationEndpointFilter authorizationEndpointFilter =
 				new OAuth2AuthorizationEndpointFilter(
-						registeredClientRepository,
-						authorizationService,
+						getRegisteredClientRepository(builder),
+						getAuthorizationService(builder),
 						providerSettings.authorizationEndpoint());
 		builder.addFilterBefore(postProcess(authorizationEndpointFilter), AbstractPreAuthenticatedProcessingFilter.class);
 
@@ -291,14 +279,12 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 						providerSettings.tokenRevocationEndpoint());
 		builder.addFilterAfter(postProcess(tokenRevocationEndpointFilter), OAuth2TokenIntrospectionEndpointFilter.class);
 
-		if (providerSettings.isOidClientRegistrationEndpointEnabled()) {
-			OidcClientRegistrationEndpointFilter oidcClientRegistrationEndpointFilter =
-					new OidcClientRegistrationEndpointFilter(
-							registeredClientRepository,
-							authenticationManager,
-							providerSettings.oidcClientRegistrationEndpoint());
-			builder.addFilterAfter(postProcess(oidcClientRegistrationEndpointFilter), OAuth2TokenRevocationEndpointFilter.class);
-		}
+		// TODO Make OpenID Client Registration an "opt-in" feature
+		OidcClientRegistrationEndpointFilter oidcClientRegistrationEndpointFilter =
+				new OidcClientRegistrationEndpointFilter(
+						authenticationManager,
+						providerSettings.oidcClientRegistrationEndpoint());
+		builder.addFilterAfter(postProcess(oidcClientRegistrationEndpointFilter), OAuth2TokenRevocationEndpointFilter.class);
 	}
 
 	private void initEndpointMatchers(ProviderSettings providerSettings) {
@@ -322,8 +308,7 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 		this.authorizationServerMetadataEndpointMatcher = new AntPathRequestMatcher(
 				OAuth2AuthorizationServerMetadataEndpointFilter.DEFAULT_OAUTH2_AUTHORIZATION_SERVER_METADATA_ENDPOINT_URI, HttpMethod.GET.name());
 		this.oidcClientRegistrationEndpointMatcher = new AntPathRequestMatcher(
-				providerSettings.oidcClientRegistrationEndpoint(),
-				HttpMethod.POST.name());
+				providerSettings.oidcClientRegistrationEndpoint(), HttpMethod.POST.name());
 	}
 
 	private static void validateProviderSettings(ProviderSettings providerSettings) {

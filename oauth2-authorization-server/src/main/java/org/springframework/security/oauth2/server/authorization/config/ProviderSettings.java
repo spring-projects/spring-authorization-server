@@ -34,7 +34,6 @@ public class ProviderSettings extends Settings {
 	public static final String TOKEN_REVOCATION_ENDPOINT = PROVIDER_SETTING_BASE.concat("token-revocation-endpoint");
 	public static final String TOKEN_INTROSPECTION_ENDPOINT = PROVIDER_SETTING_BASE.concat("token-introspection-endpoint");
 	public static final String OIDC_CLIENT_REGISTRATION_ENDPOINT = PROVIDER_SETTING_BASE.concat("oidc-client-registration-endpoint");
-	public static final String ENABLE_OIDC_CLIENT_REGISTRATION_ENDPOINT = PROVIDER_SETTING_BASE.concat("enable-oidc-client-registration-endpoint");
 
 	/**
 	 * Constructs a {@code ProviderSettings}.
@@ -167,43 +166,22 @@ public class ProviderSettings extends Settings {
 	}
 
 	/**
-	 * Returns the Provider's OAuth 2.0 OIDC Client Registration endpoint. The default is {@code /connect/register}.
+	 * Returns the Provider's OpenID Connect 1.0 Client Registration endpoint. The default is {@code /connect/register}.
 	 *
-	 * @return the OIDC Client Registration endpoint
+	 * @return the OpenID Connect 1.0 Client Registration endpoint
 	 */
 	public String oidcClientRegistrationEndpoint() {
 		return setting(OIDC_CLIENT_REGISTRATION_ENDPOINT);
 	}
 
 	/**
-	 * Sets the Provider's OAuth 2.0 OIDC Client Registration endpoint.
+	 * Sets the Provider's OpenID Connect 1.0 Client Registration endpoint.
 	 *
-	 * @param oidcClientRegistrationEndpoint the Token Revocation endpoint
+	 * @param oidcClientRegistrationEndpoint the OpenID Connect 1.0 Client Registration endpoint
 	 * @return the {@link ProviderSettings} for further configuration
 	 */
 	public ProviderSettings oidcClientRegistrationEndpoint(String oidcClientRegistrationEndpoint) {
 		return setting(OIDC_CLIENT_REGISTRATION_ENDPOINT, oidcClientRegistrationEndpoint);
-	}
-
-	/**
-	 * Returns {@code true} if the OIDC Client Registration endpoint is enabled.
-	 * The default is {@code false}.
-	 *
-	 * @return {@code true} if the OIDC Client Registration endpoint is enabled, {@code false} otherwise
-	 */
-	public boolean isOidClientRegistrationEndpointEnabled() {
-		return setting(ENABLE_OIDC_CLIENT_REGISTRATION_ENDPOINT);
-	}
-
-	/**
-	 * Set to {@code true} if the OIDC Client Registration Endpoint should be enabled.
-	 *
-	 * @param oidClientRegistrationEndpointEnabled {@code true} if the OIDC Client Registration endpoint should enabled
-	 * @return the {@link ProviderSettings}
-	 */
-	public ProviderSettings isOidClientRegistrationEndpointEnabled(boolean oidClientRegistrationEndpointEnabled) {
-		setting(ENABLE_OIDC_CLIENT_REGISTRATION_ENDPOINT, oidClientRegistrationEndpointEnabled);
-		return this;
 	}
 
 	protected static Map<String, Object> defaultSettings() {
@@ -214,7 +192,6 @@ public class ProviderSettings extends Settings {
 		settings.put(TOKEN_REVOCATION_ENDPOINT, "/oauth2/revoke");
 		settings.put(TOKEN_INTROSPECTION_ENDPOINT, "/oauth2/introspect");
 		settings.put(OIDC_CLIENT_REGISTRATION_ENDPOINT, "/connect/register");
-		settings.put(ENABLE_OIDC_CLIENT_REGISTRATION_ENDPOINT, false);
 		return settings;
 	}
 }

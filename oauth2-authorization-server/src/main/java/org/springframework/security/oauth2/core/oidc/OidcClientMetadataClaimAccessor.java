@@ -15,17 +15,18 @@
  */
 package org.springframework.security.oauth2.core.oidc;
 
-import org.springframework.security.oauth2.core.ClaimAccessor;
-import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
-
 import java.time.Instant;
 import java.util.List;
 
+import org.springframework.security.oauth2.core.ClaimAccessor;
+import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
+
 /**
- * A {@link ClaimAccessor} for the "claims" that can be returned
- * in the OpenID Client Registration Response.
+ * A {@link ClaimAccessor} for the "claims" that are contained
+ * in the OpenID Client Registration Request and Response.
  *
  * @author Ovidiu Popa
+ * @author Joe Grandja
  * @since 0.1.1
  * @see ClaimAccessor
  * @see OidcClientMetadataClaimNames
@@ -35,96 +36,102 @@ import java.util.List;
 public interface OidcClientMetadataClaimAccessor extends ClaimAccessor {
 
 	/**
-	 * Returns the redirect URI(s) that the client may use in redirect-based flows.
+	 * Returns the Client Identifier {@code (client_id)}.
 	 *
-	 * @return the {@code List} of redirect URI(s)
-	 */
-	default List<String> getRedirectUris() {
-		return getClaimAsStringList(OidcClientMetadataClaimNames.REDIRECT_URIS);
-	}
-
-	/**
-	 * Returns the OAuth 2.0 {@code response_type} values that the client may use.
-	 *
-	 * @return the {@code List} of {@code response_type}
-	 */
-	default List<String> getResponseTypes() {
-		return getClaimAsStringList(OidcClientMetadataClaimNames.RESPONSE_TYPES);
-	}
-
-	/**
-	 * Returns the authorization {@code grant_types} that the client may use.
-	 *
-	 * @return the {@code List} of authorization {@code grant_types}
-	 */
-	default List<String> getGrantTypes() {
-		return getClaimAsStringList(OidcClientMetadataClaimNames.GRANT_TYPES);
-	}
-
-	/**
-	 * Returns the {@code client_name}.
-	 *
-	 * @return the {@code client_name}
-	 */
-	default String getClientName() {
-		return getClaimAsString(OidcClientMetadataClaimNames.CLIENT_NAME);
-	}
-
-	/**
-	 * Returns the scope(s) that the client may use.
-	 *
-	 * @return the scope(s)
-	 */
-	default String getScope() {
-		return getClaimAsString(OidcClientMetadataClaimNames.SCOPE);
-	}
-
-	/**
-	 * Returns the {@link ClientAuthenticationMethod authentication method} that the client may use.
-	 *
-	 * @return the {@link ClientAuthenticationMethod authentication method}
-	 */
-	default String getTokenEndpointAuthenticationMethod() {
-		return getClaimAsString(OidcClientMetadataClaimNames.TOKEN_ENDPOINT_AUTH_METHOD);
-	}
-
-	/**
-	 * Returns the {@code client_id}.
-	 *
-	 * @return the {@code client_id}
+	 * @return the Client Identifier
 	 */
 	default String getClientId() {
 		return getClaimAsString(OidcClientMetadataClaimNames.CLIENT_ID);
 	}
 
 	/**
-	 * Returns the {@code client_id_issued_at} timestamp.
+	 * Returns the time at which the Client Identifier was issued {@code (client_id_issued_at)}.
 	 *
-	 * @return the {@code client_id_issued_at} timestamp
+	 * @return the time at which the Client Identifier was issued
 	 */
 	default Instant getClientIdIssuedAt() {
 		return getClaimAsInstant(OidcClientMetadataClaimNames.CLIENT_ID_ISSUED_AT);
 	}
 
 	/**
-	 * Returns the {@code client_secret}.
+	 * Returns the Client Secret {@code (client_secret)}.
 	 *
-	 * @return the {@code client_secret}
+	 * @return the Client Secret
 	 */
 	default String getClientSecret() {
 		return getClaimAsString(OidcClientMetadataClaimNames.CLIENT_SECRET);
 	}
 
 	/**
-	 * Returns the {@code client_secret_expires_at} timestamp.
+	 * Returns the time at which the {@code client_secret} will expire {@code (client_secret_expires_at)}.
 	 *
-	 * @return the {@code client_secret_expires_at} timestamp
+	 * @return the time at which the {@code client_secret} will expire
 	 */
 	default Instant getClientSecretExpiresAt() {
 		return getClaimAsInstant(OidcClientMetadataClaimNames.CLIENT_SECRET_EXPIRES_AT);
 	}
 
+	/**
+	 * Returns the name of the Client to be presented to the End-User {@code (client_name)}.
+	 *
+	 * @return the name of the Client to be presented to the End-User
+	 */
+	default String getClientName() {
+		return getClaimAsString(OidcClientMetadataClaimNames.CLIENT_NAME);
+	}
 
+	/**
+	 * Returns the redirection {@code URI} values used by the Client {@code (redirect_uris)}.
+	 *
+	 * @return the redirection {@code URI} values used by the Client
+	 */
+	default List<String> getRedirectUris() {
+		return getClaimAsStringList(OidcClientMetadataClaimNames.REDIRECT_URIS);
+	}
 
+	/**
+	 * Returns the authentication method used by the Client for the Token Endpoint {@code (token_endpoint_auth_method)}.
+	 *
+	 * @return the authentication method used by the Client for the Token Endpoint
+	 */
+	default String getTokenEndpointAuthenticationMethod() {
+		return getClaimAsString(OidcClientMetadataClaimNames.TOKEN_ENDPOINT_AUTH_METHOD);
+	}
+
+	/**
+	 * Returns the OAuth 2.0 {@code grant_type} values that the Client will restrict itself to using {@code (grant_types)}.
+	 *
+	 * @return the OAuth 2.0 {@code grant_type} values that the Client will restrict itself to using
+	 */
+	default List<String> getGrantTypes() {
+		return getClaimAsStringList(OidcClientMetadataClaimNames.GRANT_TYPES);
+	}
+
+	/**
+	 * Returns the OAuth 2.0 {@code response_type} values that the Client will restrict itself to using {@code (response_types)}.
+	 *
+	 * @return the OAuth 2.0 {@code response_type} values that the Client will restrict itself to using
+	 */
+	default List<String> getResponseTypes() {
+		return getClaimAsStringList(OidcClientMetadataClaimNames.RESPONSE_TYPES);
+	}
+
+	/**
+	 * Returns the OAuth 2.0 {@code scope} values that the Client will restrict itself to using {@code (scope)}.
+	 *
+	 * @return the OAuth 2.0 {@code scope} values that the Client will restrict itself to using
+	 */
+	default List<String> getScopes() {
+		return getClaimAsStringList(OidcClientMetadataClaimNames.SCOPE);
+	}
+
+	/**
+	 * Returns the {@link SignatureAlgorithm JWS} algorithm required for signing the {@link OidcIdToken ID Token} issued to the Client {@code (id_token_signed_response_alg)}.
+	 *
+	 * @return the {@link SignatureAlgorithm JWS} algorithm required for signing the {@link OidcIdToken ID Token} issued to the Client
+	 */
+	default String getIdTokenSignedResponseAlgorithm() {
+		return getClaimAsString(OidcClientMetadataClaimNames.ID_TOKEN_SIGNED_RESPONSE_ALG);
+	}
 
 }

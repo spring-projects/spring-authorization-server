@@ -15,12 +15,6 @@
  */
 package org.springframework.security.oauth2.core.oidc;
 
-import org.springframework.security.oauth2.core.AuthorizationGrantType;
-import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
-import org.springframework.security.oauth2.core.Version;
-import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationResponseType;
-import org.springframework.util.Assert;
-
 import java.io.Serializable;
 import java.net.URI;
 import java.net.URL;
@@ -32,28 +26,36 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
+import org.springframework.security.oauth2.core.Version;
+import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
+import org.springframework.util.Assert;
+
 /**
  * A representation of an OpenID Client Registration Request and Response,
- * which contains a set of claims defined by the
- * OpenID Connect Registration 1.0 specification.
+ * which is sent to and returned from the Client Registration Endpoint,
+ * and contains a set of claims about the Client's Registration information.
+ * The claims are defined by the OpenID Connect Dynamic Client Registration 1.0 specification.
  *
  * @author Ovidiu Popa
+ * @author Joe Grandja
  * @since 0.1.1
  * @see OidcClientMetadataClaimAccessor
- * @see <a href="https://openid.net/specs/openid-connect-registration-1_0.html#ClientRegistration">3.1.  Client Registration Request</a>
+ * @see <a href="https://openid.net/specs/openid-connect-registration-1_0.html#RegistrationRequest">3.1. Client Registration Request</a>
+ * @see <a href="https://openid.net/specs/openid-connect-registration-1_0.html#RegistrationResponse">3.2. Client Registration Response</a>
  */
 public final class OidcClientRegistration implements OidcClientMetadataClaimAccessor, Serializable {
 	private static final long serialVersionUID = Version.SERIAL_VERSION_UID;
 	private final Map<String, Object> claims;
 
 	private OidcClientRegistration(Map<String, Object> claims) {
-		this.claims = Collections.unmodifiableMap(claims);
+		Assert.notEmpty(claims, "claims cannot be empty");
+		this.claims = Collections.unmodifiableMap(new LinkedHashMap<>(claims));
 	}
 
 	/**
-	 * Returns the OpenID Client Registration metadata.
+	 * Returns the metadata as claims.
 	 *
-	 * @return a {@code Map} of the metadata values
+	 * @return a {@code Map} of the metadata as claims
 	 */
 	@Override
 	public Map<String, Object> getClaims() {
@@ -61,9 +63,9 @@ public final class OidcClientRegistration implements OidcClientMetadataClaimAcce
 	}
 
 	/**
-	 * Constructs a new {@link OidcClientRegistration.Builder} with empty claims.
+	 * Constructs a new {@link Builder} with empty claims.
 	 *
-	 * @return the {@link OidcClientRegistration.Builder}
+	 * @return the {@link Builder}
 	 */
 	public static Builder builder() {
 		return new Builder();
@@ -80,18 +82,69 @@ public final class OidcClientRegistration implements OidcClientMetadataClaimAcce
 				.claims(c -> c.putAll(claims));
 	}
 
+	/**
+	 * Helps configure an {@link OidcClientRegistration}.
+	 */
 	public static class Builder {
-
 		private final Map<String, Object> claims = new LinkedHashMap<>();
 
 		private Builder() {
 		}
 
 		/**
-		 * Add this Redirect URI to the collection of {@code redirect_uris} in the resulting
-		 * {@link OidcClientRegistration}, REQUIRED.
+		 * Sets the Client Identifier, REQUIRED.
 		 *
-		 * @param redirectUri the OAuth 2.0 {@code redirect_uri} value that client supports
+		 * @param clientId the Client Identifier
+		 * @return the {@link Builder} for further configuration
+		 */
+		public Builder clientId(String clientId) {
+			return claim(OidcClientMetadataClaimNames.CLIENT_ID, clientId);
+		}
+
+		/**
+		 * Sets the time at which the Client Identifier was issued, OPTIONAL.
+		 *
+		 * @param clientIdIssuedAt the time at which the Client Identifier was issued
+		 * @return the {@link Builder} for further configuration
+		 */
+		public Builder clientIdIssuedAt(Instant clientIdIssuedAt) {
+			return claim(OidcClientMetadataClaimNames.CLIENT_ID_ISSUED_AT, clientIdIssuedAt);
+		}
+
+		/**
+		 * Sets the Client Secret, OPTIONAL.
+		 *
+		 * @param clientSecret the Client Secret
+		 * @return the {@link Builder} for further configuration
+		 */
+		public Builder clientSecret(String clientSecret) {
+			return claim(OidcClientMetadataClaimNames.CLIENT_SECRET, clientSecret);
+		}
+
+		/**
+		 * Sets the time at which the {@code client_secret} will expire or {@code null} if it will not expire, REQUIRED if {@code client_secret} was issued.
+		 *
+		 * @param clientSecretExpiresAt the time at which the {@code client_secret} will expire or {@code null} if it will not expire
+		 * @return the {@link Builder} for further configuration
+		 */
+		public Builder clientSecretExpiresAt(Instant clientSecretExpiresAt) {
+			return claim(OidcClientMetadataClaimNames.CLIENT_SECRET_EXPIRES_AT, clientSecretExpiresAt);
+		}
+
+		/**
+		 * Sets the name of the Client to be presented to the End-User, OPTIONAL.
+		 *
+		 * @param clientName the name of the Client to be presented to the End-User
+		 * @return the {@link Builder} for further configuration
+		 */
+		public Builder clientName(String clientName) {
+			return claim(OidcClientMetadataClaimNames.CLIENT_NAME, clientName);
+		}
+
+		/**
+		 * Add the redirection {@code URI} used by the Client, REQUIRED.
+		 *
+		 * @param redirectUri the redirection {@code URI} used by the Client
 		 * @return the {@link Builder} for further configuration
 		 */
 		public Builder redirectUri(String redirectUri) {
@@ -100,100 +153,31 @@ public final class OidcClientRegistration implements OidcClientMetadataClaimAcce
 		}
 
 		/**
-		 * A {@code Consumer} of the Redirect URI(s) allowing the ability to add, replace, or remove.
+		 * A {@code Consumer} of the redirection {@code URI} values used by the Client,
+		 * allowing the ability to add, replace, or remove, REQUIRED.
 		 *
-		 * @param redirectUriConsumer a {@code Consumer} of the Redirect URI(s)
+		 * @param redirectUrisConsumer a {@code Consumer} of the redirection {@code URI} values used by the Client
 		 * @return the {@link Builder} for further configuration
 		 */
-		public Builder redirectUris(Consumer<List<String>> redirectUriConsumer) {
-			acceptClaimValues(OidcClientMetadataClaimNames.REDIRECT_URIS, redirectUriConsumer);
+		public Builder redirectUris(Consumer<List<String>> redirectUrisConsumer) {
+			acceptClaimValues(OidcClientMetadataClaimNames.REDIRECT_URIS, redirectUrisConsumer);
 			return this;
 		}
 
 		/**
-		 * Add this Response Type to the collection of {@code response_types} in the resulting
-		 * {@link OidcClientRegistration}, OPTIONAL.
+		 * Sets the authentication method used by the Client for the Token Endpoint, OPTIONAL.
 		 *
-		 * @param responseType the OAuth 2.0 {@code response_type} value that client supports
+		 * @param tokenEndpointAuthenticationMethod the authentication method used by the Client for the Token Endpoint
 		 * @return the {@link Builder} for further configuration
 		 */
-		public Builder responseType(String responseType) {
-			addClaimToClaimList(OidcClientMetadataClaimNames.RESPONSE_TYPES, responseType);
-			return this;
+		public Builder tokenEndpointAuthenticationMethod(String tokenEndpointAuthenticationMethod) {
+			return claim(OidcClientMetadataClaimNames.TOKEN_ENDPOINT_AUTH_METHOD, tokenEndpointAuthenticationMethod);
 		}
 
 		/**
-		 * Add {@code Consumer}  of {@code response_types} allowing the ability to add, replace, or remove
-		 * {@link OidcClientRegistration}, OPTIONAL.
+		 * Add the OAuth 2.0 {@code grant_type} that the Client will restrict itself to using, OPTIONAL.
 		 *
-		 * @param responseType the OAuth 2.0 {@code response_type} value that client supports
-		 * @return the {@link Builder} for further configuration
-		 */
-		public Builder responseTypes(Consumer<List<String>>  responseType) {
-			acceptClaimValues(OidcClientMetadataClaimNames.RESPONSE_TYPES, responseType);
-			return this;
-		}
-
-		/**
-		 * Sets {@code client_name} claim in the resulting
-		 * {@link OidcClientRegistration}, OPTIONAL.
-		 *
-		 * @param clientName the OAuth 2.0 {@code client_name} of the registered client
-		 * @return the {@link Builder} for further configuration
-		 */
-		public Builder clientName(String clientName) {
-			return claim(OidcClientMetadataClaimNames.CLIENT_NAME, clientName);
-		}
-
-		/**
-		 * Sets {@code client_id} claim in the resulting
-		 * {@link OidcClientRegistration}.
-		 *
-		 * @param clientId the OAuth 2.0 {@code client_id} of the registered client
-		 * @return the {@link Builder} for further configuration
-		 */
-		public Builder clientId(String clientId) {
-			return claim(OidcClientMetadataClaimNames.CLIENT_ID, clientId);
-		}
-
-		/**
-		 * Sets {@code client_id_issued_at} claim in the resulting
-		 * {@link OidcClientRegistration}.
-		 *
-		 * @param clientIssuedAt the timestamp {@code client_id_issued_at} when the client was issued
-		 * @return the {@link Builder} for further configuration
-		 */
-		public Builder clientIdIssuedAt(Instant clientIssuedAt) {
-			return claim(OidcClientMetadataClaimNames.CLIENT_ID_ISSUED_AT, clientIssuedAt);
-		}
-
-		/**
-		 * Sets {@code client_secret} claim in the resulting
-		 * {@link OidcClientRegistration}.
-		 *
-		 * @param clientSecret the {@code client_secret} of the registered client
-		 * @return the {@link Builder} for further configuration
-		 */
-		public Builder clientSecret(String clientSecret) {
-			return claim(OidcClientMetadataClaimNames.CLIENT_SECRET, clientSecret);
-		}
-
-		/**
-		 * Sets {@code client_secret_expires_at} claim in the resulting
-		 * {@link OidcClientRegistration}.
-		 *
-		 * @param clientSecretExpiresAt the timestamp {@code client_secret_expires_at} when the client_secret expires
-		 * @return the {@link Builder} for further configuration
-		 */
-		public Builder clientSecretExpiresAt(Instant clientSecretExpiresAt) {
-			return claim(OidcClientMetadataClaimNames.CLIENT_SECRET_EXPIRES_AT, clientSecretExpiresAt);
-		}
-
-		/**
-		 * Add this Grant Type to the collection of {@code grant_types_supported} in the resulting
-		 * {@link OidcClientRegistration}, OPTIONAL.
-		 *
-		 * @param grantType the OAuth 2.0 {@code grant_type} value that client supports
+		 * @param grantType the OAuth 2.0 {@code grant_type} that the Client will restrict itself to using
 		 * @return the {@link Builder} for further configuration
 		 */
 		public Builder grantType(String grantType) {
@@ -202,9 +186,10 @@ public final class OidcClientRegistration implements OidcClientMetadataClaimAcce
 		}
 
 		/**
-		 * A {@code Consumer} of the Grant Type(s) allowing the ability to add, replace, or remove.
+		 * A {@code Consumer} of the OAuth 2.0 {@code grant_type} values that the Client will restrict itself to using,
+		 * allowing the ability to add, replace, or remove, OPTIONAL.
 		 *
-		 * @param grantTypesConsumer a {@code Consumer} of the Grant Type(s)
+		 * @param grantTypesConsumer a {@code Consumer} of the OAuth 2.0 {@code grant_type} values that the Client will restrict itself to using
 		 * @return the {@link Builder} for further configuration
 		 */
 		public Builder grantTypes(Consumer<List<String>> grantTypesConsumer) {
@@ -213,22 +198,44 @@ public final class OidcClientRegistration implements OidcClientMetadataClaimAcce
 		}
 
 		/**
-		 * Add this Scope to the collection of {@code scopes_supported} in the resulting
-		 * {@link OidcClientRegistration}, RECOMMENDED.
+		 * Add the OAuth 2.0 {@code response_type} that the Client will restrict itself to using, OPTIONAL.
 		 *
-		 * @param scope the OAuth 2.0 {@code scope} value that client supports
+		 * @param responseType the OAuth 2.0 {@code response_type} that the Client will restrict itself to using
 		 * @return the {@link Builder} for further configuration
 		 */
-		public Builder scope(String scope) {
-			claim(OidcClientMetadataClaimNames.SCOPE, scope);
+		public Builder responseType(String responseType) {
+			addClaimToClaimList(OidcClientMetadataClaimNames.RESPONSE_TYPES, responseType);
 			return this;
 		}
 
 		/**
-		 * Add {@code Consumer}  of {@code scopes} allowing the ability to add, replace, or remove
-		 * {@link OidcClientRegistration}, RECOMMENDED.
+		 * A {@code Consumer} of the OAuth 2.0 {@code response_type} values that the Client will restrict itself to using,
+		 * allowing the ability to add, replace, or remove, OPTIONAL.
 		 *
-		 * @param scopesConsumer the OAuth 2.0 {@code scope} value that client supports
+		 * @param responseTypesConsumer a {@code Consumer} of the OAuth 2.0 {@code response_type} values that the Client will restrict itself to using
+		 * @return the {@link Builder} for further configuration
+		 */
+		public Builder responseTypes(Consumer<List<String>>  responseTypesConsumer) {
+			acceptClaimValues(OidcClientMetadataClaimNames.RESPONSE_TYPES, responseTypesConsumer);
+			return this;
+		}
+
+		/**
+		 * Add the OAuth 2.0 {@code scope} that the Client will restrict itself to using, OPTIONAL.
+		 *
+		 * @param scope the OAuth 2.0 {@code scope} that the Client will restrict itself to using
+		 * @return the {@link Builder} for further configuration
+		 */
+		public Builder scope(String scope) {
+			addClaimToClaimList(OidcClientMetadataClaimNames.SCOPE, scope);
+			return this;
+		}
+
+		/**
+		 * A {@code Consumer} of the OAuth 2.0 {@code scope} values that the Client will restrict itself to using,
+		 * allowing the ability to add, replace, or remove, OPTIONAL.
+		 *
+		 * @param scopesConsumer a {@code Consumer} of the OAuth 2.0 {@code scope} values that the Client will restrict itself to using
 		 * @return the {@link Builder} for further configuration
 		 */
 		public Builder scopes(Consumer<List<String>>  scopesConsumer) {
@@ -237,19 +244,17 @@ public final class OidcClientRegistration implements OidcClientMetadataClaimAcce
 		}
 
 		/**
-		 * Add this Token endpoint authentication method to the collection of {@code token_endpoint_auth_method} in the resulting
-		 * {@link OidcClientRegistration}, OPTIONAL.
+		 * Sets the {@link SignatureAlgorithm JWS} algorithm required for signing the {@link OidcIdToken ID Token} issued to the Client, OPTIONAL.
 		 *
-		 * @param tokenEndpointAuthenticationMethod the OAuth 2.0 {@code token_endpoint_auth_method} value that client supports
+		 * @param idTokenSignedResponseAlgorithm the {@link SignatureAlgorithm JWS} algorithm required for signing the {@link OidcIdToken ID Token} issued to the Client
 		 * @return the {@link Builder} for further configuration
 		 */
-		public Builder tokenEndpointAuthenticationMethod(String tokenEndpointAuthenticationMethod) {
-			claim(OidcClientMetadataClaimNames.TOKEN_ENDPOINT_AUTH_METHOD, tokenEndpointAuthenticationMethod);
-			return this;
+		public Builder idTokenSignedResponseAlgorithm(String idTokenSignedResponseAlgorithm) {
+			return claim(OidcClientMetadataClaimNames.ID_TOKEN_SIGNED_RESPONSE_ALG, idTokenSignedResponseAlgorithm);
 		}
 
 		/**
-		 * Add this claim in the resulting {@link OidcClientRegistration}.
+		 * Sets the claim.
 		 *
 		 * @param name  the claim name
 		 * @param value the claim value
@@ -263,8 +268,8 @@ public final class OidcClientRegistration implements OidcClientMetadataClaimAcce
 		}
 
 		/**
-		 * Provides access to every {@link #claim(String, Object)} declared so far with
-		 * the possibility to add, replace, or remove.
+		 * Provides access to every {@link #claim(String, Object)} declared so far
+		 * allowing the ability to add, replace, or remove.
 		 *
 		 * @param claimsConsumer a {@code Consumer} of the claims
 		 * @return the {@link Builder} for further configurations
@@ -274,58 +279,48 @@ public final class OidcClientRegistration implements OidcClientMetadataClaimAcce
 			return this;
 		}
 
+		/**
+		 * Validate the claims and build the {@link OidcClientRegistration}.
+		 * <p>
+		 * The following claims are REQUIRED:
+		 * {@code client_id}, {@code redirect_uris}.
+		 *
+		 * @return the {@link OidcClientRegistration}
+		 */
 		public OidcClientRegistration build() {
-			this.claims.computeIfAbsent(OidcClientMetadataClaimNames.TOKEN_ENDPOINT_AUTH_METHOD,
-					k -> ClientAuthenticationMethod.BASIC.getValue());
-			// If omitted, the default is that the Client will use only the authorization_code Grant Type.
-			this.claims.computeIfAbsent(OidcClientMetadataClaimNames.GRANT_TYPES,
-					k -> Collections.singletonList(AuthorizationGrantType.AUTHORIZATION_CODE.getValue()));
-			//If omitted, the default is that the Client will use only the code Response Type.
-			this.claims.computeIfAbsent(OidcClientMetadataClaimNames.RESPONSE_TYPES,
-					k -> Collections.singletonList(OAuth2AuthorizationResponseType.CODE.getValue()));
-			validateRedirectUris();
-			validateReponseTypesClaim();
-			validateGrantTypesClaim();
+			validate();
 			return new OidcClientRegistration(this.claims);
 		}
 
-		private void validateRedirectUris() {
-			// redirect_uris is required
+		private void validate() {
+			if (this.claims.get(OidcClientMetadataClaimNames.CLIENT_ID_ISSUED_AT) != null ||
+					this.claims.get(OidcClientMetadataClaimNames.CLIENT_SECRET) != null) {
+				Assert.notNull(this.claims.get(OidcClientMetadataClaimNames.CLIENT_ID), "client_id cannot be null");
+			}
+			if (this.claims.get(OidcClientMetadataClaimNames.CLIENT_ID_ISSUED_AT) != null) {
+				Assert.isInstanceOf(Instant.class, this.claims.get(OidcClientMetadataClaimNames.CLIENT_ID_ISSUED_AT), "client_id_issued_at must be of type Instant");
+			}
+			if (this.claims.get(OidcClientMetadataClaimNames.CLIENT_SECRET_EXPIRES_AT) != null) {
+				Assert.notNull(this.claims.get(OidcClientMetadataClaimNames.CLIENT_SECRET), "client_secret cannot be null");
+				Assert.isInstanceOf(Instant.class, this.claims.get(OidcClientMetadataClaimNames.CLIENT_SECRET_EXPIRES_AT), "client_secret_expires_at must be of type Instant");
+			}
 			Assert.notNull(this.claims.get(OidcClientMetadataClaimNames.REDIRECT_URIS), "redirect_uris cannot be null");
-			Assert.isInstanceOf(List.class, this.claims.get(OidcClientMetadataClaimNames.REDIRECT_URIS), "redirect_uris must be of type list");
-			Assert.notEmpty((List<?>) this.claims.get(OidcClientMetadataClaimNames.REDIRECT_URIS), "redirect_uris must not be empty");
+			Assert.isInstanceOf(List.class, this.claims.get(OidcClientMetadataClaimNames.REDIRECT_URIS), "redirect_uris must be of type List");
+			Assert.notEmpty((List<?>) this.claims.get(OidcClientMetadataClaimNames.REDIRECT_URIS), "redirect_uris cannot be empty");
 			((List<?>) this.claims.get(OidcClientMetadataClaimNames.REDIRECT_URIS)).forEach(
 					url -> validateURL(url, "redirect_uri must be a valid URL")
 			);
-		}
-
-		private void validateGrantTypesClaim() {
-			Assert.isInstanceOf(List.class, this.claims.get(OidcClientMetadataClaimNames.GRANT_TYPES), "grant_types must be of type List");
-			List<?> grantTypes = (List<?>) this.claims.get(OidcClientMetadataClaimNames.GRANT_TYPES);
-			// If empty, the default is that the Client will use only the authorization_code Grant Type.
-			if (grantTypes.isEmpty()) {
-				this.claims.put(OidcClientMetadataClaimNames.GRANT_TYPES,
-						Collections.singletonList(AuthorizationGrantType.AUTHORIZATION_CODE.getValue()));
+			if (this.claims.get(OidcClientMetadataClaimNames.GRANT_TYPES) != null) {
+				Assert.isInstanceOf(List.class, this.claims.get(OidcClientMetadataClaimNames.GRANT_TYPES), "grant_types must be of type List");
+				Assert.notEmpty((List<?>) this.claims.get(OidcClientMetadataClaimNames.GRANT_TYPES), "grant_types cannot be empty");
 			}
-		}
-
-		private void validateReponseTypesClaim() {
-			Assert.isInstanceOf(List.class, this.claims.get(OidcClientMetadataClaimNames.RESPONSE_TYPES), "response_types must be of type List");
-			List<?> responseTypes = (List<?>) this.claims.get(OidcClientMetadataClaimNames.RESPONSE_TYPES);
-			//If empty, the default is that the Client will use only the code Response Type.
-			if (responseTypes.isEmpty()) {
-				this.claims.put(OidcClientMetadataClaimNames.RESPONSE_TYPES, Collections.singletonList(OAuth2AuthorizationResponseType.CODE.getValue()));
+			if (this.claims.get(OidcClientMetadataClaimNames.RESPONSE_TYPES) != null) {
+				Assert.isInstanceOf(List.class, this.claims.get(OidcClientMetadataClaimNames.RESPONSE_TYPES), "response_types must be of type List");
+				Assert.notEmpty((List<?>) this.claims.get(OidcClientMetadataClaimNames.RESPONSE_TYPES), "response_types cannot be empty");
 			}
-		}
-
-		private static void validateURL(Object url, String errorMessage) {
-			if (URL.class.isAssignableFrom(url.getClass())) {
-				return;
-			}
-			try {
-				new URI(url.toString()).toURL();
-			} catch (Exception ex) {
-				throw new IllegalArgumentException(errorMessage, ex);
+			if (this.claims.get(OidcClientMetadataClaimNames.SCOPE) != null) {
+				Assert.isInstanceOf(List.class, this.claims.get(OidcClientMetadataClaimNames.SCOPE), "scope must be of type List");
+				Assert.notEmpty((List<?>) this.claims.get(OidcClientMetadataClaimNames.SCOPE), "scope cannot be empty");
 			}
 		}
 
@@ -344,6 +339,17 @@ public final class OidcClientRegistration implements OidcClientMetadataClaimAcce
 			this.claims.computeIfAbsent(name, k -> new LinkedList<String>());
 			List<String> values = (List<String>) this.claims.get(name);
 			valuesConsumer.accept(values);
+		}
+
+		private static void validateURL(Object url, String errorMessage) {
+			if (URL.class.isAssignableFrom(url.getClass())) {
+				return;
+			}
+			try {
+				new URI(url.toString()).toURL();
+			} catch (Exception ex) {
+				throw new IllegalArgumentException(errorMessage, ex);
+			}
 		}
 	}
 }

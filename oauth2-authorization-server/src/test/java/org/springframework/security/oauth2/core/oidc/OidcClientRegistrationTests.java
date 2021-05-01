@@ -15,317 +15,384 @@
  */
 package org.springframework.security.oauth2.core.oidc;
 
-import org.junit.Test;
-import org.springframework.security.oauth2.core.AuthorizationGrantType;
-import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
-import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationResponseType;
-
-import java.net.URL;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+
+import org.junit.Test;
+
+import org.springframework.security.oauth2.core.AuthorizationGrantType;
+import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
+import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationResponseType;
+import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 /**
- * Tests for {@link OidcClientRegistration}
+ * Tests for {@link OidcClientRegistration}.
  *
  * @author Ovidiu Popa
- * @since 0.1.1
+ * @author Joe Grandja
  */
 public class OidcClientRegistrationTests {
-
-	private final OidcClientRegistration.Builder clientRegistrationBuilder =
-			OidcClientRegistration.builder();
+	// @formatter:off
+	private final OidcClientRegistration.Builder minimalBuilder =
+			OidcClientRegistration.builder()
+					.redirectUri("https://client.example.com");
+	// @formatter:on
 
 	@Test
-	public void buildWhenAllRequiredClaimsAndAdditionalClaimsThenCreated() {
+	public void buildWhenAllClaimsProvidedThenCreated() {
+		// @formatter:off
+		Instant clientIdIssuedAt = Instant.now();
+		Instant clientSecretExpiresAt = clientIdIssuedAt.plus(30, ChronoUnit.DAYS);
 		OidcClientRegistration clientRegistration = OidcClientRegistration.builder()
-				.redirectUri("http://client.example.com")
+				.clientId("client-id")
+				.clientIdIssuedAt(clientIdIssuedAt)
+				.clientSecret("client-secret")
+				.clientSecretExpiresAt(clientSecretExpiresAt)
+				.clientName("client-name")
+				.redirectUri("https://client.example.com")
+				.tokenEndpointAuthenticationMethod(ClientAuthenticationMethod.BASIC.getValue())
 				.grantType(AuthorizationGrantType.AUTHORIZATION_CODE.getValue())
 				.grantType(AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
 				.responseType(OAuth2AuthorizationResponseType.CODE.getValue())
-				.scope("test read")
-				.tokenEndpointAuthenticationMethod(ClientAuthenticationMethod.BASIC.getValue())
+				.scope("scope1")
+				.scope("scope2")
+				.idTokenSignedResponseAlgorithm(SignatureAlgorithm.RS256.getName())
+				.claim("a-claim", "a-value")
 				.build();
+		// @formatter:on
 
-		assertThat(clientRegistration.getRedirectUris())
-				.containsOnly("http://client.example.com");
-		assertThat(clientRegistration.getGrantTypes())
-				.contains(
-						AuthorizationGrantType.AUTHORIZATION_CODE.getValue(),
-						AuthorizationGrantType.CLIENT_CREDENTIALS.getValue()
-				);
-		assertThat(clientRegistration.getResponseTypes())
-				.contains(OAuth2AuthorizationResponseType.CODE.getValue());
-		assertThat(clientRegistration.getScope())
-				.isEqualTo("test read");
-		assertThat(clientRegistration.getTokenEndpointAuthenticationMethod())
-				.isEqualTo(ClientAuthenticationMethod.BASIC.getValue());
-
+		assertThat(clientRegistration.getClientId()).isEqualTo("client-id");
+		assertThat(clientRegistration.getClientIdIssuedAt()).isEqualTo(clientIdIssuedAt);
+		assertThat(clientRegistration.getClientSecret()).isEqualTo("client-secret");
+		assertThat(clientRegistration.getClientSecretExpiresAt()).isEqualTo(clientSecretExpiresAt);
+		assertThat(clientRegistration.getClientName()).isEqualTo("client-name");
+		assertThat(clientRegistration.getRedirectUris()).containsOnly("https://client.example.com");
+		assertThat(clientRegistration.getTokenEndpointAuthenticationMethod()).isEqualTo("basic");
+		assertThat(clientRegistration.getGrantTypes()).containsExactlyInAnyOrder("authorization_code", "client_credentials");
+		assertThat(clientRegistration.getResponseTypes()).containsOnly("code");
+		assertThat(clientRegistration.getScopes()).containsExactlyInAnyOrder("scope1", "scope2");
+		assertThat(clientRegistration.getIdTokenSignedResponseAlgorithm()).isEqualTo("RS256");
+		assertThat(clientRegistration.getClaimAsString("a-claim")).isEqualTo("a-value");
 	}
 
 	@Test
-	public void buildWhenAllRequiredClaimsThenCreated() {
-		OidcClientRegistration clientRegistration = OidcClientRegistration.builder()
-				.redirectUri("http://client.example.com")
-				.build();
-
-		assertThat(clientRegistration.getRedirectUris())
-				.containsOnly("http://client.example.com");
-		assertThat(clientRegistration.getGrantTypes())
-				.containsOnly(AuthorizationGrantType.AUTHORIZATION_CODE.getValue());
-		assertThat(clientRegistration.getResponseTypes())
-				.containsOnly(OAuth2AuthorizationResponseType.CODE.getValue());
-		assertThat(clientRegistration.getScope())
-				.isNull();
-		assertThat(clientRegistration.getTokenEndpointAuthenticationMethod())
-				.isEqualTo(ClientAuthenticationMethod.BASIC.getValue());
+	public void buildWhenOnlyRequiredClaimsProvidedThenCreated() {
+		OidcClientRegistration clientRegistration = this.minimalBuilder.build();
+		assertThat(clientRegistration.getRedirectUris()).containsOnly("https://client.example.com");
 	}
 
 	@Test
-	public void buildWhenAllRequiredClaimsAndAuthorizationGrantTypeButMissingResponseTypeThenCreated() {
-		OidcClientRegistration clientRegistration = OidcClientRegistration.builder()
-				.redirectUri("http://client.example.com")
-				.grantType(AuthorizationGrantType.AUTHORIZATION_CODE.getValue())
-				.build();
-
-		assertThat(clientRegistration.getRedirectUris())
-				.containsOnly("http://client.example.com");
-		assertThat(clientRegistration.getGrantTypes())
-				.containsOnly(AuthorizationGrantType.AUTHORIZATION_CODE.getValue());
-		assertThat(clientRegistration.getResponseTypes())
-				.containsOnly(OAuth2AuthorizationResponseType.CODE.getValue());
-	}
-
-	@Test
-	public void buildWhenAllRequiredClaimsAndEmptyGrantTypeListButMissingResponseTypeThenCreated() {
-		OidcClientRegistration clientRegistration = OidcClientRegistration.builder()
-				.redirectUri("http://client.example.com")
-				.grantTypes(List::clear)
-				.build();
-
-		assertThat(clientRegistration.getRedirectUris())
-				.containsOnly("http://client.example.com");
-		assertThat(clientRegistration.getGrantTypes())
-				.containsOnly(AuthorizationGrantType.AUTHORIZATION_CODE.getValue());
-		assertThat(clientRegistration.getResponseTypes())
-				.containsOnly(OAuth2AuthorizationResponseType.CODE.getValue());
-	}
-
-	@Test
-	public void buildWhenAllRequiredClaimsAndResponseTypeButMissingAuthorizationGrantTypeThenCreated() {
-		OidcClientRegistration clientRegistration = OidcClientRegistration.builder()
-				.redirectUri("http://client.example.com")
-				.responseType(OAuth2AuthorizationResponseType.CODE.getValue())
-				.build();
-
-		assertThat(clientRegistration.getRedirectUris())
-				.containsOnly("http://client.example.com");
-		assertThat(clientRegistration.getGrantTypes())
-				.containsOnly(AuthorizationGrantType.AUTHORIZATION_CODE.getValue());
-		assertThat(clientRegistration.getResponseTypes())
-				.containsOnly(OAuth2AuthorizationResponseType.CODE.getValue());
-	}
-
-	@Test
-	public void buildWhenAllRequiredClaimsAndEmptyResponseTypeListButMissingAuthorizationGrantTypeThenCreated() {
-		OidcClientRegistration clientRegistration = OidcClientRegistration.builder()
-				.redirectUri("http://client.example.com")
-				.responseTypes(List::clear)
-				.build();
-
-		assertThat(clientRegistration.getRedirectUris())
-				.containsOnly("http://client.example.com");
-		assertThat(clientRegistration.getGrantTypes())
-				.containsOnly(AuthorizationGrantType.AUTHORIZATION_CODE.getValue());
-		assertThat(clientRegistration.getResponseTypes())
-				.containsOnly(OAuth2AuthorizationResponseType.CODE.getValue());
-	}
-
-	@Test
-	public void buildWhenAllRequiredClaimsAndEmptyScopeThenCreated() {
-		OidcClientRegistration clientRegistration = OidcClientRegistration.builder()
-				.redirectUri("http://client.example.com")
-				.build();
-
-		assertThat(clientRegistration.getRedirectUris())
-				.containsOnly("http://client.example.com");
-		assertThat(clientRegistration.getScope())
-				.isNull();
-	}
-
-	@Test
-	public void buildWhenAllRequiredClaimsAndEmptyTokenEndpointAuthMethodThenCreated() {
-		OidcClientRegistration clientRegistration = OidcClientRegistration.builder()
-				.redirectUri("http://client.example.com")
-				.build();
-
-		assertThat(clientRegistration.getRedirectUris())
-				.containsOnly("http://client.example.com");
-		assertThat(clientRegistration.getTokenEndpointAuthenticationMethod())
-				.isEqualTo(ClientAuthenticationMethod.BASIC.getValue());
-	}
-
-	@Test
-	public void buildWhenClaimsProvidedThenCreated() {
-		Map<String, Object> claims = new HashMap<>();
-		claims.put(OidcClientMetadataClaimNames.REDIRECT_URIS, Collections.singletonList("http://client.example.com"));
-		claims.put(OidcClientMetadataClaimNames.GRANT_TYPES, Arrays.asList(
-				AuthorizationGrantType.AUTHORIZATION_CODE.getValue(),
-				AuthorizationGrantType.CLIENT_CREDENTIALS.getValue()
-		));
-		claims.put(OidcClientMetadataClaimNames.RESPONSE_TYPES,
-				Collections.singletonList(OAuth2AuthorizationResponseType.CODE.getValue()));
-		claims.put(OidcClientMetadataClaimNames.SCOPE, "test read");
+	public void withClaimsWhenClaimsProvidedThenCreated() {
+		Instant clientIdIssuedAt = Instant.now();
+		Instant clientSecretExpiresAt = clientIdIssuedAt.plus(30, ChronoUnit.DAYS);
+		HashMap<String, Object> claims = new HashMap<>();
+		claims.put(OidcClientMetadataClaimNames.CLIENT_ID, "client-id");
+		claims.put(OidcClientMetadataClaimNames.CLIENT_ID_ISSUED_AT, clientIdIssuedAt);
+		claims.put(OidcClientMetadataClaimNames.CLIENT_SECRET, "client-secret");
+		claims.put(OidcClientMetadataClaimNames.CLIENT_SECRET_EXPIRES_AT, clientSecretExpiresAt);
+		claims.put(OidcClientMetadataClaimNames.CLIENT_NAME, "client-name");
+		claims.put(OidcClientMetadataClaimNames.REDIRECT_URIS, Collections.singletonList("https://client.example.com"));
 		claims.put(OidcClientMetadataClaimNames.TOKEN_ENDPOINT_AUTH_METHOD, ClientAuthenticationMethod.BASIC.getValue());
+		claims.put(OidcClientMetadataClaimNames.GRANT_TYPES, Arrays.asList(
+				AuthorizationGrantType.AUTHORIZATION_CODE.getValue(), AuthorizationGrantType.CLIENT_CREDENTIALS.getValue()));
+		claims.put(OidcClientMetadataClaimNames.RESPONSE_TYPES, Collections.singletonList("code"));
+		claims.put(OidcClientMetadataClaimNames.SCOPE, Arrays.asList("scope1", "scope2"));
+		claims.put(OidcClientMetadataClaimNames.ID_TOKEN_SIGNED_RESPONSE_ALG, SignatureAlgorithm.RS256.getName());
+		claims.put("a-claim", "a-value");
 
 		OidcClientRegistration clientRegistration = OidcClientRegistration.withClaims(claims).build();
 
-		assertThat(clientRegistration.getRedirectUris())
-				.containsOnly("http://client.example.com");
-		assertThat(clientRegistration.getGrantTypes())
-				.contains(
-						AuthorizationGrantType.AUTHORIZATION_CODE.getValue(),
-						AuthorizationGrantType.CLIENT_CREDENTIALS.getValue()
-				);
-		assertThat(clientRegistration.getResponseTypes())
-				.contains(OAuth2AuthorizationResponseType.CODE.getValue());
-		assertThat(clientRegistration.getScope())
-				.isEqualTo("test read");
-		assertThat(clientRegistration.getTokenEndpointAuthenticationMethod())
-				.isEqualTo(ClientAuthenticationMethod.BASIC.getValue());
+		assertThat(clientRegistration.getClientId()).isEqualTo("client-id");
+		assertThat(clientRegistration.getClientIdIssuedAt()).isEqualTo(clientIdIssuedAt);
+		assertThat(clientRegistration.getClientSecret()).isEqualTo("client-secret");
+		assertThat(clientRegistration.getClientSecretExpiresAt()).isEqualTo(clientSecretExpiresAt);
+		assertThat(clientRegistration.getClientName()).isEqualTo("client-name");
+		assertThat(clientRegistration.getRedirectUris()).containsOnly("https://client.example.com");
+		assertThat(clientRegistration.getTokenEndpointAuthenticationMethod()).isEqualTo("basic");
+		assertThat(clientRegistration.getGrantTypes()).containsExactlyInAnyOrder("authorization_code", "client_credentials");
+		assertThat(clientRegistration.getResponseTypes()).containsOnly("code");
+		assertThat(clientRegistration.getScopes()).containsExactlyInAnyOrder("scope1", "scope2");
+		assertThat(clientRegistration.getIdTokenSignedResponseAlgorithm()).isEqualTo("RS256");
+		assertThat(clientRegistration.getClaimAsString("a-claim")).isEqualTo("a-value");
 	}
 
 	@Test
-	public void buildWhenRedirectUriProvidedWithUrlThenCreated() {
-		Map<String, Object> claims = new HashMap<>();
-		claims.put(OidcClientMetadataClaimNames.REDIRECT_URIS, Arrays.asList(
-				url("http://client.example.com"),
-				url("http://client.example.com/authorized")
-				)
-		);
-		claims.put(OidcClientMetadataClaimNames.GRANT_TYPES, Arrays.asList(
-				AuthorizationGrantType.AUTHORIZATION_CODE.getValue(),
-				AuthorizationGrantType.CLIENT_CREDENTIALS.getValue()
-		));
-		claims.put(OidcClientMetadataClaimNames.RESPONSE_TYPES,
-				Collections.singletonList(OAuth2AuthorizationResponseType.CODE.getValue()));
-		claims.put(OidcClientMetadataClaimNames.SCOPE, "test read");
-		claims.put(OidcClientMetadataClaimNames.TOKEN_ENDPOINT_AUTH_METHOD, ClientAuthenticationMethod.BASIC.getValue());
-
-		OidcClientRegistration clientRegistration = OidcClientRegistration.withClaims(claims).build();
-
-		assertThat(clientRegistration.getRedirectUris())
-				.contains("http://client.example.com", "http://client.example.com/authorized");
-		assertThat(clientRegistration.getGrantTypes())
-				.contains(
-						AuthorizationGrantType.AUTHORIZATION_CODE.getValue(),
-						AuthorizationGrantType.CLIENT_CREDENTIALS.getValue()
-				);
-		assertThat(clientRegistration.getResponseTypes())
-				.contains(OAuth2AuthorizationResponseType.CODE.getValue());
-		assertThat(clientRegistration.getScope())
-				.isEqualTo("test read");
-		assertThat(clientRegistration.getTokenEndpointAuthenticationMethod())
-				.isEqualTo(ClientAuthenticationMethod.BASIC.getValue());
+	public void withClaimsWhenNullThenThrowIllegalArgumentException() {
+		assertThatIllegalArgumentException()
+				.isThrownBy(() -> OidcClientRegistration.withClaims(null))
+				.withMessage("claims cannot be empty");
 	}
 
 	@Test
-	public void withClaimsNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> OidcClientRegistration.withClaims(null))
-				.isInstanceOf(IllegalArgumentException.class);
+	public void withClaimsWhenEmptyThenThrowIllegalArgumentException() {
+		assertThatIllegalArgumentException()
+				.isThrownBy(() -> OidcClientRegistration.withClaims(Collections.emptyMap()))
+				.withMessage("claims cannot be empty");
 	}
 
 	@Test
-	public void withClaimsEmptyThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> OidcClientRegistration.withClaims(Collections.emptyMap()))
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("claims cannot be empty");
+	public void buildWhenMissingClientIdThenThrowIllegalArgumentException() {
+		OidcClientRegistration.Builder builder = this.minimalBuilder
+				.clientIdIssuedAt(Instant.now());
+
+		assertThatIllegalArgumentException()
+				.isThrownBy(builder::build)
+				.withMessage("client_id cannot be null");
 	}
 
 	@Test
-	public void buildWhenNullRedirectUriThenThrowIllegalArgumentException() {
-		OidcClientRegistration.Builder builder = this.clientRegistrationBuilder
-				.redirectUris((claims) -> claims.remove(OidcClientMetadataClaimNames.REDIRECT_URIS));
+	public void buildWhenClientSecretAndMissingClientIdThenThrowIllegalArgumentException() {
+		OidcClientRegistration.Builder builder = this.minimalBuilder
+				.clientSecret("client-secret");
 
-		assertThatThrownBy(builder::build)
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("redirect_uris must not be empty");
+		assertThatIllegalArgumentException()
+				.isThrownBy(builder::build)
+				.withMessage("client_id cannot be null");
 	}
 
 	@Test
-	public void buildWhenNullRedirectUriClaimThenThrowIllegalArgumentException() {
-		Map<String, Object> claims = new HashMap<>();
-		claims.put(OidcClientMetadataClaimNames.REDIRECT_URIS, null);
-		OidcClientRegistration.Builder builder = OidcClientRegistration.withClaims(claims);
+	public void buildWhenClientIdIssuedAtNotInstantThenThrowIllegalArgumentException() {
+		// @formatter:off
+		OidcClientRegistration.Builder builder = this.minimalBuilder
+				.clientId("client-id")
+				.claim(OidcClientMetadataClaimNames.CLIENT_ID_ISSUED_AT, "clientIdIssuedAt");
+		// @formatter:on
 
-		assertThatThrownBy(builder::build)
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("redirect_uris cannot be null");
+		assertThatIllegalArgumentException()
+				.isThrownBy(builder::build)
+				.withMessageStartingWith("client_id_issued_at must be of type Instant");
 	}
 
 	@Test
-	public void buildWhenEmptyRedirectUriListThenThrowIllegalArgumentException() {
-		OidcClientRegistration.Builder builder = this.clientRegistrationBuilder
-				.redirectUris(List::clear);
+	public void buildWhenMissingClientSecretThenThrowIllegalArgumentException() {
+		// @formatter:off
+		OidcClientRegistration.Builder builder = this.minimalBuilder
+				.clientId("client-id")
+				.clientIdIssuedAt(Instant.now())
+				.clientSecretExpiresAt(Instant.now().plus(30, ChronoUnit.DAYS));
+		// @formatter:on
 
-		assertThatThrownBy(builder::build)
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("redirect_uris must not be empty");
+		assertThatIllegalArgumentException()
+				.isThrownBy(builder::build)
+				.withMessage("client_secret cannot be null");
 	}
 
 	@Test
-	public void buildWhenRedirectUriNotOfTypeListThenThrowIllegalArgumentException() {
-		OidcClientRegistration.Builder builder = this.clientRegistrationBuilder
-				.claims(claims -> claims.put(OidcClientMetadataClaimNames.REDIRECT_URIS, "http://client.example.com"));
+	public void buildWhenClientSecretExpiresAtNotInstantThenThrowIllegalArgumentException() {
+		// @formatter:off
+		OidcClientRegistration.Builder builder = this.minimalBuilder
+				.clientId("client-id")
+				.clientIdIssuedAt(Instant.now())
+				.clientSecret("client-secret")
+				.claim(OidcClientMetadataClaimNames.CLIENT_SECRET_EXPIRES_AT, "clientSecretExpiresAt");
+		// @formatter:on
 
-		assertThatThrownBy(builder::build)
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessageContaining("redirect_uris must be of type list");
+		assertThatIllegalArgumentException()
+				.isThrownBy(builder::build)
+				.withMessageStartingWith("client_secret_expires_at must be of type Instant");
 	}
 
 	@Test
-	public void buildWhenRedirectUriNotUrlThenThrowIllegalArgumentException() {
-		OidcClientRegistration.Builder builder = this.clientRegistrationBuilder
-				.redirectUri("not url");
+	public void buildWhenMissingRedirectUrisThenThrowIllegalArgumentException() {
+		OidcClientRegistration.Builder builder = OidcClientRegistration.builder()
+				.clientName("client-name");
 
-		assertThatThrownBy(builder::build)
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("redirect_uri must be a valid URL");
+		assertThatIllegalArgumentException()
+				.isThrownBy(builder::build)
+				.withMessage("redirect_uris cannot be null");
 	}
 
 	@Test
-	public void buildWhenResponseTypesNotOfTypeListThenThrowIllegalArgumentException() {
-		OidcClientRegistration.Builder builder = this.clientRegistrationBuilder
-				.redirectUri("http://client.example.com")
-				.claims(claims -> claims.put(OidcClientMetadataClaimNames.RESPONSE_TYPES, OAuth2AuthorizationResponseType.CODE.getValue()));
+	public void buildWhenRedirectUrisNotListThenThrowIllegalArgumentException() {
+		OidcClientRegistration.Builder builder = OidcClientRegistration.builder()
+				.claim(OidcClientMetadataClaimNames.REDIRECT_URIS, "redirectUris");
 
-		assertThatThrownBy(builder::build)
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessageContaining("response_types must be of type List");
+		assertThatIllegalArgumentException()
+				.isThrownBy(builder::build)
+				.withMessageStartingWith("redirect_uris must be of type List");
 	}
 
 	@Test
-	public void buildWhenGrantTypesNotOfTypeListThenThrowIllegalArgumentException() {
-		OidcClientRegistration.Builder builder = this.clientRegistrationBuilder
-				.redirectUri("http://client.example.com")
-				.claims(claims -> claims.put(OidcClientMetadataClaimNames.GRANT_TYPES, AuthorizationGrantType.AUTHORIZATION_CODE.getValue()));
+	public void buildWhenRedirectUrisEmptyListThenThrowIllegalArgumentException() {
+		OidcClientRegistration.Builder builder = OidcClientRegistration.builder()
+				.claim(OidcClientMetadataClaimNames.REDIRECT_URIS, Collections.emptyList());
 
-		assertThatThrownBy(builder::build)
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessageContaining("grant_types must be of type List");
+		assertThatIllegalArgumentException()
+				.isThrownBy(builder::build)
+				.withMessage("redirect_uris cannot be empty");
 	}
 
-	private static URL url(String urlString) {
-		try {
-			return new URL(urlString);
-		} catch (Exception ex) {
-			throw new IllegalArgumentException("urlString must be a valid URL and valid URI");
-		}
+	@Test
+	public void buildWhenInvalidRedirectUriThenThrowIllegalArgumentException() {
+		OidcClientRegistration.Builder builder = OidcClientRegistration.builder()
+				.redirectUri("invalid-uri");
+
+		assertThatIllegalArgumentException()
+				.isThrownBy(builder::build)
+				.withMessage("redirect_uri must be a valid URL");
+	}
+
+	@Test
+	public void buildWhenRedirectUrisAddingOrRemovingThenCorrectValues() {
+		// @formatter:off
+		OidcClientRegistration clientRegistration = this.minimalBuilder
+				.redirectUri("https://client1.example.com")
+				.redirectUris(redirectUris -> {
+					redirectUris.clear();
+					redirectUris.add("https://client2.example.com");
+				})
+				.build();
+		// @formatter:on
+
+		assertThat(clientRegistration.getRedirectUris()).containsExactly("https://client2.example.com");
+	}
+
+	@Test
+	public void buildWhenGrantTypesNotListThenThrowIllegalArgumentException() {
+		OidcClientRegistration.Builder builder = this.minimalBuilder
+				.claim(OidcClientMetadataClaimNames.GRANT_TYPES, "grantTypes");
+
+		assertThatIllegalArgumentException()
+				.isThrownBy(builder::build)
+				.withMessageStartingWith("grant_types must be of type List");
+	}
+
+	@Test
+	public void buildWhenGrantTypesEmptyListThenThrowIllegalArgumentException() {
+		OidcClientRegistration.Builder builder = this.minimalBuilder
+				.claim(OidcClientMetadataClaimNames.GRANT_TYPES, Collections.emptyList());
+
+		assertThatIllegalArgumentException()
+				.isThrownBy(builder::build)
+				.withMessage("grant_types cannot be empty");
+	}
+
+	@Test
+	public void buildWhenGrantTypesAddingOrRemovingThenCorrectValues() {
+		// @formatter:off
+		OidcClientRegistration clientRegistration = this.minimalBuilder
+				.grantType("authorization_code")
+				.grantTypes(grantTypes -> {
+					grantTypes.clear();
+					grantTypes.add("client_credentials");
+				})
+				.build();
+		// @formatter:on
+
+		assertThat(clientRegistration.getGrantTypes()).containsExactly("client_credentials");
+	}
+
+	@Test
+	public void buildWhenResponseTypesNotListThenThrowIllegalArgumentException() {
+		OidcClientRegistration.Builder builder = this.minimalBuilder
+				.claim(OidcClientMetadataClaimNames.RESPONSE_TYPES, "responseTypes");
+
+		assertThatIllegalArgumentException()
+				.isThrownBy(builder::build)
+				.withMessageStartingWith("response_types must be of type List");
+	}
+
+	@Test
+	public void buildWhenResponseTypesEmptyListThenThrowIllegalArgumentException() {
+		OidcClientRegistration.Builder builder = this.minimalBuilder
+				.claim(OidcClientMetadataClaimNames.RESPONSE_TYPES, Collections.emptyList());
+
+		assertThatIllegalArgumentException()
+				.isThrownBy(builder::build)
+				.withMessage("response_types cannot be empty");
+	}
+
+	@Test
+	public void buildWhenResponseTypesAddingOrRemovingThenCorrectValues() {
+		// @formatter:off
+		OidcClientRegistration clientRegistration = this.minimalBuilder
+				.responseType("token")
+				.responseTypes(responseTypes -> {
+					responseTypes.clear();
+					responseTypes.add("code");
+				})
+				.build();
+		// @formatter:on
+
+		assertThat(clientRegistration.getResponseTypes()).containsExactly("code");
+	}
+
+	@Test
+	public void buildWhenScopesNotListThenThrowIllegalArgumentException() {
+		OidcClientRegistration.Builder builder = this.minimalBuilder
+				.claim(OidcClientMetadataClaimNames.SCOPE, "scopes");
+
+		assertThatIllegalArgumentException()
+				.isThrownBy(builder::build)
+				.withMessageStartingWith("scope must be of type List");
+	}
+
+	@Test
+	public void buildWhenScopesEmptyListThenThrowIllegalArgumentException() {
+		OidcClientRegistration.Builder builder = this.minimalBuilder
+				.claim(OidcClientMetadataClaimNames.SCOPE, Collections.emptyList());
+
+		assertThatIllegalArgumentException()
+				.isThrownBy(builder::build)
+				.withMessage("scope cannot be empty");
+	}
+
+	@Test
+	public void buildWhenScopesAddingOrRemovingThenCorrectValues() {
+		// @formatter:off
+		OidcClientRegistration clientRegistration = this.minimalBuilder
+				.scope("should-be-removed")
+				.scopes(scopes -> {
+					scopes.clear();
+					scopes.add("scope1");
+				})
+				.build();
+		// @formatter:on
+
+		assertThat(clientRegistration.getScopes()).containsExactly("scope1");
+	}
+
+	@Test
+	public void claimWhenNameNullThenThrowIllegalArgumentException() {
+		assertThatIllegalArgumentException()
+				.isThrownBy(() -> OidcClientRegistration.builder().claim(null, "claim-value"))
+				.withMessage("name cannot be empty");
+	}
+
+	@Test
+	public void claimWhenValueNullThenThrowIllegalArgumentException() {
+		assertThatIllegalArgumentException()
+				.isThrownBy(() -> OidcClientRegistration.builder().claim("claim-name", null))
+				.withMessage("value cannot be null");
+	}
+
+	@Test
+	public void claimsWhenRemovingClaimThenNotPresent() {
+		// @formatter:off
+		OidcClientRegistration clientRegistration = this.minimalBuilder
+				.claim("claim-name", "claim-value")
+				.claims((claims) -> claims.remove("claim-name"))
+				.build();
+		// @formatter:on
+
+		assertThat(clientRegistration.containsClaim("claim-name")).isFalse();
+	}
+
+	@Test
+	public void claimsWhenAddingClaimThenPresent() {
+		// @formatter:off
+		OidcClientRegistration clientRegistration = this.minimalBuilder
+				.claim("claim-name", "claim-value")
+				.build();
+		// @formatter:on
+
+		assertThat(clientRegistration.containsClaim("claim-name")).isTrue();
 	}
 
 }

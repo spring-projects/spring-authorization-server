@@ -18,12 +18,14 @@ package org.springframework.security.oauth2.server.authorization.client;
 import java.io.Serializable;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 
+import org.springframework.lang.Nullable;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.Version;
@@ -31,6 +33,7 @@ import org.springframework.security.oauth2.server.authorization.config.ClientSet
 import org.springframework.security.oauth2.server.authorization.config.TokenSettings;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 /**
  * A representation of a client registration with an OAuth 2.0 Authorization Server.
@@ -44,7 +47,10 @@ public class RegisteredClient implements Serializable {
 	private static final long serialVersionUID = Version.SERIAL_VERSION_UID;
 	private String id;
 	private String clientId;
+	private Instant clientIdIssuedAt;
 	private String clientSecret;
+	private Instant clientSecretExpiresAt;
+	private String clientName;
 	private Set<ClientAuthenticationMethod> clientAuthenticationMethods;
 	private Set<AuthorizationGrantType> authorizationGrantTypes;
 	private Set<String> redirectUris;
@@ -74,12 +80,41 @@ public class RegisteredClient implements Serializable {
 	}
 
 	/**
+	 * Returns the time at which the client identifier was issued.
+	 *
+	 * @return the time at which the client identifier was issued
+	 */
+	@Nullable
+	public Instant getClientIdIssuedAt() {
+		return this.clientIdIssuedAt;
+	}
+
+	/**
 	 * Returns the client secret.
 	 *
 	 * @return the client secret
 	 */
 	public String getClientSecret() {
 		return this.clientSecret;
+	}
+
+	/**
+	 * Returns the time at which the client secret expires or {@code null} if it does not expire.
+	 *
+	 * @return the time at which the client secret expires or {@code null} if it does not expire
+	 */
+	@Nullable
+	public Instant getClientSecretExpiresAt() {
+		return this.clientSecretExpiresAt;
+	}
+
+	/**
+	 * Returns the client name.
+	 *
+	 * @return the client name
+	 */
+	public String getClientName() {
+		return this.clientName;
 	}
 
 	/**
@@ -147,7 +182,10 @@ public class RegisteredClient implements Serializable {
 		RegisteredClient that = (RegisteredClient) obj;
 		return Objects.equals(this.id, that.id) &&
 				Objects.equals(this.clientId, that.clientId) &&
+				Objects.equals(this.clientIdIssuedAt, that.clientIdIssuedAt) &&
 				Objects.equals(this.clientSecret, that.clientSecret) &&
+				Objects.equals(this.clientSecretExpiresAt, that.clientSecretExpiresAt) &&
+				Objects.equals(this.clientName, that.clientName) &&
 				Objects.equals(this.clientAuthenticationMethods, that.clientAuthenticationMethods) &&
 				Objects.equals(this.authorizationGrantTypes, that.authorizationGrantTypes) &&
 				Objects.equals(this.redirectUris, that.redirectUris) &&
@@ -158,8 +196,8 @@ public class RegisteredClient implements Serializable {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(this.id, this.clientId, this.clientSecret,
-				this.clientAuthenticationMethods, this.authorizationGrantTypes, this.redirectUris,
+		return Objects.hash(this.id, this.clientId, this.clientIdIssuedAt, this.clientSecret, this.clientSecretExpiresAt,
+				this.clientName, this.clientAuthenticationMethods, this.authorizationGrantTypes, this.redirectUris,
 				this.scopes, this.clientSettings.settings(), this.tokenSettings.settings());
 	}
 
@@ -168,6 +206,7 @@ public class RegisteredClient implements Serializable {
 		return "RegisteredClient {" +
 				"id='" + this.id + '\'' +
 				", clientId='" + this.clientId + '\'' +
+				", clientName='" + this.clientName + '\'' +
 				", clientAuthenticationMethods=" + this.clientAuthenticationMethods +
 				", authorizationGrantTypes=" + this.authorizationGrantTypes +
 				", redirectUris=" + this.redirectUris +
@@ -206,7 +245,10 @@ public class RegisteredClient implements Serializable {
 		private static final long serialVersionUID = Version.SERIAL_VERSION_UID;
 		private String id;
 		private String clientId;
+		private Instant clientIdIssuedAt;
 		private String clientSecret;
+		private Instant clientSecretExpiresAt;
+		private String clientName;
 		private Set<ClientAuthenticationMethod> clientAuthenticationMethods = new HashSet<>();
 		private Set<AuthorizationGrantType> authorizationGrantTypes = new HashSet<>();
 		private Set<String> redirectUris = new HashSet<>();
@@ -221,7 +263,10 @@ public class RegisteredClient implements Serializable {
 		protected Builder(RegisteredClient registeredClient) {
 			this.id = registeredClient.id;
 			this.clientId = registeredClient.clientId;
+			this.clientIdIssuedAt = registeredClient.clientIdIssuedAt;
 			this.clientSecret = registeredClient.clientSecret;
+			this.clientSecretExpiresAt = registeredClient.clientSecretExpiresAt;
+			this.clientName = registeredClient.clientName;
 			if (!CollectionUtils.isEmpty(registeredClient.clientAuthenticationMethods)) {
 				this.clientAuthenticationMethods.addAll(registeredClient.clientAuthenticationMethods);
 			}
@@ -261,6 +306,17 @@ public class RegisteredClient implements Serializable {
 		}
 
 		/**
+		 * Sets the time at which the client identifier was issued.
+		 *
+		 * @param clientIdIssuedAt the time at which the client identifier was issued
+		 * @return the {@link Builder}
+		 */
+		public Builder clientIdIssuedAt(Instant clientIdIssuedAt) {
+			this.clientIdIssuedAt = clientIdIssuedAt;
+			return this;
+		}
+
+		/**
 		 * Sets the client secret.
 		 *
 		 * @param clientSecret the client secret
@@ -268,6 +324,28 @@ public class RegisteredClient implements Serializable {
 		 */
 		public Builder clientSecret(String clientSecret) {
 			this.clientSecret = clientSecret;
+			return this;
+		}
+
+		/**
+		 * Sets the time at which the client secret expires or {@code null} if it does not expire.
+		 *
+		 * @param clientSecretExpiresAt the time at which the client secret expires or {@code null} if it does not expire
+		 * @return the {@link Builder}
+		 */
+		public Builder clientSecretExpiresAt(Instant clientSecretExpiresAt) {
+			this.clientSecretExpiresAt = clientSecretExpiresAt;
+			return this;
+		}
+
+		/**
+		 * Sets the client name.
+		 *
+		 * @param clientName the client name
+		 * @return the {@link Builder}
+		 */
+		public Builder clientName(String clientName) {
+			this.clientName = clientName;
 			return this;
 		}
 
@@ -400,6 +478,9 @@ public class RegisteredClient implements Serializable {
 			if (this.authorizationGrantTypes.contains(AuthorizationGrantType.AUTHORIZATION_CODE)) {
 				Assert.notEmpty(this.redirectUris, "redirectUris cannot be empty");
 			}
+			if (!StringUtils.hasText(this.clientName)) {
+				this.clientName = this.id;
+			}
 			if (CollectionUtils.isEmpty(this.clientAuthenticationMethods)) {
 				this.clientAuthenticationMethods.add(ClientAuthenticationMethod.BASIC);
 			}
@@ -413,7 +494,10 @@ public class RegisteredClient implements Serializable {
 
 			registeredClient.id = this.id;
 			registeredClient.clientId = this.clientId;
+			registeredClient.clientIdIssuedAt = this.clientIdIssuedAt;
 			registeredClient.clientSecret = this.clientSecret;
+			registeredClient.clientSecretExpiresAt = this.clientSecretExpiresAt;
+			registeredClient.clientName = this.clientName;
 			registeredClient.clientAuthenticationMethods = Collections.unmodifiableSet(
 					new HashSet<>(this.clientAuthenticationMethods));
 			registeredClient.authorizationGrantTypes = Collections.unmodifiableSet(

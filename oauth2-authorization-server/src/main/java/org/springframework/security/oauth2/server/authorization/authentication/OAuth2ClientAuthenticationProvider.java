@@ -53,6 +53,7 @@ import org.springframework.util.StringUtils;
  * @see OAuth2ClientAuthenticationToken
  * @see RegisteredClientRepository
  * @see OAuth2AuthorizationService
+ * @see PasswordEncoder
  */
 public class OAuth2ClientAuthenticationProvider implements AuthenticationProvider {
 	private static final OAuth2TokenType AUTHORIZATION_CODE_TOKEN_TYPE = new OAuth2TokenType(OAuth2ParameterNames.CODE);
@@ -75,7 +76,15 @@ public class OAuth2ClientAuthenticationProvider implements AuthenticationProvide
 		this.passwordEncoder = PasswordEncoderFactories.createDelegatingPasswordEncoder();
 	}
 
-	public void setPasswordEncoder(PasswordEncoder passwordEncoder) {
+	/**
+	 * Sets the {@link PasswordEncoder} used to validate
+	 * the {@link RegisteredClient#getClientSecret() client secret}.
+	 * If not set, the client secret will be compared using
+	 * {@link PasswordEncoderFactories#createDelegatingPasswordEncoder()}.
+	 *
+	 * @param passwordEncoder the {@link PasswordEncoder} used to validate the client secret
+	 */
+	public final void setPasswordEncoder(PasswordEncoder passwordEncoder) {
 		Assert.notNull(passwordEncoder, "passwordEncoder cannot be null");
 		this.passwordEncoder = passwordEncoder;
 	}
@@ -100,7 +109,7 @@ public class OAuth2ClientAuthenticationProvider implements AuthenticationProvide
 
 		if (clientAuthentication.getCredentials() != null) {
 			String clientSecret = clientAuthentication.getCredentials().toString();
-			if (!passwordEncoder.matches(clientSecret, registeredClient.getClientSecret())) {
+			if (!this.passwordEncoder.matches(clientSecret, registeredClient.getClientSecret())) {
 				throwInvalidClient();
 			}
 			authenticatedCredentials = true;

@@ -159,11 +159,11 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 		validateProviderSettings(providerSettings);
 		initEndpointMatchers(providerSettings);
 
-		PasswordEncoder passwordEncoder = getOptionalBean(builder, PasswordEncoder.class);
 		OAuth2ClientAuthenticationProvider clientAuthenticationProvider =
 				new OAuth2ClientAuthenticationProvider(
 						getRegisteredClientRepository(builder),
 						getAuthorizationService(builder));
+		PasswordEncoder passwordEncoder = getOptionalBean(builder, PasswordEncoder.class);
 		if (passwordEncoder != null) {
 			clientAuthenticationProvider.setPasswordEncoder(passwordEncoder);
 		}

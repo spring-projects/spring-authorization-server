@@ -277,11 +277,11 @@ public final class OAuth2TokenIntrospection implements OAuth2TokenIntrospectionC
 		 * @return the {@link OAuth2TokenIntrospection}
 		 */
 		public OAuth2TokenIntrospection build() {
-			validateClaims();
+			validate();
 			return new OAuth2TokenIntrospection(this.claims);
 		}
 
-		private void validateClaims() {
+		private void validate() {
 			Assert.notNull(this.claims.get(OAuth2TokenIntrospectionClaimNames.ACTIVE), "active cannot be null");
 			Assert.isInstanceOf(Boolean.class, this.claims.get(OAuth2TokenIntrospectionClaimNames.ACTIVE), "active must be of type boolean");
 			if (this.claims.containsKey(OAuth2TokenIntrospectionClaimNames.SCOPE)) {

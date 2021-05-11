@@ -349,10 +349,16 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 			return;
 		}
 
-		// scope (OPTIONAL)
+		// scope (REQUIRED)
+		// If the client omits the scope parameter when requesting
+		// authorization, the authorization server MUST either process the
+		// request using a pre-defined default value or fail the request
+		// indicating an invalid scope.  The authorization server SHOULD
+		// document its scope requirements and default value (if defined).
+		// TODO Allow configuration for scope request parameter behavior
 		Set<String> requestedScopes = authorizationRequestContext.getScopes();
 		Set<String> allowedScopes = registeredClient.getScopes();
-		if (!requestedScopes.isEmpty() && !allowedScopes.containsAll(requestedScopes)) {
+		if (requestedScopes.isEmpty() || !allowedScopes.containsAll(requestedScopes)) {
 			authorizationRequestContext.setError(
 					createError(OAuth2ErrorCodes.INVALID_SCOPE, OAuth2ParameterNames.SCOPE));
 			return;

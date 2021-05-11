@@ -284,6 +284,21 @@ public class OAuth2AuthorizationEndpointFilterTests {
 				request -> request.setParameter(OAuth2ParameterNames.RESPONSE_TYPE, "id_token"));
 	}
 
+	// gh-288
+	@Test
+	public void doFilterWhenAuthorizationRequestMissingScopeThenInvalidScopeError() throws Exception {
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+		when(this.registeredClientRepository.findByClientId((eq(registeredClient.getClientId()))))
+				.thenReturn(registeredClient);
+
+		doFilterWhenAuthorizationRequestInvalidParameterThenRedirect(
+				registeredClient,
+				OAuth2ParameterNames.SCOPE,
+				OAuth2ErrorCodes.INVALID_SCOPE,
+				DEFAULT_ERROR_URI,
+				request -> request.removeParameter(OAuth2ParameterNames.SCOPE));
+	}
+
 	@Test
 	public void doFilterWhenAuthorizationRequestInvalidScopeThenInvalidScopeError() throws Exception {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();

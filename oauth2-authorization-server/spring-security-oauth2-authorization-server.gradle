@@ -10,12 +10,16 @@ dependencies {
 	compile 'com.nimbusds:nimbus-jose-jwt'
 	compile 'com.fasterxml.jackson.core:jackson-databind'
 
+	optional 'org.springframework:spring-jdbc'
+
 	testCompile 'org.springframework.security:spring-security-test'
 	testCompile 'org.springframework:spring-webmvc'
 	testCompile 'junit:junit'
 	testCompile 'org.assertj:assertj-core'
 	testCompile 'org.mockito:mockito-core'
 	testCompile 'com.jayway.jsonpath:json-path'
+
+	testRuntime 'org.hsqldb:hsqldb'
 
 	provided 'javax.servlet:javax.servlet-api'
 }

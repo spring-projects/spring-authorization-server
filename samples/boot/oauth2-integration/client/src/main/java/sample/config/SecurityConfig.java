@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright 2020-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ public class SecurityConfig {
 		return (web) -> web.ignoring().antMatchers("/webjars/**");
 	}
 
-	// formatter:off
+	// @formatter:off
 	@Bean
 	SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 		http
@@ -47,6 +47,6 @@ public class SecurityConfig {
 			.oauth2Client(withDefaults());
 		return http.build();
 	}
-	// formatter:on
+	// @formatter:on
 
 }

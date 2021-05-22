@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright 2020-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -41,9 +41,9 @@ public class OidcProviderConfigurationEndpointFilterTests {
 
 	@Test
 	public void constructorWhenProviderSettingsNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> new OidcProviderConfigurationEndpointFilter(null))
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("providerSettings cannot be null");
+		assertThatIllegalArgumentException()
+				.isThrownBy(() -> new OidcProviderConfigurationEndpointFilter(null))
+				.withMessage("providerSettings cannot be null");
 	}
 
 	@Test
@@ -129,8 +129,8 @@ public class OidcProviderConfigurationEndpointFilterTests {
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		FilterChain filterChain = mock(FilterChain.class);
 
-		assertThatThrownBy(() -> filter.doFilter(request, response, filterChain))
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("issuer must be a valid URL");
+		assertThatIllegalArgumentException()
+				.isThrownBy(() -> filter.doFilter(request, response, filterChain))
+				.withMessage("issuer must be a valid URL");
 	}
 }

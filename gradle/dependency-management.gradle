@@ -1,13 +1,13 @@
 if (!project.hasProperty("springVersion")) {
-	ext.springVersion = "5.3.3"
+	ext.springVersion = "5.3.6"
 }
 
 if (!project.hasProperty("springSecurityVersion")) {
-	ext.springSecurityVersion = "5.4.5"
+	ext.springSecurityVersion = "5.4.6"
 }
 
 if (!project.hasProperty("reactorVersion")) {
-	ext.reactorVersion = "2020.0.3"
+	ext.reactorVersion = "2020.0.6"
 }
 
 if (!project.hasProperty("locksDisabled")) {

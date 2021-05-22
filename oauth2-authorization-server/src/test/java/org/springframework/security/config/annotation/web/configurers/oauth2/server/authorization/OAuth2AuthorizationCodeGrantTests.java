@@ -45,6 +45,8 @@ import org.springframework.security.config.annotation.web.configuration.OAuth2Au
 import org.springframework.security.config.test.SpringTestRule;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.crypto.password.NoOpPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.OAuth2TokenType;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AccessTokenResponse;
@@ -53,11 +55,10 @@ import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.endpoint.PkceParameterNames;
 import org.springframework.security.oauth2.core.http.converter.OAuth2AccessTokenResponseHttpMessageConverter;
 import org.springframework.security.oauth2.jose.TestJwks;
-import org.springframework.security.oauth2.jose.TestKeys;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.NimbusJwsEncoder;
-import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.authorization.JwtEncodingContext;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationCode;
@@ -111,7 +112,6 @@ public class OAuth2AuthorizationCodeGrantTests {
 	private static OAuth2AuthorizationService authorizationService;
 	private static JWKSource<SecurityContext> jwkSource;
 	private static NimbusJwsEncoder jwtEncoder;
-	private static NimbusJwtDecoder jwtDecoder;
 	private static ProviderSettings providerSettings;
 	private static HttpMessageConverter<OAuth2AccessTokenResponse> accessTokenHttpResponseConverter =
 			new OAuth2AccessTokenResponseHttpMessageConverter();
@@ -122,6 +122,9 @@ public class OAuth2AuthorizationCodeGrantTests {
 	@Autowired
 	private MockMvc mvc;
 
+	@Autowired
+	private JwtDecoder jwtDecoder;
+
 	@BeforeClass
 	public static void init() {
 		registeredClientRepository = mock(RegisteredClientRepository.class);
@@ -129,7 +132,6 @@ public class OAuth2AuthorizationCodeGrantTests {
 		JWKSet jwkSet = new JWKSet(TestJwks.DEFAULT_RSA_JWK);
 		jwkSource = (jwkSelector, securityContext) -> jwkSelector.select(jwkSet);
 		jwtEncoder = new NimbusJwsEncoder(jwkSource);
-		jwtDecoder = NimbusJwtDecoder.withPublicKey(TestKeys.DEFAULT_PUBLIC_KEY).build();
 		providerSettings = new ProviderSettings()
 				.authorizationEndpoint("/test/authorize")
 				.tokenEndpoint("/test/token");
@@ -206,7 +208,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 				registeredClient, authorization, OAuth2TokenEndpointFilter.DEFAULT_TOKEN_ENDPOINT_URI);
 
 		// Assert user authorities was propagated as claim in JWT
-		Jwt jwt = jwtDecoder.decode(accessTokenResponse.getAccessToken().getTokenValue());
+		Jwt jwt = this.jwtDecoder.decode(accessTokenResponse.getAccessToken().getTokenValue());
 		List<String> authoritiesClaim = jwt.getClaim(AUTHORITIES_CLAIM);
 		Authentication principal = authorization.getAttribute(Principal.class.getName());
 		Set<String> userAuthorities = principal.getAuthorities().stream()
@@ -388,6 +390,12 @@ public class OAuth2AuthorizationCodeGrantTests {
 				}
 			};
 		}
+
+		@Bean
+		PasswordEncoder passwordEncoder() {
+			return NoOpPasswordEncoder.getInstance();
+		}
+
 	}
 
 	@EnableWebSecurity

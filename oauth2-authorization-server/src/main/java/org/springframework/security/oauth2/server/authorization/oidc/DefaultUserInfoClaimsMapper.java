@@ -1,12 +1,11 @@
 package org.springframework.security.oauth2.server.authorization.oidc;
 
-import java.util.Collections;
-import java.util.Map;
+import org.springframework.security.oauth2.core.oidc.OidcUserInfo;
 
 public class DefaultUserInfoClaimsMapper implements UserInfoClaimsMapper {
 
-	public Map<String, Object> map(Object principal) {
-		return Collections.emptyMap(); // TODO
+	public OidcUserInfo map(Object principal) {
+		return null; // TODO
 	}
 
 }

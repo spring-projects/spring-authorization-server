@@ -45,6 +45,7 @@ import org.springframework.security.oauth2.server.authorization.authentication.O
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2TokenRevocationAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.config.ProviderSettings;
+import org.springframework.security.oauth2.server.authorization.oidc.DefaultUserInfoClaimsMapper;
 import org.springframework.security.oauth2.server.authorization.oidc.UserInfoClaimsMapper;
 import org.springframework.security.oauth2.server.authorization.oidc.web.OidcProviderConfigurationEndpointFilter;
 import org.springframework.security.oauth2.server.authorization.oidc.OidcUserInfoEndpointFilter;
@@ -67,7 +68,6 @@ import org.springframework.util.StringUtils;
  *
  * @author Joe Grandja
  * @author Daniel Garnier-Moiroux
- * @since 0.0.1
  * @see AbstractHttpConfigurer
  * @see RegisteredClientRepository
  * @see OAuth2AuthorizationService
@@ -78,6 +78,7 @@ import org.springframework.util.StringUtils;
  * @see OidcProviderConfigurationEndpointFilter
  * @see OAuth2ClientAuthenticationFilter
  * @see OidcUserInfoEndpointFilter
+ * @since 0.0.1
  */
 public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBuilder<B>>
 		extends AbstractHttpConfigurer<OAuth2AuthorizationServerConfigurer<B>, B> {
@@ -90,11 +91,11 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 	private RequestMatcher oidcUserInfoEndpointMatcher;
 	private final RequestMatcher endpointsMatcher = (request) ->
 			this.authorizationEndpointMatcher.matches(request) ||
-			this.tokenEndpointMatcher.matches(request) ||
-			this.tokenRevocationEndpointMatcher.matches(request) ||
-			this.jwkSetEndpointMatcher.matches(request) ||
-			this.oidcProviderConfigurationEndpointMatcher.matches(request) ||
-			this.oidcUserInfoEndpointMatcher.matches(request);
+					this.tokenEndpointMatcher.matches(request) ||
+					this.tokenRevocationEndpointMatcher.matches(request) ||
+					this.jwkSetEndpointMatcher.matches(request) ||
+					this.oidcProviderConfigurationEndpointMatcher.matches(request) ||
+					this.oidcUserInfoEndpointMatcher.matches(request);
 
 	/**
 	 * Sets the repository of registered clients.
@@ -255,8 +256,9 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 						providerSettings.tokenRevocationEndpoint());
 		builder.addFilterAfter(postProcess(tokenRevocationEndpointFilter), OAuth2TokenEndpointFilter.class);
 
+		UserInfoClaimsMapper userInfoClaimsMapper = getUserInfoClaimsMapper(builder);
 		OidcUserInfoEndpointFilter oidcUserInfoEndpointFilter =
-				new OidcUserInfoEndpointFilter();
+				new OidcUserInfoEndpointFilter(userInfoClaimsMapper);
 		builder.addFilterAfter(postProcess(oidcUserInfoEndpointFilter), OAuth2TokenRevocationEndpointFilter.class);
 	}
 

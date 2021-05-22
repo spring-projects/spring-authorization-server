@@ -1,9 +1,9 @@
 package org.springframework.security.oauth2.server.authorization.oidc;
 
-import java.util.Map;
+import org.springframework.security.oauth2.core.oidc.OidcUserInfo;
 
 public interface UserInfoClaimsMapper {
 
-	Map<String, Object> map(Object principal);
+	OidcUserInfo map(Object principal);
 
 }

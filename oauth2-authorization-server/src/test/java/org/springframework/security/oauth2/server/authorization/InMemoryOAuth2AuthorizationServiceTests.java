@@ -246,6 +246,22 @@ public class InMemoryOAuth2AuthorizationServiceTests {
 	}
 
 	@Test
+	public void findByTokenWhenWrongTokenTypeThenNotFound() {
+		OAuth2RefreshToken refreshToken = new OAuth2RefreshToken("refresh-token", Instant.now());
+		OAuth2Authorization authorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
+				.id(ID)
+				.principalName(PRINCIPAL_NAME)
+				.authorizationGrantType(AUTHORIZATION_GRANT_TYPE)
+				.refreshToken(refreshToken)
+				.build();
+		this.authorizationService.save(authorization);
+
+		OAuth2Authorization result = this.authorizationService.findByToken(
+				refreshToken.getTokenValue(), OAuth2TokenType.ACCESS_TOKEN);
+		assertThat(result).isNull();
+	}
+
+	@Test
 	public void findByTokenWhenTokenDoesNotExistThenNull() {
 		OAuth2Authorization result = this.authorizationService.findByToken(
 				"access-token", OAuth2TokenType.ACCESS_TOKEN);

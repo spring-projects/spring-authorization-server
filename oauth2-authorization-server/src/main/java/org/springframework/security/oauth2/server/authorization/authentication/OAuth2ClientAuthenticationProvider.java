@@ -24,6 +24,8 @@ import java.util.Map;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.crypto.factory.PasswordEncoderFactories;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
@@ -51,11 +53,13 @@ import org.springframework.util.StringUtils;
  * @see OAuth2ClientAuthenticationToken
  * @see RegisteredClientRepository
  * @see OAuth2AuthorizationService
+ * @see PasswordEncoder
  */
 public class OAuth2ClientAuthenticationProvider implements AuthenticationProvider {
 	private static final OAuth2TokenType AUTHORIZATION_CODE_TOKEN_TYPE = new OAuth2TokenType(OAuth2ParameterNames.CODE);
 	private final RegisteredClientRepository registeredClientRepository;
 	private final OAuth2AuthorizationService authorizationService;
+	private PasswordEncoder passwordEncoder;
 
 	/**
 	 * Constructs an {@code OAuth2ClientAuthenticationProvider} using the provided parameters.
@@ -69,6 +73,20 @@ public class OAuth2ClientAuthenticationProvider implements AuthenticationProvide
 		Assert.notNull(authorizationService, "authorizationService cannot be null");
 		this.registeredClientRepository = registeredClientRepository;
 		this.authorizationService = authorizationService;
+		this.passwordEncoder = PasswordEncoderFactories.createDelegatingPasswordEncoder();
+	}
+
+	/**
+	 * Sets the {@link PasswordEncoder} used to validate
+	 * the {@link RegisteredClient#getClientSecret() client secret}.
+	 * If not set, the client secret will be compared using
+	 * {@link PasswordEncoderFactories#createDelegatingPasswordEncoder()}.
+	 *
+	 * @param passwordEncoder the {@link PasswordEncoder} used to validate the client secret
+	 */
+	public final void setPasswordEncoder(PasswordEncoder passwordEncoder) {
+		Assert.notNull(passwordEncoder, "passwordEncoder cannot be null");
+		this.passwordEncoder = passwordEncoder;
 	}
 
 	@Override
@@ -91,8 +109,7 @@ public class OAuth2ClientAuthenticationProvider implements AuthenticationProvide
 
 		if (clientAuthentication.getCredentials() != null) {
 			String clientSecret = clientAuthentication.getCredentials().toString();
-			// TODO Use PasswordEncoder.matches()
-			if (!registeredClient.getClientSecret().equals(clientSecret)) {
+			if (!this.passwordEncoder.matches(clientSecret, registeredClient.getClientSecret())) {
 				throwInvalidClient();
 			}
 			authenticatedCredentials = true;

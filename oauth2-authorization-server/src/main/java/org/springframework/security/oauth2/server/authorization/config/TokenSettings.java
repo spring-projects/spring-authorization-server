@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright 2020-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,13 @@
  */
 package org.springframework.security.oauth2.server.authorization.config;
 
-import org.springframework.util.Assert;
-
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
+
+import org.springframework.security.oauth2.core.oidc.OidcIdToken;
+import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
+import org.springframework.util.Assert;
 
 /**
  * A facility for token configuration settings.
@@ -33,6 +35,7 @@ public class TokenSettings extends Settings {
 	public static final String ACCESS_TOKEN_TIME_TO_LIVE = TOKEN_SETTING_BASE.concat("access-token-time-to-live");
 	public static final String REUSE_REFRESH_TOKENS = TOKEN_SETTING_BASE.concat("reuse-refresh-tokens");
 	public static final String REFRESH_TOKEN_TIME_TO_LIVE = TOKEN_SETTING_BASE.concat("refresh-token-time-to-live");
+	public static final String ID_TOKEN_SIGNATURE_ALGORITHM = TOKEN_SETTING_BASE.concat("id-token-signature-algorithm");
 
 	/**
 	 * Constructs a {@code TokenSettings}.
@@ -114,11 +117,35 @@ public class TokenSettings extends Settings {
 		return this;
 	}
 
+	/**
+	 * Returns the {@link SignatureAlgorithm JWS} algorithm for signing the {@link OidcIdToken ID Token}.
+	 * The default is {@link SignatureAlgorithm#RS256 RS256}.
+	 *
+	 * @return the {@link SignatureAlgorithm JWS} algorithm for signing the {@link OidcIdToken ID Token}
+	 */
+	public SignatureAlgorithm idTokenSignatureAlgorithm() {
+		return setting(ID_TOKEN_SIGNATURE_ALGORITHM);
+	}
+
+	/**
+	 * Sets the {@link SignatureAlgorithm JWS} algorithm for signing the {@link OidcIdToken ID Token}.
+	 *
+	 * @param idTokenSignatureAlgorithm the {@link SignatureAlgorithm JWS} algorithm for signing the {@link OidcIdToken ID Token}
+	 * @return the {@link TokenSettings}
+	 */
+	public TokenSettings idTokenSignatureAlgorithm(SignatureAlgorithm idTokenSignatureAlgorithm) {
+		Assert.notNull(idTokenSignatureAlgorithm, "idTokenSignatureAlgorithm cannot be null");
+		setting(ID_TOKEN_SIGNATURE_ALGORITHM, idTokenSignatureAlgorithm);
+		return this;
+	}
+
 	protected static Map<String, Object> defaultSettings() {
 		Map<String, Object> settings = new HashMap<>();
 		settings.put(ACCESS_TOKEN_TIME_TO_LIVE, Duration.ofMinutes(5));
 		settings.put(REUSE_REFRESH_TOKENS, true);
 		settings.put(REFRESH_TOKEN_TIME_TO_LIVE, Duration.ofMinutes(60));
+		settings.put(ID_TOKEN_SIGNATURE_ALGORITHM, SignatureAlgorithm.RS256);
 		return settings;
 	}
+
 }

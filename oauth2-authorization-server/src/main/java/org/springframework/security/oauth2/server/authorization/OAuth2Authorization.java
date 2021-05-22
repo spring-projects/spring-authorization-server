@@ -16,6 +16,7 @@
 package org.springframework.security.oauth2.server.authorization;
 
 import java.io.Serializable;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -32,6 +33,7 @@ import org.springframework.security.oauth2.core.OAuth2RefreshToken;
 import org.springframework.security.oauth2.core.OAuth2RefreshToken2;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.util.Assert;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 /**
@@ -278,6 +280,37 @@ public class OAuth2Authorization implements Serializable {
 		 */
 		public boolean isInvalidated() {
 			return Boolean.TRUE.equals(getMetadata(INVALIDATED_METADATA_NAME));
+		}
+
+		/**
+		 * Returns {@code true} if the token has expired.
+		 *
+		 * @return {@code true} if the token has expired, {@code false} otherwise
+		 */
+		public boolean isExpired() {
+			return getToken().getExpiresAt() != null && Instant.now().isAfter(getToken().getExpiresAt());
+		}
+
+		/**
+		 * Returns {@code true} if the token is before the time it can be used.
+		 *
+		 * @return {@code true} if the token is before the time it can be used, {@code false} otherwise
+		 */
+		public boolean isBeforeUse() {
+			Instant notBefore = null;
+			if (!CollectionUtils.isEmpty(getClaims())) {
+				notBefore = (Instant) getClaims().get("nbf");
+			}
+			return notBefore != null && Instant.now().isBefore(notBefore);
+		}
+
+		/**
+		 * Returns {@code true} if the token is currently active.
+		 *
+		 * @return {@code true} if the token is currently active, {@code false} otherwise
+		 */
+		public boolean isActive() {
+			return !isInvalidated() && !isExpired() && !isBeforeUse();
 		}
 
 		/**

@@ -3,7 +3,7 @@ name: CI
 on:
   push:
     branches:
-      - master
+      - main
   schedule:
     - cron: '0 10 * * *' # Once per day at 10am UTC
 

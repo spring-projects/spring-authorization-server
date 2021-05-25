@@ -19,7 +19,6 @@ import java.security.Principal;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -225,43 +224,13 @@ public class OAuth2AuthorizationCodeAuthenticationProviderTests {
 
 	// gh-290
 	@Test
-	public void authenticateWhenExpiredCodeThenThrowOAuth2AuthenticationException() throws InterruptedException {
+	public void authenticateWhenExpiredCodeThenThrowOAuth2AuthenticationException() {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 		Instant now = Instant.now();
 		OAuth2AuthorizationCode authorizationCode = new OAuth2AuthorizationCode(
-				AUTHORIZATION_CODE, now, now.plusNanos(1));
+				AUTHORIZATION_CODE, null, now.minusSeconds(60));
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient)
 				.token(authorizationCode)
-				.build();
-		when(this.authorizationService.findByToken(eq(AUTHORIZATION_CODE), eq(AUTHORIZATION_CODE_TOKEN_TYPE)))
-				.thenReturn(authorization);
-
-		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient);
-		OAuth2AuthorizationRequest authorizationRequest = authorization.getAttribute(
-				OAuth2AuthorizationRequest.class.getName());
-		OAuth2AuthorizationCodeAuthenticationToken authentication =
-				new OAuth2AuthorizationCodeAuthenticationToken(AUTHORIZATION_CODE, clientPrincipal, authorizationRequest.getRedirectUri(), null);
-
-		// Busy wait a brief moment for token to expire. TODO: Add a way to mock the underlying java.time.Clock?
-		while (!Instant.now().isAfter(authorizationCode.getExpiresAt())) {
-			Thread.sleep(0, 1);
-		}
-
-		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
-				.isInstanceOf(OAuth2AuthenticationException.class)
-				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
-				.extracting("errorCode")
-				.isEqualTo(OAuth2ErrorCodes.INVALID_GRANT);
-	}
-
-	// gh-290
-	@Test
-	public void authenticateWhenCodeIsBeforeUseThenThrowOAuth2AuthenticationException() throws InterruptedException {
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
-		OAuth2AuthorizationCode authorizationCode = new OAuth2AuthorizationCode(
-				AUTHORIZATION_CODE, Instant.now(), Instant.now().plusSeconds(240));
-		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient)
-				.token(authorizationCode, (metadata) -> metadata.put(OAuth2Authorization.Token.CLAIMS_METADATA_NAME, Collections.singletonMap("nbf", Instant.now().plusSeconds(120))))
 				.build();
 		when(this.authorizationService.findByToken(eq(AUTHORIZATION_CODE), eq(AUTHORIZATION_CODE_TOKEN_TYPE)))
 				.thenReturn(authorization);

@@ -122,7 +122,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 	private static ProviderSettings providerSettings;
 	private static HttpMessageConverter<OAuth2AccessTokenResponse> accessTokenHttpResponseConverter =
 			new OAuth2AccessTokenResponseHttpMessageConverter();
-	private static String consentPage = "/custom-consent";
+	private static String consentPage = "/oauth2/consent";
 
 	@Rule
 	public final SpringTestRule spring = new SpringTestRule();
@@ -360,15 +360,13 @@ public class OAuth2AuthorizationCodeGrantTests {
 				.getResponse()
 				.getContentAsString();
 
-
 		assertThat(consentPage).contains("Consent required");
 		assertThat(consentPage).contains(scopeCheckbox("message.read"));
 		assertThat(consentPage).contains(scopeCheckbox("message.write"));
 	}
 
 	@Test
-	public void requestWhenConsentRequestReturnAccessTokenResponse() throws Exception {
-		final String stateParameter = "consent-state";
+	public void requestWhenConsentRequestThenReturnAccessTokenResponse() throws Exception {
 		this.spring.register(AuthorizationServerConfiguration.class).autowire();
 
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
@@ -381,14 +379,15 @@ public class OAuth2AuthorizationCodeGrantTests {
 				.build();
 		when(registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
 				.thenReturn(registeredClient);
-		OAuth2Authorization stateTokenAuthorization = TestOAuth2Authorizations.authorization(registeredClient)
+		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient)
 				.principalName("user")
 				.build();
 
+		final String stateParameter = "state";
+
 		when(authorizationService.findByToken(
-				eq(stateParameter),
-				eq(new OAuth2TokenType(OAuth2ParameterNames.STATE))))
-				.thenReturn(stateTokenAuthorization);
+				eq(stateParameter), eq(new OAuth2TokenType(OAuth2ParameterNames.STATE))))
+				.thenReturn(authorization);
 
 		MvcResult mvcResult = this.mvc.perform(post(OAuth2AuthorizationEndpointFilter.DEFAULT_AUTHORIZATION_ENDPOINT_URI)
 				.param(OAuth2ParameterNames.CLIENT_ID, registeredClient.getClientId())
@@ -480,10 +479,10 @@ public class OAuth2AuthorizationCodeGrantTests {
 
 	private static String getAuthorizationHeader(RegisteredClient registeredClient) throws Exception {
 		String clientId = registeredClient.getClientId();
-		String secret = registeredClient.getClientSecret();
+		String clientSecret = registeredClient.getClientSecret();
 		clientId = URLEncoder.encode(clientId, StandardCharsets.UTF_8.name());
-		secret = URLEncoder.encode(secret, StandardCharsets.UTF_8.name());
-		String credentialsString = clientId + ":" + secret;
+		clientSecret = URLEncoder.encode(clientSecret, StandardCharsets.UTF_8.name());
+		String credentialsString = clientId + ":" + clientSecret;
 		byte[] encodedBytes = Base64.getEncoder().encode(credentialsString.getBytes(StandardCharsets.UTF_8));
 		return "Basic " + new String(encodedBytes, StandardCharsets.UTF_8);
 	}

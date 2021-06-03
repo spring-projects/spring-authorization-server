@@ -15,6 +15,13 @@
  */
 package org.springframework.security.oauth2.server.authorization;
 
+import java.io.Serializable;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
+
 import org.springframework.lang.NonNull;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -23,16 +30,9 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 
-import java.io.Serializable;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.function.Consumer;
-import java.util.stream.Collectors;
-
 /**
  * A representation of an OAuth 2.0 "consent" to an Authorization request, which holds state related to the
- * set of {@link #getAuthorities()} authorities} granted to a {@link #getRegisteredClientId() client} by the
+ * set of {@link #getAuthorities() authorities} granted to a {@link #getRegisteredClientId() client} by the
  * {@link #getPrincipalName() resource owner}.
  * <p>
  * When authorizing access for a given client, the resource owner may only grant a subset of the authorities
@@ -130,7 +130,7 @@ public final class OAuth2AuthorizationConsent implements Serializable {
 	/**
 	 * A builder for {@link OAuth2AuthorizationConsent}.
 	 */
-	public final static class Builder implements Serializable {
+	public static final class Builder implements Serializable {
 		private static final long serialVersionUID = Version.SERIAL_VERSION_UID;
 
 		private final String registeredClientId;
@@ -151,10 +151,10 @@ public final class OAuth2AuthorizationConsent implements Serializable {
 
 		/**
 		 * Adds a scope to the collection of {@code authorities} in the resulting {@link OAuth2AuthorizationConsent},
-		 * wrapping it in a SimpleGrantedAuthority, prefixed by {@code SCOPE_}. For example, a
+		 * wrapping it in a {@link SimpleGrantedAuthority}, prefixed by {@code SCOPE_}. For example, a
 		 * {@code message.write} scope would be stored as {@code SCOPE_message.write}.
 		 *
-		 * @param scope the {@code scope}
+		 * @param scope the scope
 		 * @return the {@code Builder} for further configuration
 		 */
 		public Builder scope(String scope) {

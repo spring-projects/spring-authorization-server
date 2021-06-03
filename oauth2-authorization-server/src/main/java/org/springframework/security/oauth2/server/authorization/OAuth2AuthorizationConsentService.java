@@ -29,6 +29,7 @@ import java.security.Principal;
  * @see OAuth2AuthorizationConsent
  */
 public interface OAuth2AuthorizationConsentService {
+
 	/**
 	 * Saves the {@link OAuth2AuthorizationConsent}.
 	 *
@@ -53,4 +54,5 @@ public interface OAuth2AuthorizationConsentService {
 	 */
 	@Nullable
 	OAuth2AuthorizationConsent findById(String registeredClientId, String principalName);
+
 }

@@ -35,12 +35,12 @@ import org.springframework.security.config.annotation.web.configurers.ExceptionH
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.NimbusJwsEncoder;
-import org.springframework.security.oauth2.server.authorization.InMemoryOAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.InMemoryOAuth2AuthorizationConsentService;
+import org.springframework.security.oauth2.server.authorization.InMemoryOAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.JwtEncodingContext;
+import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsentService;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenCustomizer;
-import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsentService;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientCredentialsAuthenticationProvider;
@@ -79,6 +79,7 @@ import org.springframework.util.StringUtils;
  * @see AbstractHttpConfigurer
  * @see RegisteredClientRepository
  * @see OAuth2AuthorizationService
+ * @see OAuth2AuthorizationConsentService
  * @see OAuth2AuthorizationEndpointFilter
  * @see OAuth2TokenEndpointFilter
  * @see OAuth2TokenIntrospectionEndpointFilter
@@ -138,7 +139,7 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 	/**
 	 * Sets the authorization consent service.
 	 *
-	 * @param authorizationConsentService the authorization service
+	 * @param authorizationConsentService the authorization consent service
 	 * @return the {@link OAuth2AuthorizationServerConfigurer} for further configuration
 	 */
 	public OAuth2AuthorizationServerConfigurer<B> authorizationConsentService(OAuth2AuthorizationConsentService authorizationConsentService) {
@@ -160,17 +161,17 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 	}
 
 	/**
-	 * Specify the URL to redirect Resource Owners to if consent is required during
+	 * Specify the URI to redirect Resource Owners to if consent is required during
 	 * the {@code authorization_code} flow. A default consent page will be generated when
 	 * this attribute is not specified.
 	 *
-	 * If a URL is specified, users are required to process the specified URL to generate
+	 * If a URI is specified, applications are required to process the specified URI to generate
 	 * a consent page. The query string will contain the following parameters:
 	 *
 	 * <ul>
-	 * <li>{@code client_id} the client identifier</li>
-	 * <li>{@code scope} the space separated list of scopes present in the authorization request</li>
-	 * <li>{@code state} a CSRF protection token</li>
+	 * <li>{@code client_id} - the client identifier</li>
+	 * <li>{@code scope} - the space separated list of scopes present in the authorization request</li>
+	 * <li>{@code state} - a CSRF protection token</li>
 	 * </ul>
 	 *
 	 * In general, the consent page should create a form that submits
@@ -181,14 +182,13 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 	 * <li>It must be submitted to {@link ProviderSettings#authorizationEndpoint()}</li>
 	 * <li>It must include the received {@code client_id} as an HTTP parameter</li>
 	 * <li>It must include the received {@code state} as an HTTP parameter</li>
-	 * <li>It must include the list of {@code scope}s the {@code Resource Owners}
-	 * consents to as an HTTP parameter</li>
-	 * <li>It must include the {@code consent_action} parameter, with value either
+	 * <li>It must include the list of {@code scope}s the {@code Resource Owner}
+	 * consented to as an HTTP parameter</li>
+	 * <li>It must include the {@code consent_action} parameter, with a value either
 	 * {@code approve} or {@code cancel} as an HTTP parameter</li>
 	 * </ul>
 	 *
-	 *
-	 * @param consentPage the consent page to redirect to if consent is required (e.g. "/consent")
+	 * @param consentPage the consent page to redirect to if consent is required (e.g. "/oauth2/consent")
 	 * @return the {@link OAuth2AuthorizationServerConfigurer} for further configuration
 	 */
 	public OAuth2AuthorizationServerConfigurer<B> consentPage(String consentPage) {
@@ -316,9 +316,8 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 						getRegisteredClientRepository(builder),
 						getAuthorizationService(builder),
 						getAuthorizationConsentService(builder),
-						providerSettings.authorizationEndpoint()
-				);
-		if (this.consentPage != null) {
+						providerSettings.authorizationEndpoint());
+		if (StringUtils.hasText(this.consentPage)) {
 			authorizationEndpointFilter.setUserConsentUri(this.consentPage);
 		}
 		builder.addFilterBefore(postProcess(authorizationEndpointFilter), AbstractPreAuthenticatedProcessingFilter.class);

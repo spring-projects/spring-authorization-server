@@ -15,10 +15,14 @@
  */
 package sample.config;
 
+import java.util.UUID;
+
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
+import sample.jose.Jwks;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
@@ -37,14 +41,10 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 import org.springframework.security.oauth2.server.authorization.config.ProviderSettings;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.util.matcher.RequestMatcher;
-import sample.jose.Jwks;
-
-import java.util.UUID;
 
 /**
  * @author Joe Grandja
  * @author Daniel Garnier-Moiroux
- * @since 0.0.1
  */
 @Configuration(proxyBeanMethods = false)
 public class AuthorizationServerConfig {
@@ -54,7 +54,7 @@ public class AuthorizationServerConfig {
 	public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
 		OAuth2AuthorizationServerConfigurer<HttpSecurity> authorizationServerConfigurer =
 				new OAuth2AuthorizationServerConfigurer<>();
-		authorizationServerConfigurer.consentPage("/consent");
+		authorizationServerConfigurer.consentPage("/oauth2/consent");
 		RequestMatcher endpointsMatcher = authorizationServerConfigurer
 				.getEndpointsMatcher();
 
@@ -102,8 +102,9 @@ public class AuthorizationServerConfig {
 	}
 
 	@Bean
-	public OAuth2AuthorizationConsentService authorizationService() {
+	public OAuth2AuthorizationConsentService authorizationConsentService() {
 		// Will be used by the ConsentController
 		return new InMemoryOAuth2AuthorizationConsentService();
 	}
+
 }

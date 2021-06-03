@@ -15,15 +15,15 @@
  */
 package org.springframework.security.oauth2.server.authorization;
 
-import org.springframework.lang.Nullable;
-import org.springframework.util.Assert;
-
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
+
+import org.springframework.lang.Nullable;
+import org.springframework.util.Assert;
 
 /**
  * An {@link OAuth2AuthorizationConsentService} that stores {@link OAuth2AuthorizationConsent}'s in-memory.
@@ -102,4 +102,5 @@ public final class InMemoryOAuth2AuthorizationConsentService implements OAuth2Au
 	private static int getId(OAuth2AuthorizationConsent authorizationConsent) {
 		return getId(authorizationConsent.getRegisteredClientId(), authorizationConsent.getPrincipalName());
 	}
+
 }

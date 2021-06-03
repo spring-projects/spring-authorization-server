@@ -120,8 +120,7 @@ public class OAuth2RefreshTokenAuthenticationProvider implements AuthenticationP
 		}
 
 		OAuth2Authorization.Token<OAuth2RefreshToken> refreshToken = authorization.getRefreshToken();
-		Instant refreshTokenExpiresAt = refreshToken.getToken().getExpiresAt();
-		if (refreshTokenExpiresAt.isBefore(Instant.now())) {
+		if (!refreshToken.isActive()) {
 			// As per https://tools.ietf.org/html/rfc6749#section-5.2
 			// invalid_grant: The provided authorization grant (e.g., authorization code,
 			// resource owner credentials) or refresh token is invalid, expired, revoked [...].
@@ -138,10 +137,6 @@ public class OAuth2RefreshTokenAuthenticationProvider implements AuthenticationP
 		}
 		if (scopes.isEmpty()) {
 			scopes = authorizedScopes;
-		}
-
-		if (refreshToken.isInvalidated()) {
-			throw new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_GRANT));
 		}
 
 		String issuer = this.providerSettings != null ? this.providerSettings.issuer() : null;

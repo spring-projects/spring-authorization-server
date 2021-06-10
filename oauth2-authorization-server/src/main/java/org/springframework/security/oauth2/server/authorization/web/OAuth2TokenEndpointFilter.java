@@ -17,13 +17,8 @@ package org.springframework.security.oauth2.server.authorization.web;
 
 import java.io.IOException;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
@@ -38,7 +33,6 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
@@ -50,11 +44,12 @@ import org.springframework.security.oauth2.core.http.converter.OAuth2AccessToken
 import org.springframework.security.oauth2.core.http.converter.OAuth2ErrorHttpMessageConverter;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AccessTokenAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeAuthenticationProvider;
-import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeAuthenticationToken;
+import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationGrantAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientCredentialsAuthenticationProvider;
-import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientCredentialsAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2RefreshTokenAuthenticationProvider;
-import org.springframework.security.oauth2.server.authorization.authentication.OAuth2RefreshTokenAuthenticationToken;
+import org.springframework.security.oauth2.server.authorization.web.authentication.OAuth2AuthorizationCodeAuthenticationConverter;
+import org.springframework.security.oauth2.server.authorization.web.authentication.OAuth2ClientCredentialsAuthenticationConverter;
+import org.springframework.security.oauth2.server.authorization.web.authentication.OAuth2RefreshTokenAuthenticationConverter;
 import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
@@ -62,8 +57,6 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
-import org.springframework.util.MultiValueMap;
-import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 /**
@@ -103,11 +96,11 @@ public class OAuth2TokenEndpointFilter extends OncePerRequestFilter {
 
 	private final AuthenticationManager authenticationManager;
 	private final RequestMatcher tokenEndpointMatcher;
-	private final AuthenticationConverter authorizationGrantAuthenticationConverter;
 	private final HttpMessageConverter<OAuth2AccessTokenResponse> accessTokenHttpResponseConverter =
 			new OAuth2AccessTokenResponseHttpMessageConverter();
 	private final HttpMessageConverter<OAuth2Error> errorHttpResponseConverter =
 			new OAuth2ErrorHttpMessageConverter();
+	private AuthenticationConverter authenticationConverter;
 	private AuthenticationSuccessHandler authenticationSuccessHandler = this::sendAccessTokenResponse;
 	private AuthenticationFailureHandler authenticationFailureHandler = this::sendErrorResponse;
 
@@ -131,11 +124,11 @@ public class OAuth2TokenEndpointFilter extends OncePerRequestFilter {
 		Assert.hasText(tokenEndpointUri, "tokenEndpointUri cannot be empty");
 		this.authenticationManager = authenticationManager;
 		this.tokenEndpointMatcher = new AntPathRequestMatcher(tokenEndpointUri, HttpMethod.POST.name());
-		List<AuthenticationConverter> converters = new ArrayList<>();
-		converters.add(new AuthorizationCodeAuthenticationConverter());
-		converters.add(new RefreshTokenAuthenticationConverter());
-		converters.add(new ClientCredentialsAuthenticationConverter());
-		this.authorizationGrantAuthenticationConverter = new DelegatingAuthenticationConverter(converters);
+		this.authenticationConverter = new DelegatingAuthenticationConverter(
+				Arrays.asList(
+						new OAuth2AuthorizationCodeAuthenticationConverter(),
+						new OAuth2RefreshTokenAuthenticationConverter(),
+						new OAuth2ClientCredentialsAuthenticationConverter()));
 	}
 
 	@Override
@@ -153,7 +146,7 @@ public class OAuth2TokenEndpointFilter extends OncePerRequestFilter {
 				throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.GRANT_TYPE);
 			}
 
-			Authentication authorizationGrantAuthentication = this.authorizationGrantAuthenticationConverter.convert(request);
+			Authentication authorizationGrantAuthentication = this.authenticationConverter.convert(request);
 			if (authorizationGrantAuthentication == null) {
 				throwError(OAuth2ErrorCodes.UNSUPPORTED_GRANT_TYPE, OAuth2ParameterNames.GRANT_TYPE);
 			}
@@ -165,6 +158,17 @@ public class OAuth2TokenEndpointFilter extends OncePerRequestFilter {
 			SecurityContextHolder.clearContext();
 			this.authenticationFailureHandler.onAuthenticationFailure(request, response, ex);
 		}
+	}
+
+	/**
+	 * Sets the {@link AuthenticationConverter} used when attempting to extract an Access Token Request from {@link HttpServletRequest}
+	 * to an instance of {@link OAuth2AuthorizationGrantAuthenticationToken} used for authenticating the authorization grant.
+	 *
+	 * @param authenticationConverter the {@link AuthenticationConverter} used when attempting to extract an Access Token Request from {@link HttpServletRequest}
+	 */
+	public final void setAuthenticationConverter(AuthenticationConverter authenticationConverter) {
+		Assert.notNull(authenticationConverter, "authenticationConverter cannot be null");
+		this.authenticationConverter = authenticationConverter;
 	}
 
 	/**
@@ -232,136 +236,4 @@ public class OAuth2TokenEndpointFilter extends OncePerRequestFilter {
 		throw new OAuth2AuthenticationException(error);
 	}
 
-	private static class AuthorizationCodeAuthenticationConverter implements AuthenticationConverter {
-
-		@Override
-		public Authentication convert(HttpServletRequest request) {
-			// grant_type (REQUIRED)
-			String grantType = request.getParameter(OAuth2ParameterNames.GRANT_TYPE);
-			if (!AuthorizationGrantType.AUTHORIZATION_CODE.getValue().equals(grantType)) {
-				return null;
-			}
-
-			Authentication clientPrincipal = SecurityContextHolder.getContext().getAuthentication();
-
-			MultiValueMap<String, String> parameters = OAuth2EndpointUtils.getParameters(request);
-
-			// code (REQUIRED)
-			String code = parameters.getFirst(OAuth2ParameterNames.CODE);
-			if (!StringUtils.hasText(code) ||
-					parameters.get(OAuth2ParameterNames.CODE).size() != 1) {
-				throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.CODE);
-			}
-
-			// redirect_uri (REQUIRED)
-			// Required only if the "redirect_uri" parameter was included in the authorization request
-			String redirectUri = parameters.getFirst(OAuth2ParameterNames.REDIRECT_URI);
-			if (StringUtils.hasText(redirectUri) &&
-					parameters.get(OAuth2ParameterNames.REDIRECT_URI).size() != 1) {
-				throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.REDIRECT_URI);
-			}
-
-			// @formatter:off
-			Map<String, Object> additionalParameters = parameters
-					.entrySet()
-					.stream()
-					.filter(e -> !e.getKey().equals(OAuth2ParameterNames.GRANT_TYPE) &&
-							!e.getKey().equals(OAuth2ParameterNames.CLIENT_ID) &&
-							!e.getKey().equals(OAuth2ParameterNames.CODE) &&
-							!e.getKey().equals(OAuth2ParameterNames.REDIRECT_URI))
-					.collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().get(0)));
-			// @formatter:on
-
-			return new OAuth2AuthorizationCodeAuthenticationToken(
-					code, clientPrincipal, redirectUri, additionalParameters);
-		}
-	}
-
-	private static class RefreshTokenAuthenticationConverter implements AuthenticationConverter {
-
-		@Override
-		public Authentication convert(HttpServletRequest request) {
-			// grant_type (REQUIRED)
-			String grantType = request.getParameter(OAuth2ParameterNames.GRANT_TYPE);
-			if (!AuthorizationGrantType.REFRESH_TOKEN.getValue().equals(grantType)) {
-				return null;
-			}
-
-			Authentication clientPrincipal = SecurityContextHolder.getContext().getAuthentication();
-
-			MultiValueMap<String, String> parameters = OAuth2EndpointUtils.getParameters(request);
-
-			// refresh_token (REQUIRED)
-			String refreshToken = parameters.getFirst(OAuth2ParameterNames.REFRESH_TOKEN);
-			if (!StringUtils.hasText(refreshToken) ||
-					parameters.get(OAuth2ParameterNames.REFRESH_TOKEN).size() != 1) {
-				throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.REFRESH_TOKEN);
-			}
-
-			// scope (OPTIONAL)
-			String scope = parameters.getFirst(OAuth2ParameterNames.SCOPE);
-			if (StringUtils.hasText(scope) &&
-					parameters.get(OAuth2ParameterNames.SCOPE).size() != 1) {
-				throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.SCOPE);
-			}
-			Set<String> requestedScopes = null;
-			if (StringUtils.hasText(scope)) {
-				requestedScopes = new HashSet<>(
-						Arrays.asList(StringUtils.delimitedListToStringArray(scope, " ")));
-			}
-
-			// @formatter:off
-			Map<String, Object> additionalParameters = parameters
-					.entrySet()
-					.stream()
-					.filter(e -> !e.getKey().equals(OAuth2ParameterNames.GRANT_TYPE) &&
-							!e.getKey().equals(OAuth2ParameterNames.REFRESH_TOKEN) &&
-							!e.getKey().equals(OAuth2ParameterNames.SCOPE))
-					.collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().get(0)));
-			// @formatter:on
-
-			return new OAuth2RefreshTokenAuthenticationToken(
-					refreshToken, clientPrincipal, requestedScopes, additionalParameters);
-		}
-	}
-
-	private static class ClientCredentialsAuthenticationConverter implements AuthenticationConverter {
-
-		@Override
-		public Authentication convert(HttpServletRequest request) {
-			// grant_type (REQUIRED)
-			String grantType = request.getParameter(OAuth2ParameterNames.GRANT_TYPE);
-			if (!AuthorizationGrantType.CLIENT_CREDENTIALS.getValue().equals(grantType)) {
-				return null;
-			}
-
-			Authentication clientPrincipal = SecurityContextHolder.getContext().getAuthentication();
-
-			MultiValueMap<String, String> parameters = OAuth2EndpointUtils.getParameters(request);
-
-			// scope (OPTIONAL)
-			String scope = parameters.getFirst(OAuth2ParameterNames.SCOPE);
-			if (StringUtils.hasText(scope) &&
-					parameters.get(OAuth2ParameterNames.SCOPE).size() != 1) {
-				throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.SCOPE);
-			}
-			Set<String> requestedScopes = null;
-			if (StringUtils.hasText(scope)) {
-				requestedScopes = new HashSet<>(
-						Arrays.asList(StringUtils.delimitedListToStringArray(scope, " ")));
-			}
-
-			// @formatter:off
-			Map<String, Object> additionalParameters = parameters
-					.entrySet()
-					.stream()
-					.filter(e -> !e.getKey().equals(OAuth2ParameterNames.GRANT_TYPE) &&
-							!e.getKey().equals(OAuth2ParameterNames.SCOPE))
-					.collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().get(0)));
-			// @formatter:on
-
-			return new OAuth2ClientCredentialsAuthenticationToken(
-					clientPrincipal, requestedScopes, additionalParameters);
-		}
-	}
 }

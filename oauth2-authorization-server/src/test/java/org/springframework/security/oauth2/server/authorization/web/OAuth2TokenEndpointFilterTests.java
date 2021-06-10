@@ -57,6 +57,7 @@ import org.springframework.security.oauth2.server.authorization.authentication.O
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2RefreshTokenAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
+import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.util.StringUtils;
@@ -108,6 +109,13 @@ public class OAuth2TokenEndpointFilterTests {
 		assertThatThrownBy(() -> new OAuth2TokenEndpointFilter(this.authenticationManager, null))
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessage("tokenEndpointUri cannot be empty");
+	}
+
+	@Test
+	public void setAuthenticationConverterWhenNullThenThrowIllegalArgumentException() {
+		assertThatThrownBy(() -> this.filter.setAuthenticationConverter(null))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("authenticationConverter cannot be null");
 	}
 
 	@Test
@@ -411,6 +419,40 @@ public class OAuth2TokenEndpointFilterTests {
 
 		OAuth2RefreshToken refreshTokenResult = accessTokenResponse.getRefreshToken();
 		assertThat(refreshTokenResult.getTokenValue()).isEqualTo(refreshToken.getTokenValue());
+	}
+
+	@Test
+	public void doFilterWhenCustomAuthenticationConverterThenUsed() throws Exception {
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+		Authentication clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient);
+
+		OAuth2AuthorizationCodeAuthenticationToken authorizationCodeAuthentication =
+				new OAuth2AuthorizationCodeAuthenticationToken("code", clientPrincipal, null, null);
+
+		AuthenticationConverter authenticationConverter = mock(AuthenticationConverter.class);
+		when(authenticationConverter.convert(any())).thenReturn(authorizationCodeAuthentication);
+		this.filter.setAuthenticationConverter(authenticationConverter);
+
+		OAuth2AccessToken accessToken = new OAuth2AccessToken(
+				OAuth2AccessToken.TokenType.BEARER, "token",
+				Instant.now(), Instant.now().plus(Duration.ofHours(1)),
+				new HashSet<>(Arrays.asList("scope1", "scope2")));
+		OAuth2AccessTokenAuthenticationToken accessTokenAuthentication =
+				new OAuth2AccessTokenAuthenticationToken(registeredClient, clientPrincipal, accessToken);
+
+		when(this.authenticationManager.authenticate(any())).thenReturn(accessTokenAuthentication);
+
+		SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
+		securityContext.setAuthentication(clientPrincipal);
+		SecurityContextHolder.setContext(securityContext);
+
+		MockHttpServletRequest request = createAuthorizationCodeTokenRequest(registeredClient);
+		MockHttpServletResponse response = new MockHttpServletResponse();
+		FilterChain filterChain = mock(FilterChain.class);
+
+		this.filter.doFilter(request, response, filterChain);
+
+		verify(authenticationConverter).convert(any());
 	}
 
 	@Test

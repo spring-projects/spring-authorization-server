@@ -189,6 +189,7 @@ public final class JdbcOAuth2AuthorizationService implements OAuth2Authorization
 		this.authorizationParametersMapper = new OAuth2AuthorizationParametersMapper(objectMapper);
 	}
 
+
 	@Override
 	public void save(OAuth2Authorization authorization) {
 		Assert.notNull(authorization, "authorization cannot be null");
@@ -310,6 +311,7 @@ public final class JdbcOAuth2AuthorizationService implements OAuth2Authorization
 		private final ObjectMapper objectMapper;
 		private LobHandler lobHandler = new DefaultLobHandler();
 
+
 		public OAuth2AuthorizationRowMapper(RegisteredClientRepository registeredClientRepository, ObjectMapper objectMapper) {
 			Assert.notNull(registeredClientRepository, "registeredClientRepository cannot be null");
 			Assert.notNull(objectMapper, "objectMapper cannot be null");
@@ -322,7 +324,8 @@ public final class JdbcOAuth2AuthorizationService implements OAuth2Authorization
 		public OAuth2Authorization mapRow(ResultSet rs, int rowNum) throws SQLException {
 			try {
 				String registeredClientId = rs.getString("registered_client_id");
-				RegisteredClient registeredClient = this.registeredClientRepository.findById(registeredClientId);
+				RegisteredClient registeredClient = this.registeredClientRepository
+						.findById(registeredClientId);
 				if (registeredClient == null) {
 					throw new DataRetrievalFailureException(
 							"The RegisteredClient with id '" + registeredClientId + "' it was not found in the RegisteredClientRepository.");
@@ -337,7 +340,7 @@ public final class JdbcOAuth2AuthorizationService implements OAuth2Authorization
 				builder.id(id)
 						.principalName(principalName)
 						.authorizationGrantType(new AuthorizationGrantType(authorizationGrantType))
-						.attributes((attrs) -> attrs.putAll(attributes));
+						.attributes(attrs -> attrs.putAll(attributes));
 
 				String state = rs.getString("state");
 				if (StringUtils.hasText(state)) {
@@ -350,19 +353,22 @@ public final class JdbcOAuth2AuthorizationService implements OAuth2Authorization
 				byte[] authorizationCodeValue = this.lobHandler.getBlobAsBytes(rs, "authorization_code_value");
 
 				if (authorizationCodeValue != null) {
-					tokenValue = new String(authorizationCodeValue, StandardCharsets.UTF_8);
+					tokenValue = new String(authorizationCodeValue,
+							StandardCharsets.UTF_8);
 					tokenIssuedAt = rs.getTimestamp("authorization_code_issued_at").toInstant();
 					tokenExpiresAt = rs.getTimestamp("authorization_code_expires_at").toInstant();
 					Map<String, Object> authorizationCodeMetadata = this.objectMapper.readValue(rs.getString("authorization_code_metadata"), Map.class);
 
 					OAuth2AuthorizationCode authorizationCode = new OAuth2AuthorizationCode(
 							tokenValue, tokenIssuedAt, tokenExpiresAt);
-					builder.token(authorizationCode, (metadata) -> metadata.putAll(authorizationCodeMetadata));
+					builder
+							.token(authorizationCode, (metadata) -> metadata.putAll(authorizationCodeMetadata));
 				}
 
 				byte[] accessTokenValue = this.lobHandler.getBlobAsBytes(rs, "access_token_value");
 				if (accessTokenValue != null) {
-					tokenValue = new String(accessTokenValue, StandardCharsets.UTF_8);
+					tokenValue = new String(accessTokenValue,
+							StandardCharsets.UTF_8);
 					tokenIssuedAt = rs.getTimestamp("access_token_issued_at").toInstant();
 					tokenExpiresAt = rs.getTimestamp("access_token_expires_at").toInstant();
 					Map<String, Object> accessTokenMetadata = this.objectMapper.readValue(rs.getString("access_token_metadata"), Map.class);
@@ -377,24 +383,29 @@ public final class JdbcOAuth2AuthorizationService implements OAuth2Authorization
 						scopes = StringUtils.commaDelimitedListToSet(accessTokenScopes);
 					}
 					OAuth2AccessToken accessToken = new OAuth2AccessToken(tokenType, tokenValue, tokenIssuedAt, tokenExpiresAt, scopes);
-					builder.token(accessToken, (metadata) -> metadata.putAll(accessTokenMetadata));
+					builder
+							.token(accessToken, (metadata) -> metadata.putAll(accessTokenMetadata));
 				}
 
 				byte[] oidcIdTokenValue = this.lobHandler.getBlobAsBytes(rs, "oidc_id_token_value");
+
 				if (oidcIdTokenValue != null) {
-					tokenValue = new String(oidcIdTokenValue, StandardCharsets.UTF_8);
+					tokenValue = new String(oidcIdTokenValue,
+							StandardCharsets.UTF_8);
 					tokenIssuedAt = rs.getTimestamp("oidc_id_token_issued_at").toInstant();
 					tokenExpiresAt = rs.getTimestamp("oidc_id_token_expires_at").toInstant();
 					Map<String, Object> oidcTokenMetadata = this.objectMapper.readValue(rs.getString("oidc_id_token_metadata"), Map.class);
 
 					OidcIdToken oidcToken = new OidcIdToken(
 							tokenValue, tokenIssuedAt, tokenExpiresAt, (Map<String, Object>) oidcTokenMetadata.get(OAuth2Authorization.Token.CLAIMS_METADATA_NAME));
-					builder.token(oidcToken, (metadata) -> metadata.putAll(oidcTokenMetadata));
+					builder
+							.token(oidcToken, (metadata) -> metadata.putAll(oidcTokenMetadata));
 				}
 
 				byte[] refreshTokenValue = this.lobHandler.getBlobAsBytes(rs, "refresh_token_value");
 				if (refreshTokenValue != null) {
-					tokenValue = new String(refreshTokenValue, StandardCharsets.UTF_8);
+					tokenValue = new String(refreshTokenValue,
+							StandardCharsets.UTF_8);
 					tokenIssuedAt = rs.getTimestamp("refresh_token_issued_at").toInstant();
 					tokenExpiresAt = null;
 					Timestamp refreshTokenExpiresAt = rs.getTimestamp("refresh_token_expires_at");
@@ -405,7 +416,8 @@ public final class JdbcOAuth2AuthorizationService implements OAuth2Authorization
 
 					OAuth2RefreshToken refreshToken = new OAuth2RefreshToken2(
 							tokenValue, tokenIssuedAt, tokenExpiresAt);
-					builder.token(refreshToken, (metadata) -> metadata.putAll(refreshTokenMetadata));
+					builder
+							.token(refreshToken, (metadata) -> metadata.putAll(refreshTokenMetadata));
 				}
 				return builder.build();
 			} catch (JsonProcessingException e) {
@@ -417,7 +429,6 @@ public final class JdbcOAuth2AuthorizationService implements OAuth2Authorization
 			Assert.notNull(lobHandler, "lobHandler cannot be null");
 			this.lobHandler = lobHandler;
 		}
-
 	}
 
 	/**
@@ -425,7 +436,6 @@ public final class JdbcOAuth2AuthorizationService implements OAuth2Authorization
 	 * {@code List} of {@link SqlParameterValue}.
 	 */
 	public static class OAuth2AuthorizationParametersMapper implements Function<OAuth2Authorization, List<SqlParameterValue>> {
-
 		private final ObjectMapper objectMapper;
 
 		public OAuth2AuthorizationParametersMapper(ObjectMapper objectMapper) {
@@ -435,6 +445,7 @@ public final class JdbcOAuth2AuthorizationService implements OAuth2Authorization
 
 		@Override
 		public List<SqlParameterValue> apply(OAuth2Authorization authorization) {
+
 			try {
 				List<SqlParameterValue> parameters = new ArrayList<>();
 				parameters.add(new SqlParameterValue(Types.VARCHAR, authorization.getId()));
@@ -485,6 +496,7 @@ public final class JdbcOAuth2AuthorizationService implements OAuth2Authorization
 			} catch (JsonProcessingException e) {
 				throw new IllegalArgumentException(e.getMessage(), e);
 			}
+
 		}
 
 		private <T extends AbstractOAuth2Token> List<SqlParameterValue> toSqlParameterList(OAuth2Authorization.Token<T> token) throws JsonProcessingException {
@@ -494,6 +506,7 @@ public final class JdbcOAuth2AuthorizationService implements OAuth2Authorization
 			Timestamp tokenExpiresAt = null;
 			String codeMetadata = null;
 			if (token != null) {
+
 				tokenValue = token.getToken().getTokenValue().getBytes(StandardCharsets.UTF_8);
 				if (token.getToken().getIssuedAt() != null) {
 					tokenIssuedAt = Timestamp.from(token.getToken().getIssuedAt());
@@ -510,7 +523,6 @@ public final class JdbcOAuth2AuthorizationService implements OAuth2Authorization
 			parameters.add(new SqlParameterValue(Types.VARCHAR, codeMetadata));
 			return parameters;
 		}
-
 	}
 
 	private static final class LobCreatorArgumentPreparedStatementSetter extends ArgumentPreparedStatementSetter {
@@ -540,5 +552,4 @@ public final class JdbcOAuth2AuthorizationService implements OAuth2Authorization
 		}
 
 	}
-
 }

@@ -18,6 +18,7 @@ package org.springframework.security.oauth2.server.authorization;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -95,6 +96,25 @@ public final class OAuth2AuthorizationConsent implements Serializable {
 				.filter(authority -> authority.startsWith(AUTHORITIES_SCOPE_PREFIX))
 				.map(scope -> scope.replaceFirst(AUTHORITIES_SCOPE_PREFIX, ""))
 				.collect(Collectors.toSet());
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null || getClass() != obj.getClass()) {
+			return false;
+		}
+		OAuth2AuthorizationConsent that = (OAuth2AuthorizationConsent) obj;
+		return Objects.equals(this.registeredClientId, that.registeredClientId) &&
+				Objects.equals(this.principalName, that.principalName) &&
+				Objects.equals(this.authorities, that.authorities);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(this.registeredClientId, this.principalName, this.authorities);
 	}
 
 	/**

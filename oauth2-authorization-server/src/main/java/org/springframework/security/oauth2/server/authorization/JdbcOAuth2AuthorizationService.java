@@ -304,7 +304,7 @@ public final class JdbcOAuth2AuthorizationService implements OAuth2Authorization
 	 * The default {@link RowMapper} that maps the current row in
 	 * {@code java.sql.ResultSet} to {@link OAuth2Authorization}.
 	 */
-	public static class OAuth2AuthorizationRowMapper implements RowMapper<OAuth2Authorization> {
+	static class OAuth2AuthorizationRowMapper implements RowMapper<OAuth2Authorization> {
 
 		private final RegisteredClientRepository registeredClientRepository;
 		private final ObjectMapper objectMapper;
@@ -424,7 +424,7 @@ public final class JdbcOAuth2AuthorizationService implements OAuth2Authorization
 	 * The default {@code Function} that maps {@link OAuth2Authorization} to a
 	 * {@code List} of {@link SqlParameterValue}.
 	 */
-	public static class OAuth2AuthorizationParametersMapper implements Function<OAuth2Authorization, List<SqlParameterValue>> {
+	static class OAuth2AuthorizationParametersMapper implements Function<OAuth2Authorization, List<SqlParameterValue>> {
 
 		private final ObjectMapper objectMapper;
 

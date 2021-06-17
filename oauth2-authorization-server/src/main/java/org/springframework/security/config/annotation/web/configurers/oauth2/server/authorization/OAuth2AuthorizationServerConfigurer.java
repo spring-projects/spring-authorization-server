@@ -16,6 +16,8 @@
 package org.springframework.security.config.annotation.web.configurers.oauth2.server.authorization;
 
 import java.net.URI;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
@@ -23,19 +25,14 @@ import com.nimbusds.jose.proc.SecurityContext;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.HttpSecurityBuilder;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.ExceptionHandlingConfigurer;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.oauth2.jwt.JwtEncoder;
-import org.springframework.security.oauth2.server.authorization.JwtEncodingContext;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsentService;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
-import org.springframework.security.oauth2.server.authorization.OAuth2TokenCustomizer;
-import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientAuthenticationProvider;
-import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientCredentialsAuthenticationProvider;
-import org.springframework.security.oauth2.server.authorization.authentication.OAuth2RefreshTokenAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2TokenIntrospectionAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2TokenRevocationAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
@@ -47,7 +44,6 @@ import org.springframework.security.oauth2.server.authorization.web.NimbusJwkSet
 import org.springframework.security.oauth2.server.authorization.web.OAuth2AuthorizationEndpointFilter;
 import org.springframework.security.oauth2.server.authorization.web.OAuth2AuthorizationServerMetadataEndpointFilter;
 import org.springframework.security.oauth2.server.authorization.web.OAuth2ClientAuthenticationFilter;
-import org.springframework.security.oauth2.server.authorization.web.OAuth2TokenEndpointFilter;
 import org.springframework.security.oauth2.server.authorization.web.OAuth2TokenIntrospectionEndpointFilter;
 import org.springframework.security.oauth2.server.authorization.web.OAuth2TokenRevocationEndpointFilter;
 import org.springframework.security.web.access.intercept.FilterSecurityInterceptor;
@@ -68,11 +64,11 @@ import org.springframework.util.StringUtils;
  * @author Ovidiu Popa
  * @since 0.0.1
  * @see AbstractHttpConfigurer
+ * @see OAuth2TokenEndpointConfigurer
  * @see RegisteredClientRepository
  * @see OAuth2AuthorizationService
  * @see OAuth2AuthorizationConsentService
  * @see OAuth2AuthorizationEndpointFilter
- * @see OAuth2TokenEndpointFilter
  * @see OAuth2TokenIntrospectionEndpointFilter
  * @see OAuth2TokenRevocationEndpointFilter
  * @see NimbusJwkSetEndpointFilter
@@ -84,8 +80,8 @@ import org.springframework.util.StringUtils;
 public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBuilder<B>>
 		extends AbstractHttpConfigurer<OAuth2AuthorizationServerConfigurer<B>, B> {
 
+	private final Map<Class<? extends AbstractOAuth2Configurer>, AbstractOAuth2Configurer> configurers = createConfigurers();
 	private RequestMatcher authorizationEndpointMatcher;
-	private RequestMatcher tokenEndpointMatcher;
 	private RequestMatcher tokenIntrospectionEndpointMatcher;
 	private RequestMatcher tokenRevocationEndpointMatcher;
 	private RequestMatcher jwkSetEndpointMatcher;
@@ -94,7 +90,7 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 	private RequestMatcher oidcClientRegistrationEndpointMatcher;
 	private final RequestMatcher endpointsMatcher = (request) ->
 			this.authorizationEndpointMatcher.matches(request) ||
-			this.tokenEndpointMatcher.matches(request) ||
+			getRequestMatcher(OAuth2TokenEndpointConfigurer.class).matches(request) ||
 			this.tokenIntrospectionEndpointMatcher.matches(request) ||
 			this.tokenRevocationEndpointMatcher.matches(request) ||
 			this.jwkSetEndpointMatcher.matches(request) ||
@@ -188,6 +184,17 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 	}
 
 	/**
+	 * Configures the OAuth 2.0 Token Endpoint.
+	 *
+	 * @param tokenEndpointCustomizer the {@link Customizer} providing access to the {@link OAuth2TokenEndpointConfigurer}
+	 * @return the {@link OAuth2AuthorizationServerConfigurer} for further configuration
+	 */
+	public OAuth2AuthorizationServerConfigurer<B> tokenEndpoint(Customizer<OAuth2TokenEndpointConfigurer> tokenEndpointCustomizer) {
+		tokenEndpointCustomizer.customize(getConfigurer(OAuth2TokenEndpointConfigurer.class));
+		return this;
+	}
+
+	/**
 	 * Returns a {@link RequestMatcher} for the authorization server endpoints.
 	 *
 	 * @return a {@link RequestMatcher} for the authorization server endpoints
@@ -202,6 +209,8 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 		validateProviderSettings(providerSettings);
 		initEndpointMatchers(providerSettings);
 
+		this.configurers.values().forEach(configurer -> configurer.init(builder));
+
 		OAuth2ClientAuthenticationProvider clientAuthenticationProvider =
 				new OAuth2ClientAuthenticationProvider(
 						OAuth2ConfigurerUtils.getRegisteredClientRepository(builder),
@@ -211,36 +220,6 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 			clientAuthenticationProvider.setPasswordEncoder(passwordEncoder);
 		}
 		builder.authenticationProvider(postProcess(clientAuthenticationProvider));
-
-		JwtEncoder jwtEncoder = OAuth2ConfigurerUtils.getJwtEncoder(builder);
-		OAuth2TokenCustomizer<JwtEncodingContext> jwtCustomizer = OAuth2ConfigurerUtils.getJwtCustomizer(builder);
-
-		OAuth2AuthorizationCodeAuthenticationProvider authorizationCodeAuthenticationProvider =
-				new OAuth2AuthorizationCodeAuthenticationProvider(
-						OAuth2ConfigurerUtils.getAuthorizationService(builder),
-						jwtEncoder);
-		if (jwtCustomizer != null) {
-			authorizationCodeAuthenticationProvider.setJwtCustomizer(jwtCustomizer);
-		}
-		builder.authenticationProvider(postProcess(authorizationCodeAuthenticationProvider));
-
-		OAuth2RefreshTokenAuthenticationProvider refreshTokenAuthenticationProvider =
-				new OAuth2RefreshTokenAuthenticationProvider(
-						OAuth2ConfigurerUtils.getAuthorizationService(builder),
-						jwtEncoder);
-		if (jwtCustomizer != null) {
-			refreshTokenAuthenticationProvider.setJwtCustomizer(jwtCustomizer);
-		}
-		builder.authenticationProvider(postProcess(refreshTokenAuthenticationProvider));
-
-		OAuth2ClientCredentialsAuthenticationProvider clientCredentialsAuthenticationProvider =
-				new OAuth2ClientCredentialsAuthenticationProvider(
-						OAuth2ConfigurerUtils.getAuthorizationService(builder),
-						jwtEncoder);
-		if (jwtCustomizer != null) {
-			clientCredentialsAuthenticationProvider.setJwtCustomizer(jwtCustomizer);
-		}
-		builder.authenticationProvider(postProcess(clientCredentialsAuthenticationProvider));
 
 		OAuth2TokenIntrospectionAuthenticationProvider tokenIntrospectionAuthenticationProvider =
 				new OAuth2TokenIntrospectionAuthenticationProvider(
@@ -265,7 +244,7 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 			exceptionHandling.defaultAuthenticationEntryPointFor(
 					new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED),
 					new OrRequestMatcher(
-							this.tokenEndpointMatcher,
+							getRequestMatcher(OAuth2TokenEndpointConfigurer.class),
 							this.tokenIntrospectionEndpointMatcher,
 							this.tokenRevocationEndpointMatcher)
 			);
@@ -274,6 +253,8 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 
 	@Override
 	public void configure(B builder) {
+		this.configurers.values().forEach(configurer -> configurer.configure(builder));
+
 		ProviderSettings providerSettings = OAuth2ConfigurerUtils.getProviderSettings(builder);
 		if (providerSettings.issuer() != null) {
 			OidcProviderConfigurationEndpointFilter oidcProviderConfigurationEndpointFilter =
@@ -297,7 +278,7 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 				new OAuth2ClientAuthenticationFilter(
 						authenticationManager,
 						new OrRequestMatcher(
-								this.tokenEndpointMatcher,
+								getRequestMatcher(OAuth2TokenEndpointConfigurer.class),
 								this.tokenIntrospectionEndpointMatcher,
 								this.tokenRevocationEndpointMatcher));
 		builder.addFilterAfter(postProcess(clientAuthenticationFilter), AbstractPreAuthenticatedProcessingFilter.class);
@@ -313,17 +294,11 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 		}
 		builder.addFilterBefore(postProcess(authorizationEndpointFilter), AbstractPreAuthenticatedProcessingFilter.class);
 
-		OAuth2TokenEndpointFilter tokenEndpointFilter =
-				new OAuth2TokenEndpointFilter(
-						authenticationManager,
-						providerSettings.tokenEndpoint());
-		builder.addFilterAfter(postProcess(tokenEndpointFilter), FilterSecurityInterceptor.class);
-
 		OAuth2TokenIntrospectionEndpointFilter tokenIntrospectionEndpointFilter =
 				new OAuth2TokenIntrospectionEndpointFilter(
 						authenticationManager,
 						providerSettings.tokenIntrospectionEndpoint());
-		builder.addFilterAfter(postProcess(tokenIntrospectionEndpointFilter), OAuth2TokenEndpointFilter.class);
+		builder.addFilterAfter(postProcess(tokenIntrospectionEndpointFilter), FilterSecurityInterceptor.class);
 
 		OAuth2TokenRevocationEndpointFilter tokenRevocationEndpointFilter =
 				new OAuth2TokenRevocationEndpointFilter(
@@ -339,6 +314,21 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 		builder.addFilterAfter(postProcess(oidcClientRegistrationEndpointFilter), OAuth2TokenRevocationEndpointFilter.class);
 	}
 
+	private Map<Class<? extends AbstractOAuth2Configurer>, AbstractOAuth2Configurer> createConfigurers() {
+		Map<Class<? extends AbstractOAuth2Configurer>, AbstractOAuth2Configurer> configurers = new LinkedHashMap<>();
+		configurers.put(OAuth2TokenEndpointConfigurer.class, new OAuth2TokenEndpointConfigurer(this::postProcess));
+		return configurers;
+	}
+
+	@SuppressWarnings("unchecked")
+	private <T> T getConfigurer(Class<T> type) {
+		return (T) this.configurers.get(type);
+	}
+
+	private <T extends AbstractOAuth2Configurer> RequestMatcher getRequestMatcher(Class<T> configurerType) {
+		return getConfigurer(configurerType).getRequestMatcher();
+	}
+
 	private void initEndpointMatchers(ProviderSettings providerSettings) {
 		this.authorizationEndpointMatcher = new OrRequestMatcher(
 				new AntPathRequestMatcher(
@@ -347,8 +337,6 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 				new AntPathRequestMatcher(
 						providerSettings.authorizationEndpoint(),
 						HttpMethod.POST.name()));
-		this.tokenEndpointMatcher = new AntPathRequestMatcher(
-				providerSettings.tokenEndpoint(), HttpMethod.POST.name());
 		this.tokenIntrospectionEndpointMatcher = new AntPathRequestMatcher(
 				providerSettings.tokenIntrospectionEndpoint(), HttpMethod.POST.name());
 		this.tokenRevocationEndpointMatcher = new AntPathRequestMatcher(

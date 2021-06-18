@@ -139,7 +139,7 @@ public final class JdbcOAuth2AuthorizationConsentService implements OAuth2Author
 	@Override
 	public void remove(OAuth2AuthorizationConsent authorizationConsent) {
 		Assert.notNull(authorizationConsent, "authorizationConsent cannot be null");
-		SqlParameterValue[] parameters = new SqlParameterValue[]{
+		SqlParameterValue[] parameters = new SqlParameterValue[] {
 				new SqlParameterValue(Types.VARCHAR, authorizationConsent.getRegisteredClientId()),
 				new SqlParameterValue(Types.VARCHAR, authorizationConsent.getPrincipalName())
 		};
@@ -152,7 +152,7 @@ public final class JdbcOAuth2AuthorizationConsentService implements OAuth2Author
 	public OAuth2AuthorizationConsent findById(String registeredClientId, String principalName) {
 		Assert.hasText(registeredClientId, "registeredClientId cannot be empty");
 		Assert.hasText(principalName, "principalName cannot be empty");
-		SqlParameterValue[] parameters = new SqlParameterValue[]{
+		SqlParameterValue[] parameters = new SqlParameterValue[] {
 				new SqlParameterValue(Types.VARCHAR, registeredClientId),
 				new SqlParameterValue(Types.VARCHAR, principalName)};
 		PreparedStatementSetter pss = new ArgumentPreparedStatementSetter(parameters);
@@ -209,7 +209,7 @@ public final class JdbcOAuth2AuthorizationConsentService implements OAuth2Author
 					.findById(registeredClientId);
 			if (registeredClient == null) {
 				throw new DataRetrievalFailureException(
-						"The RegisteredClient with id '" + registeredClientId + "' it was not found in the RegisteredClientRepository.");
+						"The RegisteredClient with id '" + registeredClientId + "' was not found in the RegisteredClientRepository.");
 			}
 
 			String principalName = rs.getString("principal_name");

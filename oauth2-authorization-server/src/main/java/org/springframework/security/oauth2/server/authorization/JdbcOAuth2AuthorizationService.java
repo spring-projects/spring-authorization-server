@@ -224,7 +224,7 @@ public final class JdbcOAuth2AuthorizationService implements OAuth2Authorization
 	@Override
 	public void remove(OAuth2Authorization authorization) {
 		Assert.notNull(authorization, "authorization cannot be null");
-		SqlParameterValue[] parameters = new SqlParameterValue[]{
+		SqlParameterValue[] parameters = new SqlParameterValue[] {
 				new SqlParameterValue(Types.VARCHAR, authorization.getId())
 		};
 		PreparedStatementSetter pss = new ArgumentPreparedStatementSetter(parameters);
@@ -325,7 +325,7 @@ public final class JdbcOAuth2AuthorizationService implements OAuth2Authorization
 				RegisteredClient registeredClient = this.registeredClientRepository.findById(registeredClientId);
 				if (registeredClient == null) {
 					throw new DataRetrievalFailureException(
-							"The RegisteredClient with id '" + registeredClientId + "' it was not found in the RegisteredClientRepository.");
+							"The RegisteredClient with id '" + registeredClientId + "' was not found in the RegisteredClientRepository.");
 				}
 
 				OAuth2Authorization.Builder builder = OAuth2Authorization.withRegisteredClient(registeredClient);

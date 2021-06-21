@@ -19,6 +19,9 @@ import java.security.Principal;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Base64;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,17 +38,20 @@ import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.OAuth2RefreshToken;
 import org.springframework.security.oauth2.core.OAuth2RefreshToken2;
 import org.springframework.security.oauth2.core.OAuth2TokenType;
+import org.springframework.security.oauth2.core.oidc.OidcIdToken;
+import org.springframework.security.oauth2.core.oidc.OidcScopes;
+import org.springframework.security.oauth2.core.oidc.endpoint.OidcParameterNames;
 import org.springframework.security.oauth2.jwt.JoseHeader;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
+import org.springframework.security.oauth2.server.authorization.JwtEncodingContext;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
+import org.springframework.security.oauth2.server.authorization.OAuth2TokenCustomizer;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.config.ProviderSettings;
 import org.springframework.security.oauth2.server.authorization.config.TokenSettings;
-import org.springframework.security.oauth2.server.authorization.JwtEncodingContext;
-import org.springframework.security.oauth2.server.authorization.OAuth2TokenCustomizer;
 import org.springframework.util.Assert;
 
 import static org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthenticationProviderUtils.getAuthenticatedClientElseThrowInvalidClient;
@@ -55,6 +61,7 @@ import static org.springframework.security.oauth2.server.authorization.authentic
  *
  * @author Alexey Nesterov
  * @author Joe Grandja
+ * @author Anoop Garlapati
  * @since 0.0.3
  * @see OAuth2RefreshTokenAuthenticationToken
  * @see OAuth2AccessTokenAuthenticationToken
@@ -66,6 +73,7 @@ import static org.springframework.security.oauth2.server.authorization.authentic
  * @see <a target="_blank" href="https://tools.ietf.org/html/rfc6749#section-6">Section 6 Refreshing an Access Token</a>
  */
 public class OAuth2RefreshTokenAuthenticationProvider implements AuthenticationProvider {
+	private static final OAuth2TokenType ID_TOKEN_TOKEN_TYPE = new OAuth2TokenType(OidcParameterNames.ID_TOKEN);
 	private static final StringKeyGenerator TOKEN_GENERATOR = new Base64StringKeyGenerator(Base64.getUrlEncoder().withoutPadding(), 96);
 	private final OAuth2AuthorizationService authorizationService;
 	private final JwtEncoder jwtEncoder;
@@ -174,19 +182,64 @@ public class OAuth2RefreshTokenAuthenticationProvider implements AuthenticationP
 			currentRefreshToken = generateRefreshToken(tokenSettings.refreshTokenTimeToLive());
 		}
 
+		Jwt jwtIdToken = null;
+		if (authorizedScopes.contains(OidcScopes.OPENID)) {
+			headersBuilder = JwtUtils.headers();
+			claimsBuilder = JwtUtils.idTokenClaims(
+					registeredClient, issuer, authorization.getPrincipalName(), null);
+
+			// @formatter:off
+			context = JwtEncodingContext.with(headersBuilder, claimsBuilder)
+					.registeredClient(registeredClient)
+					.principal(authorization.getAttribute(Principal.class.getName()))
+					.authorization(authorization)
+					.authorizedScopes(authorizedScopes)
+					.tokenType(ID_TOKEN_TOKEN_TYPE)
+					.authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
+					.authorizationGrant(refreshTokenAuthentication)
+					.build();
+			// @formatter:on
+
+			this.jwtCustomizer.customize(context);
+
+			headers = context.getHeaders().build();
+			claims = context.getClaims().build();
+			jwtIdToken = this.jwtEncoder.encode(headers, claims);
+		}
+
+		OidcIdToken idToken;
+		if (jwtIdToken != null) {
+			idToken = new OidcIdToken(jwtIdToken.getTokenValue(), jwtIdToken.getIssuedAt(),
+					jwtIdToken.getExpiresAt(), jwtIdToken.getClaims());
+		} else {
+			idToken = null;
+		}
+
 		// @formatter:off
-		authorization = OAuth2Authorization.from(authorization)
+		OAuth2Authorization.Builder authorizationBuilder = OAuth2Authorization.from(authorization)
 				.token(accessToken,
 						(metadata) ->
 								metadata.put(OAuth2Authorization.Token.CLAIMS_METADATA_NAME, jwtAccessToken.getClaims()))
-				.refreshToken(currentRefreshToken)
-				.build();
+				.refreshToken(currentRefreshToken);
+		if (idToken != null) {
+			authorizationBuilder
+					.token(idToken,
+							(metadata) ->
+									metadata.put(OAuth2Authorization.Token.CLAIMS_METADATA_NAME, idToken.getClaims()));
+		}
+		authorization = authorizationBuilder.build();
 		// @formatter:on
 
 		this.authorizationService.save(authorization);
 
+		Map<String, Object> additionalParameters = Collections.emptyMap();
+		if (idToken != null) {
+			additionalParameters = new HashMap<>();
+			additionalParameters.put(OidcParameterNames.ID_TOKEN, idToken.getTokenValue());
+		}
+
 		return new OAuth2AccessTokenAuthenticationToken(
-				registeredClient, clientPrincipal, accessToken, currentRefreshToken);
+				registeredClient, clientPrincipal, accessToken, currentRefreshToken, additionalParameters);
 	}
 
 	@Override

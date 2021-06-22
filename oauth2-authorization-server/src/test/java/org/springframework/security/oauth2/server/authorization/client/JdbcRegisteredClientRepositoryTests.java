@@ -15,22 +15,24 @@
  */
 package org.springframework.security.oauth2.server.authorization.client;
 
+import java.io.InputStream;
+import java.nio.charset.Charset;
+import java.time.Duration;
+import java.time.Instant;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.util.StreamUtils;
 
-import java.io.InputStream;
-import java.nio.charset.Charset;
-import java.time.Duration;
-import java.time.Instant;
-
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 /**
  * JDBC-backed registered client repository tests
@@ -40,7 +42,7 @@ import static org.assertj.core.api.Assertions.*;
  */
 public class JdbcRegisteredClientRepositoryTests {
 
-	private final String SCRIPT = "/org/springframework/security/oauth2/server/authorization/client/oauth2_registered_client.sql";
+	private final String SCRIPT = "/org/springframework/security/oauth2/server/authorization/client/oauth2-registered-client.sql";
 
 	private DriverManagerDataSource dataSource;
 
@@ -71,7 +73,7 @@ public class JdbcRegisteredClientRepositoryTests {
 			}
 		}
 
-		this.clients = new JdbcRegisteredClientRepository(this.jdbc, new ObjectMapper());
+		this.clients = new JdbcRegisteredClientRepository(this.jdbc);
 		this.registration = TestRegisteredClients.registeredClient().build();
 
 		this.clients.save(this.registration);
@@ -98,6 +100,15 @@ public class JdbcRegisteredClientRepositoryTests {
 		assertThatIllegalArgumentException()
 				.isThrownBy(() -> new JdbcRegisteredClientRepository(this.jdbc, null))
 				.withMessage("objectMapper cannot be null");
+		// @formatter:on
+	}
+
+	@Test
+	public void whenLobHandlerNullThenThrow() {
+		// @formatter:off
+		assertThatIllegalArgumentException()
+				.isThrownBy(() -> new JdbcRegisteredClientRepository(this.jdbc, null, new ObjectMapper()))
+				.withMessage("lobHandler cannot be null");
 		// @formatter:on
 	}
 

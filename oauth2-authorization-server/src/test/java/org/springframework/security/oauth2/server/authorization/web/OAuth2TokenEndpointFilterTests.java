@@ -26,6 +26,7 @@ import javax.servlet.FilterChain;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -48,7 +49,6 @@ import org.springframework.security.oauth2.core.OAuth2RefreshToken;
 import org.springframework.security.oauth2.core.OAuth2RefreshToken2;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AccessTokenResponse;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
-import org.springframework.security.oauth2.core.http.converter.OAuth2AccessTokenResponseHttpMessageConverter;
 import org.springframework.security.oauth2.core.http.converter.OAuth2ErrorHttpMessageConverter;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AccessTokenAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeAuthenticationToken;
@@ -335,6 +335,9 @@ public class OAuth2TokenEndpointFilterTests {
 				.isEqualTo(REMOTE_ADDRESS);
 
 		assertThat(response.getStatus()).isEqualTo(HttpStatus.OK.value());
+		// For gh-281, check that expires_in is a number
+		assertThat(new ObjectMapper().readValue(response.getContentAsByteArray(), Map.class).get(OAuth2ParameterNames.EXPIRES_IN))
+				.isInstanceOf(Number.class);
 		OAuth2AccessTokenResponse accessTokenResponse = readAccessTokenResponse(response);
 
 		OAuth2AccessToken accessTokenResult = accessTokenResponse.getAccessToken();

@@ -29,7 +29,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.springframework.dao.DataRetrievalFailureException;
@@ -74,7 +73,7 @@ import org.springframework.util.StringUtils;
  * @see RowMapper
  * @since 0.1.2
  */
-public final class JdbcOAuth2AuthorizationService implements OAuth2AuthorizationService {
+public class JdbcOAuth2AuthorizationService implements OAuth2AuthorizationService {
 
 	// @formatter:off
 	private static final String COLUMN_NAMES = "id, "
@@ -163,30 +162,15 @@ public final class JdbcOAuth2AuthorizationService implements OAuth2Authorization
 	 */
 	public JdbcOAuth2AuthorizationService(JdbcOperations jdbcOperations,
 			RegisteredClientRepository registeredClientRepository, LobHandler lobHandler) {
-		this(jdbcOperations, registeredClientRepository, lobHandler, new ObjectMapper());
-	}
-
-	/**
-	 * Constructs a {@code JdbcOAuth2AuthorizationService} using the provided parameters.
-	 *
-	 * @param jdbcOperations             the JDBC operations
-	 * @param registeredClientRepository the registered client repository
-	 * @param lobHandler                 the handler for large binary fields and large text fields
-	 * @param objectMapper               the object mapper
-	 */
-	public JdbcOAuth2AuthorizationService(JdbcOperations jdbcOperations,
-			RegisteredClientRepository registeredClientRepository,
-			LobHandler lobHandler, ObjectMapper objectMapper) {
 		Assert.notNull(jdbcOperations, "jdbcOperations cannot be null");
 		Assert.notNull(registeredClientRepository, "registeredClientRepository cannot be null");
 		Assert.notNull(lobHandler, "lobHandler cannot be null");
-		Assert.notNull(objectMapper, "objectMapper cannot be null");
 		this.jdbcOperations = jdbcOperations;
 		this.lobHandler = lobHandler;
-		OAuth2AuthorizationRowMapper authorizationRowMapper = new OAuth2AuthorizationRowMapper(registeredClientRepository, objectMapper);
+		OAuth2AuthorizationRowMapper authorizationRowMapper = new OAuth2AuthorizationRowMapper(registeredClientRepository);
 		authorizationRowMapper.setLobHandler(lobHandler);
 		this.authorizationRowMapper = authorizationRowMapper;
-		this.authorizationParametersMapper = new OAuth2AuthorizationParametersMapper(objectMapper);
+		this.authorizationParametersMapper = new OAuth2AuthorizationParametersMapper();
 	}
 
 	@Override
@@ -281,7 +265,7 @@ public final class JdbcOAuth2AuthorizationService implements OAuth2Authorization
 	 * @param authorizationRowMapper the {@link RowMapper} used for mapping the current
 	 *                               row in {@code ResultSet} to {@link OAuth2Authorization}
 	 */
-	public void setAuthorizationRowMapper(RowMapper<OAuth2Authorization> authorizationRowMapper) {
+	public final void setAuthorizationRowMapper(RowMapper<OAuth2Authorization> authorizationRowMapper) {
 		Assert.notNull(authorizationRowMapper, "authorizationRowMapper cannot be null");
 		this.authorizationRowMapper = authorizationRowMapper;
 	}
@@ -294,10 +278,26 @@ public final class JdbcOAuth2AuthorizationService implements OAuth2Authorization
 	 * @param authorizationParametersMapper the {@code Function} used for mapping
 	 *                                      {@link OAuth2Authorization} to a {@code List} of {@link SqlParameterValue}
 	 */
-	public void setAuthorizationParametersMapper(
+	public final void setAuthorizationParametersMapper(
 			Function<OAuth2Authorization, List<SqlParameterValue>> authorizationParametersMapper) {
 		Assert.notNull(authorizationParametersMapper, "authorizationParametersMapper cannot be null");
 		this.authorizationParametersMapper = authorizationParametersMapper;
+	}
+
+	protected final JdbcOperations getJdbcOperations() {
+		return this.jdbcOperations;
+	}
+
+	protected final LobHandler getLobHandler() {
+		return this.lobHandler;
+	}
+
+	protected final RowMapper<OAuth2Authorization> getAuthorizationRowMapper() {
+		return this.authorizationRowMapper;
+	}
+
+	protected final Function<OAuth2Authorization, List<SqlParameterValue>> getAuthorizationParametersMapper() {
+		return this.authorizationParametersMapper;
 	}
 
 	/**
@@ -305,117 +305,136 @@ public final class JdbcOAuth2AuthorizationService implements OAuth2Authorization
 	 * {@code java.sql.ResultSet} to {@link OAuth2Authorization}.
 	 */
 	public static class OAuth2AuthorizationRowMapper implements RowMapper<OAuth2Authorization> {
-
 		private final RegisteredClientRepository registeredClientRepository;
-		private final ObjectMapper objectMapper;
 		private LobHandler lobHandler = new DefaultLobHandler();
+		private ObjectMapper objectMapper = new ObjectMapper();
 
-		public OAuth2AuthorizationRowMapper(RegisteredClientRepository registeredClientRepository, ObjectMapper objectMapper) {
+		public OAuth2AuthorizationRowMapper(RegisteredClientRepository registeredClientRepository) {
 			Assert.notNull(registeredClientRepository, "registeredClientRepository cannot be null");
-			Assert.notNull(objectMapper, "objectMapper cannot be null");
 			this.registeredClientRepository = registeredClientRepository;
-			this.objectMapper = objectMapper;
 		}
 
 		@Override
 		@SuppressWarnings("unchecked")
 		public OAuth2Authorization mapRow(ResultSet rs, int rowNum) throws SQLException {
-			try {
-				String registeredClientId = rs.getString("registered_client_id");
-				RegisteredClient registeredClient = this.registeredClientRepository.findById(registeredClientId);
-				if (registeredClient == null) {
-					throw new DataRetrievalFailureException(
-							"The RegisteredClient with id '" + registeredClientId + "' was not found in the RegisteredClientRepository.");
-				}
-
-				OAuth2Authorization.Builder builder = OAuth2Authorization.withRegisteredClient(registeredClient);
-				String id = rs.getString("id");
-				String principalName = rs.getString("principal_name");
-				String authorizationGrantType = rs.getString("authorization_grant_type");
-				Map<String, Object> attributes = this.objectMapper.readValue(rs.getString("attributes"), Map.class);
-
-				builder.id(id)
-						.principalName(principalName)
-						.authorizationGrantType(new AuthorizationGrantType(authorizationGrantType))
-						.attributes((attrs) -> attrs.putAll(attributes));
-
-				String state = rs.getString("state");
-				if (StringUtils.hasText(state)) {
-					builder.attribute(OAuth2ParameterNames.STATE, state);
-				}
-
-				String tokenValue;
-				Instant tokenIssuedAt;
-				Instant tokenExpiresAt;
-				byte[] authorizationCodeValue = this.lobHandler.getBlobAsBytes(rs, "authorization_code_value");
-
-				if (authorizationCodeValue != null) {
-					tokenValue = new String(authorizationCodeValue, StandardCharsets.UTF_8);
-					tokenIssuedAt = rs.getTimestamp("authorization_code_issued_at").toInstant();
-					tokenExpiresAt = rs.getTimestamp("authorization_code_expires_at").toInstant();
-					Map<String, Object> authorizationCodeMetadata = this.objectMapper.readValue(rs.getString("authorization_code_metadata"), Map.class);
-
-					OAuth2AuthorizationCode authorizationCode = new OAuth2AuthorizationCode(
-							tokenValue, tokenIssuedAt, tokenExpiresAt);
-					builder.token(authorizationCode, (metadata) -> metadata.putAll(authorizationCodeMetadata));
-				}
-
-				byte[] accessTokenValue = this.lobHandler.getBlobAsBytes(rs, "access_token_value");
-				if (accessTokenValue != null) {
-					tokenValue = new String(accessTokenValue, StandardCharsets.UTF_8);
-					tokenIssuedAt = rs.getTimestamp("access_token_issued_at").toInstant();
-					tokenExpiresAt = rs.getTimestamp("access_token_expires_at").toInstant();
-					Map<String, Object> accessTokenMetadata = this.objectMapper.readValue(rs.getString("access_token_metadata"), Map.class);
-					OAuth2AccessToken.TokenType tokenType = null;
-					if (OAuth2AccessToken.TokenType.BEARER.getValue().equalsIgnoreCase(rs.getString("access_token_type"))) {
-						tokenType = OAuth2AccessToken.TokenType.BEARER;
-					}
-
-					Set<String> scopes = Collections.emptySet();
-					String accessTokenScopes = rs.getString("access_token_scopes");
-					if (accessTokenScopes != null) {
-						scopes = StringUtils.commaDelimitedListToSet(accessTokenScopes);
-					}
-					OAuth2AccessToken accessToken = new OAuth2AccessToken(tokenType, tokenValue, tokenIssuedAt, tokenExpiresAt, scopes);
-					builder.token(accessToken, (metadata) -> metadata.putAll(accessTokenMetadata));
-				}
-
-				byte[] oidcIdTokenValue = this.lobHandler.getBlobAsBytes(rs, "oidc_id_token_value");
-				if (oidcIdTokenValue != null) {
-					tokenValue = new String(oidcIdTokenValue, StandardCharsets.UTF_8);
-					tokenIssuedAt = rs.getTimestamp("oidc_id_token_issued_at").toInstant();
-					tokenExpiresAt = rs.getTimestamp("oidc_id_token_expires_at").toInstant();
-					Map<String, Object> oidcTokenMetadata = this.objectMapper.readValue(rs.getString("oidc_id_token_metadata"), Map.class);
-
-					OidcIdToken oidcToken = new OidcIdToken(
-							tokenValue, tokenIssuedAt, tokenExpiresAt, (Map<String, Object>) oidcTokenMetadata.get(OAuth2Authorization.Token.CLAIMS_METADATA_NAME));
-					builder.token(oidcToken, (metadata) -> metadata.putAll(oidcTokenMetadata));
-				}
-
-				byte[] refreshTokenValue = this.lobHandler.getBlobAsBytes(rs, "refresh_token_value");
-				if (refreshTokenValue != null) {
-					tokenValue = new String(refreshTokenValue, StandardCharsets.UTF_8);
-					tokenIssuedAt = rs.getTimestamp("refresh_token_issued_at").toInstant();
-					tokenExpiresAt = null;
-					Timestamp refreshTokenExpiresAt = rs.getTimestamp("refresh_token_expires_at");
-					if (refreshTokenExpiresAt != null) {
-						tokenExpiresAt = refreshTokenExpiresAt.toInstant();
-					}
-					Map<String, Object> refreshTokenMetadata = this.objectMapper.readValue(rs.getString("refresh_token_metadata"), Map.class);
-
-					OAuth2RefreshToken refreshToken = new OAuth2RefreshToken2(
-							tokenValue, tokenIssuedAt, tokenExpiresAt);
-					builder.token(refreshToken, (metadata) -> metadata.putAll(refreshTokenMetadata));
-				}
-				return builder.build();
-			} catch (JsonProcessingException e) {
-				throw new IllegalArgumentException(e.getMessage(), e);
+			String registeredClientId = rs.getString("registered_client_id");
+			RegisteredClient registeredClient = this.registeredClientRepository.findById(registeredClientId);
+			if (registeredClient == null) {
+				throw new DataRetrievalFailureException(
+						"The RegisteredClient with id '" + registeredClientId + "' was not found in the RegisteredClientRepository.");
 			}
+
+			OAuth2Authorization.Builder builder = OAuth2Authorization.withRegisteredClient(registeredClient);
+			String id = rs.getString("id");
+			String principalName = rs.getString("principal_name");
+			String authorizationGrantType = rs.getString("authorization_grant_type");
+			Map<String, Object> attributes = parseMap(rs.getString("attributes"));
+
+			builder.id(id)
+					.principalName(principalName)
+					.authorizationGrantType(new AuthorizationGrantType(authorizationGrantType))
+					.attributes((attrs) -> attrs.putAll(attributes));
+
+			String state = rs.getString("state");
+			if (StringUtils.hasText(state)) {
+				builder.attribute(OAuth2ParameterNames.STATE, state);
+			}
+
+			String tokenValue;
+			Instant tokenIssuedAt;
+			Instant tokenExpiresAt;
+			byte[] authorizationCodeValue = this.lobHandler.getBlobAsBytes(rs, "authorization_code_value");
+
+			if (authorizationCodeValue != null) {
+				tokenValue = new String(authorizationCodeValue, StandardCharsets.UTF_8);
+				tokenIssuedAt = rs.getTimestamp("authorization_code_issued_at").toInstant();
+				tokenExpiresAt = rs.getTimestamp("authorization_code_expires_at").toInstant();
+				Map<String, Object> authorizationCodeMetadata = parseMap(rs.getString("authorization_code_metadata"));
+
+				OAuth2AuthorizationCode authorizationCode = new OAuth2AuthorizationCode(
+						tokenValue, tokenIssuedAt, tokenExpiresAt);
+				builder.token(authorizationCode, (metadata) -> metadata.putAll(authorizationCodeMetadata));
+			}
+
+			byte[] accessTokenValue = this.lobHandler.getBlobAsBytes(rs, "access_token_value");
+			if (accessTokenValue != null) {
+				tokenValue = new String(accessTokenValue, StandardCharsets.UTF_8);
+				tokenIssuedAt = rs.getTimestamp("access_token_issued_at").toInstant();
+				tokenExpiresAt = rs.getTimestamp("access_token_expires_at").toInstant();
+				Map<String, Object> accessTokenMetadata = parseMap(rs.getString("access_token_metadata"));
+				OAuth2AccessToken.TokenType tokenType = null;
+				if (OAuth2AccessToken.TokenType.BEARER.getValue().equalsIgnoreCase(rs.getString("access_token_type"))) {
+					tokenType = OAuth2AccessToken.TokenType.BEARER;
+				}
+
+				Set<String> scopes = Collections.emptySet();
+				String accessTokenScopes = rs.getString("access_token_scopes");
+				if (accessTokenScopes != null) {
+					scopes = StringUtils.commaDelimitedListToSet(accessTokenScopes);
+				}
+				OAuth2AccessToken accessToken = new OAuth2AccessToken(tokenType, tokenValue, tokenIssuedAt, tokenExpiresAt, scopes);
+				builder.token(accessToken, (metadata) -> metadata.putAll(accessTokenMetadata));
+			}
+
+			byte[] oidcIdTokenValue = this.lobHandler.getBlobAsBytes(rs, "oidc_id_token_value");
+			if (oidcIdTokenValue != null) {
+				tokenValue = new String(oidcIdTokenValue, StandardCharsets.UTF_8);
+				tokenIssuedAt = rs.getTimestamp("oidc_id_token_issued_at").toInstant();
+				tokenExpiresAt = rs.getTimestamp("oidc_id_token_expires_at").toInstant();
+				Map<String, Object> oidcTokenMetadata = parseMap(rs.getString("oidc_id_token_metadata"));
+
+				OidcIdToken oidcToken = new OidcIdToken(
+						tokenValue, tokenIssuedAt, tokenExpiresAt, (Map<String, Object>) oidcTokenMetadata.get(OAuth2Authorization.Token.CLAIMS_METADATA_NAME));
+				builder.token(oidcToken, (metadata) -> metadata.putAll(oidcTokenMetadata));
+			}
+
+			byte[] refreshTokenValue = this.lobHandler.getBlobAsBytes(rs, "refresh_token_value");
+			if (refreshTokenValue != null) {
+				tokenValue = new String(refreshTokenValue, StandardCharsets.UTF_8);
+				tokenIssuedAt = rs.getTimestamp("refresh_token_issued_at").toInstant();
+				tokenExpiresAt = null;
+				Timestamp refreshTokenExpiresAt = rs.getTimestamp("refresh_token_expires_at");
+				if (refreshTokenExpiresAt != null) {
+					tokenExpiresAt = refreshTokenExpiresAt.toInstant();
+				}
+				Map<String, Object> refreshTokenMetadata = parseMap(rs.getString("refresh_token_metadata"));
+
+				OAuth2RefreshToken refreshToken = new OAuth2RefreshToken2(
+						tokenValue, tokenIssuedAt, tokenExpiresAt);
+				builder.token(refreshToken, (metadata) -> metadata.putAll(refreshTokenMetadata));
+			}
+			return builder.build();
 		}
 
 		public final void setLobHandler(LobHandler lobHandler) {
 			Assert.notNull(lobHandler, "lobHandler cannot be null");
 			this.lobHandler = lobHandler;
+		}
+
+		public final void setObjectMapper(ObjectMapper objectMapper) {
+			Assert.notNull(objectMapper, "objectMapper cannot be null");
+			this.objectMapper = objectMapper;
+		}
+
+		protected final RegisteredClientRepository getRegisteredClientRepository() {
+			return this.registeredClientRepository;
+		}
+
+		protected final LobHandler getLobHandler() {
+			return this.lobHandler;
+		}
+
+		protected final ObjectMapper getObjectMapper() {
+			return this.objectMapper;
+		}
+
+		@SuppressWarnings("unchecked")
+		private Map<String, Object> parseMap(String data) {
+			try {
+				return this.objectMapper.readValue(data, Map.class);
+			} catch (Exception ex) {
+				throw new IllegalArgumentException(ex.getMessage(), ex);
+			}
 		}
 
 	}
@@ -425,74 +444,71 @@ public final class JdbcOAuth2AuthorizationService implements OAuth2Authorization
 	 * {@code List} of {@link SqlParameterValue}.
 	 */
 	public static class OAuth2AuthorizationParametersMapper implements Function<OAuth2Authorization, List<SqlParameterValue>> {
+		private ObjectMapper objectMapper = new ObjectMapper();
 
-		private final ObjectMapper objectMapper;
+		@Override
+		public List<SqlParameterValue> apply(OAuth2Authorization authorization) {
+			List<SqlParameterValue> parameters = new ArrayList<>();
+			parameters.add(new SqlParameterValue(Types.VARCHAR, authorization.getId()));
+			parameters.add(new SqlParameterValue(Types.VARCHAR, authorization.getRegisteredClientId()));
+			parameters.add(new SqlParameterValue(Types.VARCHAR, authorization.getPrincipalName()));
+			parameters.add(new SqlParameterValue(Types.VARCHAR, authorization.getAuthorizationGrantType().getValue()));
 
-		public OAuth2AuthorizationParametersMapper(ObjectMapper objectMapper) {
+			String attributes = writeMap(authorization.getAttributes());
+			parameters.add(new SqlParameterValue(Types.VARCHAR, attributes));
+
+			String state = null;
+			String authorizationState = authorization.getAttribute(OAuth2ParameterNames.STATE);
+			if (StringUtils.hasText(authorizationState)) {
+				state = authorizationState;
+			}
+			parameters.add(new SqlParameterValue(Types.VARCHAR, state));
+
+			OAuth2Authorization.Token<OAuth2AuthorizationCode> authorizationCode =
+					authorization.getToken(OAuth2AuthorizationCode.class);
+			List<SqlParameterValue> authorizationCodeSqlParameters = toSqlParameterList(authorizationCode);
+			parameters.addAll(authorizationCodeSqlParameters);
+
+			OAuth2Authorization.Token<OAuth2AccessToken> accessToken =
+					authorization.getToken(OAuth2AccessToken.class);
+			List<SqlParameterValue> accessTokenSqlParameters = toSqlParameterList(accessToken);
+			parameters.addAll(accessTokenSqlParameters);
+			String accessTokenType = null;
+			String accessTokenScopes = null;
+			if (accessToken != null) {
+				accessTokenType = accessToken.getToken().getTokenType().getValue();
+				if (!CollectionUtils.isEmpty(accessToken.getToken().getScopes())) {
+					accessTokenScopes = StringUtils.collectionToDelimitedString(accessToken.getToken().getScopes(), ",");
+				}
+			}
+			parameters.add(new SqlParameterValue(Types.VARCHAR, accessTokenType));
+			parameters.add(new SqlParameterValue(Types.VARCHAR, accessTokenScopes));
+
+			OAuth2Authorization.Token<OidcIdToken> oidcIdToken = authorization.getToken(OidcIdToken.class);
+			List<SqlParameterValue> oidcIdTokenSqlParameters = toSqlParameterList(oidcIdToken);
+			parameters.addAll(oidcIdTokenSqlParameters);
+
+			OAuth2Authorization.Token<OAuth2RefreshToken> refreshToken = authorization.getRefreshToken();
+			List<SqlParameterValue> refreshTokenSqlParameters = toSqlParameterList(refreshToken);
+			parameters.addAll(refreshTokenSqlParameters);
+			return parameters;
+		}
+
+		public final void setObjectMapper(ObjectMapper objectMapper) {
 			Assert.notNull(objectMapper, "objectMapper cannot be null");
 			this.objectMapper = objectMapper;
 		}
 
-		@Override
-		public List<SqlParameterValue> apply(OAuth2Authorization authorization) {
-			try {
-				List<SqlParameterValue> parameters = new ArrayList<>();
-				parameters.add(new SqlParameterValue(Types.VARCHAR, authorization.getId()));
-				parameters.add(new SqlParameterValue(Types.VARCHAR, authorization.getRegisteredClientId()));
-				parameters.add(new SqlParameterValue(Types.VARCHAR, authorization.getPrincipalName()));
-				parameters.add(new SqlParameterValue(Types.VARCHAR, authorization.getAuthorizationGrantType().getValue()));
-
-				String attributes = this.objectMapper.writeValueAsString(authorization.getAttributes());
-				parameters.add(new SqlParameterValue(Types.VARCHAR, attributes));
-
-				String state = null;
-				String authorizationState = authorization.getAttribute(OAuth2ParameterNames.STATE);
-				if (StringUtils.hasText(authorizationState)) {
-					state = authorizationState;
-				}
-				parameters.add(new SqlParameterValue(Types.VARCHAR, state));
-
-				OAuth2Authorization.Token<OAuth2AuthorizationCode> authorizationCode =
-						authorization.getToken(OAuth2AuthorizationCode.class);
-				List<SqlParameterValue> authorizationCodeSqlParameters = toSqlParameterList(authorizationCode);
-				parameters.addAll(authorizationCodeSqlParameters);
-
-				OAuth2Authorization.Token<OAuth2AccessToken> accessToken =
-						authorization.getToken(OAuth2AccessToken.class);
-				List<SqlParameterValue> accessTokenSqlParameters = toSqlParameterList(accessToken);
-				parameters.addAll(accessTokenSqlParameters);
-				String accessTokenType = null;
-				String accessTokenScopes = null;
-
-				if (accessToken != null) {
-					accessTokenType = accessToken.getToken().getTokenType().getValue();
-					if (!CollectionUtils.isEmpty(accessToken.getToken().getScopes())) {
-						accessTokenScopes = StringUtils.collectionToDelimitedString(accessToken.getToken().getScopes(), ",");
-					}
-				}
-
-				parameters.add(new SqlParameterValue(Types.VARCHAR, accessTokenType));
-				parameters.add(new SqlParameterValue(Types.VARCHAR, accessTokenScopes));
-				OAuth2Authorization.Token<OidcIdToken> oidcIdToken = authorization.getToken(OidcIdToken.class);
-				List<SqlParameterValue> oidcTokenSqlParameters = toSqlParameterList(oidcIdToken);
-				parameters.addAll(oidcTokenSqlParameters);
-
-				OAuth2Authorization.Token<OAuth2RefreshToken> refreshToken = authorization.getRefreshToken();
-
-				List<SqlParameterValue> refreshTokenSqlParameters = toSqlParameterList(refreshToken);
-				parameters.addAll(refreshTokenSqlParameters);
-				return parameters;
-			} catch (JsonProcessingException e) {
-				throw new IllegalArgumentException(e.getMessage(), e);
-			}
+		protected final ObjectMapper getObjectMapper() {
+			return this.objectMapper;
 		}
 
-		private <T extends AbstractOAuth2Token> List<SqlParameterValue> toSqlParameterList(OAuth2Authorization.Token<T> token) throws JsonProcessingException {
+		private <T extends AbstractOAuth2Token> List<SqlParameterValue> toSqlParameterList(OAuth2Authorization.Token<T> token) {
 			List<SqlParameterValue> parameters = new ArrayList<>();
 			byte[] tokenValue = null;
 			Timestamp tokenIssuedAt = null;
 			Timestamp tokenExpiresAt = null;
-			String codeMetadata = null;
+			String metadata = null;
 			if (token != null) {
 				tokenValue = token.getToken().getTokenValue().getBytes(StandardCharsets.UTF_8);
 				if (token.getToken().getIssuedAt() != null) {
@@ -502,20 +518,29 @@ public final class JdbcOAuth2AuthorizationService implements OAuth2Authorization
 				if (token.getToken().getExpiresAt() != null) {
 					tokenExpiresAt = Timestamp.from(token.getToken().getExpiresAt());
 				}
-				codeMetadata = this.objectMapper.writeValueAsString(token.getMetadata());
+				metadata = writeMap(token.getMetadata());
 			}
 			parameters.add(new SqlParameterValue(Types.BLOB, tokenValue));
 			parameters.add(new SqlParameterValue(Types.TIMESTAMP, tokenIssuedAt));
 			parameters.add(new SqlParameterValue(Types.TIMESTAMP, tokenExpiresAt));
-			parameters.add(new SqlParameterValue(Types.VARCHAR, codeMetadata));
+			parameters.add(new SqlParameterValue(Types.VARCHAR, metadata));
 			return parameters;
+		}
+
+		@SuppressWarnings("unchecked")
+		private String writeMap(Map<String, Object> data) {
+			try {
+				return this.objectMapper.writeValueAsString(data);
+			} catch (Exception ex) {
+				throw new IllegalArgumentException(ex.getMessage(), ex);
+			}
 		}
 
 	}
 
 	private static final class LobCreatorArgumentPreparedStatementSetter extends ArgumentPreparedStatementSetter {
 
-		protected final LobCreator lobCreator;
+		private final LobCreator lobCreator;
 
 		private LobCreatorArgumentPreparedStatementSetter(LobCreator lobCreator, Object[] args) {
 			super(args);

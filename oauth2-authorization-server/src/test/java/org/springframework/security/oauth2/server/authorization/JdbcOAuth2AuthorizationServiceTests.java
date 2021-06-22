@@ -15,16 +15,23 @@
  */
 package org.springframework.security.oauth2.server.authorization;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
+import java.util.function.Function;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.SqlParameterValue;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabase;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseBuilder;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType;
-import org.springframework.jdbc.support.lob.DefaultLobHandler;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2RefreshToken;
@@ -34,9 +41,6 @@ import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
-
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -69,12 +73,11 @@ public class JdbcOAuth2AuthorizationServiceTests {
 	private RegisteredClientRepository registeredClientRepository;
 	private JdbcOAuth2AuthorizationService authorizationService;
 
-
 	@Before
 	public void setUp() {
 		this.db = createDb();
-		this.registeredClientRepository = mock(RegisteredClientRepository.class);
 		this.jdbcOperations = new JdbcTemplate(this.db);
+		this.registeredClientRepository = mock(RegisteredClientRepository.class);
 		this.authorizationService = new JdbcOAuth2AuthorizationService(this.jdbcOperations, this.registeredClientRepository);
 	}
 
@@ -111,15 +114,6 @@ public class JdbcOAuth2AuthorizationServiceTests {
 	}
 
 	@Test
-	public void constructorWhenObjectMapperIsNullThenThrowIllegalArgumentException() {
-		// @formatter:off
-		assertThatThrownBy(() -> new JdbcOAuth2AuthorizationService(this.jdbcOperations, this.registeredClientRepository, new DefaultLobHandler(), null))
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("objectMapper cannot be null");
-		// @formatter:on
-	}
-
-	@Test
 	public void setAuthorizationRowMapperWhenNullThenThrowIllegalArgumentException() {
 		// @formatter:off
 		assertThatThrownBy(() -> this.authorizationService.setAuthorizationRowMapper(null))
@@ -148,7 +142,7 @@ public class JdbcOAuth2AuthorizationServiceTests {
 
 	@Test
 	public void saveWhenAuthorizationNewThenSaved() {
-		when(registeredClientRepository.findById(eq(REGISTERED_CLIENT.getId())))
+		when(this.registeredClientRepository.findById(eq(REGISTERED_CLIENT.getId())))
 				.thenReturn(REGISTERED_CLIENT);
 		OAuth2Authorization expectedAuthorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
 				.id(ID)
@@ -164,7 +158,7 @@ public class JdbcOAuth2AuthorizationServiceTests {
 
 	@Test
 	public void saveWhenAuthorizationExistsThenUpdated() {
-		when(registeredClientRepository.findById(eq(REGISTERED_CLIENT.getId())))
+		when(this.registeredClientRepository.findById(eq(REGISTERED_CLIENT.getId())))
 				.thenReturn(REGISTERED_CLIENT);
 		OAuth2Authorization originalAuthorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
 				.id(ID)
@@ -191,7 +185,7 @@ public class JdbcOAuth2AuthorizationServiceTests {
 
 	@Test
 	public void saveLoadAuthorizationWhenCustomStrategiesSetThenCalled() throws Exception {
-		when(registeredClientRepository.findById(eq(REGISTERED_CLIENT.getId())))
+		when(this.registeredClientRepository.findById(eq(REGISTERED_CLIENT.getId())))
 				.thenReturn(REGISTERED_CLIENT);
 		OAuth2Authorization originalAuthorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
 				.id(ID)
@@ -200,12 +194,12 @@ public class JdbcOAuth2AuthorizationServiceTests {
 				.token(AUTHORIZATION_CODE)
 				.build();
 		ObjectMapper objectMapper = new ObjectMapper();
-		JdbcOAuth2AuthorizationService.OAuth2AuthorizationRowMapper authorizationRowMapper = spy(
+		RowMapper<OAuth2Authorization> authorizationRowMapper = spy(
 				new JdbcOAuth2AuthorizationService.OAuth2AuthorizationRowMapper(
-						this.registeredClientRepository, objectMapper));
+						this.registeredClientRepository));
 		this.authorizationService.setAuthorizationRowMapper(authorizationRowMapper);
-		JdbcOAuth2AuthorizationService.OAuth2AuthorizationParametersMapper authorizationParametersMapper = spy(
-				new JdbcOAuth2AuthorizationService.OAuth2AuthorizationParametersMapper(objectMapper));
+		Function<OAuth2Authorization, List<SqlParameterValue>> authorizationParametersMapper = spy(
+				new JdbcOAuth2AuthorizationService.OAuth2AuthorizationParametersMapper());
 		this.authorizationService.setAuthorizationParametersMapper(authorizationParametersMapper);
 
 		this.authorizationService.save(originalAuthorization);
@@ -227,7 +221,7 @@ public class JdbcOAuth2AuthorizationServiceTests {
 
 	@Test
 	public void removeWhenAuthorizationProvidedThenRemoved() {
-		when(registeredClientRepository.findById(eq(REGISTERED_CLIENT.getId())))
+		when(this.registeredClientRepository.findById(eq(REGISTERED_CLIENT.getId())))
 				.thenReturn(REGISTERED_CLIENT);
 		OAuth2Authorization expectedAuthorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
 				.id(ID)
@@ -276,7 +270,7 @@ public class JdbcOAuth2AuthorizationServiceTests {
 
 	@Test
 	public void findByTokenWhenStateExistsThenFound() {
-		when(registeredClientRepository.findById(eq(REGISTERED_CLIENT.getId())))
+		when(this.registeredClientRepository.findById(eq(REGISTERED_CLIENT.getId())))
 				.thenReturn(REGISTERED_CLIENT);
 		String state = "state";
 		OAuth2Authorization authorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
@@ -296,7 +290,7 @@ public class JdbcOAuth2AuthorizationServiceTests {
 
 	@Test
 	public void findByTokenWhenAuthorizationCodeExistsThenFound() {
-		when(registeredClientRepository.findById(eq(REGISTERED_CLIENT.getId())))
+		when(this.registeredClientRepository.findById(eq(REGISTERED_CLIENT.getId())))
 				.thenReturn(REGISTERED_CLIENT);
 		OAuth2Authorization authorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
 				.id(ID)
@@ -315,7 +309,7 @@ public class JdbcOAuth2AuthorizationServiceTests {
 
 	@Test
 	public void findByTokenWhenAccessTokenExistsThenFound() {
-		when(registeredClientRepository.findById(eq(REGISTERED_CLIENT.getId())))
+		when(this.registeredClientRepository.findById(eq(REGISTERED_CLIENT.getId())))
 				.thenReturn(REGISTERED_CLIENT);
 		OAuth2AccessToken accessToken = new OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER,
 				"access-token", Instant.now().minusSeconds(60).truncatedTo(ChronoUnit.MILLIS), Instant.now().truncatedTo(ChronoUnit.MILLIS));
@@ -337,7 +331,7 @@ public class JdbcOAuth2AuthorizationServiceTests {
 
 	@Test
 	public void findByTokenWhenRefreshTokenExistsThenFound() {
-		when(registeredClientRepository.findById(eq(REGISTERED_CLIENT.getId())))
+		when(this.registeredClientRepository.findById(eq(REGISTERED_CLIENT.getId())))
 				.thenReturn(REGISTERED_CLIENT);
 		OAuth2RefreshToken refreshToken = new OAuth2RefreshToken2("refresh-token",
 				Instant.now().truncatedTo(ChronoUnit.MILLIS),

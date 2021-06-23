@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright 2020-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,19 @@
  */
 package org.springframework.security.oauth2.server.authorization.web;
 
+import java.io.IOException;
+import java.util.Arrays;
+
+import javax.servlet.FilterChain;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.server.ServletServerHttpResponse;
+import org.springframework.security.authentication.AbstractAuthenticationToken;
+import org.springframework.security.authentication.AuthenticationDetailsSource;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -32,16 +42,10 @@ import org.springframework.security.oauth2.server.authorization.authentication.O
 import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
 import org.springframework.web.filter.OncePerRequestFilter;
-
-import javax.servlet.FilterChain;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.util.Arrays;
 
 /**
  * A {@code Filter} that processes an authentication request for an OAuth 2.0 Client.
@@ -58,6 +62,8 @@ public class OAuth2ClientAuthenticationFilter extends OncePerRequestFilter {
 	private final AuthenticationManager authenticationManager;
 	private final RequestMatcher requestMatcher;
 	private final HttpMessageConverter<OAuth2Error> errorHttpResponseConverter = new OAuth2ErrorHttpMessageConverter();
+	private final AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource =
+			new WebAuthenticationDetailsSource();
 	private AuthenticationConverter authenticationConverter;
 	private AuthenticationSuccessHandler authenticationSuccessHandler;
 	private AuthenticationFailureHandler authenticationFailureHandler;
@@ -90,6 +96,10 @@ public class OAuth2ClientAuthenticationFilter extends OncePerRequestFilter {
 		if (this.requestMatcher.matches(request)) {
 			try {
 				Authentication authenticationRequest = this.authenticationConverter.convert(request);
+				if (authenticationRequest instanceof AbstractAuthenticationToken) {
+					((AbstractAuthenticationToken) authenticationRequest).setDetails(
+							this.authenticationDetailsSource.buildDetails(request));
+				}
 				if (authenticationRequest != null) {
 					Authentication authenticationResult = this.authenticationManager.authenticate(authenticationRequest);
 					this.authenticationSuccessHandler.onAuthenticationSuccess(request, response, authenticationResult);

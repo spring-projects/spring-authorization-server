@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.springframework.dao.DataRetrievalFailureException;
@@ -428,10 +429,9 @@ public class JdbcOAuth2AuthorizationService implements OAuth2AuthorizationServic
 			return this.objectMapper;
 		}
 
-		@SuppressWarnings("unchecked")
 		private Map<String, Object> parseMap(String data) {
 			try {
-				return this.objectMapper.readValue(data, Map.class);
+				return this.objectMapper.readValue(data, new TypeReference<Map<String, Object>>() {});
 			} catch (Exception ex) {
 				throw new IllegalArgumentException(ex.getMessage(), ex);
 			}
@@ -527,7 +527,6 @@ public class JdbcOAuth2AuthorizationService implements OAuth2AuthorizationServic
 			return parameters;
 		}
 
-		@SuppressWarnings("unchecked")
 		private String writeMap(Map<String, Object> data) {
 			try {
 				return this.objectMapper.writeValueAsString(data);

@@ -60,11 +60,13 @@ import org.springframework.security.oauth2.server.authorization.client.TestRegis
 import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.security.web.authentication.WebAuthenticationDetails;
 import org.springframework.util.StringUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.entry;
+import static org.assertj.core.api.InstanceOfAssertFactories.type;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -79,6 +81,7 @@ import static org.mockito.Mockito.when;
  * @author Daniel Garnier-Moiroux
  */
 public class OAuth2TokenEndpointFilterTests {
+	private static final String REMOTE_ADDRESS = "remote-address";
 	private AuthenticationManager authenticationManager;
 	private OAuth2TokenEndpointFilter filter;
 	private final HttpMessageConverter<OAuth2Error> errorHttpResponseConverter =
@@ -260,6 +263,10 @@ public class OAuth2TokenEndpointFilterTests {
 				request.getParameter(OAuth2ParameterNames.REDIRECT_URI));
 		assertThat(authorizationCodeAuthentication.getAdditionalParameters())
 				.containsExactly(entry("custom-param-1", "custom-value-1"));
+		assertThat(authorizationCodeAuthentication.getDetails())
+				.asInstanceOf(type(WebAuthenticationDetails.class))
+				.extracting(WebAuthenticationDetails::getRemoteAddress)
+				.isEqualTo(REMOTE_ADDRESS);
 
 		assertThat(response.getStatus()).isEqualTo(HttpStatus.OK.value());
 		OAuth2AccessTokenResponse accessTokenResponse = readAccessTokenResponse(response);
@@ -322,6 +329,10 @@ public class OAuth2TokenEndpointFilterTests {
 		assertThat(clientCredentialsAuthentication.getScopes()).isEqualTo(registeredClient.getScopes());
 		assertThat(clientCredentialsAuthentication.getAdditionalParameters())
 				.containsExactly(entry("custom-param-1", "custom-value-1"));
+		assertThat(clientCredentialsAuthentication.getDetails())
+				.asInstanceOf(type(WebAuthenticationDetails.class))
+				.extracting(WebAuthenticationDetails::getRemoteAddress)
+				.isEqualTo(REMOTE_ADDRESS);
 
 		assertThat(response.getStatus()).isEqualTo(HttpStatus.OK.value());
 		OAuth2AccessTokenResponse accessTokenResponse = readAccessTokenResponse(response);
@@ -404,6 +415,11 @@ public class OAuth2TokenEndpointFilterTests {
 		assertThat(refreshTokenAuthenticationToken.getScopes()).isEqualTo(registeredClient.getScopes());
 		assertThat(refreshTokenAuthenticationToken.getAdditionalParameters())
 				.containsExactly(entry("custom-param-1", "custom-value-1"));
+		assertThat(refreshTokenAuthenticationToken.getDetails())
+				.asInstanceOf(type(WebAuthenticationDetails.class))
+				.extracting(WebAuthenticationDetails::getRemoteAddress)
+				.isEqualTo(REMOTE_ADDRESS);
+
 
 		assertThat(response.getStatus()).isEqualTo(HttpStatus.OK.value());
 		OAuth2AccessTokenResponse accessTokenResponse = readAccessTokenResponse(response);
@@ -536,6 +552,7 @@ public class OAuth2TokenEndpointFilterTests {
 		String requestUri = OAuth2TokenEndpointFilter.DEFAULT_TOKEN_ENDPOINT_URI;
 		MockHttpServletRequest request = new MockHttpServletRequest("POST", requestUri);
 		request.setServletPath(requestUri);
+		request.setRemoteAddr(REMOTE_ADDRESS);
 
 		request.addParameter(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.AUTHORIZATION_CODE.getValue());
 		request.addParameter(OAuth2ParameterNames.CODE, "code");
@@ -551,6 +568,7 @@ public class OAuth2TokenEndpointFilterTests {
 		String requestUri = OAuth2TokenEndpointFilter.DEFAULT_TOKEN_ENDPOINT_URI;
 		MockHttpServletRequest request = new MockHttpServletRequest("POST", requestUri);
 		request.setServletPath(requestUri);
+		request.setRemoteAddr(REMOTE_ADDRESS);
 
 		request.addParameter(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.CLIENT_CREDENTIALS.getValue());
 		request.addParameter(OAuth2ParameterNames.SCOPE,
@@ -564,6 +582,7 @@ public class OAuth2TokenEndpointFilterTests {
 		String requestUri = OAuth2TokenEndpointFilter.DEFAULT_TOKEN_ENDPOINT_URI;
 		MockHttpServletRequest request = new MockHttpServletRequest("POST", requestUri);
 		request.setServletPath(requestUri);
+		request.setRemoteAddr(REMOTE_ADDRESS);
 
 		request.addParameter(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.REFRESH_TOKEN.getValue());
 		request.addParameter(OAuth2ParameterNames.REFRESH_TOKEN, "refresh-token");

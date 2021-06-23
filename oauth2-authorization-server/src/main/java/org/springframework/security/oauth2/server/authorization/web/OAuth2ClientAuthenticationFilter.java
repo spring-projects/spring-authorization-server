@@ -18,6 +18,8 @@ package org.springframework.security.oauth2.server.authorization.web;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.server.ServletServerHttpResponse;
+import org.springframework.security.authentication.AbstractAuthenticationToken;
+import org.springframework.security.authentication.AuthenticationDetailsSource;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -32,6 +34,7 @@ import org.springframework.security.oauth2.server.authorization.authentication.O
 import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -61,6 +64,8 @@ public class OAuth2ClientAuthenticationFilter extends OncePerRequestFilter {
 	private AuthenticationConverter authenticationConverter;
 	private AuthenticationSuccessHandler authenticationSuccessHandler;
 	private AuthenticationFailureHandler authenticationFailureHandler;
+	private final AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource =
+			new WebAuthenticationDetailsSource();
 
 	/**
 	 * Constructs an {@code OAuth2ClientAuthenticationFilter} using the provided parameters.
@@ -90,6 +95,10 @@ public class OAuth2ClientAuthenticationFilter extends OncePerRequestFilter {
 		if (this.requestMatcher.matches(request)) {
 			try {
 				Authentication authenticationRequest = this.authenticationConverter.convert(request);
+				if (authenticationRequest instanceof AbstractAuthenticationToken) {
+					((AbstractAuthenticationToken) authenticationRequest).setDetails(
+							this.authenticationDetailsSource.buildDetails(request));
+				}
 				if (authenticationRequest != null) {
 					Authentication authenticationResult = this.authenticationManager.authenticate(authenticationRequest);
 					this.authenticationSuccessHandler.onAuthenticationSuccess(request, response, authenticationResult);

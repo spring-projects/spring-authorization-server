@@ -29,6 +29,8 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.server.ServletServerHttpResponse;
+import org.springframework.security.authentication.AbstractAuthenticationToken;
+import org.springframework.security.authentication.AuthenticationDetailsSource;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -53,6 +55,7 @@ import org.springframework.security.oauth2.server.authorization.web.authenticati
 import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
@@ -103,6 +106,8 @@ public class OAuth2TokenEndpointFilter extends OncePerRequestFilter {
 	private AuthenticationConverter authenticationConverter;
 	private AuthenticationSuccessHandler authenticationSuccessHandler = this::sendAccessTokenResponse;
 	private AuthenticationFailureHandler authenticationFailureHandler = this::sendErrorResponse;
+	private final AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource =
+			new WebAuthenticationDetailsSource();
 
 	/**
 	 * Constructs an {@code OAuth2TokenEndpointFilter} using the provided parameters.
@@ -149,6 +154,10 @@ public class OAuth2TokenEndpointFilter extends OncePerRequestFilter {
 			Authentication authorizationGrantAuthentication = this.authenticationConverter.convert(request);
 			if (authorizationGrantAuthentication == null) {
 				throwError(OAuth2ErrorCodes.UNSUPPORTED_GRANT_TYPE, OAuth2ParameterNames.GRANT_TYPE);
+			}
+			if (authorizationGrantAuthentication instanceof AbstractAuthenticationToken) {
+				((AbstractAuthenticationToken) authorizationGrantAuthentication)
+						.setDetails(this.authenticationDetailsSource.buildDetails(request));
 			}
 
 			OAuth2AccessTokenAuthenticationToken accessTokenAuthentication =

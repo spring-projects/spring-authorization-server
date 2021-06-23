@@ -61,6 +61,7 @@ import static org.springframework.security.oauth2.server.authorization.authentic
  * @since 0.0.1
  * @see OAuth2AuthorizationCodeAuthenticationToken
  * @see OAuth2AccessTokenAuthenticationToken
+ * @see OAuth2AuthorizationCodeRequestAuthenticationProvider
  * @see OAuth2AuthorizationService
  * @see JwtEncoder
  * @see OAuth2TokenCustomizer

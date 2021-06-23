@@ -15,13 +15,12 @@
  */
 package org.springframework.security.oauth2.server.authorization.web;
 
-import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
-import java.security.Principal;
 import java.text.MessageFormat;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Consumer;
 
@@ -32,44 +31,33 @@ import javax.servlet.http.HttpServletResponse;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.ArgumentCaptor;
 
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.core.AuthorizationGrantType;
+import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
-import org.springframework.security.oauth2.core.OAuth2TokenType;
-import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationResponseType;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.endpoint.PkceParameterNames;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
-import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationCode;
-import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsent;
-import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsentService;
-import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
-import org.springframework.security.oauth2.server.authorization.TestOAuth2Authorizations;
+import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationCodeRequestAuthenticationException;
+import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeRequestAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
-import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
 import org.springframework.util.StringUtils;
-import org.springframework.web.util.UriComponents;
-import org.springframework.web.util.UriComponentsBuilder;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -84,27 +72,23 @@ import static org.mockito.Mockito.when;
  * @since 0.0.1
  */
 public class OAuth2AuthorizationEndpointFilterTests {
-	private static final OAuth2TokenType STATE_TOKEN_TYPE = new OAuth2TokenType(OAuth2ParameterNames.STATE);
-	private static final String DEFAULT_ERROR_URI = "https://tools.ietf.org/html/rfc6749%23section-4.1.2.1";
-	private static final String PKCE_ERROR_URI = "https://tools.ietf.org/html/rfc7636%23section-4.4.1";
-	private RegisteredClientRepository registeredClientRepository;
-	private OAuth2AuthorizationService authorizationService;
-	private OAuth2AuthorizationConsentService authorizationConsentService;
+	private AuthenticationManager authenticationManager;
 	private OAuth2AuthorizationEndpointFilter filter;
-	private TestingAuthenticationToken authentication;
+	private TestingAuthenticationToken principal;
+	private OAuth2AuthorizationCode authorizationCode;
 
 	@Before
 	public void setUp() {
-		this.registeredClientRepository = mock(RegisteredClientRepository.class);
-		this.authorizationService = mock(OAuth2AuthorizationService.class);
-		this.authorizationConsentService = mock(OAuth2AuthorizationConsentService.class);
-		this.filter = new OAuth2AuthorizationEndpointFilter(
-				this.registeredClientRepository, this.authorizationService, this.authorizationConsentService);
-		this.authentication = new TestingAuthenticationToken("principalName", "password");
-		this.authentication.setAuthenticated(true);
+		this.authenticationManager = mock(AuthenticationManager.class);
+		this.filter = new OAuth2AuthorizationEndpointFilter(this.authenticationManager);
+		this.principal = new TestingAuthenticationToken("principalName", "password");
+		this.principal.setAuthenticated(true);
 		SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
-		securityContext.setAuthentication(this.authentication);
+		securityContext.setAuthentication(this.principal);
 		SecurityContextHolder.setContext(securityContext);
+		Instant issuedAt = Instant.now();
+		Instant expiresAt = issuedAt.plus(5, ChronoUnit.MINUTES);
+		this.authorizationCode = new OAuth2AuthorizationCode("code", issuedAt, expiresAt);
 	}
 
 	@After
@@ -113,29 +97,15 @@ public class OAuth2AuthorizationEndpointFilterTests {
 	}
 
 	@Test
-	public void constructorWhenRegisteredClientRepositoryNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> new OAuth2AuthorizationEndpointFilter(null, this.authorizationService, this.authorizationConsentService))
+	public void constructorWhenAuthenticationManagerNullThenThrowIllegalArgumentException() {
+		assertThatThrownBy(() -> new OAuth2AuthorizationEndpointFilter(null))
 				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("registeredClientRepository cannot be null");
-	}
-
-	@Test
-	public void constructorWhenAuthorizationServiceNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> new OAuth2AuthorizationEndpointFilter(this.registeredClientRepository, null, this.authorizationConsentService))
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("authorizationService cannot be null");
-	}
-
-	@Test
-	public void constructorWhenAuthorizationConsentServiceNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> new OAuth2AuthorizationEndpointFilter(this.registeredClientRepository, this.authorizationService, (OAuth2AuthorizationConsentService) null))
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("authorizationConsentService cannot be null");
+				.hasMessage("authenticationManager cannot be null");
 	}
 
 	@Test
 	public void constructorWhenAuthorizationEndpointUriNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> new OAuth2AuthorizationEndpointFilter(this.registeredClientRepository, this.authorizationService, this.authorizationConsentService, null))
+		assertThatThrownBy(() -> new OAuth2AuthorizationEndpointFilter(this.authenticationManager, null))
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessage("authorizationEndpointUri cannot be empty");
 	}
@@ -151,6 +121,33 @@ public class OAuth2AuthorizationEndpointFilterTests {
 		this.filter.doFilter(request, response, filterChain);
 
 		verify(filterChain).doFilter(any(HttpServletRequest.class), any(HttpServletResponse.class));
+	}
+
+	@Test
+	public void doFilterWhenAuthorizationRequestMissingResponseTypeThenInvalidRequestError() throws Exception {
+		doFilterWhenAuthorizationRequestInvalidParameterThenError(
+				TestRegisteredClients.registeredClient().build(),
+				OAuth2ParameterNames.RESPONSE_TYPE,
+				OAuth2ErrorCodes.INVALID_REQUEST,
+				request -> request.removeParameter(OAuth2ParameterNames.RESPONSE_TYPE));
+	}
+
+	@Test
+	public void doFilterWhenAuthorizationRequestMultipleResponseTypeThenInvalidRequestError() throws Exception {
+		doFilterWhenAuthorizationRequestInvalidParameterThenError(
+				TestRegisteredClients.registeredClient().build(),
+				OAuth2ParameterNames.RESPONSE_TYPE,
+				OAuth2ErrorCodes.INVALID_REQUEST,
+				request -> request.addParameter(OAuth2ParameterNames.RESPONSE_TYPE, "id_token"));
+	}
+
+	@Test
+	public void doFilterWhenAuthorizationRequestInvalidResponseTypeThenUnsupportedResponseTypeError() throws Exception {
+		doFilterWhenAuthorizationRequestInvalidParameterThenError(
+				TestRegisteredClients.registeredClient().build(),
+				OAuth2ParameterNames.RESPONSE_TYPE,
+				OAuth2ErrorCodes.UNSUPPORTED_RESPONSE_TYPE,
+				request -> request.setParameter(OAuth2ParameterNames.RESPONSE_TYPE, "id_token"));
 	}
 
 	@Test
@@ -172,1055 +169,258 @@ public class OAuth2AuthorizationEndpointFilterTests {
 	}
 
 	@Test
-	public void doFilterWhenAuthorizationRequestInvalidClientIdThenInvalidRequestError() throws Exception {
+	public void doFilterWhenAuthorizationRequestMultipleRedirectUriThenInvalidRequestError() throws Exception {
 		doFilterWhenAuthorizationRequestInvalidParameterThenError(
 				TestRegisteredClients.registeredClient().build(),
-				OAuth2ParameterNames.CLIENT_ID,
-				OAuth2ErrorCodes.INVALID_REQUEST,
-				request -> request.setParameter(OAuth2ParameterNames.CLIENT_ID, "invalid"));
-	}
-
-	@Test
-	public void doFilterWhenAuthorizationRequestAndClientNotAuthorizedToRequestCodeThenUnauthorizedClientError() throws Exception {
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
-				.authorizationGrantTypes(Set::clear)
-				.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
-				.build();
-		when(this.registeredClientRepository.findByClientId((eq(registeredClient.getClientId()))))
-				.thenReturn(registeredClient);
-
-		doFilterWhenAuthorizationRequestInvalidParameterThenError(
-				registeredClient,
-				OAuth2ParameterNames.CLIENT_ID,
-				OAuth2ErrorCodes.UNAUTHORIZED_CLIENT);
-	}
-
-	@Test
-	public void doFilterWhenAuthenticationRequestMissingRedirectUriThenInvalidRequestError() throws Exception {
-		// redirect_uri is REQUIRED for OpenID Connect requests
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().scope(OidcScopes.OPENID).build();
-		when(this.registeredClientRepository.findByClientId((eq(registeredClient.getClientId()))))
-				.thenReturn(registeredClient);
-
-		doFilterWhenAuthorizationRequestInvalidParameterThenError(
-				registeredClient,
-				OAuth2ParameterNames.REDIRECT_URI,
-				OAuth2ErrorCodes.INVALID_REQUEST,
-				request -> request.removeParameter(OAuth2ParameterNames.REDIRECT_URI));
-	}
-
-	@Test
-	public void doFilterWhenAuthorizationRequestUnregisteredRedirectUriThenInvalidRequestError() throws Exception {
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
-		when(this.registeredClientRepository.findByClientId((eq(registeredClient.getClientId()))))
-				.thenReturn(registeredClient);
-
-		doFilterWhenAuthorizationRequestInvalidParameterThenError(
-				registeredClient,
-				OAuth2ParameterNames.REDIRECT_URI,
-				OAuth2ErrorCodes.INVALID_REQUEST,
-				request -> request.setParameter(OAuth2ParameterNames.REDIRECT_URI, "https://invalid-example.com"));
-	}
-
-	// gh-243
-	@Test
-	public void doFilterWhenAuthorizationRequestInvalidRedirectUriHostThenInvalidRequestError() throws Exception {
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
-		when(this.registeredClientRepository.findByClientId((eq(registeredClient.getClientId()))))
-				.thenReturn(registeredClient);
-
-		doFilterWhenAuthorizationRequestInvalidParameterThenError(
-				registeredClient,
-				OAuth2ParameterNames.REDIRECT_URI,
-				OAuth2ErrorCodes.INVALID_REQUEST,
-				request -> request.setParameter(OAuth2ParameterNames.REDIRECT_URI, "https:///invalid"));
-	}
-
-	@Test
-	public void doFilterWhenAuthorizationRequestMultipleRedirectUriThenInvalidRequestError() throws Exception {
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
-		when(this.registeredClientRepository.findByClientId((eq(registeredClient.getClientId()))))
-				.thenReturn(registeredClient);
-
-		doFilterWhenAuthorizationRequestInvalidParameterThenError(
-				registeredClient,
 				OAuth2ParameterNames.REDIRECT_URI,
 				OAuth2ErrorCodes.INVALID_REQUEST,
 				request -> request.addParameter(OAuth2ParameterNames.REDIRECT_URI, "https://example2.com"));
 	}
 
 	@Test
-	public void doFilterWhenAuthorizationRequestExcludesRedirectUriAndMultipleRegisteredThenInvalidRequestError() throws Exception {
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().redirectUri("https://example2.com").build();
-		when(this.registeredClientRepository.findByClientId((eq(registeredClient.getClientId()))))
-				.thenReturn(registeredClient);
-
+	public void doFilterWhenAuthorizationRequestMultipleScopeThenInvalidRequestError() throws Exception {
 		doFilterWhenAuthorizationRequestInvalidParameterThenError(
-				registeredClient,
-				OAuth2ParameterNames.REDIRECT_URI,
-				OAuth2ErrorCodes.INVALID_REQUEST,
-				request -> request.removeParameter(OAuth2ParameterNames.REDIRECT_URI));
-	}
-
-	@Test
-	public void doFilterWhenAuthorizationRequestMissingResponseTypeThenInvalidRequestError() throws Exception {
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
-		when(this.registeredClientRepository.findByClientId((eq(registeredClient.getClientId()))))
-				.thenReturn(registeredClient);
-
-		doFilterWhenAuthorizationRequestInvalidParameterThenRedirect(
-				registeredClient,
-				OAuth2ParameterNames.RESPONSE_TYPE,
-				OAuth2ErrorCodes.INVALID_REQUEST,
-				DEFAULT_ERROR_URI,
-				request -> request.removeParameter(OAuth2ParameterNames.RESPONSE_TYPE));
-	}
-
-	@Test
-	public void doFilterWhenAuthorizationRequestMultipleResponseTypeThenInvalidRequestError() throws Exception {
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
-		when(this.registeredClientRepository.findByClientId((eq(registeredClient.getClientId()))))
-				.thenReturn(registeredClient);
-
-		doFilterWhenAuthorizationRequestInvalidParameterThenRedirect(
-				registeredClient,
-				OAuth2ParameterNames.RESPONSE_TYPE,
-				OAuth2ErrorCodes.INVALID_REQUEST,
-				DEFAULT_ERROR_URI,
-				request -> request.addParameter(OAuth2ParameterNames.RESPONSE_TYPE, "id_token"));
-	}
-
-	@Test
-	public void doFilterWhenAuthorizationRequestInvalidResponseTypeThenUnsupportedResponseTypeError() throws Exception {
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
-		when(this.registeredClientRepository.findByClientId((eq(registeredClient.getClientId()))))
-				.thenReturn(registeredClient);
-
-		doFilterWhenAuthorizationRequestInvalidParameterThenRedirect(
-				registeredClient,
-				OAuth2ParameterNames.RESPONSE_TYPE,
-				OAuth2ErrorCodes.UNSUPPORTED_RESPONSE_TYPE,
-				DEFAULT_ERROR_URI,
-				request -> request.setParameter(OAuth2ParameterNames.RESPONSE_TYPE, "id_token"));
-	}
-
-	@Test
-	public void doFilterWhenAuthorizationRequestInvalidScopeThenInvalidScopeError() throws Exception {
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
-		when(this.registeredClientRepository.findByClientId((eq(registeredClient.getClientId()))))
-				.thenReturn(registeredClient);
-
-		doFilterWhenAuthorizationRequestInvalidParameterThenRedirect(
-				registeredClient,
+				TestRegisteredClients.registeredClient().build(),
 				OAuth2ParameterNames.SCOPE,
-				OAuth2ErrorCodes.INVALID_SCOPE,
-				DEFAULT_ERROR_URI,
-				request -> {
-					String scope = request.getParameter(OAuth2ParameterNames.SCOPE);
-					request.setParameter(OAuth2ParameterNames.SCOPE, scope + " invalid-scope");
-				});
+				OAuth2ErrorCodes.INVALID_REQUEST,
+				request -> request.addParameter(OAuth2ParameterNames.SCOPE, "scope2"));
 	}
 
 	@Test
-	public void doFilterWhenPkceRequiredAndMissingCodeChallengeThenInvalidRequestError() throws Exception {
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
-				.clientSettings(clientSettings -> clientSettings.requireProofKey(true))
-				.build();
-		when(this.registeredClientRepository.findByClientId((eq(registeredClient.getClientId()))))
-				.thenReturn(registeredClient);
-
-		doFilterWhenAuthorizationRequestInvalidParameterThenRedirect(
-				registeredClient,
-				PkceParameterNames.CODE_CHALLENGE,
+	public void doFilterWhenAuthorizationRequestMultipleStateThenInvalidRequestError() throws Exception {
+		doFilterWhenAuthorizationRequestInvalidParameterThenError(
+				TestRegisteredClients.registeredClient().build(),
+				OAuth2ParameterNames.STATE,
 				OAuth2ErrorCodes.INVALID_REQUEST,
-				PKCE_ERROR_URI,
-				request -> {
-					addPkceParameters(request);
-					request.removeParameter(PkceParameterNames.CODE_CHALLENGE);
-				});
+				request -> request.addParameter(OAuth2ParameterNames.STATE, "state2"));
 	}
 
 	@Test
-	public void doFilterWhenPkceRequiredAndMultipleCodeChallengeThenInvalidRequestError() throws Exception {
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
-				.clientSettings(clientSettings -> clientSettings.requireProofKey(true))
-				.build();
-		when(this.registeredClientRepository.findByClientId((eq(registeredClient.getClientId()))))
-				.thenReturn(registeredClient);
-
-		doFilterWhenAuthorizationRequestInvalidParameterThenRedirect(
-				registeredClient,
+	public void doFilterWhenAuthorizationRequestMultipleCodeChallengeThenInvalidRequestError() throws Exception {
+		doFilterWhenAuthorizationRequestInvalidParameterThenError(
+				TestRegisteredClients.registeredClient().build(),
 				PkceParameterNames.CODE_CHALLENGE,
 				OAuth2ErrorCodes.INVALID_REQUEST,
-				PKCE_ERROR_URI,
 				request -> {
-					addPkceParameters(request);
+					request.addParameter(PkceParameterNames.CODE_CHALLENGE, "code-challenge");
 					request.addParameter(PkceParameterNames.CODE_CHALLENGE, "another-code-challenge");
 				});
 	}
 
 	@Test
-	public void doFilterWhenPkceNotRequiredAndMultipleCodeChallengeThenInvalidRequestError() throws Exception {
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
-		when(this.registeredClientRepository.findByClientId((eq(registeredClient.getClientId()))))
-				.thenReturn(registeredClient);
-
-		doFilterWhenAuthorizationRequestInvalidParameterThenRedirect(
-				registeredClient,
-				PkceParameterNames.CODE_CHALLENGE,
-				OAuth2ErrorCodes.INVALID_REQUEST,
-				PKCE_ERROR_URI,
-				request -> {
-					addPkceParameters(request);
-					request.addParameter(PkceParameterNames.CODE_CHALLENGE, "another-code-challenge");
-				});
-	}
-
-	@Test
-	public void doFilterWhenPkceRequiredAndMultipleCodeChallengeMethodThenInvalidRequestError() throws Exception {
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
-				.clientSettings(clientSettings -> clientSettings.requireProofKey(true))
-				.build();
-		when(this.registeredClientRepository.findByClientId((eq(registeredClient.getClientId()))))
-				.thenReturn(registeredClient);
-
-		doFilterWhenAuthorizationRequestInvalidParameterThenRedirect(
-				registeredClient,
+	public void doFilterWhenAuthorizationRequestMultipleCodeChallengeMethodThenInvalidRequestError() throws Exception {
+		doFilterWhenAuthorizationRequestInvalidParameterThenError(
+				TestRegisteredClients.registeredClient().build(),
 				PkceParameterNames.CODE_CHALLENGE_METHOD,
 				OAuth2ErrorCodes.INVALID_REQUEST,
-				PKCE_ERROR_URI,
 				request -> {
-					addPkceParameters(request);
+					request.addParameter(PkceParameterNames.CODE_CHALLENGE_METHOD, "S256");
 					request.addParameter(PkceParameterNames.CODE_CHALLENGE_METHOD, "plain");
 				});
 	}
 
 	@Test
-	public void doFilterWhenPkceNotRequiredAndMultipleCodeChallengeMethodThenInvalidRequestError() throws Exception {
+	public void doFilterWhenAuthorizationRequestAuthenticationExceptionThenErrorResponse() throws Exception {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
-		when(this.registeredClientRepository.findByClientId((eq(registeredClient.getClientId()))))
-				.thenReturn(registeredClient);
-
-		doFilterWhenAuthorizationRequestInvalidParameterThenRedirect(
-				registeredClient,
-				PkceParameterNames.CODE_CHALLENGE_METHOD,
-				OAuth2ErrorCodes.INVALID_REQUEST,
-				PKCE_ERROR_URI,
-				request -> {
-					addPkceParameters(request);
-					request.addParameter(PkceParameterNames.CODE_CHALLENGE_METHOD, "plain");
-				});
-	}
-
-	@Test
-	public void doFilterWhenPkceRequiredAndUnsupportedCodeChallengeMethodThenInvalidRequestError() throws Exception {
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
-				.clientSettings(clientSettings -> clientSettings.requireProofKey(true))
-				.build();
-		when(this.registeredClientRepository.findByClientId((eq(registeredClient.getClientId()))))
-				.thenReturn(registeredClient);
-
-		doFilterWhenAuthorizationRequestInvalidParameterThenRedirect(
-				registeredClient,
-				PkceParameterNames.CODE_CHALLENGE_METHOD,
-				OAuth2ErrorCodes.INVALID_REQUEST,
-				PKCE_ERROR_URI,
-				request -> {
-					addPkceParameters(request);
-					request.setParameter(PkceParameterNames.CODE_CHALLENGE_METHOD, "unsupported");
-				});
-	}
-
-	@Test
-	public void doFilterWhenPkceNotRequiredAndUnsupportedCodeChallengeMethodThenInvalidRequestError() throws Exception {
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
-		when(this.registeredClientRepository.findByClientId((eq(registeredClient.getClientId()))))
-				.thenReturn(registeredClient);
-
-		doFilterWhenAuthorizationRequestInvalidParameterThenRedirect(
-				registeredClient,
-				PkceParameterNames.CODE_CHALLENGE_METHOD,
-				OAuth2ErrorCodes.INVALID_REQUEST,
-				PKCE_ERROR_URI,
-				request -> {
-					addPkceParameters(request);
-					request.setParameter(PkceParameterNames.CODE_CHALLENGE_METHOD, "unsupported");
-				});
-	}
-
-	@Test
-	public void doFilterWhenAuthorizationRequestNotAuthenticatedThenContinueChainToCommenceAuthentication() throws Exception {
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
-		when(this.registeredClientRepository.findByClientId((eq(registeredClient.getClientId()))))
-				.thenReturn(registeredClient);
+		OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthentication =
+				authorizationCodeRequestAuthentication(registeredClient, this.principal)
+						.build();
+		OAuth2Error error = new OAuth2Error("errorCode", "errorDescription", "errorUri");
+		when(this.authenticationManager.authenticate(any()))
+				.thenThrow(new OAuth2AuthorizationCodeRequestAuthenticationException(error, authorizationCodeRequestAuthentication));
 
 		MockHttpServletRequest request = createAuthorizationRequest(registeredClient);
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		FilterChain filterChain = mock(FilterChain.class);
 
-		this.authentication.setAuthenticated(false);
+		this.filter.doFilter(request, response, filterChain);
+
+		verify(this.authenticationManager).authenticate(any());
+		verifyNoInteractions(filterChain);
+
+		assertThat(response.getStatus()).isEqualTo(HttpStatus.FOUND.value());
+		assertThat(response.getRedirectedUrl()).isEqualTo("https://example.com?error=errorCode&error_description=errorDescription&error_uri=errorUri&state=state");
+	}
+
+	@Test
+	public void doFilterWhenAuthorizationRequestPrincipalNotAuthenticatedThenCommenceAuthentication() throws Exception {
+		this.principal.setAuthenticated(false);
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+		OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthenticationResult =
+				authorizationCodeRequestAuthentication(registeredClient, this.principal)
+						.build();
+		authorizationCodeRequestAuthenticationResult.setAuthenticated(false);
+		when(this.authenticationManager.authenticate(any()))
+				.thenReturn(authorizationCodeRequestAuthenticationResult);
+
+		MockHttpServletRequest request = createAuthorizationRequest(registeredClient);
+		MockHttpServletResponse response = new MockHttpServletResponse();
+		FilterChain filterChain = mock(FilterChain.class);
 
 		this.filter.doFilter(request, response, filterChain);
 
+		verify(this.authenticationManager).authenticate(any());
 		verify(filterChain).doFilter(any(HttpServletRequest.class), any(HttpServletResponse.class));
 	}
 
 	@Test
-	public void doFilterWhenAuthorizationRequestGetThenAuthorizationResponse() throws Exception {
+	public void doFilterWhenAuthorizationRequestConsentRequiredWithCustomConsentUriThenRedirectConsentResponse() throws Exception {
+		Set<String> requestedScopes = new HashSet<>(Arrays.asList("scope1", "scope2"));
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
+				.scopes(scopes -> {
+					scopes.clear();
+					scopes.addAll(requestedScopes);
+				})
+				.build();
+		OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthenticationResult =
+				authorizationCodeRequestAuthentication(registeredClient, this.principal)
+						.scopes(new HashSet<>())	// No scopes previously approved
+						.consentRequired(true)
+						.build();
+		authorizationCodeRequestAuthenticationResult.setAuthenticated(true);
+		when(this.authenticationManager.authenticate(any()))
+				.thenReturn(authorizationCodeRequestAuthenticationResult);
+
+		MockHttpServletRequest request = createAuthorizationRequest(registeredClient);
+		MockHttpServletResponse response = new MockHttpServletResponse();
+		FilterChain filterChain = mock(FilterChain.class);
+
+		this.filter.setUserConsentUri("/oauth2/custom-consent");
+		this.filter.doFilter(request, response, filterChain);
+
+		verify(this.authenticationManager).authenticate(any());
+		verifyNoInteractions(filterChain);
+
+		assertThat(response.getStatus()).isEqualTo(HttpStatus.FOUND.value());
+		assertThat(response.getRedirectedUrl()).isEqualTo("http://localhost/oauth2/custom-consent?scope=scope1%20scope2&client_id=client-1&state=state");
+	}
+
+	@Test
+	public void doFilterWhenAuthorizationRequestConsentRequiredThenConsentResponse() throws Exception {
+		Set<String> requestedScopes = new HashSet<>(Arrays.asList("scope1", "scope2"));
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
+				.scopes(scopes -> {
+					scopes.clear();
+					scopes.addAll(requestedScopes);
+				})
+				.build();
+		OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthenticationResult =
+				authorizationCodeRequestAuthentication(registeredClient, this.principal)
+						.scopes(new HashSet<>())	// No scopes previously approved
+						.consentRequired(true)
+						.build();
+		authorizationCodeRequestAuthenticationResult.setAuthenticated(true);
+		when(this.authenticationManager.authenticate(any()))
+				.thenReturn(authorizationCodeRequestAuthenticationResult);
+
+		MockHttpServletRequest request = createAuthorizationRequest(registeredClient);
+		MockHttpServletResponse response = new MockHttpServletResponse();
+		FilterChain filterChain = mock(FilterChain.class);
+
+		this.filter.doFilter(request, response, filterChain);
+
+		verify(this.authenticationManager).authenticate(any());
+		verifyNoInteractions(filterChain);
+
+		assertThat(response.getStatus()).isEqualTo(HttpStatus.OK.value());
+		assertThat(response.getContentType().equals(new MediaType("text", "html", StandardCharsets.UTF_8).toString()));
+		for (String requestedScope : requestedScopes) {
+			assertThat(response.getContentAsString()).contains(scopeCheckbox(requestedScope));
+		}
+	}
+
+	@Test
+	public void doFilterWhenAuthorizationRequestConsentRequiredWithPreviouslyApprovedThenConsentResponse() throws Exception {
+		Set<String> approvedScopes = new HashSet<>(Arrays.asList("scope1", "scope2"));
+		Set<String> requestedScopes = new HashSet<>(Arrays.asList("scope3", "scope4"));
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
+				.scopes(scopes -> {
+					scopes.clear();
+					scopes.addAll(approvedScopes);
+					scopes.addAll(requestedScopes);
+				})
+				.build();
+		OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthenticationResult =
+				authorizationCodeRequestAuthentication(registeredClient, this.principal)
+						.scopes(approvedScopes)
+						.consentRequired(true)
+						.build();
+		authorizationCodeRequestAuthenticationResult.setAuthenticated(true);
+		when(this.authenticationManager.authenticate(any()))
+				.thenReturn(authorizationCodeRequestAuthenticationResult);
+
+		MockHttpServletRequest request = createAuthorizationRequest(registeredClient);
+		MockHttpServletResponse response = new MockHttpServletResponse();
+		FilterChain filterChain = mock(FilterChain.class);
+
+		this.filter.doFilter(request, response, filterChain);
+
+		verify(this.authenticationManager).authenticate(any());
+		verifyNoInteractions(filterChain);
+
+		assertThat(response.getStatus()).isEqualTo(HttpStatus.OK.value());
+		assertThat(response.getContentType().equals(new MediaType("text", "html", StandardCharsets.UTF_8).toString()));
+		for (String requestedScope : requestedScopes) {
+			assertThat(response.getContentAsString()).contains(scopeCheckbox(requestedScope));
+		}
+		for (String approvedScope : approvedScopes) {
+			assertThat(response.getContentAsString()).contains(disabledScopeCheckbox(approvedScope));
+		}
+	}
+
+	@Test
+	public void doFilterWhenAuthorizationRequestAuthenticatedThenAuthorizationResponse() throws Exception {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+		OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthenticationResult =
+				authorizationCodeRequestAuthentication(registeredClient, this.principal)
+						.authorizationCode(this.authorizationCode)
+						.build();
+		authorizationCodeRequestAuthenticationResult.setAuthenticated(true);
+		when(this.authenticationManager.authenticate(any()))
+				.thenReturn(authorizationCodeRequestAuthenticationResult);
+
 		MockHttpServletRequest request = createAuthorizationRequest(registeredClient);
-		doFilterWhenAuthorizationRequestThenAuthorizationResponse(registeredClient, request);
+		MockHttpServletResponse response = new MockHttpServletResponse();
+		FilterChain filterChain = mock(FilterChain.class);
+
+		this.filter.doFilter(request, response, filterChain);
+
+		verify(this.authenticationManager).authenticate(any());
+		verifyNoInteractions(filterChain);
+
+		assertThat(response.getStatus()).isEqualTo(HttpStatus.FOUND.value());
+		assertThat(response.getRedirectedUrl()).isEqualTo("https://example.com?code=code&state=state");
 	}
 
 	@Test
-	public void doFilterWhenAuthorizationRequestPostThenAuthorizationResponse() throws Exception {
-		// OpenID Connect requests support POST method
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().scope(OidcScopes.OPENID).build();
-		MockHttpServletRequest request = createAuthorizationRequest(registeredClient);
-		request.setMethod("POST");
-		doFilterWhenAuthorizationRequestThenAuthorizationResponse(registeredClient, request);
-	}
-
-	@Test
-	public void doFilterWhenAuthenticationRequestIncludesOnlyOpenidScopeThenDoesNotRequireConsent() throws Exception {
+	public void doFilterWhenAuthenticationRequestAuthenticatedThenAuthorizationResponse() throws Exception {
+		// Setup OpenID Connect request
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
 				.scopes(scopes -> {
 					scopes.clear();
 					scopes.add(OidcScopes.OPENID);
 				})
-				.clientSettings(clientSettings -> clientSettings.requireUserConsent(true))
 				.build();
+		OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthenticationResult =
+				authorizationCodeRequestAuthentication(registeredClient, this.principal)
+						.authorizationCode(this.authorizationCode)
+						.build();
+		authorizationCodeRequestAuthenticationResult.setAuthenticated(true);
+		when(this.authenticationManager.authenticate(any()))
+				.thenReturn(authorizationCodeRequestAuthenticationResult);
+
 		MockHttpServletRequest request = createAuthorizationRequest(registeredClient);
-		doFilterWhenAuthorizationRequestThenAuthorizationResponse(registeredClient, request);
-	}
-
-	private void doFilterWhenAuthorizationRequestThenAuthorizationResponse(
-			RegisteredClient registeredClient, MockHttpServletRequest request) throws Exception {
-
-		when(this.registeredClientRepository.findByClientId((eq(registeredClient.getClientId()))))
-				.thenReturn(registeredClient);
-
+		request.setMethod("POST");	// OpenID Connect supports POST method
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		FilterChain filterChain = mock(FilterChain.class);
 
 		this.filter.doFilter(request, response, filterChain);
 
+		verify(this.authenticationManager).authenticate(any());
 		verifyNoInteractions(filterChain);
 
 		assertThat(response.getStatus()).isEqualTo(HttpStatus.FOUND.value());
-		assertThat(response.getRedirectedUrl()).matches("https://example.com\\?code=.{15,}&state=state");
-
-		ArgumentCaptor<OAuth2Authorization> authorizationCaptor = ArgumentCaptor.forClass(OAuth2Authorization.class);
-
-		verify(this.authorizationService).save(authorizationCaptor.capture());
-
-		OAuth2Authorization authorization = authorizationCaptor.getValue();
-		assertThat(authorization.getRegisteredClientId()).isEqualTo(registeredClient.getId());
-		assertThat(authorization.getPrincipalName()).isEqualTo(this.authentication.getPrincipal().toString());
-		assertThat(authorization.getAuthorizationGrantType()).isEqualTo(AuthorizationGrantType.AUTHORIZATION_CODE);
-		assertThat(authorization.<Authentication>getAttribute(Principal.class.getName()))
-				.isEqualTo(this.authentication);
-
-		OAuth2Authorization.Token<OAuth2AuthorizationCode> authorizationCode = authorization.getToken(OAuth2AuthorizationCode.class);
-		assertThat(authorizationCode).isNotNull();
-
-		OAuth2AuthorizationRequest authorizationRequest = authorization.getAttribute(OAuth2AuthorizationRequest.class.getName());
-		assertThat(authorizationRequest).isNotNull();
-
-		Set<String> authorizedScopes = authorization.getAttribute(OAuth2Authorization.AUTHORIZED_SCOPE_ATTRIBUTE_NAME);
-		assertThat(authorizedScopes).isEqualTo(authorizationRequest.getScopes());
-
-		assertThat(authorizationRequest.getAuthorizationUri()).isEqualTo("http://localhost/oauth2/authorize");
-		assertThat(authorizationRequest.getGrantType()).isEqualTo(AuthorizationGrantType.AUTHORIZATION_CODE);
-		assertThat(authorizationRequest.getResponseType()).isEqualTo(OAuth2AuthorizationResponseType.CODE);
-		assertThat(authorizationRequest.getClientId()).isEqualTo(registeredClient.getClientId());
-		assertThat(authorizationRequest.getRedirectUri()).isEqualTo(registeredClient.getRedirectUris().iterator().next());
-		assertThat(authorizationRequest.getScopes()).containsExactlyInAnyOrderElementsOf(registeredClient.getScopes());
-		assertThat(authorizationRequest.getState()).isEqualTo("state");
-		assertThat(authorizationRequest.getAdditionalParameters()).isEmpty();
-	}
-
-	@Test
-	public void doFilterWhenPkceRequiredAndAuthorizationRequestThenAuthorizationResponse() throws Exception {
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
-				.clientSettings(clientSettings -> clientSettings.requireProofKey(true))
-				.build();
-		when(this.registeredClientRepository.findByClientId((eq(registeredClient.getClientId()))))
-				.thenReturn(registeredClient);
-
-		MockHttpServletRequest request = createAuthorizationRequest(registeredClient);
-		addPkceParameters(request);
-		MockHttpServletResponse response = new MockHttpServletResponse();
-		FilterChain filterChain = mock(FilterChain.class);
-
-		this.filter.doFilter(request, response, filterChain);
-
-		verifyNoInteractions(filterChain);
-
-		assertThat(response.getStatus()).isEqualTo(HttpStatus.FOUND.value());
-		assertThat(response.getRedirectedUrl()).matches("https://example.com\\?code=.{15,}&state=state");
-
-		ArgumentCaptor<OAuth2Authorization> authorizationCaptor = ArgumentCaptor.forClass(OAuth2Authorization.class);
-
-		verify(this.authorizationService).save(authorizationCaptor.capture());
-
-		OAuth2Authorization authorization = authorizationCaptor.getValue();
-		assertThat(authorization.getRegisteredClientId()).isEqualTo(registeredClient.getId());
-		assertThat(authorization.getPrincipalName()).isEqualTo(this.authentication.getPrincipal().toString());
-		assertThat(authorization.getAuthorizationGrantType()).isEqualTo(AuthorizationGrantType.AUTHORIZATION_CODE);
-		assertThat(authorization.<Authentication>getAttribute(Principal.class.getName()))
-				.isEqualTo(this.authentication);
-
-		OAuth2Authorization.Token<OAuth2AuthorizationCode> authorizationCode = authorization.getToken(OAuth2AuthorizationCode.class);
-		assertThat(authorizationCode).isNotNull();
-
-		OAuth2AuthorizationRequest authorizationRequest = authorization.getAttribute(OAuth2AuthorizationRequest.class.getName());
-		assertThat(authorizationRequest).isNotNull();
-
-		Set<String> authorizedScopes = authorization.getAttribute(OAuth2Authorization.AUTHORIZED_SCOPE_ATTRIBUTE_NAME);
-		assertThat(authorizedScopes).isEqualTo(authorizationRequest.getScopes());
-
-		assertThat(authorizationRequest.getClientId()).isEqualTo(registeredClient.getClientId());
-		assertThat(authorizationRequest.getAdditionalParameters())
-				.size()
-				.isEqualTo(2)
-				.returnToMap()
-				.containsEntry(PkceParameterNames.CODE_CHALLENGE, "code-challenge")
-				.containsEntry(PkceParameterNames.CODE_CHALLENGE_METHOD, "S256");
-	}
-
-	@Test
-	public void doFilterWhenUserConsentRequiredAndAuthorizationRequestThenSavesAuthorization() throws Exception {
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
-				.clientSettings(clientSettings -> clientSettings.requireUserConsent(true))
-				.build();
-		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
-				.thenReturn(registeredClient);
-
-		MockHttpServletRequest request = createAuthorizationRequest(registeredClient);
-		MockHttpServletResponse response = new MockHttpServletResponse();
-		FilterChain filterChain = mock(FilterChain.class);
-
-		this.filter.doFilter(request, response, filterChain);
-
-		verifyNoInteractions(filterChain);
-
-		ArgumentCaptor<OAuth2Authorization> authorizationCaptor = ArgumentCaptor.forClass(OAuth2Authorization.class);
-
-		verify(this.authorizationService).save(authorizationCaptor.capture());
-
-		OAuth2Authorization authorization = authorizationCaptor.getValue();
-		assertThat(authorization.getRegisteredClientId()).isEqualTo(registeredClient.getId());
-		assertThat(authorization.getPrincipalName()).isEqualTo(this.authentication.getPrincipal().toString());
-		assertThat(authorization.getAuthorizationGrantType()).isEqualTo(AuthorizationGrantType.AUTHORIZATION_CODE);
-		assertThat(authorization.<Authentication>getAttribute(Principal.class.getName()))
-				.isEqualTo(this.authentication);
-
-		String state = authorization.getAttribute(OAuth2ParameterNames.STATE);
-		assertThat(state).isNotNull();
-
-		Set<String> authorizedScopes = authorization.getAttribute(OAuth2Authorization.AUTHORIZED_SCOPE_ATTRIBUTE_NAME);
-		assertThat(authorizedScopes).isNull();
-
-		OAuth2AuthorizationRequest authorizationRequest = authorization.getAttribute(OAuth2AuthorizationRequest.class.getName());
-		assertThat(authorizationRequest).isNotNull();
-		assertThat(authorizationRequest.getAuthorizationUri()).isEqualTo("http://localhost/oauth2/authorize");
-		assertThat(authorizationRequest.getGrantType()).isEqualTo(AuthorizationGrantType.AUTHORIZATION_CODE);
-		assertThat(authorizationRequest.getResponseType()).isEqualTo(OAuth2AuthorizationResponseType.CODE);
-		assertThat(authorizationRequest.getClientId()).isEqualTo(registeredClient.getClientId());
-		assertThat(authorizationRequest.getRedirectUri()).isEqualTo(registeredClient.getRedirectUris().iterator().next());
-		assertThat(authorizationRequest.getScopes()).containsExactlyInAnyOrderElementsOf(registeredClient.getScopes());
-		assertThat(authorizationRequest.getState()).isEqualTo("state");
-		assertThat(authorizationRequest.getAdditionalParameters()).isEmpty();
-	}
-
-	@Test
-	public void doFilterWhenUserConsentRequiredAndAuthorizationRequestThenUserConsentResponse() throws Exception {
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
-				.scopes(scopes -> {
-					scopes.clear();
-					scopes.add("message.read");
-					scopes.add("message.write");
-				})
-				.clientSettings(clientSettings -> clientSettings.requireUserConsent(true))
-				.build();
-		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
-				.thenReturn(registeredClient);
-
-		MockHttpServletRequest request = createAuthorizationRequest(registeredClient);
-		MockHttpServletResponse response = new MockHttpServletResponse();
-		FilterChain filterChain = mock(FilterChain.class);
-
-		this.filter.doFilter(request, response, filterChain);
-
-		verifyNoInteractions(filterChain);
-
-		assertThat(response.getStatus()).isEqualTo(HttpStatus.OK.value());
-		assertThat(response.getContentType().equals(new MediaType("text", "html", StandardCharsets.UTF_8).toString()));
-
-		assertThat(response.getContentAsString()).contains(scopeCheckbox("message.read"));
-		assertThat(response.getContentAsString()).contains(scopeCheckbox("message.write"));
-	}
-
-	@Test
-	public void doFilterWhenUserConsentRequiredAndPreviouslyApprovedAndAuthorizationRequestThenUserConsentResponse() throws Exception {
-		String unrelatedPreviouslyApprovedScope = "unrelated.scope";
-		String previouslyApprovedScope = "message.read";
-		String newScope = "message.write";
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
-				.scopes(scopes -> {
-					scopes.clear();
-					scopes.add(previouslyApprovedScope);
-					scopes.add(newScope);
-				})
-				.clientSettings(clientSettings -> clientSettings.requireUserConsent(true))
-				.build();
-		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
-				.thenReturn(registeredClient);
-		OAuth2AuthorizationConsent previousConsent = createAuthorizationConsent(
-				registeredClient.getClientId(),
-				this.authentication.getName(),
-				Arrays.asList(previouslyApprovedScope, unrelatedPreviouslyApprovedScope)
-		);
-		when(this.authorizationConsentService.findById(
-				eq(registeredClient.getId()), eq(this.authentication.getName())))
-				.thenReturn(previousConsent);
-
-		MockHttpServletRequest request = createAuthorizationRequest(registeredClient);
-		MockHttpServletResponse response = new MockHttpServletResponse();
-		FilterChain filterChain = mock(FilterChain.class);
-
-		this.filter.doFilter(request, response, filterChain);
-
-		verifyNoInteractions(filterChain);
-
-		assertThat(response.getStatus()).isEqualTo(HttpStatus.OK.value());
-		assertThat(response.getContentType().equals(new MediaType("text", "html", StandardCharsets.UTF_8).toString()));
-
-		assertThat(response.getContentAsString()).contains(scopeCheckbox(newScope));
-		assertThat(response.getContentAsString()).contains(disabledScopeCheckbox(previouslyApprovedScope));
-		assertThat(response.getContentAsString()).doesNotContain(unrelatedPreviouslyApprovedScope);
-	}
-
-	@Test
-	public void doFilterWhenUserConsentRequiredAndCustomConsentUriAndAuthorizationRequestThenRedirects() throws Exception {
-		this.filter.setUserConsentUri("/oauth2/consent");
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
-				.scopes(scopes -> {
-					scopes.clear();
-					scopes.add("message.read");
-					scopes.add("message.write");
-				})
-				.clientSettings(clientSettings -> clientSettings.requireUserConsent(true))
-				.build();
-		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
-				.thenReturn(registeredClient);
-
-		MockHttpServletRequest request = createAuthorizationRequest(registeredClient);
-		MockHttpServletResponse response = new MockHttpServletResponse();
-		FilterChain filterChain = mock(FilterChain.class);
-
-		this.filter.doFilter(request, response, filterChain);
-
-		verifyNoInteractions(filterChain);
-
-		ArgumentCaptor<OAuth2Authorization> authorizationCaptor = ArgumentCaptor.forClass(OAuth2Authorization.class);
-
-		verify(this.authorizationService).save(authorizationCaptor.capture());
-		OAuth2Authorization authorization = authorizationCaptor.getValue();
-
-		assertThat(response.getStatus()).isEqualTo(HttpStatus.FOUND.value());
-
-		String consentRedirectHeader = URLDecoder.decode(response.getHeader(HttpHeaders.LOCATION), StandardCharsets.UTF_8.name());
-		UriComponents consentRedirectUri = UriComponentsBuilder.fromUriString(consentRedirectHeader).build();
-		String[] redirectScopes = consentRedirectUri.getQueryParams().getFirst(OAuth2ParameterNames.SCOPE).split(" ");
-		String redirectState = consentRedirectUri.getQueryParams().getFirst(OAuth2ParameterNames.STATE);
-
-		assertThat(consentRedirectUri.getPath()).isEqualTo("/oauth2/consent");
-		assertThat(consentRedirectUri.getQueryParams().getFirst(OAuth2ParameterNames.CLIENT_ID)).isEqualTo(registeredClient.getClientId());
-		assertThat(redirectScopes).containsExactlyInAnyOrder("message.read", "message.write");
-		assertThat(redirectState).isEqualTo(authorization.getAttribute(OAuth2ParameterNames.STATE));
-	}
-
-	@Test
-	public void doFilterWhenUserConsentRequiredAndAllScopesPreviouslyApprovedAndAuthorizationRequestThenAuthorizationResponse() throws Exception {
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
-				.scopes(scopes -> {
-					scopes.clear();
-					scopes.add("message.read");
-					scopes.add("message.write");
-				})
-				.clientSettings(clientSettings -> clientSettings.requireUserConsent(true))
-				.build();
-		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
-				.thenReturn(registeredClient);
-		OAuth2AuthorizationConsent authorizationConsent = createAuthorizationConsent(
-				registeredClient.getClientId(), this.authentication.getName(), Arrays.asList("message.read", "message.write")
-		);
-		when(this.authorizationConsentService.findById(
-				eq(registeredClient.getId()), eq(this.authentication.getName())))
-				.thenReturn(authorizationConsent);
-
-		MockHttpServletRequest request = createAuthorizationRequest(registeredClient);
-		MockHttpServletResponse response = new MockHttpServletResponse();
-		FilterChain filterChain = mock(FilterChain.class);
-
-		this.filter.doFilter(request, response, filterChain);
-
-		verifyNoInteractions(filterChain);
-
-		assertThat(response.getStatus()).isEqualTo(HttpStatus.FOUND.value());
-		assertThat(response.getRedirectedUrl()).matches("https://example.com\\?code=.{15,}&state=state");
-	}
-
-	@Test
-	public void doFilterWhenUserConsentRequestMissingStateThenInvalidRequestError() throws Exception {
-		doFilterWhenUserConsentRequestInvalidParameterThenError(
-				TestRegisteredClients.registeredClient().build(),
-				OAuth2ParameterNames.STATE,
-				OAuth2ErrorCodes.INVALID_REQUEST,
-				request -> request.removeParameter(OAuth2ParameterNames.STATE));
-	}
-
-	@Test
-	public void doFilterWhenUserConsentRequestMultipleStateThenInvalidRequestError() throws Exception {
-		doFilterWhenUserConsentRequestInvalidParameterThenError(
-				TestRegisteredClients.registeredClient().build(),
-				OAuth2ParameterNames.STATE,
-				OAuth2ErrorCodes.INVALID_REQUEST,
-				request -> request.addParameter(OAuth2ParameterNames.STATE, "state-2"));
-	}
-
-	@Test
-	public void doFilterWhenUserConsentRequestInvalidStateThenInvalidRequestError() throws Exception {
-		doFilterWhenUserConsentRequestInvalidParameterThenError(
-				TestRegisteredClients.registeredClient().build(),
-				OAuth2ParameterNames.STATE,
-				OAuth2ErrorCodes.INVALID_REQUEST,
-				request -> request.setParameter(OAuth2ParameterNames.STATE, "invalid"));
-	}
-
-	@Test
-	public void doFilterWhenUserConsentRequestNotAuthenticatedThenInvalidRequestError() throws Exception {
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
-		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
-				.thenReturn(registeredClient);
-		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();
-		when(this.authorizationService.findByToken(eq("state"), eq(STATE_TOKEN_TYPE)))
-				.thenReturn(authorization);
-
-		this.authentication.setAuthenticated(false);
-
-		doFilterWhenUserConsentRequestInvalidParameterThenError(
-				registeredClient,
-				OAuth2ParameterNames.STATE,
-				OAuth2ErrorCodes.INVALID_REQUEST,
-				request -> {});
-	}
-
-	@Test
-	public void doFilterWhenUserConsentRequestInvalidPrincipalThenInvalidRequestError() throws Exception {
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
-		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
-				.thenReturn(registeredClient);
-		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();
-		when(this.authorizationService.findByToken(eq("state"), eq(STATE_TOKEN_TYPE)))
-				.thenReturn(authorization);
-
-		this.authentication = new TestingAuthenticationToken("other-principal", "password");
-		this.authentication.setAuthenticated(true);
-		SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
-		securityContext.setAuthentication(this.authentication);
-		SecurityContextHolder.setContext(securityContext);
-
-		doFilterWhenUserConsentRequestInvalidParameterThenError(
-				registeredClient,
-				OAuth2ParameterNames.STATE,
-				OAuth2ErrorCodes.INVALID_REQUEST,
-				request -> {});
-	}
-
-	@Test
-	public void doFilterWhenUserConsentRequestMissingClientIdThenInvalidRequestError() throws Exception {
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
-		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
-				.thenReturn(registeredClient);
-		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient)
-				.principalName(this.authentication.getName())
-				.build();
-		when(this.authorizationService.findByToken(eq("state"), eq(STATE_TOKEN_TYPE)))
-				.thenReturn(authorization);
-
-		doFilterWhenUserConsentRequestInvalidParameterThenError(
-				registeredClient,
-				OAuth2ParameterNames.CLIENT_ID,
-				OAuth2ErrorCodes.INVALID_REQUEST,
-				request -> request.removeParameter(OAuth2ParameterNames.CLIENT_ID));
-	}
-
-	@Test
-	public void doFilterWhenUserConsentRequestMultipleClientIdThenInvalidRequestError() throws Exception {
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
-		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
-				.thenReturn(registeredClient);
-		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient)
-				.principalName(this.authentication.getName())
-				.build();
-		when(this.authorizationService.findByToken(eq("state"), eq(STATE_TOKEN_TYPE)))
-				.thenReturn(authorization);
-
-		doFilterWhenUserConsentRequestInvalidParameterThenError(
-				TestRegisteredClients.registeredClient().build(),
-				OAuth2ParameterNames.CLIENT_ID,
-				OAuth2ErrorCodes.INVALID_REQUEST,
-				request -> request.addParameter(OAuth2ParameterNames.CLIENT_ID, "client-2"));
-	}
-
-	@Test
-	public void doFilterWhenUserConsentRequestInvalidClientIdThenInvalidRequestError() throws Exception {
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
-		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
-				.thenReturn(registeredClient);
-		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient)
-				.principalName(this.authentication.getName())
-				.build();
-		when(this.authorizationService.findByToken(eq("state"), eq(STATE_TOKEN_TYPE)))
-				.thenReturn(authorization);
-
-		doFilterWhenUserConsentRequestInvalidParameterThenError(
-				registeredClient,
-				OAuth2ParameterNames.CLIENT_ID,
-				OAuth2ErrorCodes.INVALID_REQUEST,
-				request -> request.setParameter(OAuth2ParameterNames.CLIENT_ID, "invalid"));
-	}
-
-	@Test
-	public void doFilterWhenUserConsentRequestDoesNotMatchClientThenInvalidRequestError() throws Exception {
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
-		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
-				.thenReturn(registeredClient);
-		RegisteredClient otherRegisteredClient = TestRegisteredClients.registeredClient2().build();
-		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(otherRegisteredClient)
-				.principalName(this.authentication.getName())
-				.build();
-		when(this.authorizationService.findByToken(eq("state"), eq(STATE_TOKEN_TYPE)))
-				.thenReturn(authorization);
-
-		doFilterWhenUserConsentRequestInvalidParameterThenError(
-				registeredClient,
-				OAuth2ParameterNames.CLIENT_ID,
-				OAuth2ErrorCodes.INVALID_REQUEST,
-				request -> {});
-	}
-
-	@Test
-	public void doFilterWhenUserConsentRequestInvalidScopeThenInvalidScopeError() throws Exception {
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
-		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
-				.thenReturn(registeredClient);
-		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient)
-				.principalName(this.authentication.getName())
-				.build();
-		when(this.authorizationService.findByToken(eq("state"), eq(STATE_TOKEN_TYPE)))
-				.thenReturn(authorization);
-
-		doFilterWhenUserConsentRequestInvalidParameterThenRedirect(
-				registeredClient,
-				OAuth2ParameterNames.SCOPE,
-				OAuth2ErrorCodes.INVALID_SCOPE,
-				DEFAULT_ERROR_URI,
-				request -> {
-					request.addParameter(OAuth2ParameterNames.SCOPE, "invalid-scope");
-				});
-	}
-
-	@Test
-	public void doFilterWhenUserConsentRequestNotApprovedThenAccessDeniedError() throws Exception {
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
-		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
-				.thenReturn(registeredClient);
-		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient)
-				.principalName(this.authentication.getName())
-				.build();
-		when(this.authorizationService.findByToken(eq("state"), eq(STATE_TOKEN_TYPE)))
-				.thenReturn(authorization);
-
-		doFilterWhenUserConsentRequestInvalidParameterThenRedirect(
-				registeredClient,
-				OAuth2ParameterNames.CLIENT_ID,
-				OAuth2ErrorCodes.ACCESS_DENIED,
-				DEFAULT_ERROR_URI,
-				request -> request.setParameter("consent_action", "cancel"));
-
-		verify(this.authorizationService).remove(eq(authorization));
-	}
-
-	@Test
-	public void doFilterWhenUserConsentRequestApprovedThenAuthorizationResponse() throws Exception {
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().scope(OidcScopes.OPENID).build();
-		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
-				.thenReturn(registeredClient);
-		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient)
-				.principalName(this.authentication.getName())
-				.attributes(attrs -> attrs.remove(OAuth2Authorization.AUTHORIZED_SCOPE_ATTRIBUTE_NAME))
-				.build();
-		when(this.authorizationService.findByToken(eq("state"), eq(STATE_TOKEN_TYPE)))
-				.thenReturn(authorization);
-
-		MockHttpServletRequest request = createUserConsentRequest(registeredClient);
-		MockHttpServletResponse response = new MockHttpServletResponse();
-		FilterChain filterChain = mock(FilterChain.class);
-
-		this.filter.doFilter(request, response, filterChain);
-
-		verifyNoInteractions(filterChain);
-
-		assertThat(response.getStatus()).isEqualTo(HttpStatus.FOUND.value());
-		assertThat(response.getRedirectedUrl()).matches("https://example.com\\?code=.{15,}&state=state");
-
-		ArgumentCaptor<OAuth2Authorization> authorizationCaptor = ArgumentCaptor.forClass(OAuth2Authorization.class);
-
-		verify(this.authorizationService).save(authorizationCaptor.capture());
-
-		OAuth2Authorization updatedAuthorization = authorizationCaptor.getValue();
-		assertThat(updatedAuthorization.getRegisteredClientId()).isEqualTo(registeredClient.getId());
-		assertThat(updatedAuthorization.getPrincipalName()).isEqualTo(this.authentication.getPrincipal().toString());
-		assertThat(updatedAuthorization.getAuthorizationGrantType()).isEqualTo(AuthorizationGrantType.AUTHORIZATION_CODE);
-		assertThat(updatedAuthorization.getToken(OAuth2AuthorizationCode.class)).isNotNull();
-		assertThat(updatedAuthorization.<String>getAttribute(OAuth2ParameterNames.STATE)).isNull();
-		assertThat(updatedAuthorization.<OAuth2AuthorizationRequest>getAttribute(OAuth2AuthorizationRequest.class.getName()))
-				.isEqualTo(authorization.<OAuth2AuthorizationRequest>getAttribute(OAuth2AuthorizationRequest.class.getName()));
-		assertThat(updatedAuthorization.<Set<String>>getAttribute(OAuth2Authorization.AUTHORIZED_SCOPE_ATTRIBUTE_NAME))
-				.isEqualTo(registeredClient.getScopes());
-	}
-
-	@Test
-	public void doFilterWhenUserConsentRequestApprovedThenSaveConsent() throws Exception {
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
-				.scopes(scopes -> {
-					scopes.clear();
-					scopes.add("message.read");
-					scopes.add("message.write");
-				})
-				.clientSettings(clientSettings -> clientSettings.requireUserConsent(true))
-				.build();
-		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient)
-				.principalName(this.authentication.getName())
-				.attributes(attrs -> attrs.remove(OAuth2Authorization.AUTHORIZED_SCOPE_ATTRIBUTE_NAME))
-				.build();
-		when(this.authorizationService.findByToken(eq("state"), eq(STATE_TOKEN_TYPE)))
-				.thenReturn(authorization);
-		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
-				.thenReturn(registeredClient);
-
-		MockHttpServletRequest request = createUserConsentRequest(registeredClient);
-		MockHttpServletResponse response = new MockHttpServletResponse();
-		FilterChain filterChain = mock(FilterChain.class);
-
-		this.filter.doFilter(request, response, filterChain);
-
-		ArgumentCaptor<OAuth2AuthorizationConsent> authorizationConsentCaptor = ArgumentCaptor.forClass(OAuth2AuthorizationConsent.class);
-
-		verify(this.authorizationConsentService).save(authorizationConsentCaptor.capture());
-		OAuth2AuthorizationConsent authorizationConsent = authorizationConsentCaptor.getValue();
-		assertThat(authorizationConsent.getPrincipalName()).isEqualTo(this.authentication.getName());
-		assertThat(authorizationConsent.getRegisteredClientId()).isEqualTo(registeredClient.getId());
-		assertThat(authorizationConsent.getScopes()).containsExactlyInAnyOrder("message.read", "message.write");
-	}
-
-	@Test
-	public void doFilterWhenUserConsentRequestApprovedAndNoScopesThenConsentNotSaved() throws Exception {
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
-				.scopes(Set::clear)
-				.clientSettings(clientSettings -> clientSettings.requireUserConsent(true))
-				.build();
-		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient)
-				.principalName(this.authentication.getName())
-				.attributes(attrs -> attrs.remove(OAuth2Authorization.AUTHORIZED_SCOPE_ATTRIBUTE_NAME))
-				.build();
-		when(this.authorizationService.findByToken(eq("state"), eq(STATE_TOKEN_TYPE)))
-				.thenReturn(authorization);
-		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
-				.thenReturn(registeredClient);
-
-		MockHttpServletRequest request = createUserConsentRequest(registeredClient);
-		MockHttpServletResponse response = new MockHttpServletResponse();
-		FilterChain filterChain = mock(FilterChain.class);
-
-		this.filter.doFilter(request, response, filterChain);
-
-		verify(this.authorizationConsentService, never()).save(any());
-	}
-
-	@Test
-	public void doFilterWhenUserConsentRequestApprovedAndPreviousConsentExistsThenUpdatesConsent() throws Exception {
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
-				.scopes(scopes -> {
-					scopes.clear();
-					scopes.add("message.read");
-					scopes.add("message.write");
-				})
-				.clientSettings(clientSettings -> clientSettings.requireUserConsent(true))
-				.build();
-		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient)
-				.principalName(this.authentication.getName())
-				.attributes(attrs -> attrs.remove(OAuth2Authorization.AUTHORIZED_SCOPE_ATTRIBUTE_NAME))
-				.build();
-		when(this.authorizationService.findByToken(eq("state"), eq(STATE_TOKEN_TYPE)))
-				.thenReturn(authorization);
-		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
-				.thenReturn(registeredClient);
-		OAuth2AuthorizationConsent previousAuthorizationConsent =
-				createAuthorizationConsent(
-						registeredClient.getClientId(),
-						this.authentication.getName(),
-						Collections.singleton("message.read")
-				);
-		when(this.authorizationConsentService.findById(
-				eq(registeredClient.getId()), eq(this.authentication.getName())))
-				.thenReturn(previousAuthorizationConsent);
-
-		MockHttpServletRequest request = createUserConsentRequest(registeredClient);
-		MockHttpServletResponse response = new MockHttpServletResponse();
-		FilterChain filterChain = mock(FilterChain.class);
-
-		this.filter.doFilter(request, response, filterChain);
-
-		ArgumentCaptor<OAuth2AuthorizationConsent> authorizationConsentCaptor = ArgumentCaptor.forClass(OAuth2AuthorizationConsent.class);
-
-		verify(this.authorizationConsentService).save(authorizationConsentCaptor.capture());
-		OAuth2AuthorizationConsent authorizationConsent = authorizationConsentCaptor.getValue();
-		assertThat(authorizationConsent.getRegisteredClientId()).isEqualTo(registeredClient.getClientId());
-		assertThat(authorizationConsent.getPrincipalName()).isEqualTo(this.authentication.getName());
-		assertThat(authorizationConsent.getScopes()).containsExactlyInAnyOrder("message.read", "message.write");
-	}
-
-	@Test
-	public void doFilterWhenUserConsentRequestApprovedAndPreviousConsentExistsThenSavesOAuth2Authorization() throws Exception {
-		String newScope = "message.write";
-		String previouslyApprovedScope = "message.read";
-		String unrelatedPreviouslyApprovedScope = "unrelated.scope";
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
-				.scopes(scopes -> {
-					scopes.clear();
-					scopes.add(previouslyApprovedScope);
-					scopes.add(newScope);
-				})
-				.clientSettings(clientSettings -> clientSettings.requireUserConsent(true))
-				.build();
-		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient)
-				.principalName(this.authentication.getName())
-				.attributes(attrs -> attrs.remove(OAuth2Authorization.AUTHORIZED_SCOPE_ATTRIBUTE_NAME))
-				.build();
-		when(this.authorizationService.findByToken(eq("state"), eq(STATE_TOKEN_TYPE)))
-				.thenReturn(authorization);
-		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
-				.thenReturn(registeredClient);
-		OAuth2AuthorizationConsent previousAuthorizationConsent =
-				createAuthorizationConsent(
-						registeredClient.getClientId(),
-						this.authentication.getName(),
-						Arrays.asList(previouslyApprovedScope, unrelatedPreviouslyApprovedScope)
-				);
-		when(this.authorizationConsentService.findById(
-				eq(registeredClient.getId()), eq(this.authentication.getName())))
-				.thenReturn(previousAuthorizationConsent);
-
-		MockHttpServletRequest request = createUserConsentRequest(registeredClient);
-		MockHttpServletResponse response = new MockHttpServletResponse();
-		FilterChain filterChain = mock(FilterChain.class);
-
-		this.filter.doFilter(request, response, filterChain);
-
-		ArgumentCaptor<OAuth2Authorization> authorizationCaptor = ArgumentCaptor.forClass(OAuth2Authorization.class);
-
-		verify(this.authorizationService).save(authorizationCaptor.capture());
-		Set<String> savedAuthorizationScopes = authorizationCaptor.getValue().getAttribute(OAuth2Authorization.AUTHORIZED_SCOPE_ATTRIBUTE_NAME);
-		assertThat(savedAuthorizationScopes).containsExactlyInAnyOrder(newScope, previouslyApprovedScope);
-		assertThat(savedAuthorizationScopes).doesNotContain(unrelatedPreviouslyApprovedScope);
-	}
-
-	// gh-243
-	@Test
-	public void doFilterWhenAuthorizationRequestIPv4LoopbackRedirectUriAndDifferentPortThenAuthorizationResponse()
-			throws Exception {
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
-				.redirectUri("http://127.0.0.1:8080")
-				.build();
-		MockHttpServletRequest request = createAuthorizationRequest(registeredClient);
-		request.removeParameter(OAuth2ParameterNames.REDIRECT_URI);
-		request.addParameter(OAuth2ParameterNames.REDIRECT_URI, "http://127.0.0.1:5000");
-
-		when(this.registeredClientRepository.findByClientId((eq(registeredClient.getClientId()))))
-				.thenReturn(registeredClient);
-
-		MockHttpServletResponse response = new MockHttpServletResponse();
-		FilterChain filterChain = mock(FilterChain.class);
-
-		this.filter.doFilter(request, response, filterChain);
-
-		verifyNoInteractions(filterChain);
-
-		assertThat(response.getStatus()).isEqualTo(HttpStatus.FOUND.value());
-		assertThat(response.getRedirectedUrl()).matches("http://127.0.0.1:5000\\?code=.{15,}&state=state");
-	}
-
-	// gh-243
-	@Test
-	public void doFilterWhenAuthorizationRequestIPv6LoopbackRedirectUriAndDifferentPortThenAuthorizationResponse()
-			throws Exception {
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
-				.redirectUri("http://[::1]:8080")
-				.build();
-		MockHttpServletRequest request = createAuthorizationRequest(registeredClient);
-		request.removeParameter(OAuth2ParameterNames.REDIRECT_URI);
-		request.addParameter(OAuth2ParameterNames.REDIRECT_URI, "http://[::1]:5000");
-
-		when(this.registeredClientRepository.findByClientId((eq(registeredClient.getClientId()))))
-				.thenReturn(registeredClient);
-
-		MockHttpServletResponse response = new MockHttpServletResponse();
-		FilterChain filterChain = mock(FilterChain.class);
-
-		this.filter.doFilter(request, response, filterChain);
-
-		verifyNoInteractions(filterChain);
-
-		assertThat(response.getStatus()).isEqualTo(HttpStatus.FOUND.value());
-		assertThat(response.getRedirectedUrl()).matches("http://\\[::1]:5000\\?code=.{15,}&state=state");
-	}
-
-	// gh-243
-	@Test
-	public void doFilterWhenAuthorizationRequestInvalidRedirectUriFragmentThenInvalidRequestError() throws Exception {
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
-		when(this.registeredClientRepository.findByClientId((eq(registeredClient.getClientId()))))
-				.thenReturn(registeredClient);
-
-		doFilterWhenAuthorizationRequestInvalidParameterThenError(
-				registeredClient,
-				OAuth2ParameterNames.REDIRECT_URI,
-				OAuth2ErrorCodes.INVALID_REQUEST,
-				request -> request.setParameter(OAuth2ParameterNames.REDIRECT_URI, "https://example.com#fragment"));
-	}
-
-	// gh-243
-	@Test
-	public void doFilterWhenAuthorizationRequestLocalhostRedirectUriThenInvalidRequestError() throws Exception {
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
-		when(this.registeredClientRepository.findByClientId((eq(registeredClient.getClientId()))))
-				.thenReturn(registeredClient);
-
-		doFilterWhenAuthorizationRequestInvalidParameterThenError(
-				registeredClient,
-				OAuth2ParameterNames.REDIRECT_URI,
-				OAuth2ErrorCodes.INVALID_REQUEST,
-				request -> request.setParameter(OAuth2ParameterNames.REDIRECT_URI, "http://localhost:5000"));
-	}
-
-	private void doFilterWhenAuthorizationRequestInvalidParameterThenError(RegisteredClient registeredClient,
-			String parameterName, String errorCode) throws Exception {
-		doFilterWhenAuthorizationRequestInvalidParameterThenError(registeredClient, parameterName, errorCode, request -> {});
+		assertThat(response.getRedirectedUrl()).isEqualTo("https://example.com?code=code&state=state");
 	}
 
 	private void doFilterWhenAuthorizationRequestInvalidParameterThenError(RegisteredClient registeredClient,
@@ -1228,29 +428,6 @@ public class OAuth2AuthorizationEndpointFilterTests {
 
 		doFilterWhenRequestInvalidParameterThenError(createAuthorizationRequest(registeredClient),
 				parameterName, errorCode, requestConsumer);
-	}
-
-	private void doFilterWhenAuthorizationRequestInvalidParameterThenRedirect(RegisteredClient registeredClient,
-			String parameterName, String errorCode, String errorUri,
-			Consumer<MockHttpServletRequest> requestConsumer) throws Exception {
-
-		doFilterWhenRequestInvalidParameterThenRedirect(createAuthorizationRequest(registeredClient),
-				parameterName, errorCode, errorUri, requestConsumer);
-	}
-
-	private void doFilterWhenUserConsentRequestInvalidParameterThenError(RegisteredClient registeredClient,
-			String parameterName, String errorCode, Consumer<MockHttpServletRequest> requestConsumer) throws Exception {
-
-		doFilterWhenRequestInvalidParameterThenError(createUserConsentRequest(registeredClient),
-				parameterName, errorCode, requestConsumer);
-	}
-
-	private void doFilterWhenUserConsentRequestInvalidParameterThenRedirect(RegisteredClient registeredClient,
-			String parameterName, String errorCode, String errorUri,
-			Consumer<MockHttpServletRequest> requestConsumer) throws Exception {
-
-		doFilterWhenRequestInvalidParameterThenRedirect(createUserConsentRequest(registeredClient),
-				parameterName, errorCode, errorUri, requestConsumer);
 	}
 
 	private void doFilterWhenRequestInvalidParameterThenError(MockHttpServletRequest request,
@@ -1268,36 +445,14 @@ public class OAuth2AuthorizationEndpointFilterTests {
 		assertThat(response.getErrorMessage()).isEqualTo("[" + errorCode + "] OAuth 2.0 Parameter: " + parameterName);
 	}
 
-	private void doFilterWhenRequestInvalidParameterThenRedirect(MockHttpServletRequest request,
-			String parameterName, String errorCode, String errorUri,
-			Consumer<MockHttpServletRequest> requestConsumer) throws Exception {
-
-		requestConsumer.accept(request);
-		MockHttpServletResponse response = new MockHttpServletResponse();
-		FilterChain filterChain = mock(FilterChain.class);
-
-		this.filter.doFilter(request, response, filterChain);
-
-		verifyNoInteractions(filterChain);
-
-		assertThat(response.getStatus()).isEqualTo(HttpStatus.FOUND.value());
-		assertThat(response.getRedirectedUrl()).matches("https://example.com\\?" +
-				"error=" + errorCode + "&" +
-				"error_description=OAuth%202.0%20Parameter:%20" + parameterName + "&" +
-				"error_uri=" + errorUri + "&" +
-				"state=state");
-	}
-
 	private static MockHttpServletRequest createAuthorizationRequest(RegisteredClient registeredClient) {
-		String[] redirectUris = registeredClient.getRedirectUris().toArray(new String[0]);
-
 		String requestUri = OAuth2AuthorizationEndpointFilter.DEFAULT_AUTHORIZATION_ENDPOINT_URI;
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestUri);
 		request.setServletPath(requestUri);
 
 		request.addParameter(OAuth2ParameterNames.RESPONSE_TYPE, OAuth2AuthorizationResponseType.CODE.getValue());
 		request.addParameter(OAuth2ParameterNames.CLIENT_ID, registeredClient.getClientId());
-		request.addParameter(OAuth2ParameterNames.REDIRECT_URI, redirectUris[0]);
+		request.addParameter(OAuth2ParameterNames.REDIRECT_URI, registeredClient.getRedirectUris().iterator().next());
 		request.addParameter(OAuth2ParameterNames.SCOPE,
 				StringUtils.collectionToDelimitedString(registeredClient.getScopes(), " "));
 		request.addParameter(OAuth2ParameterNames.STATE, "state");
@@ -1305,36 +460,13 @@ public class OAuth2AuthorizationEndpointFilterTests {
 		return request;
 	}
 
-	private static void addPkceParameters(MockHttpServletRequest request) {
-		request.addParameter(PkceParameterNames.CODE_CHALLENGE, "code-challenge");
-		request.addParameter(PkceParameterNames.CODE_CHALLENGE_METHOD, "S256");
-	}
-
-	private static OAuth2AuthorizationConsent createAuthorizationConsent(String registeredClientId,
-			String principalName, Collection<String> scopes) {
-		OAuth2AuthorizationConsent.Builder authorizationConsentBuilder =
-				OAuth2AuthorizationConsent.withId(registeredClientId, principalName);
-		for (String scope : scopes) {
-			authorizationConsentBuilder.scope(scope);
-		}
-		return authorizationConsentBuilder.build();
-	}
-
-	private static MockHttpServletRequest createUserConsentRequest(RegisteredClient registeredClient) {
-		String requestUri = OAuth2AuthorizationEndpointFilter.DEFAULT_AUTHORIZATION_ENDPOINT_URI;
-		MockHttpServletRequest request = new MockHttpServletRequest("POST", requestUri);
-		request.setServletPath(requestUri);
-
-		request.addParameter(OAuth2ParameterNames.CLIENT_ID, registeredClient.getClientId());
-		request.addParameter(OAuth2ParameterNames.STATE, "state");
-		for (String scope : registeredClient.getScopes()) {
-			if (!OidcScopes.OPENID.equals(scope)) {
-				request.addParameter(OAuth2ParameterNames.SCOPE, scope);
-			}
-		}
-		request.addParameter("consent_action", "approve");
-
-		return request;
+	private static OAuth2AuthorizationCodeRequestAuthenticationToken.Builder authorizationCodeRequestAuthentication(
+			RegisteredClient registeredClient, Authentication principal) {
+		return OAuth2AuthorizationCodeRequestAuthenticationToken.with(registeredClient.getClientId(), principal)
+				.authorizationUri("https://provider.com/oauth2/authorize")
+				.redirectUri(registeredClient.getRedirectUris().iterator().next())
+				.scopes(registeredClient.getScopes())
+				.state("state");
 	}
 
 	private static String scopeCheckbox(String scope) {

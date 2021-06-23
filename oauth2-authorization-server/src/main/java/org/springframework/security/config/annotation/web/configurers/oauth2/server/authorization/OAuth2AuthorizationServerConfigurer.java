@@ -32,6 +32,7 @@ import org.springframework.security.config.annotation.web.configurers.ExceptionH
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsentService;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
+import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeRequestAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2TokenIntrospectionAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2TokenRevocationAuthenticationProvider;
@@ -221,6 +222,13 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 		}
 		builder.authenticationProvider(postProcess(clientAuthenticationProvider));
 
+		OAuth2AuthorizationCodeRequestAuthenticationProvider authorizationCodeRequestAuthenticationProvider =
+				new OAuth2AuthorizationCodeRequestAuthenticationProvider(
+						OAuth2ConfigurerUtils.getRegisteredClientRepository(builder),
+						OAuth2ConfigurerUtils.getAuthorizationService(builder),
+						OAuth2ConfigurerUtils.getAuthorizationConsentService(builder));
+		builder.authenticationProvider(postProcess(authorizationCodeRequestAuthenticationProvider));
+
 		OAuth2TokenIntrospectionAuthenticationProvider tokenIntrospectionAuthenticationProvider =
 				new OAuth2TokenIntrospectionAuthenticationProvider(
 						OAuth2ConfigurerUtils.getRegisteredClientRepository(builder),
@@ -285,9 +293,7 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 
 		OAuth2AuthorizationEndpointFilter authorizationEndpointFilter =
 				new OAuth2AuthorizationEndpointFilter(
-						OAuth2ConfigurerUtils.getRegisteredClientRepository(builder),
-						OAuth2ConfigurerUtils.getAuthorizationService(builder),
-						OAuth2ConfigurerUtils.getAuthorizationConsentService(builder),
+						authenticationManager,
 						providerSettings.authorizationEndpoint());
 		if (StringUtils.hasText(this.consentPage)) {
 			authorizationEndpointFilter.setUserConsentUri(this.consentPage);

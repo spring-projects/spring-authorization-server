@@ -410,7 +410,6 @@ public class OAuth2AuthorizationCodeGrantTests {
 				.param(OAuth2ParameterNames.SCOPE, "message.read")
 				.param(OAuth2ParameterNames.SCOPE, "message.write")
 				.param(OAuth2ParameterNames.STATE, "state")
-				.param("consent_action", "approve")
 				.with(user("user")))
 				.andExpect(status().is3xxRedirection())
 				.andReturn();
@@ -455,7 +454,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 				.andExpect(status().is3xxRedirection())
 				.andReturn();
 		String redirectedUrl = mvcResult.getResponse().getRedirectedUrl();
-		assertThat(redirectedUrl).matches("/oauth2/consent\\?scope=.+&client_id=.+&state=.+");
+		assertThat(redirectedUrl).matches("http://localhost/oauth2/consent\\?scope=.+&client_id=.+&state=.+");
 
 		String locationHeader = URLDecoder.decode(redirectedUrl, StandardCharsets.UTF_8.name());
 		UriComponents uriComponents = UriComponentsBuilder.fromUriString(locationHeader).build();

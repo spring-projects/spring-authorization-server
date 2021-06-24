@@ -3,7 +3,7 @@ CREATE TABLE oauth2_authorization (
     registered_client_id varchar(100) NOT NULL,
     principal_name varchar(200) NOT NULL,
     authorization_grant_type varchar(100) NOT NULL,
-    attributes varchar(1000) DEFAULT NULL,
+    attributes varchar(4000) DEFAULT NULL,
     state varchar(1000) DEFAULT NULL,
     authorization_code_value blob DEFAULT NULL,
     authorization_code_issued_at timestamp DEFAULT NULL,

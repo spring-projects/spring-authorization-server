@@ -10,6 +10,7 @@ dependencies {
 	compile 'com.nimbusds:nimbus-jose-jwt'
 	compile 'com.fasterxml.jackson.core:jackson-databind'
 
+	optional 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
 	optional 'org.springframework:spring-jdbc'
 
 	testCompile 'org.springframework.security:spring-security-test'

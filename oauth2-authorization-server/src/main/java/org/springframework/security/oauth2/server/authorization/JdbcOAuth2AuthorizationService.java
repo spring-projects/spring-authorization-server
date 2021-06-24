@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
+import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.springframework.dao.DataRetrievalFailureException;
@@ -41,6 +42,7 @@ import org.springframework.jdbc.support.lob.DefaultLobHandler;
 import org.springframework.jdbc.support.lob.LobCreator;
 import org.springframework.jdbc.support.lob.LobHandler;
 import org.springframework.lang.Nullable;
+import org.springframework.security.jackson2.SecurityJackson2Modules;
 import org.springframework.security.oauth2.core.AbstractOAuth2Token;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
@@ -51,6 +53,7 @@ import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
+import org.springframework.security.oauth2.server.authorization.jackson2.OAuth2ServerJackson2Module;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
@@ -312,6 +315,11 @@ public class JdbcOAuth2AuthorizationService implements OAuth2AuthorizationServic
 		public OAuth2AuthorizationRowMapper(RegisteredClientRepository registeredClientRepository) {
 			Assert.notNull(registeredClientRepository, "registeredClientRepository cannot be null");
 			this.registeredClientRepository = registeredClientRepository;
+
+			ClassLoader classLoader = JdbcOAuth2AuthorizationService.class.getClassLoader();
+			List<Module> securityModules = SecurityJackson2Modules.getModules(classLoader);
+			this.objectMapper.registerModules(securityModules);
+			this.objectMapper.registerModule(new OAuth2ServerJackson2Module());
 		}
 
 		@Override
@@ -445,6 +453,13 @@ public class JdbcOAuth2AuthorizationService implements OAuth2AuthorizationServic
 	 */
 	public static class OAuth2AuthorizationParametersMapper implements Function<OAuth2Authorization, List<SqlParameterValue>> {
 		private ObjectMapper objectMapper = new ObjectMapper();
+
+		public OAuth2AuthorizationParametersMapper() {
+			ClassLoader classLoader = JdbcOAuth2AuthorizationService.class.getClassLoader();
+			List<Module> securityModules = SecurityJackson2Modules.getModules(classLoader);
+			this.objectMapper.registerModules(securityModules);
+			this.objectMapper.registerModule(new OAuth2ServerJackson2Module());
+		}
 
 		@Override
 		public List<SqlParameterValue> apply(OAuth2Authorization authorization) {

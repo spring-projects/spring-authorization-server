@@ -20,13 +20,13 @@ import java.nio.charset.Charset;
 import java.time.Duration;
 import java.time.Instant;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
-import org.springframework.jdbc.support.lob.DefaultLobHandler;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.util.StreamUtils;
@@ -89,8 +89,17 @@ public class JdbcRegisteredClientRepositoryTests {
 	public void whenJdbcOperationsNullThenThrow() {
 		// @formatter:off
 		assertThatIllegalArgumentException()
-				.isThrownBy(() -> new JdbcRegisteredClientRepository(null, new DefaultLobHandler()))
+				.isThrownBy(() -> new JdbcRegisteredClientRepository(null, new ObjectMapper()))
 				.withMessage("jdbcOperations cannot be null");
+		// @formatter:on
+	}
+
+	@Test
+	public void whenObjectMapperNullThenThrow() {
+		// @formatter:off
+		assertThatIllegalArgumentException()
+				.isThrownBy(() -> new JdbcRegisteredClientRepository(this.jdbc, null))
+				.withMessage("objectMapper cannot be null");
 		// @formatter:on
 	}
 
@@ -98,7 +107,7 @@ public class JdbcRegisteredClientRepositoryTests {
 	public void whenLobHandlerNullThenThrow() {
 		// @formatter:off
 		assertThatIllegalArgumentException()
-				.isThrownBy(() -> new JdbcRegisteredClientRepository(this.jdbc, null))
+				.isThrownBy(() -> new JdbcRegisteredClientRepository(this.jdbc, null, new ObjectMapper()))
 				.withMessage("lobHandler cannot be null");
 		// @formatter:on
 	}

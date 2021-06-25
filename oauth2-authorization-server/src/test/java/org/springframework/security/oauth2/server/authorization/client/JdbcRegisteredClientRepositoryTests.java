@@ -104,15 +104,6 @@ public class JdbcRegisteredClientRepositoryTests {
 	}
 
 	@Test
-	public void whenLobHandlerNullThenThrow() {
-		// @formatter:off
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> new JdbcRegisteredClientRepository(this.jdbc, null, new ObjectMapper()))
-				.withMessage("lobHandler cannot be null");
-		// @formatter:on
-	}
-
-	@Test
 	public void whenSetNullRegisteredClientRowMapperThenThrow() {
 		// @formatter:off
 		assertThatIllegalArgumentException()
@@ -198,12 +189,12 @@ public class JdbcRegisteredClientRepositoryTests {
 	}
 
 	@Test
-	public void saveWhenExistingClientSecretThenThrowIllegalArgumentException() {
+	public void saveWhenExistingClientSecretThenSuccess() {
 		RegisteredClient registeredClient = createRegisteredClient(
 				"client-2", "client-id-2", this.registration.getClientSecret());
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> this.clients.save(registeredClient))
-				.withMessage("Registered client must be unique. Found duplicate client secret for identifier: " + registeredClient.getId());
+		this.clients.save(registeredClient);
+		RegisteredClient savedClient = this.clients.findById(registeredClient.getId());
+		assertRegisteredClientIsEqualTo(savedClient, registeredClient);
 	}
 
 	@Test
@@ -220,6 +211,26 @@ public class JdbcRegisteredClientRepositoryTests {
 		this.clients.save(registeredClient);
 		RegisteredClient savedClient = this.clients.findByClientId(registeredClient.getClientId());
 		assertRegisteredClientIsEqualTo(savedClient, registeredClient);
+	}
+
+	@Test
+	public void saveWhenPublicClientSavedAndFindByClientIdThenFound() {
+		RegisteredClient registeredClient = TestRegisteredClients.registeredPublicClient().build();
+		this.clients.save(registeredClient);
+		RegisteredClient savedClient = this.clients.findByClientId(registeredClient.getClientId());
+		assertRegisteredClientIsEqualTo(savedClient, registeredClient);
+	}
+
+	@Test
+	public void saveWhenMultiplePublicClientsSavedAndFindByIdThenFound() {
+		RegisteredClient registeredClient1 = TestRegisteredClients.registeredPublicClient()
+				.id("1").clientId("a").build();
+		RegisteredClient registeredClient2 = TestRegisteredClients.registeredPublicClient()
+				.id("2").clientId("b").build();
+		this.clients.save(registeredClient1);
+		this.clients.save(registeredClient2);
+		RegisteredClient savedClient = this.clients.findByClientId(registeredClient2.getClientId());
+		assertRegisteredClientIsEqualTo(savedClient, registeredClient2);
 	}
 
 	@Test

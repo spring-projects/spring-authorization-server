@@ -11,4 +11,5 @@ CREATE TABLE oauth2_registered_client (
     scopes varchar(1000) NOT NULL,
     client_settings varchar(1000) DEFAULT NULL,
     token_settings varchar(1000) DEFAULT NULL,
-    PRIMARY KEY (id));
+    PRIMARY KEY (id)
+);

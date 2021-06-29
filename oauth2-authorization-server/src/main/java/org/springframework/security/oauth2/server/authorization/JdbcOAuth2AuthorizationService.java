@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -254,9 +255,13 @@ public class JdbcOAuth2AuthorizationService implements OAuth2AuthorizationServic
 		return null;
 	}
 
-	private OAuth2Authorization findBy(String filter, List<SqlParameterValue> parameters) {
+	protected final List<OAuth2Authorization> findAll(String filter, List<SqlParameterValue> parameters) {
 		PreparedStatementSetter pss = new ArgumentPreparedStatementSetter(parameters.toArray());
-		List<OAuth2Authorization> result = this.jdbcOperations.query(LOAD_AUTHORIZATION_SQL + filter, pss, this.authorizationRowMapper);
+		return this.jdbcOperations.query(LOAD_AUTHORIZATION_SQL + filter, pss, this.authorizationRowMapper);
+	}
+
+	protected final OAuth2Authorization findBy(String filter, List<SqlParameterValue> parameters) {
+		List<OAuth2Authorization> result = findAll(filter, parameters);
 		return !result.isEmpty() ? result.get(0) : null;
 	}
 
@@ -436,10 +441,9 @@ public class JdbcOAuth2AuthorizationService implements OAuth2AuthorizationServic
 			return this.objectMapper;
 		}
 
-		@SuppressWarnings("unchecked")
 		private Map<String, Object> parseMap(String data) {
 			try {
-				return this.objectMapper.readValue(data, Map.class);
+				return this.objectMapper.readValue(data, new TypeReference<Map<String, Object>>() {});
 			} catch (Exception ex) {
 				throw new IllegalArgumentException(ex.getMessage(), ex);
 			}
@@ -542,7 +546,6 @@ public class JdbcOAuth2AuthorizationService implements OAuth2AuthorizationServic
 			return parameters;
 		}
 
-		@SuppressWarnings("unchecked")
 		private String writeMap(Map<String, Object> data) {
 			try {
 				return this.objectMapper.writeValueAsString(data);

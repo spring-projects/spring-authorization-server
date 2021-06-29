@@ -56,7 +56,7 @@ import org.springframework.util.StringUtils;
  * @see RowMapper
  * @since 0.1.2
  */
-public final class JdbcOAuth2AuthorizationConsentService implements OAuth2AuthorizationConsentService {
+public class JdbcOAuth2AuthorizationConsentService implements OAuth2AuthorizationConsentService {
 
 	// @formatter:off
 	private static final String COLUMN_NAMES = "registered_client_id, "
@@ -169,7 +169,7 @@ public final class JdbcOAuth2AuthorizationConsentService implements OAuth2Author
 	 * @param authorizationConsentRowMapper the {@link RowMapper} used for mapping the current
 	 *                                      row in {@code ResultSet} to {@link OAuth2AuthorizationConsent}
 	 */
-	public void setAuthorizationConsentRowMapper(RowMapper<OAuth2AuthorizationConsent> authorizationConsentRowMapper) {
+	public final void setAuthorizationConsentRowMapper(RowMapper<OAuth2AuthorizationConsent> authorizationConsentRowMapper) {
 		Assert.notNull(authorizationConsentRowMapper, "authorizationConsentRowMapper cannot be null");
 		this.authorizationConsentRowMapper = authorizationConsentRowMapper;
 	}
@@ -182,10 +182,22 @@ public final class JdbcOAuth2AuthorizationConsentService implements OAuth2Author
 	 * @param authorizationConsentParametersMapper the {@code Function} used for mapping
 	 *                                             {@link OAuth2AuthorizationConsent} to a {@code List} of {@link SqlParameterValue}
 	 */
-	public void setAuthorizationConsentParametersMapper(
+	public final void setAuthorizationConsentParametersMapper(
 			Function<OAuth2AuthorizationConsent, List<SqlParameterValue>> authorizationConsentParametersMapper) {
 		Assert.notNull(authorizationConsentParametersMapper, "authorizationConsentParametersMapper cannot be null");
 		this.authorizationConsentParametersMapper = authorizationConsentParametersMapper;
+	}
+
+	protected final JdbcOperations getJdbcOperations() {
+		return this.jdbcOperations;
+	}
+
+	protected final RowMapper<OAuth2AuthorizationConsent> getAuthorizationConsentRowMapper() {
+		return this.authorizationConsentRowMapper;
+	}
+
+	protected final Function<OAuth2AuthorizationConsent, List<SqlParameterValue>> getAuthorizationConsentParametersMapper() {
+		return this.authorizationConsentParametersMapper;
 	}
 
 	/**
@@ -223,6 +235,11 @@ public final class JdbcOAuth2AuthorizationConsentService implements OAuth2Author
 			}
 			return builder.build();
 		}
+
+		protected final RegisteredClientRepository getRegisteredClientRepository() {
+			return this.registeredClientRepository;
+		}
+
 	}
 
 	/**
@@ -244,6 +261,7 @@ public final class JdbcOAuth2AuthorizationConsentService implements OAuth2Author
 			parameters.add(new SqlParameterValue(Types.VARCHAR, StringUtils.collectionToDelimitedString(authorities, ",")));
 			return parameters;
 		}
+
 	}
 
 }

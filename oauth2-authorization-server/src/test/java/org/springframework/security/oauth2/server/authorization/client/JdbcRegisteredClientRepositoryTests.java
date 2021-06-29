@@ -351,7 +351,7 @@ public class JdbcRegisteredClientRepositoryTests {
 		private static final String INSERT_REGISTERED_CLIENT_SQL = "INSERT INTO " + TABLE_NAME
 				+ " (" + COLUMN_NAMES + ") values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
-		public CustomJdbcRegisteredClientRepository(JdbcOperations jdbcOperations) {
+		CustomJdbcRegisteredClientRepository(JdbcOperations jdbcOperations) {
 			super(jdbcOperations);
 			setRegisteredClientRowMapper(new CustomRegisteredClientRowMapper());
 		}

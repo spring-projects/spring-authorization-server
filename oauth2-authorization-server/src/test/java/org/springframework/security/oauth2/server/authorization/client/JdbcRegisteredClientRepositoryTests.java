@@ -20,7 +20,6 @@ import java.nio.charset.Charset;
 import java.time.Duration;
 import java.time.Instant;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -89,17 +88,8 @@ public class JdbcRegisteredClientRepositoryTests {
 	public void whenJdbcOperationsNullThenThrow() {
 		// @formatter:off
 		assertThatIllegalArgumentException()
-				.isThrownBy(() -> new JdbcRegisteredClientRepository(null, new ObjectMapper()))
+				.isThrownBy(() -> new JdbcRegisteredClientRepository(null))
 				.withMessage("jdbcOperations cannot be null");
-		// @formatter:on
-	}
-
-	@Test
-	public void whenObjectMapperNullThenThrow() {
-		// @formatter:off
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> new JdbcRegisteredClientRepository(this.jdbc, null))
-				.withMessage("objectMapper cannot be null");
 		// @formatter:on
 	}
 

@@ -15,6 +15,8 @@
  */
 package org.springframework.security.config.annotation.web.configurers.oauth2.server.authorization;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.security.Principal;
@@ -26,11 +28,9 @@ import java.util.stream.Collectors;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
-import org.mockito.ArgumentCaptor;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -58,11 +58,15 @@ import org.springframework.security.oauth2.core.oidc.endpoint.OidcParameterNames
 import org.springframework.security.oauth2.jose.TestJwks;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.server.authorization.InMemoryOAuth2AuthorizationConsentService;
+import org.springframework.security.oauth2.server.authorization.InMemoryOAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.JwtEncodingContext;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationCode;
+import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsentService;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenCustomizer;
+import org.springframework.security.oauth2.server.authorization.client.InMemoryRegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
@@ -75,17 +79,12 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
+import org.springframework.web.util.UriComponents;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hamcrest.CoreMatchers.containsString;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -102,8 +101,6 @@ public class OidcTests {
 	private static final String ISSUER_URL = "https://example.com/issuer1";
 	private static final String AUTHORITIES_CLAIM = "authorities";
 	private static final OAuth2TokenType AUTHORIZATION_CODE_TOKEN_TYPE = new OAuth2TokenType(OAuth2ParameterNames.CODE);
-	private static RegisteredClientRepository registeredClientRepository;
-	private static OAuth2AuthorizationService authorizationService;
 	private static JWKSource<SecurityContext> jwkSource;
 	private static HttpMessageConverter<OAuth2AccessTokenResponse> accessTokenHttpResponseConverter =
 			new OAuth2AccessTokenResponseHttpMessageConverter();
@@ -115,20 +112,18 @@ public class OidcTests {
 	private MockMvc mvc;
 
 	@Autowired
+	private RegisteredClientRepository registeredClientRepository;
+
+	@Autowired
+	private OAuth2AuthorizationService authorizationService;
+
+	@Autowired
 	private JwtDecoder jwtDecoder;
 
 	@BeforeClass
 	public static void init() {
-		registeredClientRepository = mock(RegisteredClientRepository.class);
-		authorizationService = mock(OAuth2AuthorizationService.class);
 		JWKSet jwkSet = new JWKSet(TestJwks.DEFAULT_RSA_JWK);
 		jwkSource = (jwkSelector, securityContext) -> jwkSelector.select(jwkSet);
-	}
-
-	@Before
-	public void setup() {
-		reset(registeredClientRepository);
-		reset(authorizationService);
 	}
 
 	@Test
@@ -159,26 +154,18 @@ public class OidcTests {
 		this.spring.register(AuthorizationServerConfiguration.class).autowire();
 
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().scope(OidcScopes.OPENID).build();
-		when(registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
-				.thenReturn(registeredClient);
+		this.registeredClientRepository.save(registeredClient);
 
 		MvcResult mvcResult = this.mvc.perform(get(OAuth2AuthorizationEndpointFilter.DEFAULT_AUTHORIZATION_ENDPOINT_URI)
 				.params(getAuthorizationRequestParameters(registeredClient))
 				.with(user("user").roles("A", "B")))
 				.andExpect(status().is3xxRedirection())
 				.andReturn();
-		assertThat(mvcResult.getResponse().getRedirectedUrl()).matches("https://example.com\\?code=.{15,}&state=state");
+		String redirectedUrl = mvcResult.getResponse().getRedirectedUrl();
+		assertThat(redirectedUrl).matches("https://example.com\\?code=.{15,}&state=state");
 
-		verify(registeredClientRepository).findByClientId(eq(registeredClient.getClientId()));
-
-		ArgumentCaptor<OAuth2Authorization> authorizationCaptor = ArgumentCaptor.forClass(OAuth2Authorization.class);
-		verify(authorizationService).save(authorizationCaptor.capture());
-		OAuth2Authorization authorization = authorizationCaptor.getValue();
-
-		when(authorizationService.findByToken(
-				eq(authorization.getToken(OAuth2AuthorizationCode.class).getToken().getTokenValue()),
-				eq(AUTHORIZATION_CODE_TOKEN_TYPE)))
-				.thenReturn(authorization);
+		String authorizationCode = extractParameterFromRedirectUri(redirectedUrl, "code");
+		OAuth2Authorization authorization = this.authorizationService.findByToken(authorizationCode, AUTHORIZATION_CODE_TOKEN_TYPE);
 
 		mvcResult = this.mvc.perform(post(OAuth2TokenEndpointFilter.DEFAULT_TOKEN_ENDPOINT_URI)
 				.params(getTokenRequestParameters(registeredClient, authorization))
@@ -194,12 +181,6 @@ public class OidcTests {
 				.andExpect(jsonPath("$.scope").isNotEmpty())
 				.andExpect(jsonPath("$.id_token").isNotEmpty())
 				.andReturn();
-
-		verify(registeredClientRepository, times(2)).findByClientId(eq(registeredClient.getClientId()));
-		verify(authorizationService).findByToken(
-				eq(authorization.getToken(OAuth2AuthorizationCode.class).getToken().getTokenValue()),
-				eq(AUTHORIZATION_CODE_TOKEN_TYPE));
-		verify(authorizationService, times(2)).save(any());
 
 		MockHttpServletResponse servletResponse = mvcResult.getResponse();
 		MockClientHttpResponse httpResponse = new MockClientHttpResponse(
@@ -244,18 +225,36 @@ public class OidcTests {
 		return new String(encodedBytes, StandardCharsets.UTF_8);
 	}
 
+	private String extractParameterFromRedirectUri(String redirectUri, String param) throws UnsupportedEncodingException {
+		String locationHeader = URLDecoder.decode(redirectUri, StandardCharsets.UTF_8.name());
+		UriComponents uriComponents = UriComponentsBuilder.fromUriString(locationHeader).build();
+		return uriComponents.getQueryParams().getFirst(param);
+	}
+
 	@EnableWebSecurity
 	@Import(OAuth2AuthorizationServerConfiguration.class)
 	static class AuthorizationServerConfiguration {
 
 		@Bean
-		RegisteredClientRepository registeredClientRepository() {
-			return registeredClientRepository;
+		OAuth2AuthorizationService authorizationService() {
+			return new InMemoryOAuth2AuthorizationService();
 		}
 
 		@Bean
-		OAuth2AuthorizationService authorizationService() {
-			return authorizationService;
+		OAuth2AuthorizationConsentService authorizationConsentService() {
+			return new InMemoryOAuth2AuthorizationConsentService();
+		}
+
+		@Bean
+		RegisteredClientRepository registeredClientRepository() {
+			// @formatter:off
+			RegisteredClient dummyClient = TestRegisteredClients.registeredClient()
+					.id("dummy-client")
+					.clientId("dummy-client")
+					.clientSecret("dummy-secret")
+					.build();
+			// @formatter:on
+			return new InMemoryRegisteredClientRepository(dummyClient);
 		}
 
 		@Bean

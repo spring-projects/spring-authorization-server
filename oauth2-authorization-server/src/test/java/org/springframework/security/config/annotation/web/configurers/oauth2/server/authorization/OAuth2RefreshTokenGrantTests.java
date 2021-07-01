@@ -26,7 +26,6 @@ import java.util.stream.Collectors;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
@@ -47,7 +46,6 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
-import org.springframework.security.oauth2.core.OAuth2TokenType;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AccessTokenResponse;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.http.converter.OAuth2AccessTokenResponseHttpMessageConverter;
@@ -55,11 +53,15 @@ import org.springframework.security.oauth2.jose.TestJwks;
 import org.springframework.security.oauth2.jose.TestKeys;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
+import org.springframework.security.oauth2.server.authorization.InMemoryOAuth2AuthorizationConsentService;
+import org.springframework.security.oauth2.server.authorization.InMemoryOAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.JwtEncodingContext;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
+import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsentService;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenCustomizer;
 import org.springframework.security.oauth2.server.authorization.TestOAuth2Authorizations;
+import org.springframework.security.oauth2.server.authorization.client.InMemoryRegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
@@ -71,12 +73,6 @@ import org.springframework.util.MultiValueMap;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.containsString;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -90,8 +86,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 public class OAuth2RefreshTokenGrantTests {
 	private static final String AUTHORITIES_CLAIM = "authorities";
-	private static RegisteredClientRepository registeredClientRepository;
-	private static OAuth2AuthorizationService authorizationService;
 	private static JWKSource<SecurityContext> jwkSource;
 	private static NimbusJwtDecoder jwtDecoder;
 	private static HttpMessageConverter<OAuth2AccessTokenResponse> accessTokenHttpResponseConverter =
@@ -103,19 +97,17 @@ public class OAuth2RefreshTokenGrantTests {
 	@Autowired
 	private MockMvc mvc;
 
+	@Autowired
+	private RegisteredClientRepository registeredClientRepository;
+
+	@Autowired
+	private OAuth2AuthorizationService authorizationService;
+
 	@BeforeClass
 	public static void init() {
-		registeredClientRepository = mock(RegisteredClientRepository.class);
-		authorizationService = mock(OAuth2AuthorizationService.class);
 		JWKSet jwkSet = new JWKSet(TestJwks.DEFAULT_RSA_JWK);
 		jwkSource = (jwkSelector, securityContext) -> jwkSelector.select(jwkSet);
 		jwtDecoder = NimbusJwtDecoder.withPublicKey(TestKeys.DEFAULT_PUBLIC_KEY).build();
-	}
-
-	@Before
-	public void setup() {
-		reset(registeredClientRepository);
-		reset(authorizationService);
 	}
 
 	@Test
@@ -123,14 +115,10 @@ public class OAuth2RefreshTokenGrantTests {
 		this.spring.register(AuthorizationServerConfiguration.class).autowire();
 
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
-		when(registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
-				.thenReturn(registeredClient);
+		this.registeredClientRepository.save(registeredClient);
 
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();
-		when(authorizationService.findByToken(
-				eq(authorization.getRefreshToken().getToken().getTokenValue()),
-				eq(OAuth2TokenType.REFRESH_TOKEN)))
-				.thenReturn(authorization);
+		this.authorizationService.save(authorization);
 
 		MvcResult mvcResult = this.mvc.perform(post(OAuth2TokenEndpointFilter.DEFAULT_TOKEN_ENDPOINT_URI)
 				.params(getRefreshTokenRequestParameters(authorization))
@@ -145,12 +133,6 @@ public class OAuth2RefreshTokenGrantTests {
 				.andExpect(jsonPath("$.refresh_token").isNotEmpty())
 				.andExpect(jsonPath("$.scope").isNotEmpty())
 				.andReturn();
-
-		verify(registeredClientRepository).findByClientId(eq(registeredClient.getClientId()));
-		verify(authorizationService).findByToken(
-				eq(authorization.getRefreshToken().getToken().getTokenValue()),
-				eq(OAuth2TokenType.REFRESH_TOKEN));
-		verify(authorizationService).save(any());
 
 		MockHttpServletResponse servletResponse = mvcResult.getResponse();
 		MockClientHttpResponse httpResponse = new MockClientHttpResponse(
@@ -188,13 +170,25 @@ public class OAuth2RefreshTokenGrantTests {
 	static class AuthorizationServerConfiguration {
 
 		@Bean
-		RegisteredClientRepository registeredClientRepository() {
-			return registeredClientRepository;
+		OAuth2AuthorizationService authorizationService() {
+			return new InMemoryOAuth2AuthorizationService();
 		}
 
 		@Bean
-		OAuth2AuthorizationService authorizationService() {
-			return authorizationService;
+		OAuth2AuthorizationConsentService authorizationConsentService() {
+			return new InMemoryOAuth2AuthorizationConsentService();
+		}
+
+		@Bean
+		RegisteredClientRepository registeredClientRepository() {
+			// @formatter:off
+			RegisteredClient dummyClient = TestRegisteredClients.registeredClient()
+					.id("dummy-client")
+					.clientId("dummy-client")
+					.clientSecret("dummy-secret")
+					.build();
+			// @formatter:on
+			return new InMemoryRegisteredClientRepository(dummyClient);
 		}
 
 		@Bean

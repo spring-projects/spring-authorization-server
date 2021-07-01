@@ -44,12 +44,16 @@ import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.jose.TestJwks;
+import org.springframework.security.oauth2.server.authorization.InMemoryOAuth2AuthorizationConsentService;
+import org.springframework.security.oauth2.server.authorization.InMemoryOAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.JwtEncodingContext;
+import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsentService;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenCustomizer;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AccessTokenAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientCredentialsAuthenticationToken;
+import org.springframework.security.oauth2.server.authorization.client.InMemoryRegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
@@ -67,7 +71,6 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -80,8 +83,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * @author Joe Grandja
  */
 public class OAuth2ClientCredentialsGrantTests {
-	private static RegisteredClientRepository registeredClientRepository;
-	private static OAuth2AuthorizationService authorizationService;
 	private static JWKSource<SecurityContext> jwkSource;
 	private static OAuth2TokenCustomizer<JwtEncodingContext> jwtCustomizer;
 	private static AuthenticationConverter accessTokenRequestConverter;
@@ -95,10 +96,11 @@ public class OAuth2ClientCredentialsGrantTests {
 	@Autowired
 	private MockMvc mvc;
 
+	@Autowired
+	private RegisteredClientRepository registeredClientRepository;
+
 	@BeforeClass
 	public static void init() {
-		registeredClientRepository = mock(RegisteredClientRepository.class);
-		authorizationService = mock(OAuth2AuthorizationService.class);
 		JWKSet jwkSet = new JWKSet(TestJwks.DEFAULT_RSA_JWK);
 		jwkSource = (jwkSelector, securityContext) -> jwkSelector.select(jwkSet);
 		jwtCustomizer = mock(OAuth2TokenCustomizer.class);
@@ -112,8 +114,6 @@ public class OAuth2ClientCredentialsGrantTests {
 	@Before
 	public void setup() {
 		reset(jwtCustomizer);
-		reset(registeredClientRepository);
-		reset(authorizationService);
 	}
 
 	@Test
@@ -123,9 +123,6 @@ public class OAuth2ClientCredentialsGrantTests {
 		this.mvc.perform(MockMvcRequestBuilders.post(OAuth2TokenEndpointFilter.DEFAULT_TOKEN_ENDPOINT_URI)
 				.param(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.CLIENT_CREDENTIALS.getValue()))
 				.andExpect(status().isUnauthorized());
-
-		verifyNoInteractions(registeredClientRepository);
-		verifyNoInteractions(authorizationService);
 	}
 
 	@Test
@@ -133,8 +130,7 @@ public class OAuth2ClientCredentialsGrantTests {
 		this.spring.register(AuthorizationServerConfiguration.class).autowire();
 
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient2().build();
-		when(registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
-				.thenReturn(registeredClient);
+		this.registeredClientRepository.save(registeredClient);
 
 		this.mvc.perform(post(OAuth2TokenEndpointFilter.DEFAULT_TOKEN_ENDPOINT_URI)
 				.param(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
@@ -146,8 +142,6 @@ public class OAuth2ClientCredentialsGrantTests {
 				.andExpect(jsonPath("$.scope").value("scope1 scope2"));
 
 		verify(jwtCustomizer).customize(any());
-		verify(registeredClientRepository).findByClientId(eq(registeredClient.getClientId()));
-		verify(authorizationService).save(any());
 	}
 
 	@Test
@@ -155,8 +149,7 @@ public class OAuth2ClientCredentialsGrantTests {
 		this.spring.register(AuthorizationServerConfiguration.class).autowire();
 
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient2().build();
-		when(registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
-				.thenReturn(registeredClient);
+		this.registeredClientRepository.save(registeredClient);
 
 		this.mvc.perform(post(OAuth2TokenEndpointFilter.DEFAULT_TOKEN_ENDPOINT_URI)
 				.param(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
@@ -168,8 +161,6 @@ public class OAuth2ClientCredentialsGrantTests {
 				.andExpect(jsonPath("$.scope").value("scope1 scope2"));
 
 		verify(jwtCustomizer).customize(any());
-		verify(registeredClientRepository).findByClientId(eq(registeredClient.getClientId()));
-		verify(authorizationService).save(any());
 	}
 
 	@Test
@@ -177,8 +168,7 @@ public class OAuth2ClientCredentialsGrantTests {
 		this.spring.register(AuthorizationServerConfigurationCustomTokenEndpoint.class).autowire();
 
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient2().build();
-		when(registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
-				.thenReturn(registeredClient);
+		this.registeredClientRepository.save(registeredClient);
 
 		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient);
 		OAuth2ClientCredentialsAuthenticationToken clientCredentialsAuthentication =
@@ -217,13 +207,25 @@ public class OAuth2ClientCredentialsGrantTests {
 	static class AuthorizationServerConfiguration {
 
 		@Bean
-		RegisteredClientRepository registeredClientRepository() {
-			return registeredClientRepository;
+		OAuth2AuthorizationService authorizationService() {
+			return new InMemoryOAuth2AuthorizationService();
 		}
 
 		@Bean
-		OAuth2AuthorizationService authorizationService() {
-			return authorizationService;
+		OAuth2AuthorizationConsentService authorizationConsentService() {
+			return new InMemoryOAuth2AuthorizationConsentService();
+		}
+
+		@Bean
+		RegisteredClientRepository registeredClientRepository() {
+			// @formatter:off
+			RegisteredClient dummyClient = TestRegisteredClients.registeredClient()
+					.id("dummy-client")
+					.clientId("dummy-client")
+					.clientSecret("dummy-secret")
+					.build();
+			// @formatter:on
+			return new InMemoryRegisteredClientRepository(dummyClient);
 		}
 
 		@Bean

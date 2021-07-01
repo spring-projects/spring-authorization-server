@@ -23,7 +23,6 @@ import java.util.HashSet;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
@@ -50,9 +49,13 @@ import org.springframework.security.oauth2.core.http.converter.OAuth2TokenIntros
 import org.springframework.security.oauth2.jose.TestJwks;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.TestJwtClaimsSets;
+import org.springframework.security.oauth2.server.authorization.InMemoryOAuth2AuthorizationConsentService;
+import org.springframework.security.oauth2.server.authorization.InMemoryOAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
+import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsentService;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.TestOAuth2Authorizations;
+import org.springframework.security.oauth2.server.authorization.client.InMemoryRegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
@@ -63,12 +66,6 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -80,8 +77,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * @author Joe Grandja
  */
 public class OAuth2TokenIntrospectionTests {
-	private static RegisteredClientRepository registeredClientRepository;
-	private static OAuth2AuthorizationService authorizationService;
 	private static JWKSource<SecurityContext> jwkSource;
 	private static ProviderSettings providerSettings;
 	private final HttpMessageConverter<OAuth2TokenIntrospection> tokenIntrospectionHttpResponseConverter =
@@ -93,28 +88,26 @@ public class OAuth2TokenIntrospectionTests {
 	@Autowired
 	private MockMvc mvc;
 
+	@Autowired
+	private RegisteredClientRepository registeredClientRepository;
+
+	@Autowired
+	private OAuth2AuthorizationService authorizationService;
+
 	@BeforeClass
 	public static void init() {
-		registeredClientRepository = mock(RegisteredClientRepository.class);
-		authorizationService = mock(OAuth2AuthorizationService.class);
 		JWKSet jwkSet = new JWKSet(TestJwks.DEFAULT_RSA_JWK);
 		jwkSource = (jwkSelector, securityContext) -> jwkSelector.select(jwkSet);
 		providerSettings = new ProviderSettings().tokenIntrospectionEndpoint("/test/introspect");
-	}
-
-	@Before
-	public void setup() {
-		reset(registeredClientRepository);
-		reset(authorizationService);
 	}
 
 	@Test
 	public void requestWhenIntrospectValidAccessTokenThenActive() throws Exception {
 		this.spring.register(AuthorizationServerConfiguration.class).autowire();
 
-		RegisteredClient introspectRegisteredClient = TestRegisteredClients.registeredClient2().build();
-		when(registeredClientRepository.findByClientId(eq(introspectRegisteredClient.getClientId())))
-				.thenReturn(introspectRegisteredClient);
+		RegisteredClient introspectRegisteredClient = TestRegisteredClients.registeredClient2()
+				.clientSecret("secret-2").build();
+		this.registeredClientRepository.save(introspectRegisteredClient);
 
 		RegisteredClient authorizedRegisteredClient = TestRegisteredClients.registeredClient().build();
 		Instant issuedAt = Instant.now();
@@ -126,10 +119,8 @@ public class OAuth2TokenIntrospectionTests {
 		OAuth2Authorization authorization = TestOAuth2Authorizations
 				.authorization(authorizedRegisteredClient, accessToken, tokenClaims.getClaims())
 				.build();
-		when(authorizationService.findByToken(eq(accessToken.getTokenValue()), isNull()))
-				.thenReturn(authorization);
-		when(registeredClientRepository.findById(eq(authorizedRegisteredClient.getId())))
-				.thenReturn(authorizedRegisteredClient);
+		this.registeredClientRepository.save(authorizedRegisteredClient);
+		this.authorizationService.save(authorization);
 
 		// @formatter:off
 		MvcResult mvcResult = this.mvc.perform(post(providerSettings.tokenIntrospectionEndpoint())
@@ -138,10 +129,6 @@ public class OAuth2TokenIntrospectionTests {
 				.andExpect(status().isOk())
 				.andReturn();
 		// @formatter:on
-
-		verify(registeredClientRepository).findByClientId(eq(introspectRegisteredClient.getClientId()));
-		verify(authorizationService).findByToken(eq(accessToken.getTokenValue()), isNull());
-		verify(registeredClientRepository).findById(eq(authorizedRegisteredClient.getId()));
 
 		OAuth2TokenIntrospection tokenIntrospectionResponse = readTokenIntrospectionResponse(mvcResult);
 		assertThat(tokenIntrospectionResponse.isActive()).isTrue();
@@ -165,17 +152,15 @@ public class OAuth2TokenIntrospectionTests {
 	public void requestWhenIntrospectValidRefreshTokenThenActive() throws Exception {
 		this.spring.register(AuthorizationServerConfiguration.class).autowire();
 
-		RegisteredClient introspectRegisteredClient = TestRegisteredClients.registeredClient2().build();
-		when(registeredClientRepository.findByClientId(eq(introspectRegisteredClient.getClientId())))
-				.thenReturn(introspectRegisteredClient);
+		RegisteredClient introspectRegisteredClient = TestRegisteredClients.registeredClient2()
+				.clientSecret("secret-2").build();
+		this.registeredClientRepository.save(introspectRegisteredClient);
 
 		RegisteredClient authorizedRegisteredClient = TestRegisteredClients.registeredClient().build();
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(authorizedRegisteredClient).build();
 		OAuth2RefreshToken refreshToken = authorization.getRefreshToken().getToken();
-		when(authorizationService.findByToken(eq(refreshToken.getTokenValue()), isNull()))
-				.thenReturn(authorization);
-		when(registeredClientRepository.findById(eq(authorizedRegisteredClient.getId())))
-				.thenReturn(authorizedRegisteredClient);
+		this.registeredClientRepository.save(authorizedRegisteredClient);
+		this.authorizationService.save(authorization);
 
 		// @formatter:off
 		MvcResult mvcResult = this.mvc.perform(post(providerSettings.tokenIntrospectionEndpoint())
@@ -184,10 +169,6 @@ public class OAuth2TokenIntrospectionTests {
 				.andExpect(status().isOk())
 				.andReturn();
 		// @formatter:on
-
-		verify(registeredClientRepository).findByClientId(eq(introspectRegisteredClient.getClientId()));
-		verify(authorizationService).findByToken(eq(refreshToken.getTokenValue()), isNull());
-		verify(registeredClientRepository).findById(eq(authorizedRegisteredClient.getId()));
 
 		OAuth2TokenIntrospection tokenIntrospectionResponse = readTokenIntrospectionResponse(mvcResult);
 		assertThat(tokenIntrospectionResponse.isActive()).isTrue();
@@ -226,13 +207,25 @@ public class OAuth2TokenIntrospectionTests {
 	static class AuthorizationServerConfiguration {
 
 		@Bean
-		RegisteredClientRepository registeredClientRepository() {
-			return registeredClientRepository;
+		OAuth2AuthorizationService authorizationService() {
+			return new InMemoryOAuth2AuthorizationService();
 		}
 
 		@Bean
-		OAuth2AuthorizationService authorizationService() {
-			return authorizationService;
+		OAuth2AuthorizationConsentService authorizationConsentService() {
+			return new InMemoryOAuth2AuthorizationConsentService();
+		}
+
+		@Bean
+		RegisteredClientRepository registeredClientRepository() {
+			// @formatter:off
+			RegisteredClient dummyClient = TestRegisteredClients.registeredClient()
+					.id("dummy-client")
+					.clientId("dummy-client")
+					.clientSecret("dummy-secret")
+					.build();
+			// @formatter:on
+			return new InMemoryRegisteredClientRepository(dummyClient);
 		}
 
 		@Bean

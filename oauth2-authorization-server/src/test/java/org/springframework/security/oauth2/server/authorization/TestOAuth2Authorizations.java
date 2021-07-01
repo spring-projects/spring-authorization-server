@@ -28,6 +28,7 @@ import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2RefreshToken;
 import org.springframework.security.oauth2.core.OAuth2RefreshToken2;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
+import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
 import org.springframework.util.CollectionUtils;
@@ -80,6 +81,7 @@ public class TestOAuth2Authorizations {
 				.token(authorizationCode)
 				.token(accessToken, (metadata) -> metadata.putAll(tokenMetadata(accessTokenClaims)))
 				.refreshToken(refreshToken)
+				.attribute(OAuth2ParameterNames.STATE, "state")
 				.attribute(OAuth2AuthorizationRequest.class.getName(), authorizationRequest)
 				.attribute(Principal.class.getName(),
 						new TestingAuthenticationToken("principal", null, "ROLE_A", "ROLE_B"))

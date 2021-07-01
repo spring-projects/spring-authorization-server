@@ -22,6 +22,8 @@ import java.util.Base64;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
+import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
@@ -33,6 +35,11 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageConverter;
+import org.springframework.jdbc.core.JdbcOperations;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.datasource.embedded.EmbeddedDatabase;
+import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseBuilder;
+import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType;
 import org.springframework.mock.http.MockHttpOutputMessage;
 import org.springframework.mock.http.client.MockClientHttpResponse;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -52,11 +59,7 @@ import org.springframework.security.oauth2.core.oidc.OidcClientRegistration;
 import org.springframework.security.oauth2.core.oidc.http.converter.OidcClientRegistrationHttpMessageConverter;
 import org.springframework.security.oauth2.jose.TestJwks;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
-import org.springframework.security.oauth2.server.authorization.InMemoryOAuth2AuthorizationConsentService;
-import org.springframework.security.oauth2.server.authorization.InMemoryOAuth2AuthorizationService;
-import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsentService;
-import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
-import org.springframework.security.oauth2.server.authorization.client.InMemoryRegisteredClientRepository;
+import org.springframework.security.oauth2.server.authorization.client.JdbcRegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
@@ -83,6 +86,7 @@ public class OidcClientRegistrationTests {
 			new OAuth2AccessTokenResponseHttpMessageConverter();
 	private static final HttpMessageConverter<OidcClientRegistration> clientRegistrationHttpMessageConverter =
 			new OidcClientRegistrationHttpMessageConverter();
+	private static EmbeddedDatabase db;
 	private static JWKSource<SecurityContext> jwkSource;
 
 	@Rule
@@ -92,15 +96,33 @@ public class OidcClientRegistrationTests {
 	private MockMvc mvc;
 
 	@Autowired
-	private RegisteredClientRepository registeredClientRepository;
+	private JdbcOperations jdbcOperations;
 
 	@Autowired
-	private OAuth2AuthorizationService authorizationService;
+	private RegisteredClientRepository registeredClientRepository;
 
 	@BeforeClass
 	public static void init() {
 		JWKSet jwkSet = new JWKSet(TestJwks.DEFAULT_RSA_JWK);
 		jwkSource = (jwkSelector, securityContext) -> jwkSelector.select(jwkSet);
+		db = new EmbeddedDatabaseBuilder()
+				.generateUniqueName(true)
+				.setType(EmbeddedDatabaseType.HSQL)
+				.setScriptEncoding("UTF-8")
+				.addScript("org/springframework/security/oauth2/server/authorization/oauth2-authorization-schema.sql")
+				.addScript("org/springframework/security/oauth2/server/authorization/client/oauth2-registered-client-schema.sql")
+				.build();
+	}
+
+	@After
+	public void tearDown() {
+		jdbcOperations.update("truncate table oauth2_authorization");
+		jdbcOperations.update("truncate table oauth2_registered_client");
+	}
+
+	@AfterClass
+	public static void destroy() {
+		db.shutdown();
 	}
 
 	@Test
@@ -204,25 +226,16 @@ public class OidcClientRegistrationTests {
 	static class AuthorizationServerConfiguration {
 
 		@Bean
-		OAuth2AuthorizationService authorizationService() {
-			return new InMemoryOAuth2AuthorizationService();
+		RegisteredClientRepository registeredClientRepository(JdbcOperations jdbcOperations) {
+			RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+			JdbcRegisteredClientRepository registeredClientRepository = new JdbcRegisteredClientRepository(jdbcOperations);
+			registeredClientRepository.save(registeredClient);
+			return registeredClientRepository;
 		}
 
 		@Bean
-		OAuth2AuthorizationConsentService authorizationConsentService() {
-			return new InMemoryOAuth2AuthorizationConsentService();
-		}
-
-		@Bean
-		RegisteredClientRepository registeredClientRepository() {
-			// @formatter:off
-			RegisteredClient dummyClient = TestRegisteredClients.registeredClient()
-					.id("dummy-client")
-					.clientId("dummy-client")
-					.clientSecret("dummy-secret")
-					.build();
-			// @formatter:on
-			return new InMemoryRegisteredClientRepository(dummyClient);
+		JdbcOperations jdbcOperations() {
+			return new JdbcTemplate(db);
 		}
 
 		@Bean

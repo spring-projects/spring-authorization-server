@@ -35,6 +35,7 @@ import org.springframework.security.config.annotation.web.configurers.oauth2.ser
 import org.springframework.security.config.annotation.web.configurers.oauth2.server.resource.OAuth2ResourceServerConfigurer;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
+import org.springframework.security.oauth2.server.authorization.config.ProviderSettings;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 
@@ -87,6 +88,13 @@ public class OAuth2AuthorizationServerConfiguration {
 		jwtProcessor.setJWTClaimsSetVerifier((claims, context) -> {
 		});
 		return new NimbusJwtDecoder(jwtProcessor);
+	}
+
+	@Bean
+	RegisterMissingBeanPostProcessor registerMissingBeanPostProcessor() {
+		RegisterMissingBeanPostProcessor postProcessor = new RegisterMissingBeanPostProcessor();
+		postProcessor.addBeanDefinition(ProviderSettings.class, () -> ProviderSettings.builder().build());
+		return postProcessor;
 	}
 
 }

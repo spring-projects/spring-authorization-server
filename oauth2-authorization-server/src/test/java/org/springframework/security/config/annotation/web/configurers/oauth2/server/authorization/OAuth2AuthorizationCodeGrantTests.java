@@ -21,6 +21,8 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.security.Principal;
 import java.text.MessageFormat;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Base64;
 import java.util.List;
 import java.util.Set;
@@ -48,6 +50,7 @@ import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseBuilder;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType;
 import org.springframework.mock.http.client.MockClientHttpResponse;
 import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -78,6 +81,7 @@ import org.springframework.security.oauth2.server.authorization.OAuth2Authorizat
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenCustomizer;
 import org.springframework.security.oauth2.server.authorization.TestOAuth2Authorizations;
+import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeRequestAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.client.JdbcRegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
@@ -87,6 +91,9 @@ import org.springframework.security.oauth2.server.authorization.jackson2.Testing
 import org.springframework.security.oauth2.server.authorization.web.OAuth2AuthorizationEndpointFilter;
 import org.springframework.security.oauth2.server.authorization.web.OAuth2TokenEndpointFilter;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AuthenticationConverter;
+import org.springframework.security.web.authentication.AuthenticationFailureHandler;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -98,6 +105,11 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.containsString;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -126,6 +138,10 @@ public class OAuth2AuthorizationCodeGrantTests {
 	private static ProviderSettings providerSettings;
 	private static HttpMessageConverter<OAuth2AccessTokenResponse> accessTokenHttpResponseConverter =
 			new OAuth2AccessTokenResponseHttpMessageConverter();
+	private static AuthenticationConverter authorizationRequestConverter;
+	private static AuthenticationProvider authorizationRequestAuthenticationProvider;
+	private static AuthenticationSuccessHandler authorizationResponseHandler;
+	private static AuthenticationFailureHandler authorizationErrorResponseHandler;
 	private static String consentPage = "/oauth2/consent";
 
 	@Rule
@@ -154,6 +170,10 @@ public class OAuth2AuthorizationCodeGrantTests {
 		providerSettings = new ProviderSettings()
 				.authorizationEndpoint("/test/authorize")
 				.tokenEndpoint("/test/token");
+		authorizationRequestConverter = mock(AuthenticationConverter.class);
+		authorizationRequestAuthenticationProvider = mock(AuthenticationProvider.class);
+		authorizationResponseHandler = mock(AuthenticationSuccessHandler.class);
+		authorizationErrorResponseHandler = mock(AuthenticationFailureHandler.class);
 		db = new EmbeddedDatabaseBuilder()
 				.generateUniqueName(true)
 				.setType(EmbeddedDatabaseType.HSQL)
@@ -469,6 +489,36 @@ public class OAuth2AuthorizationCodeGrantTests {
 		assertThat(authorization).isNotNull();
 	}
 
+	@Test
+	public void requestWhenAuthorizationEndpointCustomizedThenUsed() throws Exception {
+		this.spring.register(AuthorizationServerConfigurationCustomAuthorizationEndpoint.class).autowire();
+
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+		TestingAuthenticationToken principal = new TestingAuthenticationToken("principalName", "password");
+		OAuth2AuthorizationCode authorizationCode = new OAuth2AuthorizationCode(
+				"code", Instant.now(), Instant.now().plus(5, ChronoUnit.MINUTES));
+		OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthenticationResult =
+				OAuth2AuthorizationCodeRequestAuthenticationToken.with(registeredClient.getClientId(), principal)
+						.authorizationUri("https://provider.com/oauth2/authorize")
+						.redirectUri(registeredClient.getRedirectUris().iterator().next())
+						.scopes(registeredClient.getScopes())
+						.state("state")
+						.authorizationCode(authorizationCode)
+						.build();
+		when(authorizationRequestConverter.convert(any())).thenReturn(authorizationCodeRequestAuthenticationResult);
+		when(authorizationRequestAuthenticationProvider.supports(eq(OAuth2AuthorizationCodeRequestAuthenticationToken.class))).thenReturn(true);
+		when(authorizationRequestAuthenticationProvider.authenticate(any())).thenReturn(authorizationCodeRequestAuthenticationResult);
+
+		this.mvc.perform(get(OAuth2AuthorizationEndpointFilter.DEFAULT_AUTHORIZATION_ENDPOINT_URI)
+				.params(getAuthorizationRequestParameters(registeredClient))
+				.with(user("user")))
+				.andExpect(status().isOk());
+
+		verify(authorizationRequestConverter).convert(any());
+		verify(authorizationRequestAuthenticationProvider).authenticate(eq(authorizationCodeRequestAuthenticationResult));
+		verify(authorizationResponseHandler).onAuthenticationSuccess(any(), any(), eq(authorizationCodeRequestAuthenticationResult));
+	}
+
 	private static MultiValueMap<String, String> getAuthorizationRequestParameters(RegisteredClient registeredClient) {
 		MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
 		parameters.set(OAuth2ParameterNames.RESPONSE_TYPE, OAuth2AuthorizationResponseType.CODE.getValue());
@@ -610,7 +660,9 @@ public class OAuth2AuthorizationCodeGrantTests {
 		public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
 			OAuth2AuthorizationServerConfigurer<HttpSecurity> authorizationServerConfigurer =
 					new OAuth2AuthorizationServerConfigurer<>();
-			authorizationServerConfigurer.consentPage(consentPage);
+			authorizationServerConfigurer
+					.authorizationEndpoint(authorizationEndpoint ->
+							authorizationEndpoint.consentPage(consentPage));
 			RequestMatcher endpointsMatcher = authorizationServerConfigurer.getEndpointsMatcher();
 
 			http
@@ -624,4 +676,33 @@ public class OAuth2AuthorizationCodeGrantTests {
 		}
 		// @formatter:on
 	}
+
+	@EnableWebSecurity
+	static class AuthorizationServerConfigurationCustomAuthorizationEndpoint extends AuthorizationServerConfiguration {
+		// @formatter:off
+		@Bean
+		public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
+			OAuth2AuthorizationServerConfigurer<HttpSecurity> authorizationServerConfigurer =
+					new OAuth2AuthorizationServerConfigurer<>();
+			authorizationServerConfigurer
+					.authorizationEndpoint(authorizationEndpoint ->
+							authorizationEndpoint
+									.authorizationRequestConverter(authorizationRequestConverter)
+									.authenticationProvider(authorizationRequestAuthenticationProvider)
+									.authorizationResponseHandler(authorizationResponseHandler)
+									.errorResponseHandler(authorizationErrorResponseHandler));
+			RequestMatcher endpointsMatcher = authorizationServerConfigurer.getEndpointsMatcher();
+
+			http
+					.requestMatcher(endpointsMatcher)
+					.authorizeRequests(authorizeRequests ->
+							authorizeRequests.anyRequest().authenticated()
+					)
+					.csrf(csrf -> csrf.ignoringRequestMatchers(endpointsMatcher))
+					.apply(authorizationServerConfigurer);
+			return http.build();
+		}
+		// @formatter:on
+	}
+
 }

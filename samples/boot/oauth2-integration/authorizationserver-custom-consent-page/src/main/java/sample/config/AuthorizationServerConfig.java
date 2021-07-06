@@ -54,7 +54,10 @@ public class AuthorizationServerConfig {
 	public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
 		OAuth2AuthorizationServerConfigurer<HttpSecurity> authorizationServerConfigurer =
 				new OAuth2AuthorizationServerConfigurer<>();
-		authorizationServerConfigurer.consentPage("/oauth2/consent");
+		authorizationServerConfigurer
+				.authorizationEndpoint(authorizationEndpoint ->
+						authorizationEndpoint.consentPage("/oauth2/consent"));
+
 		RequestMatcher endpointsMatcher = authorizationServerConfigurer
 				.getEndpointsMatcher();
 

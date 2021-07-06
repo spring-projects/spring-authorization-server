@@ -237,7 +237,6 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 	 * page will be generated when this attribute is not specified.
 	 *
 	 * @param consentPage the URI of the custom consent page to redirect to if consent is required (e.g. "/oauth2/consent")
-	 * @see org.springframework.security.config.annotation.web.configurers.oauth2.server.authorization.OAuth2AuthorizationServerConfigurer#consentPage(String)
 	 */
 	public final void setConsentPage(String consentPage) {
 		this.consentPage = consentPage;

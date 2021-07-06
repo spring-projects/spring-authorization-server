@@ -15,12 +15,6 @@
  */
 package org.springframework.security.config.annotation.web.configurers.oauth2.server.authorization;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-
-import javax.servlet.http.HttpServletRequest;
-
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -32,11 +26,7 @@ import org.springframework.security.oauth2.core.endpoint.OAuth2AccessTokenRespon
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.server.authorization.JwtEncodingContext;
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenCustomizer;
-import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AccessTokenAuthenticationToken;
-import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeAuthenticationProvider;
-import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationGrantAuthenticationToken;
-import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientCredentialsAuthenticationProvider;
-import org.springframework.security.oauth2.server.authorization.authentication.OAuth2RefreshTokenAuthenticationProvider;
+import org.springframework.security.oauth2.server.authorization.authentication.*;
 import org.springframework.security.oauth2.server.authorization.config.ProviderSettings;
 import org.springframework.security.oauth2.server.authorization.web.OAuth2TokenEndpointFilter;
 import org.springframework.security.web.access.intercept.FilterSecurityInterceptor;
@@ -45,6 +35,11 @@ import org.springframework.security.web.authentication.AuthenticationFailureHand
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
+
+import javax.servlet.http.HttpServletRequest;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Configurer for the OAuth 2.0 Token Endpoint.
@@ -187,6 +182,15 @@ public final class OAuth2TokenEndpointConfigurer extends AbstractOAuth2Configure
 			clientCredentialsAuthenticationProvider.setJwtCustomizer(jwtCustomizer);
 		}
 		authenticationProviders.add(clientCredentialsAuthenticationProvider);
+
+		OAuth2UsernamePasswordAuthenticationProvider usernamePasswordAuthenticationProvider =
+				new OAuth2UsernamePasswordAuthenticationProvider(
+						OAuth2ConfigurerUtils.getAuthorizationService(builder),
+						OAuth2ConfigurerUtils.getUserDetailsService(builder), jwtEncoder);
+		if (jwtCustomizer != null) {
+			clientCredentialsAuthenticationProvider.setJwtCustomizer(jwtCustomizer);
+		}
+		authenticationProviders.add(usernamePasswordAuthenticationProvider);
 
 		return authenticationProviders;
 	}

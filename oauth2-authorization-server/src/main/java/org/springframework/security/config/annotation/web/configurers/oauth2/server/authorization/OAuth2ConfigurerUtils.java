@@ -15,28 +15,24 @@
  */
 package org.springframework.security.config.annotation.web.configurers.oauth2.server.authorization;
 
-import java.util.Map;
-
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
-
 import org.springframework.beans.factory.BeanFactoryUtils;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.NoUniqueBeanDefinitionException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.ResolvableType;
 import org.springframework.security.config.annotation.web.HttpSecurityBuilder;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.NimbusJwsEncoder;
-import org.springframework.security.oauth2.server.authorization.InMemoryOAuth2AuthorizationConsentService;
-import org.springframework.security.oauth2.server.authorization.InMemoryOAuth2AuthorizationService;
-import org.springframework.security.oauth2.server.authorization.JwtEncodingContext;
-import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsentService;
-import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
-import org.springframework.security.oauth2.server.authorization.OAuth2TokenCustomizer;
+import org.springframework.security.oauth2.server.authorization.*;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.config.ProviderSettings;
+import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.util.StringUtils;
+
+import java.util.Map;
 
 /**
  * Utility methods for the OAuth 2.0 Configurers.
@@ -68,6 +64,18 @@ final class OAuth2ConfigurerUtils {
 			builder.setSharedObject(OAuth2AuthorizationService.class, authorizationService);
 		}
 		return authorizationService;
+	}
+
+	static <B extends HttpSecurityBuilder<B>> UserDetailsService getUserDetailsService(B builder) {
+		UserDetailsService userDetailsService = builder.getSharedObject(UserDetailsService.class);
+		if (userDetailsService == null) {
+			userDetailsService = getOptionalBean(builder, UserDetailsService.class);
+			if (userDetailsService == null) {
+				userDetailsService = new InMemoryUserDetailsManager();
+			}
+			builder.setSharedObject(UserDetailsService.class, userDetailsService);
+		}
+		return userDetailsService;
 	}
 
 	static <B extends HttpSecurityBuilder<B>> OAuth2AuthorizationConsentService getAuthorizationConsentService(B builder) {

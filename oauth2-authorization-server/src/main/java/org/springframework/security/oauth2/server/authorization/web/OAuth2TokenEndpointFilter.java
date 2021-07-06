@@ -94,6 +94,7 @@ public class OAuth2TokenEndpointFilter extends OncePerRequestFilter {
 	 */
 	public static final String DEFAULT_TOKEN_ENDPOINT_URI = "/oauth2/token";
 
+	private static final String DEFAULT_ERROR_URI = "https://datatracker.ietf.org/doc/html/rfc6749#section-5.2";
 	private final AuthenticationManager authenticationManager;
 	private final RequestMatcher tokenEndpointMatcher;
 	private final HttpMessageConverter<OAuth2AccessTokenResponse> accessTokenHttpResponseConverter =
@@ -231,8 +232,7 @@ public class OAuth2TokenEndpointFilter extends OncePerRequestFilter {
 	}
 
 	private static void throwError(String errorCode, String parameterName) {
-		OAuth2Error error = new OAuth2Error(errorCode, "OAuth 2.0 Parameter: " + parameterName,
-				"https://tools.ietf.org/html/rfc6749#section-5.2");
+		OAuth2Error error = new OAuth2Error(errorCode, "OAuth 2.0 Parameter: " + parameterName, DEFAULT_ERROR_URI);
 		throw new OAuth2AuthenticationException(error);
 	}
 

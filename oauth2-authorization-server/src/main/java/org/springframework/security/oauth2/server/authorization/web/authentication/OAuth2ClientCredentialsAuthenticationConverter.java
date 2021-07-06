@@ -64,7 +64,10 @@ public final class OAuth2ClientCredentialsAuthenticationConverter implements Aut
 		String scope = parameters.getFirst(OAuth2ParameterNames.SCOPE);
 		if (StringUtils.hasText(scope) &&
 				parameters.get(OAuth2ParameterNames.SCOPE).size() != 1) {
-			OAuth2EndpointUtils.throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.SCOPE);
+			OAuth2EndpointUtils.throwError(
+					OAuth2ErrorCodes.INVALID_REQUEST,
+					OAuth2ParameterNames.SCOPE,
+					OAuth2EndpointUtils.ACCESS_TOKEN_REQUEST_ERROR_URI);
 		}
 		Set<String> requestedScopes = null;
 		if (StringUtils.hasText(scope)) {

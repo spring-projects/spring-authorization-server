@@ -61,7 +61,10 @@ public final class OAuth2AuthorizationCodeAuthenticationConverter implements Aut
 		String code = parameters.getFirst(OAuth2ParameterNames.CODE);
 		if (!StringUtils.hasText(code) ||
 				parameters.get(OAuth2ParameterNames.CODE).size() != 1) {
-			OAuth2EndpointUtils.throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.CODE);
+			OAuth2EndpointUtils.throwError(
+					OAuth2ErrorCodes.INVALID_REQUEST,
+					OAuth2ParameterNames.CODE,
+					OAuth2EndpointUtils.ACCESS_TOKEN_REQUEST_ERROR_URI);
 		}
 
 		// redirect_uri (REQUIRED)
@@ -69,7 +72,10 @@ public final class OAuth2AuthorizationCodeAuthenticationConverter implements Aut
 		String redirectUri = parameters.getFirst(OAuth2ParameterNames.REDIRECT_URI);
 		if (StringUtils.hasText(redirectUri) &&
 				parameters.get(OAuth2ParameterNames.REDIRECT_URI).size() != 1) {
-			OAuth2EndpointUtils.throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.REDIRECT_URI);
+			OAuth2EndpointUtils.throwError(
+					OAuth2ErrorCodes.INVALID_REQUEST,
+					OAuth2ParameterNames.REDIRECT_URI,
+					OAuth2EndpointUtils.ACCESS_TOKEN_REQUEST_ERROR_URI);
 		}
 
 		// @formatter:off

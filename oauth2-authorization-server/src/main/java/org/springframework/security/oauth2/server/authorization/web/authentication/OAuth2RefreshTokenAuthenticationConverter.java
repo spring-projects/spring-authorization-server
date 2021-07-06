@@ -64,14 +64,20 @@ public final class OAuth2RefreshTokenAuthenticationConverter implements Authenti
 		String refreshToken = parameters.getFirst(OAuth2ParameterNames.REFRESH_TOKEN);
 		if (!StringUtils.hasText(refreshToken) ||
 				parameters.get(OAuth2ParameterNames.REFRESH_TOKEN).size() != 1) {
-			OAuth2EndpointUtils.throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.REFRESH_TOKEN);
+			OAuth2EndpointUtils.throwError(
+					OAuth2ErrorCodes.INVALID_REQUEST,
+					OAuth2ParameterNames.REFRESH_TOKEN,
+					OAuth2EndpointUtils.ACCESS_TOKEN_REQUEST_ERROR_URI);
 		}
 
 		// scope (OPTIONAL)
 		String scope = parameters.getFirst(OAuth2ParameterNames.SCOPE);
 		if (StringUtils.hasText(scope) &&
 				parameters.get(OAuth2ParameterNames.SCOPE).size() != 1) {
-			OAuth2EndpointUtils.throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.SCOPE);
+			OAuth2EndpointUtils.throwError(
+					OAuth2ErrorCodes.INVALID_REQUEST,
+					OAuth2ParameterNames.SCOPE,
+					OAuth2EndpointUtils.ACCESS_TOKEN_REQUEST_ERROR_URI);
 		}
 		Set<String> requestedScopes = null;
 		if (StringUtils.hasText(scope)) {

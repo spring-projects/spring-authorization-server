@@ -34,6 +34,7 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
+import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationResponse;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationCodeRequestAuthenticationException;
@@ -45,6 +46,8 @@ import org.springframework.security.oauth2.server.authorization.web.authenticati
 import org.springframework.security.web.DefaultRedirectStrategy;
 import org.springframework.security.web.RedirectStrategy;
 import org.springframework.security.web.authentication.AuthenticationConverter;
+import org.springframework.security.web.authentication.AuthenticationFailureHandler;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.util.RedirectUrlBuilder;
 import org.springframework.security.web.util.UrlUtils;
 import org.springframework.security.web.util.matcher.AndRequestMatcher;
@@ -82,6 +85,8 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 	private final RequestMatcher authorizationEndpointMatcher;
 	private final RedirectStrategy redirectStrategy = new DefaultRedirectStrategy();
 	private AuthenticationConverter authenticationConverter;
+	private AuthenticationSuccessHandler authenticationSuccessHandler = this::sendAuthorizationResponse;
+	private AuthenticationFailureHandler authenticationFailureHandler = this::sendErrorResponse;
 	private String consentPage;
 
 	/**
@@ -185,11 +190,12 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 				return;
 			}
 
-			sendAuthorizationResponse(request, response, authorizationCodeRequestAuthenticationResult);
+			this.authenticationSuccessHandler.onAuthenticationSuccess(
+					request, response, authorizationCodeRequestAuthenticationResult);
 
 		} catch (OAuth2AuthenticationException ex) {
 			SecurityContextHolder.clearContext();
-			sendErrorResponse(request, response, ex);
+			this.authenticationFailureHandler.onAuthenticationFailure(request, response, ex);
 		}
 	}
 
@@ -202,6 +208,28 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 	public final void setAuthenticationConverter(AuthenticationConverter authenticationConverter) {
 		Assert.notNull(authenticationConverter, "authenticationConverter cannot be null");
 		this.authenticationConverter = authenticationConverter;
+	}
+
+	/**
+	 * Sets the {@link AuthenticationSuccessHandler} used for handling an {@link OAuth2AuthorizationCodeRequestAuthenticationToken}
+	 * and returning the {@link OAuth2AuthorizationResponse Authorization Response}.
+	 *
+	 * @param authenticationSuccessHandler the {@link AuthenticationSuccessHandler} used for handling an {@link OAuth2AuthorizationCodeRequestAuthenticationToken}
+	 */
+	public final void setAuthenticationSuccessHandler(AuthenticationSuccessHandler authenticationSuccessHandler) {
+		Assert.notNull(authenticationSuccessHandler, "authenticationSuccessHandler cannot be null");
+		this.authenticationSuccessHandler = authenticationSuccessHandler;
+	}
+
+	/**
+	 * Sets the {@link AuthenticationFailureHandler} used for handling an {@link OAuth2AuthorizationCodeRequestAuthenticationException}
+	 * and returning the {@link OAuth2Error Error Response}.
+	 *
+	 * @param authenticationFailureHandler the {@link AuthenticationFailureHandler} used for handling an {@link OAuth2AuthorizationCodeRequestAuthenticationException}
+	 */
+	public final void setAuthenticationFailureHandler(AuthenticationFailureHandler authenticationFailureHandler) {
+		Assert.notNull(authenticationFailureHandler, "authenticationFailureHandler cannot be null");
+		this.authenticationFailureHandler = authenticationFailureHandler;
 	}
 
 	/**
@@ -255,8 +283,10 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 	}
 
 	private void sendAuthorizationResponse(HttpServletRequest request, HttpServletResponse response,
-			OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthentication) throws IOException {
+			Authentication authentication) throws IOException {
 
+		OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthentication =
+				(OAuth2AuthorizationCodeRequestAuthenticationToken) authentication;
 		UriComponentsBuilder uriBuilder = UriComponentsBuilder
 				.fromUriString(authorizationCodeRequestAuthentication.getRedirectUri())
 				.queryParam(OAuth2ParameterNames.CODE, authorizationCodeRequestAuthentication.getAuthorizationCode().getTokenValue());

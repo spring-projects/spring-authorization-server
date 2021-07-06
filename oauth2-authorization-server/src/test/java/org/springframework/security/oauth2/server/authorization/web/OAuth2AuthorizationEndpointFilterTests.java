@@ -52,6 +52,7 @@ import org.springframework.security.oauth2.server.authorization.OAuth2Authorizat
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeRequestAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
+import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.util.StringUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -108,6 +109,13 @@ public class OAuth2AuthorizationEndpointFilterTests {
 		assertThatThrownBy(() -> new OAuth2AuthorizationEndpointFilter(this.authenticationManager, null))
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessage("authorizationEndpointUri cannot be empty");
+	}
+
+	@Test
+	public void setAuthenticationConverterWhenNullThenThrowIllegalArgumentException() {
+		assertThatThrownBy(() -> this.filter.setAuthenticationConverter(null))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("authenticationConverter cannot be null");
 	}
 
 	@Test
@@ -240,6 +248,31 @@ public class OAuth2AuthorizationEndpointFilterTests {
 
 		assertThat(response.getStatus()).isEqualTo(HttpStatus.FOUND.value());
 		assertThat(response.getRedirectedUrl()).isEqualTo("https://example.com?error=errorCode&error_description=errorDescription&error_uri=errorUri&state=state");
+	}
+
+	@Test
+	public void doFilterWhenCustomAuthenticationConverterThenUsed() throws Exception {
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+		OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthentication =
+				authorizationCodeRequestAuthentication(registeredClient, this.principal)
+						.build();
+
+		AuthenticationConverter authenticationConverter = mock(AuthenticationConverter.class);
+		when(authenticationConverter.convert(any())).thenReturn(authorizationCodeRequestAuthentication);
+		this.filter.setAuthenticationConverter(authenticationConverter);
+
+		when(this.authenticationManager.authenticate(any()))
+				.thenReturn(authorizationCodeRequestAuthentication);
+
+		MockHttpServletRequest request = createAuthorizationRequest(registeredClient);
+		MockHttpServletResponse response = new MockHttpServletResponse();
+		FilterChain filterChain = mock(FilterChain.class);
+
+		this.filter.doFilter(request, response, filterChain);
+
+		verify(authenticationConverter).convert(any());
+		verify(this.authenticationManager).authenticate(any());
+		verify(filterChain).doFilter(any(HttpServletRequest.class), any(HttpServletResponse.class));
 	}
 
 	@Test

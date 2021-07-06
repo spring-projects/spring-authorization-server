@@ -29,6 +29,7 @@ import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2RefreshToken;
 import org.springframework.security.oauth2.core.OAuth2TokenType;
+import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.jwt.JoseHeader;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
@@ -42,6 +43,7 @@ import org.springframework.security.oauth2.server.authorization.config.ProviderS
 import org.springframework.util.Assert;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 import static org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthenticationProviderUtils.getAuthenticatedClientElseThrowInvalidClient;
@@ -50,13 +52,13 @@ import static org.springframework.security.oauth2.server.authorization.authentic
  * An {@link AuthenticationProvider} implementation for the OAuth 2.0 Password Grant.
  *
  * @author leegecho
- * @since 0.1.2
  * @see OAuth2UsernamePasswordAuthenticationToken
  * @see OAuth2AccessTokenAuthenticationToken
  * @see OAuth2AuthorizationService
  * @see JwtEncoder
  * @see OAuth2TokenCustomizer
  * @see JwtEncodingContext
+ * @since 0.1.2
  */
 public class OAuth2UsernamePasswordAuthenticationProvider extends DaoAuthenticationProvider {
 
@@ -89,13 +91,13 @@ public class OAuth2UsernamePasswordAuthenticationProvider extends DaoAuthenticat
 		UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(passwordAuthentication.getUsername(), passwordAuthentication.getPassword());
 		token = (UsernamePasswordAuthenticationToken) super.authenticate(token);
 
- 		return createSuccessAuthentication(passwordAuthentication, token);
+		return createSuccessAuthentication(passwordAuthentication, token);
 	}
 
 	protected Authentication createSuccessAuthentication(OAuth2UsernamePasswordAuthenticationToken authentication,
 			UsernamePasswordAuthenticationToken token) {
 
-		String username = ((User)token.getPrincipal()).getUsername();
+		String username = ((User) token.getPrincipal()).getUsername();
 		OAuth2UsernamePasswordAuthenticationToken result = new OAuth2UsernamePasswordAuthenticationToken(
 				authentication.getClientPrincipal(), username, authentication.getPassword(),
 				authentication.getAdditionalParameters(), token.getAuthorities());
@@ -105,15 +107,19 @@ public class OAuth2UsernamePasswordAuthenticationProvider extends DaoAuthenticat
 		OAuth2ClientAuthenticationToken clientPrincipal =
 				getAuthenticatedClientElseThrowInvalidClient(authentication);
 		RegisteredClient registeredClient = clientPrincipal.getRegisteredClient();
+		Assert.notNull(registeredClient, "registeredClient cannot be null");
 
-		Set<String> authorizedScopes = registeredClient.getScopes();
+		Object scopeObject = authentication.getAdditionalParameters().get(OAuth2ParameterNames.SCOPE);
+		String[] scopes = scopeObject != null ? scopeObject.toString().split("[, ;]]") : new String[0];
+		Set<String> authorizedScopes = new HashSet<>();
+		Collections.addAll(authorizedScopes, scopes);
 
 		String issuer = this.providerSettings != null ? this.providerSettings.issuer() : null;
 
 		JoseHeader.Builder headersBuilder = JwtUtils.headers();
 		JwtClaimsSet.Builder claimsBuilder = JwtUtils.accessTokenClaims(
-				registeredClient, issuer, token.getPrincipal().toString(),
-				Collections.emptySet());
+				registeredClient, issuer, username,
+				authorizedScopes);
 
 		// @formatter:off
 		JwtEncodingContext context = JwtEncodingContext.with(headersBuilder, claimsBuilder)

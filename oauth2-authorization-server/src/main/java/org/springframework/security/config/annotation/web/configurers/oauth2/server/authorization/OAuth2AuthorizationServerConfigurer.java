@@ -158,7 +158,7 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 	 *
 	 * <ul>
 	 * <li>{@code client_id} - the client identifier</li>
-	 * <li>{@code scope} - the space separated list of scopes present in the authorization request</li>
+	 * <li>{@code scope} - a space-delimited list of scopes present in the authorization request</li>
 	 * <li>{@code state} - a CSRF protection token</li>
 	 * </ul>
 	 *
@@ -172,11 +172,9 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 	 * <li>It must include the received {@code state} as an HTTP parameter</li>
 	 * <li>It must include the list of {@code scope}s the {@code Resource Owner}
 	 * consented to as an HTTP parameter</li>
-	 * <li>It must include the {@code consent_action} parameter, with a value either
-	 * {@code approve} or {@code cancel} as an HTTP parameter</li>
 	 * </ul>
 	 *
-	 * @param consentPage the consent page to redirect to if consent is required (e.g. "/oauth2/consent")
+	 * @param consentPage the URI of the custom consent page to redirect to if consent is required (e.g. "/oauth2/consent")
 	 * @return the {@link OAuth2AuthorizationServerConfigurer} for further configuration
 	 */
 	public OAuth2AuthorizationServerConfigurer<B> consentPage(String consentPage) {
@@ -296,7 +294,7 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 						authenticationManager,
 						providerSettings.authorizationEndpoint());
 		if (StringUtils.hasText(this.consentPage)) {
-			authorizationEndpointFilter.setUserConsentUri(this.consentPage);
+			authorizationEndpointFilter.setConsentPage(this.consentPage);
 		}
 		builder.addFilterBefore(postProcess(authorizationEndpointFilter), AbstractPreAuthenticatedProcessingFilter.class);
 

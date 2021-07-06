@@ -90,7 +90,7 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 	private final RequestMatcher authorizationEndpointMatcher;
 	private final AuthenticationConverter authenticationConverter;
 	private final RedirectStrategy redirectStrategy = new DefaultRedirectStrategy();
-	private String userConsentUri;
+	private String consentPage;
 
 	/**
 	 * Constructs an {@code OAuth2AuthorizationEndpointFilter} using the provided parameters.
@@ -168,11 +168,11 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 	 * Specify the URI to redirect Resource Owners to if consent is required. A default consent
 	 * page will be generated when this attribute is not specified.
 	 *
-	 * @param userConsentUri the URI of the custom consent page to redirect to if consent is required (e.g. "/oauth2/consent")
+	 * @param consentPage the URI of the custom consent page to redirect to if consent is required (e.g. "/oauth2/consent")
 	 * @see org.springframework.security.config.annotation.web.configurers.oauth2.server.authorization.OAuth2AuthorizationServerConfigurer#consentPage(String)
 	 */
-	public final void setUserConsentUri(String userConsentUri) {
-		this.userConsentUri = userConsentUri;
+	public final void setConsentPage(String consentPage) {
+		this.consentPage = consentPage;
 	}
 
 	@Override
@@ -230,24 +230,24 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 					.toUriString();
 			this.redirectStrategy.sendRedirect(request, response, redirectUri);
 		} else {
-			UserConsentPage.displayConsent(request, response, clientId, principal, requestedScopes, authorizedScopes, state);
+			DefaultConsentPage.displayConsent(request, response, clientId, principal, requestedScopes, authorizedScopes, state);
 		}
 	}
 
 	private boolean hasConsentUri() {
-		return StringUtils.hasText(this.userConsentUri);
+		return StringUtils.hasText(this.consentPage);
 	}
 
 	private String resolveConsentUri(HttpServletRequest request) {
-		if (UrlUtils.isAbsoluteUrl(this.userConsentUri)) {
-			return this.userConsentUri;
+		if (UrlUtils.isAbsoluteUrl(this.consentPage)) {
+			return this.consentPage;
 		}
 		RedirectUrlBuilder urlBuilder = new RedirectUrlBuilder();
 		urlBuilder.setScheme(request.getScheme());
 		urlBuilder.setServerName(request.getServerName());
 		urlBuilder.setPort(request.getServerPort());
 		urlBuilder.setContextPath(request.getContextPath());
-		urlBuilder.setPathInfo(this.userConsentUri);
+		urlBuilder.setPathInfo(this.consentPage);
 		return urlBuilder.getUrl();
 	}
 
@@ -427,7 +427,7 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 	/**
 	 * For internal use only.
 	 */
-	private static class UserConsentPage {
+	private static class DefaultConsentPage {
 		private static final MediaType TEXT_HTML_UTF8 = new MediaType("text", "html", StandardCharsets.UTF_8);
 
 		private static void displayConsent(HttpServletRequest request, HttpServletResponse response,
@@ -485,7 +485,7 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 
 			for (String scope : scopesToAuthorize) {
 				builder.append("                <div class=\"form-group form-check py-1\">");
-				builder.append("                    <input class=\"form-check-input\" type=\"checkbox\" name=\"scope\" value=\"" + scope + "\" id=\"" + scope + "\" checked>");
+				builder.append("                    <input class=\"form-check-input\" type=\"checkbox\" name=\"scope\" value=\"" + scope + "\" id=\"" + scope + "\">");
 				builder.append("                    <label class=\"form-check-label\" for=\"" + scope + "\">" + scope + "</label>");
 				builder.append("                </div>");
 			}

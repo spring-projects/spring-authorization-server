@@ -42,8 +42,7 @@
                            type="checkbox"
                            name="scope"
                            th:value="${scope.scope}"
-                           th:id="${scope.scope}"
-                           checked>
+                           th:id="${scope.scope}">
                     <label class="form-check-label font-weight-bold" th:for="${scope.scope}" th:text="${scope.scope}"></label>
                     <p class="text-primary" th:text="${scope.description}"></p>
                 </div>
@@ -60,12 +59,12 @@
                 </div>
 
                 <div class="form-group pt-3">
-                    <button class="btn btn-primary btn-lg" type="submit" name="consent_action" value="approve">
+                    <button class="btn btn-primary btn-lg" type="submit">
                         Submit Consent
                     </button>
                 </div>
                 <div class="form-group">
-                    <button class="btn btn-link regular" type="submit" name="consent_action" value="cancel">
+                    <button class="btn btn-link regular" type="submit">
                         Cancel
                     </button>
                 </div>

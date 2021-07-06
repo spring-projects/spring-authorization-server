@@ -285,7 +285,7 @@ public class OAuth2AuthorizationEndpointFilterTests {
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		FilterChain filterChain = mock(FilterChain.class);
 
-		this.filter.setUserConsentUri("/oauth2/custom-consent");
+		this.filter.setConsentPage("/oauth2/custom-consent");
 		this.filter.doFilter(request, response, filterChain);
 
 		verify(this.authenticationManager).authenticate(any());
@@ -471,7 +471,7 @@ public class OAuth2AuthorizationEndpointFilterTests {
 
 	private static String scopeCheckbox(String scope) {
 		return MessageFormat.format(
-				"<input class=\"form-check-input\" type=\"checkbox\" name=\"scope\" value=\"{0}\" id=\"{0}\" checked>",
+				"<input class=\"form-check-input\" type=\"checkbox\" name=\"scope\" value=\"{0}\" id=\"{0}\">",
 				scope
 		);
 	}

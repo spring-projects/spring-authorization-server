@@ -1,5 +1,5 @@
 if (!project.hasProperty("springVersion")) {
-	ext.springVersion = "5.3.6"
+	ext.springVersion = "5.3.8"
 }
 
 if (!project.hasProperty("springSecurityVersion")) {

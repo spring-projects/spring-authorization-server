@@ -19,18 +19,16 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.sql.Types;
-import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.springframework.jdbc.core.ArgumentPreparedStatementSetter;
@@ -38,24 +36,33 @@ import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.SqlParameterValue;
+import org.springframework.security.jackson2.SecurityJackson2Modules;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
-import org.springframework.security.oauth2.server.authorization.config.ClientSettings;
-import org.springframework.security.oauth2.server.authorization.config.TokenSettings;
+import org.springframework.security.oauth2.server.authorization.jackson2.OAuth2AuthorizationServerJackson2Module;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
 /**
- * JDBC-backed registered client repository
+ * A JDBC implementation of a {@link RegisteredClientRepository} that uses a
+ * {@link JdbcOperations} for {@link RegisteredClient} persistence.
+ *
+ * <p>
+ * <b>NOTE:</b> This {@code RegisteredClientRepository} depends on the table definition described in
+ * "classpath:org/springframework/security/oauth2/server/authorization/client/oauth2-registered-client-schema.sql" and
+ * therefore MUST be defined in the database schema.
  *
  * @author Rafal Lewczuk
+ * @author Joe Grandja
  * @since 0.1.2
+ * @see RegisteredClientRepository
+ * @see RegisteredClient
+ * @see JdbcOperations
+ * @see RowMapper
  */
 public class JdbcRegisteredClientRepository implements RegisteredClientRepository {
 
-	private static final Map<String, AuthorizationGrantType> AUTHORIZATION_GRANT_TYPE_MAP;
-	private static final Map<String, ClientAuthenticationMethod> CLIENT_AUTHENTICATION_METHOD_MAP;
-
+	// @formatter:off
 	private static final String COLUMN_NAMES = "id, "
 			+ "client_id, "
 			+ "client_id_issued_at, "
@@ -68,19 +75,20 @@ public class JdbcRegisteredClientRepository implements RegisteredClientRepositor
 			+ "scopes, "
 			+ "client_settings,"
 			+ "token_settings";
+	// @formatter:on
 
 	private static final String TABLE_NAME = "oauth2_registered_client";
 
 	private static final String LOAD_REGISTERED_CLIENT_SQL = "SELECT " + COLUMN_NAMES + " FROM " + TABLE_NAME + " WHERE ";
 
+	// @formatter:off
 	private static final String INSERT_REGISTERED_CLIENT_SQL = "INSERT INTO " + TABLE_NAME
-			+ "(" + COLUMN_NAMES + ") values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-
-	private RowMapper<RegisteredClient> registeredClientRowMapper;
-
-	private Function<RegisteredClient, List<SqlParameterValue>> registeredClientParametersMapper;
+			+ "(" + COLUMN_NAMES + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+	// @formatter:on
 
 	private final JdbcOperations jdbcOperations;
+	private RowMapper<RegisteredClient> registeredClientRowMapper;
+	private Function<RegisteredClient, List<SqlParameterValue>> registeredClientParametersMapper;
 
 	/**
 	 * Constructs a {@code JdbcRegisteredClientRepository} using the provided parameters.
@@ -90,55 +98,21 @@ public class JdbcRegisteredClientRepository implements RegisteredClientRepositor
 	public JdbcRegisteredClientRepository(JdbcOperations jdbcOperations) {
 		Assert.notNull(jdbcOperations, "jdbcOperations cannot be null");
 		this.jdbcOperations = jdbcOperations;
-		this.registeredClientRowMapper = new DefaultRegisteredClientRowMapper();
-		this.registeredClientParametersMapper = new DefaultRegisteredClientParametersMapper();
-	}
-
-	/**
-	 * Allows changing of {@link RegisteredClient} row mapper implementation
-	 *
-	 * @param registeredClientRowMapper mapper implementation
-	 */
-	public final void setRegisteredClientRowMapper(RowMapper<RegisteredClient> registeredClientRowMapper) {
-		Assert.notNull(registeredClientRowMapper, "registeredClientRowMapper cannot be null");
-		this.registeredClientRowMapper = registeredClientRowMapper;
-	}
-
-	/**
-	 * Allows changing of SQL parameter mapper for {@link RegisteredClient}
-	 *
-	 * @param registeredClientParametersMapper mapper implementation
-	 */
-	public final void setRegisteredClientParametersMapper(Function<RegisteredClient, List<SqlParameterValue>> registeredClientParametersMapper) {
-		Assert.notNull(registeredClientParametersMapper, "registeredClientParameterMapper cannot be null");
-		this.registeredClientParametersMapper = registeredClientParametersMapper;
-	}
-
-	protected final JdbcOperations getJdbcOperations() {
-		return this.jdbcOperations;
-	}
-
-	protected final RowMapper<RegisteredClient> getRegisteredClientRowMapper() {
-		return this.registeredClientRowMapper;
-	}
-
-	protected final Function<RegisteredClient, List<SqlParameterValue>> getRegisteredClientParametersMapper() {
-		return this.registeredClientParametersMapper;
+		this.registeredClientRowMapper = new RegisteredClientRowMapper();
+		this.registeredClientParametersMapper = new RegisteredClientParametersMapper();
 	}
 
 	@Override
 	public void save(RegisteredClient registeredClient) {
 		Assert.notNull(registeredClient, "registeredClient cannot be null");
-		RegisteredClient foundClient = findBy("id = ? OR client_id = ?",
+		RegisteredClient existingRegisteredClient = findBy("id = ? OR client_id = ?",
 				registeredClient.getId(), registeredClient.getClientId());
-
-		if (foundClient != null) {
-			Assert.isTrue(!foundClient.getId().equals(registeredClient.getId()),
+		if (existingRegisteredClient != null) {
+			Assert.isTrue(!existingRegisteredClient.getId().equals(registeredClient.getId()),
 					"Registered client must be unique. Found duplicate identifier: " + registeredClient.getId());
-			Assert.isTrue(!foundClient.getClientId().equals(registeredClient.getClientId()),
+			Assert.isTrue(!existingRegisteredClient.getClientId().equals(registeredClient.getClientId()),
 					"Registered client must be unique. Found duplicate client identifier: " + registeredClient.getClientId());
 		}
-
 		List<SqlParameterValue> parameters = this.registeredClientParametersMapper.apply(registeredClient);
 		PreparedStatementSetter pss = new ArgumentPreparedStatementSetter(parameters.toArray());
 		this.jdbcOperations.update(INSERT_REGISTERED_CLIENT_SQL, pss);
@@ -156,80 +130,95 @@ public class JdbcRegisteredClientRepository implements RegisteredClientRepositor
 		return findBy("client_id = ?", clientId);
 	}
 
-	private RegisteredClient findBy(String condStr, Object... args) {
+	private RegisteredClient findBy(String filter, Object... args) {
 		List<RegisteredClient> result = this.jdbcOperations.query(
-				LOAD_REGISTERED_CLIENT_SQL + condStr,
-				this.registeredClientRowMapper, args);
+				LOAD_REGISTERED_CLIENT_SQL + filter, this.registeredClientRowMapper, args);
 		return !result.isEmpty() ? result.get(0) : null;
 	}
 
-	public static class DefaultRegisteredClientRowMapper implements RowMapper<RegisteredClient> {
+	/**
+	 * Sets the {@link RowMapper} used for mapping the current row in {@code java.sql.ResultSet} to {@link RegisteredClient}.
+	 * The default is {@link RegisteredClientRowMapper}.
+	 *
+	 * @param registeredClientRowMapper the {@link RowMapper} used for mapping the current row in {@code ResultSet} to {@link RegisteredClient}
+	 */
+	public final void setRegisteredClientRowMapper(RowMapper<RegisteredClient> registeredClientRowMapper) {
+		Assert.notNull(registeredClientRowMapper, "registeredClientRowMapper cannot be null");
+		this.registeredClientRowMapper = registeredClientRowMapper;
+	}
 
+	/**
+	 * Sets the {@code Function} used for mapping {@link RegisteredClient} to a {@code List} of {@link SqlParameterValue}.
+	 * The default is {@link RegisteredClientParametersMapper}.
+	 *
+	 * @param registeredClientParametersMapper the {@code Function} used for mapping {@link RegisteredClient} to a {@code List} of {@link SqlParameterValue}
+	 */
+	public final void setRegisteredClientParametersMapper(Function<RegisteredClient, List<SqlParameterValue>> registeredClientParametersMapper) {
+		Assert.notNull(registeredClientParametersMapper, "registeredClientParametersMapper cannot be null");
+		this.registeredClientParametersMapper = registeredClientParametersMapper;
+	}
+
+	protected final JdbcOperations getJdbcOperations() {
+		return this.jdbcOperations;
+	}
+
+	protected final RowMapper<RegisteredClient> getRegisteredClientRowMapper() {
+		return this.registeredClientRowMapper;
+	}
+
+	protected final Function<RegisteredClient, List<SqlParameterValue>> getRegisteredClientParametersMapper() {
+		return this.registeredClientParametersMapper;
+	}
+
+	/**
+	 * The default {@link RowMapper} that maps the current row in
+	 * {@code java.sql.ResultSet} to {@link RegisteredClient}.
+	 */
+	public static class RegisteredClientRowMapper implements RowMapper<RegisteredClient> {
 		private ObjectMapper objectMapper = new ObjectMapper();
+
+		public RegisteredClientRowMapper() {
+			ClassLoader classLoader = JdbcRegisteredClientRepository.class.getClassLoader();
+			List<Module> securityModules = SecurityJackson2Modules.getModules(classLoader);
+			this.objectMapper.registerModules(securityModules);
+			this.objectMapper.registerModule(new OAuth2AuthorizationServerJackson2Module());
+		}
 
 		@Override
 		public RegisteredClient mapRow(ResultSet rs, int rowNum) throws SQLException {
-			Set<String> clientScopes = parseList(rs.getString("scopes"));
-			Set<String> authGrantTypes = parseList(rs.getString("authorization_grant_types"));
-			Set<String> clientAuthMethods = parseList(rs.getString("client_authentication_methods"));
-			Set<String> redirectUris = parseList(rs.getString("redirect_uris"));
-			Timestamp clientIssuedAt = rs.getTimestamp("client_id_issued_at");
+			Timestamp clientIdIssuedAt = rs.getTimestamp("client_id_issued_at");
 			Timestamp clientSecretExpiresAt = rs.getTimestamp("client_secret_expires_at");
-			String clientSecret = rs.getString("client_secret");
-			RegisteredClient.Builder builder = RegisteredClient
-					.withId(rs.getString("id"))
+			Set<String> clientAuthenticationMethods = StringUtils.commaDelimitedListToSet(rs.getString("client_authentication_methods"));
+			Set<String> authorizationGrantTypes = StringUtils.commaDelimitedListToSet(rs.getString("authorization_grant_types"));
+			Set<String> redirectUris = StringUtils.commaDelimitedListToSet(rs.getString("redirect_uris"));
+			Set<String> clientScopes = StringUtils.commaDelimitedListToSet(rs.getString("scopes"));
+
+			// @formatter:off
+			RegisteredClient.Builder builder = RegisteredClient.withId(rs.getString("id"))
 					.clientId(rs.getString("client_id"))
-					.clientIdIssuedAt(clientIssuedAt != null ? clientIssuedAt.toInstant() : null)
-					.clientSecret(clientSecret)
+					.clientIdIssuedAt(clientIdIssuedAt != null ? clientIdIssuedAt.toInstant() : null)
+					.clientSecret(rs.getString("client_secret"))
 					.clientSecretExpiresAt(clientSecretExpiresAt != null ? clientSecretExpiresAt.toInstant() : null)
 					.clientName(rs.getString("client_name"))
-					.authorizationGrantTypes((grantTypes) -> authGrantTypes.forEach(authGrantType ->
-							grantTypes.add(AUTHORIZATION_GRANT_TYPE_MAP.get(authGrantType))))
-					.clientAuthenticationMethods((authenticationMethods) -> clientAuthMethods.forEach(clientAuthMethod ->
-							authenticationMethods.add(CLIENT_AUTHENTICATION_METHOD_MAP.get(clientAuthMethod))))
+					.clientAuthenticationMethods((authenticationMethods) ->
+							clientAuthenticationMethods.forEach(authenticationMethod ->
+									authenticationMethods.add(resolveClientAuthenticationMethod(authenticationMethod))))
+					.authorizationGrantTypes((grantTypes) ->
+							authorizationGrantTypes.forEach(grantType ->
+									grantTypes.add(resolveAuthorizationGrantType(grantType))))
 					.redirectUris((uris) -> uris.addAll(redirectUris))
 					.scopes((scopes) -> scopes.addAll(clientScopes));
+			// @formatter:on
 
-			RegisteredClient registeredClient = builder.build();
+			Map<String, Object> clientSettingsMap = parseMap(rs.getString("client_settings"));
+			builder.clientSettings(clientSettings ->
+					clientSettings.settings().putAll(clientSettingsMap));
 
-			String tokenSettingsJson = rs.getString("token_settings");
-			if (tokenSettingsJson != null) {
-				Map<String, Object> settings = parseMap(tokenSettingsJson);
-				TokenSettings tokenSettings = registeredClient.getTokenSettings();
+			Map<String, Object> tokenSettingsMap = parseMap(rs.getString("token_settings"));
+			builder.tokenSettings(tokenSettings ->
+					tokenSettings.settings().putAll(tokenSettingsMap));
 
-				Number accessTokenTTL = (Number) settings.get("access_token_ttl");
-				if (accessTokenTTL != null) {
-					tokenSettings.accessTokenTimeToLive(Duration.ofMillis(accessTokenTTL.longValue()));
-				}
-
-				Number refreshTokenTTL = (Number) settings.get("refresh_token_ttl");
-				if (refreshTokenTTL != null) {
-					tokenSettings.refreshTokenTimeToLive(Duration.ofMillis(refreshTokenTTL.longValue()));
-				}
-
-				Boolean reuseRefreshTokens = (Boolean) settings.get("reuse_refresh_tokens");
-				if (reuseRefreshTokens != null) {
-					tokenSettings.reuseRefreshTokens(reuseRefreshTokens);
-				}
-			}
-
-			String clientSettingsJson = rs.getString("client_settings");
-			if (clientSettingsJson != null) {
-				Map<String, Object> settings = parseMap(clientSettingsJson);
-				ClientSettings clientSettings = registeredClient.getClientSettings();
-
-				Boolean requireProofKey = (Boolean) settings.get("require_proof_key");
-				if (requireProofKey != null) {
-					clientSettings.requireProofKey(requireProofKey);
-				}
-
-				Boolean requireUserConsent = (Boolean) settings.get("require_user_consent");
-				if (requireUserConsent != null) {
-					clientSettings.requireUserConsent(requireUserConsent);
-				}
-			}
-
-			return registeredClient;
+			return builder.build();
 		}
 
 		public final void setObjectMapper(ObjectMapper objectMapper) {
@@ -241,10 +230,6 @@ public class JdbcRegisteredClientRepository implements RegisteredClientRepositor
 			return this.objectMapper;
 		}
 
-		private Set<String> parseList(String s) {
-			return s != null ? StringUtils.commaDelimitedListToSet(s) : Collections.emptySet();
-		}
-
 		private Map<String, Object> parseMap(String data) {
 			try {
 				return this.objectMapper.readValue(data, new TypeReference<Map<String, Object>>() {});
@@ -253,54 +238,73 @@ public class JdbcRegisteredClientRepository implements RegisteredClientRepositor
 			}
 		}
 
+		private static AuthorizationGrantType resolveAuthorizationGrantType(String authorizationGrantType) {
+			if (AuthorizationGrantType.AUTHORIZATION_CODE.getValue().equals(authorizationGrantType)) {
+				return AuthorizationGrantType.AUTHORIZATION_CODE;
+			} else if (AuthorizationGrantType.CLIENT_CREDENTIALS.getValue().equals(authorizationGrantType)) {
+				return AuthorizationGrantType.CLIENT_CREDENTIALS;
+			} else if (AuthorizationGrantType.REFRESH_TOKEN.getValue().equals(authorizationGrantType)) {
+				return AuthorizationGrantType.REFRESH_TOKEN;
+			}
+			return new AuthorizationGrantType(authorizationGrantType);		// Custom authorization grant type
+		}
+
+		private static ClientAuthenticationMethod resolveClientAuthenticationMethod(String clientAuthenticationMethod) {
+			if (ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue().equals(clientAuthenticationMethod)) {
+				return ClientAuthenticationMethod.CLIENT_SECRET_BASIC;
+			} else if (ClientAuthenticationMethod.CLIENT_SECRET_POST.getValue().equals(clientAuthenticationMethod)) {
+				return ClientAuthenticationMethod.CLIENT_SECRET_POST;
+			} else if (ClientAuthenticationMethod.NONE.getValue().equals(clientAuthenticationMethod)) {
+				return ClientAuthenticationMethod.NONE;
+			}
+			return new ClientAuthenticationMethod(clientAuthenticationMethod);		// Custom client authentication method
+		}
+
 	}
 
-	public static class DefaultRegisteredClientParametersMapper implements Function<RegisteredClient, List<SqlParameterValue>> {
-
+	/**
+	 * The default {@code Function} that maps {@link RegisteredClient} to a
+	 * {@code List} of {@link SqlParameterValue}.
+	 */
+	public static class RegisteredClientParametersMapper implements Function<RegisteredClient, List<SqlParameterValue>> {
 		private ObjectMapper objectMapper = new ObjectMapper();
+
+		public RegisteredClientParametersMapper() {
+			ClassLoader classLoader = JdbcRegisteredClientRepository.class.getClassLoader();
+			List<Module> securityModules = SecurityJackson2Modules.getModules(classLoader);
+			this.objectMapper.registerModules(securityModules);
+			this.objectMapper.registerModule(new OAuth2AuthorizationServerJackson2Module());
+		}
 
 		@Override
 		public List<SqlParameterValue> apply(RegisteredClient registeredClient) {
-			List<String> clientAuthenticationMethodNames = new ArrayList<>(registeredClient.getClientAuthenticationMethods().size());
-			for (ClientAuthenticationMethod clientAuthenticationMethod : registeredClient.getClientAuthenticationMethods()) {
-				clientAuthenticationMethodNames.add(clientAuthenticationMethod.getValue());
-			}
-
-			List<String> authorizationGrantTypeNames = new ArrayList<>(registeredClient.getAuthorizationGrantTypes().size());
-			for (AuthorizationGrantType authorizationGrantType : registeredClient.getAuthorizationGrantTypes()) {
-				authorizationGrantTypeNames.add(authorizationGrantType.getValue());
-			}
-
-			Instant issuedAt = registeredClient.getClientIdIssuedAt() != null ?
-					registeredClient.getClientIdIssuedAt() : Instant.now();
+			Timestamp clientIdIssuedAt = registeredClient.getClientIdIssuedAt() != null ?
+					Timestamp.from(registeredClient.getClientIdIssuedAt()) : Timestamp.from(Instant.now());
 
 			Timestamp clientSecretExpiresAt = registeredClient.getClientSecretExpiresAt() != null ?
 					Timestamp.from(registeredClient.getClientSecretExpiresAt()) : null;
 
-			Map<String, Object> clientSettings = new HashMap<>();
-			clientSettings.put("require_proof_key", registeredClient.getClientSettings().requireProofKey());
-			clientSettings.put("require_user_consent", registeredClient.getClientSettings().requireUserConsent());
-			String clientSettingsJson = writeMap(clientSettings);
+			List<String> clientAuthenticationMethods = new ArrayList<>(registeredClient.getClientAuthenticationMethods().size());
+			registeredClient.getClientAuthenticationMethods().forEach(clientAuthenticationMethod ->
+					clientAuthenticationMethods.add(clientAuthenticationMethod.getValue()));
 
-			Map<String, Object> tokenSettings = new HashMap<>();
-			tokenSettings.put("access_token_ttl", registeredClient.getTokenSettings().accessTokenTimeToLive().toMillis());
-			tokenSettings.put("reuse_refresh_tokens", registeredClient.getTokenSettings().reuseRefreshTokens());
-			tokenSettings.put("refresh_token_ttl", registeredClient.getTokenSettings().refreshTokenTimeToLive().toMillis());
-			String tokenSettingsJson = writeMap(tokenSettings);
+			List<String> authorizationGrantTypes = new ArrayList<>(registeredClient.getAuthorizationGrantTypes().size());
+			registeredClient.getAuthorizationGrantTypes().forEach(authorizationGrantType ->
+					authorizationGrantTypes.add(authorizationGrantType.getValue()));
 
 			return Arrays.asList(
 					new SqlParameterValue(Types.VARCHAR, registeredClient.getId()),
 					new SqlParameterValue(Types.VARCHAR, registeredClient.getClientId()),
-					new SqlParameterValue(Types.TIMESTAMP, Timestamp.from(issuedAt)),
+					new SqlParameterValue(Types.TIMESTAMP, clientIdIssuedAt),
 					new SqlParameterValue(Types.VARCHAR, registeredClient.getClientSecret()),
 					new SqlParameterValue(Types.TIMESTAMP, clientSecretExpiresAt),
 					new SqlParameterValue(Types.VARCHAR, registeredClient.getClientName()),
-					new SqlParameterValue(Types.VARCHAR, StringUtils.collectionToCommaDelimitedString(clientAuthenticationMethodNames)),
-					new SqlParameterValue(Types.VARCHAR, StringUtils.collectionToCommaDelimitedString(authorizationGrantTypeNames)),
+					new SqlParameterValue(Types.VARCHAR, StringUtils.collectionToCommaDelimitedString(clientAuthenticationMethods)),
+					new SqlParameterValue(Types.VARCHAR, StringUtils.collectionToCommaDelimitedString(authorizationGrantTypes)),
 					new SqlParameterValue(Types.VARCHAR, StringUtils.collectionToCommaDelimitedString(registeredClient.getRedirectUris())),
 					new SqlParameterValue(Types.VARCHAR, StringUtils.collectionToCommaDelimitedString(registeredClient.getScopes())),
-					new SqlParameterValue(Types.VARCHAR, clientSettingsJson),
-					new SqlParameterValue(Types.VARCHAR, tokenSettingsJson));
+					new SqlParameterValue(Types.VARCHAR, writeMap(registeredClient.getClientSettings().settings())),
+					new SqlParameterValue(Types.VARCHAR, writeMap(registeredClient.getTokenSettings().settings())));
 		}
 
 		public final void setObjectMapper(ObjectMapper objectMapper) {
@@ -322,25 +326,4 @@ public class JdbcRegisteredClientRepository implements RegisteredClientRepositor
 
 	}
 
-	static {
-		Map<String, AuthorizationGrantType> am = new HashMap<>();
-		for (AuthorizationGrantType a : Arrays.asList(
-				AuthorizationGrantType.AUTHORIZATION_CODE,
-				AuthorizationGrantType.REFRESH_TOKEN,
-				AuthorizationGrantType.CLIENT_CREDENTIALS,
-				AuthorizationGrantType.PASSWORD,
-				AuthorizationGrantType.IMPLICIT)) {
-			am.put(a.getValue(), a);
-		}
-		AUTHORIZATION_GRANT_TYPE_MAP = Collections.unmodifiableMap(am);
-
-		Map<String, ClientAuthenticationMethod> cm = new HashMap<>();
-		for (ClientAuthenticationMethod c : Arrays.asList(
-				ClientAuthenticationMethod.NONE,
-				ClientAuthenticationMethod.BASIC,
-				ClientAuthenticationMethod.POST)) {
-			cm.put(c.getValue(), c);
-		}
-		CLIENT_AUTHENTICATION_METHOD_MAP = Collections.unmodifiableMap(cm);
-	}
 }

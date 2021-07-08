@@ -40,7 +40,6 @@ import org.springframework.util.StringUtils;
 
 /**
  * A JDBC implementation of an {@link OAuth2AuthorizationConsentService} that uses a
- * <p>
  * {@link JdbcOperations} for {@link OAuth2AuthorizationConsent} persistence.
  *
  * <p>
@@ -50,11 +49,11 @@ import org.springframework.util.StringUtils;
  * therefore MUST be defined in the database schema.
  *
  * @author Ovidiu Popa
+ * @since 0.1.2
  * @see OAuth2AuthorizationConsentService
  * @see OAuth2AuthorizationConsent
  * @see JdbcOperations
  * @see RowMapper
- * @since 0.1.2
  */
 public class JdbcOAuth2AuthorizationConsentService implements OAuth2AuthorizationConsentService {
 
@@ -109,10 +108,8 @@ public class JdbcOAuth2AuthorizationConsentService implements OAuth2Authorizatio
 	@Override
 	public void save(OAuth2AuthorizationConsent authorizationConsent) {
 		Assert.notNull(authorizationConsent, "authorizationConsent cannot be null");
-
-		OAuth2AuthorizationConsent existingAuthorizationConsent =
-				findById(authorizationConsent.getRegisteredClientId(), authorizationConsent.getPrincipalName());
-
+		OAuth2AuthorizationConsent existingAuthorizationConsent = findById(
+				authorizationConsent.getRegisteredClientId(), authorizationConsent.getPrincipalName());
 		if (existingAuthorizationConsent == null) {
 			insertAuthorizationConsent(authorizationConsent);
 		} else {
@@ -205,7 +202,6 @@ public class JdbcOAuth2AuthorizationConsentService implements OAuth2Authorizatio
 	 * {@code ResultSet} to {@link OAuth2AuthorizationConsent}.
 	 */
 	public static class OAuth2AuthorizationConsentRowMapper implements RowMapper<OAuth2AuthorizationConsent> {
-
 		private final RegisteredClientRepository registeredClientRepository;
 
 		public OAuth2AuthorizationConsentRowMapper(RegisteredClientRepository registeredClientRepository) {
@@ -216,9 +212,7 @@ public class JdbcOAuth2AuthorizationConsentService implements OAuth2Authorizatio
 		@Override
 		public OAuth2AuthorizationConsent mapRow(ResultSet rs, int rowNum) throws SQLException {
 			String registeredClientId = rs.getString("registered_client_id");
-
-			RegisteredClient registeredClient = this.registeredClientRepository
-					.findById(registeredClientId);
+			RegisteredClient registeredClient = this.registeredClientRepository.findById(registeredClientId);
 			if (registeredClient == null) {
 				throw new DataRetrievalFailureException(
 						"The RegisteredClient with id '" + registeredClientId + "' was not found in the RegisteredClientRepository.");

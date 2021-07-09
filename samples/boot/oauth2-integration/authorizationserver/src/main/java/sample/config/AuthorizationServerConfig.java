@@ -82,9 +82,7 @@ public class AuthorizationServerConfig {
 
 		// Save registered client in db as if in-memory
 		JdbcRegisteredClientRepository registeredClientRepository = new JdbcRegisteredClientRepository(jdbcTemplate);
-		if (registeredClientRepository.findByClientId(registeredClient.getClientId()) == null) {
-			registeredClientRepository.save(registeredClient);
-		}
+		registeredClientRepository.save(registeredClient);
 
 		return registeredClientRepository;
 	}

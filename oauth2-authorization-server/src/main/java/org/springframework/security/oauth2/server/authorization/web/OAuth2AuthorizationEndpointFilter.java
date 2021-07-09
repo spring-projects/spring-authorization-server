@@ -406,7 +406,7 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 			builder.append("                    <button class=\"btn btn-primary btn-lg\" type=\"submit\">Submit Consent</button>");
 			builder.append("                </div>");
 			builder.append("                <div class=\"form-group\">");
-			builder.append("                    <button class=\"btn btn-link regular\" type=\"submit\">Cancel</button>");
+			builder.append("                    <button class=\"btn btn-link regular\" type=\"reset\">Cancel</button>");
 			builder.append("                </div>");
 			builder.append("            </form>");
 			builder.append("        </div>");

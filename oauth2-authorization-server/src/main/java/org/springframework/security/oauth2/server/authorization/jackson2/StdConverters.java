@@ -19,15 +19,56 @@ package org.springframework.security.oauth2.server.authorization.jackson2;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.util.StdConverter;
 
+import org.springframework.security.oauth2.core.AuthenticationMethod;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
+import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
+import org.springframework.security.oauth2.core.OAuth2AccessToken;
 
 /**
+ * TODO
+ * This class is a straight copy from Spring Security.
+ * It should be consolidated when merging this codebase into Spring Security.
+ *
  * {@code StdConverter} implementations.
  *
  * @author Joe Grandja
- * @since 0.1.2
+ * @since 5.3
  */
 abstract class StdConverters {
+
+	static final class AccessTokenTypeConverter extends StdConverter<JsonNode, OAuth2AccessToken.TokenType> {
+
+		@Override
+		public OAuth2AccessToken.TokenType convert(JsonNode jsonNode) {
+			String value = JsonNodeUtils.findStringValue(jsonNode, "value");
+			if (OAuth2AccessToken.TokenType.BEARER.getValue().equalsIgnoreCase(value)) {
+				return OAuth2AccessToken.TokenType.BEARER;
+			}
+			return null;
+		}
+
+	}
+
+	static final class ClientAuthenticationMethodConverter extends StdConverter<JsonNode, ClientAuthenticationMethod> {
+
+		@Override
+		public ClientAuthenticationMethod convert(JsonNode jsonNode) {
+			String value = JsonNodeUtils.findStringValue(jsonNode, "value");
+			if (ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue().equalsIgnoreCase(value)
+					|| ClientAuthenticationMethod.BASIC.getValue().equalsIgnoreCase(value)) {
+				return ClientAuthenticationMethod.CLIENT_SECRET_BASIC;
+			}
+			if (ClientAuthenticationMethod.CLIENT_SECRET_POST.getValue().equalsIgnoreCase(value)
+					|| ClientAuthenticationMethod.POST.getValue().equalsIgnoreCase(value)) {
+				return ClientAuthenticationMethod.CLIENT_SECRET_POST;
+			}
+			if (ClientAuthenticationMethod.NONE.getValue().equalsIgnoreCase(value)) {
+				return ClientAuthenticationMethod.NONE;
+			}
+			return null;
+		}
+
+	}
 
 	static final class AuthorizationGrantTypeConverter extends StdConverter<JsonNode, AuthorizationGrantType> {
 
@@ -45,6 +86,25 @@ abstract class StdConverters {
 			}
 			if (AuthorizationGrantType.PASSWORD.getValue().equalsIgnoreCase(value)) {
 				return AuthorizationGrantType.PASSWORD;
+			}
+			return null;
+		}
+
+	}
+
+	static final class AuthenticationMethodConverter extends StdConverter<JsonNode, AuthenticationMethod> {
+
+		@Override
+		public AuthenticationMethod convert(JsonNode jsonNode) {
+			String value = JsonNodeUtils.findStringValue(jsonNode, "value");
+			if (AuthenticationMethod.HEADER.getValue().equalsIgnoreCase(value)) {
+				return AuthenticationMethod.HEADER;
+			}
+			if (AuthenticationMethod.FORM.getValue().equalsIgnoreCase(value)) {
+				return AuthenticationMethod.FORM;
+			}
+			if (AuthenticationMethod.QUERY.getValue().equalsIgnoreCase(value)) {
+				return AuthenticationMethod.QUERY;
 			}
 			return null;
 		}

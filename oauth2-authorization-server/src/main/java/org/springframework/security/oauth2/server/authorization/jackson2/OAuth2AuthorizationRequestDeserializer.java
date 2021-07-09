@@ -31,10 +31,14 @@ import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequ
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest.Builder;
 
 /**
+ * TODO
+ * This class is a straight copy from Spring Security.
+ * It should be consolidated when merging this codebase into Spring Security.
+ *
  * A {@code JsonDeserializer} for {@link OAuth2AuthorizationRequest}.
  *
  * @author Joe Grandja
- * @since 0.1.2
+ * @since 5.3
  * @see OAuth2AuthorizationRequest
  * @see OAuth2AuthorizationRequestMixin
  */

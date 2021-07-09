@@ -28,10 +28,14 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
+ * TODO
+ * This class is a straight copy from Spring Security.
+ * It should be consolidated when merging this codebase into Spring Security.
+ *
  * A {@code JsonDeserializer} for {@link Collections#unmodifiableMap(Map)}.
  *
  * @author Joe Grandja
- * @since 0.1.2
+ * @since 5.3
  * @see Collections#unmodifiableMap(Map)
  * @see UnmodifiableMapMixin
  */

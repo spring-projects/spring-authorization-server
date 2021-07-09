@@ -24,10 +24,14 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
+ * TODO
+ * This class is a straight copy from Spring Security.
+ * It should be consolidated when merging this codebase into Spring Security.
+ *
  * Utility class for {@code JsonNode}.
  *
  * @author Joe Grandja
- * @since 0.1.2
+ * @since 5.3
  */
 abstract class JsonNodeUtils {
 

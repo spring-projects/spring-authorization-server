@@ -54,7 +54,7 @@ import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
-import org.springframework.security.oauth2.server.authorization.jackson2.OAuth2ServerJackson2Module;
+import org.springframework.security.oauth2.server.authorization.jackson2.OAuth2AuthorizationServerJackson2Module;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
@@ -317,7 +317,7 @@ public class JdbcOAuth2AuthorizationService implements OAuth2AuthorizationServic
 			ClassLoader classLoader = JdbcOAuth2AuthorizationService.class.getClassLoader();
 			List<Module> securityModules = SecurityJackson2Modules.getModules(classLoader);
 			this.objectMapper.registerModules(securityModules);
-			this.objectMapper.registerModule(new OAuth2ServerJackson2Module());
+			this.objectMapper.registerModule(new OAuth2AuthorizationServerJackson2Module());
 		}
 
 		@Override
@@ -455,7 +455,7 @@ public class JdbcOAuth2AuthorizationService implements OAuth2AuthorizationServic
 			ClassLoader classLoader = JdbcOAuth2AuthorizationService.class.getClassLoader();
 			List<Module> securityModules = SecurityJackson2Modules.getModules(classLoader);
 			this.objectMapper.registerModules(securityModules);
-			this.objectMapper.registerModule(new OAuth2ServerJackson2Module());
+			this.objectMapper.registerModule(new OAuth2AuthorizationServerJackson2Module());
 		}
 
 		@Override

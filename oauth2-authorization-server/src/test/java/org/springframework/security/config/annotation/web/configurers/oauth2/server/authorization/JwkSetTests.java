@@ -33,6 +33,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabase;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseBuilder;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType;
+import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
 import org.springframework.security.config.test.SpringTestRule;
@@ -42,6 +43,7 @@ import org.springframework.security.oauth2.server.authorization.OAuth2Authorizat
 import org.springframework.security.oauth2.server.authorization.client.JdbcRegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.config.ProviderSettings;
+import org.springframework.security.oauth2.server.authorization.jackson2.TestingAuthenticationTokenMixin;
 import org.springframework.security.oauth2.server.authorization.web.NimbusJwkSetEndpointFilter;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -125,8 +127,8 @@ public class JwkSetTests {
 		@Bean
 		OAuth2AuthorizationService authorizationService(JdbcOperations jdbcOperations, RegisteredClientRepository registeredClientRepository) {
 			JdbcOAuth2AuthorizationService authorizationService = new JdbcOAuth2AuthorizationService(jdbcOperations, registeredClientRepository);
-			authorizationService.setAuthorizationRowMapper(new OAuth2ClientCredentialsGrantTests.AuthorizationServerConfiguration.RowMapper(registeredClientRepository));
-			authorizationService.setAuthorizationParametersMapper(new OAuth2ClientCredentialsGrantTests.AuthorizationServerConfiguration.ParametersMapper());
+			authorizationService.setAuthorizationRowMapper(new RowMapper(registeredClientRepository));
+			authorizationService.setAuthorizationParametersMapper(new ParametersMapper());
 			return authorizationService;
 		}
 
@@ -143,6 +145,24 @@ public class JwkSetTests {
 		@Bean
 		JWKSource<SecurityContext> jwkSource() {
 			return jwkSource;
+		}
+
+		static class RowMapper extends JdbcOAuth2AuthorizationService.OAuth2AuthorizationRowMapper {
+
+			RowMapper(RegisteredClientRepository registeredClientRepository) {
+				super(registeredClientRepository);
+				getObjectMapper().addMixIn(TestingAuthenticationToken.class, TestingAuthenticationTokenMixin.class);
+			}
+
+		}
+
+		static class ParametersMapper extends JdbcOAuth2AuthorizationService.OAuth2AuthorizationParametersMapper {
+
+			ParametersMapper() {
+				super();
+				getObjectMapper().addMixIn(TestingAuthenticationToken.class, TestingAuthenticationTokenMixin.class);
+			}
+
 		}
 	}
 

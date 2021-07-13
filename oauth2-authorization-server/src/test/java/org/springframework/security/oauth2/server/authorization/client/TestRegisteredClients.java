@@ -16,6 +16,7 @@
 package org.springframework.security.oauth2.server.authorization.client;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
@@ -28,7 +29,7 @@ public class TestRegisteredClients {
 	public static RegisteredClient.Builder registeredClient() {
 		return RegisteredClient.withId("registration-1")
 				.clientId("client-1")
-				.clientIdIssuedAt(Instant.now())
+				.clientIdIssuedAt(Instant.now().truncatedTo(ChronoUnit.SECONDS))
 				.clientSecret("secret")
 				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
 				.authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
@@ -40,7 +41,7 @@ public class TestRegisteredClients {
 	public static RegisteredClient.Builder registeredClient2() {
 		return RegisteredClient.withId("registration-2")
 				.clientId("client-2")
-				.clientIdIssuedAt(Instant.now())
+				.clientIdIssuedAt(Instant.now().truncatedTo(ChronoUnit.SECONDS))
 				.clientSecret("secret")
 				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
 				.authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
@@ -55,7 +56,7 @@ public class TestRegisteredClients {
 	public static RegisteredClient.Builder registeredPublicClient() {
 		return RegisteredClient.withId("registration-3")
 				.clientId("client-3")
-				.clientIdIssuedAt(Instant.now())
+				.clientIdIssuedAt(Instant.now().truncatedTo(ChronoUnit.SECONDS))
 				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
 				.clientAuthenticationMethod(ClientAuthenticationMethod.NONE)
 				.redirectUri("https://example.com")

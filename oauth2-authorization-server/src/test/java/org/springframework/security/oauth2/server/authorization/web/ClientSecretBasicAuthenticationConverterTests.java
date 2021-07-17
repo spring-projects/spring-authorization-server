@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright 2020-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -99,7 +99,7 @@ public class ClientSecretBasicAuthenticationConverterTests {
 		OAuth2ClientAuthenticationToken authentication = (OAuth2ClientAuthenticationToken) this.converter.convert(request);
 		assertThat(authentication.getPrincipal()).isEqualTo("clientId");
 		assertThat(authentication.getCredentials()).isEqualTo("secret");
-		assertThat(authentication.getClientAuthenticationMethod()).isEqualTo(ClientAuthenticationMethod.BASIC);
+		assertThat(authentication.getClientAuthenticationMethod()).isEqualTo(ClientAuthenticationMethod.CLIENT_SECRET_BASIC);
 	}
 
 	@Test
@@ -109,7 +109,7 @@ public class ClientSecretBasicAuthenticationConverterTests {
 		OAuth2ClientAuthenticationToken authentication = (OAuth2ClientAuthenticationToken) this.converter.convert(request);
 		assertThat(authentication.getPrincipal()).isEqualTo("clientId");
 		assertThat(authentication.getCredentials()).isEqualTo("secret");
-		assertThat(authentication.getClientAuthenticationMethod()).isEqualTo(ClientAuthenticationMethod.BASIC);
+		assertThat(authentication.getClientAuthenticationMethod()).isEqualTo(ClientAuthenticationMethod.CLIENT_SECRET_BASIC);
 		assertThat(authentication.getAdditionalParameters())
 				.containsOnly(
 						entry(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.AUTHORIZATION_CODE.getValue()),

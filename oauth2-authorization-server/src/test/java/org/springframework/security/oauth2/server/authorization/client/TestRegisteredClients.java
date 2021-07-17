@@ -33,7 +33,7 @@ public class TestRegisteredClients {
 				.clientSecret("secret")
 				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
 				.authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
-				.clientAuthenticationMethod(ClientAuthenticationMethod.BASIC)
+				.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
 				.redirectUri("https://example.com")
 				.scope("scope1");
 	}
@@ -46,8 +46,8 @@ public class TestRegisteredClients {
 				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
 				.authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
 				.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
-				.clientAuthenticationMethod(ClientAuthenticationMethod.BASIC)
-				.clientAuthenticationMethod(ClientAuthenticationMethod.POST)
+				.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
+				.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_POST)
 				.redirectUri("https://example.com")
 				.scope("scope1")
 				.scope("scope2");

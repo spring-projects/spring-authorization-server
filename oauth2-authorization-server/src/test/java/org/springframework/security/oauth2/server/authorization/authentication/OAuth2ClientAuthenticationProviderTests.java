@@ -124,7 +124,7 @@ public class OAuth2ClientAuthenticationProviderTests {
 				.thenReturn(registeredClient);
 
 		OAuth2ClientAuthenticationToken authentication = new OAuth2ClientAuthenticationToken(
-				registeredClient.getClientId() + "-invalid", registeredClient.getClientSecret(), ClientAuthenticationMethod.BASIC, null);
+				registeredClient.getClientId() + "-invalid", registeredClient.getClientSecret(), ClientAuthenticationMethod.CLIENT_SECRET_BASIC, null);
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 				.isInstanceOf(OAuth2AuthenticationException.class)
 				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
@@ -139,7 +139,7 @@ public class OAuth2ClientAuthenticationProviderTests {
 				.thenReturn(registeredClient);
 
 		OAuth2ClientAuthenticationToken authentication = new OAuth2ClientAuthenticationToken(
-				registeredClient.getClientId(), registeredClient.getClientSecret() + "-invalid", ClientAuthenticationMethod.BASIC, null);
+				registeredClient.getClientId(), registeredClient.getClientSecret() + "-invalid", ClientAuthenticationMethod.CLIENT_SECRET_BASIC, null);
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 				.isInstanceOf(OAuth2AuthenticationException.class)
 				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
@@ -170,7 +170,7 @@ public class OAuth2ClientAuthenticationProviderTests {
 				.thenReturn(registeredClient);
 
 		OAuth2ClientAuthenticationToken authentication = new OAuth2ClientAuthenticationToken(
-				registeredClient.getClientId(), registeredClient.getClientSecret(), ClientAuthenticationMethod.BASIC, null);
+				registeredClient.getClientId(), registeredClient.getClientSecret(), ClientAuthenticationMethod.CLIENT_SECRET_BASIC, null);
 		OAuth2ClientAuthenticationToken authenticationResult =
 				(OAuth2ClientAuthenticationToken) this.authenticationProvider.authenticate(authentication);
 
@@ -416,7 +416,7 @@ public class OAuth2ClientAuthenticationProviderTests {
 				.thenReturn(registeredClient);
 
 		OAuth2ClientAuthenticationToken authentication = new OAuth2ClientAuthenticationToken(
-				registeredClient.getClientId(), registeredClient.getClientSecret(), ClientAuthenticationMethod.POST, null);
+				registeredClient.getClientId(), registeredClient.getClientSecret(), ClientAuthenticationMethod.CLIENT_SECRET_POST, null);
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 				.isInstanceOf(OAuth2AuthenticationException.class)
 				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())

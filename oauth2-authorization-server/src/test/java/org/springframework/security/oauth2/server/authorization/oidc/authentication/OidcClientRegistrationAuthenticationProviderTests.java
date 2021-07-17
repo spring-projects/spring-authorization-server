@@ -259,7 +259,7 @@ public class OidcClientRegistrationAuthenticationProviderTests {
 		assertThat(registeredClientResult.getClientIdIssuedAt()).isNotNull();
 		assertThat(registeredClientResult.getClientSecret()).isNotNull();
 		assertThat(registeredClientResult.getClientName()).isEqualTo(clientRegistration.getClientName());
-		assertThat(registeredClientResult.getClientAuthenticationMethods()).containsExactly(ClientAuthenticationMethod.BASIC);
+		assertThat(registeredClientResult.getClientAuthenticationMethods()).containsExactly(ClientAuthenticationMethod.CLIENT_SECRET_BASIC);
 		assertThat(registeredClientResult.getRedirectUris()).containsExactly("https://client.example.com");
 		assertThat(registeredClientResult.getAuthorizationGrantTypes())
 				.containsExactlyInAnyOrder(AuthorizationGrantType.AUTHORIZATION_CODE, AuthorizationGrantType.CLIENT_CREDENTIALS);

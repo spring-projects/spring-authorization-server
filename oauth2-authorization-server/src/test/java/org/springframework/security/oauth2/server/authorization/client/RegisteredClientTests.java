@@ -43,7 +43,7 @@ public class RegisteredClientTests {
 	private static final Set<String> SCOPES = Collections.unmodifiableSet(
 			Stream.of("openid", "profile", "email").collect(Collectors.toSet()));
 	private static final Set<ClientAuthenticationMethod> CLIENT_AUTHENTICATION_METHODS =
-			Collections.singleton(ClientAuthenticationMethod.BASIC);
+			Collections.singleton(ClientAuthenticationMethod.CLIENT_SECRET_BASIC);
 
 	@Test
 	public void buildWhenAuthorizationGrantTypesNotSetThenThrowIllegalArgumentException() {
@@ -146,7 +146,7 @@ public class RegisteredClientTests {
 				.build();
 
 		assertThat(registration.getClientAuthenticationMethods())
-				.isEqualTo(Collections.singleton(ClientAuthenticationMethod.BASIC));
+				.isEqualTo(Collections.singleton(ClientAuthenticationMethod.CLIENT_SECRET_BASIC));
 	}
 
 	@Test
@@ -284,6 +284,22 @@ public class RegisteredClientTests {
 				.clientId(CLIENT_ID)
 				.clientSecret(CLIENT_SECRET)
 				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+				.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
+				.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_POST)
+				.redirectUris(redirectUris -> redirectUris.addAll(REDIRECT_URIS))
+				.scopes(scopes -> scopes.addAll(SCOPES))
+				.build();
+
+		assertThat(registration.getClientAuthenticationMethods())
+				.containsExactlyInAnyOrder(ClientAuthenticationMethod.CLIENT_SECRET_BASIC, ClientAuthenticationMethod.CLIENT_SECRET_POST);
+	}
+
+	@Test
+	public void buildWhenBothDeprecatedClientAuthenticationMethodsAreProvidedThenBothNonDeprecatedAreRegistered() {
+		RegisteredClient registration = RegisteredClient.withId(ID)
+				.clientId(CLIENT_ID)
+				.clientSecret(CLIENT_SECRET)
+				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
 				.clientAuthenticationMethod(ClientAuthenticationMethod.BASIC)
 				.clientAuthenticationMethod(ClientAuthenticationMethod.POST)
 				.redirectUris(redirectUris -> redirectUris.addAll(REDIRECT_URIS))
@@ -291,11 +307,29 @@ public class RegisteredClientTests {
 				.build();
 
 		assertThat(registration.getClientAuthenticationMethods())
-				.containsExactlyInAnyOrder(ClientAuthenticationMethod.BASIC, ClientAuthenticationMethod.POST);
+				.containsExactlyInAnyOrder(ClientAuthenticationMethod.CLIENT_SECRET_BASIC, ClientAuthenticationMethod.CLIENT_SECRET_POST);
 	}
 
 	@Test
 	public void buildWhenClientAuthenticationMethodsConsumerIsProvidedThenConsumerAccepted() {
+		RegisteredClient registration = RegisteredClient.withId(ID)
+				.clientId(CLIENT_ID)
+				.clientSecret(CLIENT_SECRET)
+				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+				.clientAuthenticationMethods(clientAuthenticationMethods -> {
+					clientAuthenticationMethods.add(ClientAuthenticationMethod.CLIENT_SECRET_BASIC);
+					clientAuthenticationMethods.add(ClientAuthenticationMethod.CLIENT_SECRET_POST);
+				})
+				.redirectUris(redirectUris -> redirectUris.addAll(REDIRECT_URIS))
+				.scopes(scopes -> scopes.addAll(SCOPES))
+				.build();
+
+		assertThat(registration.getClientAuthenticationMethods())
+				.containsExactlyInAnyOrder(ClientAuthenticationMethod.CLIENT_SECRET_BASIC, ClientAuthenticationMethod.CLIENT_SECRET_POST);
+	}
+
+	@Test
+	public void buildWhenConsumerAddsDeprecatedClientAuthenticationMethodsThenNonDeprecatedAreRegistered() {
 		RegisteredClient registration = RegisteredClient.withId(ID)
 				.clientId(CLIENT_ID)
 				.clientSecret(CLIENT_SECRET)
@@ -309,7 +343,7 @@ public class RegisteredClientTests {
 				.build();
 
 		assertThat(registration.getClientAuthenticationMethods())
-				.containsExactlyInAnyOrder(ClientAuthenticationMethod.BASIC, ClientAuthenticationMethod.POST);
+				.containsExactlyInAnyOrder(ClientAuthenticationMethod.CLIENT_SECRET_BASIC, ClientAuthenticationMethod.CLIENT_SECRET_POST);
 	}
 
 	@Test

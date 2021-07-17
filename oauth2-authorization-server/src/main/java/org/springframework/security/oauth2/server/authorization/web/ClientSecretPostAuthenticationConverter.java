@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright 2020-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,7 +67,7 @@ public class ClientSecretPostAuthenticationConverter implements AuthenticationCo
 			throw new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_REQUEST));
 		}
 
-		return new OAuth2ClientAuthenticationToken(clientId, clientSecret, ClientAuthenticationMethod.POST,
+		return new OAuth2ClientAuthenticationToken(clientId, clientSecret, ClientAuthenticationMethod.CLIENT_SECRET_POST,
 				extractAdditionalParameters(request));
 	}
 

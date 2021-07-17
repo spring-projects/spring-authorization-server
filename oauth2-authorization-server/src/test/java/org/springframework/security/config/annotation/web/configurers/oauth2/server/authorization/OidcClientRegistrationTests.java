@@ -190,7 +190,7 @@ public class OidcClientRegistrationTests {
 		assertThat(clientRegistrationResponse.getScopes())
 				.containsExactlyInAnyOrderElementsOf(clientRegistration.getScopes());
 		assertThat(clientRegistrationResponse.getTokenEndpointAuthenticationMethod())
-				.isEqualTo(ClientAuthenticationMethod.BASIC.getValue());
+				.isEqualTo(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue());
 		assertThat(clientRegistrationResponse.getIdTokenSignedResponseAlgorithm())
 				.isEqualTo(SignatureAlgorithm.RS256.getName());
 	}

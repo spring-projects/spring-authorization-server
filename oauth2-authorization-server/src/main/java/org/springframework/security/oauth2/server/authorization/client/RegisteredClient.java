@@ -486,6 +486,7 @@ public class RegisteredClient implements Serializable {
 			}
 			validateScopes();
 			validateRedirectUris();
+			upgradeClientAuthenticationMethods();
 			return create();
 		}
 
@@ -541,6 +542,17 @@ public class RegisteredClient implements Serializable {
 			for (String redirectUri : redirectUris) {
 				Assert.isTrue(validateRedirectUri(redirectUri),
 						"redirect_uri \"" + redirectUri + "\" is not a valid redirect URI or contains fragment");
+			}
+		}
+
+		private void upgradeClientAuthenticationMethods() {
+			if (this.clientAuthenticationMethods.contains(ClientAuthenticationMethod.BASIC)) {
+				this.clientAuthenticationMethods.remove(ClientAuthenticationMethod.BASIC);
+				this.clientAuthenticationMethods.add(ClientAuthenticationMethod.CLIENT_SECRET_BASIC);
+			}
+			if (this.clientAuthenticationMethods.contains(ClientAuthenticationMethod.POST)) {
+				this.clientAuthenticationMethods.remove(ClientAuthenticationMethod.POST);
+				this.clientAuthenticationMethods.add(ClientAuthenticationMethod.CLIENT_SECRET_POST);
 			}
 		}
 

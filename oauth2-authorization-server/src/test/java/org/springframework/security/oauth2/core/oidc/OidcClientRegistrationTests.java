@@ -56,7 +56,7 @@ public class OidcClientRegistrationTests {
 				.clientSecretExpiresAt(clientSecretExpiresAt)
 				.clientName("client-name")
 				.redirectUri("https://client.example.com")
-				.tokenEndpointAuthenticationMethod(ClientAuthenticationMethod.BASIC.getValue())
+				.tokenEndpointAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue())
 				.grantType(AuthorizationGrantType.AUTHORIZATION_CODE.getValue())
 				.grantType(AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
 				.responseType(OAuth2AuthorizationResponseType.CODE.getValue())
@@ -73,7 +73,7 @@ public class OidcClientRegistrationTests {
 		assertThat(clientRegistration.getClientSecretExpiresAt()).isEqualTo(clientSecretExpiresAt);
 		assertThat(clientRegistration.getClientName()).isEqualTo("client-name");
 		assertThat(clientRegistration.getRedirectUris()).containsOnly("https://client.example.com");
-		assertThat(clientRegistration.getTokenEndpointAuthenticationMethod()).isEqualTo("basic");
+		assertThat(clientRegistration.getTokenEndpointAuthenticationMethod()).isEqualTo(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue());
 		assertThat(clientRegistration.getGrantTypes()).containsExactlyInAnyOrder("authorization_code", "client_credentials");
 		assertThat(clientRegistration.getResponseTypes()).containsOnly("code");
 		assertThat(clientRegistration.getScopes()).containsExactlyInAnyOrder("scope1", "scope2");
@@ -98,7 +98,7 @@ public class OidcClientRegistrationTests {
 		claims.put(OidcClientMetadataClaimNames.CLIENT_SECRET_EXPIRES_AT, clientSecretExpiresAt);
 		claims.put(OidcClientMetadataClaimNames.CLIENT_NAME, "client-name");
 		claims.put(OidcClientMetadataClaimNames.REDIRECT_URIS, Collections.singletonList("https://client.example.com"));
-		claims.put(OidcClientMetadataClaimNames.TOKEN_ENDPOINT_AUTH_METHOD, ClientAuthenticationMethod.BASIC.getValue());
+		claims.put(OidcClientMetadataClaimNames.TOKEN_ENDPOINT_AUTH_METHOD, ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue());
 		claims.put(OidcClientMetadataClaimNames.GRANT_TYPES, Arrays.asList(
 				AuthorizationGrantType.AUTHORIZATION_CODE.getValue(), AuthorizationGrantType.CLIENT_CREDENTIALS.getValue()));
 		claims.put(OidcClientMetadataClaimNames.RESPONSE_TYPES, Collections.singletonList("code"));
@@ -114,7 +114,7 @@ public class OidcClientRegistrationTests {
 		assertThat(clientRegistration.getClientSecretExpiresAt()).isEqualTo(clientSecretExpiresAt);
 		assertThat(clientRegistration.getClientName()).isEqualTo("client-name");
 		assertThat(clientRegistration.getRedirectUris()).containsOnly("https://client.example.com");
-		assertThat(clientRegistration.getTokenEndpointAuthenticationMethod()).isEqualTo("basic");
+		assertThat(clientRegistration.getTokenEndpointAuthenticationMethod()).isEqualTo(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue());
 		assertThat(clientRegistration.getGrantTypes()).containsExactlyInAnyOrder("authorization_code", "client_credentials");
 		assertThat(clientRegistration.getResponseTypes()).containsOnly("code");
 		assertThat(clientRegistration.getScopes()).containsExactlyInAnyOrder("scope1", "scope2");

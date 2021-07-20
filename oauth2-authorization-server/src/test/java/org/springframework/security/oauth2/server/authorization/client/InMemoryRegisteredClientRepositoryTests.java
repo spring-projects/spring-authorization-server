@@ -205,7 +205,7 @@ public class InMemoryRegisteredClientRepositoryTests {
 				.clientId(clientId)
 				.clientSecret(clientSecret)
 				.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
-				.clientAuthenticationMethod(ClientAuthenticationMethod.BASIC)
+				.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
 				.redirectUri("https://client.example.com")
 				.scope("scope1")
 				.build();

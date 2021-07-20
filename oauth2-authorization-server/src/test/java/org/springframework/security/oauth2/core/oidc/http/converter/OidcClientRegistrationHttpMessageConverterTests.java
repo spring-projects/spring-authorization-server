@@ -97,7 +97,7 @@ public class OidcClientRegistrationHttpMessageConverterTests {
 				+"		\"redirect_uris\": [\n"
 				+ "			\"https://client.example.com\"\n"
 				+ "		],\n"
-				+"		\"token_endpoint_auth_method\": \"basic\",\n"
+				+"		\"token_endpoint_auth_method\": \"client_secret_basic\",\n"
 				+"		\"grant_types\": [\n"
 				+"			\"authorization_code\",\n"
 				+"			\"client_credentials\"\n"
@@ -121,7 +121,7 @@ public class OidcClientRegistrationHttpMessageConverterTests {
 		assertThat(clientRegistration.getClientSecretExpiresAt()).isEqualTo(Instant.ofEpochSecond(1607637467L));
 		assertThat(clientRegistration.getClientName()).isEqualTo("client-name");
 		assertThat(clientRegistration.getRedirectUris()).containsOnly("https://client.example.com");
-		assertThat(clientRegistration.getTokenEndpointAuthenticationMethod()).isEqualTo("basic");
+		assertThat(clientRegistration.getTokenEndpointAuthenticationMethod()).isEqualTo(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue());
 		assertThat(clientRegistration.getGrantTypes()).containsExactlyInAnyOrder("authorization_code", "client_credentials");
 		assertThat(clientRegistration.getResponseTypes()).containsOnly("code");
 		assertThat(clientRegistration.getScopes()).containsExactlyInAnyOrder("scope1", "scope2");
@@ -177,7 +177,7 @@ public class OidcClientRegistrationHttpMessageConverterTests {
 				.clientSecretExpiresAt(Instant.ofEpochSecond(1607637467))
 				.clientName("client-name")
 				.redirectUri("https://client.example.com")
-				.tokenEndpointAuthenticationMethod(ClientAuthenticationMethod.BASIC.getValue())
+				.tokenEndpointAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue())
 				.grantType(AuthorizationGrantType.AUTHORIZATION_CODE.getValue())
 				.grantType(AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
 				.responseType(OAuth2AuthorizationResponseType.CODE.getValue())
@@ -198,7 +198,7 @@ public class OidcClientRegistrationHttpMessageConverterTests {
 		assertThat(clientRegistrationResponse).contains("\"client_secret_expires_at\":1607637467");
 		assertThat(clientRegistrationResponse).contains("\"client_name\":\"client-name\"");
 		assertThat(clientRegistrationResponse).contains("\"redirect_uris\":[\"https://client.example.com\"]");
-		assertThat(clientRegistrationResponse).contains("\"token_endpoint_auth_method\":\"basic\"");
+		assertThat(clientRegistrationResponse).contains("\"token_endpoint_auth_method\":\"client_secret_basic\"");
 		assertThat(clientRegistrationResponse).contains("\"grant_types\":[\"authorization_code\",\"client_credentials\"]");
 		assertThat(clientRegistrationResponse).contains("\"response_types\":[\"code\"]");
 		assertThat(clientRegistrationResponse).contains("\"scope\":\"scope1 scope2\"");

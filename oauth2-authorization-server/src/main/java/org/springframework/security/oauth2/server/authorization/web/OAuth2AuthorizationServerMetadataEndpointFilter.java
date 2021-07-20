@@ -28,6 +28,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.server.ServletServerHttpResponse;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
+import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.OAuth2AuthorizationServerMetadata;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationResponseType;
 import org.springframework.security.oauth2.core.http.converter.OAuth2AuthorizationServerMetadataHttpMessageConverter;
@@ -101,8 +102,8 @@ public class OAuth2AuthorizationServerMetadataEndpointFilter extends OncePerRequ
 
 	private static Consumer<List<String>> clientAuthenticationMethods() {
 		return (authenticationMethods) -> {
-			authenticationMethods.add("client_secret_basic");	// TODO: Use ClientAuthenticationMethod.CLIENT_SECRET_BASIC in Spring Security 5.5.0
-			authenticationMethods.add("client_secret_post");	// TODO: Use ClientAuthenticationMethod.CLIENT_SECRET_POST in Spring Security 5.5.0
+			authenticationMethods.add(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue());
+			authenticationMethods.add(ClientAuthenticationMethod.CLIENT_SECRET_POST.getValue());
 		};
 	}
 

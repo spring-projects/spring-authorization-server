@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright 2020-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,14 +36,14 @@ public class OAuth2ClientAuthenticationTokenTests {
 
 	@Test
 	public void constructorWhenClientIdNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> new OAuth2ClientAuthenticationToken(null, "secret", ClientAuthenticationMethod.BASIC, null))
+		assertThatThrownBy(() -> new OAuth2ClientAuthenticationToken(null, "secret", ClientAuthenticationMethod.CLIENT_SECRET_BASIC, null))
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessage("clientId cannot be empty");
 	}
 
 	@Test
 	public void constructorWhenClientSecretNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> new OAuth2ClientAuthenticationToken("clientId", null, ClientAuthenticationMethod.BASIC, null))
+		assertThatThrownBy(() -> new OAuth2ClientAuthenticationToken("clientId", null, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, null))
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessage("clientSecret cannot be empty");
 	}
@@ -65,12 +65,12 @@ public class OAuth2ClientAuthenticationTokenTests {
 	@Test
 	public void constructorWhenClientCredentialsProvidedThenCreated() {
 		OAuth2ClientAuthenticationToken authentication = new OAuth2ClientAuthenticationToken("clientId", "secret",
-				ClientAuthenticationMethod.BASIC, null);
+				ClientAuthenticationMethod.CLIENT_SECRET_BASIC, null);
 		assertThat(authentication.isAuthenticated()).isFalse();
 		assertThat(authentication.getPrincipal().toString()).isEqualTo("clientId");
 		assertThat(authentication.getCredentials()).isEqualTo("secret");
 		assertThat(authentication.getRegisteredClient()).isNull();
-		assertThat(authentication.getClientAuthenticationMethod()).isEqualTo(ClientAuthenticationMethod.BASIC);
+		assertThat(authentication.getClientAuthenticationMethod()).isEqualTo(ClientAuthenticationMethod.CLIENT_SECRET_BASIC);
 	}
 
 	@Test

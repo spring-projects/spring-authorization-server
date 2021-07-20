@@ -141,12 +141,10 @@ public class OidcClientRegistrationAuthenticationProvider implements Authenticat
 				.clientSecret(CLIENT_SECRET_GENERATOR.generateKey())
 				.clientName(clientRegistration.getClientName());
 
-		if ("client_secret_post".equals(clientRegistration.getTokenEndpointAuthenticationMethod())) {
-			// TODO: Use ClientAuthenticationMethod.CLIENT_SECRET_POST in Spring Security 5.5.0
-			builder.clientAuthenticationMethod(ClientAuthenticationMethod.POST);
+		if (ClientAuthenticationMethod.CLIENT_SECRET_POST.getValue().equals(clientRegistration.getTokenEndpointAuthenticationMethod())) {
+			builder.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_POST);
 		} else {
-			// TODO: Use ClientAuthenticationMethod.CLIENT_SECRET_BASIC in Spring Security 5.5.0
-			builder.clientAuthenticationMethod(ClientAuthenticationMethod.BASIC);
+			builder.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC);
 		}
 
 		// TODO Validate redirect_uris and throw OAuth2ErrorCodes2.INVALID_REDIRECT_URI on error

@@ -28,6 +28,7 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.http.converter.HttpMessageNotWritableException;
 import org.springframework.mock.http.MockHttpOutputMessage;
 import org.springframework.mock.http.client.MockClientHttpResponse;
+import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.OAuth2AuthorizationServerMetadata;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -115,15 +116,15 @@ public class OAuth2AuthorizationServerMetadataHttpMessageConverterTests {
 		assertThat(authorizationServerMetadata.getIssuer()).isEqualTo(new URL("https://example.com/issuer1"));
 		assertThat(authorizationServerMetadata.getAuthorizationEndpoint()).isEqualTo(new URL("https://example.com/issuer1/oauth2/authorize"));
 		assertThat(authorizationServerMetadata.getTokenEndpoint()).isEqualTo(new URL("https://example.com/issuer1/oauth2/token"));
-		assertThat(authorizationServerMetadata.getTokenEndpointAuthenticationMethods()).containsExactly("client_secret_basic");
+		assertThat(authorizationServerMetadata.getTokenEndpointAuthenticationMethods()).containsExactly(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue());
 		assertThat(authorizationServerMetadata.getJwkSetUrl()).isEqualTo(new URL("https://example.com/issuer1/oauth2/jwks"));
 		assertThat(authorizationServerMetadata.getScopes()).containsExactly("openid");
 		assertThat(authorizationServerMetadata.getResponseTypes()).containsExactly("code");
 		assertThat(authorizationServerMetadata.getGrantTypes()).containsExactlyInAnyOrder("authorization_code", "client_credentials");
 		assertThat(authorizationServerMetadata.getTokenRevocationEndpoint()).isEqualTo(new URL("https://example.com/issuer1/oauth2/revoke"));
-		assertThat(authorizationServerMetadata.getTokenRevocationEndpointAuthenticationMethods()).containsExactly("client_secret_basic");
+		assertThat(authorizationServerMetadata.getTokenRevocationEndpointAuthenticationMethods()).containsExactly(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue());
 		assertThat(authorizationServerMetadata.getTokenIntrospectionEndpoint()).isEqualTo(new URL("https://example.com/issuer1/oauth2/introspect"));
-		assertThat(authorizationServerMetadata.getTokenIntrospectionEndpointAuthenticationMethods()).containsExactly("client_secret_basic");
+		assertThat(authorizationServerMetadata.getTokenIntrospectionEndpointAuthenticationMethods()).containsExactly(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue());
 		assertThat(authorizationServerMetadata.getCodeChallengeMethods()).containsExactlyInAnyOrder("plain", "S256");
 		assertThat(authorizationServerMetadata.getClaimAsString("custom_claim")).isEqualTo("value");
 		assertThat(authorizationServerMetadata.getClaimAsStringList("custom_collection_claim")).containsExactlyInAnyOrder("value1", "value2");
@@ -161,16 +162,16 @@ public class OAuth2AuthorizationServerMetadataHttpMessageConverterTests {
 						.issuer("https://example.com/issuer1")
 						.authorizationEndpoint("https://example.com/issuer1/oauth2/authorize")
 						.tokenEndpoint("https://example.com/issuer1/oauth2/token")
-						.tokenEndpointAuthenticationMethod("client_secret_basic")
+						.tokenEndpointAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue())
 						.jwkSetUrl("https://example.com/issuer1/oauth2/jwks")
 						.scope("openid")
 						.responseType("code")
 						.grantType("authorization_code")
 						.grantType("client_credentials")
 						.tokenRevocationEndpoint("https://example.com/issuer1/oauth2/revoke")
-						.tokenRevocationEndpointAuthenticationMethod("client_secret_basic")
+						.tokenRevocationEndpointAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue())
 						.tokenIntrospectionEndpoint("https://example.com/issuer1/oauth2/introspect")
-						.tokenIntrospectionEndpointAuthenticationMethod("client_secret_basic")
+						.tokenIntrospectionEndpointAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue())
 						.codeChallengeMethod("plain")
 						.codeChallengeMethod("S256")
 						.claim("custom_claim", "value")

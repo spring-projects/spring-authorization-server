@@ -27,6 +27,7 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.http.converter.HttpMessageNotWritableException;
 import org.springframework.mock.http.MockHttpOutputMessage;
 import org.springframework.mock.http.client.MockClientHttpResponse;
+import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.oidc.OidcProviderConfiguration;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -116,7 +117,7 @@ public class OidcProviderConfigurationHttpMessageConverterTests {
 		assertThat(providerConfiguration.getGrantTypes()).containsExactlyInAnyOrder("authorization_code", "client_credentials");
 		assertThat(providerConfiguration.getSubjectTypes()).containsExactly("public");
 		assertThat(providerConfiguration.getIdTokenSigningAlgorithms()).containsExactly("RS256");
-		assertThat(providerConfiguration.getTokenEndpointAuthenticationMethods()).containsExactly("client_secret_basic");
+		assertThat(providerConfiguration.getTokenEndpointAuthenticationMethods()).containsExactly(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue());
 		assertThat(providerConfiguration.<String>getClaim("custom_claim")).isEqualTo("value");
 		assertThat(providerConfiguration.getClaimAsStringList("custom_collection_claim")).containsExactlyInAnyOrder("value1", "value2");
 	}
@@ -160,7 +161,7 @@ public class OidcProviderConfigurationHttpMessageConverterTests {
 						.grantType("client_credentials")
 						.subjectType("public")
 						.idTokenSigningAlgorithm("RS256")
-						.tokenEndpointAuthenticationMethod("client_secret_basic")
+						.tokenEndpointAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue())
 						.claim("custom_claim", "value")
 						.claim("custom_collection_claim", Arrays.asList("value1", "value2"))
 						.build();

@@ -216,7 +216,7 @@ public class OidcClientRegistrationEndpointFilterTests {
 				.clientId("client-id")
 				.clientIdIssuedAt(Instant.now())
 				.clientSecret("client-secret")
-				.tokenEndpointAuthenticationMethod(ClientAuthenticationMethod.BASIC.getValue())
+				.tokenEndpointAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue())
 				.responseType(OAuth2AuthorizationResponseType.CODE.getValue())
 				.idTokenSignedResponseAlgorithm(SignatureAlgorithm.RS256.getName())
 				.build();

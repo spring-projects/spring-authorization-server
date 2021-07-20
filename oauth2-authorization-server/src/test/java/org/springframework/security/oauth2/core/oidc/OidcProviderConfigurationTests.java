@@ -24,6 +24,8 @@ import java.util.Map;
 
 import org.junit.Test;
 
+import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
@@ -57,7 +59,7 @@ public class OidcProviderConfigurationTests {
 				.grantType("client_credentials")
 				.subjectType("public")
 				.idTokenSigningAlgorithm("RS256")
-				.tokenEndpointAuthenticationMethod("client_secret_basic")
+				.tokenEndpointAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue())
 				.claim("a-claim", "a-value")
 				.build();
 
@@ -70,7 +72,7 @@ public class OidcProviderConfigurationTests {
 		assertThat(providerConfiguration.getGrantTypes()).containsExactlyInAnyOrder("authorization_code", "client_credentials");
 		assertThat(providerConfiguration.getSubjectTypes()).containsExactly("public");
 		assertThat(providerConfiguration.getIdTokenSigningAlgorithms()).containsExactly("RS256");
-		assertThat(providerConfiguration.getTokenEndpointAuthenticationMethods()).containsExactly("client_secret_basic");
+		assertThat(providerConfiguration.getTokenEndpointAuthenticationMethods()).containsExactly(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue());
 		assertThat(providerConfiguration.<String>getClaim("a-claim")).isEqualTo("a-value");
 	}
 

@@ -48,7 +48,7 @@ import org.springframework.web.util.UriComponentsBuilder;
  * @see ProviderSettings
  * @see <a target="_blank" href="https://tools.ietf.org/html/rfc8414#section-3">3. Obtaining Authorization Server Metadata</a>
  */
-public class OAuth2AuthorizationServerMetadataEndpointFilter extends OncePerRequestFilter {
+public final class OAuth2AuthorizationServerMetadataEndpointFilter extends OncePerRequestFilter {
 	/**
 	 * The default endpoint {@code URI} for OAuth 2.0 Authorization Server Metadata requests.
 	 */

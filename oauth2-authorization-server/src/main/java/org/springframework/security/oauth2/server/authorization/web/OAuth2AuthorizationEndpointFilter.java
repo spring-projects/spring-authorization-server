@@ -75,7 +75,7 @@ import org.springframework.web.util.UriComponentsBuilder;
  * @see <a target="_blank" href="https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.1">Section 4.1.1 Authorization Request</a>
  * @see <a target="_blank" href="https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.2">Section 4.1.2 Authorization Response</a>
  */
-public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
+public final class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 	/**
 	 * The default endpoint {@code URI} for authorization requests.
 	 */
@@ -205,7 +205,7 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 	 *
 	 * @param authenticationConverter the {@link AuthenticationConverter} used when attempting to extract an Authorization Request (or Consent) from {@link HttpServletRequest}
 	 */
-	public final void setAuthenticationConverter(AuthenticationConverter authenticationConverter) {
+	public void setAuthenticationConverter(AuthenticationConverter authenticationConverter) {
 		Assert.notNull(authenticationConverter, "authenticationConverter cannot be null");
 		this.authenticationConverter = authenticationConverter;
 	}
@@ -216,7 +216,7 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 	 *
 	 * @param authenticationSuccessHandler the {@link AuthenticationSuccessHandler} used for handling an {@link OAuth2AuthorizationCodeRequestAuthenticationToken}
 	 */
-	public final void setAuthenticationSuccessHandler(AuthenticationSuccessHandler authenticationSuccessHandler) {
+	public void setAuthenticationSuccessHandler(AuthenticationSuccessHandler authenticationSuccessHandler) {
 		Assert.notNull(authenticationSuccessHandler, "authenticationSuccessHandler cannot be null");
 		this.authenticationSuccessHandler = authenticationSuccessHandler;
 	}
@@ -227,7 +227,7 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 	 *
 	 * @param authenticationFailureHandler the {@link AuthenticationFailureHandler} used for handling an {@link OAuth2AuthorizationCodeRequestAuthenticationException}
 	 */
-	public final void setAuthenticationFailureHandler(AuthenticationFailureHandler authenticationFailureHandler) {
+	public void setAuthenticationFailureHandler(AuthenticationFailureHandler authenticationFailureHandler) {
 		Assert.notNull(authenticationFailureHandler, "authenticationFailureHandler cannot be null");
 		this.authenticationFailureHandler = authenticationFailureHandler;
 	}
@@ -238,7 +238,7 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 	 *
 	 * @param consentPage the URI of the custom consent page to redirect to if consent is required (e.g. "/oauth2/consent")
 	 */
-	public final void setConsentPage(String consentPage) {
+	public void setConsentPage(String consentPage) {
 		this.consentPage = consentPage;
 	}
 

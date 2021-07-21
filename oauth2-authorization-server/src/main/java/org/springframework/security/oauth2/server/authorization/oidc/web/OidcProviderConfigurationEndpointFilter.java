@@ -47,7 +47,7 @@ import java.io.IOException;
  * @see ProviderSettings
  * @see <a target="_blank" href="https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderConfigurationRequest">4.1. OpenID Provider Configuration Request</a>
  */
-public class OidcProviderConfigurationEndpointFilter extends OncePerRequestFilter {
+public final class OidcProviderConfigurationEndpointFilter extends OncePerRequestFilter {
 	/**
 	 * The default endpoint {@code URI} for OpenID Provider Configuration requests.
 	 */

@@ -91,7 +91,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
  * @see OAuth2ClientCredentialsAuthenticationProvider
  * @see <a target="_blank" href="https://tools.ietf.org/html/rfc6749#section-3.2">Section 3.2 Token Endpoint</a>
  */
-public class OAuth2TokenEndpointFilter extends OncePerRequestFilter {
+public final class OAuth2TokenEndpointFilter extends OncePerRequestFilter {
 	/**
 	 * The default endpoint {@code URI} for access token requests.
 	 */
@@ -176,7 +176,7 @@ public class OAuth2TokenEndpointFilter extends OncePerRequestFilter {
 	 *
 	 * @param authenticationConverter the {@link AuthenticationConverter} used when attempting to extract an Access Token Request from {@link HttpServletRequest}
 	 */
-	public final void setAuthenticationConverter(AuthenticationConverter authenticationConverter) {
+	public void setAuthenticationConverter(AuthenticationConverter authenticationConverter) {
 		Assert.notNull(authenticationConverter, "authenticationConverter cannot be null");
 		this.authenticationConverter = authenticationConverter;
 	}
@@ -187,7 +187,7 @@ public class OAuth2TokenEndpointFilter extends OncePerRequestFilter {
 	 *
 	 * @param authenticationSuccessHandler the {@link AuthenticationSuccessHandler} used for handling an {@link OAuth2AccessTokenAuthenticationToken}
 	 */
-	public final void setAuthenticationSuccessHandler(AuthenticationSuccessHandler authenticationSuccessHandler) {
+	public void setAuthenticationSuccessHandler(AuthenticationSuccessHandler authenticationSuccessHandler) {
 		Assert.notNull(authenticationSuccessHandler, "authenticationSuccessHandler cannot be null");
 		this.authenticationSuccessHandler = authenticationSuccessHandler;
 	}
@@ -198,7 +198,7 @@ public class OAuth2TokenEndpointFilter extends OncePerRequestFilter {
 	 *
 	 * @param authenticationFailureHandler the {@link AuthenticationFailureHandler} used for handling an {@link OAuth2AuthenticationException}
 	 */
-	public final void setAuthenticationFailureHandler(AuthenticationFailureHandler authenticationFailureHandler) {
+	public void setAuthenticationFailureHandler(AuthenticationFailureHandler authenticationFailureHandler) {
 		Assert.notNull(authenticationFailureHandler, "authenticationFailureHandler cannot be null");
 		this.authenticationFailureHandler = authenticationFailureHandler;
 	}

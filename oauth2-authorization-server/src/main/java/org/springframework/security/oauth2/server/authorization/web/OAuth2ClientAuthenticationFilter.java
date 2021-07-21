@@ -62,7 +62,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
  * @see <a target="_blank" href="https://tools.ietf.org/html/rfc6749#section-2.3">Section 2.3 Client Authentication</a>
  * @see <a target="_blank" href="https://tools.ietf.org/html/rfc6749#section-3.2.1">Section 3.2.1 Token Endpoint Client Authentication</a>
  */
-public class OAuth2ClientAuthenticationFilter extends OncePerRequestFilter {
+public final class OAuth2ClientAuthenticationFilter extends OncePerRequestFilter {
 	private final AuthenticationManager authenticationManager;
 	private final RequestMatcher requestMatcher;
 	private final HttpMessageConverter<OAuth2Error> errorHttpResponseConverter = new OAuth2ErrorHttpMessageConverter();
@@ -121,7 +121,7 @@ public class OAuth2ClientAuthenticationFilter extends OncePerRequestFilter {
 	 *
 	 * @param authenticationConverter used for converting a {@link HttpServletRequest} to an {@link OAuth2ClientAuthenticationToken}
 	 */
-	public final void setAuthenticationConverter(AuthenticationConverter authenticationConverter) {
+	public void setAuthenticationConverter(AuthenticationConverter authenticationConverter) {
 		Assert.notNull(authenticationConverter, "authenticationConverter cannot be null");
 		this.authenticationConverter = authenticationConverter;
 	}
@@ -131,7 +131,7 @@ public class OAuth2ClientAuthenticationFilter extends OncePerRequestFilter {
 	 *
 	 * @param authenticationSuccessHandler the {@link AuthenticationSuccessHandler} used for handling successful authentications
 	 */
-	public final void setAuthenticationSuccessHandler(AuthenticationSuccessHandler authenticationSuccessHandler) {
+	public void setAuthenticationSuccessHandler(AuthenticationSuccessHandler authenticationSuccessHandler) {
 		Assert.notNull(authenticationSuccessHandler, "authenticationSuccessHandler cannot be null");
 		this.authenticationSuccessHandler = authenticationSuccessHandler;
 	}
@@ -141,7 +141,7 @@ public class OAuth2ClientAuthenticationFilter extends OncePerRequestFilter {
 	 *
 	 * @param authenticationFailureHandler the {@link AuthenticationFailureHandler} used for handling failed authentications
 	 */
-	public final void setAuthenticationFailureHandler(AuthenticationFailureHandler authenticationFailureHandler) {
+	public void setAuthenticationFailureHandler(AuthenticationFailureHandler authenticationFailureHandler) {
 		Assert.notNull(authenticationFailureHandler, "authenticationFailureHandler cannot be null");
 		this.authenticationFailureHandler = authenticationFailureHandler;
 	}

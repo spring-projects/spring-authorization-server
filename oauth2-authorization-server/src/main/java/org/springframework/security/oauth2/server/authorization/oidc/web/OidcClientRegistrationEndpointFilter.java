@@ -51,7 +51,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
  * @see OidcClientRegistration
  * @see <a href="https://openid.net/specs/openid-connect-registration-1_0.html#ClientRegistration">3. Client Registration Endpoint</a>
  */
-public class OidcClientRegistrationEndpointFilter extends OncePerRequestFilter {
+public final class OidcClientRegistrationEndpointFilter extends OncePerRequestFilter {
 	/**
 	 * The default endpoint {@code URI} for OpenID Client Registration requests.
 	 */

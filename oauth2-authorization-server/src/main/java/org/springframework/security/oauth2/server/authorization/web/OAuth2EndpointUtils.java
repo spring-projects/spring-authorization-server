@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright 2020-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,22 +15,18 @@
  */
 package org.springframework.security.oauth2.server.authorization.web;
 
-import org.springframework.security.oauth2.core.AuthorizationGrantType;
-import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
-import org.springframework.security.oauth2.core.endpoint.PkceParameterNames;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
+import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.Map;
+
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 
 /**
  * Utility methods for the OAuth 2.0 Protocol Endpoints.
  *
  * @author Joe Grandja
  * @since 0.0.1
- * @see OAuth2AuthorizationEndpointFilter
- * @see OAuth2TokenEndpointFilter
  */
 final class OAuth2EndpointUtils {
 
@@ -50,10 +46,4 @@ final class OAuth2EndpointUtils {
 		return parameters;
 	}
 
-	static boolean matchesPkceTokenRequest(HttpServletRequest request) {
-		return AuthorizationGrantType.AUTHORIZATION_CODE.getValue().equals(
-				request.getParameter(OAuth2ParameterNames.GRANT_TYPE)) &&
-				request.getParameter(OAuth2ParameterNames.CODE) != null &&
-				request.getParameter(PkceParameterNames.CODE_VERIFIER) != null;
-	}
 }

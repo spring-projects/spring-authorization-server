@@ -184,8 +184,8 @@ public class OAuth2TokenIntrospectionHttpMessageConverter extends AbstractHttpMe
 		@Override
 		public Map<String, Object> convert(OAuth2TokenIntrospection source) {
 			Map<String, Object> responseClaims = new LinkedHashMap<>(source.getClaims());
-			if (!CollectionUtils.isEmpty(source.getScope())) {
-				responseClaims.put(OAuth2TokenIntrospectionClaimNames.SCOPE, StringUtils.collectionToDelimitedString(source.getScope(), " "));
+			if (!CollectionUtils.isEmpty(source.getScopes())) {
+				responseClaims.put(OAuth2TokenIntrospectionClaimNames.SCOPE, StringUtils.collectionToDelimitedString(source.getScopes(), " "));
 			}
 			if (source.getExpiresAt() != null) {
 				responseClaims.put(OAuth2TokenIntrospectionClaimNames.EXP, source.getExpiresAt().getEpochSecond());

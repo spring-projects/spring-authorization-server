@@ -218,7 +218,7 @@ public class OAuth2TokenIntrospectionEndpointFilterTests {
 				tokenClaims.getIssuedAt().minusSeconds(1), tokenClaims.getIssuedAt().plusSeconds(1));
 		assertThat(tokenIntrospectionResponse.getExpiresAt()).isBetween(
 				tokenClaims.getExpiresAt().minusSeconds(1), tokenClaims.getExpiresAt().plusSeconds(1));
-		assertThat(tokenIntrospectionResponse.getScope()).containsExactlyInAnyOrderElementsOf(tokenClaims.getScope());
+		assertThat(tokenIntrospectionResponse.getScopes()).containsExactlyInAnyOrderElementsOf(tokenClaims.getScopes());
 		assertThat(tokenIntrospectionResponse.getTokenType()).isEqualTo(tokenClaims.getTokenType());
 		assertThat(tokenIntrospectionResponse.getNotBefore()).isBetween(
 				tokenClaims.getNotBefore().minusSeconds(1), tokenClaims.getNotBefore().plusSeconds(1));

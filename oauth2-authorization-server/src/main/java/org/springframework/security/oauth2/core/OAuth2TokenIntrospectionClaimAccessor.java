@@ -56,7 +56,7 @@ public interface OAuth2TokenIntrospectionClaimAccessor extends ClaimAccessor {
 	 * Returns the scopes {@code (scope)} associated with the token
 	 * @return the scopes associated with the token
 	 */
-	default List<String> getScope() {
+	default List<String> getScopes() {
 		return getClaimAsStringList(OAuth2TokenIntrospectionClaimNames.SCOPE);
 	}
 

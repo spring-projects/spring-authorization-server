@@ -236,7 +236,7 @@ public class OAuth2TokenIntrospectionAuthenticationProviderTests {
 		assertThat(tokenClaims.getClientId()).isEqualTo(authorizedClient.getClientId());
 		assertThat(tokenClaims.getIssuedAt()).isEqualTo(accessToken.getIssuedAt());
 		assertThat(tokenClaims.getExpiresAt()).isEqualTo(accessToken.getExpiresAt());
-		assertThat(tokenClaims.getScope()).containsExactlyInAnyOrderElementsOf(accessToken.getScopes());
+		assertThat(tokenClaims.getScopes()).containsExactlyInAnyOrderElementsOf(accessToken.getScopes());
 		assertThat(tokenClaims.getTokenType()).isEqualTo(accessToken.getTokenType().getValue());
 		assertThat(tokenClaims.getNotBefore()).isEqualTo(jwtClaims.getNotBefore());
 		assertThat(tokenClaims.getSubject()).isEqualTo(jwtClaims.getSubject());

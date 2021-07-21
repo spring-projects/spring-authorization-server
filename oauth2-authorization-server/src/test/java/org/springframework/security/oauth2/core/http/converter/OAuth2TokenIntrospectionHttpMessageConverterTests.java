@@ -90,7 +90,7 @@ public class OAuth2TokenIntrospectionHttpMessageConverterTests {
 		assertThat(tokenIntrospectionResponse.getUsername()).isEqualTo("username1");
 		assertThat(tokenIntrospectionResponse.getIssuedAt()).isEqualTo(Instant.ofEpochSecond(1607633867L));
 		assertThat(tokenIntrospectionResponse.getExpiresAt()).isEqualTo(Instant.ofEpochSecond(1607637467L));
-		assertThat(tokenIntrospectionResponse.getScope()).containsExactlyInAnyOrderElementsOf(Arrays.asList("scope1", "scope2"));
+		assertThat(tokenIntrospectionResponse.getScopes()).containsExactlyInAnyOrderElementsOf(Arrays.asList("scope1", "scope2"));
 		assertThat(tokenIntrospectionResponse.getTokenType()).isEqualTo("Bearer");
 		assertThat(tokenIntrospectionResponse.getNotBefore()).isEqualTo(Instant.ofEpochSecond(1607633867L));
 		assertThat(tokenIntrospectionResponse.getSubject()).isEqualTo("subject1");

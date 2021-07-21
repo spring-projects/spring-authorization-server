@@ -167,7 +167,7 @@ public class OAuth2TokenIntrospectionTests {
 				accessToken.getIssuedAt().minusSeconds(1), accessToken.getIssuedAt().plusSeconds(1));
 		assertThat(tokenIntrospectionResponse.getExpiresAt()).isBetween(
 				accessToken.getExpiresAt().minusSeconds(1), accessToken.getExpiresAt().plusSeconds(1));
-		assertThat(tokenIntrospectionResponse.getScope()).containsExactlyInAnyOrderElementsOf(accessToken.getScopes());
+		assertThat(tokenIntrospectionResponse.getScopes()).containsExactlyInAnyOrderElementsOf(accessToken.getScopes());
 		assertThat(tokenIntrospectionResponse.getTokenType()).isEqualTo(accessToken.getTokenType().getValue());
 		assertThat(tokenIntrospectionResponse.getNotBefore()).isBetween(
 				tokenClaims.getNotBefore().minusSeconds(1), tokenClaims.getNotBefore().plusSeconds(1));
@@ -207,7 +207,7 @@ public class OAuth2TokenIntrospectionTests {
 				refreshToken.getIssuedAt().minusSeconds(1), refreshToken.getIssuedAt().plusSeconds(1));
 		assertThat(tokenIntrospectionResponse.getExpiresAt()).isBetween(
 				refreshToken.getExpiresAt().minusSeconds(1), refreshToken.getExpiresAt().plusSeconds(1));
-		assertThat(tokenIntrospectionResponse.getScope()).isNull();
+		assertThat(tokenIntrospectionResponse.getScopes()).isNull();
 		assertThat(tokenIntrospectionResponse.getTokenType()).isNull();
 		assertThat(tokenIntrospectionResponse.getNotBefore()).isNull();
 		assertThat(tokenIntrospectionResponse.getSubject()).isNull();

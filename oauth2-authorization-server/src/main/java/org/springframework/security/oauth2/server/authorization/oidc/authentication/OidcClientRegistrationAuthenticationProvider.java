@@ -172,7 +172,7 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 				.clientSettings(clientSettings ->
 						clientSettings
 								.requireProofKey(true)
-								.requireUserConsent(true))
+								.requireAuthorizationConsent(true))
 				.tokenSettings(tokenSettings ->
 						tokenSettings
 								.idTokenSignatureAlgorithm(SignatureAlgorithm.RS256));

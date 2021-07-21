@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright 2020-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import java.util.Map;
 public class ClientSettings extends Settings {
 	private static final String CLIENT_SETTING_BASE = "setting.client.";
 	public static final String REQUIRE_PROOF_KEY = CLIENT_SETTING_BASE.concat("require-proof-key");
-	public static final String REQUIRE_USER_CONSENT = CLIENT_SETTING_BASE.concat("require-user-consent");
+	public static final String REQUIRE_AUTHORIZATION_CONSENT = CLIENT_SETTING_BASE.concat("require-authorization-consent");
 
 	/**
 	 * Constructs a {@code ClientSettings}.
@@ -69,31 +69,31 @@ public class ClientSettings extends Settings {
 	}
 
 	/**
-	 * Returns {@code true} if the user's consent is required when the client requests access.
+	 * Returns {@code true} if authorization consent is required when the client requests access.
 	 * The default is {@code false}.
 	 *
-	 * @return {@code true} if the user's consent is required when the client requests access, {@code false} otherwise
+	 * @return {@code true} if authorization consent is required when the client requests access, {@code false} otherwise
 	 */
-	public boolean requireUserConsent() {
-		return setting(REQUIRE_USER_CONSENT);
+	public boolean requireAuthorizationConsent() {
+		return setting(REQUIRE_AUTHORIZATION_CONSENT);
 	}
 
 	/**
-	 * Set to {@code true} if the user's consent is required when the client requests access.
+	 * Set to {@code true} if authorization consent is required when the client requests access.
 	 * This applies to all interactive flows (e.g. {@code authorization_code} and {@code device_code}).
 	 *
-	 * @param requireUserConsent {@code true} if the user's consent is required when the client requests access, {@code false} otherwise
+	 * @param requireAuthorizationConsent {@code true} if authorization consent is required when the client requests access, {@code false} otherwise
 	 * @return the {@link ClientSettings}
 	 */
-	public ClientSettings requireUserConsent(boolean requireUserConsent) {
-		setting(REQUIRE_USER_CONSENT, requireUserConsent);
+	public ClientSettings requireAuthorizationConsent(boolean requireAuthorizationConsent) {
+		setting(REQUIRE_AUTHORIZATION_CONSENT, requireAuthorizationConsent);
 		return this;
 	}
 
 	protected static Map<String, Object> defaultSettings() {
 		Map<String, Object> settings = new HashMap<>();
 		settings.put(REQUIRE_PROOF_KEY, false);
-		settings.put(REQUIRE_USER_CONSENT, false);
+		settings.put(REQUIRE_AUTHORIZATION_CONSENT, false);
 		return settings;
 	}
 }

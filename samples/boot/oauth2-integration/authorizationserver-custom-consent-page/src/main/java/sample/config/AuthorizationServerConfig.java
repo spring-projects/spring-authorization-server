@@ -86,7 +86,7 @@ public class AuthorizationServerConfig {
 				.scope(OidcScopes.OPENID)
 				.scope("message.read")
 				.scope("message.write")
-				.clientSettings(clientSettings -> clientSettings.requireUserConsent(true))
+				.clientSettings(clientSettings -> clientSettings.requireAuthorizationConsent(true))
 				.build();
 		return new InMemoryRegisteredClientRepository(registeredClient);
 	}

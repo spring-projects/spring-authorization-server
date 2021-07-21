@@ -265,7 +265,7 @@ public class OidcClientRegistrationAuthenticationProviderTests {
 				.containsExactlyInAnyOrder(AuthorizationGrantType.AUTHORIZATION_CODE, AuthorizationGrantType.CLIENT_CREDENTIALS);
 		assertThat(registeredClientResult.getScopes()).containsExactlyInAnyOrder("scope1", "scope2");
 		assertThat(registeredClientResult.getClientSettings().requireProofKey()).isTrue();
-		assertThat(registeredClientResult.getClientSettings().requireUserConsent()).isTrue();
+		assertThat(registeredClientResult.getClientSettings().requireAuthorizationConsent()).isTrue();
 		assertThat(registeredClientResult.getTokenSettings().idTokenSignatureAlgorithm()).isEqualTo(SignatureAlgorithm.RS256);
 
 		OidcClientRegistration clientRegistrationResult = authenticationResult.getClientRegistration();

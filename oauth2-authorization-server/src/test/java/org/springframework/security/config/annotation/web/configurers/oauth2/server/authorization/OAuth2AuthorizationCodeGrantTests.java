@@ -389,7 +389,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 					scopes.add("message.read");
 					scopes.add("message.write");
 				})
-				.clientSettings(settings -> settings.requireUserConsent(true))
+				.clientSettings(settings -> settings.requireAuthorizationConsent(true))
 				.build();
 		this.registeredClientRepository.save(registeredClient);
 
@@ -416,7 +416,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 					scopes.add("message.read");
 					scopes.add("message.write");
 				})
-				.clientSettings(settings -> settings.requireUserConsent(true))
+				.clientSettings(settings -> settings.requireAuthorizationConsent(true))
 				.build();
 		this.registeredClientRepository.save(registeredClient);
 
@@ -464,7 +464,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 					scopes.add("message.read");
 					scopes.add("message.write");
 				})
-				.clientSettings(settings -> settings.requireUserConsent(true))
+				.clientSettings(settings -> settings.requireAuthorizationConsent(true))
 				.build();
 		this.registeredClientRepository.save(registeredClient);
 

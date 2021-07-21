@@ -365,7 +365,7 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 	@Test
 	public void authenticateWhenRequireAuthorizationConsentThenReturnAuthorizationConsent() {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
-				.clientSettings(clientSettings -> clientSettings.requireUserConsent(true))
+				.clientSettings(clientSettings -> clientSettings.requireAuthorizationConsent(true))
 				.build();
 		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
 				.thenReturn(registeredClient);
@@ -412,7 +412,7 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 	@Test
 	public void authenticateWhenRequireAuthorizationConsentAndOnlyOpenidScopeRequestedThenAuthorizationConsentNotRequired() {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
-				.clientSettings(clientSettings -> clientSettings.requireUserConsent(true))
+				.clientSettings(clientSettings -> clientSettings.requireAuthorizationConsent(true))
 				.scopes(scopes -> {
 					scopes.clear();
 					scopes.add(OidcScopes.OPENID);
@@ -434,7 +434,7 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 	@Test
 	public void authenticateWhenRequireAuthorizationConsentAndAllPreviouslyApprovedThenAuthorizationConsentNotRequired() {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
-				.clientSettings(clientSettings -> clientSettings.requireUserConsent(true))
+				.clientSettings(clientSettings -> clientSettings.requireAuthorizationConsent(true))
 				.build();
 		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
 				.thenReturn(registeredClient);

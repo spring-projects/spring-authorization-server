@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright 2020-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ public class ClientSettingsTests {
 		ClientSettings clientSettings = new ClientSettings();
 		assertThat(clientSettings.settings()).hasSize(2);
 		assertThat(clientSettings.requireProofKey()).isFalse();
-		assertThat(clientSettings.requireUserConsent()).isFalse();
+		assertThat(clientSettings.requireAuthorizationConsent()).isFalse();
 	}
 
 	@Test
@@ -49,9 +49,9 @@ public class ClientSettingsTests {
 	}
 
 	@Test
-	public void requireUserConsentWhenTrueThenSet() {
-		ClientSettings clientSettings = new ClientSettings().requireUserConsent(true);
-		assertThat(clientSettings.requireUserConsent()).isTrue();
+	public void requireAuthorizationConsentWhenTrueThenSet() {
+		ClientSettings clientSettings = new ClientSettings().requireAuthorizationConsent(true);
+		assertThat(clientSettings.requireAuthorizationConsent()).isTrue();
 	}
 
 	@Test
@@ -60,10 +60,10 @@ public class ClientSettingsTests {
 				.<ClientSettings>setting("name1", "value1")
 				.requireProofKey(true)
 				.<ClientSettings>settings(settings -> settings.put("name2", "value2"))
-				.requireUserConsent(true);
+				.requireAuthorizationConsent(true);
 		assertThat(clientSettings.settings()).hasSize(4);
 		assertThat(clientSettings.requireProofKey()).isTrue();
-		assertThat(clientSettings.requireUserConsent()).isTrue();
+		assertThat(clientSettings.requireAuthorizationConsent()).isTrue();
 		assertThat(clientSettings.<String>setting("name1")).isEqualTo("value1");
 		assertThat(clientSettings.<String>setting("name2")).isEqualTo("value2");
 	}

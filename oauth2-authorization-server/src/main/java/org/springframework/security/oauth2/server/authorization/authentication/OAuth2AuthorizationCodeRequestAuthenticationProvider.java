@@ -341,7 +341,7 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 	private static boolean requireAuthorizationConsent(RegisteredClient registeredClient,
 			OAuth2AuthorizationRequest authorizationRequest, OAuth2AuthorizationConsent authorizationConsent) {
 
-		if (!registeredClient.getClientSettings().requireUserConsent()) {
+		if (!registeredClient.getClientSettings().requireAuthorizationConsent()) {
 			return false;
 		}
 		// 'openid' scope does not require consent

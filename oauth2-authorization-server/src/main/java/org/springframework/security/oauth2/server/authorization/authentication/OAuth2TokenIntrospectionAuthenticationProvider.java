@@ -47,7 +47,7 @@ import static org.springframework.security.oauth2.server.authorization.authentic
  * @see OAuth2AuthorizationService
  * @see <a target="_blank" href="https://tools.ietf.org/html/rfc7662#section-2.1">Section 2.1 Introspection Request</a>
  */
-public class OAuth2TokenIntrospectionAuthenticationProvider implements AuthenticationProvider {
+public final class OAuth2TokenIntrospectionAuthenticationProvider implements AuthenticationProvider {
 	private final RegisteredClientRepository registeredClientRepository;
 	private final OAuth2AuthorizationService authorizationService;
 

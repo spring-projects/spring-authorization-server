@@ -39,7 +39,7 @@ import static org.springframework.security.oauth2.server.authorization.authentic
  * @see OAuth2AuthorizationService
  * @see <a target="_blank" href="https://tools.ietf.org/html/rfc7009#section-2.1">Section 2.1 Revocation Request</a>
  */
-public class OAuth2TokenRevocationAuthenticationProvider implements AuthenticationProvider {
+public final class OAuth2TokenRevocationAuthenticationProvider implements AuthenticationProvider {
 	private final OAuth2AuthorizationService authorizationService;
 
 	/**

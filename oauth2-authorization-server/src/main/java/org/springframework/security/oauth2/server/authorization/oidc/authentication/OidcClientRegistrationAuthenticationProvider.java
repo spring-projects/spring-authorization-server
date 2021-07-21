@@ -54,7 +54,7 @@ import org.springframework.util.CollectionUtils;
  * @see OAuth2AuthorizationService
  * @see <a href="https://openid.net/specs/openid-connect-registration-1_0.html#ClientRegistration">3. Client Registration Endpoint</a>
  */
-public class OidcClientRegistrationAuthenticationProvider implements AuthenticationProvider {
+public final class OidcClientRegistrationAuthenticationProvider implements AuthenticationProvider {
 	private static final StringKeyGenerator CLIENT_ID_GENERATOR = new Base64StringKeyGenerator(
 			Base64.getUrlEncoder().withoutPadding(), 32);
 	private static final StringKeyGenerator CLIENT_SECRET_GENERATOR = new Base64StringKeyGenerator(

@@ -63,7 +63,7 @@ import org.springframework.web.util.UriComponentsBuilder;
  * @see OAuth2AuthorizationConsentService
  * @see <a target="_blank" href="https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.1">Section 4.1.1 Authorization Request</a>
  */
-public class OAuth2AuthorizationCodeRequestAuthenticationProvider implements AuthenticationProvider {
+public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implements AuthenticationProvider {
 	private static final OAuth2TokenType STATE_TOKEN_TYPE = new OAuth2TokenType(OAuth2ParameterNames.STATE);
 	private static final String PKCE_ERROR_URI = "https://datatracker.ietf.org/doc/html/rfc7636#section-4.4.1";
 	private static final Pattern LOOPBACK_ADDRESS_PATTERN =

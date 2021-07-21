@@ -55,7 +55,7 @@ import org.springframework.util.StringUtils;
  * @see OAuth2AuthorizationService
  * @see PasswordEncoder
  */
-public class OAuth2ClientAuthenticationProvider implements AuthenticationProvider {
+public final class OAuth2ClientAuthenticationProvider implements AuthenticationProvider {
 	private static final OAuth2TokenType AUTHORIZATION_CODE_TOKEN_TYPE = new OAuth2TokenType(OAuth2ParameterNames.CODE);
 	private final RegisteredClientRepository registeredClientRepository;
 	private final OAuth2AuthorizationService authorizationService;
@@ -84,7 +84,7 @@ public class OAuth2ClientAuthenticationProvider implements AuthenticationProvide
 	 *
 	 * @param passwordEncoder the {@link PasswordEncoder} used to validate the client secret
 	 */
-	public final void setPasswordEncoder(PasswordEncoder passwordEncoder) {
+	public void setPasswordEncoder(PasswordEncoder passwordEncoder) {
 		Assert.notNull(passwordEncoder, "passwordEncoder cannot be null");
 		this.passwordEncoder = passwordEncoder;
 	}

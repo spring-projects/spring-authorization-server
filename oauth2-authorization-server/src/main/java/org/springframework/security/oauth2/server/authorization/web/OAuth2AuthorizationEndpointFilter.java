@@ -38,10 +38,8 @@ import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationResp
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeRequestAuthenticationException;
-import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeRequestAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeRequestAuthenticationToken;
-import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.web.authentication.OAuth2AuthorizationCodeRequestAuthenticationConverter;
 import org.springframework.security.web.DefaultRedirectStrategy;
 import org.springframework.security.web.RedirectStrategy;
@@ -88,33 +86,6 @@ public final class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilte
 	private AuthenticationSuccessHandler authenticationSuccessHandler = this::sendAuthorizationResponse;
 	private AuthenticationFailureHandler authenticationFailureHandler = this::sendErrorResponse;
 	private String consentPage;
-
-	/**
-	 * Constructs an {@code OAuth2AuthorizationEndpointFilter} using the provided parameters.
-	 *
-	 * @param registeredClientRepository the repository of registered clients
-	 * @param authorizationService the authorization service
-	 * @deprecated use {@link #OAuth2AuthorizationEndpointFilter(AuthenticationManager)} instead.
-	 */
-	@Deprecated
-	public OAuth2AuthorizationEndpointFilter(RegisteredClientRepository registeredClientRepository,
-			OAuth2AuthorizationService authorizationService) {
-		this(null);
-	}
-
-	/**
-	 * Constructs an {@code OAuth2AuthorizationEndpointFilter} using the provided parameters.
-	 *
-	 * @param registeredClientRepository the repository of registered clients
-	 * @param authorizationService the authorization service
-	 * @param authorizationEndpointUri the endpoint {@code URI} for authorization requests
-	 * @deprecated use {@link #OAuth2AuthorizationEndpointFilter(AuthenticationManager, String)} instead.
-	 */
-	@Deprecated
-	public OAuth2AuthorizationEndpointFilter(RegisteredClientRepository registeredClientRepository,
-			OAuth2AuthorizationService authorizationService, String authorizationEndpointUri) {
-		this(null, authorizationEndpointUri);
-	}
 
 	/**
 	 * Constructs an {@code OAuth2AuthorizationEndpointFilter} using the provided parameters.

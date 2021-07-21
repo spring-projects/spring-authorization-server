@@ -55,7 +55,7 @@ public class OidcClientRegistrationEndpointFilter extends OncePerRequestFilter {
 	/**
 	 * The default endpoint {@code URI} for OpenID Client Registration requests.
 	 */
-	public static final String DEFAULT_OIDC_CLIENT_REGISTRATION_ENDPOINT_URI = "/connect/register";
+	private static final String DEFAULT_OIDC_CLIENT_REGISTRATION_ENDPOINT_URI = "/connect/register";
 
 	private final AuthenticationManager authenticationManager;
 	private final RequestMatcher clientRegistrationEndpointMatcher;

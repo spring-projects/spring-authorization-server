@@ -63,8 +63,6 @@ import org.springframework.security.oauth2.server.authorization.client.JdbcRegis
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
-import org.springframework.security.oauth2.server.authorization.oidc.web.OidcClientRegistrationEndpointFilter;
-import org.springframework.security.oauth2.server.authorization.web.OAuth2TokenEndpointFilter;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
@@ -82,6 +80,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * @author Joe Grandja
  */
 public class OidcClientRegistrationTests {
+	private static final String DEFAULT_TOKEN_ENDPOINT_URI = "/oauth2/token";
+	private static final String DEFAULT_OIDC_CLIENT_REGISTRATION_ENDPOINT_URI = "/connect/register";
 	private static final HttpMessageConverter<OAuth2AccessTokenResponse> accessTokenHttpResponseConverter =
 			new OAuth2AccessTokenResponseHttpMessageConverter();
 	private static final HttpMessageConverter<OidcClientRegistration> clientRegistrationHttpMessageConverter =
@@ -137,7 +137,7 @@ public class OidcClientRegistrationTests {
 				.build();
 		this.registeredClientRepository.save(registeredClient);
 
-		MvcResult mvcResult = this.mvc.perform(post(OAuth2TokenEndpointFilter.DEFAULT_TOKEN_ENDPOINT_URI)
+		MvcResult mvcResult = this.mvc.perform(post(DEFAULT_TOKEN_ENDPOINT_URI)
 				.param(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
 				.param(OAuth2ParameterNames.SCOPE, clientRegistrationScope)
 				.header(HttpHeaders.AUTHORIZATION, "Basic " + encodeBasicAuth(
@@ -166,7 +166,7 @@ public class OidcClientRegistrationTests {
 		httpHeaders.setBearerAuth(accessToken.getTokenValue());
 
 		// Register the client
-		mvcResult = this.mvc.perform(post(OidcClientRegistrationEndpointFilter.DEFAULT_OIDC_CLIENT_REGISTRATION_ENDPOINT_URI)
+		mvcResult = this.mvc.perform(post(DEFAULT_OIDC_CLIENT_REGISTRATION_ENDPOINT_URI)
 				.headers(httpHeaders)
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(getClientRegistrationRequestContent(clientRegistration)))

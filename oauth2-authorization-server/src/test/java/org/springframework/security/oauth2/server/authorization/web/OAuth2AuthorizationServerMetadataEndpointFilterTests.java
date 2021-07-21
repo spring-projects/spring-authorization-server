@@ -40,6 +40,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
  * @author Daniel Garnier-Moiroux
  */
 public class OAuth2AuthorizationServerMetadataEndpointFilterTests {
+	private static final String DEFAULT_OAUTH2_AUTHORIZATION_SERVER_METADATA_ENDPOINT_URI = "/.well-known/oauth-authorization-server";
 
 	@Test
 	public void constructorWhenProviderSettingsNullThenThrowIllegalArgumentException() {
@@ -69,7 +70,7 @@ public class OAuth2AuthorizationServerMetadataEndpointFilterTests {
 		OAuth2AuthorizationServerMetadataEndpointFilter filter =
 				new OAuth2AuthorizationServerMetadataEndpointFilter(new ProviderSettings().issuer("https://example.com"));
 
-		String requestUri = OAuth2AuthorizationServerMetadataEndpointFilter.DEFAULT_OAUTH2_AUTHORIZATION_SERVER_METADATA_ENDPOINT_URI;
+		String requestUri = DEFAULT_OAUTH2_AUTHORIZATION_SERVER_METADATA_ENDPOINT_URI;
 		MockHttpServletRequest request = new MockHttpServletRequest("POST", requestUri);
 		request.setServletPath(requestUri);
 		MockHttpServletResponse response = new MockHttpServletResponse();
@@ -98,7 +99,7 @@ public class OAuth2AuthorizationServerMetadataEndpointFilterTests {
 		OAuth2AuthorizationServerMetadataEndpointFilter filter =
 				new OAuth2AuthorizationServerMetadataEndpointFilter(providerSettings);
 
-		String requestUri = OAuth2AuthorizationServerMetadataEndpointFilter.DEFAULT_OAUTH2_AUTHORIZATION_SERVER_METADATA_ENDPOINT_URI;
+		String requestUri = DEFAULT_OAUTH2_AUTHORIZATION_SERVER_METADATA_ENDPOINT_URI;
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestUri);
 		request.setServletPath(requestUri);
 		MockHttpServletResponse response = new MockHttpServletResponse();
@@ -131,7 +132,7 @@ public class OAuth2AuthorizationServerMetadataEndpointFilterTests {
 		OAuth2AuthorizationServerMetadataEndpointFilter filter =
 				new OAuth2AuthorizationServerMetadataEndpointFilter(providerSettings);
 
-		String requestUri = OAuth2AuthorizationServerMetadataEndpointFilter.DEFAULT_OAUTH2_AUTHORIZATION_SERVER_METADATA_ENDPOINT_URI;
+		String requestUri = DEFAULT_OAUTH2_AUTHORIZATION_SERVER_METADATA_ENDPOINT_URI;
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestUri);
 		request.setServletPath(requestUri);
 		MockHttpServletResponse response = new MockHttpServletResponse();

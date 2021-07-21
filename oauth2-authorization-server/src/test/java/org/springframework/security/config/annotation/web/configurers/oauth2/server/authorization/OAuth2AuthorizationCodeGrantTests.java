@@ -88,8 +88,6 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
 import org.springframework.security.oauth2.server.authorization.config.ProviderSettings;
 import org.springframework.security.oauth2.server.authorization.jackson2.TestingAuthenticationTokenMixin;
-import org.springframework.security.oauth2.server.authorization.web.OAuth2AuthorizationEndpointFilter;
-import org.springframework.security.oauth2.server.authorization.web.OAuth2TokenEndpointFilter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
@@ -124,6 +122,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * @author Daniel Garnier-Moiroux
  */
 public class OAuth2AuthorizationCodeGrantTests {
+	private static final String DEFAULT_AUTHORIZATION_ENDPOINT_URI = "/oauth2/authorize";
+	private static final String DEFAULT_TOKEN_ENDPOINT_URI = "/oauth2/token";
 	// See RFC 7636: Appendix B.  Example for the S256 code_challenge_method
 	// https://tools.ietf.org/html/rfc7636#appendix-B
 	private static final String S256_CODE_VERIFIER = "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk";
@@ -203,7 +203,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 		this.registeredClientRepository.save(registeredClient);
 
-		this.mvc.perform(get(OAuth2AuthorizationEndpointFilter.DEFAULT_AUTHORIZATION_ENDPOINT_URI)
+		this.mvc.perform(get(DEFAULT_AUTHORIZATION_ENDPOINT_URI)
 				.params(getAuthorizationRequestParameters(registeredClient)))
 				.andExpect(status().isUnauthorized())
 				.andReturn();
@@ -215,7 +215,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 
-		this.mvc.perform(get(OAuth2AuthorizationEndpointFilter.DEFAULT_AUTHORIZATION_ENDPOINT_URI)
+		this.mvc.perform(get(DEFAULT_AUTHORIZATION_ENDPOINT_URI)
 				.params(getAuthorizationRequestParameters(registeredClient)))
 				.andExpect(status().isBadRequest())
 				.andReturn();
@@ -225,7 +225,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 	public void requestWhenAuthorizationRequestAuthenticatedThenRedirectToClient() throws Exception {
 		this.spring.register(AuthorizationServerConfiguration.class).autowire();
 
-		assertAuthorizationRequestRedirectsToClient(OAuth2AuthorizationEndpointFilter.DEFAULT_AUTHORIZATION_ENDPOINT_URI);
+		assertAuthorizationRequestRedirectsToClient(DEFAULT_AUTHORIZATION_ENDPOINT_URI);
 	}
 
 	@Test
@@ -264,7 +264,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 		this.authorizationService.save(authorization);
 
 		OAuth2AccessTokenResponse accessTokenResponse = assertTokenRequestReturnsAccessTokenResponse(
-				registeredClient, authorization, OAuth2TokenEndpointFilter.DEFAULT_TOKEN_ENDPOINT_URI);
+				registeredClient, authorization, DEFAULT_TOKEN_ENDPOINT_URI);
 
 		// Assert user authorities was propagated as claim in JWT
 		Jwt jwt = this.jwtDecoder.decode(accessTokenResponse.getAccessToken().getTokenValue());
@@ -327,7 +327,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredPublicClient().build();
 		this.registeredClientRepository.save(registeredClient);
 
-		MvcResult mvcResult = this.mvc.perform(get(OAuth2AuthorizationEndpointFilter.DEFAULT_AUTHORIZATION_ENDPOINT_URI)
+		MvcResult mvcResult = this.mvc.perform(get(DEFAULT_AUTHORIZATION_ENDPOINT_URI)
 				.params(getAuthorizationRequestParameters(registeredClient))
 				.param(PkceParameterNames.CODE_CHALLENGE, S256_CODE_CHALLENGE)
 				.param(PkceParameterNames.CODE_CHALLENGE_METHOD, "S256")
@@ -342,7 +342,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 		assertThat(authorizationCodeAuthorization).isNotNull();
 		assertThat(authorizationCodeAuthorization.getAuthorizationGrantType()).isEqualTo(AuthorizationGrantType.AUTHORIZATION_CODE);
 
-		this.mvc.perform(post(OAuth2TokenEndpointFilter.DEFAULT_TOKEN_ENDPOINT_URI)
+		this.mvc.perform(post(DEFAULT_TOKEN_ENDPOINT_URI)
 				.params(getTokenRequestParameters(registeredClient, authorizationCodeAuthorization))
 				.param(OAuth2ParameterNames.CLIENT_ID, registeredClient.getClientId())
 				.param(PkceParameterNames.CODE_VERIFIER, S256_CODE_VERIFIER))
@@ -374,7 +374,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();
 		this.authorizationService.save(authorization);
 
-		this.mvc.perform(post(OAuth2TokenEndpointFilter.DEFAULT_TOKEN_ENDPOINT_URI)
+		this.mvc.perform(post(DEFAULT_TOKEN_ENDPOINT_URI)
 				.params(getTokenRequestParameters(registeredClient, authorization))
 				.header(HttpHeaders.AUTHORIZATION, getAuthorizationHeader(registeredClient)));
 	}
@@ -393,7 +393,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 				.build();
 		this.registeredClientRepository.save(registeredClient);
 
-		String consentPage = this.mvc.perform(get(OAuth2AuthorizationEndpointFilter.DEFAULT_AUTHORIZATION_ENDPOINT_URI)
+		String consentPage = this.mvc.perform(get(DEFAULT_AUTHORIZATION_ENDPOINT_URI)
 				.params(getAuthorizationRequestParameters(registeredClient))
 				.with(user("user")))
 				.andExpect(status().is2xxSuccessful())
@@ -425,7 +425,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 				.build();
 		this.authorizationService.save(authorization);
 
-		MvcResult mvcResult = this.mvc.perform(post(OAuth2AuthorizationEndpointFilter.DEFAULT_AUTHORIZATION_ENDPOINT_URI)
+		MvcResult mvcResult = this.mvc.perform(post(DEFAULT_AUTHORIZATION_ENDPOINT_URI)
 				.param(OAuth2ParameterNames.CLIENT_ID, registeredClient.getClientId())
 				.param(OAuth2ParameterNames.SCOPE, "message.read")
 				.param(OAuth2ParameterNames.SCOPE, "message.write")
@@ -440,7 +440,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 		String authorizationCode = extractParameterFromRedirectUri(redirectedUrl, "code");
 		OAuth2Authorization authorizationCodeAuthorization = this.authorizationService.findByToken(authorizationCode, AUTHORIZATION_CODE_TOKEN_TYPE);
 
-		this.mvc.perform(post(OAuth2TokenEndpointFilter.DEFAULT_TOKEN_ENDPOINT_URI)
+		this.mvc.perform(post(DEFAULT_TOKEN_ENDPOINT_URI)
 				.params(getTokenRequestParameters(registeredClient, authorizationCodeAuthorization))
 				.header(HttpHeaders.AUTHORIZATION, getAuthorizationHeader(registeredClient)))
 				.andExpect(status().isOk())
@@ -468,7 +468,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 				.build();
 		this.registeredClientRepository.save(registeredClient);
 
-		MvcResult mvcResult = this.mvc.perform(get(OAuth2AuthorizationEndpointFilter.DEFAULT_AUTHORIZATION_ENDPOINT_URI)
+		MvcResult mvcResult = this.mvc.perform(get(DEFAULT_AUTHORIZATION_ENDPOINT_URI)
 				.params(getAuthorizationRequestParameters(registeredClient))
 				.with(user("user")))
 				.andExpect(status().is3xxRedirection())
@@ -509,7 +509,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 		when(authorizationRequestAuthenticationProvider.supports(eq(OAuth2AuthorizationCodeRequestAuthenticationToken.class))).thenReturn(true);
 		when(authorizationRequestAuthenticationProvider.authenticate(any())).thenReturn(authorizationCodeRequestAuthenticationResult);
 
-		this.mvc.perform(get(OAuth2AuthorizationEndpointFilter.DEFAULT_AUTHORIZATION_ENDPOINT_URI)
+		this.mvc.perform(get(DEFAULT_AUTHORIZATION_ENDPOINT_URI)
 				.params(getAuthorizationRequestParameters(registeredClient))
 				.with(user("user")))
 				.andExpect(status().isOk());

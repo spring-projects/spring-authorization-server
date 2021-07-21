@@ -52,7 +52,7 @@ public class OAuth2AuthorizationServerMetadataEndpointFilter extends OncePerRequ
 	/**
 	 * The default endpoint {@code URI} for OAuth 2.0 Authorization Server Metadata requests.
 	 */
-	public static final String DEFAULT_OAUTH2_AUTHORIZATION_SERVER_METADATA_ENDPOINT_URI = "/.well-known/oauth-authorization-server";
+	private static final String DEFAULT_OAUTH2_AUTHORIZATION_SERVER_METADATA_ENDPOINT_URI = "/.well-known/oauth-authorization-server";
 
 	private final ProviderSettings providerSettings;
 	private final RequestMatcher requestMatcher;

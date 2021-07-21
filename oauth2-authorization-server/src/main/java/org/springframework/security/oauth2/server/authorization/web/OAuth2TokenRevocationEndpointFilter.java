@@ -57,7 +57,7 @@ public class OAuth2TokenRevocationEndpointFilter extends OncePerRequestFilter {
 	/**
 	 * The default endpoint {@code URI} for token revocation requests.
 	 */
-	public static final String DEFAULT_TOKEN_REVOCATION_ENDPOINT_URI = "/oauth2/revoke";
+	private static final String DEFAULT_TOKEN_REVOCATION_ENDPOINT_URI = "/oauth2/revoke";
 
 	private final AuthenticationManager authenticationManager;
 	private final RequestMatcher tokenRevocationEndpointMatcher;

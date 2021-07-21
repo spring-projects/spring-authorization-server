@@ -51,6 +51,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
  * @author Joe Grandja
  */
 public class NimbusJwkSetEndpointFilterTests {
+	private static final String DEFAULT_JWK_SET_ENDPOINT_URI = "/oauth2/jwks";
 	private List<JWK> jwkList;
 	private JWKSource<SecurityContext> jwkSource;
 	private NimbusJwkSetEndpointFilter filter;
@@ -91,7 +92,7 @@ public class NimbusJwkSetEndpointFilterTests {
 
 	@Test
 	public void doFilterWhenJwkSetRequestPostThenNotProcessed() throws Exception {
-		String requestUri = NimbusJwkSetEndpointFilter.DEFAULT_JWK_SET_ENDPOINT_URI;
+		String requestUri = DEFAULT_JWK_SET_ENDPOINT_URI;
 		MockHttpServletRequest request = new MockHttpServletRequest("POST", requestUri);
 		request.setServletPath(requestUri);
 		MockHttpServletResponse response = new MockHttpServletResponse();
@@ -109,7 +110,7 @@ public class NimbusJwkSetEndpointFilterTests {
 		ECKey ecJwk = TestJwks.DEFAULT_EC_JWK;
 		this.jwkList.add(ecJwk);
 
-		String requestUri = NimbusJwkSetEndpointFilter.DEFAULT_JWK_SET_ENDPOINT_URI;
+		String requestUri = DEFAULT_JWK_SET_ENDPOINT_URI;
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestUri);
 		request.setServletPath(requestUri);
 		MockHttpServletResponse response = new MockHttpServletResponse();
@@ -142,7 +143,7 @@ public class NimbusJwkSetEndpointFilterTests {
 		OctetSequenceKey secretJwk = TestJwks.DEFAULT_SECRET_JWK;
 		this.jwkList.add(secretJwk);
 
-		String requestUri = NimbusJwkSetEndpointFilter.DEFAULT_JWK_SET_ENDPOINT_URI;
+		String requestUri = DEFAULT_JWK_SET_ENDPOINT_URI;
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestUri);
 		request.setServletPath(requestUri);
 		MockHttpServletResponse response = new MockHttpServletResponse();

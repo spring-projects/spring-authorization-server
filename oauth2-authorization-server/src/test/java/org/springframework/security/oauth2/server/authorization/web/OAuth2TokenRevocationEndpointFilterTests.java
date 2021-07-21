@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright 2020-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,6 +62,7 @@ import static org.mockito.Mockito.when;
  * @author Joe Grandja
  */
 public class OAuth2TokenRevocationEndpointFilterTests {
+	private static final String DEFAULT_TOKEN_REVOCATION_ENDPOINT_URI = "/oauth2/revoke";
 	private AuthenticationManager authenticationManager;
 	private OAuth2TokenRevocationEndpointFilter filter;
 	private final HttpMessageConverter<OAuth2Error> errorHttpResponseConverter =
@@ -107,7 +108,7 @@ public class OAuth2TokenRevocationEndpointFilterTests {
 
 	@Test
 	public void doFilterWhenTokenRevocationRequestGetThenNotProcessed() throws Exception {
-		String requestUri = OAuth2TokenRevocationEndpointFilter.DEFAULT_TOKEN_REVOCATION_ENDPOINT_URI;
+		String requestUri = DEFAULT_TOKEN_REVOCATION_ENDPOINT_URI;
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestUri);
 		request.setServletPath(requestUri);
 		MockHttpServletResponse response = new MockHttpServletResponse();
@@ -197,7 +198,7 @@ public class OAuth2TokenRevocationEndpointFilterTests {
 	}
 
 	private static MockHttpServletRequest createTokenRevocationRequest() {
-		String requestUri = OAuth2TokenRevocationEndpointFilter.DEFAULT_TOKEN_REVOCATION_ENDPOINT_URI;
+		String requestUri = DEFAULT_TOKEN_REVOCATION_ENDPOINT_URI;
 		MockHttpServletRequest request = new MockHttpServletRequest("POST", requestUri);
 		request.setServletPath(requestUri);
 

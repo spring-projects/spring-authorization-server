@@ -81,6 +81,7 @@ import static org.mockito.Mockito.when;
  * @author Daniel Garnier-Moiroux
  */
 public class OAuth2TokenEndpointFilterTests {
+	private static final String DEFAULT_TOKEN_ENDPOINT_URI = "/oauth2/token";
 	private static final String REMOTE_ADDRESS = "remote-address";
 	private AuthenticationManager authenticationManager;
 	private OAuth2TokenEndpointFilter filter;
@@ -150,7 +151,7 @@ public class OAuth2TokenEndpointFilterTests {
 
 	@Test
 	public void doFilterWhenTokenRequestGetThenNotProcessed() throws Exception {
-		String requestUri = OAuth2TokenEndpointFilter.DEFAULT_TOKEN_ENDPOINT_URI;
+		String requestUri = DEFAULT_TOKEN_ENDPOINT_URI;
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestUri);
 		request.setServletPath(requestUri);
 		MockHttpServletResponse response = new MockHttpServletResponse();
@@ -552,7 +553,7 @@ public class OAuth2TokenEndpointFilterTests {
 	private static MockHttpServletRequest createAuthorizationCodeTokenRequest(RegisteredClient registeredClient) {
 		String[] redirectUris = registeredClient.getRedirectUris().toArray(new String[0]);
 
-		String requestUri = OAuth2TokenEndpointFilter.DEFAULT_TOKEN_ENDPOINT_URI;
+		String requestUri = DEFAULT_TOKEN_ENDPOINT_URI;
 		MockHttpServletRequest request = new MockHttpServletRequest("POST", requestUri);
 		request.setServletPath(requestUri);
 		request.setRemoteAddr(REMOTE_ADDRESS);
@@ -568,7 +569,7 @@ public class OAuth2TokenEndpointFilterTests {
 	}
 
 	private static MockHttpServletRequest createClientCredentialsTokenRequest(RegisteredClient registeredClient) {
-		String requestUri = OAuth2TokenEndpointFilter.DEFAULT_TOKEN_ENDPOINT_URI;
+		String requestUri = DEFAULT_TOKEN_ENDPOINT_URI;
 		MockHttpServletRequest request = new MockHttpServletRequest("POST", requestUri);
 		request.setServletPath(requestUri);
 		request.setRemoteAddr(REMOTE_ADDRESS);
@@ -582,7 +583,7 @@ public class OAuth2TokenEndpointFilterTests {
 	}
 
 	private static MockHttpServletRequest createRefreshTokenTokenRequest(RegisteredClient registeredClient) {
-		String requestUri = OAuth2TokenEndpointFilter.DEFAULT_TOKEN_ENDPOINT_URI;
+		String requestUri = DEFAULT_TOKEN_ENDPOINT_URI;
 		MockHttpServletRequest request = new MockHttpServletRequest("POST", requestUri);
 		request.setServletPath(requestUri);
 		request.setRemoteAddr(REMOTE_ADDRESS);

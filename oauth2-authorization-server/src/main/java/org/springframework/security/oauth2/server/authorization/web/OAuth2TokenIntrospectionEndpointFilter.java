@@ -62,7 +62,7 @@ public class OAuth2TokenIntrospectionEndpointFilter extends OncePerRequestFilter
 	/**
 	 * The default endpoint {@code URI} for token introspection requests.
 	 */
-	public static final String DEFAULT_TOKEN_INTROSPECTION_ENDPOINT_URI = "/oauth2/introspect";
+	private static final String DEFAULT_TOKEN_INTROSPECTION_ENDPOINT_URI = "/oauth2/introspect";
 
 	private final AuthenticationManager authenticationManager;
 	private final RequestMatcher tokenIntrospectionEndpointMatcher;

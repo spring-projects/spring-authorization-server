@@ -67,6 +67,7 @@ import static org.mockito.Mockito.when;
  * @author Joe Grandja
  */
 public class OAuth2TokenIntrospectionEndpointFilterTests {
+	private static final String DEFAULT_TOKEN_INTROSPECTION_ENDPOINT_URI = "/oauth2/introspect";
 	private AuthenticationManager authenticationManager;
 	private OAuth2TokenIntrospectionEndpointFilter filter;
 	private final HttpMessageConverter<OAuth2TokenIntrospection> tokenIntrospectionHttpResponseConverter =
@@ -114,7 +115,7 @@ public class OAuth2TokenIntrospectionEndpointFilterTests {
 
 	@Test
 	public void doFilterWhenTokenIntrospectionRequestGetThenNotProcessed() throws Exception {
-		String requestUri = OAuth2TokenIntrospectionEndpointFilter.DEFAULT_TOKEN_INTROSPECTION_ENDPOINT_URI;
+		String requestUri = DEFAULT_TOKEN_INTROSPECTION_ENDPOINT_URI;
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestUri);
 		request.setServletPath(requestUri);
 		MockHttpServletResponse response = new MockHttpServletResponse();
@@ -257,7 +258,7 @@ public class OAuth2TokenIntrospectionEndpointFilterTests {
 	}
 
 	private static MockHttpServletRequest createTokenIntrospectionRequest(String token, String tokenTypeHint) {
-		String requestUri = OAuth2TokenIntrospectionEndpointFilter.DEFAULT_TOKEN_INTROSPECTION_ENDPOINT_URI;
+		String requestUri = DEFAULT_TOKEN_INTROSPECTION_ENDPOINT_URI;
 		MockHttpServletRequest request = new MockHttpServletRequest("POST", requestUri);
 		request.setServletPath(requestUri);
 		request.addParameter(OAuth2ParameterNames2.TOKEN, token);

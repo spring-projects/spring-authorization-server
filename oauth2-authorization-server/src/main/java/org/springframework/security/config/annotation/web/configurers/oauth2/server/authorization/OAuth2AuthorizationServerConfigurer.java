@@ -298,9 +298,9 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 		this.jwkSetEndpointMatcher = new AntPathRequestMatcher(
 				providerSettings.jwkSetEndpoint(), HttpMethod.GET.name());
 		this.oidcProviderConfigurationEndpointMatcher = new AntPathRequestMatcher(
-				OidcProviderConfigurationEndpointFilter.DEFAULT_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI, HttpMethod.GET.name());
+				"/.well-known/openid-configuration", HttpMethod.GET.name());
 		this.authorizationServerMetadataEndpointMatcher = new AntPathRequestMatcher(
-				OAuth2AuthorizationServerMetadataEndpointFilter.DEFAULT_OAUTH2_AUTHORIZATION_SERVER_METADATA_ENDPOINT_URI, HttpMethod.GET.name());
+				"/.well-known/oauth-authorization-server", HttpMethod.GET.name());
 		this.oidcClientRegistrationEndpointMatcher = new AntPathRequestMatcher(
 				providerSettings.oidcClientRegistrationEndpoint(), HttpMethod.POST.name());
 	}

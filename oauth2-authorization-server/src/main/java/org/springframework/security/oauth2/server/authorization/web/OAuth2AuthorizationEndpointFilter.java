@@ -79,7 +79,7 @@ public class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 	/**
 	 * The default endpoint {@code URI} for authorization requests.
 	 */
-	public static final String DEFAULT_AUTHORIZATION_ENDPOINT_URI = "/oauth2/authorize";
+	private static final String DEFAULT_AUTHORIZATION_ENDPOINT_URI = "/oauth2/authorize";
 
 	private final AuthenticationManager authenticationManager;
 	private final RequestMatcher authorizationEndpointMatcher;

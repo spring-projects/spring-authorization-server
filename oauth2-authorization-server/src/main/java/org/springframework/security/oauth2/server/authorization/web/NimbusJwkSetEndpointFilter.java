@@ -49,7 +49,7 @@ public class NimbusJwkSetEndpointFilter extends OncePerRequestFilter {
 	/**
 	 * The default endpoint {@code URI} for JWK Set requests.
 	 */
-	public static final String DEFAULT_JWK_SET_ENDPOINT_URI = "/oauth2/jwks";
+	private static final String DEFAULT_JWK_SET_ENDPOINT_URI = "/oauth2/jwks";
 
 	private final JWKSource<SecurityContext> jwkSource;
 	private final JWKSelector jwkSelector;

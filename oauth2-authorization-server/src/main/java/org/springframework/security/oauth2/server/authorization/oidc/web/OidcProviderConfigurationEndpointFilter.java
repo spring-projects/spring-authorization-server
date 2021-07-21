@@ -51,7 +51,7 @@ public class OidcProviderConfigurationEndpointFilter extends OncePerRequestFilte
 	/**
 	 * The default endpoint {@code URI} for OpenID Provider Configuration requests.
 	 */
-	public static final String DEFAULT_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI = "/.well-known/openid-configuration";
+	private static final String DEFAULT_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI = "/.well-known/openid-configuration";
 
 	private final ProviderSettings providerSettings;
 	private final RequestMatcher requestMatcher;

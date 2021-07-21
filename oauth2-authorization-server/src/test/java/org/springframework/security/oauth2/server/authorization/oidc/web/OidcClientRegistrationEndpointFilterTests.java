@@ -70,6 +70,7 @@ import static org.mockito.Mockito.when;
  * @author Joe Grandja
  */
 public class OidcClientRegistrationEndpointFilterTests {
+	private static final String DEFAULT_OIDC_CLIENT_REGISTRATION_ENDPOINT_URI = "/connect/register";
 	private AuthenticationManager authenticationManager;
 	private OidcClientRegistrationEndpointFilter filter;
 	private final HttpMessageConverter<OidcClientRegistration> clientRegistrationHttpMessageConverter =
@@ -117,7 +118,7 @@ public class OidcClientRegistrationEndpointFilterTests {
 
 	@Test
 	public void doFilterWhenClientRegistrationRequestGetThenNotProcessed() throws Exception {
-		String requestUri = OidcClientRegistrationEndpointFilter.DEFAULT_OIDC_CLIENT_REGISTRATION_ENDPOINT_URI;
+		String requestUri = DEFAULT_OIDC_CLIENT_REGISTRATION_ENDPOINT_URI;
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestUri);
 		request.setServletPath(requestUri);
 		MockHttpServletResponse response = new MockHttpServletResponse();
@@ -130,7 +131,7 @@ public class OidcClientRegistrationEndpointFilterTests {
 
 	@Test
 	public void doFilterWhenClientRegistrationRequestInvalidThenInvalidRequestError() throws Exception {
-		String requestUri = OidcClientRegistrationEndpointFilter.DEFAULT_OIDC_CLIENT_REGISTRATION_ENDPOINT_URI;
+		String requestUri = DEFAULT_OIDC_CLIENT_REGISTRATION_ENDPOINT_URI;
 		MockHttpServletRequest request = new MockHttpServletRequest("POST", requestUri);
 		request.setServletPath(requestUri);
 		request.setContent("invalid content".getBytes());
@@ -183,7 +184,7 @@ public class OidcClientRegistrationEndpointFilterTests {
 				.build();
 		// @formatter:on
 
-		String requestUri = OidcClientRegistrationEndpointFilter.DEFAULT_OIDC_CLIENT_REGISTRATION_ENDPOINT_URI;
+		String requestUri = DEFAULT_OIDC_CLIENT_REGISTRATION_ENDPOINT_URI;
 		MockHttpServletRequest request = new MockHttpServletRequest("POST", requestUri);
 		request.setServletPath(requestUri);
 		writeClientRegistrationRequest(request, clientRegistrationRequest);
@@ -235,7 +236,7 @@ public class OidcClientRegistrationEndpointFilterTests {
 		securityContext.setAuthentication(principal);
 		SecurityContextHolder.setContext(securityContext);
 
-		String requestUri = OidcClientRegistrationEndpointFilter.DEFAULT_OIDC_CLIENT_REGISTRATION_ENDPOINT_URI;
+		String requestUri = DEFAULT_OIDC_CLIENT_REGISTRATION_ENDPOINT_URI;
 		MockHttpServletRequest request = new MockHttpServletRequest("POST", requestUri);
 		request.setServletPath(requestUri);
 		writeClientRegistrationRequest(request, clientRegistrationRequest);

@@ -43,7 +43,7 @@ import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.OAuth2TokenIntrospection;
 import org.springframework.security.oauth2.core.OAuth2TokenType;
-import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames2;
+import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.http.converter.OAuth2ErrorHttpMessageConverter;
 import org.springframework.security.oauth2.core.http.converter.OAuth2TokenIntrospectionHttpMessageConverter;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientAuthenticationToken;
@@ -130,30 +130,30 @@ public class OAuth2TokenIntrospectionEndpointFilterTests {
 	public void doFilterWhenTokenIntrospectionRequestMissingTokenThenInvalidRequestError() throws Exception {
 		MockHttpServletRequest request = createTokenIntrospectionRequest(
 				"token", OAuth2TokenType.ACCESS_TOKEN.getValue());
-		request.removeParameter(OAuth2ParameterNames2.TOKEN);
+		request.removeParameter(OAuth2ParameterNames.TOKEN);
 
 		doFilterWhenTokenIntrospectionRequestInvalidParameterThenError(
-				OAuth2ParameterNames2.TOKEN, OAuth2ErrorCodes.INVALID_REQUEST, request);
+				OAuth2ParameterNames.TOKEN, OAuth2ErrorCodes.INVALID_REQUEST, request);
 	}
 
 	@Test
 	public void doFilterWhenTokenIntrospectionRequestMultipleTokenThenInvalidRequestError() throws Exception {
 		MockHttpServletRequest request = createTokenIntrospectionRequest(
 				"token", OAuth2TokenType.ACCESS_TOKEN.getValue());
-		request.addParameter(OAuth2ParameterNames2.TOKEN, "other-token");
+		request.addParameter(OAuth2ParameterNames.TOKEN, "other-token");
 
 		doFilterWhenTokenIntrospectionRequestInvalidParameterThenError(
-				OAuth2ParameterNames2.TOKEN, OAuth2ErrorCodes.INVALID_REQUEST, request);
+				OAuth2ParameterNames.TOKEN, OAuth2ErrorCodes.INVALID_REQUEST, request);
 	}
 
 	@Test
 	public void doFilterWhenTokenIntrospectionRequestMultipleTokenTypeHintThenInvalidRequestError() throws Exception {
 		MockHttpServletRequest request = createTokenIntrospectionRequest(
 				"token", OAuth2TokenType.ACCESS_TOKEN.getValue());
-		request.addParameter(OAuth2ParameterNames2.TOKEN_TYPE_HINT, OAuth2TokenType.ACCESS_TOKEN.getValue());
+		request.addParameter(OAuth2ParameterNames.TOKEN_TYPE_HINT, OAuth2TokenType.ACCESS_TOKEN.getValue());
 
 		doFilterWhenTokenIntrospectionRequestInvalidParameterThenError(
-				OAuth2ParameterNames2.TOKEN_TYPE_HINT, OAuth2ErrorCodes.INVALID_REQUEST, request);
+				OAuth2ParameterNames.TOKEN_TYPE_HINT, OAuth2ErrorCodes.INVALID_REQUEST, request);
 	}
 
 	@Test
@@ -261,8 +261,8 @@ public class OAuth2TokenIntrospectionEndpointFilterTests {
 		String requestUri = DEFAULT_TOKEN_INTROSPECTION_ENDPOINT_URI;
 		MockHttpServletRequest request = new MockHttpServletRequest("POST", requestUri);
 		request.setServletPath(requestUri);
-		request.addParameter(OAuth2ParameterNames2.TOKEN, token);
-		request.addParameter(OAuth2ParameterNames2.TOKEN_TYPE_HINT, tokenTypeHint);
+		request.addParameter(OAuth2ParameterNames.TOKEN, token);
+		request.addParameter(OAuth2ParameterNames.TOKEN_TYPE_HINT, tokenTypeHint);
 		return request;
 	}
 

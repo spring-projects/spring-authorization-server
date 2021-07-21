@@ -15,6 +15,13 @@
  */
 package org.springframework.security.oauth2.server.authorization.web;
 
+import java.io.IOException;
+
+import javax.servlet.FilterChain;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -26,7 +33,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
-import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames2;
+import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.http.converter.OAuth2ErrorHttpMessageConverter;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2TokenRevocationAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2TokenRevocationAuthenticationToken;
@@ -36,12 +43,6 @@ import org.springframework.util.Assert;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
-
-import javax.servlet.FilterChain;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 
 /**
  * A {@code Filter} for the OAuth 2.0 Token Revocation endpoint.
@@ -131,17 +132,17 @@ public final class OAuth2TokenRevocationEndpointFilter extends OncePerRequestFil
 			MultiValueMap<String, String> parameters = OAuth2EndpointUtils.getParameters(request);
 
 			// token (REQUIRED)
-			String token = parameters.getFirst(OAuth2ParameterNames2.TOKEN);
+			String token = parameters.getFirst(OAuth2ParameterNames.TOKEN);
 			if (!StringUtils.hasText(token) ||
-					parameters.get(OAuth2ParameterNames2.TOKEN).size() != 1) {
-				throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames2.TOKEN);
+					parameters.get(OAuth2ParameterNames.TOKEN).size() != 1) {
+				throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.TOKEN);
 			}
 
 			// token_type_hint (OPTIONAL)
-			String tokenTypeHint = parameters.getFirst(OAuth2ParameterNames2.TOKEN_TYPE_HINT);
+			String tokenTypeHint = parameters.getFirst(OAuth2ParameterNames.TOKEN_TYPE_HINT);
 			if (StringUtils.hasText(tokenTypeHint) &&
-					parameters.get(OAuth2ParameterNames2.TOKEN_TYPE_HINT).size() != 1) {
-				throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames2.TOKEN_TYPE_HINT);
+					parameters.get(OAuth2ParameterNames.TOKEN_TYPE_HINT).size() != 1) {
+				throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.TOKEN_TYPE_HINT);
 			}
 
 			return new OAuth2TokenRevocationAuthenticationToken(token, clientPrincipal, tokenTypeHint);

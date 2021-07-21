@@ -52,7 +52,7 @@ import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2RefreshToken;
 import org.springframework.security.oauth2.core.OAuth2TokenIntrospection;
 import org.springframework.security.oauth2.core.OAuth2TokenType;
-import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames2;
+import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.http.converter.OAuth2TokenIntrospectionHttpMessageConverter;
 import org.springframework.security.oauth2.jose.TestJwks;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
@@ -219,8 +219,8 @@ public class OAuth2TokenIntrospectionTests {
 	private static MultiValueMap<String, String> getTokenIntrospectionRequestParameters(AbstractOAuth2Token token,
 			OAuth2TokenType tokenType) {
 		MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
-		parameters.set(OAuth2ParameterNames2.TOKEN, token.getTokenValue());
-		parameters.set(OAuth2ParameterNames2.TOKEN_TYPE_HINT, tokenType.getValue());
+		parameters.set(OAuth2ParameterNames.TOKEN, token.getTokenValue());
+		parameters.set(OAuth2ParameterNames.TOKEN_TYPE_HINT, tokenType.getValue());
 		return parameters;
 	}
 

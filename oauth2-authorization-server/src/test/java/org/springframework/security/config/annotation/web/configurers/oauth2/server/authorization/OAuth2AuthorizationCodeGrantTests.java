@@ -86,6 +86,7 @@ import org.springframework.security.oauth2.server.authorization.client.JdbcRegis
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
+import org.springframework.security.oauth2.server.authorization.config.ClientSettings;
 import org.springframework.security.oauth2.server.authorization.config.ProviderSettings;
 import org.springframework.security.oauth2.server.authorization.jackson2.TestingAuthenticationTokenMixin;
 import org.springframework.security.web.SecurityFilterChain;
@@ -167,9 +168,10 @@ public class OAuth2AuthorizationCodeGrantTests {
 		JWKSet jwkSet = new JWKSet(TestJwks.DEFAULT_RSA_JWK);
 		jwkSource = (jwkSelector, securityContext) -> jwkSelector.select(jwkSet);
 		jwtEncoder = new NimbusJwsEncoder(jwkSource);
-		providerSettings = new ProviderSettings()
+		providerSettings = ProviderSettings.builder()
 				.authorizationEndpoint("/test/authorize")
-				.tokenEndpoint("/test/token");
+				.tokenEndpoint("/test/token")
+				.build();
 		authorizationRequestConverter = mock(AuthenticationConverter.class);
 		authorizationRequestAuthenticationProvider = mock(AuthenticationProvider.class);
 		authorizationResponseHandler = mock(AuthenticationSuccessHandler.class);
@@ -232,7 +234,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 	public void requestWhenAuthorizationRequestCustomEndpointThenRedirectToClient() throws Exception {
 		this.spring.register(AuthorizationServerConfigurationCustomEndpoints.class).autowire();
 
-		assertAuthorizationRequestRedirectsToClient(providerSettings.authorizationEndpoint());
+		assertAuthorizationRequestRedirectsToClient(providerSettings.getAuthorizationEndpoint());
 	}
 
 	private void assertAuthorizationRequestRedirectsToClient(String authorizationEndpointUri) throws Exception {
@@ -287,7 +289,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 		this.authorizationService.save(authorization);
 
 		assertTokenRequestReturnsAccessTokenResponse(
-				registeredClient, authorization, providerSettings.tokenEndpoint());
+				registeredClient, authorization, providerSettings.getTokenEndpoint());
 	}
 
 	private OAuth2AccessTokenResponse assertTokenRequestReturnsAccessTokenResponse(RegisteredClient registeredClient,
@@ -389,7 +391,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 					scopes.add("message.read");
 					scopes.add("message.write");
 				})
-				.clientSettings(settings -> settings.requireAuthorizationConsent(true))
+				.clientSettings(ClientSettings.builder().requireAuthorizationConsent(true).build())
 				.build();
 		this.registeredClientRepository.save(registeredClient);
 
@@ -416,7 +418,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 					scopes.add("message.read");
 					scopes.add("message.write");
 				})
-				.clientSettings(settings -> settings.requireAuthorizationConsent(true))
+				.clientSettings(ClientSettings.builder().requireAuthorizationConsent(true).build())
 				.build();
 		this.registeredClientRepository.save(registeredClient);
 
@@ -464,7 +466,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 					scopes.add("message.read");
 					scopes.add("message.write");
 				})
-				.clientSettings(settings -> settings.requireAuthorizationConsent(true))
+				.clientSettings(ClientSettings.builder().requireAuthorizationConsent(true).build())
 				.build();
 		this.registeredClientRepository.save(registeredClient);
 

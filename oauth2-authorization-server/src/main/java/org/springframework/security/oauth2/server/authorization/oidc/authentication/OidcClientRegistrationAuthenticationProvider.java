@@ -40,6 +40,8 @@ import org.springframework.security.oauth2.server.authorization.OAuth2Authorizat
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
+import org.springframework.security.oauth2.server.authorization.config.ClientSettings;
+import org.springframework.security.oauth2.server.authorization.config.TokenSettings;
 import org.springframework.security.oauth2.server.resource.authentication.AbstractOAuth2TokenAuthenticationToken;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
@@ -169,13 +171,13 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 		}
 
 		builder
-				.clientSettings(clientSettings ->
-						clientSettings
-								.requireProofKey(true)
-								.requireAuthorizationConsent(true))
-				.tokenSettings(tokenSettings ->
-						tokenSettings
-								.idTokenSignatureAlgorithm(SignatureAlgorithm.RS256));
+				.clientSettings(ClientSettings.builder()
+						.requireProofKey(true)
+						.requireAuthorizationConsent(true)
+						.build())
+				.tokenSettings(TokenSettings.builder()
+						.idTokenSignatureAlgorithm(SignatureAlgorithm.RS256)
+						.build());
 
 		return builder.build();
 		// @formatter:on
@@ -207,7 +209,7 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 
 		builder
 				.tokenEndpointAuthenticationMethod(registeredClient.getClientAuthenticationMethods().iterator().next().getValue())
-				.idTokenSignedResponseAlgorithm(registeredClient.getTokenSettings().idTokenSignatureAlgorithm().getName());
+				.idTokenSignedResponseAlgorithm(registeredClient.getTokenSettings().getIdTokenSignatureAlgorithm().getName());
 
 		return builder.build();
 		// @formatter:on

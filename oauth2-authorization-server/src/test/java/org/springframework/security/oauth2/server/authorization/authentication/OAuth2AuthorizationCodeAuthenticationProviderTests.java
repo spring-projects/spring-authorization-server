@@ -53,6 +53,7 @@ import org.springframework.security.oauth2.server.authorization.OAuth2TokenCusto
 import org.springframework.security.oauth2.server.authorization.TestOAuth2Authorizations;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
+import org.springframework.security.oauth2.server.authorization.config.TokenSettings;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -377,8 +378,10 @@ public class OAuth2AuthorizationCodeAuthenticationProviderTests {
 		Duration accessTokenTTL = Duration.ofHours(2);
 		Duration refreshTokenTTL = Duration.ofDays(1);
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
-				.tokenSettings(tokenSettings ->
-						tokenSettings.accessTokenTimeToLive(accessTokenTTL).refreshTokenTimeToLive(refreshTokenTTL))
+				.tokenSettings(TokenSettings.builder()
+						.accessTokenTimeToLive(accessTokenTTL)
+						.refreshTokenTimeToLive(refreshTokenTTL)
+						.build())
 				.build();
 
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();

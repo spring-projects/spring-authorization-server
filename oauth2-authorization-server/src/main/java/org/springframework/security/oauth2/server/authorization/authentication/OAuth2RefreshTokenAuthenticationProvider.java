@@ -147,7 +147,7 @@ public final class OAuth2RefreshTokenAuthenticationProvider implements Authentic
 			scopes = authorizedScopes;
 		}
 
-		String issuer = this.providerSettings != null ? this.providerSettings.issuer() : null;
+		String issuer = this.providerSettings != null ? this.providerSettings.getIssuer() : null;
 
 		JoseHeader.Builder headersBuilder = JwtUtils.headers();
 		JwtClaimsSet.Builder claimsBuilder = JwtUtils.accessTokenClaims(
@@ -178,8 +178,8 @@ public final class OAuth2RefreshTokenAuthenticationProvider implements Authentic
 		TokenSettings tokenSettings = registeredClient.getTokenSettings();
 
 		OAuth2RefreshToken currentRefreshToken = refreshToken.getToken();
-		if (!tokenSettings.reuseRefreshTokens()) {
-			currentRefreshToken = generateRefreshToken(tokenSettings.refreshTokenTimeToLive());
+		if (!tokenSettings.isReuseRefreshTokens()) {
+			currentRefreshToken = generateRefreshToken(tokenSettings.getRefreshTokenTimeToLive());
 		}
 
 		Jwt jwtIdToken = null;

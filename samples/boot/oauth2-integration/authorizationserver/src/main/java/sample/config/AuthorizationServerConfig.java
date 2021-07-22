@@ -45,6 +45,7 @@ import org.springframework.security.oauth2.server.authorization.OAuth2Authorizat
 import org.springframework.security.oauth2.server.authorization.client.JdbcRegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
+import org.springframework.security.oauth2.server.authorization.config.ClientSettings;
 import org.springframework.security.oauth2.server.authorization.config.ProviderSettings;
 import org.springframework.security.web.SecurityFilterChain;
 
@@ -77,7 +78,7 @@ public class AuthorizationServerConfig {
 				.scope(OidcScopes.OPENID)
 				.scope("message.read")
 				.scope("message.write")
-				.clientSettings(clientSettings -> clientSettings.requireAuthorizationConsent(true))
+				.clientSettings(ClientSettings.builder().requireAuthorizationConsent(true).build())
 				.build();
 
 		// Save registered client in db as if in-memory
@@ -112,7 +113,7 @@ public class AuthorizationServerConfig {
 
 	@Bean
 	public ProviderSettings providerSettings() {
-		return new ProviderSettings().issuer("http://auth-server:9000");
+		return ProviderSettings.builder().issuer("http://auth-server:9000").build();
 	}
 
 	@Bean

@@ -227,7 +227,7 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 		this.configurers.values().forEach(configurer -> configurer.configure(builder));
 
 		ProviderSettings providerSettings = OAuth2ConfigurerUtils.getProviderSettings(builder);
-		if (providerSettings.issuer() != null) {
+		if (providerSettings.getIssuer() != null) {
 			OidcProviderConfigurationEndpointFilter oidcProviderConfigurationEndpointFilter =
 					new OidcProviderConfigurationEndpointFilter(providerSettings);
 			builder.addFilterBefore(postProcess(oidcProviderConfigurationEndpointFilter), AbstractPreAuthenticatedProcessingFilter.class);
@@ -240,7 +240,7 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 		JWKSource<SecurityContext> jwkSource = OAuth2ConfigurerUtils.getJwkSource(builder);
 		NimbusJwkSetEndpointFilter jwkSetEndpointFilter = new NimbusJwkSetEndpointFilter(
 				jwkSource,
-				providerSettings.jwkSetEndpoint());
+				providerSettings.getJwkSetEndpoint());
 		builder.addFilterBefore(postProcess(jwkSetEndpointFilter), AbstractPreAuthenticatedProcessingFilter.class);
 
 		AuthenticationManager authenticationManager = builder.getSharedObject(AuthenticationManager.class);
@@ -257,20 +257,20 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 		OAuth2TokenIntrospectionEndpointFilter tokenIntrospectionEndpointFilter =
 				new OAuth2TokenIntrospectionEndpointFilter(
 						authenticationManager,
-						providerSettings.tokenIntrospectionEndpoint());
+						providerSettings.getTokenIntrospectionEndpoint());
 		builder.addFilterAfter(postProcess(tokenIntrospectionEndpointFilter), FilterSecurityInterceptor.class);
 
 		OAuth2TokenRevocationEndpointFilter tokenRevocationEndpointFilter =
 				new OAuth2TokenRevocationEndpointFilter(
 						authenticationManager,
-						providerSettings.tokenRevocationEndpoint());
+						providerSettings.getTokenRevocationEndpoint());
 		builder.addFilterAfter(postProcess(tokenRevocationEndpointFilter), OAuth2TokenIntrospectionEndpointFilter.class);
 
 		// TODO Make OpenID Client Registration an "opt-in" feature
 		OidcClientRegistrationEndpointFilter oidcClientRegistrationEndpointFilter =
 				new OidcClientRegistrationEndpointFilter(
 						authenticationManager,
-						providerSettings.oidcClientRegistrationEndpoint());
+						providerSettings.getOidcClientRegistrationEndpoint());
 		builder.addFilterAfter(postProcess(oidcClientRegistrationEndpointFilter), OAuth2TokenRevocationEndpointFilter.class);
 	}
 
@@ -292,23 +292,23 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 
 	private void initEndpointMatchers(ProviderSettings providerSettings) {
 		this.tokenIntrospectionEndpointMatcher = new AntPathRequestMatcher(
-				providerSettings.tokenIntrospectionEndpoint(), HttpMethod.POST.name());
+				providerSettings.getTokenIntrospectionEndpoint(), HttpMethod.POST.name());
 		this.tokenRevocationEndpointMatcher = new AntPathRequestMatcher(
-				providerSettings.tokenRevocationEndpoint(), HttpMethod.POST.name());
+				providerSettings.getTokenRevocationEndpoint(), HttpMethod.POST.name());
 		this.jwkSetEndpointMatcher = new AntPathRequestMatcher(
-				providerSettings.jwkSetEndpoint(), HttpMethod.GET.name());
+				providerSettings.getJwkSetEndpoint(), HttpMethod.GET.name());
 		this.oidcProviderConfigurationEndpointMatcher = new AntPathRequestMatcher(
 				"/.well-known/openid-configuration", HttpMethod.GET.name());
 		this.authorizationServerMetadataEndpointMatcher = new AntPathRequestMatcher(
 				"/.well-known/oauth-authorization-server", HttpMethod.GET.name());
 		this.oidcClientRegistrationEndpointMatcher = new AntPathRequestMatcher(
-				providerSettings.oidcClientRegistrationEndpoint(), HttpMethod.POST.name());
+				providerSettings.getOidcClientRegistrationEndpoint(), HttpMethod.POST.name());
 	}
 
 	private static void validateProviderSettings(ProviderSettings providerSettings) {
-		if (providerSettings.issuer() != null) {
+		if (providerSettings.getIssuer() != null) {
 			try {
-				new URI(providerSettings.issuer()).toURL();
+				new URI(providerSettings.getIssuer()).toURL();
 			} catch (Exception ex) {
 				throw new IllegalArgumentException("issuer must be a valid URL", ex);
 			}

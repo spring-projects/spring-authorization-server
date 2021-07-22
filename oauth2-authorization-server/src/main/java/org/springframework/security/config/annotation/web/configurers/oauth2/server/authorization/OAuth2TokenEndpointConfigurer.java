@@ -119,7 +119,7 @@ public final class OAuth2TokenEndpointConfigurer extends AbstractOAuth2Configure
 	<B extends HttpSecurityBuilder<B>> void init(B builder) {
 		ProviderSettings providerSettings = OAuth2ConfigurerUtils.getProviderSettings(builder);
 		this.requestMatcher = new AntPathRequestMatcher(
-				providerSettings.tokenEndpoint(), HttpMethod.POST.name());
+				providerSettings.getTokenEndpoint(), HttpMethod.POST.name());
 
 		List<AuthenticationProvider> authenticationProviders =
 				!this.authenticationProviders.isEmpty() ?
@@ -137,7 +137,7 @@ public final class OAuth2TokenEndpointConfigurer extends AbstractOAuth2Configure
 		OAuth2TokenEndpointFilter tokenEndpointFilter =
 				new OAuth2TokenEndpointFilter(
 						authenticationManager,
-						providerSettings.tokenEndpoint());
+						providerSettings.getTokenEndpoint());
 		if (this.accessTokenRequestConverter != null) {
 			tokenEndpointFilter.setAuthenticationConverter(this.accessTokenRequestConverter);
 		}

@@ -109,7 +109,7 @@ public class OAuth2TokenIntrospectionTests {
 	public static void init() {
 		JWKSet jwkSet = new JWKSet(TestJwks.DEFAULT_RSA_JWK);
 		jwkSource = (jwkSelector, securityContext) -> jwkSelector.select(jwkSet);
-		providerSettings = new ProviderSettings().tokenIntrospectionEndpoint("/test/introspect");
+		providerSettings = ProviderSettings.builder().tokenIntrospectionEndpoint("/test/introspect").build();
 		db = new EmbeddedDatabaseBuilder()
 				.generateUniqueName(true)
 				.setType(EmbeddedDatabaseType.HSQL)
@@ -152,7 +152,7 @@ public class OAuth2TokenIntrospectionTests {
 		this.authorizationService.save(authorization);
 
 		// @formatter:off
-		MvcResult mvcResult = this.mvc.perform(post(providerSettings.tokenIntrospectionEndpoint())
+		MvcResult mvcResult = this.mvc.perform(post(providerSettings.getTokenIntrospectionEndpoint())
 				.params(getTokenIntrospectionRequestParameters(accessToken, OAuth2TokenType.ACCESS_TOKEN))
 				.with(httpBasic(introspectRegisteredClient.getClientId(), introspectRegisteredClient.getClientSecret())))
 				.andExpect(status().isOk())
@@ -192,7 +192,7 @@ public class OAuth2TokenIntrospectionTests {
 		this.authorizationService.save(authorization);
 
 		// @formatter:off
-		MvcResult mvcResult = this.mvc.perform(post(providerSettings.tokenIntrospectionEndpoint())
+		MvcResult mvcResult = this.mvc.perform(post(providerSettings.getTokenIntrospectionEndpoint())
 				.params(getTokenIntrospectionRequestParameters(refreshToken, OAuth2TokenType.REFRESH_TOKEN))
 				.with(httpBasic(introspectRegisteredClient.getClientId(), introspectRegisteredClient.getClientSecret())))
 				.andExpect(status().isOk())

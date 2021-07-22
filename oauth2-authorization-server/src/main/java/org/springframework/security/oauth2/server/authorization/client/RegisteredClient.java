@@ -190,15 +190,15 @@ public class RegisteredClient implements Serializable {
 				Objects.equals(this.authorizationGrantTypes, that.authorizationGrantTypes) &&
 				Objects.equals(this.redirectUris, that.redirectUris) &&
 				Objects.equals(this.scopes, that.scopes) &&
-				Objects.equals(this.clientSettings.settings(), that.getClientSettings().settings()) &&
-				Objects.equals(this.tokenSettings.settings(), that.tokenSettings.settings());
+				Objects.equals(this.clientSettings, that.clientSettings) &&
+				Objects.equals(this.tokenSettings, that.tokenSettings);
 	}
 
 	@Override
 	public int hashCode() {
 		return Objects.hash(this.id, this.clientId, this.clientIdIssuedAt, this.clientSecret, this.clientSecretExpiresAt,
 				this.clientName, this.clientAuthenticationMethods, this.authorizationGrantTypes, this.redirectUris,
-				this.scopes, this.clientSettings.settings(), this.tokenSettings.settings());
+				this.scopes, this.clientSettings, this.tokenSettings);
 	}
 
 	@Override
@@ -211,8 +211,8 @@ public class RegisteredClient implements Serializable {
 				", authorizationGrantTypes=" + this.authorizationGrantTypes +
 				", redirectUris=" + this.redirectUris +
 				", scopes=" + this.scopes +
-				", clientSettings=" + this.clientSettings.settings() +
-				", tokenSettings=" + this.tokenSettings.settings() +
+				", clientSettings=" + this.clientSettings +
+				", tokenSettings=" + this.tokenSettings +
 				'}';
 	}
 
@@ -253,8 +253,8 @@ public class RegisteredClient implements Serializable {
 		private Set<AuthorizationGrantType> authorizationGrantTypes = new HashSet<>();
 		private Set<String> redirectUris = new HashSet<>();
 		private Set<String> scopes = new HashSet<>();
-		private ClientSettings clientSettings = new ClientSettings();
-		private TokenSettings tokenSettings = new TokenSettings();
+		private ClientSettings clientSettings;
+		private TokenSettings tokenSettings;
 
 		protected Builder(String id) {
 			this.id = id;
@@ -279,8 +279,8 @@ public class RegisteredClient implements Serializable {
 			if (!CollectionUtils.isEmpty(registeredClient.scopes)) {
 				this.scopes.addAll(registeredClient.scopes);
 			}
-			this.clientSettings = new ClientSettings(registeredClient.clientSettings.settings());
-			this.tokenSettings = new TokenSettings(registeredClient.tokenSettings.settings());
+			this.clientSettings = ClientSettings.withSettings(registeredClient.getClientSettings().getSettings()).build();
+			this.tokenSettings = TokenSettings.withSettings(registeredClient.getTokenSettings().getSettings()).build();
 		}
 
 		/**
@@ -444,26 +444,24 @@ public class RegisteredClient implements Serializable {
 		}
 
 		/**
-		 * A {@link Consumer} of the client configuration settings,
-		 * allowing the ability to add, replace, or remove.
+		 * Sets the {@link ClientSettings client configuration settings}.
 		 *
-		 * @param clientSettingsConsumer a {@link Consumer} of the client configuration settings
+		 * @param clientSettings the client configuration settings
 		 * @return the {@link Builder}
 		 */
-		public Builder clientSettings(Consumer<ClientSettings> clientSettingsConsumer) {
-			clientSettingsConsumer.accept(this.clientSettings);
+		public Builder clientSettings(ClientSettings clientSettings) {
+			this.clientSettings = clientSettings;
 			return this;
 		}
 
 		/**
-		 * A {@link Consumer} of the token configuration settings,
-		 * allowing the ability to add, replace, or remove.
+		 * Sets the {@link TokenSettings token configuration settings}.
 		 *
-		 * @param tokenSettingsConsumer a {@link Consumer} of the token configuration settings
+		 * @param tokenSettings the token configuration settings
 		 * @return the {@link Builder}
 		 */
-		public Builder tokenSettings(Consumer<TokenSettings> tokenSettingsConsumer) {
-			tokenSettingsConsumer.accept(this.tokenSettings);
+		public Builder tokenSettings(TokenSettings tokenSettings) {
+			this.tokenSettings = tokenSettings;
 			return this;
 		}
 
@@ -506,8 +504,10 @@ public class RegisteredClient implements Serializable {
 					new HashSet<>(this.redirectUris));
 			registeredClient.scopes = Collections.unmodifiableSet(
 					new HashSet<>(this.scopes));
-			registeredClient.clientSettings = new ClientSettings(this.clientSettings.settings());
-			registeredClient.tokenSettings = new TokenSettings(this.tokenSettings.settings());
+			registeredClient.clientSettings = this.clientSettings != null ?
+					this.clientSettings : ClientSettings.builder().build();
+			registeredClient.tokenSettings = this.tokenSettings != null ?
+					this.tokenSettings : TokenSettings.builder().build();
 
 			return registeredClient;
 		}

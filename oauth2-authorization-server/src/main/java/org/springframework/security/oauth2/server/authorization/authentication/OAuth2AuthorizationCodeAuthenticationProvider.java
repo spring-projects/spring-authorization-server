@@ -140,7 +140,7 @@ public final class OAuth2AuthorizationCodeAuthenticationProvider implements Auth
 			throw new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_GRANT));
 		}
 
-		String issuer = this.providerSettings != null ? this.providerSettings.issuer() : null;
+		String issuer = this.providerSettings != null ? this.providerSettings.getIssuer() : null;
 		Set<String> authorizedScopes = authorization.getAttribute(
 				OAuth2Authorization.AUTHORIZED_SCOPE_ATTRIBUTE_NAME);
 
@@ -174,7 +174,7 @@ public final class OAuth2AuthorizationCodeAuthenticationProvider implements Auth
 		OAuth2RefreshToken refreshToken = null;
 		if (registeredClient.getAuthorizationGrantTypes().contains(AuthorizationGrantType.REFRESH_TOKEN)) {
 			refreshToken = OAuth2RefreshTokenAuthenticationProvider.generateRefreshToken(
-					registeredClient.getTokenSettings().refreshTokenTimeToLive());
+					registeredClient.getTokenSettings().getRefreshTokenTimeToLive());
 		}
 
 		Jwt jwtIdToken = null;

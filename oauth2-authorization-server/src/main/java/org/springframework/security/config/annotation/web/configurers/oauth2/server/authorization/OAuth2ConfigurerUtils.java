@@ -124,7 +124,7 @@ final class OAuth2ConfigurerUtils {
 		if (providerSettings == null) {
 			providerSettings = getOptionalBean(builder, ProviderSettings.class);
 			if (providerSettings == null) {
-				providerSettings = new ProviderSettings();
+				providerSettings = ProviderSettings.builder().build();
 			}
 			builder.setSharedObject(ProviderSettings.class, providerSettings);
 		}

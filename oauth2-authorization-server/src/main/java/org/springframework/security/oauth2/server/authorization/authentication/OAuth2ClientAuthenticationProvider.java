@@ -150,7 +150,7 @@ public final class OAuth2ClientAuthenticationProvider implements AuthenticationP
 		String codeChallenge = (String) authorizationRequest.getAdditionalParameters()
 				.get(PkceParameterNames.CODE_CHALLENGE);
 		if (!StringUtils.hasText(codeChallenge) &&
-				registeredClient.getClientSettings().requireProofKey()) {
+				registeredClient.getClientSettings().isRequireProofKey()) {
 			throwInvalidClient();
 		}
 

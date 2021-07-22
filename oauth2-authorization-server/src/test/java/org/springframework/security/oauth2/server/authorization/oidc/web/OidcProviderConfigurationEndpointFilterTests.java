@@ -15,15 +15,16 @@
  */
 package org.springframework.security.oauth2.server.authorization.oidc.web;
 
+import javax.servlet.FilterChain;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import org.junit.Test;
+
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.oauth2.server.authorization.config.ProviderSettings;
-
-import javax.servlet.FilterChain;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
@@ -50,7 +51,7 @@ public class OidcProviderConfigurationEndpointFilterTests {
 	@Test
 	public void doFilterWhenNotConfigurationRequestThenNotProcessed() throws Exception {
 		OidcProviderConfigurationEndpointFilter filter =
-				new OidcProviderConfigurationEndpointFilter(new ProviderSettings());
+				new OidcProviderConfigurationEndpointFilter(ProviderSettings.builder().build());
 
 		String requestUri = "/path";
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestUri);
@@ -66,7 +67,7 @@ public class OidcProviderConfigurationEndpointFilterTests {
 	@Test
 	public void doFilterWhenConfigurationRequestPostThenNotProcessed() throws Exception {
 		OidcProviderConfigurationEndpointFilter filter =
-				new OidcProviderConfigurationEndpointFilter(new ProviderSettings());
+				new OidcProviderConfigurationEndpointFilter(ProviderSettings.builder().build());
 
 		String requestUri = DEFAULT_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI;
 		MockHttpServletRequest request = new MockHttpServletRequest("POST", requestUri);
@@ -85,11 +86,12 @@ public class OidcProviderConfigurationEndpointFilterTests {
 		String tokenEndpoint = "/oauth2/v1/token";
 		String jwkSetEndpoint = "/oauth2/v1/jwks";
 
-		ProviderSettings providerSettings = new ProviderSettings()
+		ProviderSettings providerSettings = ProviderSettings.builder()
 				.issuer("https://example.com/issuer1")
 				.authorizationEndpoint(authorizationEndpoint)
 				.tokenEndpoint(tokenEndpoint)
-				.jwkSetEndpoint(jwkSetEndpoint);
+				.jwkSetEndpoint(jwkSetEndpoint)
+				.build();
 		OidcProviderConfigurationEndpointFilter filter =
 				new OidcProviderConfigurationEndpointFilter(providerSettings);
 
@@ -119,8 +121,9 @@ public class OidcProviderConfigurationEndpointFilterTests {
 
 	@Test
 	public void doFilterWhenProviderSettingsWithInvalidIssuerThenThrowIllegalArgumentException() {
-		ProviderSettings providerSettings = new ProviderSettings()
-				.issuer("https://this is an invalid URL");
+		ProviderSettings providerSettings = ProviderSettings.builder()
+				.issuer("https://this is an invalid URL")
+				.build();
 		OidcProviderConfigurationEndpointFilter filter =
 				new OidcProviderConfigurationEndpointFilter(providerSettings);
 

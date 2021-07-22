@@ -347,9 +347,9 @@ public class RegisteredClientTests {
 		assertThat(registration.getRedirectUris()).isNotSameAs(updated.getRedirectUris());
 		assertThat(registration.getScopes()).isEqualTo(updated.getScopes());
 		assertThat(registration.getScopes()).isNotSameAs(updated.getScopes());
-		assertThat(registration.getClientSettings().settings()).isEqualTo(updated.getClientSettings().settings());
+		assertThat(registration.getClientSettings()).isEqualTo(updated.getClientSettings());
 		assertThat(registration.getClientSettings()).isNotSameAs(updated.getClientSettings());
-		assertThat(registration.getTokenSettings().settings()).isEqualTo(updated.getTokenSettings().settings());
+		assertThat(registration.getTokenSettings()).isEqualTo(updated.getTokenSettings());
 		assertThat(registration.getTokenSettings()).isNotSameAs(updated.getTokenSettings());
 	}
 

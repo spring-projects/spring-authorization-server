@@ -39,6 +39,8 @@ import org.springframework.jdbc.core.SqlParameterValue;
 import org.springframework.security.jackson2.SecurityJackson2Modules;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
+import org.springframework.security.oauth2.server.authorization.config.ClientSettings;
+import org.springframework.security.oauth2.server.authorization.config.TokenSettings;
 import org.springframework.security.oauth2.server.authorization.jackson2.OAuth2AuthorizationServerJackson2Module;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
@@ -211,12 +213,10 @@ public class JdbcRegisteredClientRepository implements RegisteredClientRepositor
 			// @formatter:on
 
 			Map<String, Object> clientSettingsMap = parseMap(rs.getString("client_settings"));
-			builder.clientSettings(clientSettings ->
-					clientSettings.settings().putAll(clientSettingsMap));
+			builder.clientSettings(ClientSettings.withSettings(clientSettingsMap).build());
 
 			Map<String, Object> tokenSettingsMap = parseMap(rs.getString("token_settings"));
-			builder.tokenSettings(tokenSettings ->
-					tokenSettings.settings().putAll(tokenSettingsMap));
+			builder.tokenSettings(TokenSettings.withSettings(tokenSettingsMap).build());
 
 			return builder.build();
 		}
@@ -303,8 +303,8 @@ public class JdbcRegisteredClientRepository implements RegisteredClientRepositor
 					new SqlParameterValue(Types.VARCHAR, StringUtils.collectionToCommaDelimitedString(authorizationGrantTypes)),
 					new SqlParameterValue(Types.VARCHAR, StringUtils.collectionToCommaDelimitedString(registeredClient.getRedirectUris())),
 					new SqlParameterValue(Types.VARCHAR, StringUtils.collectionToCommaDelimitedString(registeredClient.getScopes())),
-					new SqlParameterValue(Types.VARCHAR, writeMap(registeredClient.getClientSettings().settings())),
-					new SqlParameterValue(Types.VARCHAR, writeMap(registeredClient.getTokenSettings().settings())));
+					new SqlParameterValue(Types.VARCHAR, writeMap(registeredClient.getClientSettings().getSettings())),
+					new SqlParameterValue(Types.VARCHAR, writeMap(registeredClient.getTokenSettings().getSettings())));
 		}
 
 		public final void setObjectMapper(ObjectMapper objectMapper) {

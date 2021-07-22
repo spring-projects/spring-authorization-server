@@ -15,17 +15,19 @@
  */
 package org.springframework.security.oauth2.server.authorization.config;
 
-import java.util.HashMap;
 import java.util.Map;
+
+import org.springframework.util.Assert;
 
 /**
  * A facility for provider configuration settings.
  *
  * @author Daniel Garnier-Moiroux
+ * @author Joe Grandja
  * @since 0.1.0
- * @see Settings
+ * @see AbstractSettings
  */
-public class ProviderSettings extends Settings {
+public final class ProviderSettings extends AbstractSettings {
 	private static final String PROVIDER_SETTING_BASE = "setting.provider.";
 	public static final String ISSUER = PROVIDER_SETTING_BASE.concat("issuer");
 	public static final String AUTHORIZATION_ENDPOINT = PROVIDER_SETTING_BASE.concat("authorization-endpoint");
@@ -35,19 +37,7 @@ public class ProviderSettings extends Settings {
 	public static final String TOKEN_INTROSPECTION_ENDPOINT = PROVIDER_SETTING_BASE.concat("token-introspection-endpoint");
 	public static final String OIDC_CLIENT_REGISTRATION_ENDPOINT = PROVIDER_SETTING_BASE.concat("oidc-client-registration-endpoint");
 
-	/**
-	 * Constructs a {@code ProviderSettings}.
-	 */
-	public ProviderSettings() {
-		this(defaultSettings());
-	}
-
-	/**
-	 * Constructs a {@code ProviderSettings} using the provided parameters.
-	 *
-	 * @param settings the initial settings
-	 */
-	public ProviderSettings(Map<String, Object> settings) {
+	private ProviderSettings(Map<String, Object> settings) {
 		super(settings);
 	}
 
@@ -56,18 +46,8 @@ public class ProviderSettings extends Settings {
 	 *
 	 * @return the URL of the Provider's Issuer Identifier
 	 */
-	public String issuer() {
-		return setting(ISSUER);
-	}
-
-	/**
-	 * Sets the URL the Provider uses as its Issuer Identifier.
-	 *
-	 * @param issuer the URL the Provider uses as its Issuer Identifier.
-	 * @return the {@link ProviderSettings} for further configuration
-	 */
-	public ProviderSettings issuer(String issuer) {
-		return setting(ISSUER, issuer);
+	public String getIssuer() {
+		return getSetting(ISSUER);
 	}
 
 	/**
@@ -75,18 +55,8 @@ public class ProviderSettings extends Settings {
 	 *
 	 * @return the Authorization endpoint
 	 */
-	public String authorizationEndpoint() {
-		return setting(AUTHORIZATION_ENDPOINT);
-	}
-
-	/**
-	 * Sets the Provider's OAuth 2.0 Authorization endpoint.
-	 *
-	 * @param authorizationEndpoint the Authorization endpoint
-	 * @return the {@link ProviderSettings} for further configuration
-	 */
-	public ProviderSettings authorizationEndpoint(String authorizationEndpoint) {
-		return setting(AUTHORIZATION_ENDPOINT, authorizationEndpoint);
+	public String getAuthorizationEndpoint() {
+		return getSetting(AUTHORIZATION_ENDPOINT);
 	}
 
 	/**
@@ -94,18 +64,8 @@ public class ProviderSettings extends Settings {
 	 *
 	 * @return the Token endpoint
 	 */
-	public String tokenEndpoint() {
-		return setting(TOKEN_ENDPOINT);
-	}
-
-	/**
-	 * Sets the Provider's OAuth 2.0 Token endpoint.
-	 *
-	 * @param tokenEndpoint the Token endpoint
-	 * @return the {@link ProviderSettings} for further configuration
-	 */
-	public ProviderSettings tokenEndpoint(String tokenEndpoint) {
-		return setting(TOKEN_ENDPOINT, tokenEndpoint);
+	public String getTokenEndpoint() {
+		return getSetting(TOKEN_ENDPOINT);
 	}
 
 	/**
@@ -113,18 +73,8 @@ public class ProviderSettings extends Settings {
 	 *
 	 * @return the JWK Set endpoint
 	 */
-	public String jwkSetEndpoint() {
-		return setting(JWK_SET_ENDPOINT);
-	}
-
-	/**
-	 * Sets the Provider's JWK Set endpoint.
-	 *
-	 * @param jwkSetEndpoint the JWK Set endpoint
-	 * @return the {@link ProviderSettings} for further configuration
-	 */
-	public ProviderSettings jwkSetEndpoint(String jwkSetEndpoint) {
-		return setting(JWK_SET_ENDPOINT, jwkSetEndpoint);
+	public String getJwkSetEndpoint() {
+		return getSetting(JWK_SET_ENDPOINT);
 	}
 
 	/**
@@ -132,18 +82,8 @@ public class ProviderSettings extends Settings {
 	 *
 	 * @return the Token Revocation endpoint
 	 */
-	public String tokenRevocationEndpoint() {
-		return setting(TOKEN_REVOCATION_ENDPOINT);
-	}
-
-	/**
-	 * Sets the Provider's OAuth 2.0 Token Revocation endpoint.
-	 *
-	 * @param tokenRevocationEndpoint the Token Revocation endpoint
-	 * @return the {@link ProviderSettings} for further configuration
-	 */
-	public ProviderSettings tokenRevocationEndpoint(String tokenRevocationEndpoint) {
-		return setting(TOKEN_REVOCATION_ENDPOINT, tokenRevocationEndpoint);
+	public String getTokenRevocationEndpoint() {
+		return getSetting(TOKEN_REVOCATION_ENDPOINT);
 	}
 
 	/**
@@ -151,18 +91,8 @@ public class ProviderSettings extends Settings {
 	 *
 	 * @return the Token Introspection endpoint
 	 */
-	public String tokenIntrospectionEndpoint() {
-		return setting(TOKEN_INTROSPECTION_ENDPOINT);
-	}
-
-	/**
-	 * Sets the Provider's OAuth 2.0 Token Introspection endpoint.
-	 *
-	 * @param tokenIntrospectionEndpoint the Token Introspection endpoint
-	 * @return the {@link ProviderSettings} for further configuration
-	 */
-	public ProviderSettings tokenIntrospectionEndpoint(String tokenIntrospectionEndpoint) {
-		return setting(TOKEN_INTROSPECTION_ENDPOINT, tokenIntrospectionEndpoint);
+	public String getTokenIntrospectionEndpoint() {
+		return getSetting(TOKEN_INTROSPECTION_ENDPOINT);
 	}
 
 	/**
@@ -170,28 +100,125 @@ public class ProviderSettings extends Settings {
 	 *
 	 * @return the OpenID Connect 1.0 Client Registration endpoint
 	 */
-	public String oidcClientRegistrationEndpoint() {
-		return setting(OIDC_CLIENT_REGISTRATION_ENDPOINT);
+	public String getOidcClientRegistrationEndpoint() {
+		return getSetting(OIDC_CLIENT_REGISTRATION_ENDPOINT);
 	}
 
 	/**
-	 * Sets the Provider's OpenID Connect 1.0 Client Registration endpoint.
+	 * Constructs a new {@link Builder} with the default settings.
 	 *
-	 * @param oidcClientRegistrationEndpoint the OpenID Connect 1.0 Client Registration endpoint
-	 * @return the {@link ProviderSettings} for further configuration
+	 * @return the {@link Builder}
 	 */
-	public ProviderSettings oidcClientRegistrationEndpoint(String oidcClientRegistrationEndpoint) {
-		return setting(OIDC_CLIENT_REGISTRATION_ENDPOINT, oidcClientRegistrationEndpoint);
+	public static Builder builder() {
+		return new Builder()
+				.authorizationEndpoint("/oauth2/authorize")
+				.tokenEndpoint("/oauth2/token")
+				.jwkSetEndpoint("/oauth2/jwks")
+				.tokenRevocationEndpoint("/oauth2/revoke")
+				.tokenIntrospectionEndpoint("/oauth2/introspect")
+				.oidcClientRegistrationEndpoint("/connect/register");
 	}
 
-	protected static Map<String, Object> defaultSettings() {
-		Map<String, Object> settings = new HashMap<>();
-		settings.put(AUTHORIZATION_ENDPOINT, "/oauth2/authorize");
-		settings.put(TOKEN_ENDPOINT, "/oauth2/token");
-		settings.put(JWK_SET_ENDPOINT, "/oauth2/jwks");
-		settings.put(TOKEN_REVOCATION_ENDPOINT, "/oauth2/revoke");
-		settings.put(TOKEN_INTROSPECTION_ENDPOINT, "/oauth2/introspect");
-		settings.put(OIDC_CLIENT_REGISTRATION_ENDPOINT, "/connect/register");
-		return settings;
+	/**
+	 * Constructs a new {@link Builder} with the provided settings.
+	 *
+	 * @param settings the settings to initialize the builder
+	 * @return the {@link Builder}
+	 */
+	public static Builder withSettings(Map<String, Object> settings) {
+		Assert.notEmpty(settings, "settings cannot be empty");
+		return new Builder()
+				.settings(s -> s.putAll(settings));
 	}
+
+	/**
+	 * A builder for {@link ProviderSettings}.
+	 */
+	public static class Builder extends AbstractBuilder<ProviderSettings, Builder> {
+
+		private Builder() {
+		}
+
+		/**
+		 * Sets the URL the Provider uses as its Issuer Identifier.
+		 *
+		 * @param issuer the URL the Provider uses as its Issuer Identifier.
+		 * @return the {@link Builder} for further configuration
+		 */
+		public Builder issuer(String issuer) {
+			return setting(ISSUER, issuer);
+		}
+
+		/**
+		 * Sets the Provider's OAuth 2.0 Authorization endpoint.
+		 *
+		 * @param authorizationEndpoint the Authorization endpoint
+		 * @return the {@link Builder} for further configuration
+		 */
+		public Builder authorizationEndpoint(String authorizationEndpoint) {
+			return setting(AUTHORIZATION_ENDPOINT, authorizationEndpoint);
+		}
+
+		/**
+		 * Sets the Provider's OAuth 2.0 Token endpoint.
+		 *
+		 * @param tokenEndpoint the Token endpoint
+		 * @return the {@link Builder} for further configuration
+		 */
+		public Builder tokenEndpoint(String tokenEndpoint) {
+			return setting(TOKEN_ENDPOINT, tokenEndpoint);
+		}
+
+		/**
+		 * Sets the Provider's JWK Set endpoint.
+		 *
+		 * @param jwkSetEndpoint the JWK Set endpoint
+		 * @return the {@link Builder} for further configuration
+		 */
+		public Builder jwkSetEndpoint(String jwkSetEndpoint) {
+			return setting(JWK_SET_ENDPOINT, jwkSetEndpoint);
+		}
+
+		/**
+		 * Sets the Provider's OAuth 2.0 Token Revocation endpoint.
+		 *
+		 * @param tokenRevocationEndpoint the Token Revocation endpoint
+		 * @return the {@link Builder} for further configuration
+		 */
+		public Builder tokenRevocationEndpoint(String tokenRevocationEndpoint) {
+			return setting(TOKEN_REVOCATION_ENDPOINT, tokenRevocationEndpoint);
+		}
+
+		/**
+		 * Sets the Provider's OAuth 2.0 Token Introspection endpoint.
+		 *
+		 * @param tokenIntrospectionEndpoint the Token Introspection endpoint
+		 * @return the {@link Builder} for further configuration
+		 */
+		public Builder tokenIntrospectionEndpoint(String tokenIntrospectionEndpoint) {
+			return setting(TOKEN_INTROSPECTION_ENDPOINT, tokenIntrospectionEndpoint);
+		}
+
+		/**
+		 * Sets the Provider's OpenID Connect 1.0 Client Registration endpoint.
+		 *
+		 * @param oidcClientRegistrationEndpoint the OpenID Connect 1.0 Client Registration endpoint
+		 * @return the {@link Builder} for further configuration
+		 */
+		public Builder oidcClientRegistrationEndpoint(String oidcClientRegistrationEndpoint) {
+			return setting(OIDC_CLIENT_REGISTRATION_ENDPOINT, oidcClientRegistrationEndpoint);
+		}
+
+		/**
+		 * Builds the {@link ProviderSettings}.
+		 *
+		 * @return the {@link ProviderSettings}
+		 */
+		@Override
+		public ProviderSettings build() {
+			return new ProviderSettings(getSettings());
+		}
+
+	}
+
 }

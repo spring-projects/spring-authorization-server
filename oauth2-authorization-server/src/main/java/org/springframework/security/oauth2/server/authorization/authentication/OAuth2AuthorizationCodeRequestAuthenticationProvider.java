@@ -151,7 +151,7 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 							authorizationCodeRequestAuthentication, registeredClient, null);
 				}
 			}
-		} else if (registeredClient.getClientSettings().requireProofKey()) {
+		} else if (registeredClient.getClientSettings().isRequireProofKey()) {
 			throwError(OAuth2ErrorCodes.INVALID_REQUEST, PkceParameterNames.CODE_CHALLENGE, PKCE_ERROR_URI,
 					authorizationCodeRequestAuthentication, registeredClient, null);
 		}
@@ -341,7 +341,7 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 	private static boolean requireAuthorizationConsent(RegisteredClient registeredClient,
 			OAuth2AuthorizationRequest authorizationRequest, OAuth2AuthorizationConsent authorizationConsent) {
 
-		if (!registeredClient.getClientSettings().requireAuthorizationConsent()) {
+		if (!registeredClient.getClientSettings().isRequireAuthorizationConsent()) {
 			return false;
 		}
 		// 'openid' scope does not require consent

@@ -36,6 +36,7 @@ import org.springframework.security.oauth2.server.authorization.TestOAuth2Author
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
+import org.springframework.security.oauth2.server.authorization.config.ClientSettings;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -209,7 +210,7 @@ public class OAuth2ClientAuthenticationProviderTests {
 	@Test
 	public void authenticateWhenPkceAndRequireProofKeyAndMissingCodeChallengeThenThrowOAuth2AuthenticationException() {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
-				.clientSettings(clientSettings -> clientSettings.requireProofKey(true))
+				.clientSettings(ClientSettings.builder().requireProofKey(true).build())
 				.build();
 		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
 				.thenReturn(registeredClient);

@@ -77,12 +77,12 @@ public final class OidcProviderConfigurationEndpointFilter extends OncePerReques
 		}
 
 		OidcProviderConfiguration providerConfiguration = OidcProviderConfiguration.builder()
-				.issuer(this.providerSettings.issuer())
-				.authorizationEndpoint(asUrl(this.providerSettings.issuer(), this.providerSettings.authorizationEndpoint()))
-				.tokenEndpoint(asUrl(this.providerSettings.issuer(), this.providerSettings.tokenEndpoint()))
+				.issuer(this.providerSettings.getIssuer())
+				.authorizationEndpoint(asUrl(this.providerSettings.getIssuer(), this.providerSettings.getAuthorizationEndpoint()))
+				.tokenEndpoint(asUrl(this.providerSettings.getIssuer(), this.providerSettings.getTokenEndpoint()))
 				.tokenEndpointAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue())
 				.tokenEndpointAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_POST.getValue())
-				.jwkSetUrl(asUrl(this.providerSettings.issuer(), this.providerSettings.jwkSetEndpoint()))
+				.jwkSetUrl(asUrl(this.providerSettings.getIssuer(), this.providerSettings.getJwkSetEndpoint()))
 				.responseType(OAuth2AuthorizationResponseType.CODE.getValue())
 				.grantType(AuthorizationGrantType.AUTHORIZATION_CODE.getValue())
 				.grantType(AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())

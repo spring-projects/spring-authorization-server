@@ -76,7 +76,7 @@ public class JwkSetTests {
 	public static void init() {
 		JWKSet jwkSet = new JWKSet(TestJwks.DEFAULT_RSA_JWK);
 		jwkSource = (jwkSelector, securityContext) -> jwkSelector.select(jwkSet);
-		providerSettings = new ProviderSettings().jwkSetEndpoint("/test/jwks");
+		providerSettings = ProviderSettings.builder().jwkSetEndpoint("/test/jwks").build();
 		db = new EmbeddedDatabaseBuilder()
 				.generateUniqueName(true)
 				.setType(EmbeddedDatabaseType.HSQL)
@@ -108,7 +108,7 @@ public class JwkSetTests {
 	public void requestWhenJwkSetCustomEndpointThenReturnKeys() throws Exception {
 		this.spring.register(AuthorizationServerConfigurationCustomEndpoints.class).autowire();
 
-		assertJwkSetRequestThenReturnKeys(providerSettings.jwkSetEndpoint());
+		assertJwkSetRequestThenReturnKeys(providerSettings.getJwkSetEndpoint());
 	}
 
 	private void assertJwkSetRequestThenReturnKeys(String jwkSetEndpointUri) throws Exception {

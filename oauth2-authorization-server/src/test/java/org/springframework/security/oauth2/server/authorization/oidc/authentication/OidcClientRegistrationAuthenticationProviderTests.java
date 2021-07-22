@@ -264,9 +264,9 @@ public class OidcClientRegistrationAuthenticationProviderTests {
 		assertThat(registeredClientResult.getAuthorizationGrantTypes())
 				.containsExactlyInAnyOrder(AuthorizationGrantType.AUTHORIZATION_CODE, AuthorizationGrantType.CLIENT_CREDENTIALS);
 		assertThat(registeredClientResult.getScopes()).containsExactlyInAnyOrder("scope1", "scope2");
-		assertThat(registeredClientResult.getClientSettings().requireProofKey()).isTrue();
-		assertThat(registeredClientResult.getClientSettings().requireAuthorizationConsent()).isTrue();
-		assertThat(registeredClientResult.getTokenSettings().idTokenSignatureAlgorithm()).isEqualTo(SignatureAlgorithm.RS256);
+		assertThat(registeredClientResult.getClientSettings().isRequireProofKey()).isTrue();
+		assertThat(registeredClientResult.getClientSettings().isRequireAuthorizationConsent()).isTrue();
+		assertThat(registeredClientResult.getTokenSettings().getIdTokenSignatureAlgorithm()).isEqualTo(SignatureAlgorithm.RS256);
 
 		OidcClientRegistration clientRegistrationResult = authenticationResult.getClientRegistration();
 		assertThat(clientRegistrationResult.getClientId()).isEqualTo(registeredClientResult.getClientId());
@@ -289,7 +289,7 @@ public class OidcClientRegistrationAuthenticationProviderTests {
 		assertThat(clientRegistrationResult.getTokenEndpointAuthenticationMethod())
 				.isEqualTo(registeredClientResult.getClientAuthenticationMethods().iterator().next().getValue());
 		assertThat(clientRegistrationResult.getIdTokenSignedResponseAlgorithm())
-				.isEqualTo(registeredClientResult.getTokenSettings().idTokenSignatureAlgorithm().getName());
+				.isEqualTo(registeredClientResult.getTokenSettings().getIdTokenSignatureAlgorithm().getName());
 	}
 
 	private static Jwt createJwt() {

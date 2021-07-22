@@ -97,7 +97,7 @@ public class OAuth2TokenRevocationTests {
 	public static void init() {
 		JWKSet jwkSet = new JWKSet(TestJwks.DEFAULT_RSA_JWK);
 		jwkSource = (jwkSelector, securityContext) -> jwkSelector.select(jwkSet);
-		providerSettings = new ProviderSettings().tokenRevocationEndpoint("/test/revoke");
+		providerSettings = ProviderSettings.builder().tokenRevocationEndpoint("/test/revoke").build();
 		db = new EmbeddedDatabaseBuilder()
 				.generateUniqueName(true)
 				.setType(EmbeddedDatabaseType.HSQL)
@@ -154,7 +154,7 @@ public class OAuth2TokenRevocationTests {
 	public void requestWhenRevokeAccessTokenCustomEndpointThenRevoked() throws Exception {
 		this.spring.register(AuthorizationServerConfigurationCustomEndpoints.class).autowire();
 
-		assertRevokeAccessTokenThenRevoked(providerSettings.tokenRevocationEndpoint());
+		assertRevokeAccessTokenThenRevoked(providerSettings.getTokenRevocationEndpoint());
 	}
 
 	private void assertRevokeAccessTokenThenRevoked(String tokenRevocationEndpointUri) throws Exception {

@@ -42,6 +42,8 @@ import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType;
 import org.springframework.security.jackson2.SecurityJackson2Modules;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
+import org.springframework.security.oauth2.server.authorization.config.ClientSettings;
+import org.springframework.security.oauth2.server.authorization.config.TokenSettings;
 import org.springframework.security.oauth2.server.authorization.jackson2.OAuth2AuthorizationServerJackson2Module;
 import org.springframework.util.StringUtils;
 
@@ -322,12 +324,10 @@ public class JdbcRegisteredClientRepositoryTests {
 				// @formatter:on
 
 				Map<String, Object> clientSettingsMap = parseMap(rs.getString("clientSettings"));
-				builder.clientSettings(clientSettings ->
-						clientSettings.settings().putAll(clientSettingsMap));
+				builder.clientSettings(ClientSettings.withSettings(clientSettingsMap).build());
 
 				Map<String, Object> tokenSettingsMap = parseMap(rs.getString("tokenSettings"));
-				builder.tokenSettings(tokenSettings ->
-						tokenSettings.settings().putAll(tokenSettingsMap));
+				builder.tokenSettings(TokenSettings.withSettings(tokenSettingsMap).build());
 
 				return builder.build();
 			}

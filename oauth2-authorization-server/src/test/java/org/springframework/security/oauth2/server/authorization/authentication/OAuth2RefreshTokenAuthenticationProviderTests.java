@@ -52,6 +52,7 @@ import org.springframework.security.oauth2.server.authorization.OAuth2TokenCusto
 import org.springframework.security.oauth2.server.authorization.TestOAuth2Authorizations;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
+import org.springframework.security.oauth2.server.authorization.config.TokenSettings;
 
 import static org.assertj.core.api.Assertions.entry;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
@@ -233,7 +234,7 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 	@Test
 	public void authenticateWhenReuseRefreshTokensFalseThenReturnNewRefreshToken() {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
-				.tokenSettings(tokenSettings -> tokenSettings.reuseRefreshTokens(false))
+				.tokenSettings(TokenSettings.builder().reuseRefreshTokens(false).build())
 				.build();
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();
 		when(this.authorizationService.findByToken(

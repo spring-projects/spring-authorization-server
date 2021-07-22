@@ -113,7 +113,7 @@ public final class OAuth2ClientCredentialsAuthenticationProvider implements Auth
 			authorizedScopes = new LinkedHashSet<>(clientCredentialsAuthentication.getScopes());
 		}
 
-		String issuer = this.providerSettings != null ? this.providerSettings.issuer() : null;
+		String issuer = this.providerSettings != null ? this.providerSettings.getIssuer() : null;
 
 		JoseHeader.Builder headersBuilder = JwtUtils.headers();
 		JwtClaimsSet.Builder claimsBuilder = JwtUtils.accessTokenClaims(

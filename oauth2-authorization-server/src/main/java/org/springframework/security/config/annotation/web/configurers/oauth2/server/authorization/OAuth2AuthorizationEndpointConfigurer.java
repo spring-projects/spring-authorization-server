@@ -130,7 +130,7 @@ public final class OAuth2AuthorizationEndpointConfigurer extends AbstractOAuth2C
 	 *
 	 * <ul>
 	 * <li>It must be an HTTP POST</li>
-	 * <li>It must be submitted to {@link ProviderSettings#authorizationEndpoint()}</li>
+	 * <li>It must be submitted to {@link ProviderSettings#getAuthorizationEndpoint()} ()}</li>
 	 * <li>It must include the received {@code client_id} as an HTTP parameter</li>
 	 * <li>It must include the received {@code state} as an HTTP parameter</li>
 	 * <li>It must include the list of {@code scope}s the {@code Resource Owner}
@@ -150,10 +150,10 @@ public final class OAuth2AuthorizationEndpointConfigurer extends AbstractOAuth2C
 		ProviderSettings providerSettings = OAuth2ConfigurerUtils.getProviderSettings(builder);
 		this.requestMatcher = new OrRequestMatcher(
 				new AntPathRequestMatcher(
-						providerSettings.authorizationEndpoint(),
+						providerSettings.getAuthorizationEndpoint(),
 						HttpMethod.GET.name()),
 				new AntPathRequestMatcher(
-						providerSettings.authorizationEndpoint(),
+						providerSettings.getAuthorizationEndpoint(),
 						HttpMethod.POST.name()));
 
 		List<AuthenticationProvider> authenticationProviders =
@@ -172,7 +172,7 @@ public final class OAuth2AuthorizationEndpointConfigurer extends AbstractOAuth2C
 		OAuth2AuthorizationEndpointFilter authorizationEndpointFilter =
 				new OAuth2AuthorizationEndpointFilter(
 						authenticationManager,
-						providerSettings.authorizationEndpoint());
+						providerSettings.getAuthorizationEndpoint());
 		if (this.authorizationRequestConverter != null) {
 			authorizationEndpointFilter.setAuthenticationConverter(this.authorizationRequestConverter);
 		}

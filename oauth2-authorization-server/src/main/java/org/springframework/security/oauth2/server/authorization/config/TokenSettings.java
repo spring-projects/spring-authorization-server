@@ -16,7 +16,6 @@
 package org.springframework.security.oauth2.server.authorization.config;
 
 import java.time.Duration;
-import java.util.HashMap;
 import java.util.Map;
 
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
@@ -28,28 +27,16 @@ import org.springframework.util.Assert;
  *
  * @author Joe Grandja
  * @since 0.0.2
- * @see Settings
+ * @see AbstractSettings
  */
-public class TokenSettings extends Settings {
+public final class TokenSettings extends AbstractSettings {
 	private static final String TOKEN_SETTING_BASE = "setting.token.";
 	public static final String ACCESS_TOKEN_TIME_TO_LIVE = TOKEN_SETTING_BASE.concat("access-token-time-to-live");
 	public static final String REUSE_REFRESH_TOKENS = TOKEN_SETTING_BASE.concat("reuse-refresh-tokens");
 	public static final String REFRESH_TOKEN_TIME_TO_LIVE = TOKEN_SETTING_BASE.concat("refresh-token-time-to-live");
 	public static final String ID_TOKEN_SIGNATURE_ALGORITHM = TOKEN_SETTING_BASE.concat("id-token-signature-algorithm");
 
-	/**
-	 * Constructs a {@code TokenSettings}.
-	 */
-	public TokenSettings() {
-		this(defaultSettings());
-	}
-
-	/**
-	 * Constructs a {@code TokenSettings} using the provided parameters.
-	 *
-	 * @param settings the initial settings
-	 */
-	public TokenSettings(Map<String, Object> settings) {
+	private TokenSettings(Map<String, Object> settings) {
 		super(settings);
 	}
 
@@ -58,41 +45,16 @@ public class TokenSettings extends Settings {
 	 *
 	 * @return the time-to-live for an access token
 	 */
-	public Duration accessTokenTimeToLive() {
-		return setting(ACCESS_TOKEN_TIME_TO_LIVE);
-	}
-
-	/**
-	 * Set the time-to-live for an access token. Must be greater than {@code Duration.ZERO}.
-	 *
-	 * @param accessTokenTimeToLive the time-to-live for an access token
-	 * @return the {@link TokenSettings}
-	 */
-	public TokenSettings accessTokenTimeToLive(Duration accessTokenTimeToLive) {
-		Assert.notNull(accessTokenTimeToLive, "accessTokenTimeToLive cannot be null");
-		Assert.isTrue(accessTokenTimeToLive.getSeconds() > 0, "accessTokenTimeToLive must be greater than Duration.ZERO");
-		setting(ACCESS_TOKEN_TIME_TO_LIVE, accessTokenTimeToLive);
-		return this;
+	public Duration getAccessTokenTimeToLive() {
+		return getSetting(ACCESS_TOKEN_TIME_TO_LIVE);
 	}
 
 	/**
 	 * Returns {@code true} if refresh tokens are reused when returning the access token response,
 	 * or {@code false} if a new refresh token is issued. The default is {@code true}.
 	 */
-	public boolean reuseRefreshTokens() {
-		return setting(REUSE_REFRESH_TOKENS);
-	}
-
-	/**
-	 * Set to {@code true} if refresh tokens are reused when returning the access token response,
-	 * or {@code false} if a new refresh token is issued.
-	 *
-	 * @param reuseRefreshTokens {@code true} to reuse refresh tokens, {@code false} to issue new refresh tokens
-	 * @return the {@link TokenSettings}
-	 */
-	public TokenSettings reuseRefreshTokens(boolean reuseRefreshTokens) {
-		setting(REUSE_REFRESH_TOKENS, reuseRefreshTokens);
-		return this;
+	public boolean isReuseRefreshTokens() {
+		return getSetting(REUSE_REFRESH_TOKENS);
 	}
 
 	/**
@@ -100,21 +62,8 @@ public class TokenSettings extends Settings {
 	 *
 	 * @return the time-to-live for a refresh token
 	 */
-	public Duration refreshTokenTimeToLive() {
-		return setting(REFRESH_TOKEN_TIME_TO_LIVE);
-	}
-
-	/**
-	 * Set the time-to-live for a refresh token. Must be greater than {@code Duration.ZERO}.
-	 *
-	 * @param refreshTokenTimeToLive the time-to-live for a refresh token
-	 * @return the {@link TokenSettings}
-	 */
-	public TokenSettings refreshTokenTimeToLive(Duration refreshTokenTimeToLive) {
-		Assert.notNull(refreshTokenTimeToLive, "refreshTokenTimeToLive cannot be null");
-		Assert.isTrue(refreshTokenTimeToLive.getSeconds() > 0, "refreshTokenTimeToLive must be greater than Duration.ZERO");
-		setting(REFRESH_TOKEN_TIME_TO_LIVE, refreshTokenTimeToLive);
-		return this;
+	public Duration getRefreshTokenTimeToLive() {
+		return getSetting(REFRESH_TOKEN_TIME_TO_LIVE);
 	}
 
 	/**
@@ -123,29 +72,99 @@ public class TokenSettings extends Settings {
 	 *
 	 * @return the {@link SignatureAlgorithm JWS} algorithm for signing the {@link OidcIdToken ID Token}
 	 */
-	public SignatureAlgorithm idTokenSignatureAlgorithm() {
-		return setting(ID_TOKEN_SIGNATURE_ALGORITHM);
+	public SignatureAlgorithm getIdTokenSignatureAlgorithm() {
+		return getSetting(ID_TOKEN_SIGNATURE_ALGORITHM);
 	}
 
 	/**
-	 * Sets the {@link SignatureAlgorithm JWS} algorithm for signing the {@link OidcIdToken ID Token}.
+	 * Constructs a new {@link Builder} with the default settings.
 	 *
-	 * @param idTokenSignatureAlgorithm the {@link SignatureAlgorithm JWS} algorithm for signing the {@link OidcIdToken ID Token}
-	 * @return the {@link TokenSettings}
+	 * @return the {@link Builder}
 	 */
-	public TokenSettings idTokenSignatureAlgorithm(SignatureAlgorithm idTokenSignatureAlgorithm) {
-		Assert.notNull(idTokenSignatureAlgorithm, "idTokenSignatureAlgorithm cannot be null");
-		setting(ID_TOKEN_SIGNATURE_ALGORITHM, idTokenSignatureAlgorithm);
-		return this;
+	public static Builder builder() {
+		return new Builder()
+				.accessTokenTimeToLive(Duration.ofMinutes(5))
+				.reuseRefreshTokens(true)
+				.refreshTokenTimeToLive(Duration.ofMinutes(60))
+				.idTokenSignatureAlgorithm(SignatureAlgorithm.RS256);
 	}
 
-	protected static Map<String, Object> defaultSettings() {
-		Map<String, Object> settings = new HashMap<>();
-		settings.put(ACCESS_TOKEN_TIME_TO_LIVE, Duration.ofMinutes(5));
-		settings.put(REUSE_REFRESH_TOKENS, true);
-		settings.put(REFRESH_TOKEN_TIME_TO_LIVE, Duration.ofMinutes(60));
-		settings.put(ID_TOKEN_SIGNATURE_ALGORITHM, SignatureAlgorithm.RS256);
-		return settings;
+	/**
+	 * Constructs a new {@link Builder} with the provided settings.
+	 *
+	 * @param settings the settings to initialize the builder
+	 * @return the {@link Builder}
+	 */
+	public static Builder withSettings(Map<String, Object> settings) {
+		Assert.notEmpty(settings, "settings cannot be empty");
+		return new Builder()
+				.settings(s -> s.putAll(settings));
+	}
+
+	/**
+	 * A builder for {@link TokenSettings}.
+	 */
+	public static class Builder extends AbstractBuilder<TokenSettings, Builder> {
+
+		private Builder() {
+		}
+
+		/**
+		 * Set the time-to-live for an access token. Must be greater than {@code Duration.ZERO}.
+		 *
+		 * @param accessTokenTimeToLive the time-to-live for an access token
+		 * @return the {@link Builder} for further configuration
+		 */
+		public Builder accessTokenTimeToLive(Duration accessTokenTimeToLive) {
+			Assert.notNull(accessTokenTimeToLive, "accessTokenTimeToLive cannot be null");
+			Assert.isTrue(accessTokenTimeToLive.getSeconds() > 0, "accessTokenTimeToLive must be greater than Duration.ZERO");
+			return setting(ACCESS_TOKEN_TIME_TO_LIVE, accessTokenTimeToLive);
+		}
+
+		/**
+		 * Set to {@code true} if refresh tokens are reused when returning the access token response,
+		 * or {@code false} if a new refresh token is issued.
+		 *
+		 * @param reuseRefreshTokens {@code true} to reuse refresh tokens, {@code false} to issue new refresh tokens
+		 * @return the {@link Builder} for further configuration
+		 */
+		public Builder reuseRefreshTokens(boolean reuseRefreshTokens) {
+			return setting(REUSE_REFRESH_TOKENS, reuseRefreshTokens);
+		}
+
+		/**
+		 * Set the time-to-live for a refresh token. Must be greater than {@code Duration.ZERO}.
+		 *
+		 * @param refreshTokenTimeToLive the time-to-live for a refresh token
+		 * @return the {@link Builder} for further configuration
+		 */
+		public Builder refreshTokenTimeToLive(Duration refreshTokenTimeToLive) {
+			Assert.notNull(refreshTokenTimeToLive, "refreshTokenTimeToLive cannot be null");
+			Assert.isTrue(refreshTokenTimeToLive.getSeconds() > 0, "refreshTokenTimeToLive must be greater than Duration.ZERO");
+			return setting(REFRESH_TOKEN_TIME_TO_LIVE, refreshTokenTimeToLive);
+		}
+
+		/**
+		 * Sets the {@link SignatureAlgorithm JWS} algorithm for signing the {@link OidcIdToken ID Token}.
+		 *
+		 * @param idTokenSignatureAlgorithm the {@link SignatureAlgorithm JWS} algorithm for signing the {@link OidcIdToken ID Token}
+		 * @return the {@link Builder} for further configuration
+		 */
+		public Builder idTokenSignatureAlgorithm(SignatureAlgorithm idTokenSignatureAlgorithm) {
+			Assert.notNull(idTokenSignatureAlgorithm, "idTokenSignatureAlgorithm cannot be null");
+			return setting(ID_TOKEN_SIGNATURE_ALGORITHM, idTokenSignatureAlgorithm);
+		}
+
+		/**
+		 * Builds the {@link TokenSettings}.
+		 *
+		 * @return the {@link TokenSettings}
+		 */
+		@Override
+		public TokenSettings build() {
+			return new TokenSettings(getSettings());
+		}
+
 	}
 
 }

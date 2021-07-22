@@ -46,6 +46,7 @@ import org.springframework.security.oauth2.server.authorization.TestOAuth2Author
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
+import org.springframework.security.oauth2.server.authorization.config.ClientSettings;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -309,7 +310,7 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 	@Test
 	public void authenticateWhenPkceRequiredAndMissingCodeChallengeThenThrowOAuth2AuthorizationCodeRequestAuthenticationException() {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
-				.clientSettings(clientSettings -> clientSettings.requireProofKey(true))
+				.clientSettings(ClientSettings.builder().requireProofKey(true).build())
 				.build();
 		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
 				.thenReturn(registeredClient);
@@ -365,7 +366,7 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 	@Test
 	public void authenticateWhenRequireAuthorizationConsentThenReturnAuthorizationConsent() {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
-				.clientSettings(clientSettings -> clientSettings.requireAuthorizationConsent(true))
+				.clientSettings(ClientSettings.builder().requireAuthorizationConsent(true).build())
 				.build();
 		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
 				.thenReturn(registeredClient);
@@ -412,7 +413,7 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 	@Test
 	public void authenticateWhenRequireAuthorizationConsentAndOnlyOpenidScopeRequestedThenAuthorizationConsentNotRequired() {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
-				.clientSettings(clientSettings -> clientSettings.requireAuthorizationConsent(true))
+				.clientSettings(ClientSettings.builder().requireAuthorizationConsent(true).build())
 				.scopes(scopes -> {
 					scopes.clear();
 					scopes.add(OidcScopes.OPENID);
@@ -434,7 +435,7 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 	@Test
 	public void authenticateWhenRequireAuthorizationConsentAndAllPreviouslyApprovedThenAuthorizationConsentNotRequired() {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
-				.clientSettings(clientSettings -> clientSettings.requireAuthorizationConsent(true))
+				.clientSettings(ClientSettings.builder().requireAuthorizationConsent(true).build())
 				.build();
 		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
 				.thenReturn(registeredClient);

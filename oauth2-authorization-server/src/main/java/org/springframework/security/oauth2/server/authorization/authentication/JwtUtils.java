@@ -50,7 +50,7 @@ final class JwtUtils {
 			String issuer, String subject, Set<String> authorizedScopes) {
 
 		Instant issuedAt = Instant.now();
-		Instant expiresAt = issuedAt.plus(registeredClient.getTokenSettings().accessTokenTimeToLive());
+		Instant expiresAt = issuedAt.plus(registeredClient.getTokenSettings().getAccessTokenTimeToLive());
 
 		// @formatter:off
 		JwtClaimsSet.Builder claimsBuilder = JwtClaimsSet.builder();

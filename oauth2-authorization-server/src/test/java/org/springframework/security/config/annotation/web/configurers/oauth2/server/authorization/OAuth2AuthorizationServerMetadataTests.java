@@ -125,7 +125,7 @@ public class OAuth2AuthorizationServerMetadataTests {
 
 		@Bean
 		ProviderSettings providerSettings() {
-			return new ProviderSettings().issuer(issuerUrl);
+			return ProviderSettings.builder().issuer(issuerUrl).build();
 		}
 	}
 

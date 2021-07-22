@@ -333,7 +333,7 @@ public class OidcTests {
 
 		@Bean
 		ProviderSettings providerSettings() {
-			return new ProviderSettings().issuer(ISSUER_URL);
+			return ProviderSettings.builder().issuer(ISSUER_URL).build();
 		}
 	}
 
@@ -343,7 +343,7 @@ public class OidcTests {
 
 		@Bean
 		ProviderSettings providerSettings() {
-			return new ProviderSettings().issuer("urn:example");
+			return ProviderSettings.builder().issuer("urn:example").build();
 		}
 	}
 
@@ -353,7 +353,7 @@ public class OidcTests {
 
 		@Bean
 		ProviderSettings providerSettings() {
-			return new ProviderSettings().issuer("https://not a valid uri");
+			return ProviderSettings.builder().issuer("https://not a valid uri").build();
 		}
 	}
 }

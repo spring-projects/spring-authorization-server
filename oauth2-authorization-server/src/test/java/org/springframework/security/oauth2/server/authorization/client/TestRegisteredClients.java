@@ -20,6 +20,7 @@ import java.time.temporal.ChronoUnit;
 
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
+import org.springframework.security.oauth2.server.authorization.config.ClientSettings;
 
 /**
  * @author Anoop Garlapati
@@ -61,6 +62,6 @@ public class TestRegisteredClients {
 				.clientAuthenticationMethod(ClientAuthenticationMethod.NONE)
 				.redirectUri("https://example.com")
 				.scope("scope1")
-				.clientSettings(clientSettings -> clientSettings.requireProofKey(true));
+				.clientSettings(ClientSettings.builder().requireProofKey(true).build());
 	}
 }

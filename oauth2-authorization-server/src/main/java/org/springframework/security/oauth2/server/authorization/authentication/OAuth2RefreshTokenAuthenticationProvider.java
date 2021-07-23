@@ -36,7 +36,6 @@ import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.OAuth2RefreshToken;
-import org.springframework.security.oauth2.core.OAuth2RefreshToken2;
 import org.springframework.security.oauth2.core.OAuth2TokenType;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
@@ -250,6 +249,6 @@ public final class OAuth2RefreshTokenAuthenticationProvider implements Authentic
 	static OAuth2RefreshToken generateRefreshToken(Duration tokenTimeToLive) {
 		Instant issuedAt = Instant.now();
 		Instant expiresAt = issuedAt.plus(tokenTimeToLive);
-		return new OAuth2RefreshToken2(TOKEN_GENERATOR.generateKey(), issuedAt, expiresAt);
+		return new OAuth2RefreshToken(TOKEN_GENERATOR.generateKey(), issuedAt, expiresAt);
 	}
 }

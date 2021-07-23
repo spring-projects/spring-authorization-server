@@ -35,7 +35,6 @@ import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.OAuth2RefreshToken;
-import org.springframework.security.oauth2.core.OAuth2RefreshToken2;
 import org.springframework.security.oauth2.core.OAuth2TokenType;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
@@ -396,7 +395,7 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 	public void authenticateWhenExpiredRefreshTokenThenThrowOAuth2AuthenticationException() {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();
-		OAuth2RefreshToken expiredRefreshToken = new OAuth2RefreshToken2(
+		OAuth2RefreshToken expiredRefreshToken = new OAuth2RefreshToken(
 				"expired-refresh-token", Instant.now().minusSeconds(120), Instant.now().minusSeconds(60));
 		authorization = OAuth2Authorization.from(authorization).token(expiredRefreshToken).build();
 		when(this.authorizationService.findByToken(
@@ -418,7 +417,7 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 	@Test
 	public void authenticateWhenRevokedRefreshTokenThenThrowOAuth2AuthenticationException() {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
-		OAuth2RefreshToken refreshToken = new OAuth2RefreshToken2(
+		OAuth2RefreshToken refreshToken = new OAuth2RefreshToken(
 				"refresh-token", Instant.now().minusSeconds(120), Instant.now().plusSeconds(1000));
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient)
 				.token(refreshToken, (metadata) -> metadata.put(OAuth2Authorization.Token.INVALIDATED_METADATA_NAME, true))

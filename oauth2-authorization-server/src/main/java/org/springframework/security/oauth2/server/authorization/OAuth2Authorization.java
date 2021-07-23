@@ -28,7 +28,6 @@ import org.springframework.lang.Nullable;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2RefreshToken;
-import org.springframework.security.oauth2.core.OAuth2RefreshToken2;
 import org.springframework.security.oauth2.core.OAuth2Token;
 import org.springframework.security.oauth2.core.Version;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
@@ -470,9 +469,6 @@ public class OAuth2Authorization implements Serializable {
 			}
 			metadataConsumer.accept(metadata);
 			Class<? extends OAuth2Token> tokenClass = token.getClass();
-			if (tokenClass.equals(OAuth2RefreshToken2.class)) {
-				tokenClass = OAuth2RefreshToken.class;
-			}
 			this.tokens.put(tokenClass, new Token<>(token, metadata));
 			return this;
 		}

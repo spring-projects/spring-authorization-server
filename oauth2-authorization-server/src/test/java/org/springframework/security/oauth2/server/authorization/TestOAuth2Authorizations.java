@@ -26,7 +26,6 @@ import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2RefreshToken;
-import org.springframework.security.oauth2.core.OAuth2RefreshToken2;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
@@ -64,7 +63,7 @@ public class TestOAuth2Authorizations {
 			Map<String, Object> authorizationRequestAdditionalParameters) {
 		OAuth2AuthorizationCode authorizationCode = new OAuth2AuthorizationCode(
 				"code", Instant.now(), Instant.now().plusSeconds(120));
-		OAuth2RefreshToken refreshToken = new OAuth2RefreshToken2(
+		OAuth2RefreshToken refreshToken = new OAuth2RefreshToken(
 				"refresh-token", Instant.now(), Instant.now().plus(1, ChronoUnit.HOURS));
 		OAuth2AuthorizationRequest authorizationRequest = OAuth2AuthorizationRequest.authorizationCode()
 				.authorizationUri("https://provider.com/oauth2/authorize")

@@ -48,7 +48,6 @@ import org.springframework.security.oauth2.core.AbstractOAuth2Token;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2RefreshToken;
-import org.springframework.security.oauth2.core.OAuth2RefreshToken2;
 import org.springframework.security.oauth2.core.OAuth2TokenType;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
@@ -405,7 +404,7 @@ public class JdbcOAuth2AuthorizationService implements OAuth2AuthorizationServic
 				}
 				Map<String, Object> refreshTokenMetadata = parseMap(rs.getString("refresh_token_metadata"));
 
-				OAuth2RefreshToken refreshToken = new OAuth2RefreshToken2(
+				OAuth2RefreshToken refreshToken = new OAuth2RefreshToken(
 						tokenValue, tokenIssuedAt, tokenExpiresAt);
 				builder.token(refreshToken, (metadata) -> metadata.putAll(refreshTokenMetadata));
 			}

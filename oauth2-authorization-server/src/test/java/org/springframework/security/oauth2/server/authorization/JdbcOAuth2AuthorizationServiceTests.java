@@ -47,7 +47,6 @@ import org.springframework.security.oauth2.core.AbstractOAuth2Token;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2RefreshToken;
-import org.springframework.security.oauth2.core.OAuth2RefreshToken2;
 import org.springframework.security.oauth2.core.OAuth2TokenType;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
@@ -349,7 +348,7 @@ public class JdbcOAuth2AuthorizationServiceTests {
 	public void findByTokenWhenRefreshTokenExistsThenFound() {
 		when(this.registeredClientRepository.findById(eq(REGISTERED_CLIENT.getId())))
 				.thenReturn(REGISTERED_CLIENT);
-		OAuth2RefreshToken refreshToken = new OAuth2RefreshToken2("refresh-token",
+		OAuth2RefreshToken refreshToken = new OAuth2RefreshToken("refresh-token",
 				Instant.now().truncatedTo(ChronoUnit.MILLIS),
 				Instant.now().plus(5, ChronoUnit.MINUTES).truncatedTo(ChronoUnit.MILLIS));
 		OAuth2Authorization authorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
@@ -601,7 +600,7 @@ public class JdbcOAuth2AuthorizationServiceTests {
 					}
 					Map<String, Object> refreshTokenMetadata = parseMap(rs.getString("refreshTokenMetadata"));
 
-					OAuth2RefreshToken refreshToken = new OAuth2RefreshToken2(
+					OAuth2RefreshToken refreshToken = new OAuth2RefreshToken(
 							tokenValue, tokenIssuedAt, tokenExpiresAt);
 					builder.token(refreshToken, (metadata) -> metadata.putAll(refreshTokenMetadata));
 				}

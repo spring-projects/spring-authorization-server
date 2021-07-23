@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -32,6 +33,7 @@ import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.OAuth2TokenType;
+import org.springframework.security.oauth2.core.authentication.OAuth2AuthenticationValidator;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationResponseType;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
@@ -54,6 +56,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -108,6 +111,13 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 	@Test
 	public void supportsWhenTypeOAuth2AuthorizationCodeRequestAuthenticationTokenThenReturnTrue() {
 		assertThat(this.authenticationProvider.supports(OAuth2AuthorizationCodeRequestAuthenticationToken.class)).isTrue();
+	}
+
+	@Test
+	public void setAuthenticationValidatorResolverWhenNullThenThrowIllegalArgumentException() {
+		assertThatThrownBy(() -> this.authenticationProvider.setAuthenticationValidatorResolver(null))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("authenticationValidatorResolver cannot be null");
 	}
 
 	@Test
@@ -475,6 +485,31 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 				(OAuth2AuthorizationCodeRequestAuthenticationToken) this.authenticationProvider.authenticate(authentication);
 
 		assertAuthorizationCodeRequestWithAuthorizationCodeResult(registeredClient, authentication, authenticationResult);
+	}
+
+	@Test
+	public void authenticateWhenCustomAuthenticationValidatorResolverThenUsed() {
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
+				.thenReturn(registeredClient);
+
+		@SuppressWarnings("unchecked")
+		Function<String, OAuth2AuthenticationValidator> authenticationValidatorResolver = mock(Function.class);
+		this.authenticationProvider.setAuthenticationValidatorResolver(authenticationValidatorResolver);
+
+		OAuth2AuthorizationCodeRequestAuthenticationToken authentication =
+				authorizationCodeRequestAuthentication(registeredClient, this.principal)
+						.build();
+
+		OAuth2AuthorizationCodeRequestAuthenticationToken authenticationResult =
+				(OAuth2AuthorizationCodeRequestAuthenticationToken) this.authenticationProvider.authenticate(authentication);
+
+		assertAuthorizationCodeRequestWithAuthorizationCodeResult(registeredClient, authentication, authenticationResult);
+
+		ArgumentCaptor<String> parameterNameCaptor = ArgumentCaptor.forClass(String.class);
+		verify(authenticationValidatorResolver, times(2)).apply(parameterNameCaptor.capture());
+		assertThat(parameterNameCaptor.getAllValues()).containsExactly(
+				OAuth2ParameterNames.REDIRECT_URI, OAuth2ParameterNames.SCOPE);
 	}
 
 	private void assertAuthorizationCodeRequestWithAuthorizationCodeResult(

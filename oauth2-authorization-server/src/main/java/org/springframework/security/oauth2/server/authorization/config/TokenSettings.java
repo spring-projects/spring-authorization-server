@@ -28,13 +28,9 @@ import org.springframework.util.Assert;
  * @author Joe Grandja
  * @since 0.0.2
  * @see AbstractSettings
+ * @see ConfigurationSettingNames.Token
  */
 public final class TokenSettings extends AbstractSettings {
-	private static final String TOKEN_SETTING_BASE = "setting.token.";
-	public static final String ACCESS_TOKEN_TIME_TO_LIVE = TOKEN_SETTING_BASE.concat("access-token-time-to-live");
-	public static final String REUSE_REFRESH_TOKENS = TOKEN_SETTING_BASE.concat("reuse-refresh-tokens");
-	public static final String REFRESH_TOKEN_TIME_TO_LIVE = TOKEN_SETTING_BASE.concat("refresh-token-time-to-live");
-	public static final String ID_TOKEN_SIGNATURE_ALGORITHM = TOKEN_SETTING_BASE.concat("id-token-signature-algorithm");
 
 	private TokenSettings(Map<String, Object> settings) {
 		super(settings);
@@ -46,7 +42,7 @@ public final class TokenSettings extends AbstractSettings {
 	 * @return the time-to-live for an access token
 	 */
 	public Duration getAccessTokenTimeToLive() {
-		return getSetting(ACCESS_TOKEN_TIME_TO_LIVE);
+		return getSetting(ConfigurationSettingNames.Token.ACCESS_TOKEN_TIME_TO_LIVE);
 	}
 
 	/**
@@ -54,7 +50,7 @@ public final class TokenSettings extends AbstractSettings {
 	 * or {@code false} if a new refresh token is issued. The default is {@code true}.
 	 */
 	public boolean isReuseRefreshTokens() {
-		return getSetting(REUSE_REFRESH_TOKENS);
+		return getSetting(ConfigurationSettingNames.Token.REUSE_REFRESH_TOKENS);
 	}
 
 	/**
@@ -63,7 +59,7 @@ public final class TokenSettings extends AbstractSettings {
 	 * @return the time-to-live for a refresh token
 	 */
 	public Duration getRefreshTokenTimeToLive() {
-		return getSetting(REFRESH_TOKEN_TIME_TO_LIVE);
+		return getSetting(ConfigurationSettingNames.Token.REFRESH_TOKEN_TIME_TO_LIVE);
 	}
 
 	/**
@@ -73,7 +69,7 @@ public final class TokenSettings extends AbstractSettings {
 	 * @return the {@link SignatureAlgorithm JWS} algorithm for signing the {@link OidcIdToken ID Token}
 	 */
 	public SignatureAlgorithm getIdTokenSignatureAlgorithm() {
-		return getSetting(ID_TOKEN_SIGNATURE_ALGORITHM);
+		return getSetting(ConfigurationSettingNames.Token.ID_TOKEN_SIGNATURE_ALGORITHM);
 	}
 
 	/**
@@ -118,7 +114,7 @@ public final class TokenSettings extends AbstractSettings {
 		public Builder accessTokenTimeToLive(Duration accessTokenTimeToLive) {
 			Assert.notNull(accessTokenTimeToLive, "accessTokenTimeToLive cannot be null");
 			Assert.isTrue(accessTokenTimeToLive.getSeconds() > 0, "accessTokenTimeToLive must be greater than Duration.ZERO");
-			return setting(ACCESS_TOKEN_TIME_TO_LIVE, accessTokenTimeToLive);
+			return setting(ConfigurationSettingNames.Token.ACCESS_TOKEN_TIME_TO_LIVE, accessTokenTimeToLive);
 		}
 
 		/**
@@ -129,7 +125,7 @@ public final class TokenSettings extends AbstractSettings {
 		 * @return the {@link Builder} for further configuration
 		 */
 		public Builder reuseRefreshTokens(boolean reuseRefreshTokens) {
-			return setting(REUSE_REFRESH_TOKENS, reuseRefreshTokens);
+			return setting(ConfigurationSettingNames.Token.REUSE_REFRESH_TOKENS, reuseRefreshTokens);
 		}
 
 		/**
@@ -141,7 +137,7 @@ public final class TokenSettings extends AbstractSettings {
 		public Builder refreshTokenTimeToLive(Duration refreshTokenTimeToLive) {
 			Assert.notNull(refreshTokenTimeToLive, "refreshTokenTimeToLive cannot be null");
 			Assert.isTrue(refreshTokenTimeToLive.getSeconds() > 0, "refreshTokenTimeToLive must be greater than Duration.ZERO");
-			return setting(REFRESH_TOKEN_TIME_TO_LIVE, refreshTokenTimeToLive);
+			return setting(ConfigurationSettingNames.Token.REFRESH_TOKEN_TIME_TO_LIVE, refreshTokenTimeToLive);
 		}
 
 		/**
@@ -152,7 +148,7 @@ public final class TokenSettings extends AbstractSettings {
 		 */
 		public Builder idTokenSignatureAlgorithm(SignatureAlgorithm idTokenSignatureAlgorithm) {
 			Assert.notNull(idTokenSignatureAlgorithm, "idTokenSignatureAlgorithm cannot be null");
-			return setting(ID_TOKEN_SIGNATURE_ALGORITHM, idTokenSignatureAlgorithm);
+			return setting(ConfigurationSettingNames.Token.ID_TOKEN_SIGNATURE_ALGORITHM, idTokenSignatureAlgorithm);
 		}
 
 		/**

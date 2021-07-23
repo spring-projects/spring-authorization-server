@@ -26,16 +26,9 @@ import org.springframework.util.Assert;
  * @author Joe Grandja
  * @since 0.1.0
  * @see AbstractSettings
+ * @see ConfigurationSettingNames.Provider
  */
 public final class ProviderSettings extends AbstractSettings {
-	private static final String PROVIDER_SETTING_BASE = "setting.provider.";
-	public static final String ISSUER = PROVIDER_SETTING_BASE.concat("issuer");
-	public static final String AUTHORIZATION_ENDPOINT = PROVIDER_SETTING_BASE.concat("authorization-endpoint");
-	public static final String TOKEN_ENDPOINT = PROVIDER_SETTING_BASE.concat("token-endpoint");
-	public static final String JWK_SET_ENDPOINT = PROVIDER_SETTING_BASE.concat("jwk-set-endpoint");
-	public static final String TOKEN_REVOCATION_ENDPOINT = PROVIDER_SETTING_BASE.concat("token-revocation-endpoint");
-	public static final String TOKEN_INTROSPECTION_ENDPOINT = PROVIDER_SETTING_BASE.concat("token-introspection-endpoint");
-	public static final String OIDC_CLIENT_REGISTRATION_ENDPOINT = PROVIDER_SETTING_BASE.concat("oidc-client-registration-endpoint");
 
 	private ProviderSettings(Map<String, Object> settings) {
 		super(settings);
@@ -47,7 +40,7 @@ public final class ProviderSettings extends AbstractSettings {
 	 * @return the URL of the Provider's Issuer Identifier
 	 */
 	public String getIssuer() {
-		return getSetting(ISSUER);
+		return getSetting(ConfigurationSettingNames.Provider.ISSUER);
 	}
 
 	/**
@@ -56,7 +49,7 @@ public final class ProviderSettings extends AbstractSettings {
 	 * @return the Authorization endpoint
 	 */
 	public String getAuthorizationEndpoint() {
-		return getSetting(AUTHORIZATION_ENDPOINT);
+		return getSetting(ConfigurationSettingNames.Provider.AUTHORIZATION_ENDPOINT);
 	}
 
 	/**
@@ -65,7 +58,7 @@ public final class ProviderSettings extends AbstractSettings {
 	 * @return the Token endpoint
 	 */
 	public String getTokenEndpoint() {
-		return getSetting(TOKEN_ENDPOINT);
+		return getSetting(ConfigurationSettingNames.Provider.TOKEN_ENDPOINT);
 	}
 
 	/**
@@ -74,7 +67,7 @@ public final class ProviderSettings extends AbstractSettings {
 	 * @return the JWK Set endpoint
 	 */
 	public String getJwkSetEndpoint() {
-		return getSetting(JWK_SET_ENDPOINT);
+		return getSetting(ConfigurationSettingNames.Provider.JWK_SET_ENDPOINT);
 	}
 
 	/**
@@ -83,7 +76,7 @@ public final class ProviderSettings extends AbstractSettings {
 	 * @return the Token Revocation endpoint
 	 */
 	public String getTokenRevocationEndpoint() {
-		return getSetting(TOKEN_REVOCATION_ENDPOINT);
+		return getSetting(ConfigurationSettingNames.Provider.TOKEN_REVOCATION_ENDPOINT);
 	}
 
 	/**
@@ -92,7 +85,7 @@ public final class ProviderSettings extends AbstractSettings {
 	 * @return the Token Introspection endpoint
 	 */
 	public String getTokenIntrospectionEndpoint() {
-		return getSetting(TOKEN_INTROSPECTION_ENDPOINT);
+		return getSetting(ConfigurationSettingNames.Provider.TOKEN_INTROSPECTION_ENDPOINT);
 	}
 
 	/**
@@ -101,7 +94,7 @@ public final class ProviderSettings extends AbstractSettings {
 	 * @return the OpenID Connect 1.0 Client Registration endpoint
 	 */
 	public String getOidcClientRegistrationEndpoint() {
-		return getSetting(OIDC_CLIENT_REGISTRATION_ENDPOINT);
+		return getSetting(ConfigurationSettingNames.Provider.OIDC_CLIENT_REGISTRATION_ENDPOINT);
 	}
 
 	/**
@@ -146,7 +139,7 @@ public final class ProviderSettings extends AbstractSettings {
 		 * @return the {@link Builder} for further configuration
 		 */
 		public Builder issuer(String issuer) {
-			return setting(ISSUER, issuer);
+			return setting(ConfigurationSettingNames.Provider.ISSUER, issuer);
 		}
 
 		/**
@@ -156,7 +149,7 @@ public final class ProviderSettings extends AbstractSettings {
 		 * @return the {@link Builder} for further configuration
 		 */
 		public Builder authorizationEndpoint(String authorizationEndpoint) {
-			return setting(AUTHORIZATION_ENDPOINT, authorizationEndpoint);
+			return setting(ConfigurationSettingNames.Provider.AUTHORIZATION_ENDPOINT, authorizationEndpoint);
 		}
 
 		/**
@@ -166,7 +159,7 @@ public final class ProviderSettings extends AbstractSettings {
 		 * @return the {@link Builder} for further configuration
 		 */
 		public Builder tokenEndpoint(String tokenEndpoint) {
-			return setting(TOKEN_ENDPOINT, tokenEndpoint);
+			return setting(ConfigurationSettingNames.Provider.TOKEN_ENDPOINT, tokenEndpoint);
 		}
 
 		/**
@@ -176,7 +169,7 @@ public final class ProviderSettings extends AbstractSettings {
 		 * @return the {@link Builder} for further configuration
 		 */
 		public Builder jwkSetEndpoint(String jwkSetEndpoint) {
-			return setting(JWK_SET_ENDPOINT, jwkSetEndpoint);
+			return setting(ConfigurationSettingNames.Provider.JWK_SET_ENDPOINT, jwkSetEndpoint);
 		}
 
 		/**
@@ -186,7 +179,7 @@ public final class ProviderSettings extends AbstractSettings {
 		 * @return the {@link Builder} for further configuration
 		 */
 		public Builder tokenRevocationEndpoint(String tokenRevocationEndpoint) {
-			return setting(TOKEN_REVOCATION_ENDPOINT, tokenRevocationEndpoint);
+			return setting(ConfigurationSettingNames.Provider.TOKEN_REVOCATION_ENDPOINT, tokenRevocationEndpoint);
 		}
 
 		/**
@@ -196,7 +189,7 @@ public final class ProviderSettings extends AbstractSettings {
 		 * @return the {@link Builder} for further configuration
 		 */
 		public Builder tokenIntrospectionEndpoint(String tokenIntrospectionEndpoint) {
-			return setting(TOKEN_INTROSPECTION_ENDPOINT, tokenIntrospectionEndpoint);
+			return setting(ConfigurationSettingNames.Provider.TOKEN_INTROSPECTION_ENDPOINT, tokenIntrospectionEndpoint);
 		}
 
 		/**
@@ -206,7 +199,7 @@ public final class ProviderSettings extends AbstractSettings {
 		 * @return the {@link Builder} for further configuration
 		 */
 		public Builder oidcClientRegistrationEndpoint(String oidcClientRegistrationEndpoint) {
-			return setting(OIDC_CLIENT_REGISTRATION_ENDPOINT, oidcClientRegistrationEndpoint);
+			return setting(ConfigurationSettingNames.Provider.OIDC_CLIENT_REGISTRATION_ENDPOINT, oidcClientRegistrationEndpoint);
 		}
 
 		/**

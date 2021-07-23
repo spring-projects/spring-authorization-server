@@ -25,11 +25,9 @@ import org.springframework.util.Assert;
  * @author Joe Grandja
  * @since 0.0.2
  * @see AbstractSettings
+ * @see ConfigurationSettingNames.Client
  */
 public final class ClientSettings extends AbstractSettings {
-	private static final String CLIENT_SETTING_BASE = "setting.client.";
-	public static final String REQUIRE_PROOF_KEY = CLIENT_SETTING_BASE.concat("require-proof-key");
-	public static final String REQUIRE_AUTHORIZATION_CONSENT = CLIENT_SETTING_BASE.concat("require-authorization-consent");
 
 	private ClientSettings(Map<String, Object> settings) {
 		super(settings);
@@ -42,7 +40,7 @@ public final class ClientSettings extends AbstractSettings {
 	 * @return {@code true} if the client is required to provide a proof key challenge and verifier, {@code false} otherwise
 	 */
 	public boolean isRequireProofKey() {
-		return getSetting(REQUIRE_PROOF_KEY);
+		return getSetting(ConfigurationSettingNames.Client.REQUIRE_PROOF_KEY);
 	}
 
 	/**
@@ -52,7 +50,7 @@ public final class ClientSettings extends AbstractSettings {
 	 * @return {@code true} if authorization consent is required when the client requests access, {@code false} otherwise
 	 */
 	public boolean isRequireAuthorizationConsent() {
-		return getSetting(REQUIRE_AUTHORIZATION_CONSENT);
+		return getSetting(ConfigurationSettingNames.Client.REQUIRE_AUTHORIZATION_CONSENT);
 	}
 
 	/**
@@ -94,7 +92,7 @@ public final class ClientSettings extends AbstractSettings {
 		 * @return the {@link Builder} for further configuration
 		 */
 		public Builder requireProofKey(boolean requireProofKey) {
-			return setting(REQUIRE_PROOF_KEY, requireProofKey);
+			return setting(ConfigurationSettingNames.Client.REQUIRE_PROOF_KEY, requireProofKey);
 		}
 
 		/**
@@ -105,7 +103,7 @@ public final class ClientSettings extends AbstractSettings {
 		 * @return the {@link Builder} for further configuration
 		 */
 		public Builder requireAuthorizationConsent(boolean requireAuthorizationConsent) {
-			return setting(REQUIRE_AUTHORIZATION_CONSENT, requireAuthorizationConsent);
+			return setting(ConfigurationSettingNames.Client.REQUIRE_AUTHORIZATION_CONSENT, requireAuthorizationConsent);
 		}
 
 		/**

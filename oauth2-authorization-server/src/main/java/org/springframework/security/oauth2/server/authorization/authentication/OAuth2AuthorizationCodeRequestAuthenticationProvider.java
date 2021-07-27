@@ -25,6 +25,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
@@ -73,13 +74,16 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 	private static final String PKCE_ERROR_URI = "https://datatracker.ietf.org/doc/html/rfc7636#section-4.4.1";
 	private static final Pattern LOOPBACK_ADDRESS_PATTERN =
 			Pattern.compile("^127(?:\\.[0-9]+){0,2}\\.[0-9]+$|^\\[(?:0*:)*?:?0*1]$");
+	private static final StringKeyGenerator DEFAULT_AUTHORIZATION_CODE_GENERATOR =
+			new Base64StringKeyGenerator(Base64.getUrlEncoder().withoutPadding(), 96);
+	private static final StringKeyGenerator DEFAULT_STATE_GENERATOR =
+			new Base64StringKeyGenerator(Base64.getUrlEncoder());
 	private static final Function<String, OAuth2AuthenticationValidator> DEFAULT_AUTHENTICATION_VALIDATOR_RESOLVER =
 			createDefaultAuthenticationValidatorResolver();
 	private final RegisteredClientRepository registeredClientRepository;
 	private final OAuth2AuthorizationService authorizationService;
 	private final OAuth2AuthorizationConsentService authorizationConsentService;
-	private final StringKeyGenerator codeGenerator = new Base64StringKeyGenerator(Base64.getUrlEncoder().withoutPadding(), 96);
-	private final StringKeyGenerator stateGenerator = new Base64StringKeyGenerator(Base64.getUrlEncoder());
+	private Supplier<String> authorizationCodeGenerator = DEFAULT_AUTHORIZATION_CODE_GENERATOR::generateKey;
 	private Function<String, OAuth2AuthenticationValidator> authenticationValidatorResolver = DEFAULT_AUTHENTICATION_VALIDATOR_RESOLVER;
 
 	/**
@@ -112,6 +116,16 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 	@Override
 	public boolean supports(Class<?> authentication) {
 		return OAuth2AuthorizationCodeRequestAuthenticationToken.class.isAssignableFrom(authentication);
+	}
+
+	/**
+	 * Sets the {@code Supplier<String>} that generates the value for the {@link OAuth2AuthorizationCode}.
+	 *
+	 * @param authorizationCodeGenerator the {@code Supplier<String>} that generates the value for the {@link OAuth2AuthorizationCode}
+	 */
+	public void setAuthorizationCodeGenerator(Supplier<String> authorizationCodeGenerator) {
+		Assert.notNull(authorizationCodeGenerator, "authorizationCodeGenerator cannot be null");
+		this.authorizationCodeGenerator = authorizationCodeGenerator;
 	}
 
 	/**
@@ -199,7 +213,7 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 				registeredClient.getId(), principal.getName());
 
 		if (requireAuthorizationConsent(registeredClient, authorizationRequest, currentAuthorizationConsent)) {
-			String state = this.stateGenerator.generateKey();
+			String state = DEFAULT_STATE_GENERATOR.generateKey();
 			OAuth2Authorization authorization = authorizationBuilder(registeredClient, principal, authorizationRequest)
 					.attribute(OAuth2ParameterNames.STATE, state)
 					.build();
@@ -257,7 +271,7 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 	private OAuth2AuthorizationCode createAuthorizationCode() {
 		Instant issuedAt = Instant.now();
 		Instant expiresAt = issuedAt.plus(5, ChronoUnit.MINUTES);		// TODO Allow configuration for authorization code time-to-live
-		return new OAuth2AuthorizationCode(this.codeGenerator.generateKey(), issuedAt, expiresAt);
+		return new OAuth2AuthorizationCode(this.authorizationCodeGenerator.get(), issuedAt, expiresAt);
 	}
 
 	private Authentication authenticateAuthorizationConsent(Authentication authentication) throws AuthenticationException {

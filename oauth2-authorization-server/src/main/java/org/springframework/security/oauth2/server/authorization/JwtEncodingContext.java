@@ -15,11 +15,12 @@
  */
 package org.springframework.security.oauth2.server.authorization;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 
 import org.springframework.lang.Nullable;
-import org.springframework.security.oauth2.core.context.Context;
 import org.springframework.security.oauth2.jwt.JoseHeader;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.util.Assert;
@@ -32,21 +33,23 @@ import org.springframework.util.Assert;
  * @see JwtClaimsSet.Builder
  */
 public final class JwtEncodingContext implements OAuth2TokenContext {
-	private final Context context;
+	private final Map<Object, Object> context;
 
 	private JwtEncodingContext(Map<Object, Object> context) {
-		this.context = Context.of(context);
+		this.context = Collections.unmodifiableMap(new HashMap<>(context));
 	}
 
+	@SuppressWarnings("unchecked")
 	@Nullable
 	@Override
 	public <V> V get(Object key) {
-		return this.context.get(key);
+		return hasKey(key) ? (V) this.context.get(key) : null;
 	}
 
 	@Override
 	public boolean hasKey(Object key) {
-		return this.context.hasKey(key);
+		Assert.notNull(key, "key cannot be null");
+		return this.context.containsKey(key);
 	}
 
 	public JoseHeader.Builder getHeaders() {

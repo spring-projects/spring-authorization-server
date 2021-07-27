@@ -15,8 +15,6 @@
  */
 package org.springframework.security.oauth2.core.context;
 
-import java.util.Map;
-
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
@@ -39,9 +37,5 @@ public interface Context {
 	}
 
 	boolean hasKey(Object key);
-
-	static Context of(Map<Object, Object> context) {
-		return new DefaultContext(context);
-	}
 
 }

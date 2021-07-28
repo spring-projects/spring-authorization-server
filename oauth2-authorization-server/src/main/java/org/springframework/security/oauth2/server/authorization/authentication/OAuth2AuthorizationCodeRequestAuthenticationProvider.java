@@ -232,7 +232,7 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 					.build();
 		}
 
-		OAuth2AuthorizationCode authorizationCode = createAuthorizationCode();
+		OAuth2AuthorizationCode authorizationCode = generateAuthorizationCode();
 		OAuth2Authorization authorization = authorizationBuilder(registeredClient, principal, authorizationRequest)
 				.token(authorizationCode)
 				.attribute(OAuth2Authorization.AUTHORIZED_SCOPE_ATTRIBUTE_NAME, authorizationRequest.getScopes())
@@ -268,7 +268,7 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 				DEFAULT_AUTHENTICATION_VALIDATOR_RESOLVER.apply(parameterName);
 	}
 
-	private OAuth2AuthorizationCode createAuthorizationCode() {
+	private OAuth2AuthorizationCode generateAuthorizationCode() {
 		Instant issuedAt = Instant.now();
 		Instant expiresAt = issuedAt.plus(5, ChronoUnit.MINUTES);		// TODO Allow configuration for authorization code time-to-live
 		return new OAuth2AuthorizationCode(this.authorizationCodeGenerator.get(), issuedAt, expiresAt);
@@ -345,7 +345,7 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 			this.authorizationConsentService.save(authorizationConsent);
 		}
 
-		OAuth2AuthorizationCode authorizationCode = createAuthorizationCode();
+		OAuth2AuthorizationCode authorizationCode = generateAuthorizationCode();
 
 		OAuth2Authorization updatedAuthorization = OAuth2Authorization.from(authorization)
 				.token(authorizationCode)

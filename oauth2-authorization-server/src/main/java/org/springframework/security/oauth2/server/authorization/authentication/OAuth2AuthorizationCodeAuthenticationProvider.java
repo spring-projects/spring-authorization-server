@@ -32,6 +32,7 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.keygen.Base64StringKeyGenerator;
 import org.springframework.security.crypto.keygen.StringKeyGenerator;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
+import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
@@ -191,7 +192,8 @@ public final class OAuth2AuthorizationCodeAuthenticationProvider implements Auth
 				jwtAccessToken.getExpiresAt(), authorizedScopes);
 
 		OAuth2RefreshToken refreshToken = null;
-		if (registeredClient.getAuthorizationGrantTypes().contains(AuthorizationGrantType.REFRESH_TOKEN)) {
+		if (registeredClient.getAuthorizationGrantTypes().contains(AuthorizationGrantType.REFRESH_TOKEN)
+				&& !registeredClient.getClientAuthenticationMethods().contains(ClientAuthenticationMethod.NONE)) {
 			refreshToken = generateRefreshToken(registeredClient.getTokenSettings().getRefreshTokenTimeToLive());
 		}
 

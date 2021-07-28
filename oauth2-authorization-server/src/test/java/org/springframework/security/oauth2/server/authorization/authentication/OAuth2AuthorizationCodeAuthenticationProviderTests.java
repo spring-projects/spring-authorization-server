@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -61,6 +62,7 @@ import static org.assertj.core.api.Assertions.entry;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -108,6 +110,13 @@ public class OAuth2AuthorizationCodeAuthenticationProviderTests {
 		assertThatThrownBy(() -> this.authenticationProvider.setJwtCustomizer(null))
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessage("jwtCustomizer cannot be null");
+	}
+
+	@Test
+	public void setRefreshTokenGeneratorWhenNullThenThrowIllegalArgumentException() {
+		assertThatThrownBy(() -> this.authenticationProvider.setRefreshTokenGenerator(null))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("refreshTokenGenerator cannot be null");
 	}
 
 	@Test
@@ -438,6 +447,37 @@ public class OAuth2AuthorizationCodeAuthenticationProviderTests {
 				(OAuth2AccessTokenAuthenticationToken) this.authenticationProvider.authenticate(authentication);
 
 		assertThat(accessTokenAuthentication.getRefreshToken()).isNull();
+	}
+
+	@Test
+	public void authenticateWhenCustomRefreshTokenGeneratorThenUsed() {
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();
+		when(this.authorizationService.findByToken(eq(AUTHORIZATION_CODE), eq(AUTHORIZATION_CODE_TOKEN_TYPE)))
+				.thenReturn(authorization);
+
+		when(this.jwtEncoder.encode(any(), any())).thenReturn(createJwt());
+
+		@SuppressWarnings("unchecked")
+		Supplier<String> refreshTokenGenerator = spy(new Supplier<String>() {
+			@Override
+			public String get() {
+				return "custom-refresh-token";
+			}
+		});
+		this.authenticationProvider.setRefreshTokenGenerator(refreshTokenGenerator);
+
+		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient);
+		OAuth2AuthorizationRequest authorizationRequest = authorization.getAttribute(
+				OAuth2AuthorizationRequest.class.getName());
+		OAuth2AuthorizationCodeAuthenticationToken authentication =
+				new OAuth2AuthorizationCodeAuthenticationToken(AUTHORIZATION_CODE, clientPrincipal, authorizationRequest.getRedirectUri(), null);
+
+		OAuth2AccessTokenAuthenticationToken accessTokenAuthentication =
+				(OAuth2AccessTokenAuthenticationToken) this.authenticationProvider.authenticate(authentication);
+
+		verify(refreshTokenGenerator).get();
+		assertThat(accessTokenAuthentication.getRefreshToken().getTokenValue()).isEqualTo(refreshTokenGenerator.get());
 	}
 
 	private static Jwt createJwt() {

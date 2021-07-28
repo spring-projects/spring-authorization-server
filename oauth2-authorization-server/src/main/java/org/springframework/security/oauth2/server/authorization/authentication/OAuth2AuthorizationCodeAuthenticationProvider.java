@@ -16,15 +16,21 @@
 package org.springframework.security.oauth2.server.authorization.authentication;
 
 import java.security.Principal;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.crypto.keygen.Base64StringKeyGenerator;
+import org.springframework.security.crypto.keygen.StringKeyGenerator;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
@@ -74,9 +80,12 @@ public final class OAuth2AuthorizationCodeAuthenticationProvider implements Auth
 			new OAuth2TokenType(OAuth2ParameterNames.CODE);
 	private static final OAuth2TokenType ID_TOKEN_TOKEN_TYPE =
 			new OAuth2TokenType(OidcParameterNames.ID_TOKEN);
+	private static final StringKeyGenerator DEFAULT_REFRESH_TOKEN_GENERATOR =
+			new Base64StringKeyGenerator(Base64.getUrlEncoder().withoutPadding(), 96);
 	private final OAuth2AuthorizationService authorizationService;
 	private final JwtEncoder jwtEncoder;
 	private OAuth2TokenCustomizer<JwtEncodingContext> jwtCustomizer = (context) -> {};
+	private Supplier<String> refreshTokenGenerator = DEFAULT_REFRESH_TOKEN_GENERATOR::generateKey;
 	private ProviderSettings providerSettings;
 
 	/**
@@ -95,6 +104,16 @@ public final class OAuth2AuthorizationCodeAuthenticationProvider implements Auth
 	public void setJwtCustomizer(OAuth2TokenCustomizer<JwtEncodingContext> jwtCustomizer) {
 		Assert.notNull(jwtCustomizer, "jwtCustomizer cannot be null");
 		this.jwtCustomizer = jwtCustomizer;
+	}
+
+	/**
+	 * Sets the {@code Supplier<String>} that generates the value for the {@link OAuth2RefreshToken}.
+	 *
+	 * @param refreshTokenGenerator the {@code Supplier<String>} that generates the value for the {@link OAuth2RefreshToken}
+	 */
+	public void setRefreshTokenGenerator(Supplier<String> refreshTokenGenerator) {
+		Assert.notNull(refreshTokenGenerator, "refreshTokenGenerator cannot be null");
+		this.refreshTokenGenerator = refreshTokenGenerator;
 	}
 
 	@Autowired(required = false)
@@ -173,8 +192,7 @@ public final class OAuth2AuthorizationCodeAuthenticationProvider implements Auth
 
 		OAuth2RefreshToken refreshToken = null;
 		if (registeredClient.getAuthorizationGrantTypes().contains(AuthorizationGrantType.REFRESH_TOKEN)) {
-			refreshToken = OAuth2RefreshTokenAuthenticationProvider.generateRefreshToken(
-					registeredClient.getTokenSettings().getRefreshTokenTimeToLive());
+			refreshToken = generateRefreshToken(registeredClient.getTokenSettings().getRefreshTokenTimeToLive());
 		}
 
 		Jwt jwtIdToken = null;
@@ -248,6 +266,12 @@ public final class OAuth2AuthorizationCodeAuthenticationProvider implements Auth
 	@Override
 	public boolean supports(Class<?> authentication) {
 		return OAuth2AuthorizationCodeAuthenticationToken.class.isAssignableFrom(authentication);
+	}
+
+	private OAuth2RefreshToken generateRefreshToken(Duration tokenTimeToLive) {
+		Instant issuedAt = Instant.now();
+		Instant expiresAt = issuedAt.plus(tokenTimeToLive);
+		return new OAuth2RefreshToken(this.refreshTokenGenerator.get(), issuedAt, expiresAt);
 	}
 
 }

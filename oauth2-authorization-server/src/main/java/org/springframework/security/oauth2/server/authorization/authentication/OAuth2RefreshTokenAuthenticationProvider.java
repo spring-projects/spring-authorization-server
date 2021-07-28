@@ -23,6 +23,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -73,10 +74,12 @@ import static org.springframework.security.oauth2.server.authorization.authentic
  */
 public final class OAuth2RefreshTokenAuthenticationProvider implements AuthenticationProvider {
 	private static final OAuth2TokenType ID_TOKEN_TOKEN_TYPE = new OAuth2TokenType(OidcParameterNames.ID_TOKEN);
-	private static final StringKeyGenerator TOKEN_GENERATOR = new Base64StringKeyGenerator(Base64.getUrlEncoder().withoutPadding(), 96);
+	private static final StringKeyGenerator DEFAULT_REFRESH_TOKEN_GENERATOR =
+			new Base64StringKeyGenerator(Base64.getUrlEncoder().withoutPadding(), 96);
 	private final OAuth2AuthorizationService authorizationService;
 	private final JwtEncoder jwtEncoder;
 	private OAuth2TokenCustomizer<JwtEncodingContext> jwtCustomizer = (context) -> {};
+	private Supplier<String> refreshTokenGenerator = DEFAULT_REFRESH_TOKEN_GENERATOR::generateKey;
 	private ProviderSettings providerSettings;
 
 	/**
@@ -96,6 +99,16 @@ public final class OAuth2RefreshTokenAuthenticationProvider implements Authentic
 	public void setJwtCustomizer(OAuth2TokenCustomizer<JwtEncodingContext> jwtCustomizer) {
 		Assert.notNull(jwtCustomizer, "jwtCustomizer cannot be null");
 		this.jwtCustomizer = jwtCustomizer;
+	}
+
+	/**
+	 * Sets the {@code Supplier<String>} that generates the value for the {@link OAuth2RefreshToken}.
+	 *
+	 * @param refreshTokenGenerator the {@code Supplier<String>} that generates the value for the {@link OAuth2RefreshToken}
+	 */
+	public void setRefreshTokenGenerator(Supplier<String> refreshTokenGenerator) {
+		Assert.notNull(refreshTokenGenerator, "refreshTokenGenerator cannot be null");
+		this.refreshTokenGenerator = refreshTokenGenerator;
 	}
 
 	@Autowired(required = false)
@@ -246,9 +259,9 @@ public final class OAuth2RefreshTokenAuthenticationProvider implements Authentic
 		return OAuth2RefreshTokenAuthenticationToken.class.isAssignableFrom(authentication);
 	}
 
-	static OAuth2RefreshToken generateRefreshToken(Duration tokenTimeToLive) {
+	private OAuth2RefreshToken generateRefreshToken(Duration tokenTimeToLive) {
 		Instant issuedAt = Instant.now();
 		Instant expiresAt = issuedAt.plus(tokenTimeToLive);
-		return new OAuth2RefreshToken(TOKEN_GENERATOR.generateKey(), issuedAt, expiresAt);
+		return new OAuth2RefreshToken(this.refreshTokenGenerator.get(), issuedAt, expiresAt);
 	}
 }

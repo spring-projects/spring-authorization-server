@@ -59,8 +59,8 @@ import org.springframework.web.filter.OncePerRequestFilter;
  * @since 0.0.1
  * @see AuthenticationManager
  * @see OAuth2ClientAuthenticationProvider
- * @see <a target="_blank" href="https://tools.ietf.org/html/rfc6749#section-2.3">Section 2.3 Client Authentication</a>
- * @see <a target="_blank" href="https://tools.ietf.org/html/rfc6749#section-3.2.1">Section 3.2.1 Token Endpoint Client Authentication</a>
+ * @see <a target="_blank" href="https://datatracker.ietf.org/doc/html/rfc6749#section-2.3">Section 2.3 Client Authentication</a>
+ * @see <a target="_blank" href="https://datatracker.ietf.org/doc/html/rfc6749#section-3.2.1">Section 3.2.1 Token Endpoint Client Authentication</a>
  */
 public final class OAuth2ClientAuthenticationFilter extends OncePerRequestFilter {
 	private final AuthenticationManager authenticationManager;
@@ -69,8 +69,8 @@ public final class OAuth2ClientAuthenticationFilter extends OncePerRequestFilter
 	private final AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource =
 			new WebAuthenticationDetailsSource();
 	private AuthenticationConverter authenticationConverter;
-	private AuthenticationSuccessHandler authenticationSuccessHandler;
-	private AuthenticationFailureHandler authenticationFailureHandler;
+	private AuthenticationSuccessHandler authenticationSuccessHandler = this::onAuthenticationSuccess;
+	private AuthenticationFailureHandler authenticationFailureHandler = this::onAuthenticationFailure;
 
 	/**
 	 * Constructs an {@code OAuth2ClientAuthenticationFilter} using the provided parameters.
@@ -89,37 +89,39 @@ public final class OAuth2ClientAuthenticationFilter extends OncePerRequestFilter
 						new ClientSecretBasicAuthenticationConverter(),
 						new ClientSecretPostAuthenticationConverter(),
 						new PublicClientAuthenticationConverter()));
-		this.authenticationSuccessHandler = this::onAuthenticationSuccess;
-		this.authenticationFailureHandler = this::onAuthenticationFailure;
 	}
 
 	@Override
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
 			throws ServletException, IOException {
 
-		if (this.requestMatcher.matches(request)) {
-			try {
-				Authentication authenticationRequest = this.authenticationConverter.convert(request);
-				if (authenticationRequest instanceof AbstractAuthenticationToken) {
-					((AbstractAuthenticationToken) authenticationRequest).setDetails(
-							this.authenticationDetailsSource.buildDetails(request));
-				}
-				if (authenticationRequest != null) {
-					Authentication authenticationResult = this.authenticationManager.authenticate(authenticationRequest);
-					this.authenticationSuccessHandler.onAuthenticationSuccess(request, response, authenticationResult);
-				}
-			} catch (OAuth2AuthenticationException failed) {
-				this.authenticationFailureHandler.onAuthenticationFailure(request, response, failed);
-				return;
-			}
+		if (!this.requestMatcher.matches(request)) {
+			filterChain.doFilter(request, response);
+			return;
 		}
-		filterChain.doFilter(request, response);
+
+		try {
+			Authentication authenticationRequest = this.authenticationConverter.convert(request);
+			if (authenticationRequest instanceof AbstractAuthenticationToken) {
+				((AbstractAuthenticationToken) authenticationRequest).setDetails(
+						this.authenticationDetailsSource.buildDetails(request));
+			}
+			if (authenticationRequest != null) {
+				Authentication authenticationResult = this.authenticationManager.authenticate(authenticationRequest);
+				this.authenticationSuccessHandler.onAuthenticationSuccess(request, response, authenticationResult);
+			}
+			filterChain.doFilter(request, response);
+
+		} catch (OAuth2AuthenticationException ex) {
+			this.authenticationFailureHandler.onAuthenticationFailure(request, response, ex);
+		}
 	}
 
 	/**
-	 * Sets the {@link AuthenticationConverter} used for converting a {@link HttpServletRequest} to an {@link OAuth2ClientAuthenticationToken}.
+	 * Sets the {@link AuthenticationConverter} used when attempting to extract client credentials from {@link HttpServletRequest}
+	 * to an instance of {@link OAuth2ClientAuthenticationToken} used for authenticating the client.
 	 *
-	 * @param authenticationConverter used for converting a {@link HttpServletRequest} to an {@link OAuth2ClientAuthenticationToken}
+	 * @param authenticationConverter the {@link AuthenticationConverter} used when attempting to extract client credentials from {@link HttpServletRequest}
 	 */
 	public void setAuthenticationConverter(AuthenticationConverter authenticationConverter) {
 		Assert.notNull(authenticationConverter, "authenticationConverter cannot be null");
@@ -127,9 +129,10 @@ public final class OAuth2ClientAuthenticationFilter extends OncePerRequestFilter
 	}
 
 	/**
-	 * Sets the {@link AuthenticationSuccessHandler} used for handling successful authentications.
+	 * Sets the {@link AuthenticationSuccessHandler} used for handling a successful client authentication
+	 * and associating the {@link OAuth2ClientAuthenticationToken} to the {@link SecurityContext}.
 	 *
-	 * @param authenticationSuccessHandler the {@link AuthenticationSuccessHandler} used for handling successful authentications
+	 * @param authenticationSuccessHandler the {@link AuthenticationSuccessHandler} used for handling a successful client authentication
 	 */
 	public void setAuthenticationSuccessHandler(AuthenticationSuccessHandler authenticationSuccessHandler) {
 		Assert.notNull(authenticationSuccessHandler, "authenticationSuccessHandler cannot be null");
@@ -137,9 +140,10 @@ public final class OAuth2ClientAuthenticationFilter extends OncePerRequestFilter
 	}
 
 	/**
-	 * Sets the {@link AuthenticationFailureHandler} used for handling failed authentications.
+	 * Sets the {@link AuthenticationFailureHandler} used for handling a failed client authentication
+	 * and returning the {@link OAuth2Error Error Response}.
 	 *
-	 * @param authenticationFailureHandler the {@link AuthenticationFailureHandler} used for handling failed authentications
+	 * @param authenticationFailureHandler the {@link AuthenticationFailureHandler} used for handling a failed client authentication
 	 */
 	public void setAuthenticationFailureHandler(AuthenticationFailureHandler authenticationFailureHandler) {
 		Assert.notNull(authenticationFailureHandler, "authenticationFailureHandler cannot be null");
@@ -149,13 +153,13 @@ public final class OAuth2ClientAuthenticationFilter extends OncePerRequestFilter
 	private void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
 			Authentication authentication) {
 
-		SecurityContext context = SecurityContextHolder.createEmptyContext();
-		context.setAuthentication(authentication);
-		SecurityContextHolder.setContext(context);
+		SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
+		securityContext.setAuthentication(authentication);
+		SecurityContextHolder.setContext(securityContext);
 	}
 
 	private void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response,
-			AuthenticationException failed) throws IOException {
+			AuthenticationException exception) throws IOException {
 
 		SecurityContextHolder.clearContext();
 
@@ -167,7 +171,7 @@ public final class OAuth2ClientAuthenticationFilter extends OncePerRequestFilter
 		// include the "WWW-Authenticate" response header field
 		// matching the authentication scheme used by the client.
 
-		OAuth2Error error = ((OAuth2AuthenticationException) failed).getError();
+		OAuth2Error error = ((OAuth2AuthenticationException) exception).getError();
 		ServletServerHttpResponse httpResponse = new ServletServerHttpResponse(response);
 		if (OAuth2ErrorCodes.INVALID_CLIENT.equals(error.getErrorCode())) {
 			httpResponse.setStatusCode(HttpStatus.UNAUTHORIZED);
@@ -176,4 +180,5 @@ public final class OAuth2ClientAuthenticationFilter extends OncePerRequestFilter
 		}
 		this.errorHttpResponseConverter.write(error, null, httpResponse);
 	}
+
 }

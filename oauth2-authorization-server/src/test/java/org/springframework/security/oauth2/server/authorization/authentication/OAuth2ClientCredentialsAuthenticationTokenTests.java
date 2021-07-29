@@ -22,6 +22,8 @@ import java.util.Set;
 import org.junit.Test;
 
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
+import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
+import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -33,8 +35,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * @author Alexey Nesterov
  */
 public class OAuth2ClientCredentialsAuthenticationTokenTests {
-	private final OAuth2ClientAuthenticationToken clientPrincipal =
-			new OAuth2ClientAuthenticationToken(TestRegisteredClients.registeredClient().build());
+	private final RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+	private final OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(
+			this.registeredClient, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, this.registeredClient.getClientSecret());
 	private Set<String> scopes = Collections.singleton("scope1");
 	private Map<String, Object> additionalParameters = Collections.singletonMap("param1", "value1");
 

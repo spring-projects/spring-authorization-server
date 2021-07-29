@@ -20,6 +20,7 @@ import java.util.HashMap;
 import javax.servlet.http.HttpServletRequest;
 
 import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
@@ -66,7 +67,7 @@ public final class PublicClientAuthenticationConverter implements Authentication
 
 		parameters.remove(OAuth2ParameterNames.CLIENT_ID);
 
-		return new OAuth2ClientAuthenticationToken(
-				clientId, new HashMap<>(parameters.toSingleValueMap()));
+		return new OAuth2ClientAuthenticationToken(clientId, ClientAuthenticationMethod.NONE, null,
+				new HashMap<>(parameters.toSingleValueMap()));
 	}
 }

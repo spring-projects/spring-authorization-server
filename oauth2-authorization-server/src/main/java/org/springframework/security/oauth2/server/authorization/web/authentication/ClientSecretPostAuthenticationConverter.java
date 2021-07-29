@@ -70,7 +70,7 @@ public final class ClientSecretPostAuthenticationConverter implements Authentica
 			throw new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_REQUEST));
 		}
 
-		return new OAuth2ClientAuthenticationToken(clientId, clientSecret, ClientAuthenticationMethod.CLIENT_SECRET_POST,
+		return new OAuth2ClientAuthenticationToken(clientId, ClientAuthenticationMethod.CLIENT_SECRET_POST, clientSecret,
 				extractAdditionalParameters(request));
 	}
 

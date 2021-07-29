@@ -121,7 +121,8 @@ public final class OAuth2ClientAuthenticationProvider implements AuthenticationP
 			throwInvalidClient();
 		}
 
-		return new OAuth2ClientAuthenticationToken(registeredClient);
+		return new OAuth2ClientAuthenticationToken(registeredClient,
+				clientAuthentication.getClientAuthenticationMethod(), clientAuthentication.getCredentials());
 	}
 
 	@Override

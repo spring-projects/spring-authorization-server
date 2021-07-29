@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright 2020-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,9 @@
  */
 package org.springframework.security.oauth2.server.authorization.authentication;
 
+import java.util.Collections;
+import java.util.Map;
+
 import org.springframework.lang.Nullable;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -22,9 +25,6 @@ import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.Version;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.util.Assert;
-
-import java.util.Collections;
-import java.util.Map;
 
 /**
  * An {@link Authentication} implementation used for OAuth 2.0 Client Authentication.
@@ -39,94 +39,90 @@ import java.util.Map;
  */
 public class OAuth2ClientAuthenticationToken extends AbstractAuthenticationToken {
 	private static final long serialVersionUID = Version.SERIAL_VERSION_UID;
-	private String clientId;
-	private String clientSecret;
-	private ClientAuthenticationMethod clientAuthenticationMethod;
-	private Map<String, Object> additionalParameters;
-	private RegisteredClient registeredClient;
+	private final String clientId;
+	private final RegisteredClient registeredClient;
+	private final ClientAuthenticationMethod clientAuthenticationMethod;
+	private final Object credentials;
+	private final Map<String, Object> additionalParameters;
 
 	/**
 	 * Constructs an {@code OAuth2ClientAuthenticationToken} using the provided parameters.
 	 *
 	 * @param clientId the client identifier
-	 * @param clientSecret the client secret
 	 * @param clientAuthenticationMethod the authentication method used by the client
+	 * @param credentials the client credentials
 	 * @param additionalParameters the additional parameters
 	 */
-	public OAuth2ClientAuthenticationToken(String clientId, String clientSecret,
-			ClientAuthenticationMethod clientAuthenticationMethod,
-			@Nullable Map<String, Object> additionalParameters) {
-		this(clientId, additionalParameters);
-		Assert.hasText(clientSecret, "clientSecret cannot be empty");
-		Assert.notNull(clientAuthenticationMethod, "clientAuthenticationMethod cannot be null");
-		this.clientSecret = clientSecret;
-		this.clientAuthenticationMethod = clientAuthenticationMethod;
-	}
-
-	/**
-	 * Constructs an {@code OAuth2ClientAuthenticationToken} using the provided parameters.
-	 *
-	 * @param clientId the client identifier
-	 * @param additionalParameters the additional parameters
-	 */
-	public OAuth2ClientAuthenticationToken(String clientId,
-			@Nullable Map<String, Object> additionalParameters) {
+	public OAuth2ClientAuthenticationToken(String clientId, ClientAuthenticationMethod clientAuthenticationMethod,
+			@Nullable Object credentials, @Nullable Map<String, Object> additionalParameters) {
 		super(Collections.emptyList());
 		Assert.hasText(clientId, "clientId cannot be empty");
+		Assert.notNull(clientAuthenticationMethod, "clientAuthenticationMethod cannot be null");
 		this.clientId = clientId;
-		this.additionalParameters = additionalParameters != null ?
-				Collections.unmodifiableMap(additionalParameters) : null;
-		this.clientAuthenticationMethod = ClientAuthenticationMethod.NONE;
+		this.registeredClient = null;
+		this.clientAuthenticationMethod = clientAuthenticationMethod;
+		this.credentials = credentials;
+		this.additionalParameters = Collections.unmodifiableMap(
+				additionalParameters != null ? additionalParameters : Collections.emptyMap());
 	}
 
 	/**
 	 * Constructs an {@code OAuth2ClientAuthenticationToken} using the provided parameters.
 	 *
-	 * @param registeredClient the registered client
+	 * @param registeredClient the authenticated registered client
+	 * @param clientAuthenticationMethod the authentication method used by the client
+	 * @param credentials the client credentials
 	 */
-	public OAuth2ClientAuthenticationToken(RegisteredClient registeredClient) {
+	public OAuth2ClientAuthenticationToken(RegisteredClient registeredClient, ClientAuthenticationMethod clientAuthenticationMethod,
+			@Nullable Object credentials) {
 		super(Collections.emptyList());
 		Assert.notNull(registeredClient, "registeredClient cannot be null");
+		Assert.notNull(clientAuthenticationMethod, "clientAuthenticationMethod cannot be null");
+		this.clientId = registeredClient.getClientId();
 		this.registeredClient = registeredClient;
+		this.clientAuthenticationMethod = clientAuthenticationMethod;
+		this.credentials = credentials;
+		this.additionalParameters = Collections.unmodifiableMap(Collections.emptyMap());
 		setAuthenticated(true);
 	}
 
 	@Override
 	public Object getPrincipal() {
-		return this.registeredClient != null ?
-				this.registeredClient.getClientId() :
-				this.clientId;
+		return this.clientId;
 	}
 
+	@Nullable
 	@Override
 	public Object getCredentials() {
-		return this.clientSecret;
+		return this.credentials;
 	}
 
 	/**
-	 * Returns the additional parameters
+	 * Returns the authenticated {@link RegisteredClient registered client}, or {@code null} if not authenticated.
 	 *
-	 * @return the additional parameters
+	 * @return the authenticated {@link RegisteredClient}, or {@code null} if not authenticated
 	 */
-	public @Nullable Map<String, Object> getAdditionalParameters() {
-		return this.additionalParameters;
-	}
-
-	/**
-	 * Returns the {@link RegisteredClient registered client}.
-	 *
-	 * @return the {@link RegisteredClient}
-	 */
-	public @Nullable RegisteredClient getRegisteredClient() {
+	@Nullable
+	public RegisteredClient getRegisteredClient() {
 		return this.registeredClient;
 	}
 
 	/**
-	 * Returns the {@link ClientAuthenticationMethod client authentication method}.
+	 * Returns the {@link ClientAuthenticationMethod authentication method} used by the client.
 	 *
-	 * @return the {@link ClientAuthenticationMethod}
+	 * @return the {@link ClientAuthenticationMethod} used by the client
 	 */
-	public @Nullable ClientAuthenticationMethod getClientAuthenticationMethod() {
+	public ClientAuthenticationMethod getClientAuthenticationMethod() {
 		return this.clientAuthenticationMethod;
 	}
+
+	/**
+	 * Returns the additional parameters.
+	 *
+	 * @return the additional parameters
+	 */
+	public Map<String, Object> getAdditionalParameters() {
+		return this.additionalParameters;
+	}
+
 }

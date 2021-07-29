@@ -21,6 +21,8 @@ import java.util.Map;
 import org.junit.Test;
 
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
+import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
+import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -34,8 +36,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  */
 public class OAuth2AuthorizationCodeAuthenticationTokenTests {
 	private String code = "code";
+	private RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 	private OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(
-			TestRegisteredClients.registeredClient().build());
+			this.registeredClient, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, this.registeredClient.getClientSecret());
 	private String redirectUri = "redirectUri";
 	private Map<String, Object> additionalParameters = Collections.singletonMap("param1", "value1");
 

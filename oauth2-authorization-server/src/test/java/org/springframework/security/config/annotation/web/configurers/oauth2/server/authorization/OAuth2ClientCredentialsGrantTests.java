@@ -56,6 +56,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
+import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.jose.TestJwks;
@@ -211,7 +212,8 @@ public class OAuth2ClientCredentialsGrantTests {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient2().build();
 		this.registeredClientRepository.save(registeredClient);
 
-		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient);
+		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(
+				registeredClient, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
 		OAuth2ClientCredentialsAuthenticationToken clientCredentialsAuthentication =
 				new OAuth2ClientCredentialsAuthenticationToken(clientPrincipal, null, null);
 		when(authenticationConverter.convert(any())).thenReturn(clientCredentialsAuthentication);
@@ -242,7 +244,8 @@ public class OAuth2ClientCredentialsGrantTests {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient2().build();
 		this.registeredClientRepository.save(registeredClient);
 
-		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient);
+		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(
+				registeredClient, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
 		when(authenticationConverter.convert(any())).thenReturn(clientPrincipal);
 		when(authenticationProvider.supports(eq(OAuth2ClientAuthenticationToken.class))).thenReturn(true);
 		when(authenticationProvider.authenticate(any())).thenReturn(clientPrincipal);

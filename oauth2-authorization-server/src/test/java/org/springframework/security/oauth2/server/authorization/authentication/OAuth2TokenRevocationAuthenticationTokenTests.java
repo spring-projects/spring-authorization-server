@@ -16,8 +16,11 @@
 package org.springframework.security.oauth2.server.authorization.authentication;
 
 import org.junit.Test;
+
+import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2TokenType;
+import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
 
 import java.time.Duration;
@@ -34,8 +37,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  */
 public class OAuth2TokenRevocationAuthenticationTokenTests {
 	private String token = "token";
+	private RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 	private OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(
-			TestRegisteredClients.registeredClient().build());
+			this.registeredClient, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, this.registeredClient.getClientSecret());
 	private String tokenTypeHint = OAuth2TokenType.ACCESS_TOKEN.getValue();
 	private OAuth2AccessToken accessToken = new OAuth2AccessToken(
 			OAuth2AccessToken.TokenType.BEARER, this.token,

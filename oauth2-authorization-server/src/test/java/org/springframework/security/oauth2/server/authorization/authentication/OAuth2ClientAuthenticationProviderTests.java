@@ -125,7 +125,7 @@ public class OAuth2ClientAuthenticationProviderTests {
 				.thenReturn(registeredClient);
 
 		OAuth2ClientAuthenticationToken authentication = new OAuth2ClientAuthenticationToken(
-				registeredClient.getClientId() + "-invalid", registeredClient.getClientSecret(), ClientAuthenticationMethod.CLIENT_SECRET_BASIC, null);
+				registeredClient.getClientId() + "-invalid", ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret(), null);
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 				.isInstanceOf(OAuth2AuthenticationException.class)
 				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
@@ -140,7 +140,7 @@ public class OAuth2ClientAuthenticationProviderTests {
 				.thenReturn(registeredClient);
 
 		OAuth2ClientAuthenticationToken authentication = new OAuth2ClientAuthenticationToken(
-				registeredClient.getClientId(), registeredClient.getClientSecret() + "-invalid", ClientAuthenticationMethod.CLIENT_SECRET_BASIC, null);
+				registeredClient.getClientId(), ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret() + "-invalid", null);
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 				.isInstanceOf(OAuth2AuthenticationException.class)
 				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
@@ -156,7 +156,7 @@ public class OAuth2ClientAuthenticationProviderTests {
 				.thenReturn(registeredClient);
 
 		OAuth2ClientAuthenticationToken authentication =
-				new OAuth2ClientAuthenticationToken(registeredClient.getClientId(), null);
+				new OAuth2ClientAuthenticationToken(registeredClient.getClientId(), ClientAuthenticationMethod.CLIENT_SECRET_BASIC, null, null);
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 				.isInstanceOf(OAuth2AuthenticationException.class)
 				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
@@ -171,14 +171,14 @@ public class OAuth2ClientAuthenticationProviderTests {
 				.thenReturn(registeredClient);
 
 		OAuth2ClientAuthenticationToken authentication = new OAuth2ClientAuthenticationToken(
-				registeredClient.getClientId(), registeredClient.getClientSecret(), ClientAuthenticationMethod.CLIENT_SECRET_BASIC, null);
+				registeredClient.getClientId(), ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret(), null);
 		OAuth2ClientAuthenticationToken authenticationResult =
 				(OAuth2ClientAuthenticationToken) this.authenticationProvider.authenticate(authentication);
 
 		verify(this.passwordEncoder).matches(any(), any());
 		assertThat(authenticationResult.isAuthenticated()).isTrue();
 		assertThat(authenticationResult.getPrincipal().toString()).isEqualTo(registeredClient.getClientId());
-		assertThat(authenticationResult.getCredentials()).isNull();
+		assertThat(authenticationResult.getCredentials().toString()).isEqualTo(registeredClient.getClientSecret());
 		assertThat(authenticationResult.getRegisteredClient()).isEqualTo(registeredClient);
 	}
 
@@ -198,7 +198,7 @@ public class OAuth2ClientAuthenticationProviderTests {
 		parameters.put(OAuth2ParameterNames.CODE, "invalid-code");
 
 		OAuth2ClientAuthenticationToken authentication =
-				new OAuth2ClientAuthenticationToken(registeredClient.getClientId(), parameters);
+				new OAuth2ClientAuthenticationToken(registeredClient.getClientId(), ClientAuthenticationMethod.NONE, null, parameters);
 
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 				.isInstanceOf(OAuth2AuthenticationException.class)
@@ -224,7 +224,7 @@ public class OAuth2ClientAuthenticationProviderTests {
 		Map<String, Object> parameters = createPkceTokenParameters(PLAIN_CODE_VERIFIER);
 
 		OAuth2ClientAuthenticationToken authentication =
-				new OAuth2ClientAuthenticationToken(registeredClient.getClientId(), parameters);
+				new OAuth2ClientAuthenticationToken(registeredClient.getClientId(), ClientAuthenticationMethod.NONE, null, parameters);
 
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 				.isInstanceOf(OAuth2AuthenticationException.class)
@@ -249,7 +249,7 @@ public class OAuth2ClientAuthenticationProviderTests {
 		parameters.remove(PkceParameterNames.CODE_VERIFIER);
 
 		OAuth2ClientAuthenticationToken authentication =
-				new OAuth2ClientAuthenticationToken(registeredClient.getClientId(), parameters);
+				new OAuth2ClientAuthenticationToken(registeredClient.getClientId(), ClientAuthenticationMethod.NONE, null, parameters);
 
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 				.isInstanceOf(OAuth2AuthenticationException.class)
@@ -273,7 +273,7 @@ public class OAuth2ClientAuthenticationProviderTests {
 		Map<String, Object> parameters = createPkceTokenParameters("invalid-code-verifier");
 
 		OAuth2ClientAuthenticationToken authentication =
-				new OAuth2ClientAuthenticationToken(registeredClient.getClientId(), parameters);
+				new OAuth2ClientAuthenticationToken(registeredClient.getClientId(), ClientAuthenticationMethod.NONE, null, parameters);
 
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 				.isInstanceOf(OAuth2AuthenticationException.class)
@@ -297,7 +297,7 @@ public class OAuth2ClientAuthenticationProviderTests {
 		Map<String, Object> parameters = createPkceTokenParameters("invalid-code-verifier");
 
 		OAuth2ClientAuthenticationToken authentication =
-				new OAuth2ClientAuthenticationToken(registeredClient.getClientId(), parameters);
+				new OAuth2ClientAuthenticationToken(registeredClient.getClientId(), ClientAuthenticationMethod.NONE, null, parameters);
 
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 				.isInstanceOf(OAuth2AuthenticationException.class)
@@ -321,7 +321,7 @@ public class OAuth2ClientAuthenticationProviderTests {
 		Map<String, Object> parameters = createPkceTokenParameters(PLAIN_CODE_VERIFIER);
 
 		OAuth2ClientAuthenticationToken authentication =
-				new OAuth2ClientAuthenticationToken(registeredClient.getClientId(), parameters);
+				new OAuth2ClientAuthenticationToken(registeredClient.getClientId(), ClientAuthenticationMethod.NONE, null, parameters);
 
 		OAuth2ClientAuthenticationToken authenticationResult =
 				(OAuth2ClientAuthenticationToken) this.authenticationProvider.authenticate(authentication);
@@ -348,7 +348,7 @@ public class OAuth2ClientAuthenticationProviderTests {
 		Map<String, Object> parameters = createPkceTokenParameters(PLAIN_CODE_VERIFIER);
 
 		OAuth2ClientAuthenticationToken authentication =
-				new OAuth2ClientAuthenticationToken(registeredClient.getClientId(), parameters);
+				new OAuth2ClientAuthenticationToken(registeredClient.getClientId(), ClientAuthenticationMethod.NONE, null, parameters);
 
 		OAuth2ClientAuthenticationToken authenticationResult =
 				(OAuth2ClientAuthenticationToken) this.authenticationProvider.authenticate(authentication);
@@ -373,7 +373,7 @@ public class OAuth2ClientAuthenticationProviderTests {
 		Map<String, Object> parameters = createPkceTokenParameters(S256_CODE_VERIFIER);
 
 		OAuth2ClientAuthenticationToken authentication =
-				new OAuth2ClientAuthenticationToken(registeredClient.getClientId(), parameters);
+				new OAuth2ClientAuthenticationToken(registeredClient.getClientId(), ClientAuthenticationMethod.NONE, null, parameters);
 
 		OAuth2ClientAuthenticationToken authenticationResult =
 				(OAuth2ClientAuthenticationToken) this.authenticationProvider.authenticate(authentication);
@@ -401,7 +401,7 @@ public class OAuth2ClientAuthenticationProviderTests {
 		Map<String, Object> parameters = createPkceTokenParameters(PLAIN_CODE_VERIFIER);
 
 		OAuth2ClientAuthenticationToken authentication =
-				new OAuth2ClientAuthenticationToken(registeredClient.getClientId(), parameters);
+				new OAuth2ClientAuthenticationToken(registeredClient.getClientId(), ClientAuthenticationMethod.NONE, null, parameters);
 
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 				.isInstanceOf(OAuth2AuthenticationException.class)
@@ -417,7 +417,7 @@ public class OAuth2ClientAuthenticationProviderTests {
 				.thenReturn(registeredClient);
 
 		OAuth2ClientAuthenticationToken authentication = new OAuth2ClientAuthenticationToken(
-				registeredClient.getClientId(), registeredClient.getClientSecret(), ClientAuthenticationMethod.CLIENT_SECRET_POST, null);
+				registeredClient.getClientId(), ClientAuthenticationMethod.CLIENT_SECRET_POST, registeredClient.getClientSecret(), null);
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 				.isInstanceOf(OAuth2AuthenticationException.class)
 				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())

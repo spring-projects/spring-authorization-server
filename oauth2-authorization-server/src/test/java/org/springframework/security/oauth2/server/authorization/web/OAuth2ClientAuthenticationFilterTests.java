@@ -167,7 +167,7 @@ public class OAuth2ClientAuthenticationFilterTests {
 	@Test
 	public void doFilterWhenRequestMatchesAndBadCredentialsThenInvalidClientError() throws Exception {
 		when(this.authenticationConverter.convert(any(HttpServletRequest.class))).thenReturn(
-				new OAuth2ClientAuthenticationToken("clientId", "invalid-secret", ClientAuthenticationMethod.CLIENT_SECRET_BASIC, null));
+				new OAuth2ClientAuthenticationToken("clientId", ClientAuthenticationMethod.CLIENT_SECRET_BASIC, "invalid-secret", null));
 		when(this.authenticationManager.authenticate(any(Authentication.class))).thenThrow(
 				new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_CLIENT)));
 
@@ -192,9 +192,9 @@ public class OAuth2ClientAuthenticationFilterTests {
 
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 		when(this.authenticationConverter.convert(any(HttpServletRequest.class))).thenReturn(
-				new OAuth2ClientAuthenticationToken(registeredClient.getClientId(), registeredClient.getClientSecret(), ClientAuthenticationMethod.CLIENT_SECRET_BASIC, null));
+				new OAuth2ClientAuthenticationToken(registeredClient.getClientId(), ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret(), null));
 		when(this.authenticationManager.authenticate(any(Authentication.class))).thenReturn(
-				new OAuth2ClientAuthenticationToken(registeredClient));
+				new OAuth2ClientAuthenticationToken(registeredClient, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret()));
 
 		MockHttpServletRequest request = new MockHttpServletRequest("POST", this.filterProcessesUrl);
 		request.setServletPath(this.filterProcessesUrl);

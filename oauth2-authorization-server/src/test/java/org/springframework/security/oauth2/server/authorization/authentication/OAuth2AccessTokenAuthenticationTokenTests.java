@@ -16,6 +16,8 @@
 package org.springframework.security.oauth2.server.authorization.authentication;
 
 import org.junit.Test;
+
+import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2RefreshToken;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
@@ -36,8 +38,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  */
 public class OAuth2AccessTokenAuthenticationTokenTests {
 	private RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
-	private OAuth2ClientAuthenticationToken clientPrincipal =
-			new OAuth2ClientAuthenticationToken(this.registeredClient);
+	private OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(
+			this.registeredClient, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, this.registeredClient.getClientSecret());
 	private OAuth2AccessToken accessToken = new OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER,
 			"access-token", Instant.now(), Instant.now().plusSeconds(300));
 	private OAuth2RefreshToken refreshToken = new OAuth2RefreshToken(

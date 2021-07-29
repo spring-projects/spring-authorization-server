@@ -139,7 +139,8 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 				eq(OAuth2TokenType.REFRESH_TOKEN)))
 				.thenReturn(authorization);
 
-		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient);
+		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(
+				registeredClient, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
 		OAuth2RefreshTokenAuthenticationToken authentication = new OAuth2RefreshTokenAuthenticationToken(
 				authorization.getRefreshToken().getToken().getTokenValue(), clientPrincipal, null, null);
 
@@ -182,7 +183,8 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 				eq(OAuth2TokenType.REFRESH_TOKEN)))
 				.thenReturn(authorization);
 
-		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient);
+		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(
+				registeredClient, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
 		OAuth2RefreshTokenAuthenticationToken authentication = new OAuth2RefreshTokenAuthenticationToken(
 				authorization.getRefreshToken().getToken().getTokenValue(), clientPrincipal, null, null);
 
@@ -250,7 +252,8 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 				eq(OAuth2TokenType.REFRESH_TOKEN)))
 				.thenReturn(authorization);
 
-		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient);
+		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(
+				registeredClient, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
 		OAuth2RefreshTokenAuthenticationToken authentication = new OAuth2RefreshTokenAuthenticationToken(
 				authorization.getRefreshToken().getToken().getTokenValue(), clientPrincipal, null, null);
 
@@ -277,7 +280,8 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 				eq(OAuth2TokenType.REFRESH_TOKEN)))
 				.thenReturn(authorization);
 
-		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient);
+		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(
+				registeredClient, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
 		Set<String> authorizedScopes = authorization.getAttribute(OAuth2Authorization.AUTHORIZED_SCOPE_ATTRIBUTE_NAME);
 		Set<String> requestedScopes = new HashSet<>(authorizedScopes);
 		requestedScopes.remove("scope1");
@@ -310,7 +314,8 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 		});
 		this.authenticationProvider.setRefreshTokenGenerator(refreshTokenGenerator);
 
-		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient);
+		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(
+				registeredClient, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
 		OAuth2RefreshTokenAuthenticationToken authentication = new OAuth2RefreshTokenAuthenticationToken(
 				authorization.getRefreshToken().getToken().getTokenValue(), clientPrincipal, null, null);
 
@@ -330,7 +335,8 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 				eq(OAuth2TokenType.REFRESH_TOKEN)))
 				.thenReturn(authorization);
 
-		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient);
+		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(
+				registeredClient, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
 		Set<String> authorizedScopes = authorization.getAttribute(OAuth2Authorization.AUTHORIZED_SCOPE_ATTRIBUTE_NAME);
 		Set<String> requestedScopes = new HashSet<>(authorizedScopes);
 		requestedScopes.add("unauthorized");
@@ -347,7 +353,8 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 	@Test
 	public void authenticateWhenInvalidRefreshTokenThenThrowOAuth2AuthenticationException() {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
-		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient);
+		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(
+				registeredClient, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
 		OAuth2RefreshTokenAuthenticationToken authentication = new OAuth2RefreshTokenAuthenticationToken(
 				"invalid", clientPrincipal, null, null);
 
@@ -377,7 +384,7 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 	public void authenticateWhenClientPrincipalNotAuthenticatedThenThrowOAuth2AuthenticationException() {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(
-				registeredClient.getClientId(), registeredClient.getClientSecret(), ClientAuthenticationMethod.CLIENT_SECRET_BASIC, null);
+				registeredClient.getClientId(), ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret(), null);
 		OAuth2RefreshTokenAuthenticationToken authentication = new OAuth2RefreshTokenAuthenticationToken(
 				"refresh-token", clientPrincipal, null, null);
 
@@ -397,8 +404,9 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 				eq(OAuth2TokenType.REFRESH_TOKEN)))
 				.thenReturn(authorization);
 
+		RegisteredClient registeredClient2 = TestRegisteredClients.registeredClient2().build();
 		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(
-				TestRegisteredClients.registeredClient2().build());
+				registeredClient2, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient2.getClientSecret());
 		OAuth2RefreshTokenAuthenticationToken authentication = new OAuth2RefreshTokenAuthenticationToken(
 				authorization.getRefreshToken().getToken().getTokenValue(), clientPrincipal, null, null);
 
@@ -420,7 +428,8 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 				eq(OAuth2TokenType.REFRESH_TOKEN)))
 				.thenReturn(authorization);
 
-		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient);
+		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(
+				registeredClient, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
 		OAuth2RefreshTokenAuthenticationToken authentication = new OAuth2RefreshTokenAuthenticationToken(
 				authorization.getRefreshToken().getToken().getTokenValue(), clientPrincipal, null, null);
 
@@ -443,7 +452,8 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 				eq(OAuth2TokenType.REFRESH_TOKEN)))
 				.thenReturn(authorization);
 
-		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient);
+		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(
+				registeredClient, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
 		OAuth2RefreshTokenAuthenticationToken authentication = new OAuth2RefreshTokenAuthenticationToken(
 				authorization.getRefreshToken().getToken().getTokenValue(), clientPrincipal, null, null);
 
@@ -467,7 +477,8 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 				eq(OAuth2TokenType.REFRESH_TOKEN)))
 				.thenReturn(authorization);
 
-		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient);
+		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(
+				registeredClient, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
 		OAuth2RefreshTokenAuthenticationToken authentication = new OAuth2RefreshTokenAuthenticationToken(
 				authorization.getRefreshToken().getToken().getTokenValue(), clientPrincipal, null, null);
 

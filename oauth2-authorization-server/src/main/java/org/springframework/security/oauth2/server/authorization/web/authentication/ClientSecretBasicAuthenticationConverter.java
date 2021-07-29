@@ -89,7 +89,7 @@ public final class ClientSecretBasicAuthenticationConverter implements Authentic
 			throw new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_REQUEST), ex);
 		}
 
-		return new OAuth2ClientAuthenticationToken(clientID, clientSecret, ClientAuthenticationMethod.CLIENT_SECRET_BASIC,
+		return new OAuth2ClientAuthenticationToken(clientID, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, clientSecret,
 				extractAdditionalParameters(request));
 	}
 

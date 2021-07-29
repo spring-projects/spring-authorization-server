@@ -29,10 +29,8 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.HttpSecurityBuilder;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.ExceptionHandlingConfigurer;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsentService;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
-import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2TokenIntrospectionAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2TokenRevocationAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
@@ -42,7 +40,6 @@ import org.springframework.security.oauth2.server.authorization.oidc.web.OidcCli
 import org.springframework.security.oauth2.server.authorization.oidc.web.OidcProviderConfigurationEndpointFilter;
 import org.springframework.security.oauth2.server.authorization.web.NimbusJwkSetEndpointFilter;
 import org.springframework.security.oauth2.server.authorization.web.OAuth2AuthorizationServerMetadataEndpointFilter;
-import org.springframework.security.oauth2.server.authorization.web.OAuth2ClientAuthenticationFilter;
 import org.springframework.security.oauth2.server.authorization.web.OAuth2TokenIntrospectionEndpointFilter;
 import org.springframework.security.oauth2.server.authorization.web.OAuth2TokenRevocationEndpointFilter;
 import org.springframework.security.web.access.intercept.FilterSecurityInterceptor;
@@ -62,6 +59,7 @@ import org.springframework.util.Assert;
  * @author Ovidiu Popa
  * @since 0.0.1
  * @see AbstractHttpConfigurer
+ * @see OAuth2ClientAuthenticationConfigurer
  * @see OAuth2AuthorizationEndpointConfigurer
  * @see OAuth2TokenEndpointConfigurer
  * @see RegisteredClientRepository
@@ -72,7 +70,6 @@ import org.springframework.util.Assert;
  * @see NimbusJwkSetEndpointFilter
  * @see OidcProviderConfigurationEndpointFilter
  * @see OAuth2AuthorizationServerMetadataEndpointFilter
- * @see OAuth2ClientAuthenticationFilter
  * @see OidcClientRegistrationEndpointFilter
  */
 public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBuilder<B>>
@@ -103,7 +100,7 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 	 */
 	public OAuth2AuthorizationServerConfigurer<B> registeredClientRepository(RegisteredClientRepository registeredClientRepository) {
 		Assert.notNull(registeredClientRepository, "registeredClientRepository cannot be null");
-		this.getBuilder().setSharedObject(RegisteredClientRepository.class, registeredClientRepository);
+		getBuilder().setSharedObject(RegisteredClientRepository.class, registeredClientRepository);
 		return this;
 	}
 
@@ -115,7 +112,7 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 	 */
 	public OAuth2AuthorizationServerConfigurer<B> authorizationService(OAuth2AuthorizationService authorizationService) {
 		Assert.notNull(authorizationService, "authorizationService cannot be null");
-		this.getBuilder().setSharedObject(OAuth2AuthorizationService.class, authorizationService);
+		getBuilder().setSharedObject(OAuth2AuthorizationService.class, authorizationService);
 		return this;
 	}
 
@@ -127,7 +124,7 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 	 */
 	public OAuth2AuthorizationServerConfigurer<B> authorizationConsentService(OAuth2AuthorizationConsentService authorizationConsentService) {
 		Assert.notNull(authorizationConsentService, "authorizationConsentService cannot be null");
-		this.getBuilder().setSharedObject(OAuth2AuthorizationConsentService.class, authorizationConsentService);
+		getBuilder().setSharedObject(OAuth2AuthorizationConsentService.class, authorizationConsentService);
 		return this;
 	}
 
@@ -139,7 +136,18 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 	 */
 	public OAuth2AuthorizationServerConfigurer<B> providerSettings(ProviderSettings providerSettings) {
 		Assert.notNull(providerSettings, "providerSettings cannot be null");
-		this.getBuilder().setSharedObject(ProviderSettings.class, providerSettings);
+		getBuilder().setSharedObject(ProviderSettings.class, providerSettings);
+		return this;
+	}
+
+	/**
+	 * Configures OAuth 2.0 Client Authentication.
+	 *
+	 * @param clientAuthenticationCustomizer the {@link Customizer} providing access to the {@link OAuth2ClientAuthenticationConfigurer}
+	 * @return the {@link OAuth2AuthorizationServerConfigurer} for further configuration
+	 */
+	public OAuth2AuthorizationServerConfigurer<B> clientAuthentication(Customizer<OAuth2ClientAuthenticationConfigurer> clientAuthenticationCustomizer) {
+		clientAuthenticationCustomizer.customize(getConfigurer(OAuth2ClientAuthenticationConfigurer.class));
 		return this;
 	}
 
@@ -181,16 +189,6 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 		initEndpointMatchers(providerSettings);
 
 		this.configurers.values().forEach(configurer -> configurer.init(builder));
-
-		OAuth2ClientAuthenticationProvider clientAuthenticationProvider =
-				new OAuth2ClientAuthenticationProvider(
-						OAuth2ConfigurerUtils.getRegisteredClientRepository(builder),
-						OAuth2ConfigurerUtils.getAuthorizationService(builder));
-		PasswordEncoder passwordEncoder = OAuth2ConfigurerUtils.getOptionalBean(builder, PasswordEncoder.class);
-		if (passwordEncoder != null) {
-			clientAuthenticationProvider.setPasswordEncoder(passwordEncoder);
-		}
-		builder.authenticationProvider(postProcess(clientAuthenticationProvider));
 
 		OAuth2TokenIntrospectionAuthenticationProvider tokenIntrospectionAuthenticationProvider =
 				new OAuth2TokenIntrospectionAuthenticationProvider(
@@ -245,15 +243,6 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 
 		AuthenticationManager authenticationManager = builder.getSharedObject(AuthenticationManager.class);
 
-		OAuth2ClientAuthenticationFilter clientAuthenticationFilter =
-				new OAuth2ClientAuthenticationFilter(
-						authenticationManager,
-						new OrRequestMatcher(
-								getRequestMatcher(OAuth2TokenEndpointConfigurer.class),
-								this.tokenIntrospectionEndpointMatcher,
-								this.tokenRevocationEndpointMatcher));
-		builder.addFilterAfter(postProcess(clientAuthenticationFilter), AbstractPreAuthenticatedProcessingFilter.class);
-
 		OAuth2TokenIntrospectionEndpointFilter tokenIntrospectionEndpointFilter =
 				new OAuth2TokenIntrospectionEndpointFilter(
 						authenticationManager,
@@ -276,6 +265,7 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 
 	private Map<Class<? extends AbstractOAuth2Configurer>, AbstractOAuth2Configurer> createConfigurers() {
 		Map<Class<? extends AbstractOAuth2Configurer>, AbstractOAuth2Configurer> configurers = new LinkedHashMap<>();
+		configurers.put(OAuth2ClientAuthenticationConfigurer.class, new OAuth2ClientAuthenticationConfigurer(this::postProcess));
 		configurers.put(OAuth2AuthorizationEndpointConfigurer.class, new OAuth2AuthorizationEndpointConfigurer(this::postProcess));
 		configurers.put(OAuth2TokenEndpointConfigurer.class, new OAuth2TokenEndpointConfigurer(this::postProcess));
 		return configurers;

@@ -15,11 +15,16 @@
  */
 package org.springframework.security.config.annotation.web.configurers.oauth2.server.authorization;
 
+import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Base64;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
@@ -46,6 +51,8 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
 import org.springframework.security.config.test.SpringTestRule;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
@@ -76,6 +83,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -93,10 +101,10 @@ public class OAuth2ClientCredentialsGrantTests {
 	private static EmbeddedDatabase db;
 	private static JWKSource<SecurityContext> jwkSource;
 	private static OAuth2TokenCustomizer<JwtEncodingContext> jwtCustomizer;
-	private static AuthenticationConverter accessTokenRequestConverter;
+	private static AuthenticationConverter authenticationConverter;
 	private static AuthenticationProvider authenticationProvider;
-	private static AuthenticationSuccessHandler accessTokenResponseHandler;
-	private static AuthenticationFailureHandler errorResponseHandler;
+	private static AuthenticationSuccessHandler authenticationSuccessHandler;
+	private static AuthenticationFailureHandler authenticationFailureHandler;
 
 	@Rule
 	public final SpringTestRule spring = new SpringTestRule();
@@ -115,10 +123,10 @@ public class OAuth2ClientCredentialsGrantTests {
 		JWKSet jwkSet = new JWKSet(TestJwks.DEFAULT_RSA_JWK);
 		jwkSource = (jwkSelector, securityContext) -> jwkSelector.select(jwkSet);
 		jwtCustomizer = mock(OAuth2TokenCustomizer.class);
-		accessTokenRequestConverter = mock(AuthenticationConverter.class);
+		authenticationConverter = mock(AuthenticationConverter.class);
 		authenticationProvider = mock(AuthenticationProvider.class);
-		accessTokenResponseHandler = mock(AuthenticationSuccessHandler.class);
-		errorResponseHandler = mock(AuthenticationFailureHandler.class);
+		authenticationSuccessHandler = mock(AuthenticationSuccessHandler.class);
+		authenticationFailureHandler = mock(AuthenticationFailureHandler.class);
 		db = new EmbeddedDatabaseBuilder()
 				.generateUniqueName(true)
 				.setType(EmbeddedDatabaseType.HSQL)
@@ -132,6 +140,10 @@ public class OAuth2ClientCredentialsGrantTests {
 	@Before
 	public void setup() {
 		reset(jwtCustomizer);
+		reset(authenticationConverter);
+		reset(authenticationProvider);
+		reset(authenticationSuccessHandler);
+		reset(authenticationFailureHandler);
 	}
 
 	@After
@@ -202,7 +214,7 @@ public class OAuth2ClientCredentialsGrantTests {
 		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient);
 		OAuth2ClientCredentialsAuthenticationToken clientCredentialsAuthentication =
 				new OAuth2ClientCredentialsAuthenticationToken(clientPrincipal, null, null);
-		when(accessTokenRequestConverter.convert(any())).thenReturn(clientCredentialsAuthentication);
+		when(authenticationConverter.convert(any())).thenReturn(clientCredentialsAuthentication);
 
 		OAuth2AccessToken accessToken = new OAuth2AccessToken(
 				OAuth2AccessToken.TokenType.BEARER, "token",
@@ -218,9 +230,32 @@ public class OAuth2ClientCredentialsGrantTests {
 						registeredClient.getClientId(), registeredClient.getClientSecret())))
 				.andExpect(status().isOk());
 
-		verify(accessTokenRequestConverter).convert(any());
+		verify(authenticationConverter).convert(any());
 		verify(authenticationProvider).authenticate(eq(clientCredentialsAuthentication));
-		verify(accessTokenResponseHandler).onAuthenticationSuccess(any(), any(), eq(accessTokenAuthentication));
+		verify(authenticationSuccessHandler).onAuthenticationSuccess(any(), any(), eq(accessTokenAuthentication));
+	}
+
+	@Test
+	public void requestWhenClientAuthenticationCustomizedThenUsed() throws Exception {
+		this.spring.register(AuthorizationServerConfigurationCustomClientAuthentication.class).autowire();
+
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient2().build();
+		this.registeredClientRepository.save(registeredClient);
+
+		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient);
+		when(authenticationConverter.convert(any())).thenReturn(clientPrincipal);
+		when(authenticationProvider.supports(eq(OAuth2ClientAuthenticationToken.class))).thenReturn(true);
+		when(authenticationProvider.authenticate(any())).thenReturn(clientPrincipal);
+
+		this.mvc.perform(post(DEFAULT_TOKEN_ENDPOINT_URI)
+				.param(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
+				.header(HttpHeaders.AUTHORIZATION, "Basic " + encodeBasicAuth(
+						registeredClient.getClientId(), registeredClient.getClientSecret())))
+				.andExpect(status().isOk());
+
+		verify(authenticationConverter).convert(any());
+		verify(authenticationProvider).authenticate(eq(clientPrincipal));
+		verify(authenticationSuccessHandler).onAuthenticationSuccess(any(), any(), eq(clientPrincipal));
 	}
 
 	private static String encodeBasicAuth(String clientId, String secret) throws Exception {
@@ -298,10 +333,10 @@ public class OAuth2ClientCredentialsGrantTests {
 			authorizationServerConfigurer
 					.tokenEndpoint(tokenEndpoint ->
 							tokenEndpoint
-									.accessTokenRequestConverter(accessTokenRequestConverter)
+									.accessTokenRequestConverter(authenticationConverter)
 									.authenticationProvider(authenticationProvider)
-									.accessTokenResponseHandler(accessTokenResponseHandler)
-									.errorResponseHandler(errorResponseHandler));
+									.accessTokenResponseHandler(authenticationSuccessHandler)
+									.errorResponseHandler(authenticationFailureHandler));
 			RequestMatcher endpointsMatcher = authorizationServerConfigurer.getEndpointsMatcher();
 
 			http
@@ -314,6 +349,48 @@ public class OAuth2ClientCredentialsGrantTests {
 			return http.build();
 		}
 		// @formatter:on
+	}
+
+	@EnableWebSecurity
+	static class AuthorizationServerConfigurationCustomClientAuthentication extends AuthorizationServerConfiguration {
+		// @formatter:off
+		@Bean
+		public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
+			authenticationSuccessHandler = spy(authenticationSuccessHandler());
+
+			OAuth2AuthorizationServerConfigurer<HttpSecurity> authorizationServerConfigurer =
+					new OAuth2AuthorizationServerConfigurer<>();
+			authorizationServerConfigurer
+					.clientAuthentication(clientAuthentication ->
+							clientAuthentication
+									.authenticationConverter(authenticationConverter)
+									.authenticationProvider(authenticationProvider)
+									.authenticationSuccessHandler(authenticationSuccessHandler)
+									.errorResponseHandler(authenticationFailureHandler));
+			RequestMatcher endpointsMatcher = authorizationServerConfigurer.getEndpointsMatcher();
+
+			http
+					.requestMatcher(endpointsMatcher)
+					.authorizeRequests(authorizeRequests ->
+							authorizeRequests.anyRequest().authenticated()
+					)
+					.csrf(csrf -> csrf.ignoringRequestMatchers(endpointsMatcher))
+					.apply(authorizationServerConfigurer);
+			return http.build();
+		}
+		// @formatter:on
+
+		private AuthenticationSuccessHandler authenticationSuccessHandler() {
+			return new AuthenticationSuccessHandler() {
+				@Override
+				public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
+					org.springframework.security.core.context.SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
+					securityContext.setAuthentication(authentication);
+					SecurityContextHolder.setContext(securityContext);
+				}
+			};
+		}
+
 	}
 
 }

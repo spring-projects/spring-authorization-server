@@ -192,8 +192,9 @@ public final class OAuth2AuthorizationCodeAuthenticationProvider implements Auth
 				jwtAccessToken.getExpiresAt(), authorizedScopes);
 
 		OAuth2RefreshToken refreshToken = null;
-		if (registeredClient.getAuthorizationGrantTypes().contains(AuthorizationGrantType.REFRESH_TOKEN)
-				&& !registeredClient.getClientAuthenticationMethods().contains(ClientAuthenticationMethod.NONE)) {
+		if (registeredClient.getAuthorizationGrantTypes().contains(AuthorizationGrantType.REFRESH_TOKEN) &&
+				// Do not issue refresh token to public client
+				!clientPrincipal.getClientAuthenticationMethod().equals(ClientAuthenticationMethod.NONE)) {
 			refreshToken = generateRefreshToken(registeredClient.getTokenSettings().getRefreshTokenTimeToLive());
 		}
 

@@ -33,8 +33,9 @@ import org.springframework.util.Assert;
  * The metadata endpoint returns a set of claims an Authorization Server describes about its configuration.
  *
  * @author Daniel Garnier-Moiroux
- * @see OAuth2AuthorizationServerMetadataClaimAccessor
+ * @author Arthur Mita
  * @since 0.1.1
+ * @see OAuth2AuthorizationServerMetadataClaimAccessor
  * @see <a target="_blank" href="https://tools.ietf.org/html/rfc8414#section-3.2">3.2. Authorization Server Metadata Response</a>
  * @see <a target="_blank" href="https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderConfigurationResponse">4.2. OpenID Provider Configuration Response</a>
  */
@@ -73,7 +74,7 @@ public abstract class AbstractOAuth2AuthorizationServerMetadata implements OAuth
 		@SuppressWarnings("unchecked")
 		protected final B getThis() {
 			return (B) this;	// avoid unchecked casts in subclasses by using "getThis()" instead of "(B) this"
-		};
+		}
 
 		/**
 		 * Use this {@code issuer} in the resulting {@link AbstractOAuth2AuthorizationServerMetadata}, REQUIRED.
@@ -103,6 +104,16 @@ public abstract class AbstractOAuth2AuthorizationServerMetadata implements OAuth
 		 */
 		public B tokenEndpoint(String tokenEndpoint) {
 			return claim(OAuth2AuthorizationServerMetadataClaimNames.TOKEN_ENDPOINT, tokenEndpoint);
+		}
+
+		/**
+		 * Add this registration endpoint in the resulting {@link AbstractOAuth2AuthorizationServerMetadata} OPTIONAL
+		 *
+		 * @param clientRegistrationEndpoint the supported registration client url
+		 * @return the {@link AbstractOAuth2AuthorizationServerMetadata.AbstractBuilder} for further configuration
+		 */
+		public B clientRegistrationEndpoint(String clientRegistrationEndpoint) {
+			return claim(OAuth2AuthorizationServerMetadataClaimNames.REGISTRATION_ENDPOINT, clientRegistrationEndpoint);
 		}
 
 		/**

@@ -20,6 +20,7 @@ package org.springframework.security.oauth2.core;
  * used in OAuth 2.0 Authorization Server Metadata and OpenID Connect Discovery 1.0.
  *
  * @author Daniel Garnier-Moiroux
+ * @author Arthur Mita
  * @since 0.1.1
  * @see <a target="_blank" href="https://tools.ietf.org/html/rfc8414#section-2">2. Authorization Server Metadata</a>
  * @see <a target="_blank" href="https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderMetadata">3. OpenID Provider Metadata</a>
@@ -40,6 +41,11 @@ public interface OAuth2AuthorizationServerMetadataClaimNames {
 	 * {@code token_endpoint} - the {@code URL} of the OAuth 2.0 Token Endpoint
 	 */
 	String TOKEN_ENDPOINT = "token_endpoint";
+
+	/**
+	 * {@code registration_endpoint} - the {@code URL} of the authorization server's OAuth 2.0 Dynamic Client Registration endpoint
+	 */
+	String REGISTRATION_ENDPOINT = "registration_endpoint";
 
 	/**
 	 * {@code token_endpoint_auth_methods_supported} - the client authentication methods supported by the OAuth 2.0 Token Endpoint

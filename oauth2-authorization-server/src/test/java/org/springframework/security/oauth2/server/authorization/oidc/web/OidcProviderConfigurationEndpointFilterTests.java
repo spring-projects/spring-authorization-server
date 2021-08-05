@@ -37,6 +37,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
  * Tests for {@link OidcProviderConfigurationEndpointFilter}.
  *
  * @author Daniel Garnier-Moiroux
+ * @author Arthur Mita
  */
 public class OidcProviderConfigurationEndpointFilterTests {
 	private static final String DEFAULT_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI = "/.well-known/openid-configuration";
@@ -117,6 +118,7 @@ public class OidcProviderConfigurationEndpointFilterTests {
 		assertThat(providerConfigurationResponse).contains("\"subject_types_supported\":[\"public\"]");
 		assertThat(providerConfigurationResponse).contains("\"id_token_signing_alg_values_supported\":[\"RS256\"]");
 		assertThat(providerConfigurationResponse).contains("\"token_endpoint_auth_methods_supported\":[\"client_secret_basic\",\"client_secret_post\"]");
+		assertThat(providerConfigurationResponse).contains("\"registration_endpoint\":\"https://example.com/issuer1/connect/register\"");
 	}
 
 	@Test

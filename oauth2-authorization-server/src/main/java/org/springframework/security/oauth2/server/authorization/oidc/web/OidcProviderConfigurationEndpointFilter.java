@@ -42,6 +42,7 @@ import java.io.IOException;
  * A {@code Filter} that processes OpenID Provider Configuration Requests.
  *
  * @author Daniel Garnier-Moiroux
+ * @author Arthur Mita
  * @since 0.1.0
  * @see OidcProviderConfiguration
  * @see ProviderSettings
@@ -89,6 +90,7 @@ public final class OidcProviderConfigurationEndpointFilter extends OncePerReques
 				.grantType(AuthorizationGrantType.REFRESH_TOKEN.getValue())
 				.subjectType("public")
 				.idTokenSigningAlgorithm(SignatureAlgorithm.RS256.getName())
+				.clientRegistrationEndpoint(asUrl(this.providerSettings.getIssuer(), this.providerSettings.getOidcClientRegistrationEndpoint()))
 				.scope(OidcScopes.OPENID)
 				.build();
 

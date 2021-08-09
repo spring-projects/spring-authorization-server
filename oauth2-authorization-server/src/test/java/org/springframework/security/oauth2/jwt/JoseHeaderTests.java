@@ -17,6 +17,7 @@ package org.springframework.security.oauth2.jwt;
 
 import org.junit.Test;
 
+import org.springframework.security.oauth2.jose.JwaAlgorithm;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -33,18 +34,18 @@ public class JoseHeaderTests {
 	public void withAlgorithmWhenNullThenThrowIllegalArgumentException() {
 		assertThatThrownBy(() -> JoseHeader.withAlgorithm(null))
 				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("jwsAlgorithm cannot be null");
+				.hasMessage("jwaAlgorithm cannot be null");
 	}
 
 	@Test
 	public void buildWhenAllHeadersProvidedThenAllHeadersAreSet() {
 		JoseHeader expectedJoseHeader = TestJoseHeaders.joseHeader().build();
 
-		JoseHeader joseHeader = JoseHeader.withAlgorithm(expectedJoseHeader.getJwsAlgorithm())
-				.jwkSetUri(expectedJoseHeader.getJwkSetUri().toExternalForm())
+		JoseHeader joseHeader = JoseHeader.withAlgorithm(expectedJoseHeader.getAlgorithm())
+				.jwkSetUrl(expectedJoseHeader.getJwkSetUrl().toExternalForm())
 				.jwk(expectedJoseHeader.getJwk())
 				.keyId(expectedJoseHeader.getKeyId())
-				.x509Uri(expectedJoseHeader.getX509Uri().toExternalForm())
+				.x509Url(expectedJoseHeader.getX509Url().toExternalForm())
 				.x509CertificateChain(expectedJoseHeader.getX509CertificateChain())
 				.x509SHA1Thumbprint(expectedJoseHeader.getX509SHA1Thumbprint())
 				.x509SHA256Thumbprint(expectedJoseHeader.getX509SHA256Thumbprint())
@@ -53,11 +54,11 @@ public class JoseHeaderTests {
 				.headers(headers -> headers.put("custom-header-name", "custom-header-value"))
 				.build();
 
-		assertThat(joseHeader.getJwsAlgorithm()).isEqualTo(expectedJoseHeader.getJwsAlgorithm());
-		assertThat(joseHeader.getJwkSetUri()).isEqualTo(expectedJoseHeader.getJwkSetUri());
+		assertThat(joseHeader.<JwaAlgorithm>getAlgorithm()).isEqualTo(expectedJoseHeader.getAlgorithm());
+		assertThat(joseHeader.getJwkSetUrl()).isEqualTo(expectedJoseHeader.getJwkSetUrl());
 		assertThat(joseHeader.getJwk()).isEqualTo(expectedJoseHeader.getJwk());
 		assertThat(joseHeader.getKeyId()).isEqualTo(expectedJoseHeader.getKeyId());
-		assertThat(joseHeader.getX509Uri()).isEqualTo(expectedJoseHeader.getX509Uri());
+		assertThat(joseHeader.getX509Url()).isEqualTo(expectedJoseHeader.getX509Url());
 		assertThat(joseHeader.getX509CertificateChain()).isEqualTo(expectedJoseHeader.getX509CertificateChain());
 		assertThat(joseHeader.getX509SHA1Thumbprint()).isEqualTo(expectedJoseHeader.getX509SHA1Thumbprint());
 		assertThat(joseHeader.getX509SHA256Thumbprint()).isEqualTo(expectedJoseHeader.getX509SHA256Thumbprint());

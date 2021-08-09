@@ -15,26 +15,28 @@
  */
 package org.springframework.security.oauth2.jwt;
 
+import java.net.URI;
 import java.net.URL;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.jose.JWSSigner;
-import com.nimbusds.jose.KeySourceException;
 import com.nimbusds.jose.crypto.factories.DefaultJWSSignerFactory;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKMatcher;
 import com.nimbusds.jose.jwk.JWKSelector;
+import com.nimbusds.jose.jwk.KeyType;
+import com.nimbusds.jose.jwk.KeyUse;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
 import com.nimbusds.jose.produce.JWSSignerFactory;
@@ -62,27 +64,17 @@ import org.springframework.util.StringUtils;
  * @see JwtEncoder
  * @see com.nimbusds.jose.jwk.source.JWKSource
  * @see com.nimbusds.jose.jwk.JWK
- * @see <a target="_blank" href="https://tools.ietf.org/html/rfc7519">JSON Web Token
- * (JWT)</a>
- * @see <a target="_blank" href="https://tools.ietf.org/html/rfc7515">JSON Web Signature
- * (JWS)</a>
- * @see <a target="_blank" href="https://tools.ietf.org/html/rfc7515#section-3.1">JWS
- * Compact Serialization</a>
- * @see <a target="_blank" href="https://connect2id.com/products/nimbus-jose-jwt">Nimbus
- * JOSE + JWT SDK</a>
+ * @see <a target="_blank" href="https://datatracker.ietf.org/doc/html/rfc7519">JSON Web Token (JWT)</a>
+ * @see <a target="_blank" href="https://datatracker.ietf.org/doc/html/rfc7515">JSON Web Signature (JWS)</a>
+ * @see <a target="_blank" href="https://datatracker.ietf.org/doc/html/rfc7515#section-3.1">JWS Compact Serialization</a>
+ * @see <a target="_blank" href="https://connect2id.com/products/nimbus-jose-jwt">Nimbus JOSE + JWT SDK</a>
  */
 public final class NimbusJwsEncoder implements JwtEncoder {
-
 	private static final String ENCODING_ERROR_MESSAGE_TEMPLATE = "An error occurred while attempting to encode the Jwt: %s";
-
 	private static final Converter<JoseHeader, JWSHeader> JWS_HEADER_CONVERTER = new JwsHeaderConverter();
-
 	private static final Converter<JwtClaimsSet, JWTClaimsSet> JWT_CLAIMS_SET_CONVERTER = new JwtClaimsSetConverter();
-
 	private static final JWSSignerFactory JWS_SIGNER_FACTORY = new DefaultJWSSignerFactory();
-
 	private final Map<JWK, JWSSigner> jwsSigners = new ConcurrentHashMap<>();
-
 	private final JWKSource<SecurityContext> jwkSource;
 
 	/**
@@ -100,108 +92,126 @@ public final class NimbusJwsEncoder implements JwtEncoder {
 		Assert.notNull(claims, "claims cannot be null");
 
 		JWK jwk = selectJwk(headers);
-		if (jwk == null) {
-			throw new JwtEncodingException(
-					String.format(ENCODING_ERROR_MESSAGE_TEMPLATE, "Failed to select a JWK signing key"));
-		}
-		else if (!StringUtils.hasText(jwk.getKeyID())) {
-			throw new JwtEncodingException(String.format(ENCODING_ERROR_MESSAGE_TEMPLATE,
-					"The \"kid\" (key ID) from the selected JWK cannot be empty"));
-		}
+		headers = addKeyIdentifierHeadersIfNecessary(headers, jwk);
 
-		// @formatter:off
-		headers = JoseHeader.from(headers)
-				.type(JOSEObjectType.JWT.getType())
-				.keyId(jwk.getKeyID())
-				.build();
-		claims = JwtClaimsSet.from(claims)
-				.id(UUID.randomUUID().toString())
-				.build();
-		// @formatter:on
-
-		JWSHeader jwsHeader = JWS_HEADER_CONVERTER.convert(headers);
-		JWTClaimsSet jwtClaimsSet = JWT_CLAIMS_SET_CONVERTER.convert(claims);
-
-		JWSSigner jwsSigner = this.jwsSigners.computeIfAbsent(jwk, (key) -> {
-			try {
-				return JWS_SIGNER_FACTORY.createJWSSigner(key);
-			}
-			catch (JOSEException ex) {
-				throw new JwtEncodingException(String.format(ENCODING_ERROR_MESSAGE_TEMPLATE,
-						"Failed to create a JWS Signer -> " + ex.getMessage()), ex);
-			}
-		});
-
-		SignedJWT signedJwt = new SignedJWT(jwsHeader, jwtClaimsSet);
-		try {
-			signedJwt.sign(jwsSigner);
-		}
-		catch (JOSEException ex) {
-			throw new JwtEncodingException(
-					String.format(ENCODING_ERROR_MESSAGE_TEMPLATE, "Failed to sign the JWT -> " + ex.getMessage()), ex);
-		}
-		String jws = signedJwt.serialize();
+		String jws = serialize(headers, claims, jwk);
 
 		return new Jwt(jws, claims.getIssuedAt(), claims.getExpiresAt(), headers.getHeaders(), claims.getClaims());
 	}
 
 	private JWK selectJwk(JoseHeader headers) {
-		JWSAlgorithm jwsAlgorithm = JWSAlgorithm.parse(headers.getJwsAlgorithm().getName());
-		JWSHeader jwsHeader = new JWSHeader(jwsAlgorithm);
-		JWKSelector jwkSelector = new JWKSelector(JWKMatcher.forJWSHeader(jwsHeader));
-
 		List<JWK> jwks;
 		try {
+			JWKSelector jwkSelector = new JWKSelector(createJwkMatcher(headers));
 			jwks = this.jwkSource.get(jwkSelector, null);
-		}
-		catch (KeySourceException ex) {
+		} catch (Exception ex) {
 			throw new JwtEncodingException(String.format(ENCODING_ERROR_MESSAGE_TEMPLATE,
 					"Failed to select a JWK signing key -> " + ex.getMessage()), ex);
 		}
 
 		if (jwks.size() > 1) {
 			throw new JwtEncodingException(String.format(ENCODING_ERROR_MESSAGE_TEMPLATE,
-					"Found multiple JWK signing keys for algorithm '" + jwsAlgorithm.getName() + "'"));
+					"Found multiple JWK signing keys for algorithm '" + headers.getAlgorithm().getName() + "'"));
 		}
 
-		return !jwks.isEmpty() ? jwks.get(0) : null;
+		if (jwks.isEmpty()) {
+			throw new JwtEncodingException(String.format(ENCODING_ERROR_MESSAGE_TEMPLATE,
+					"Failed to select a JWK signing key"));
+		}
+
+		return jwks.get(0);
+	}
+
+	private String serialize(JoseHeader headers, JwtClaimsSet claims, JWK jwk) {
+		JWSHeader jwsHeader = JWS_HEADER_CONVERTER.convert(headers);
+		JWTClaimsSet jwtClaimsSet = JWT_CLAIMS_SET_CONVERTER.convert(claims);
+
+		JWSSigner jwsSigner = this.jwsSigners.computeIfAbsent(jwk, NimbusJwsEncoder::createSigner);
+
+		SignedJWT signedJwt = new SignedJWT(jwsHeader, jwtClaimsSet);
+		try {
+			signedJwt.sign(jwsSigner);
+		} catch (JOSEException ex) {
+			throw new JwtEncodingException(String.format(ENCODING_ERROR_MESSAGE_TEMPLATE,
+					"Failed to sign the JWT -> " + ex.getMessage()), ex);
+		}
+		return signedJwt.serialize();
+	}
+
+	private static JWKMatcher createJwkMatcher(JoseHeader headers) {
+		JWSAlgorithm jwsAlgorithm = JWSAlgorithm.parse(headers.getAlgorithm().getName());
+
+		if (JWSAlgorithm.Family.RSA.contains(jwsAlgorithm) || JWSAlgorithm.Family.EC.contains(jwsAlgorithm)) {
+			// @formatter:off
+			return new JWKMatcher.Builder()
+					.keyType(KeyType.forAlgorithm(jwsAlgorithm))
+					.keyID(headers.getKeyId())
+					.keyUses(KeyUse.SIGNATURE, null)
+					.algorithms(jwsAlgorithm, null)
+					.x509CertSHA256Thumbprint(Base64URL.from(headers.getX509SHA256Thumbprint()))
+					.build();
+			// @formatter:on
+		} else if (JWSAlgorithm.Family.HMAC_SHA.contains(jwsAlgorithm)) {
+			// @formatter:off
+			return new JWKMatcher.Builder()
+					.keyType(KeyType.forAlgorithm(jwsAlgorithm))
+					.keyID(headers.getKeyId())
+					.privateOnly(true)
+					.algorithms(jwsAlgorithm, null)
+					.build();
+			// @formatter:on
+		}
+
+		return null;
+	}
+
+	private static JoseHeader addKeyIdentifierHeadersIfNecessary(JoseHeader headers, JWK jwk) {
+		// Check if headers have already been added
+		if (StringUtils.hasText(headers.getKeyId()) && StringUtils.hasText(headers.getX509SHA256Thumbprint())) {
+			return headers;
+		}
+		// Check if headers can be added from JWK
+		if (!StringUtils.hasText(jwk.getKeyID()) && jwk.getX509CertSHA256Thumbprint() == null) {
+			return headers;
+		}
+
+		JoseHeader.Builder headersBuilder = JoseHeader.from(headers);
+		if (!StringUtils.hasText(headers.getKeyId()) && StringUtils.hasText(jwk.getKeyID())) {
+			headersBuilder.keyId(jwk.getKeyID());
+		}
+		if (!StringUtils.hasText(headers.getX509SHA256Thumbprint()) && jwk.getX509CertSHA256Thumbprint() != null) {
+			headersBuilder.x509SHA256Thumbprint(jwk.getX509CertSHA256Thumbprint().toString());
+		}
+
+		return headersBuilder.build();
+	}
+
+	private static JWSSigner createSigner(JWK jwk) {
+		try {
+			return JWS_SIGNER_FACTORY.createJWSSigner(jwk);
+		} catch (JOSEException ex) {
+			throw new JwtEncodingException(String.format(ENCODING_ERROR_MESSAGE_TEMPLATE,
+					"Failed to create a JWS Signer -> " + ex.getMessage()), ex);
+		}
 	}
 
 	private static class JwsHeaderConverter implements Converter<JoseHeader, JWSHeader> {
 
 		@Override
 		public JWSHeader convert(JoseHeader headers) {
-			JWSHeader.Builder builder = new JWSHeader.Builder(JWSAlgorithm.parse(headers.getJwsAlgorithm().getName()));
+			JWSHeader.Builder builder = new JWSHeader.Builder(JWSAlgorithm.parse(headers.getAlgorithm().getName()));
 
-			Set<String> critical = headers.getCritical();
-			if (!CollectionUtils.isEmpty(critical)) {
-				builder.criticalParams(critical);
-			}
-
-			String contentType = headers.getContentType();
-			if (StringUtils.hasText(contentType)) {
-				builder.contentType(contentType);
-			}
-
-			URL jwkSetUri = headers.getJwkSetUri();
-			if (jwkSetUri != null) {
-				try {
-					builder.jwkURL(jwkSetUri.toURI());
-				}
-				catch (Exception ex) {
-					throw new JwtEncodingException(String.format(ENCODING_ERROR_MESSAGE_TEMPLATE,
-							"Failed to convert '" + JoseHeaderNames.JKU + "' JOSE header to a URI"), ex);
-				}
+			if (headers.getJwkSetUrl() != null) {
+				builder.jwkURL(convertAsURI(JoseHeaderNames.JKU, headers.getJwkSetUrl()));
 			}
 
 			Map<String, Object> jwk = headers.getJwk();
 			if (!CollectionUtils.isEmpty(jwk)) {
 				try {
 					builder.jwk(JWK.parse(jwk));
-				}
-				catch (Exception ex) {
+				} catch (Exception ex) {
 					throw new JwtEncodingException(String.format(ENCODING_ERROR_MESSAGE_TEMPLATE,
-							"Failed to convert '" + JoseHeaderNames.JWK + "' JOSE header"), ex);
+							"Unable to convert '" + JoseHeaderNames.JWK + "' JOSE header"), ex);
 				}
 			}
 
@@ -210,14 +220,17 @@ public final class NimbusJwsEncoder implements JwtEncoder {
 				builder.keyID(keyId);
 			}
 
-			String type = headers.getType();
-			if (StringUtils.hasText(type)) {
-				builder.type(new JOSEObjectType(type));
+			if (headers.getX509Url() != null) {
+				builder.x509CertURL(convertAsURI(JoseHeaderNames.X5U, headers.getX509Url()));
 			}
 
 			List<String> x509CertificateChain = headers.getX509CertificateChain();
 			if (!CollectionUtils.isEmpty(x509CertificateChain)) {
-				builder.x509CertChain(x509CertificateChain.stream().map(Base64::new).collect(Collectors.toList()));
+				List<Base64> x5cList = new ArrayList<>();
+				x509CertificateChain.forEach((x5c) -> x5cList.add(new Base64(x5c)));
+				if (!x5cList.isEmpty()) {
+					builder.x509CertChain(x5cList);
+				}
 			}
 
 			String x509SHA1Thumbprint = headers.getX509SHA1Thumbprint();
@@ -230,25 +243,41 @@ public final class NimbusJwsEncoder implements JwtEncoder {
 				builder.x509CertSHA256Thumbprint(new Base64URL(x509SHA256Thumbprint));
 			}
 
-			URL x509Uri = headers.getX509Uri();
-			if (x509Uri != null) {
-				try {
-					builder.x509CertURL(x509Uri.toURI());
-				}
-				catch (Exception ex) {
-					throw new JwtEncodingException(String.format(ENCODING_ERROR_MESSAGE_TEMPLATE,
-							"Failed to convert '" + JoseHeaderNames.X5U + "' JOSE header to a URI"), ex);
-				}
+			String type = headers.getType();
+			if (StringUtils.hasText(type)) {
+				builder.type(new JOSEObjectType(type));
 			}
 
-			Map<String, Object> customHeaders = headers.getHeaders().entrySet().stream()
-					.filter((header) -> !JWSHeader.getRegisteredParameterNames().contains(header.getKey()))
-					.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-			if (!CollectionUtils.isEmpty(customHeaders)) {
+			String contentType = headers.getContentType();
+			if (StringUtils.hasText(contentType)) {
+				builder.contentType(contentType);
+			}
+
+			Set<String> critical = headers.getCritical();
+			if (!CollectionUtils.isEmpty(critical)) {
+				builder.criticalParams(critical);
+			}
+
+			Map<String, Object> customHeaders = new HashMap<>();
+			headers.getHeaders().forEach((name, value) -> {
+				if (!JWSHeader.getRegisteredParameterNames().contains(name)) {
+					customHeaders.put(name, value);
+				}
+			});
+			if (!customHeaders.isEmpty()) {
 				builder.customParams(customHeaders);
 			}
 
 			return builder.build();
+		}
+
+		private static URI convertAsURI(String header, URL url) {
+			try {
+				return url.toURI();
+			} catch (Exception ex) {
+				throw new JwtEncodingException(String.format(ENCODING_ERROR_MESSAGE_TEMPLATE,
+						"Unable to convert '" + header + "' JOSE header to a URI"), ex);
+			}
 		}
 
 	}
@@ -259,9 +288,10 @@ public final class NimbusJwsEncoder implements JwtEncoder {
 		public JWTClaimsSet convert(JwtClaimsSet claims) {
 			JWTClaimsSet.Builder builder = new JWTClaimsSet.Builder();
 
-			URL issuer = claims.getIssuer();
+			// NOTE: The value of the 'iss' claim is a String or URL (StringOrURI).
+			Object issuer = claims.getClaim(JwtClaimNames.ISS);
 			if (issuer != null) {
-				builder.issuer(issuer.toExternalForm());
+				builder.issuer(issuer.toString());
 			}
 
 			String subject = claims.getSubject();
@@ -274,11 +304,6 @@ public final class NimbusJwsEncoder implements JwtEncoder {
 				builder.audience(audience);
 			}
 
-			Instant issuedAt = claims.getIssuedAt();
-			if (issuedAt != null) {
-				builder.issueTime(Date.from(issuedAt));
-			}
-
 			Instant expiresAt = claims.getExpiresAt();
 			if (expiresAt != null) {
 				builder.expirationTime(Date.from(expiresAt));
@@ -289,15 +314,23 @@ public final class NimbusJwsEncoder implements JwtEncoder {
 				builder.notBeforeTime(Date.from(notBefore));
 			}
 
+			Instant issuedAt = claims.getIssuedAt();
+			if (issuedAt != null) {
+				builder.issueTime(Date.from(issuedAt));
+			}
+
 			String jwtId = claims.getId();
 			if (StringUtils.hasText(jwtId)) {
 				builder.jwtID(jwtId);
 			}
 
-			Map<String, Object> customClaims = claims.getClaims().entrySet().stream()
-					.filter((claim) -> !JWTClaimsSet.getRegisteredNames().contains(claim.getKey()))
-					.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-			if (!CollectionUtils.isEmpty(customClaims)) {
+			Map<String, Object> customClaims = new HashMap<>();
+			claims.getClaims().forEach((name, value) -> {
+				if (!JWTClaimsSet.getRegisteredNames().contains(name)) {
+					customClaims.put(name, value);
+				}
+			});
+			if (!customClaims.isEmpty()) {
 				customClaims.forEach(builder::claim);
 			}
 

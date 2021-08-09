@@ -36,10 +36,10 @@ public final class TestJoseHeaders {
 	public static JoseHeader.Builder joseHeader(SignatureAlgorithm signatureAlgorithm) {
 		// @formatter:off
 		return JoseHeader.withAlgorithm(signatureAlgorithm)
-				.jwkSetUri("https://provider.com/oauth2/jwks")
+				.jwkSetUrl("https://provider.com/oauth2/jwks")
 				.jwk(rsaJwk())
 				.keyId("keyId")
-				.x509Uri("https://provider.com/oauth2/x509")
+				.x509Url("https://provider.com/oauth2/x509")
 				.x509CertificateChain(Arrays.asList("x509Cert1", "x509Cert2"))
 				.x509SHA1Thumbprint("x509SHA1Thumbprint")
 				.x509SHA256Thumbprint("x509SHA256Thumbprint")

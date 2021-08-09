@@ -15,6 +15,7 @@
  */
 package org.springframework.security.oauth2.jwt;
 
+import java.net.URL;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.HashMap;
@@ -22,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
+import org.springframework.security.oauth2.core.converter.ClaimConversionService;
 import org.springframework.util.Assert;
 
 /**
@@ -32,7 +34,7 @@ import org.springframework.util.Assert;
  * @since 0.0.1
  * @see Jwt
  * @see JwtClaimAccessor
- * @see <a target="_blank" href="https://tools.ietf.org/html/rfc7519#section-4">JWT Claims Set</a>
+ * @see <a target="_blank" href="https://datatracker.ietf.org/doc/html/rfc7519#section-4">JWT Claims Set</a>
  */
 public final class JwtClaimsSet implements JwtClaimAccessor {
 	private final Map<String, Object> claims;
@@ -166,10 +168,10 @@ public final class JwtClaimsSet implements JwtClaimAccessor {
 		}
 
 		/**
-		 * A {@code Consumer} to be provided access to the claims set
+		 * A {@code Consumer} to be provided access to the claims
 		 * allowing the ability to add, replace, or remove.
 		 *
-		 * @param claimsConsumer a {@code Consumer} of the claims set
+		 * @param claimsConsumer a {@code Consumer} of the claims
 		 */
 		public Builder claims(Consumer<Map<String, Object>> claimsConsumer) {
 			claimsConsumer.accept(this.claims);
@@ -183,6 +185,17 @@ public final class JwtClaimsSet implements JwtClaimAccessor {
 		 */
 		public JwtClaimsSet build() {
 			Assert.notEmpty(this.claims, "claims cannot be empty");
+
+			// The value of the 'iss' claim is a String or URL (StringOrURI).
+			// Attempt to convert to URL.
+			Object issuer = this.claims.get(JwtClaimNames.ISS);
+			if (issuer != null) {
+				URL convertedValue = ClaimConversionService.getSharedInstance().convert(issuer, URL.class);
+				if (convertedValue != null) {
+					this.claims.put(JwtClaimNames.ISS, convertedValue);
+				}
+			}
+
 			return new JwtClaimsSet(this.claims);
 		}
 	}

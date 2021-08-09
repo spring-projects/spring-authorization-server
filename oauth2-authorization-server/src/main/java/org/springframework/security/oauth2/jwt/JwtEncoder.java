@@ -32,11 +32,11 @@ package org.springframework.security.oauth2.jwt;
  * @see JoseHeader
  * @see JwtClaimsSet
  * @see JwtDecoder
- * @see <a target="_blank" href="https://tools.ietf.org/html/rfc7519">JSON Web Token (JWT)</a>
- * @see <a target="_blank" href="https://tools.ietf.org/html/rfc7515">JSON Web Signature (JWS)</a>
- * @see <a target="_blank" href="https://tools.ietf.org/html/rfc7516">JSON Web Encryption (JWE)</a>
- * @see <a target="_blank" href="https://tools.ietf.org/html/rfc7515#section-3.1">JWS Compact Serialization</a>
- * @see <a target="_blank" href="https://tools.ietf.org/html/rfc7516#section-3.1">JWE Compact Serialization</a>
+ * @see <a target="_blank" href="https://datatracker.ietf.org/doc/html/rfc7519">JSON Web Token (JWT)</a>
+ * @see <a target="_blank" href="https://datatracker.ietf.org/doc/html/rfc7515">JSON Web Signature (JWS)</a>
+ * @see <a target="_blank" href="https://datatracker.ietf.org/doc/html/rfc7516">JSON Web Encryption (JWE)</a>
+ * @see <a target="_blank" href="https://datatracker.ietf.org/doc/html/rfc7515#section-3.1">JWS Compact Serialization</a>
+ * @see <a target="_blank" href="https://datatracker.ietf.org/doc/html/rfc7516#section-3.1">JWE Compact Serialization</a>
  */
 @FunctionalInterface
 public interface JwtEncoder {

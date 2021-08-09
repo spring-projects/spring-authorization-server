@@ -24,7 +24,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 import org.springframework.security.oauth2.core.converter.ClaimConversionService;
-import org.springframework.security.oauth2.jose.jws.JwsAlgorithm;
+import org.springframework.security.oauth2.jose.JwaAlgorithm;
 import org.springframework.util.Assert;
 
 /**
@@ -36,9 +36,9 @@ import org.springframework.util.Assert;
  * @author Joe Grandja
  * @since 0.0.1
  * @see Jwt
- * @see <a target="_blank" href="https://tools.ietf.org/html/rfc7519#section-5">JWT JOSE Header</a>
- * @see <a target="_blank" href="https://tools.ietf.org/html/rfc7515#section-4">JWS JOSE Header</a>
- * @see <a target="_blank" href="https://tools.ietf.org/html/rfc7516#section-4">JWE JOSE Header</a>
+ * @see <a target="_blank" href="https://datatracker.ietf.org/doc/html/rfc7519#section-5">JWT JOSE Header</a>
+ * @see <a target="_blank" href="https://datatracker.ietf.org/doc/html/rfc7515#section-4">JWS JOSE Header</a>
+ * @see <a target="_blank" href="https://datatracker.ietf.org/doc/html/rfc7516#section-4">JWE JOSE Header</a>
  */
 public final class JoseHeader {
 	private final Map<String, Object> headers;
@@ -48,12 +48,13 @@ public final class JoseHeader {
 	}
 
 	/**
-	 * Returns the {@link JwsAlgorithm JWS algorithm} used to digitally sign the JWS.
+	 * Returns the {@link JwaAlgorithm JWA algorithm} used to digitally sign the JWS or encrypt the JWE.
 	 *
-	 * @return the JWS algorithm
+	 * @return the {@link JwaAlgorithm}
 	 */
-	public JwsAlgorithm getJwsAlgorithm() {
-		return getHeader(JoseHeaderNames.ALG);
+	@SuppressWarnings("unchecked")
+	public <T extends JwaAlgorithm> T getAlgorithm() {
+		return (T) getHeader(JoseHeaderNames.ALG);
 	}
 
 	/**
@@ -62,7 +63,7 @@ public final class JoseHeader {
 	 *
 	 * @return the JWK Set URL
 	 */
-	public URL getJwkSetUri() {
+	public URL getJwkSetUrl() {
 		return getHeader(JoseHeaderNames.JKU);
 	}
 
@@ -91,13 +92,16 @@ public final class JoseHeader {
 	 *
 	 * @return the X.509 URL
 	 */
-	public URL getX509Uri() {
+	public URL getX509Url() {
 		return getHeader(JoseHeaderNames.X5U);
 	}
 
 	/**
 	 * Returns the X.509 certificate chain that contains the X.509 public key certificate
-	 * or certificate chain corresponding to the key used to digitally sign the JWS or encrypt the JWE.
+	 * or certificate chain corresponding to the key used to digitally sign the JWS or
+	 * encrypt the JWE. The certificate or certificate chain is represented as a
+	 * {@code List} of certificate value {@code String}s. Each {@code String} in the
+	 * {@code List} is a Base64-encoded DER PKIX certificate value.
 	 *
 	 * @return the X.509 certificate chain
 	 */
@@ -126,16 +130,6 @@ public final class JoseHeader {
 	}
 
 	/**
-	 * Returns the critical headers that indicates which extensions to the JWS/JWE/JWA specifications
-	 * are being used that MUST be understood and processed.
-	 *
-	 * @return the critical headers
-	 */
-	public Set<String> getCritical() {
-		return getHeader(JoseHeaderNames.CRIT);
-	}
-
-	/**
 	 * Returns the type header that declares the media type of the JWS/JWE.
 	 *
 	 * @return the type header
@@ -151,6 +145,16 @@ public final class JoseHeader {
 	 */
 	public String getContentType() {
 		return getHeader(JoseHeaderNames.CTY);
+	}
+
+	/**
+	 * Returns the critical headers that indicates which extensions to the JWS/JWE/JWA specifications
+	 * are being used that MUST be understood and processed.
+	 *
+	 * @return the critical headers
+	 */
+	public Set<String> getCritical() {
+		return getHeader(JoseHeaderNames.CRIT);
 	}
 
 	/**
@@ -185,13 +189,13 @@ public final class JoseHeader {
 	}
 
 	/**
-	 * Returns a new {@link Builder}, initialized with the provided {@link JwsAlgorithm}.
+	 * Returns a new {@link Builder}, initialized with the provided {@link JwaAlgorithm}.
 	 *
-	 * @param jwsAlgorithm the {@link JwsAlgorithm}
+	 * @param jwaAlgorithm the {@link JwaAlgorithm}
 	 * @return the {@link Builder}
 	 */
-	public static Builder withAlgorithm(JwsAlgorithm jwsAlgorithm) {
-		return new Builder(jwsAlgorithm);
+	public static Builder withAlgorithm(JwaAlgorithm jwaAlgorithm) {
+		return new Builder(jwaAlgorithm);
 	}
 
 	/**
@@ -213,9 +217,8 @@ public final class JoseHeader {
 		private Builder() {
 		}
 
-		private Builder(JwsAlgorithm jwsAlgorithm) {
-			Assert.notNull(jwsAlgorithm, "jwsAlgorithm cannot be null");
-			header(JoseHeaderNames.ALG, jwsAlgorithm);
+		private Builder(JwaAlgorithm jwaAlgorithm) {
+			algorithm(jwaAlgorithm);
 		}
 
 		private Builder(JoseHeader headers) {
@@ -224,24 +227,25 @@ public final class JoseHeader {
 		}
 
 		/**
-		 * Sets the {@link JwsAlgorithm JWS algorithm} used to digitally sign the JWS.
+		 * Sets the {@link JwaAlgorithm JWA algorithm} used to digitally sign the JWS or encrypt the JWE.
 		 *
-		 * @param jwsAlgorithm the JWS algorithm
+		 * @param jwaAlgorithm the {@link JwaAlgorithm}
 		 * @return the {@link Builder}
 		 */
-		public Builder jwsAlgorithm(JwsAlgorithm jwsAlgorithm) {
-			return header(JoseHeaderNames.ALG, jwsAlgorithm);
+		public Builder algorithm(JwaAlgorithm jwaAlgorithm) {
+			Assert.notNull(jwaAlgorithm, "jwaAlgorithm cannot be null");
+			return header(JoseHeaderNames.ALG, jwaAlgorithm);
 		}
 
 		/**
 		 * Sets the JWK Set URL that refers to the resource of a set of JSON-encoded public keys,
 		 * one of which corresponds to the key used to digitally sign the JWS or encrypt the JWE.
 		 *
-		 * @param jwkSetUri the JWK Set URL
+		 * @param jwkSetUrl the JWK Set URL
 		 * @return the {@link Builder}
 		 */
-		public Builder jwkSetUri(String jwkSetUri) {
-			return header(JoseHeaderNames.JKU, jwkSetUri);
+		public Builder jwkSetUrl(String jwkSetUrl) {
+			return header(JoseHeaderNames.JKU, convertAsURL(JoseHeaderNames.JKU, jwkSetUrl));
 		}
 
 		/**
@@ -269,16 +273,19 @@ public final class JoseHeader {
 		 * Sets the X.509 URL that refers to the resource for the X.509 public key certificate
 		 * or certificate chain corresponding to the key used to digitally sign the JWS or encrypt the JWE.
 		 *
-		 * @param x509Uri the X.509 URL
+		 * @param x509Url the X.509 URL
 		 * @return the {@link Builder}
 		 */
-		public Builder x509Uri(String x509Uri) {
-			return header(JoseHeaderNames.X5U, x509Uri);
+		public Builder x509Url(String x509Url) {
+			return header(JoseHeaderNames.X5U, convertAsURL(JoseHeaderNames.X5U, x509Url));
 		}
 
 		/**
 		 * Sets the X.509 certificate chain that contains the X.509 public key certificate
-		 * or certificate chain corresponding to the key used to digitally sign the JWS or encrypt the JWE.
+		 * or certificate chain corresponding to the key used to digitally sign the JWS or
+		 * encrypt the JWE. The certificate or certificate chain is represented as a
+		 * {@code List} of certificate value {@code String}s. Each {@code String} in the
+		 * {@code List} is a Base64-encoded DER PKIX certificate value.
 		 *
 		 * @param x509CertificateChain the X.509 certificate chain
 		 * @return the {@link Builder}
@@ -310,17 +317,6 @@ public final class JoseHeader {
 		}
 
 		/**
-		 * Sets the critical headers that indicates which extensions to the JWS/JWE/JWA specifications
-		 * are being used that MUST be understood and processed.
-		 *
-		 * @param headerNames the critical header names
-		 * @return the {@link Builder}
-		 */
-		public Builder critical(Set<String> headerNames) {
-			return header(JoseHeaderNames.CRIT, headerNames);
-		}
-
-		/**
 		 * Sets the type header that declares the media type of the JWS/JWE.
 		 *
 		 * @param type the type header
@@ -338,6 +334,17 @@ public final class JoseHeader {
 		 */
 		public Builder contentType(String contentType) {
 			return header(JoseHeaderNames.CTY, contentType);
+		}
+
+		/**
+		 * Sets the critical headers that indicates which extensions to the JWS/JWE/JWA specifications
+		 * are being used that MUST be understood and processed.
+		 *
+		 * @param headerNames the critical header names
+		 * @return the {@link Builder}
+		 */
+		public Builder critical(Set<String> headerNames) {
+			return header(JoseHeaderNames.CRIT, headerNames);
 		}
 
 		/**
@@ -373,19 +380,15 @@ public final class JoseHeader {
 		 */
 		public JoseHeader build() {
 			Assert.notEmpty(this.headers, "headers cannot be empty");
-			convertAsURL(JoseHeaderNames.JKU);
-			convertAsURL(JoseHeaderNames.X5U);
 			return new JoseHeader(this.headers);
 		}
 
-		private void convertAsURL(String header) {
-			Object value = this.headers.get(header);
-			if (value != null) {
-				URL convertedValue = ClaimConversionService.getSharedInstance().convert(value, URL.class);
-				Assert.isTrue(convertedValue != null,
-						() -> "Unable to convert header '" + header + "' of type '" + value.getClass() + "' to URL.");
-				this.headers.put(header, convertedValue);
-			}
+		private static URL convertAsURL(String header, String value) {
+			URL convertedValue = ClaimConversionService.getSharedInstance().convert(value, URL.class);
+			Assert.isTrue(convertedValue != null,
+					() -> "Unable to convert header '" + header + "' of type '" + value.getClass() + "' to URL.");
+			return convertedValue;
 		}
+
 	}
 }

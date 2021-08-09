@@ -68,7 +68,7 @@ public class AuthorizationServerConfig {
 	public RegisteredClientRepository registeredClientRepository(JdbcTemplate jdbcTemplate) {
 		RegisteredClient registeredClient = RegisteredClient.withId(UUID.randomUUID().toString())
 				.clientId("messaging-client")
-				.clientSecret("{noop}secret")
+				.clientSecret("secret")
 				.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
 				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
 				.authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)

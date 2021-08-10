@@ -15,9 +15,12 @@
  */
 package org.springframework.security.oauth2.server.authorization.oidc.authentication;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.Collection;
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -110,6 +113,11 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 			throw new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.INSUFFICIENT_SCOPE));
 		}
 
+		if (!isValidRedirectUris(clientRegistrationAuthentication.getClientRegistration().getRedirectUris())) {
+			// TODO Add OAuth2ErrorCodes.INVALID_REDIRECT_URI
+			throw new OAuth2AuthenticationException("invalid_redirect_uri");
+		}
+
 		RegisteredClient registeredClient = create(clientRegistrationAuthentication.getClientRegistration());
 		this.registeredClientRepository.save(registeredClient);
 
@@ -135,6 +143,25 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 		return scope != null && ((Collection<String>) scope).contains(DEFAULT_AUTHORIZED_SCOPE);
 	}
 
+	private static boolean isValidRedirectUris(List<String> redirectUris) {
+		if (CollectionUtils.isEmpty(redirectUris)) {
+			return true;
+		}
+
+		for (String redirectUri : redirectUris) {
+			try {
+				URI validRedirectUri = new URI(redirectUri);
+				if (validRedirectUri.getFragment() != null) {
+					return false;
+				}
+			} catch (URISyntaxException ex) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
 	private static RegisteredClient create(OidcClientRegistration clientRegistration) {
 		// @formatter:off
 		RegisteredClient.Builder builder = RegisteredClient.withId(UUID.randomUUID().toString())
@@ -149,7 +176,6 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 			builder.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC);
 		}
 
-		// TODO Validate redirect_uris and throw OAuth2ErrorCodes2.INVALID_REDIRECT_URI on error
 		builder.redirectUris(redirectUris ->
 				redirectUris.addAll(clientRegistration.getRedirectUris()));
 

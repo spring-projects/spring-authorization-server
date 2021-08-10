@@ -229,16 +229,6 @@ public class OidcClientRegistrationTests {
 	}
 
 	@Test
-	public void buildWhenInvalidRedirectUriThenThrowIllegalArgumentException() {
-		OidcClientRegistration.Builder builder = OidcClientRegistration.builder()
-				.redirectUri("invalid-uri");
-
-		assertThatIllegalArgumentException()
-				.isThrownBy(builder::build)
-				.withMessage("redirect_uri must be a valid URL");
-	}
-
-	@Test
 	public void buildWhenRedirectUrisAddingOrRemovingThenCorrectValues() {
 		// @formatter:off
 		OidcClientRegistration clientRegistration = this.minimalBuilder

@@ -16,8 +16,6 @@
 package org.springframework.security.oauth2.core.oidc;
 
 import java.io.Serializable;
-import java.net.URI;
-import java.net.URL;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -307,9 +305,6 @@ public final class OidcClientRegistration implements OidcClientMetadataClaimAcce
 			Assert.notNull(this.claims.get(OidcClientMetadataClaimNames.REDIRECT_URIS), "redirect_uris cannot be null");
 			Assert.isInstanceOf(List.class, this.claims.get(OidcClientMetadataClaimNames.REDIRECT_URIS), "redirect_uris must be of type List");
 			Assert.notEmpty((List<?>) this.claims.get(OidcClientMetadataClaimNames.REDIRECT_URIS), "redirect_uris cannot be empty");
-			((List<?>) this.claims.get(OidcClientMetadataClaimNames.REDIRECT_URIS)).forEach(
-					url -> validateURL(url, "redirect_uri must be a valid URL")
-			);
 			if (this.claims.get(OidcClientMetadataClaimNames.GRANT_TYPES) != null) {
 				Assert.isInstanceOf(List.class, this.claims.get(OidcClientMetadataClaimNames.GRANT_TYPES), "grant_types must be of type List");
 				Assert.notEmpty((List<?>) this.claims.get(OidcClientMetadataClaimNames.GRANT_TYPES), "grant_types cannot be empty");
@@ -341,15 +336,5 @@ public final class OidcClientRegistration implements OidcClientMetadataClaimAcce
 			valuesConsumer.accept(values);
 		}
 
-		private static void validateURL(Object url, String errorMessage) {
-			if (URL.class.isAssignableFrom(url.getClass())) {
-				return;
-			}
-			try {
-				new URI(url.toString()).toURL();
-			} catch (Exception ex) {
-				throw new IllegalArgumentException(errorMessage, ex);
-			}
-		}
 	}
 }

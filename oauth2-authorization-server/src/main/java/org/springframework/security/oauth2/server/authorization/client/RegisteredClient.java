@@ -90,10 +90,11 @@ public class RegisteredClient implements Serializable {
 	}
 
 	/**
-	 * Returns the client secret.
+	 * Returns the client secret or {@code null} if not available.
 	 *
-	 * @return the client secret
+	 * @return the client secret or {@code null} if not available
 	 */
+	@Nullable
 	public String getClientSecret() {
 		return this.clientSecret;
 	}

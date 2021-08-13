@@ -19,6 +19,7 @@ import java.util.HashMap;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.springframework.lang.Nullable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
@@ -45,6 +46,7 @@ import org.springframework.util.StringUtils;
  */
 public final class PublicClientAuthenticationConverter implements AuthenticationConverter {
 
+	@Nullable
 	@Override
 	public Authentication convert(HttpServletRequest request) {
 		if (!OAuth2EndpointUtils.matchesPkceTokenRequest(request)) {

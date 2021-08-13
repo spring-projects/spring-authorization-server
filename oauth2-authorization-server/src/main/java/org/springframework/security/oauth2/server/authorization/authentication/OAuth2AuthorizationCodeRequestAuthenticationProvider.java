@@ -18,6 +18,7 @@ package org.springframework.security.oauth2.server.authorization.authentication;
 import java.security.Principal;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
@@ -26,7 +27,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.regex.Pattern;
 
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -35,6 +35,7 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.keygen.Base64StringKeyGenerator;
 import org.springframework.security.crypto.keygen.StringKeyGenerator;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
+import org.springframework.security.oauth2.core.OAuth2AuthorizationCode;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.OAuth2TokenType;
@@ -45,7 +46,6 @@ import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.endpoint.PkceParameterNames;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
-import org.springframework.security.oauth2.core.OAuth2AuthorizationCode;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsent;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsentService;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
@@ -72,8 +72,6 @@ import org.springframework.web.util.UriComponentsBuilder;
 public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implements AuthenticationProvider {
 	private static final OAuth2TokenType STATE_TOKEN_TYPE = new OAuth2TokenType(OAuth2ParameterNames.STATE);
 	private static final String PKCE_ERROR_URI = "https://datatracker.ietf.org/doc/html/rfc7636#section-4.4.1";
-	private static final Pattern LOOPBACK_ADDRESS_PATTERN =
-			Pattern.compile("^127(?:\\.[0-9]+){0,2}\\.[0-9]+$|^\\[(?:0*:)*?:?0*1]$");
 	private static final StringKeyGenerator DEFAULT_AUTHORIZATION_CODE_GENERATOR =
 			new Base64StringKeyGenerator(Base64.getUrlEncoder().withoutPadding(), 96);
 	private static final StringKeyGenerator DEFAULT_STATE_GENERATOR =
@@ -417,7 +415,7 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 			// redirects described in Section 10.3.3, the use of "localhost" is NOT RECOMMENDED.
 			return false;
 		}
-		if (!LOOPBACK_ADDRESS_PATTERN.matcher(requestedRedirectHost).matches()) {
+		if (!isLoopbackAddress(requestedRedirectHost)) {
 			// As per https://tools.ietf.org/html/draft-ietf-oauth-v2-1-01#section-9.7
 			// When comparing client redirect URIs against pre-registered URIs,
 			// authorization servers MUST utilize exact string matching.
@@ -437,6 +435,25 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 			}
 		}
 		return false;
+	}
+
+	private static boolean isLoopbackAddress(String host) {
+		// IPv6 loopback address should either be "0:0:0:0:0:0:0:1" or "::1"
+		if ("[0:0:0:0:0:0:0:1]".equals(host) || "[::1]".equals(host)) {
+			return true;
+		}
+		// IPv4 loopback address ranges from 127.0.0.1 to 127.255.255.255
+		String[] ipv4Octets = host.split("\\.");
+		if (ipv4Octets.length != 4) {
+			return false;
+		}
+		try {
+			int[] address = Arrays.stream(ipv4Octets).mapToInt(Integer::parseInt).toArray();
+			return address[0] == 127 && address[1] >= 0 && address[1] <= 255 && address[2] >= 0 &&
+					address[2] <= 255 && address[3] >= 1 && address[3] <= 255;
+		} catch (NumberFormatException ex) {
+			return false;
+		}
 	}
 
 	private static boolean isPrincipalAuthenticated(Authentication principal) {

@@ -19,7 +19,7 @@ import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.oauth2.core.AbstractOAuth2Token;
 import org.springframework.security.oauth2.core.OAuth2RefreshToken;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
-import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationCode;
+import org.springframework.security.oauth2.core.OAuth2AuthorizationCode;
 
 /**
  * Utility methods for the OpenID Connect 1.0 {@link AuthenticationProvider}'s.

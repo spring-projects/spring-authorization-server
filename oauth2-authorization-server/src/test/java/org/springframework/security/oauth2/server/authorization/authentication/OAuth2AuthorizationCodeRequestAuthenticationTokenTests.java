@@ -24,7 +24,7 @@ import java.util.Set;
 import org.junit.Test;
 
 import org.springframework.security.authentication.TestingAuthenticationToken;
-import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationCode;
+import org.springframework.security.oauth2.core.OAuth2AuthorizationCode;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
 

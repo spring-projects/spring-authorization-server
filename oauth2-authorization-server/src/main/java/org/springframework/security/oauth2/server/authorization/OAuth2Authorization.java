@@ -238,17 +238,17 @@ public class OAuth2Authorization implements Serializable {
 	 */
 	public static class Token<T extends OAuth2Token> implements Serializable {
 		private static final long serialVersionUID = Version.SERIAL_VERSION_UID;
-		protected static final String TOKEN_METADATA_BASE = "metadata.token.";
+		protected static final String TOKEN_METADATA_NAMESPACE = "metadata.token.";
 
 		/**
 		 * The name of the metadata that indicates if the token has been invalidated.
 		 */
-		public static final String INVALIDATED_METADATA_NAME = TOKEN_METADATA_BASE.concat("invalidated");
+		public static final String INVALIDATED_METADATA_NAME = TOKEN_METADATA_NAMESPACE.concat("invalidated");
 
 		/**
 		 * The name of the metadata used for the claims of the token.
 		 */
-		public static final String CLAIMS_METADATA_NAME = TOKEN_METADATA_BASE.concat("claims");
+		public static final String CLAIMS_METADATA_NAME = TOKEN_METADATA_NAMESPACE.concat("claims");
 
 		private final T token;
 		private final Map<String, Object> metadata;
@@ -525,5 +525,7 @@ public class OAuth2Authorization implements Serializable {
 			authorization.attributes = Collections.unmodifiableMap(this.attributes);
 			return authorization;
 		}
+
 	}
+
 }

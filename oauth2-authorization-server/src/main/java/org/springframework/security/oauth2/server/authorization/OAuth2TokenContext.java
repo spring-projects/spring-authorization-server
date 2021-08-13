@@ -72,7 +72,7 @@ public interface OAuth2TokenContext extends Context {
 				Authentication.class.getName().concat(".PRINCIPAL");
 		private static final String AUTHORIZATION_GRANT_AUTHENTICATION_KEY =
 				Authentication.class.getName().concat(".AUTHORIZATION_GRANT");
-		protected final Map<Object, Object> context = new HashMap<>();
+		private final Map<Object, Object> context = new HashMap<>();
 
 		public B registeredClient(RegisteredClient registeredClient) {
 			return put(RegisteredClient.class, registeredClient);
@@ -119,8 +119,12 @@ public interface OAuth2TokenContext extends Context {
 			return (V) this.context.get(key);
 		}
 
+		protected Map<Object, Object> getContext() {
+			return this.context;
+		}
+
 		@SuppressWarnings("unchecked")
-		protected B getThis() {
+		protected final B getThis() {
 			return (B) this;
 		}
 

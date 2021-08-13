@@ -84,7 +84,7 @@ public final class JwtEncodingContext implements OAuth2TokenContext {
 		}
 
 		public JwtEncodingContext build() {
-			return new JwtEncodingContext(this.context);
+			return new JwtEncodingContext(getContext());
 		}
 	}
 }

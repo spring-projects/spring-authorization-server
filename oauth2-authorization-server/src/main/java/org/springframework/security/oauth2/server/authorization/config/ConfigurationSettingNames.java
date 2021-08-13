@@ -33,7 +33,7 @@ public final class ConfigurationSettingNames {
 	/**
 	 * The names for client configuration settings.
 	 */
-	public static class Client {
+	public static final class Client {
 		private static final String CLIENT_SETTINGS_NAMESPACE = SETTINGS_NAMESPACE.concat("client.");
 
 		/**
@@ -56,7 +56,7 @@ public final class ConfigurationSettingNames {
 	/**
 	 * The names for provider configuration settings.
 	 */
-	public static class Provider {
+	public static final class Provider {
 		private static final String PROVIDER_SETTINGS_NAMESPACE = SETTINGS_NAMESPACE.concat("provider.");
 
 		/**
@@ -102,7 +102,7 @@ public final class ConfigurationSettingNames {
 	/**
 	 * The names for token configuration settings.
 	 */
-	public static class Token {
+	public static final class Token {
 		private static final String TOKEN_SETTINGS_NAMESPACE = SETTINGS_NAMESPACE.concat("token.");
 
 		/**

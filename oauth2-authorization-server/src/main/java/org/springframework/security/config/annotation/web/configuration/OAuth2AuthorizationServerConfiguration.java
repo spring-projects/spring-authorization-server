@@ -32,7 +32,6 @@ import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.oauth2.server.authorization.OAuth2AuthorizationServerConfigurer;
-import org.springframework.security.config.annotation.web.configurers.oauth2.server.resource.OAuth2ResourceServerConfigurer;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.authorization.config.ProviderSettings;
@@ -69,12 +68,10 @@ public class OAuth2AuthorizationServerConfiguration {
 				authorizeRequests.anyRequest().authenticated()
 			)
 			.csrf(csrf -> csrf.ignoringRequestMatchers(endpointsMatcher))
-			.oauth2ResourceServer(OAuth2ResourceServerConfigurer::jwt)
 			.apply(authorizationServerConfigurer);
 	}
 	// @formatter:on
 
-	@Bean
 	public static JwtDecoder jwtDecoder(JWKSource<SecurityContext> jwkSource) {
 		Set<JWSAlgorithm> jwsAlgs = new HashSet<>();
 		jwsAlgs.addAll(JWSAlgorithm.Family.RSA);

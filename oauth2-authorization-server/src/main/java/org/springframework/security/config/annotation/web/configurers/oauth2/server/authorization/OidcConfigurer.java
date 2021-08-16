@@ -19,14 +19,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.http.HttpMethod;
-import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.ObjectPostProcessor;
 import org.springframework.security.config.annotation.web.HttpSecurityBuilder;
 import org.springframework.security.oauth2.server.authorization.config.ProviderSettings;
-import org.springframework.security.oauth2.server.authorization.oidc.authentication.OidcClientRegistrationAuthenticationProvider;
-import org.springframework.security.oauth2.server.authorization.oidc.web.OidcClientRegistrationEndpointFilter;
 import org.springframework.security.oauth2.server.authorization.oidc.web.OidcProviderConfigurationEndpointFilter;
-import org.springframework.security.web.access.intercept.FilterSecurityInterceptor;
 import org.springframework.security.web.authentication.preauth.AbstractPreAuthenticatedProcessingFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.OrRequestMatcher;
@@ -38,10 +35,11 @@ import org.springframework.security.web.util.matcher.RequestMatcher;
  * @author Joe Grandja
  * @since 0.2.0
  * @see OAuth2AuthorizationServerConfigurer#oidc
+ * @see OidcClientRegistrationEndpointConfigurer
  * @see OidcProviderConfigurationEndpointFilter
- * @see OidcClientRegistrationEndpointFilter
  */
 public final class OidcConfigurer extends AbstractOAuth2Configurer {
+	private OidcClientRegistrationEndpointConfigurer clientRegistrationEndpointConfigurer;
 	private RequestMatcher requestMatcher;
 
 	/**
@@ -51,47 +49,50 @@ public final class OidcConfigurer extends AbstractOAuth2Configurer {
 		super(objectPostProcessor);
 	}
 
+	/**
+	 * Configures the OpenID Connect Dynamic Client Registration 1.0 Endpoint.
+	 *
+	 * @param clientRegistrationEndpointCustomizer the {@link Customizer} providing access to the {@link OidcClientRegistrationEndpointConfigurer}
+	 * @return the {@link OidcConfigurer} for further configuration
+	 */
+	public OidcConfigurer clientRegistrationEndpoint(Customizer<OidcClientRegistrationEndpointConfigurer> clientRegistrationEndpointCustomizer) {
+		if (this.clientRegistrationEndpointConfigurer == null) {
+			this.clientRegistrationEndpointConfigurer = new OidcClientRegistrationEndpointConfigurer(getObjectPostProcessor());
+		}
+		clientRegistrationEndpointCustomizer.customize(this.clientRegistrationEndpointConfigurer);
+		return this;
+	}
+
 	@Override
 	<B extends HttpSecurityBuilder<B>> void init(B builder) {
+		if (this.clientRegistrationEndpointConfigurer != null) {
+			this.clientRegistrationEndpointConfigurer.init(builder);
+		}
+
 		List<RequestMatcher> requestMatchers = new ArrayList<>();
 		ProviderSettings providerSettings = OAuth2ConfigurerUtils.getProviderSettings(builder);
 		if (providerSettings.getIssuer() != null) {
-			requestMatchers.add(
-					new AntPathRequestMatcher(
-							"/.well-known/openid-configuration",
-							HttpMethod.GET.name()));
+			requestMatchers.add(new AntPathRequestMatcher(
+					"/.well-known/openid-configuration", HttpMethod.GET.name()));
 		}
-		requestMatchers.add(
-				new AntPathRequestMatcher(
-						providerSettings.getOidcClientRegistrationEndpoint(),
-						HttpMethod.POST.name()));
-		this.requestMatcher = new OrRequestMatcher(requestMatchers);
-
-		// TODO Make OpenID Client Registration an "opt-in" feature
-		OidcClientRegistrationAuthenticationProvider oidcClientRegistrationAuthenticationProvider =
-				new OidcClientRegistrationAuthenticationProvider(
-						OAuth2ConfigurerUtils.getRegisteredClientRepository(builder),
-						OAuth2ConfigurerUtils.getAuthorizationService(builder));
-		builder.authenticationProvider(postProcess(oidcClientRegistrationAuthenticationProvider));
+		if (this.clientRegistrationEndpointConfigurer != null) {
+			requestMatchers.add(this.clientRegistrationEndpointConfigurer.getRequestMatcher());
+		}
+		this.requestMatcher = !requestMatchers.isEmpty() ? new OrRequestMatcher(requestMatchers) : request -> false;
 	}
 
 	@Override
 	<B extends HttpSecurityBuilder<B>> void configure(B builder) {
+		if (this.clientRegistrationEndpointConfigurer != null) {
+			this.clientRegistrationEndpointConfigurer.configure(builder);
+		}
+
 		ProviderSettings providerSettings = OAuth2ConfigurerUtils.getProviderSettings(builder);
 		if (providerSettings.getIssuer() != null) {
 			OidcProviderConfigurationEndpointFilter oidcProviderConfigurationEndpointFilter =
 					new OidcProviderConfigurationEndpointFilter(providerSettings);
 			builder.addFilterBefore(postProcess(oidcProviderConfigurationEndpointFilter), AbstractPreAuthenticatedProcessingFilter.class);
 		}
-
-		AuthenticationManager authenticationManager = builder.getSharedObject(AuthenticationManager.class);
-
-		// TODO Make OpenID Client Registration an "opt-in" feature
-		OidcClientRegistrationEndpointFilter oidcClientRegistrationEndpointFilter =
-				new OidcClientRegistrationEndpointFilter(
-						authenticationManager,
-						providerSettings.getOidcClientRegistrationEndpoint());
-		builder.addFilterAfter(postProcess(oidcClientRegistrationEndpointFilter), FilterSecurityInterceptor.class);
 	}
 
 	@Override

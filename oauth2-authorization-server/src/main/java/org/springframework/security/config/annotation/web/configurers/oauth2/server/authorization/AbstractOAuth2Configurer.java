@@ -38,8 +38,12 @@ abstract class AbstractOAuth2Configurer {
 
 	abstract RequestMatcher getRequestMatcher();
 
-	protected <T> T postProcess(T object) {
+	protected final <T> T postProcess(T object) {
 		return (T) this.objectPostProcessor.postProcess(object);
+	}
+
+	protected final ObjectPostProcessor<Object> getObjectPostProcessor() {
+		return this.objectPostProcessor;
 	}
 
 }

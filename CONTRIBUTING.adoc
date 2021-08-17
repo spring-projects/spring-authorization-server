@@ -1,7 +1,7 @@
 = Contributing to Spring Authorization Server
 
 Spring Authorization Server is released under the Apache 2.0 license.
-If you would like to contribute something, or simply want to hack on the code this document should help you https://github.com/spring-projects-experimental/spring-authorization-server#getting-started[get started].
+If you would like to contribute something, or simply want to hack on the code this document should help you https://github.com/spring-projects/spring-authorization-server#getting-started[get started].
 
 == Code of Conduct
 This project adheres to the Contributor Covenant link:CODE_OF_CONDUCT.adoc[code of conduct].
@@ -32,7 +32,7 @@ That may mean using an external library directly in a `Filter`.
 
 == Reporting Security Vulnerabilities
 If you think you have found a security vulnerability please *DO NOT* disclose it publicly until we've had a chance to fix it.
-Please don't report security vulnerabilities using GitHub issues, instead head over to https://pivotal.io/security and learn how to disclose them responsibly.
+Please don't report security vulnerabilities using GitHub issues, instead head over to https://spring.io/security-policy and learn how to disclose them responsibly.
 
 == Sign the Contributor License Agreement
 Before we accept a non-trivial patch or pull request we will need you to https://cla.pivotal.io/sign/spring[sign the Contributor License Agreement].
@@ -45,7 +45,7 @@ Please add the Apache License header to all new classes, for example:
 
 ```java
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright 2020-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.

@@ -23,6 +23,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -96,6 +97,13 @@ public final class OAuth2RefreshTokenAuthenticationProvider implements Authentic
 		this.jwtEncoder = jwtEncoder;
 	}
 
+	/**
+	 * Sets the {@link OAuth2TokenCustomizer} that customizes the
+	 * {@link JwtEncodingContext.Builder#headers(Consumer) headers} and/or
+	 * {@link JwtEncodingContext.Builder#claims(Consumer) claims} for the generated {@link Jwt}.
+	 *
+	 * @param jwtCustomizer the {@link OAuth2TokenCustomizer} that customizes the headers and/or claims for the generated {@code Jwt}
+	 */
 	public void setJwtCustomizer(OAuth2TokenCustomizer<JwtEncodingContext> jwtCustomizer) {
 		Assert.notNull(jwtCustomizer, "jwtCustomizer cannot be null");
 		this.jwtCustomizer = jwtCustomizer;

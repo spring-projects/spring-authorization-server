@@ -22,15 +22,20 @@ import java.util.function.Consumer;
 
 import org.springframework.lang.Nullable;
 import org.springframework.security.oauth2.jwt.JoseHeader;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
+import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.util.Assert;
 
 /**
+ * An {@link OAuth2TokenContext} implementation used when encoding a {@link Jwt}.
+ *
  * @author Joe Grandja
  * @since 0.1.0
  * @see OAuth2TokenContext
  * @see JoseHeader.Builder
  * @see JwtClaimsSet.Builder
+ * @see JwtEncoder#encode(JoseHeader, JwtClaimsSet)
  */
 public final class JwtEncodingContext implements OAuth2TokenContext {
 	private final Map<Object, Object> context;
@@ -52,18 +57,38 @@ public final class JwtEncodingContext implements OAuth2TokenContext {
 		return this.context.containsKey(key);
 	}
 
+	/**
+	 * Returns the {@link JoseHeader.Builder headers}.
+	 *
+	 * @return the {@link JoseHeader.Builder}
+	 */
 	public JoseHeader.Builder getHeaders() {
 		return get(JoseHeader.Builder.class);
 	}
 
+	/**
+	 * Returns the {@link JwtClaimsSet.Builder claims}.
+	 *
+	 * @return the {@link JwtClaimsSet.Builder}
+	 */
 	public JwtClaimsSet.Builder getClaims() {
 		return get(JwtClaimsSet.Builder.class);
 	}
 
+	/**
+	 * Constructs a new {@link Builder} with the provided headers and claims.
+	 *
+	 * @param headersBuilder the headers to initialize the builder
+	 * @param claimsBuilder the claims to initialize the builder
+	 * @return the {@link Builder}
+	 */
 	public static Builder with(JoseHeader.Builder headersBuilder, JwtClaimsSet.Builder claimsBuilder) {
 		return new Builder(headersBuilder, claimsBuilder);
 	}
 
+	/**
+	 * A builder for {@link JwtEncodingContext}.
+	 */
 	public static final class Builder extends AbstractBuilder<JwtEncodingContext, Builder> {
 
 		private Builder(JoseHeader.Builder headersBuilder, JwtClaimsSet.Builder claimsBuilder) {
@@ -73,18 +98,39 @@ public final class JwtEncodingContext implements OAuth2TokenContext {
 			put(JwtClaimsSet.Builder.class, claimsBuilder);
 		}
 
+		/**
+		 * A {@code Consumer} of the {@link JoseHeader.Builder headers}
+		 * allowing the ability to add, replace, or remove.
+		 *
+		 * @param headersConsumer a {@code Consumer} of the {@link JoseHeader.Builder headers}
+		 * @return the {@link Builder} for further configuration
+		 */
 		public Builder headers(Consumer<JoseHeader.Builder> headersConsumer) {
 			headersConsumer.accept(get(JoseHeader.Builder.class));
 			return this;
 		}
 
+		/**
+		 * A {@code Consumer} of the {@link JwtClaimsSet.Builder claims}
+		 * allowing the ability to add, replace, or remove.
+		 *
+		 * @param claimsConsumer a {@code Consumer} of the {@link JwtClaimsSet.Builder claims}
+		 * @return the {@link Builder} for further configuration
+		 */
 		public Builder claims(Consumer<JwtClaimsSet.Builder> claimsConsumer) {
 			claimsConsumer.accept(get(JwtClaimsSet.Builder.class));
 			return this;
 		}
 
+		/**
+		 * Builds a new {@link JwtEncodingContext}.
+		 *
+		 * @return the {@link JwtEncodingContext}
+		 */
 		public JwtEncodingContext build() {
 			return new JwtEncodingContext(getContext());
 		}
+
 	}
+
 }

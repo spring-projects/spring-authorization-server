@@ -22,7 +22,7 @@ apply plugin: 'io.spring.nohttp'
 apply plugin: 'locks'
 apply plugin: 'io.spring.convention.root'
 
-group = 'org.springframework.security.experimental'
+group = 'org.springframework.security'
 description = 'Spring Authorization Server'
 
 ext.snapshotBuild = version.contains("SNAPSHOT")

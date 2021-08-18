@@ -31,7 +31,6 @@ import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationResponse;
@@ -165,7 +164,6 @@ public final class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilte
 					request, response, authorizationCodeRequestAuthenticationResult);
 
 		} catch (OAuth2AuthenticationException ex) {
-			SecurityContextHolder.clearContext();
 			this.authenticationFailureHandler.onAuthenticationFailure(request, response, ex);
 		}
 	}

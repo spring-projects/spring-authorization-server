@@ -16,8 +16,8 @@
 package org.springframework.security.oauth2.server.authorization.web;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
@@ -161,14 +161,13 @@ public final class OAuth2TokenIntrospectionEndpointFilter extends OncePerRequest
 				throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.TOKEN_TYPE_HINT);
 			}
 
-			// @formatter:off
-			Map<String, Object> additionalParameters = parameters
-					.entrySet()
-					.stream()
-					.filter(e -> !e.getKey().equals(OAuth2ParameterNames.TOKEN) &&
-							!e.getKey().equals(OAuth2ParameterNames.TOKEN_TYPE_HINT))
-					.collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().get(0)));
-			// @formatter:on
+			Map<String, Object> additionalParameters = new HashMap<>();
+			parameters.forEach((key, value) -> {
+				if (!key.equals(OAuth2ParameterNames.TOKEN) &&
+						!key.equals(OAuth2ParameterNames.TOKEN_TYPE_HINT)) {
+					additionalParameters.put(key, value.get(0));
+				}
+			});
 
 			return new OAuth2TokenIntrospectionAuthenticationToken(
 					token, clientPrincipal, tokenTypeHint, additionalParameters);

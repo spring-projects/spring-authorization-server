@@ -21,7 +21,6 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 import org.springframework.lang.NonNull;
 import org.springframework.security.core.GrantedAuthority;
@@ -91,11 +90,13 @@ public final class OAuth2AuthorizationConsent implements Serializable {
 	 * @return the {@code scope}s granted to the client by the principal.
 	 */
 	public Set<String> getScopes() {
-		return getAuthorities().stream()
-				.map(GrantedAuthority::getAuthority)
-				.filter(authority -> authority.startsWith(AUTHORITIES_SCOPE_PREFIX))
-				.map(scope -> scope.replaceFirst(AUTHORITIES_SCOPE_PREFIX, ""))
-				.collect(Collectors.toSet());
+		Set<String> authorities = new HashSet<>();
+		for (GrantedAuthority authority : getAuthorities()) {
+			if (authority.getAuthority().startsWith(AUTHORITIES_SCOPE_PREFIX)) {
+				authorities.add(authority.getAuthority().replaceFirst(AUTHORITIES_SCOPE_PREFIX, ""));
+			}
+		}
+		return authorities;
 	}
 
 	@Override

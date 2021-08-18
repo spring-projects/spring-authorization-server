@@ -16,10 +16,10 @@
 package org.springframework.security.oauth2.server.authorization.web.authentication;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -139,17 +139,16 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationConverter impleme
 			throwError(OAuth2ErrorCodes.INVALID_REQUEST, PkceParameterNames.CODE_CHALLENGE_METHOD, PKCE_ERROR_URI);
 		}
 
-		// @formatter:off
-		Map<String, Object> additionalParameters = parameters
-				.entrySet()
-				.stream()
-				.filter(e -> !e.getKey().equals(OAuth2ParameterNames.RESPONSE_TYPE) &&
-						!e.getKey().equals(OAuth2ParameterNames.CLIENT_ID) &&
-						!e.getKey().equals(OAuth2ParameterNames.REDIRECT_URI) &&
-						!e.getKey().equals(OAuth2ParameterNames.SCOPE) &&
-						!e.getKey().equals(OAuth2ParameterNames.STATE))
-				.collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().get(0)));
-        // @formatter:on
+		Map<String, Object> additionalParameters = new HashMap<>();
+		parameters.forEach((key, value) -> {
+			if (!key.equals(OAuth2ParameterNames.RESPONSE_TYPE) &&
+					!key.equals(OAuth2ParameterNames.CLIENT_ID) &&
+					!key.equals(OAuth2ParameterNames.REDIRECT_URI) &&
+					!key.equals(OAuth2ParameterNames.SCOPE) &&
+					!key.equals(OAuth2ParameterNames.STATE)) {
+				additionalParameters.put(key, value.get(0));
+			}
+		});
 
 		return OAuth2AuthorizationCodeRequestAuthenticationToken.with(clientId, principal)
 				.authorizationUri(authorizationUri)

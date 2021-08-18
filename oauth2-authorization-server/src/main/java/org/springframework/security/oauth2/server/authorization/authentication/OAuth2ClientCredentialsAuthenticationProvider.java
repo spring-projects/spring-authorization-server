@@ -18,7 +18,6 @@ package org.springframework.security.oauth2.server.authorization.authentication;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -34,12 +33,12 @@ import org.springframework.security.oauth2.jwt.JoseHeader;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
+import org.springframework.security.oauth2.server.authorization.JwtEncodingContext;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
+import org.springframework.security.oauth2.server.authorization.OAuth2TokenCustomizer;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.config.ProviderSettings;
-import org.springframework.security.oauth2.server.authorization.JwtEncodingContext;
-import org.springframework.security.oauth2.server.authorization.OAuth2TokenCustomizer;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 
@@ -112,11 +111,10 @@ public final class OAuth2ClientCredentialsAuthenticationProvider implements Auth
 
 		Set<String> authorizedScopes = registeredClient.getScopes();		// Default to configured scopes
 		if (!CollectionUtils.isEmpty(clientCredentialsAuthentication.getScopes())) {
-			Set<String> unauthorizedScopes = clientCredentialsAuthentication.getScopes().stream()
-					.filter(requestedScope -> !registeredClient.getScopes().contains(requestedScope))
-					.collect(Collectors.toSet());
-			if (!CollectionUtils.isEmpty(unauthorizedScopes)) {
-				throw new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_SCOPE));
+			for (String requestedScope : clientCredentialsAuthentication.getScopes()) {
+				if (!registeredClient.getScopes().contains(requestedScope)) {
+					throw new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_SCOPE));
+				}
 			}
 			authorizedScopes = new LinkedHashSet<>(clientCredentialsAuthentication.getScopes());
 		}

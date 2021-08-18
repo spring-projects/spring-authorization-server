@@ -24,9 +24,9 @@ import java.text.MessageFormat;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Base64;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
@@ -273,9 +273,11 @@ public class OAuth2AuthorizationCodeGrantTests {
 		Jwt jwt = this.jwtDecoder.decode(accessTokenResponse.getAccessToken().getTokenValue());
 		List<String> authoritiesClaim = jwt.getClaim(AUTHORITIES_CLAIM);
 		Authentication principal = authorization.getAttribute(Principal.class.getName());
-		Set<String> userAuthorities = principal.getAuthorities().stream()
-				.map(GrantedAuthority::getAuthority)
-				.collect(Collectors.toSet());
+		Set<String> userAuthorities = new HashSet<>();
+		for (GrantedAuthority authority : principal.getAuthorities()) {
+			userAuthorities.add(authority.getAuthority());
+		}
+
 		assertThat(authoritiesClaim).containsExactlyInAnyOrderElementsOf(userAuthorities);
 	}
 
@@ -612,9 +614,10 @@ public class OAuth2AuthorizationCodeGrantTests {
 				if (AuthorizationGrantType.AUTHORIZATION_CODE.equals(context.getAuthorizationGrantType()) &&
 						OAuth2TokenType.ACCESS_TOKEN.equals(context.getTokenType())) {
 					Authentication principal = context.getPrincipal();
-					Set<String> authorities = principal.getAuthorities().stream()
-							.map(GrantedAuthority::getAuthority)
-							.collect(Collectors.toSet());
+					Set<String> authorities = new HashSet<>();
+					for (GrantedAuthority authority : principal.getAuthorities()) {
+						authorities.add(authority.getAuthority());
+					}
 					context.getClaims().claim(AUTHORITIES_CLAIM, authorities);
 				}
 			};

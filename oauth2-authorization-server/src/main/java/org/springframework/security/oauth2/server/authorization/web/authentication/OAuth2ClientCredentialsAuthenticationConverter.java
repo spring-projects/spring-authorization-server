@@ -16,10 +16,10 @@
 package org.springframework.security.oauth2.server.authorization.web.authentication;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -75,14 +75,13 @@ public final class OAuth2ClientCredentialsAuthenticationConverter implements Aut
 					Arrays.asList(StringUtils.delimitedListToStringArray(scope, " ")));
 		}
 
-		// @formatter:off
-		Map<String, Object> additionalParameters = parameters
-				.entrySet()
-				.stream()
-				.filter(e -> !e.getKey().equals(OAuth2ParameterNames.GRANT_TYPE) &&
-						!e.getKey().equals(OAuth2ParameterNames.SCOPE))
-				.collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().get(0)));
-        // @formatter:on
+		Map<String, Object> additionalParameters = new HashMap<>();
+		parameters.forEach((key, value) -> {
+			if (!key.equals(OAuth2ParameterNames.GRANT_TYPE) &&
+					!key.equals(OAuth2ParameterNames.SCOPE)) {
+				additionalParameters.put(key, value.get(0));
+			}
+		});
 
 		return new OAuth2ClientCredentialsAuthenticationToken(
 				clientPrincipal, requestedScopes, additionalParameters);

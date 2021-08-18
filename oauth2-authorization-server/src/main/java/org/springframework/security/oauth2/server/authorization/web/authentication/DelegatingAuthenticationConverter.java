@@ -18,7 +18,6 @@ package org.springframework.security.oauth2.server.authorization.web.authenticat
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Objects;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -56,12 +55,12 @@ public final class DelegatingAuthenticationConverter implements AuthenticationCo
 	@Override
 	public Authentication convert(HttpServletRequest request) {
 		Assert.notNull(request, "request cannot be null");
-		// @formatter:off
-		return this.converters.stream()
-				.map(converter -> converter.convert(request))
-				.filter(Objects::nonNull)
-				.findFirst()
-				.orElse(null);
-		// @formatter:on
+		for (AuthenticationConverter converter : this.converters) {
+			Authentication authentication = converter.convert(request);
+			if (authentication != null) {
+				return authentication;
+			}
+		}
+		return null;
 	}
 }

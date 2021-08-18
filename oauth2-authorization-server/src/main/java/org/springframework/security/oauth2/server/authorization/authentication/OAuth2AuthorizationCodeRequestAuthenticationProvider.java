@@ -18,7 +18,6 @@ package org.springframework.security.oauth2.server.authorization.authentication;
 import java.security.Principal;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
@@ -448,7 +447,10 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 			return false;
 		}
 		try {
-			int[] address = Arrays.stream(ipv4Octets).mapToInt(Integer::parseInt).toArray();
+			int[] address = new int[ipv4Octets.length];
+			for (int i=0; i < ipv4Octets.length; i++) {
+				address[i] = Integer.parseInt(ipv4Octets[i]);
+			}
 			return address[0] == 127 && address[1] >= 0 && address[1] <= 255 && address[2] >= 0 &&
 					address[2] <= 255 && address[3] >= 1 && address[3] <= 255;
 		} catch (NumberFormatException ex) {

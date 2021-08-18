@@ -150,11 +150,12 @@ public class OAuth2Authorization implements Serializable {
 	@SuppressWarnings("unchecked")
 	public <T extends OAuth2Token> Token<T> getToken(String tokenValue) {
 		Assert.hasText(tokenValue, "tokenValue cannot be empty");
-		Token<?> token = this.tokens.values().stream()
-				.filter(t -> t.getToken().getTokenValue().equals(tokenValue))
-				.findFirst()
-				.orElse(null);
-		return token != null ? (Token<T>) token : null;
+		for (Token<?> token : this.tokens.values()) {
+			if (token.getToken().getTokenValue().equals(tokenValue)) {
+				return (Token<T>) token;
+			}
+		}
+		return null;
 	}
 
 	/**

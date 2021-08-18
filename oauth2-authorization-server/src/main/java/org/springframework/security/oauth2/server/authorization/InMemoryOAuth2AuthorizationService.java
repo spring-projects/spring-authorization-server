@@ -97,10 +97,12 @@ public final class InMemoryOAuth2AuthorizationService implements OAuth2Authoriza
 	@Override
 	public OAuth2Authorization findByToken(String token, @Nullable OAuth2TokenType tokenType) {
 		Assert.hasText(token, "token cannot be empty");
-		return this.authorizations.values().stream()
-				.filter(authorization -> hasToken(authorization, token, tokenType))
-				.findFirst()
-				.orElse(null);
+		for (OAuth2Authorization authorization : this.authorizations.values()) {
+			if (hasToken(authorization, token, tokenType)) {
+				return authorization;
+			}
+		}
+		return null;
 	}
 
 	private static boolean hasToken(OAuth2Authorization authorization, String token, @Nullable OAuth2TokenType tokenType) {

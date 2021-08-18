@@ -21,7 +21,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsent;
@@ -84,10 +83,12 @@ public class AuthorizationConsentController {
 	}
 
 	private static Set<ScopeWithDescription> withDescription(Set<String> scopes) {
-		return scopes
-				.stream()
-				.map(ScopeWithDescription::new)
-				.collect(Collectors.toSet());
+		Set<ScopeWithDescription> scopeWithDescriptions = new HashSet<>();
+		for (String scope : scopes) {
+			scopeWithDescriptions.add(new ScopeWithDescription(scope));
+
+		}
+		return scopeWithDescriptions;
 	}
 
 	public static class ScopeWithDescription {

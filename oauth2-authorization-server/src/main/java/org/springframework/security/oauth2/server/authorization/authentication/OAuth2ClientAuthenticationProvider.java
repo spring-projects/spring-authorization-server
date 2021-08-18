@@ -28,7 +28,6 @@ import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
-import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.OAuth2TokenType;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
@@ -187,10 +186,10 @@ public final class OAuth2ClientAuthenticationProvider implements AuthenticationP
 				// there will likely be bigger issues as well. We default to SERVER_ERROR.
 			}
 		}
-		throw new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.SERVER_ERROR));
+		throw new OAuth2AuthenticationException(OAuth2ErrorCodes.SERVER_ERROR);
 	}
 
 	private static void throwInvalidClient() {
-		throw new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_CLIENT));
+		throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_CLIENT);
 	}
 }

@@ -20,7 +20,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.oauth2.core.AbstractOAuth2Token;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
-import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
@@ -69,7 +68,7 @@ public final class OAuth2TokenRevocationAuthenticationProvider implements Authen
 		}
 
 		if (!registeredClient.getId().equals(authorization.getRegisteredClientId())) {
-			throw new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_CLIENT));
+			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_CLIENT);
 		}
 
 		OAuth2Authorization.Token<AbstractOAuth2Token> token = authorization.getToken(tokenRevocationAuthentication.getToken());

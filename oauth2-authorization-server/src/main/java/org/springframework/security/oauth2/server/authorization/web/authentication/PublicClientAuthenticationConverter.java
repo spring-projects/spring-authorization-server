@@ -23,7 +23,6 @@ import org.springframework.lang.Nullable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
-import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.endpoint.PkceParameterNames;
@@ -59,12 +58,12 @@ public final class PublicClientAuthenticationConverter implements Authentication
 		String clientId = parameters.getFirst(OAuth2ParameterNames.CLIENT_ID);
 		if (!StringUtils.hasText(clientId) ||
 				parameters.get(OAuth2ParameterNames.CLIENT_ID).size() != 1) {
-			throw new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_REQUEST));
+			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_REQUEST);
 		}
 
 		// code_verifier (REQUIRED)
 		if (parameters.get(PkceParameterNames.CODE_VERIFIER).size() != 1) {
-			throw new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_REQUEST));
+			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_REQUEST);
 		}
 
 		parameters.remove(OAuth2ParameterNames.CLIENT_ID);

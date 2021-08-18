@@ -147,7 +147,7 @@ public class OAuth2ClientAuthenticationFilterTests {
 	@Test
 	public void doFilterWhenRequestMatchesAndInvalidCredentialsThenInvalidRequestError() throws Exception {
 		when(this.authenticationConverter.convert(any(HttpServletRequest.class))).thenThrow(
-				new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_REQUEST)));
+				new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_REQUEST));
 
 		MockHttpServletRequest request = new MockHttpServletRequest("POST", this.filterProcessesUrl);
 		request.setServletPath(this.filterProcessesUrl);
@@ -169,7 +169,7 @@ public class OAuth2ClientAuthenticationFilterTests {
 		when(this.authenticationConverter.convert(any(HttpServletRequest.class))).thenReturn(
 				new OAuth2ClientAuthenticationToken("clientId", ClientAuthenticationMethod.CLIENT_SECRET_BASIC, "invalid-secret", null));
 		when(this.authenticationManager.authenticate(any(Authentication.class))).thenThrow(
-				new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_CLIENT)));
+				new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_CLIENT));
 
 		MockHttpServletRequest request = new MockHttpServletRequest("POST", this.filterProcessesUrl);
 		request.setServletPath(this.filterProcessesUrl);

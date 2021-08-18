@@ -26,7 +26,6 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
-import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.OAuth2TokenType;
 import org.springframework.security.oauth2.jwt.JoseHeader;
@@ -106,14 +105,14 @@ public final class OAuth2ClientCredentialsAuthenticationProvider implements Auth
 		RegisteredClient registeredClient = clientPrincipal.getRegisteredClient();
 
 		if (!registeredClient.getAuthorizationGrantTypes().contains(AuthorizationGrantType.CLIENT_CREDENTIALS)) {
-			throw new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.UNAUTHORIZED_CLIENT));
+			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.UNAUTHORIZED_CLIENT);
 		}
 
 		Set<String> authorizedScopes = registeredClient.getScopes();		// Default to configured scopes
 		if (!CollectionUtils.isEmpty(clientCredentialsAuthentication.getScopes())) {
 			for (String requestedScope : clientCredentialsAuthentication.getScopes()) {
 				if (!registeredClient.getScopes().contains(requestedScope)) {
-					throw new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_SCOPE));
+					throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_SCOPE);
 				}
 			}
 			authorizedScopes = new LinkedHashSet<>(clientCredentialsAuthentication.getScopes());

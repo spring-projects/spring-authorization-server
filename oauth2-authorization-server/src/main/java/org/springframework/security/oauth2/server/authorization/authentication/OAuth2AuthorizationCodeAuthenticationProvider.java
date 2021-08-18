@@ -37,7 +37,6 @@ import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2AuthorizationCode;
-import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.OAuth2RefreshToken;
 import org.springframework.security.oauth2.core.OAuth2TokenType;
@@ -142,7 +141,7 @@ public final class OAuth2AuthorizationCodeAuthenticationProvider implements Auth
 		OAuth2Authorization authorization = this.authorizationService.findByToken(
 				authorizationCodeAuthentication.getCode(), AUTHORIZATION_CODE_TOKEN_TYPE);
 		if (authorization == null) {
-			throw new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_GRANT));
+			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_GRANT);
 		}
 		OAuth2Authorization.Token<OAuth2AuthorizationCode> authorizationCode =
 				authorization.getToken(OAuth2AuthorizationCode.class);
@@ -156,16 +155,16 @@ public final class OAuth2AuthorizationCodeAuthenticationProvider implements Auth
 				authorization = OAuth2AuthenticationProviderUtils.invalidate(authorization, authorizationCode.getToken());
 				this.authorizationService.save(authorization);
 			}
-			throw new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_GRANT));
+			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_GRANT);
 		}
 
 		if (StringUtils.hasText(authorizationRequest.getRedirectUri()) &&
 				!authorizationRequest.getRedirectUri().equals(authorizationCodeAuthentication.getRedirectUri())) {
-			throw new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_GRANT));
+			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_GRANT);
 		}
 
 		if (!authorizationCode.isActive()) {
-			throw new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_GRANT));
+			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_GRANT);
 		}
 
 		String issuer = this.providerSettings != null ? this.providerSettings.getIssuer() : null;

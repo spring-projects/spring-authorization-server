@@ -19,11 +19,10 @@ import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.AbstractOAuth2Token;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
-import org.springframework.security.oauth2.core.OAuth2Error;
+import org.springframework.security.oauth2.core.OAuth2AuthorizationCode;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.OAuth2RefreshToken;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
-import org.springframework.security.oauth2.core.OAuth2AuthorizationCode;
 
 /**
  * Utility methods for the OAuth 2.0 {@link AuthenticationProvider}'s.
@@ -44,7 +43,7 @@ final class OAuth2AuthenticationProviderUtils {
 		if (clientPrincipal != null && clientPrincipal.isAuthenticated()) {
 			return clientPrincipal;
 		}
-		throw new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_CLIENT));
+		throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_CLIENT);
 	}
 
 	static <T extends AbstractOAuth2Token> OAuth2Authorization invalidate(

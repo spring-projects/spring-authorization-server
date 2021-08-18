@@ -63,7 +63,7 @@ public final class ClientSecretBasicAuthenticationConverter implements Authentic
 		}
 
 		if (parts.length != 2) {
-			throw new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_REQUEST));
+			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_REQUEST);
 		}
 
 		byte[] decodedCredentials;
@@ -79,7 +79,7 @@ public final class ClientSecretBasicAuthenticationConverter implements Authentic
 		if (credentials.length != 2 ||
 				!StringUtils.hasText(credentials[0]) ||
 				!StringUtils.hasText(credentials[1])) {
-			throw new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_REQUEST));
+			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_REQUEST);
 		}
 
 		String clientID;

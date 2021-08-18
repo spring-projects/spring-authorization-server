@@ -171,7 +171,7 @@ public class OidcClientRegistrationEndpointFilterTests {
 		SecurityContextHolder.setContext(securityContext);
 
 		when(this.authenticationManager.authenticate(any()))
-				.thenThrow(new OAuth2AuthenticationException(new OAuth2Error(errorCode)));
+				.thenThrow(new OAuth2AuthenticationException(errorCode));
 
 		// @formatter:off
 		OidcClientRegistration clientRegistrationRequest = OidcClientRegistration.builder()

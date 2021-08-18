@@ -22,16 +22,16 @@ package org.springframework.security.oauth2.server.authorization;
  * @author Joe Grandja
  * @since 0.1.0
  * @see OAuth2TokenContext
- * @param <C> the type of the context containing the OAuth 2.0 Token attributes
+ * @param <T> the type of the context containing the OAuth 2.0 Token attributes
  */
 @FunctionalInterface
-public interface OAuth2TokenCustomizer<C extends OAuth2TokenContext> {
+public interface OAuth2TokenCustomizer<T extends OAuth2TokenContext> {
 
 	/**
 	 * Customize the OAuth 2.0 Token attributes.
 	 *
 	 * @param context the context containing the OAuth 2.0 Token attributes
 	 */
-	void customize(C context);
+	void customize(T context);
 
 }

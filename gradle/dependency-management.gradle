@@ -21,7 +21,7 @@ dependencyManagement {
 		mavenBom "org.springframework:spring-framework-bom:$springVersion"
 		mavenBom "org.springframework.security:spring-security-bom:$springSecurityVersion"
 		mavenBom "io.projectreactor:reactor-bom:$reactorVersion"
-        mavenBom "com.fasterxml.jackson:jackson-bom:2.12.3"
+        mavenBom "com.fasterxml.jackson:jackson-bom:2.12.4"
 	}
 
 	dependencies {

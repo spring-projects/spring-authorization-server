@@ -122,6 +122,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  *
  * @author Joe Grandja
  * @author Daniel Garnier-Moiroux
+ * @author Dmitriy Dubson
  */
 public class OAuth2AuthorizationCodeGrantTests {
 	private static final String DEFAULT_AUTHORIZATION_ENDPOINT_URI = "/oauth2/authorize";
@@ -556,7 +557,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 
 	private static String scopeCheckbox(String scope) {
 		return MessageFormat.format(
-				"<input class=\"form-check-input\" type=\"checkbox\" name=\"scope\" value=\"{0}\" id=\"{0}\">",
+				"<input class=\"form-check-input scope-to-accept\" type=\"checkbox\" name=\"scope\" value=\"{0}\" id=\"{0}\">",
 				scope
 		);
 	}

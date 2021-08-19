@@ -73,6 +73,7 @@ import static org.mockito.Mockito.when;
  * @author Joe Grandja
  * @author Daniel Garnier-Moiroux
  * @author Anoop Garlapati
+ * @author Dmitriy Dubson
  * @since 0.0.1
  */
 public class OAuth2AuthorizationEndpointFilterTests {
@@ -574,7 +575,7 @@ public class OAuth2AuthorizationEndpointFilterTests {
 
 	private static String scopeCheckbox(String scope) {
 		return MessageFormat.format(
-				"<input class=\"form-check-input\" type=\"checkbox\" name=\"scope\" value=\"{0}\" id=\"{0}\">",
+				"<input class=\"form-check-input scope-to-accept\" type=\"checkbox\" name=\"scope\" value=\"{0}\" id=\"{0}\">",
 				scope
 		);
 	}

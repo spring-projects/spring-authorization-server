@@ -5,4 +5,8 @@ dependencies {
 	compile 'org.springframework.boot:spring-boot-starter-thymeleaf'
 	compile 'org.springframework.boot:spring-boot-starter-security'
 	compile project(':spring-security-oauth2-authorization-server')
+
+	testCompile 'org.springframework.boot:spring-boot-starter-test'
+	testCompile 'org.springframework.security:spring-security-test'
+	testCompile 'net.sourceforge.htmlunit:htmlunit'
 }

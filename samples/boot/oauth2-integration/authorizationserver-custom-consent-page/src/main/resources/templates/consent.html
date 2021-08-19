@@ -5,12 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
           integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
-    <title>Consent required</title>
+    <title>Custom consent page - Consent required</title>
     <style>
         body {
             background-color: aliceblue;
         }
     </style>
+	<script>
+		function cancelConsent() {
+			document.consent_form.reset();
+			document.consent_form.submit();
+		}
+	</script>
 </head>
 <body>
 <div class="container">
@@ -33,7 +39,7 @@
     </div>
     <div class="row">
         <div class="col text-center">
-            <form method="post" action="/oauth2/authorize">
+            <form name="consent_form" method="post" action="/oauth2/authorize">
                 <input type="hidden" name="client_id" th:value="${clientId}">
                 <input type="hidden" name="state" th:value="${state}">
 
@@ -59,12 +65,12 @@
                 </div>
 
                 <div class="form-group pt-3">
-                    <button class="btn btn-primary btn-lg" type="submit">
+                    <button class="btn btn-primary btn-lg" type="submit" id="submit-consent">
                         Submit Consent
                     </button>
                 </div>
                 <div class="form-group">
-                    <button class="btn btn-link regular" type="reset">
+                    <button class="btn btn-link regular" type="button" id="cancel-consent" onclick="cancelConsent();">
                         Cancel
                     </button>
                 </div>

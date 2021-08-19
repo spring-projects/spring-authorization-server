@@ -65,6 +65,7 @@ import org.springframework.web.util.UriComponentsBuilder;
  * @author Paurav Munshi
  * @author Daniel Garnier-Moiroux
  * @author Anoop Garlapati
+ * @author Dmitriy Dubson
  * @since 0.0.1
  * @see AuthenticationManager
  * @see OAuth2AuthorizationCodeRequestAuthenticationProvider
@@ -332,6 +333,12 @@ public final class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilte
 			builder.append("    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1, shrink-to-fit=no\">");
 			builder.append("    <link rel=\"stylesheet\" href=\"https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css\" integrity=\"sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z\" crossorigin=\"anonymous\">");
 			builder.append("    <title>Consent required</title>");
+			builder.append("	<script>");
+			builder.append("		function cancelConsent() {");
+			builder.append("			document.consent_form.reset();");
+			builder.append("			document.consent_form.submit();");
+			builder.append("		}");
+			builder.append("	</script>");
 			builder.append("</head>");
 			builder.append("<body>");
 			builder.append("<div class=\"container\">");
@@ -350,13 +357,13 @@ public final class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilte
 			builder.append("    </div>");
 			builder.append("    <div class=\"row\">");
 			builder.append("        <div class=\"col text-center\">");
-			builder.append("            <form method=\"post\" action=\"" + request.getRequestURI() + "\">");
+			builder.append("            <form name=\"consent_form\" method=\"post\" action=\"" + request.getRequestURI() + "\">");
 			builder.append("                <input type=\"hidden\" name=\"client_id\" value=\"" + clientId + "\">");
 			builder.append("                <input type=\"hidden\" name=\"state\" value=\"" + state + "\">");
 
 			for (String scope : scopesToAuthorize) {
 				builder.append("                <div class=\"form-group form-check py-1\">");
-				builder.append("                    <input class=\"form-check-input\" type=\"checkbox\" name=\"scope\" value=\"" + scope + "\" id=\"" + scope + "\">");
+				builder.append("                    <input class=\"form-check-input scope-to-accept\" type=\"checkbox\" name=\"scope\" value=\"" + scope + "\" id=\"" + scope + "\">");
 				builder.append("                    <label class=\"form-check-label\" for=\"" + scope + "\">" + scope + "</label>");
 				builder.append("                </div>");
 			}
@@ -372,10 +379,10 @@ public final class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilte
 			}
 
 			builder.append("                <div class=\"form-group pt-3\">");
-			builder.append("                    <button class=\"btn btn-primary btn-lg\" type=\"submit\">Submit Consent</button>");
+			builder.append("                    <button class=\"btn btn-primary btn-lg\" type=\"submit\" id=\"submit-consent\">Submit Consent</button>");
 			builder.append("                </div>");
 			builder.append("                <div class=\"form-group\">");
-			builder.append("                    <button class=\"btn btn-link regular\" type=\"reset\">Cancel</button>");
+			builder.append("                    <button class=\"btn btn-link regular\" type=\"button\" onclick=\"cancelConsent();\" id=\"cancel-consent\">Cancel</button>");
 			builder.append("                </div>");
 			builder.append("            </form>");
 			builder.append("        </div>");

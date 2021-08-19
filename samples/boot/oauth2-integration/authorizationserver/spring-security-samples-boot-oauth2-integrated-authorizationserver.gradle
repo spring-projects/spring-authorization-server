@@ -8,5 +8,6 @@ dependencies {
 	runtimeOnly 'com.h2database:h2'
 
 	testCompile 'org.springframework.boot:spring-boot-starter-test'
+	testCompile 'org.springframework.security:spring-security-test'
 	testCompile 'net.sourceforge.htmlunit:htmlunit'
 }

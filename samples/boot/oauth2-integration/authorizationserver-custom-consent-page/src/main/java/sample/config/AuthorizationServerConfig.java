@@ -21,8 +21,6 @@ import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
-import sample.jose.Jwks;
-
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
@@ -42,6 +40,7 @@ import org.springframework.security.oauth2.server.authorization.config.ClientSet
 import org.springframework.security.oauth2.server.authorization.config.ProviderSettings;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.util.matcher.RequestMatcher;
+import sample.jose.Jwks;
 
 /**
  * @author Joe Grandja
@@ -49,6 +48,7 @@ import org.springframework.security.web.util.matcher.RequestMatcher;
  */
 @Configuration(proxyBeanMethods = false)
 public class AuthorizationServerConfig {
+	private static final String CUSTOM_CONSENT_PAGE_URI = "/oauth2/consent";
 
 	@Bean
 	@Order(Ordered.HIGHEST_PRECEDENCE)
@@ -57,7 +57,7 @@ public class AuthorizationServerConfig {
 				new OAuth2AuthorizationServerConfigurer<>();
 		authorizationServerConfigurer
 				.authorizationEndpoint(authorizationEndpoint ->
-						authorizationEndpoint.consentPage("/oauth2/consent"));
+						authorizationEndpoint.consentPage(CUSTOM_CONSENT_PAGE_URI));
 
 		RequestMatcher endpointsMatcher = authorizationServerConfigurer
 				.getEndpointsMatcher();

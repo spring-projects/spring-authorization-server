@@ -43,18 +43,45 @@ public class OidcClientRegistrationAuthenticationTokenTests {
 	@Test
 	public void constructorWhenClientRegistrationNullThenThrowIllegalArgumentException() {
 		assertThatIllegalArgumentException()
-				.isThrownBy(() -> new OidcClientRegistrationAuthenticationToken(this.principal, null))
+				.isThrownBy(() -> new OidcClientRegistrationAuthenticationToken(this.principal, (OidcClientRegistration) null))
 				.withMessage("clientRegistration cannot be null");
 	}
 
 	@Test
-	public void constructorWhenAllValuesProvidedThenCreated() {
+	public void constructorWhenClientIdNullThenThrowIllegalArgumentException() {
+		assertThatIllegalArgumentException()
+				.isThrownBy(() -> new OidcClientRegistrationAuthenticationToken(this.principal, (String) null))
+				.withMessage("clientId cannot be null or empty");
+	}
+
+	@Test
+	public void constructorWhenClientIdEmptyThenThrowIllegalArgumentException() {
+		assertThatIllegalArgumentException()
+				.isThrownBy(() -> new OidcClientRegistrationAuthenticationToken(this.principal, ""))
+				.withMessage("clientId cannot be null or empty");
+	}
+
+	@Test
+	public void constructorWhenOidcClientRegistrationProvidedThenCreated() {
 		OidcClientRegistrationAuthenticationToken authentication = new OidcClientRegistrationAuthenticationToken(
 				this.principal, this.clientRegistration);
 
 		assertThat(authentication.getPrincipal()).isEqualTo(this.principal);
 		assertThat(authentication.getCredentials().toString()).isEmpty();
 		assertThat(authentication.getClientRegistration()).isEqualTo(this.clientRegistration);
+		assertThat(authentication.getClientId()).isNull();
+		assertThat(authentication.isAuthenticated()).isEqualTo(this.principal.isAuthenticated());
+	}
+
+	@Test
+	public void constructorWhenClientIdProvidedThenCreated() {
+		OidcClientRegistrationAuthenticationToken authentication = new OidcClientRegistrationAuthenticationToken(
+				this.principal, "client-1");
+
+		assertThat(authentication.getPrincipal()).isEqualTo(this.principal);
+		assertThat(authentication.getCredentials().toString()).isEmpty();
+		assertThat(authentication.getClientRegistration()).isNull();
+		assertThat(authentication.getClientId()).isEqualTo("client-1");
 		assertThat(authentication.isAuthenticated()).isEqualTo(this.principal.isAuthenticated());
 	}
 

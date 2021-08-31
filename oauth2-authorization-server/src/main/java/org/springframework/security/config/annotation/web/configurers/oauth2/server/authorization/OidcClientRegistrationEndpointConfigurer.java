@@ -24,6 +24,7 @@ import org.springframework.security.oauth2.server.authorization.oidc.authenticat
 import org.springframework.security.oauth2.server.authorization.oidc.web.OidcClientRegistrationEndpointFilter;
 import org.springframework.security.web.access.intercept.FilterSecurityInterceptor;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.security.web.util.matcher.OrRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 
 /**
@@ -47,13 +48,16 @@ public final class OidcClientRegistrationEndpointConfigurer extends AbstractOAut
 	@Override
 	<B extends HttpSecurityBuilder<B>> void init(B builder) {
 		ProviderSettings providerSettings = OAuth2ConfigurerUtils.getProviderSettings(builder);
-		this.requestMatcher = new AntPathRequestMatcher(
-				providerSettings.getOidcClientRegistrationEndpoint(), HttpMethod.POST.name());
+		this.requestMatcher = new OrRequestMatcher(
+				new AntPathRequestMatcher(providerSettings.getOidcClientRegistrationEndpoint(), HttpMethod.POST.name()),
+				new AntPathRequestMatcher(providerSettings.getOidcClientRegistrationEndpoint(), HttpMethod.GET.name())
+		);
 
 		OidcClientRegistrationAuthenticationProvider oidcClientRegistrationAuthenticationProvider =
 				new OidcClientRegistrationAuthenticationProvider(
 						OAuth2ConfigurerUtils.getRegisteredClientRepository(builder),
-						OAuth2ConfigurerUtils.getAuthorizationService(builder));
+						OAuth2ConfigurerUtils.getAuthorizationService(builder),
+						OAuth2ConfigurerUtils.getJwtEncoder(builder));
 		builder.authenticationProvider(postProcess(oidcClientRegistrationAuthenticationProvider));
 	}
 

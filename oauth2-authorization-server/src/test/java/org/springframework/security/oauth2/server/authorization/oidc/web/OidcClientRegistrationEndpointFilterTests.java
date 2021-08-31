@@ -25,7 +25,6 @@ import javax.servlet.http.HttpServletResponse;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.mock.http.client.MockClientHttpRequest;
@@ -162,7 +161,7 @@ public class OidcClientRegistrationEndpointFilterTests {
 
 	private void doFilterWhenClientRegistrationRequestInvalidThenError(
 			String errorCode, HttpStatus status) throws Exception {
-		Jwt jwt = createJwt();
+		Jwt jwt = createJwt("client.create");
 		JwtAuthenticationToken principal = new JwtAuthenticationToken(
 				jwt, AuthorityUtils.createAuthorityList("SCOPE_client.create"));
 
@@ -220,10 +219,12 @@ public class OidcClientRegistrationEndpointFilterTests {
 				.tokenEndpointAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue())
 				.responseType(OAuth2AuthorizationResponseType.CODE.getValue())
 				.idTokenSignedResponseAlgorithm(SignatureAlgorithm.RS256.getName())
+				.registrationClientUri("http://auth-server:9000/connect/register?client_id=client-id")
+				.registrationAccessToken("registration-access-token")
 				.build();
 		// @formatter:on
 
-		Jwt jwt = createJwt();
+		Jwt jwt = createJwt("client.create");
 		JwtAuthenticationToken principal = new JwtAuthenticationToken(
 				jwt, AuthorityUtils.createAuthorityList("SCOPE_client.create"));
 
@@ -269,6 +270,198 @@ public class OidcClientRegistrationEndpointFilterTests {
 				.isEqualTo(expectedClientRegistrationResponse.getTokenEndpointAuthenticationMethod());
 		assertThat(clientRegistrationResponse.getIdTokenSignedResponseAlgorithm())
 				.isEqualTo(expectedClientRegistrationResponse.getIdTokenSignedResponseAlgorithm());
+		assertThat(clientRegistrationResponse.getRegistrationClientUri())
+				.isEqualTo(expectedClientRegistrationResponse.getRegistrationClientUri());
+		assertThat(clientRegistrationResponse.getRegistrationAccessToken())
+				.isEqualTo(expectedClientRegistrationResponse.getRegistrationAccessToken());
+	}
+
+	@Test
+	public void doFilterWhenNotClientConfigurationRequestThenNotProcessed() throws Exception {
+		String requestUri = "/path";
+		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestUri);
+		request.setServletPath(requestUri);
+		MockHttpServletResponse response = new MockHttpServletResponse();
+		FilterChain filterChain = mock(FilterChain.class);
+
+		this.filter.doFilter(request, response, filterChain);
+
+		verify(filterChain).doFilter(any(HttpServletRequest.class), any(HttpServletResponse.class));
+	}
+
+	@Test
+	public void doFilterWhenClientConfigurationRequestPutThenNotProcessed() throws Exception {
+		String requestUri = DEFAULT_OIDC_CLIENT_REGISTRATION_ENDPOINT_URI;
+		MockHttpServletRequest request = new MockHttpServletRequest("PUT", requestUri);
+		request.setServletPath(requestUri);
+		MockHttpServletResponse response = new MockHttpServletResponse();
+		FilterChain filterChain = mock(FilterChain.class);
+
+		this.filter.doFilter(request, response, filterChain);
+
+		verify(filterChain).doFilter(any(HttpServletRequest.class), any(HttpServletResponse.class));
+	}
+
+	@Test
+	public void doFilterWhenClientConfigurationRequestMissingClientIdThenNotProcessed() throws Exception {
+		String requestUri = DEFAULT_OIDC_CLIENT_REGISTRATION_ENDPOINT_URI;
+		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestUri);
+		request.setServletPath(requestUri);
+		MockHttpServletResponse response = new MockHttpServletResponse();
+		FilterChain filterChain = mock(FilterChain.class);
+
+		this.filter.doFilter(request, response, filterChain);
+
+		verify(filterChain).doFilter(any(HttpServletRequest.class), any(HttpServletResponse.class));
+	}
+
+	@Test
+	public void doFilterWhenClientConfigurationRequestEmptyClientIdThenNotProcessed() throws Exception {
+		String requestUri = DEFAULT_OIDC_CLIENT_REGISTRATION_ENDPOINT_URI;
+		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestUri);
+		request.setServletPath(requestUri);
+		request.addParameter(OAuth2ParameterNames.CLIENT_ID, "");
+		MockHttpServletResponse response = new MockHttpServletResponse();
+		FilterChain filterChain = mock(FilterChain.class);
+
+		this.filter.doFilter(request, response, filterChain);
+
+		verify(filterChain).doFilter(any(HttpServletRequest.class), any(HttpServletResponse.class));
+	}
+
+	@Test
+	public void doFilterWhenClientConfigurationRequestMultipleClientIdParametersThenInvalidClientError() throws Exception {
+		String requestUri = DEFAULT_OIDC_CLIENT_REGISTRATION_ENDPOINT_URI;
+		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestUri);
+		request.setServletPath(requestUri);
+		request.addParameter(OAuth2ParameterNames.CLIENT_ID, "client-id");
+		request.addParameter(OAuth2ParameterNames.CLIENT_ID, "client-id2");
+		MockHttpServletResponse response = new MockHttpServletResponse();
+		FilterChain filterChain = mock(FilterChain.class);
+
+		this.filter.doFilter(request, response, filterChain);
+		verifyNoInteractions(filterChain);
+		assertThat(response.getStatus()).isEqualTo(HttpStatus.UNAUTHORIZED.value());
+		OAuth2Error error = readError(response);
+		assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_CLIENT);
+	}
+
+	@Test
+	public void doFilterWhenClientConfigurationRequestInvalidTokenThenUnauthorizedError() throws Exception {
+		doFilterWhenClientConfigurationRequestInvalidThenError(
+				OAuth2ErrorCodes.INVALID_TOKEN, HttpStatus.UNAUTHORIZED);
+	}
+
+	@Test
+	public void doFilterWhenClientConfigurationRequestInsufficientTokenScopeThenForbiddenError() throws Exception {
+		doFilterWhenClientConfigurationRequestInvalidThenError(
+				OAuth2ErrorCodes.INSUFFICIENT_SCOPE, HttpStatus.FORBIDDEN);
+	}
+
+	@Test
+	public void doFilterWhenClientConfigurationRequestInvalidClientThenUnauthorizedError() throws Exception {
+		doFilterWhenClientConfigurationRequestInvalidThenError(
+				OAuth2ErrorCodes.INVALID_CLIENT, HttpStatus.UNAUTHORIZED);
+	}
+
+	@Test
+	public void doFilterWhenClientConfigurationRequestValidThenSuccessResponse() throws Exception {
+		// @formatter:off
+		OidcClientRegistration expectedClientRegistrationResponse = OidcClientRegistration.builder()
+				.clientId("client-id")
+				.clientIdIssuedAt(Instant.now())
+				.clientSecret("client-secret")
+				.clientName("client-name")
+				.redirectUri("https://client.example.com")
+				.grantType(AuthorizationGrantType.AUTHORIZATION_CODE.getValue())
+				.grantType(AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
+				.tokenEndpointAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue())
+				.responseType(OAuth2AuthorizationResponseType.CODE.getValue())
+				.idTokenSignedResponseAlgorithm(SignatureAlgorithm.RS256.getName())
+				.scope("scope1")
+				.scope("scope2")
+				.registrationClientUri("http://auth-server:9000/connect/register?client_id=client-id")
+				.build();
+		// @formatter:on
+
+		Jwt jwt = createJwt("client.read");
+		JwtAuthenticationToken principal = new JwtAuthenticationToken(
+				jwt, AuthorityUtils.createAuthorityList("SCOPE_client.read"));
+
+		OidcClientRegistrationAuthenticationToken clientConfigurationAuthenticationResult =
+				new OidcClientRegistrationAuthenticationToken(principal, expectedClientRegistrationResponse);
+
+		when(this.authenticationManager.authenticate(any())).thenReturn(clientConfigurationAuthenticationResult);
+
+		SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
+		securityContext.setAuthentication(principal);
+		SecurityContextHolder.setContext(securityContext);
+
+		String requestUri = DEFAULT_OIDC_CLIENT_REGISTRATION_ENDPOINT_URI;
+		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestUri);
+		request.setServletPath(requestUri);
+		request.setParameter(OAuth2ParameterNames.CLIENT_ID, "client-id");
+
+		MockHttpServletResponse response = new MockHttpServletResponse();
+		FilterChain filterChain = mock(FilterChain.class);
+
+		this.filter.doFilter(request, response, filterChain);
+
+		verifyNoInteractions(filterChain);
+
+		assertThat(response.getStatus()).isEqualTo(HttpStatus.OK.value());
+		OidcClientRegistration clientRegistrationResponse = readClientRegistrationResponse(response);
+		assertThat(clientRegistrationResponse.getClientId()).isEqualTo(expectedClientRegistrationResponse.getClientId());
+		assertThat(clientRegistrationResponse.getClientIdIssuedAt()).isBetween(
+				expectedClientRegistrationResponse.getClientIdIssuedAt().minusSeconds(1),
+				expectedClientRegistrationResponse.getClientIdIssuedAt().plusSeconds(1));
+		assertThat(clientRegistrationResponse.getClientSecret()).isEqualTo(expectedClientRegistrationResponse.getClientSecret());
+		assertThat(clientRegistrationResponse.getClientSecretExpiresAt()).isEqualTo(expectedClientRegistrationResponse.getClientSecretExpiresAt());
+		assertThat(clientRegistrationResponse.getClientName()).isEqualTo(expectedClientRegistrationResponse.getClientName());
+		assertThat(clientRegistrationResponse.getRedirectUris())
+				.containsExactlyInAnyOrderElementsOf(expectedClientRegistrationResponse.getRedirectUris());
+		assertThat(clientRegistrationResponse.getGrantTypes())
+				.containsExactlyInAnyOrderElementsOf(expectedClientRegistrationResponse.getGrantTypes());
+		assertThat(clientRegistrationResponse.getResponseTypes())
+				.containsExactlyInAnyOrderElementsOf(expectedClientRegistrationResponse.getResponseTypes());
+		assertThat(clientRegistrationResponse.getScopes())
+				.containsExactlyInAnyOrderElementsOf(expectedClientRegistrationResponse.getScopes());
+		assertThat(clientRegistrationResponse.getTokenEndpointAuthenticationMethod())
+				.isEqualTo(expectedClientRegistrationResponse.getTokenEndpointAuthenticationMethod());
+		assertThat(clientRegistrationResponse.getIdTokenSignedResponseAlgorithm())
+				.isEqualTo(expectedClientRegistrationResponse.getIdTokenSignedResponseAlgorithm());
+		assertThat(clientRegistrationResponse.getRegistrationClientUri())
+				.isEqualTo(expectedClientRegistrationResponse.getRegistrationClientUri());
+	}
+
+
+	private void doFilterWhenClientConfigurationRequestInvalidThenError(
+			String errorCode, HttpStatus status) throws Exception {
+		Jwt jwt = createJwt("client.read");
+		JwtAuthenticationToken principal = new JwtAuthenticationToken(
+				jwt, AuthorityUtils.createAuthorityList("SCOPE_client.read"));
+
+		SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
+		securityContext.setAuthentication(principal);
+		SecurityContextHolder.setContext(securityContext);
+
+		when(this.authenticationManager.authenticate(any()))
+				.thenThrow(new OAuth2AuthenticationException(errorCode));
+
+		String requestUri = DEFAULT_OIDC_CLIENT_REGISTRATION_ENDPOINT_URI;
+		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestUri);
+		request.setServletPath(requestUri);
+		request.setParameter(OAuth2ParameterNames.CLIENT_ID, "client1");
+		MockHttpServletResponse response = new MockHttpServletResponse();
+		FilterChain filterChain = mock(FilterChain.class);
+
+		this.filter.doFilter(request, response, filterChain);
+
+		verifyNoInteractions(filterChain);
+
+		assertThat(response.getStatus()).isEqualTo(status.value());
+		OAuth2Error error = readError(response);
+		assertThat(error.getErrorCode()).isEqualTo(errorCode);
 	}
 
 	private OAuth2Error readError(MockHttpServletResponse response) throws Exception {
@@ -290,12 +483,12 @@ public class OidcClientRegistrationEndpointFilterTests {
 		return this.clientRegistrationHttpMessageConverter.read(OidcClientRegistration.class, httpResponse);
 	}
 
-	private static Jwt createJwt() {
+	private static Jwt createJwt(String scope) {
 		// @formatter:off
 		JoseHeader joseHeader = TestJoseHeaders.joseHeader()
 				.build();
 		JwtClaimsSet jwtClaimsSet = TestJwtClaimsSets.jwtClaimsSet()
-				.claim(OAuth2ParameterNames.SCOPE, Collections.singleton("client.create"))
+				.claim(OAuth2ParameterNames.SCOPE, Collections.singleton(scope))
 				.build();
 		Jwt jwt = Jwt.withTokenValue("jwt-access-token")
 				.headers(headers -> headers.putAll(joseHeader.getHeaders()))

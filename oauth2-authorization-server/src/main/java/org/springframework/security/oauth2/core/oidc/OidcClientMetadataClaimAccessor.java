@@ -15,6 +15,7 @@
  */
 package org.springframework.security.oauth2.core.oidc;
 
+import java.net.URL;
 import java.time.Instant;
 import java.util.List;
 
@@ -132,6 +133,26 @@ public interface OidcClientMetadataClaimAccessor extends ClaimAccessor {
 	 */
 	default String getIdTokenSignedResponseAlgorithm() {
 		return getClaimAsString(OidcClientMetadataClaimNames.ID_TOKEN_SIGNED_RESPONSE_ALG);
+	}
+
+	/**
+	 * Returns the Registration Access Token that can be used at the Client Configuration Endpoint.
+	 *
+	 * @return the Registration Access Token that can be used at the Client Configuration Endpoint
+	 * @since 0.2.1
+	 */
+	default String getRegistrationAccessToken() {
+		return getClaimAsString(OidcClientMetadataClaimNames.REGISTRATION_ACCESS_TOKEN);
+	}
+
+	/**
+	 * Returns the {@code URL} of the OAuth 2.0 Client Configuration Endpoint.
+	 *
+	 * @return the {@code URL} of the OAuth 2.0 Client Configuration Endpoint
+	 * @since 0.2.1
+	 */
+	default URL getRegistrationClientUri() {
+		return getClaimAsURL(OidcClientMetadataClaimNames.REGISTRATION_CLIENT_URI);
 	}
 
 }

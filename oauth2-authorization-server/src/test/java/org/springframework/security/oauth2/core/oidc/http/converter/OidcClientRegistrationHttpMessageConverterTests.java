@@ -185,6 +185,8 @@ public class OidcClientRegistrationHttpMessageConverterTests {
 				.scope("scope2")
 				.idTokenSignedResponseAlgorithm(SignatureAlgorithm.RS256.getName())
 				.claim("a-claim", "a-value")
+				.registrationClientUri("https://auth-server.com/connect/register?client_id=1")
+				.registrationAccessToken("registration-access-token")
 				.build();
 		// @formatter:on
 
@@ -204,6 +206,8 @@ public class OidcClientRegistrationHttpMessageConverterTests {
 		assertThat(clientRegistrationResponse).contains("\"scope\":\"scope1 scope2\"");
 		assertThat(clientRegistrationResponse).contains("\"id_token_signed_response_alg\":\"RS256\"");
 		assertThat(clientRegistrationResponse).contains("\"a-claim\":\"a-value\"");
+		assertThat(clientRegistrationResponse).contains("\"registration_access_token\":\"registration-access-token\"");
+		assertThat(clientRegistrationResponse).contains("\"registration_client_uri\":\"https://auth-server.com/connect/register?client_id=1\"");
 	}
 
 	@Test

@@ -33,23 +33,28 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
+import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.http.converter.OAuth2ErrorHttpMessageConverter;
 import org.springframework.security.oauth2.core.oidc.OidcClientRegistration;
 import org.springframework.security.oauth2.core.oidc.http.converter.OidcClientRegistrationHttpMessageConverter;
 import org.springframework.security.oauth2.server.authorization.oidc.authentication.OidcClientRegistrationAuthenticationToken;
+import org.springframework.security.web.util.matcher.AndRequestMatcher;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.security.web.util.matcher.OrRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
+import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 /**
- * A {@code Filter} that processes OpenID Connect Dynamic Client Registration 1.0 Requests.
+ * A {@code Filter} that processes OpenID Connect Dynamic Client Registration 1.0 Requests and  OpenID Connect Client Configuration 1.0 Requests.
  *
  * @author Ovidiu Popa
  * @author Joe Grandja
  * @since 0.1.1
  * @see OidcClientRegistration
  * @see <a href="https://openid.net/specs/openid-connect-registration-1_0.html#ClientRegistration">3. Client Registration Endpoint</a>
+ * @see <a href="https://openid.net/specs/openid-connect-registration-1_0.html#ClientConfigurationEndpoint">4. Client Configuration Endpoint</a>
  */
 public final class OidcClientRegistrationEndpointFilter extends OncePerRequestFilter {
 	/**
@@ -59,6 +64,8 @@ public final class OidcClientRegistrationEndpointFilter extends OncePerRequestFi
 
 	private final AuthenticationManager authenticationManager;
 	private final RequestMatcher clientRegistrationEndpointMatcher;
+	private final RequestMatcher registerClientEndpointMatcher;
+	private final RequestMatcher clientConfigurationEndpointMatcher;
 	private final HttpMessageConverter<OidcClientRegistration> clientRegistrationHttpMessageConverter =
 			new OidcClientRegistrationHttpMessageConverter();
 	private final HttpMessageConverter<OAuth2Error> errorHttpResponseConverter =
@@ -84,8 +91,23 @@ public final class OidcClientRegistrationEndpointFilter extends OncePerRequestFi
 		Assert.notNull(authenticationManager, "authenticationManager cannot be null");
 		Assert.hasText(clientRegistrationEndpointUri, "clientRegistrationEndpointUri cannot be empty");
 		this.authenticationManager = authenticationManager;
-		this.clientRegistrationEndpointMatcher = new AntPathRequestMatcher(
+		this.registerClientEndpointMatcher = new AntPathRequestMatcher(
 				clientRegistrationEndpointUri, HttpMethod.POST.name());
+		this.clientConfigurationEndpointMatcher = createClientConfigurationEndpointMatcher(clientRegistrationEndpointUri);
+		this.clientRegistrationEndpointMatcher = new OrRequestMatcher(this.registerClientEndpointMatcher, this.clientConfigurationEndpointMatcher);
+	}
+
+	private static RequestMatcher createClientConfigurationEndpointMatcher(String clientRegistrationEndpointUri) {
+
+		RequestMatcher clientConfigurationRequestGetMatcher = new AntPathRequestMatcher(
+				clientRegistrationEndpointUri, HttpMethod.GET.name());
+
+		RequestMatcher clientIdMatcher = request -> {
+			String clientId = request.getParameter(OAuth2ParameterNames.CLIENT_ID);
+			return StringUtils.hasText(clientId);
+		};
+
+		return new AndRequestMatcher(clientConfigurationRequestGetMatcher, clientIdMatcher);
 	}
 
 	@Override
@@ -98,17 +120,17 @@ public final class OidcClientRegistrationEndpointFilter extends OncePerRequestFi
 		}
 
 		try {
-			Authentication principal = SecurityContextHolder.getContext().getAuthentication();
-			OidcClientRegistration clientRegistration = this.clientRegistrationHttpMessageConverter.read(
-					OidcClientRegistration.class, new ServletServerHttpRequest(request));
-
-			OidcClientRegistrationAuthenticationToken clientRegistrationAuthentication =
-					new OidcClientRegistrationAuthenticationToken(principal, clientRegistration);
+			OidcClientRegistrationAuthenticationToken clientRegistrationAuthenticationToken = convert(request);
 
 			OidcClientRegistrationAuthenticationToken clientRegistrationAuthenticationResult =
-					(OidcClientRegistrationAuthenticationToken) this.authenticationManager.authenticate(clientRegistrationAuthentication);
+					(OidcClientRegistrationAuthenticationToken) this.authenticationManager.authenticate(clientRegistrationAuthenticationToken);
 
-			sendClientRegistrationResponse(response, clientRegistrationAuthenticationResult.getClientRegistration());
+			if (clientRegistrationAuthenticationToken.getClientRegistration() != null) {
+				sendClientRegistrationResponse(response, HttpStatus.CREATED, clientRegistrationAuthenticationResult.getClientRegistration());
+				return;
+			}
+
+			sendClientRegistrationResponse(response, HttpStatus.OK, clientRegistrationAuthenticationResult.getClientRegistration());
 
 		} catch (OAuth2AuthenticationException ex) {
 			sendErrorResponse(response, ex.getError());
@@ -123,18 +145,57 @@ public final class OidcClientRegistrationEndpointFilter extends OncePerRequestFi
 		}
 	}
 
-	private void sendClientRegistrationResponse(HttpServletResponse response, OidcClientRegistration clientRegistration) throws IOException {
+	private OidcClientRegistrationAuthenticationToken convert(HttpServletRequest request) {
+		if (this.registerClientEndpointMatcher.matches(request)) {
+			return convertOidcClientRegistrationRequest(request);
+		}
+
+		if (this.clientConfigurationEndpointMatcher.matches(request)) {
+			return convertOidcClientConfigurationRequest(request);
+		}
+
+		throw new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_REQUEST));
+	}
+
+	private OidcClientRegistrationAuthenticationToken convertOidcClientConfigurationRequest(HttpServletRequest request) {
+		Authentication principal = SecurityContextHolder.getContext().getAuthentication();
+		String clientId = request.getParameter(OAuth2ParameterNames.CLIENT_ID);
+		String[] clientIdParameters = request.getParameterValues(OAuth2ParameterNames.CLIENT_ID);
+		if (!StringUtils.hasText(clientId) || clientIdParameters.length != 1) {
+			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_CLIENT);
+		}
+		return new OidcClientRegistrationAuthenticationToken(principal, clientId);
+	}
+
+	private OidcClientRegistrationAuthenticationToken convertOidcClientRegistrationRequest(HttpServletRequest request) {
+		try {
+			Authentication principal = SecurityContextHolder.getContext().getAuthentication();
+			OidcClientRegistration clientRegistration = this.clientRegistrationHttpMessageConverter.read(
+					OidcClientRegistration.class, new ServletServerHttpRequest(request));
+			return new OidcClientRegistrationAuthenticationToken(principal, clientRegistration);
+		} catch (IOException ex) {
+			OAuth2Error error = new OAuth2Error(
+					OAuth2ErrorCodes.INVALID_REQUEST,
+					"OpenID Client Registration Error: " + ex.getMessage(),
+					"https://openid.net/specs/openid-connect-registration-1_0.html#RegistrationError");
+			throw new OAuth2AuthenticationException(error);
+		}
+	}
+
+	private void sendClientRegistrationResponse(HttpServletResponse response, HttpStatus httpStatus, OidcClientRegistration clientRegistration) throws IOException {
 		ServletServerHttpResponse httpResponse = new ServletServerHttpResponse(response);
-		httpResponse.setStatusCode(HttpStatus.CREATED);
+		httpResponse.setStatusCode(httpStatus);
 		this.clientRegistrationHttpMessageConverter.write(clientRegistration, null, httpResponse);
 	}
 
 	private void sendErrorResponse(HttpServletResponse response, OAuth2Error error) throws IOException {
 		HttpStatus httpStatus = HttpStatus.BAD_REQUEST;
-		if (error.getErrorCode().equals(OAuth2ErrorCodes.INVALID_TOKEN)) {
+		if (OAuth2ErrorCodes.INVALID_TOKEN.equals(error.getErrorCode())) {
 			httpStatus = HttpStatus.UNAUTHORIZED;
-		} else if (error.getErrorCode().equals(OAuth2ErrorCodes.INSUFFICIENT_SCOPE)) {
+		} else if (OAuth2ErrorCodes.INSUFFICIENT_SCOPE.equals(error.getErrorCode())) {
 			httpStatus = HttpStatus.FORBIDDEN;
+		} else if (OAuth2ErrorCodes.INVALID_CLIENT.equals(error.getErrorCode())) {
+			httpStatus = HttpStatus.UNAUTHORIZED;
 		}
 		ServletServerHttpResponse httpResponse = new ServletServerHttpResponse(response);
 		httpResponse.setStatusCode(httpStatus);

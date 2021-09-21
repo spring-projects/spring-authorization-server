@@ -38,6 +38,7 @@ public class ProviderSettingsTests {
 		assertThat(providerSettings.getTokenRevocationEndpoint()).isEqualTo("/oauth2/revoke");
 		assertThat(providerSettings.getTokenIntrospectionEndpoint()).isEqualTo("/oauth2/introspect");
 		assertThat(providerSettings.getOidcClientRegistrationEndpoint()).isEqualTo("/connect/register");
+		assertThat(providerSettings.getOidcUserInfoEndpoint()).isEqualTo("/userinfo");
 	}
 
 	@Test
@@ -48,6 +49,7 @@ public class ProviderSettingsTests {
 		String tokenRevocationEndpoint = "/oauth2/v1/revoke";
 		String tokenIntrospectionEndpoint = "/oauth2/v1/introspect";
 		String oidcClientRegistrationEndpoint = "/connect/v1/register";
+		String oidcUserInfoEndpoint = "/connect/v1/userinfo";
 		String issuer = "https://example.com:9000";
 
 		ProviderSettings providerSettings = ProviderSettings.builder()
@@ -59,6 +61,7 @@ public class ProviderSettingsTests {
 				.tokenIntrospectionEndpoint(tokenIntrospectionEndpoint)
 				.tokenRevocationEndpoint(tokenRevocationEndpoint)
 				.oidcClientRegistrationEndpoint(oidcClientRegistrationEndpoint)
+				.oidcUserInfoEndpoint(oidcUserInfoEndpoint)
 				.build();
 
 		assertThat(providerSettings.getIssuer()).isEqualTo(issuer);
@@ -68,6 +71,7 @@ public class ProviderSettingsTests {
 		assertThat(providerSettings.getTokenRevocationEndpoint()).isEqualTo(tokenRevocationEndpoint);
 		assertThat(providerSettings.getTokenIntrospectionEndpoint()).isEqualTo(tokenIntrospectionEndpoint);
 		assertThat(providerSettings.getOidcClientRegistrationEndpoint()).isEqualTo(oidcClientRegistrationEndpoint);
+		assertThat(providerSettings.getOidcUserInfoEndpoint()).isEqualTo(oidcUserInfoEndpoint);
 	}
 
 	@Test
@@ -77,7 +81,7 @@ public class ProviderSettingsTests {
 				.settings(settings -> settings.put("name2", "value2"))
 				.build();
 
-		assertThat(providerSettings.getSettings()).hasSize(8);
+		assertThat(providerSettings.getSettings()).hasSize(9);
 		assertThat(providerSettings.<String>getSetting("name1")).isEqualTo("value1");
 		assertThat(providerSettings.<String>getSetting("name2")).isEqualTo("value2");
 	}
@@ -121,6 +125,13 @@ public class ProviderSettingsTests {
 	public void oidcClientRegistrationEndpointWhenNullThenThrowIllegalArgumentException() {
 		assertThatIllegalArgumentException()
 				.isThrownBy(() -> ProviderSettings.builder().oidcClientRegistrationEndpoint(null))
+				.withMessage("value cannot be null");
+	}
+
+	@Test
+	public void oidcUserInfoEndpointWhenNullThenThrowIllegalArgumentException() {
+		assertThatIllegalArgumentException()
+				.isThrownBy(() -> ProviderSettings.builder().oidcUserInfoEndpoint(null))
 				.withMessage("value cannot be null");
 	}
 

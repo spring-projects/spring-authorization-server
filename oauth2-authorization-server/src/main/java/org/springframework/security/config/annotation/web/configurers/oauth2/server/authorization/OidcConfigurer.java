@@ -36,9 +36,11 @@ import org.springframework.security.web.util.matcher.RequestMatcher;
  * @since 0.2.0
  * @see OAuth2AuthorizationServerConfigurer#oidc
  * @see OidcClientRegistrationEndpointConfigurer
+ * @see OidcUserInfoEndpointConfigurer
  * @see OidcProviderConfigurationEndpointFilter
  */
 public final class OidcConfigurer extends AbstractOAuth2Configurer {
+	private final OidcUserInfoEndpointConfigurer userInfoEndpointConfigurer;
 	private OidcClientRegistrationEndpointConfigurer clientRegistrationEndpointConfigurer;
 	private RequestMatcher requestMatcher;
 
@@ -47,6 +49,7 @@ public final class OidcConfigurer extends AbstractOAuth2Configurer {
 	 */
 	OidcConfigurer(ObjectPostProcessor<Object> objectPostProcessor) {
 		super(objectPostProcessor);
+		this.userInfoEndpointConfigurer = new OidcUserInfoEndpointConfigurer(objectPostProcessor);
 	}
 
 	/**
@@ -63,8 +66,20 @@ public final class OidcConfigurer extends AbstractOAuth2Configurer {
 		return this;
 	}
 
+	/**
+	 * Configures the OpenID Connect 1.0 UserInfo Endpoint.
+	 *
+	 * @param userInfoEndpointCustomizer the {@link Customizer} providing access to the {@link OidcUserInfoEndpointConfigurer}
+	 * @return the {@link OidcConfigurer} for further configuration
+	 */
+	public OidcConfigurer userInfoEndpoint(Customizer<OidcUserInfoEndpointConfigurer> userInfoEndpointCustomizer) {
+		userInfoEndpointCustomizer.customize(this.userInfoEndpointConfigurer);
+		return this;
+	}
+
 	@Override
 	<B extends HttpSecurityBuilder<B>> void init(B builder) {
+		this.userInfoEndpointConfigurer.init(builder);
 		if (this.clientRegistrationEndpointConfigurer != null) {
 			this.clientRegistrationEndpointConfigurer.init(builder);
 		}
@@ -75,14 +90,16 @@ public final class OidcConfigurer extends AbstractOAuth2Configurer {
 			requestMatchers.add(new AntPathRequestMatcher(
 					"/.well-known/openid-configuration", HttpMethod.GET.name()));
 		}
+		requestMatchers.add(this.userInfoEndpointConfigurer.getRequestMatcher());
 		if (this.clientRegistrationEndpointConfigurer != null) {
 			requestMatchers.add(this.clientRegistrationEndpointConfigurer.getRequestMatcher());
 		}
-		this.requestMatcher = !requestMatchers.isEmpty() ? new OrRequestMatcher(requestMatchers) : request -> false;
+		this.requestMatcher = requestMatchers.size() > 1 ? new OrRequestMatcher(requestMatchers) : requestMatchers.get(0);
 	}
 
 	@Override
 	<B extends HttpSecurityBuilder<B>> void configure(B builder) {
+		this.userInfoEndpointConfigurer.configure(builder);
 		if (this.clientRegistrationEndpointConfigurer != null) {
 			this.clientRegistrationEndpointConfigurer.configure(builder);
 		}

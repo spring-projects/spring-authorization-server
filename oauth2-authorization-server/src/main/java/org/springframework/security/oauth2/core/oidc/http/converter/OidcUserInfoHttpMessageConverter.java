@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright 2020-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,44 +15,46 @@
  */
 package org.springframework.security.oauth2.core.oidc.http.converter;
 
+import java.time.Instant;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.convert.TypeDescriptor;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.http.HttpInputMessage;
 import org.springframework.http.HttpOutputMessage;
 import org.springframework.http.MediaType;
-import org.springframework.http.converter.HttpMessageConverter;
-import org.springframework.http.converter.GenericHttpMessageConverter;
-import org.springframework.http.converter.HttpMessageNotWritableException;
-import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.http.converter.AbstractHttpMessageConverter;
+import org.springframework.http.converter.GenericHttpMessageConverter;
+import org.springframework.http.converter.HttpMessageConverter;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.http.converter.HttpMessageNotWritableException;
 import org.springframework.security.oauth2.core.converter.ClaimConversionService;
 import org.springframework.security.oauth2.core.converter.ClaimTypeConverter;
 import org.springframework.security.oauth2.core.oidc.OidcUserInfo;
 import org.springframework.security.oauth2.core.oidc.StandardClaimNames;
 import org.springframework.util.Assert;
 
-import java.util.HashMap;
-import java.util.Map;
-
 /**
- * A {@link HttpMessageConverter} for an {@link OidcUserInfo OIDC User Info Response}.
+ * A {@link HttpMessageConverter} for an {@link OidcUserInfo OpenID Connect UserInfo Request and Response}.
  *
  * @author Ido Salomon
+ * @author Steve Riesenberg
+ * @since 0.2.1
  * @see AbstractHttpMessageConverter
  * @see OidcUserInfo
- * @since 0.1.1
  */
 public class OidcUserInfoHttpMessageConverter extends AbstractHttpMessageConverter<OidcUserInfo> {
 
 	private static final ParameterizedTypeReference<Map<String, Object>> STRING_OBJECT_MAP =
-			new ParameterizedTypeReference<Map<String, Object>>() {
-			};
+			new ParameterizedTypeReference<Map<String, Object>>() {};
 
-	private final GenericHttpMessageConverter<Object> jsonMessageConverter = HttpMessageConverters.getJsonMessageConverter();
+	private final GenericHttpMessageConverter<Object> jsonMessageConverter =
+			HttpMessageConverters.getJsonMessageConverter();
 
-	private Converter<Map<String, Object>, OidcUserInfo> oidcUserInfoConverter = new OidcUserInfoConverter();
-	private Converter<OidcUserInfo, Map<String, Object>> oidcUserInfoParametersConverter = OidcUserInfo::getClaims;
+	private Converter<Map<String, Object>, OidcUserInfo> userInfoConverter = new MapOidcUserInfoConverter();
+	private Converter<OidcUserInfo, Map<String, Object>> userInfoParametersConverter = OidcUserInfo::getClaims;
 
 	public OidcUserInfoHttpMessageConverter() {
 		super(MediaType.APPLICATION_JSON, new MediaType("application", "*+json"));
@@ -68,12 +70,12 @@ public class OidcUserInfoHttpMessageConverter extends AbstractHttpMessageConvert
 	protected OidcUserInfo readInternal(Class<? extends OidcUserInfo> clazz, HttpInputMessage inputMessage)
 			throws HttpMessageNotReadableException {
 		try {
-			Map<String, Object> oidcUserInfoParameters =
+			Map<String, Object> userInfoParameters =
 					(Map<String, Object>) this.jsonMessageConverter.read(STRING_OBJECT_MAP.getType(), null, inputMessage);
-			return this.oidcUserInfoConverter.convert(oidcUserInfoParameters);
+			return this.userInfoConverter.convert(userInfoParameters);
 		} catch (Exception ex) {
 			throw new HttpMessageNotReadableException(
-					"An error occurred reading the OIDC User Info: " + ex.getMessage(), ex, inputMessage);
+					"An error occurred reading the UserInfo: " + ex.getMessage(), ex, inputMessage);
 		}
 	}
 
@@ -81,77 +83,82 @@ public class OidcUserInfoHttpMessageConverter extends AbstractHttpMessageConvert
 	protected void writeInternal(OidcUserInfo oidcUserInfo, HttpOutputMessage outputMessage)
 			throws HttpMessageNotWritableException {
 		try {
-			Map<String, Object> oidcUserInfoResponseParameters =
-					this.oidcUserInfoParametersConverter.convert(oidcUserInfo);
+			Map<String, Object> userInfoResponseParameters =
+					this.userInfoParametersConverter.convert(oidcUserInfo);
 			this.jsonMessageConverter.write(
-					oidcUserInfoResponseParameters,
+					userInfoResponseParameters,
 					STRING_OBJECT_MAP.getType(),
 					MediaType.APPLICATION_JSON,
 					outputMessage
 			);
 		} catch (Exception ex) {
 			throw new HttpMessageNotWritableException(
-					"An error occurred writing the OIDC User Info response: " + ex.getMessage(), ex);
+					"An error occurred writing the UserInfo response: " + ex.getMessage(), ex);
 		}
 	}
 
 	/**
-	 * Sets the {@link Converter} used for converting the OIDC User Info parameters
+	 * Sets the {@link Converter} used for converting the UserInfo parameters
 	 * to an {@link OidcUserInfo}.
 	 *
-	 * @param oidcUserInfoConverter the {@link Converter} used for converting to an
-	 *                              {@link OidcUserInfo}
+	 * @param userInfoConverter the {@link Converter} used for converting to an
+	 * {@link OidcUserInfo}
 	 */
-	public final void setOidcUserInfoConverter(Converter<Map<String, Object>, OidcUserInfo> oidcUserInfoConverter) {
-		Assert.notNull(oidcUserInfoConverter, "oidcUserInfoConverter cannot be null");
-		this.oidcUserInfoConverter = oidcUserInfoConverter;
+	public final void setUserInfoConverter(Converter<Map<String, Object>, OidcUserInfo> userInfoConverter) {
+		Assert.notNull(userInfoConverter, "userInfoConverter cannot be null");
+		this.userInfoConverter = userInfoConverter;
 	}
 
 	/**
 	 * Sets the {@link Converter} used for converting the {@link OidcUserInfo} to a
-	 * {@code Map} representation of the OIDC User Info.
+	 * {@code Map} representation of the UserInfo.
 	 *
-	 * @param oidcUserInfoParametersConverter the {@link Converter} used for converting to a
-	 *                                        {@code Map} representation of the OIDC User Info
+	 * @param userInfoParametersConverter the {@link Converter} used for converting to a
+	 * {@code Map} representation of the UserInfo
 	 */
-	public final void setOidcUserInfoParametersConverter(
-			Converter<OidcUserInfo, Map<String, Object>> oidcUserInfoParametersConverter) {
-		Assert.notNull(oidcUserInfoParametersConverter, "oidcUserInfoParametersConverter cannot be null");
-		this.oidcUserInfoParametersConverter = oidcUserInfoParametersConverter;
+	public final void setUserInfoParametersConverter(
+			Converter<OidcUserInfo, Map<String, Object>> userInfoParametersConverter) {
+		Assert.notNull(userInfoParametersConverter, "userInfoParametersConverter cannot be null");
+		this.userInfoParametersConverter = userInfoParametersConverter;
 	}
 
-	private static final class OidcUserInfoConverter implements Converter<Map<String, Object>, OidcUserInfo> {
+	private static final class MapOidcUserInfoConverter implements Converter<Map<String, Object>, OidcUserInfo> {
+
 		private static final ClaimConversionService CLAIM_CONVERSION_SERVICE = ClaimConversionService.getSharedInstance();
 		private static final TypeDescriptor OBJECT_TYPE_DESCRIPTOR = TypeDescriptor.valueOf(Object.class);
 		private static final TypeDescriptor BOOLEAN_TYPE_DESCRIPTOR = TypeDescriptor.valueOf(Boolean.class);
 		private static final TypeDescriptor STRING_TYPE_DESCRIPTOR = TypeDescriptor.valueOf(String.class);
+		private static final TypeDescriptor INSTANT_TYPE_DESCRIPTOR = TypeDescriptor.valueOf(Instant.class);
+		private static final TypeDescriptor STRING_OBJECT_MAP_DESCRIPTOR = TypeDescriptor.map(Map.class, STRING_TYPE_DESCRIPTOR, OBJECT_TYPE_DESCRIPTOR);
 		private final ClaimTypeConverter claimTypeConverter;
 
-		private OidcUserInfoConverter() {
-			Converter<Object, ?> stringConverter = getConverter(STRING_TYPE_DESCRIPTOR);
+		private MapOidcUserInfoConverter() {
 			Converter<Object, ?> booleanConverter = getConverter(BOOLEAN_TYPE_DESCRIPTOR);
+			Converter<Object, ?> stringConverter = getConverter(STRING_TYPE_DESCRIPTOR);
+			Converter<Object, ?> instantConverter = getConverter(INSTANT_TYPE_DESCRIPTOR);
+			Converter<Object, ?> mapConverter = getConverter(STRING_OBJECT_MAP_DESCRIPTOR);
 
 			Map<String, Converter<Object, ?>> claimConverters = new HashMap<>();
 			claimConverters.put(StandardClaimNames.SUB, stringConverter);
-			claimConverters.put(StandardClaimNames.PROFILE, stringConverter);
-			claimConverters.put(StandardClaimNames.ADDRESS, stringConverter);
-			claimConverters.put(StandardClaimNames.BIRTHDATE, stringConverter);
-			claimConverters.put(StandardClaimNames.EMAIL, stringConverter);
-			claimConverters.put(StandardClaimNames.EMAIL_VERIFIED, booleanConverter);
 			claimConverters.put(StandardClaimNames.NAME, stringConverter);
 			claimConverters.put(StandardClaimNames.GIVEN_NAME, stringConverter);
-			claimConverters.put(StandardClaimNames.MIDDLE_NAME, stringConverter);
 			claimConverters.put(StandardClaimNames.FAMILY_NAME, stringConverter);
+			claimConverters.put(StandardClaimNames.MIDDLE_NAME, stringConverter);
 			claimConverters.put(StandardClaimNames.NICKNAME, stringConverter);
 			claimConverters.put(StandardClaimNames.PREFERRED_USERNAME, stringConverter);
-			claimConverters.put(StandardClaimNames.LOCALE, stringConverter);
-			claimConverters.put(StandardClaimNames.GENDER, stringConverter);
-			claimConverters.put(StandardClaimNames.PHONE_NUMBER, stringConverter);
-			claimConverters.put(StandardClaimNames.PHONE_NUMBER_VERIFIED, stringConverter);
+			claimConverters.put(StandardClaimNames.PROFILE, stringConverter);
 			claimConverters.put(StandardClaimNames.PICTURE, stringConverter);
-			claimConverters.put(StandardClaimNames.ZONEINFO, stringConverter);
 			claimConverters.put(StandardClaimNames.WEBSITE, stringConverter);
-			claimConverters.put(StandardClaimNames.UPDATED_AT, stringConverter);
+			claimConverters.put(StandardClaimNames.EMAIL, stringConverter);
+			claimConverters.put(StandardClaimNames.EMAIL_VERIFIED, booleanConverter);
+			claimConverters.put(StandardClaimNames.GENDER, stringConverter);
+			claimConverters.put(StandardClaimNames.BIRTHDATE, stringConverter);
+			claimConverters.put(StandardClaimNames.ZONEINFO, stringConverter);
+			claimConverters.put(StandardClaimNames.LOCALE, stringConverter);
+			claimConverters.put(StandardClaimNames.PHONE_NUMBER, stringConverter);
+			claimConverters.put(StandardClaimNames.PHONE_NUMBER_VERIFIED, booleanConverter);
+			claimConverters.put(StandardClaimNames.ADDRESS, mapConverter);
+			claimConverters.put(StandardClaimNames.UPDATED_AT, instantConverter);
 
 			this.claimTypeConverter = new ClaimTypeConverter(claimConverters);
 		}

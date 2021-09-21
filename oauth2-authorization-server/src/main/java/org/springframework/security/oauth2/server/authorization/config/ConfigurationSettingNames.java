@@ -94,6 +94,11 @@ public final class ConfigurationSettingNames {
 		 */
 		public static final String OIDC_CLIENT_REGISTRATION_ENDPOINT = PROVIDER_SETTINGS_NAMESPACE.concat("oidc-client-registration-endpoint");
 
+		/**
+		 * Set the Provider's OpenID Connect 1.0 UserInfo endpoint.
+		 */
+		public static final String OIDC_USER_INFO_ENDPOINT = PROVIDER_SETTINGS_NAMESPACE.concat("oidc-user-info-endpoint");
+
 		private Provider() {
 		}
 

@@ -54,6 +54,9 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
+import org.springframework.security.oauth2.core.OAuth2AccessToken;
+import org.springframework.security.oauth2.core.OAuth2Token;
+import org.springframework.security.oauth2.core.OAuth2TokenType;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AccessTokenResponse;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.http.converter.OAuth2AccessTokenResponseHttpMessageConverter;
@@ -93,6 +96,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 public class OAuth2RefreshTokenGrantTests {
 	private static final String DEFAULT_TOKEN_ENDPOINT_URI = "/oauth2/token";
+	private static final String DEFAULT_TOKEN_REVOCATION_ENDPOINT_URI = "/oauth2/revoke";
 	private static final String AUTHORITIES_CLAIM = "authorities";
 	private static EmbeddedDatabase db;
 	private static JWKSource<SecurityContext> jwkSource;
@@ -181,10 +185,48 @@ public class OAuth2RefreshTokenGrantTests {
 		assertThat(authoritiesClaim).containsExactlyInAnyOrderElementsOf(userAuthorities);
 	}
 
+	// gh-432
+	@Test
+	public void requestWhenRevokeAndRefreshThenAccessTokenActive() throws Exception {
+		this.spring.register(AuthorizationServerConfiguration.class).autowire();
+
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+		this.registeredClientRepository.save(registeredClient);
+
+		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();
+		this.authorizationService.save(authorization);
+
+		OAuth2AccessToken token = authorization.getAccessToken().getToken();
+		OAuth2TokenType tokenType = OAuth2TokenType.ACCESS_TOKEN;
+
+		this.mvc.perform(post(DEFAULT_TOKEN_REVOCATION_ENDPOINT_URI)
+				.params(getTokenRevocationRequestParameters(token, tokenType))
+				.header(HttpHeaders.AUTHORIZATION, "Basic " + encodeBasicAuth(
+						registeredClient.getClientId(), registeredClient.getClientSecret())))
+				.andExpect(status().isOk());
+
+		this.mvc.perform(post(DEFAULT_TOKEN_ENDPOINT_URI)
+				.params(getRefreshTokenRequestParameters(authorization))
+				.header(HttpHeaders.AUTHORIZATION, "Basic " + encodeBasicAuth(
+						registeredClient.getClientId(), registeredClient.getClientSecret())))
+				.andExpect(status().isOk());
+
+		OAuth2Authorization updatedAuthorization = this.authorizationService.findById(authorization.getId());
+		OAuth2Authorization.Token<OAuth2AccessToken> accessToken = updatedAuthorization.getAccessToken();
+		assertThat(accessToken.isActive()).isTrue();
+	}
+
 	private static MultiValueMap<String, String> getRefreshTokenRequestParameters(OAuth2Authorization authorization) {
 		MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
 		parameters.set(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.REFRESH_TOKEN.getValue());
 		parameters.set(OAuth2ParameterNames.REFRESH_TOKEN, authorization.getRefreshToken().getToken().getTokenValue());
+		return parameters;
+	}
+
+	private static MultiValueMap<String, String> getTokenRevocationRequestParameters(OAuth2Token token, OAuth2TokenType tokenType) {
+		MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+		parameters.set(OAuth2ParameterNames.TOKEN, token.getTokenValue());
+		parameters.set(OAuth2ParameterNames.TOKEN_TYPE_HINT, tokenType.getValue());
 		return parameters;
 	}
 

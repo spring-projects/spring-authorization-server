@@ -237,8 +237,10 @@ public final class OAuth2RefreshTokenAuthenticationProvider implements Authentic
 		// @formatter:off
 		OAuth2Authorization.Builder authorizationBuilder = OAuth2Authorization.from(authorization)
 				.token(accessToken,
-						(metadata) ->
-								metadata.put(OAuth2Authorization.Token.CLAIMS_METADATA_NAME, jwtAccessToken.getClaims()))
+						(metadata) -> {
+								metadata.put(OAuth2Authorization.Token.CLAIMS_METADATA_NAME, jwtAccessToken.getClaims());
+								metadata.put(OAuth2Authorization.Token.INVALIDATED_METADATA_NAME, false);
+						})
 				.refreshToken(currentRefreshToken);
 		if (idToken != null) {
 			authorizationBuilder

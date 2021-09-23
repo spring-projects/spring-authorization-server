@@ -363,7 +363,7 @@ public final class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilte
 
 			for (String scope : scopesToAuthorize) {
 				builder.append("                <div class=\"form-group form-check py-1\">");
-				builder.append("                    <input class=\"form-check-input scope-to-accept\" type=\"checkbox\" name=\"scope\" value=\"" + scope + "\" id=\"" + scope + "\">");
+				builder.append("                    <input class=\"form-check-input\" type=\"checkbox\" name=\"scope\" value=\"" + scope + "\" id=\"" + scope + "\">");
 				builder.append("                    <label class=\"form-check-label\" for=\"" + scope + "\">" + scope + "</label>");
 				builder.append("                </div>");
 			}

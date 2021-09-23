@@ -557,7 +557,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 
 	private static String scopeCheckbox(String scope) {
 		return MessageFormat.format(
-				"<input class=\"form-check-input scope-to-accept\" type=\"checkbox\" name=\"scope\" value=\"{0}\" id=\"{0}\">",
+				"<input class=\"form-check-input\" type=\"checkbox\" name=\"scope\" value=\"{0}\" id=\"{0}\">",
 				scope
 		);
 	}

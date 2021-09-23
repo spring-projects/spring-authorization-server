@@ -15,6 +15,7 @@
  */
 package org.springframework.security.oauth2.server.authorization.authentication;
 
+import java.net.URL;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -134,7 +135,10 @@ public final class OAuth2TokenIntrospectionAuthenticationProvider implements Aut
 				if (!CollectionUtils.isEmpty(audience)) {
 					tokenClaims.audiences(audiences -> audiences.addAll(audience));
 				}
-				tokenClaims.issuer(jwtClaims.getIssuer().toExternalForm());
+				URL issuer = jwtClaims.getIssuer();
+				if (issuer != null) {
+					tokenClaims.issuer(issuer.toExternalForm());
+				}
 				String jti = jwtClaims.getId();
 				if (StringUtils.hasText(jti)) {
 					tokenClaims.id(jti);

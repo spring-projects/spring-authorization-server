@@ -104,7 +104,7 @@ public final class OAuth2TokenEndpointFilter extends OncePerRequestFilter {
 			new OAuth2AccessTokenResponseHttpMessageConverter();
 	private final HttpMessageConverter<OAuth2Error> errorHttpResponseConverter =
 			new OAuth2ErrorHttpMessageConverter();
-	private final AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource =
+	private AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource =
 			new WebAuthenticationDetailsSource();
 	private AuthenticationConverter authenticationConverter;
 	private AuthenticationSuccessHandler authenticationSuccessHandler = this::sendAccessTokenResponse;
@@ -168,6 +168,17 @@ public final class OAuth2TokenEndpointFilter extends OncePerRequestFilter {
 			SecurityContextHolder.clearContext();
 			this.authenticationFailureHandler.onAuthenticationFailure(request, response, ex);
 		}
+	}
+
+	/**
+	 * Sets the {@link AuthenticationDetailsSource} used for building an authentication details instance from {@link HttpServletRequest}.
+	 *
+	 * @param authenticationDetailsSource the {@link AuthenticationDetailsSource} used for building an authentication details instance from {@link HttpServletRequest}
+	 */
+	public void setAuthenticationDetailsSource(
+			AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource) {
+		Assert.notNull(authenticationDetailsSource, "authenticationDetailsSource cannot be null");
+		this.authenticationDetailsSource = authenticationDetailsSource;
 	}
 
 	/**

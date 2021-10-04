@@ -262,23 +262,23 @@ public class RegisteredClient implements Serializable {
 		}
 
 		protected Builder(RegisteredClient registeredClient) {
-			this.id = registeredClient.id;
-			this.clientId = registeredClient.clientId;
-			this.clientIdIssuedAt = registeredClient.clientIdIssuedAt;
-			this.clientSecret = registeredClient.clientSecret;
-			this.clientSecretExpiresAt = registeredClient.clientSecretExpiresAt;
-			this.clientName = registeredClient.clientName;
-			if (!CollectionUtils.isEmpty(registeredClient.clientAuthenticationMethods)) {
-				this.clientAuthenticationMethods.addAll(registeredClient.clientAuthenticationMethods);
+			this.id = registeredClient.getId();
+			this.clientId = registeredClient.getClientId();
+			this.clientIdIssuedAt = registeredClient.getClientIdIssuedAt();
+			this.clientSecret = registeredClient.getClientSecret();
+			this.clientSecretExpiresAt = registeredClient.getClientSecretExpiresAt();
+			this.clientName = registeredClient.getClientName();
+			if (!CollectionUtils.isEmpty(registeredClient.getClientAuthenticationMethods())) {
+				this.clientAuthenticationMethods.addAll(registeredClient.getClientAuthenticationMethods());
 			}
-			if (!CollectionUtils.isEmpty(registeredClient.authorizationGrantTypes)) {
-				this.authorizationGrantTypes.addAll(registeredClient.authorizationGrantTypes);
+			if (!CollectionUtils.isEmpty(registeredClient.getAuthorizationGrantTypes())) {
+				this.authorizationGrantTypes.addAll(registeredClient.getAuthorizationGrantTypes());
 			}
-			if (!CollectionUtils.isEmpty(registeredClient.redirectUris)) {
-				this.redirectUris.addAll(registeredClient.redirectUris);
+			if (!CollectionUtils.isEmpty(registeredClient.getRedirectUris())) {
+				this.redirectUris.addAll(registeredClient.getRedirectUris());
 			}
-			if (!CollectionUtils.isEmpty(registeredClient.scopes)) {
-				this.scopes.addAll(registeredClient.scopes);
+			if (!CollectionUtils.isEmpty(registeredClient.getScopes())) {
+				this.scopes.addAll(registeredClient.getScopes());
 			}
 			this.clientSettings = ClientSettings.withSettings(registeredClient.getClientSettings().getSettings()).build();
 			this.tokenSettings = TokenSettings.withSettings(registeredClient.getTokenSettings().getSettings()).build();

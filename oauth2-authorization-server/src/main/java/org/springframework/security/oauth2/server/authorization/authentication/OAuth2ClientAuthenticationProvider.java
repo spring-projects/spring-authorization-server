@@ -114,8 +114,7 @@ public final class OAuth2ClientAuthenticationProvider implements AuthenticationP
 			authenticatedCredentials = true;
 		}
 
-		authenticatedCredentials = authenticatedCredentials ||
-				authenticatePkceIfAvailable(clientAuthentication, registeredClient);
+		authenticatedCredentials = authenticatedCredentials || authenticatePkceIfAvailable(clientAuthentication);
 		if (!authenticatedCredentials) {
 			throwInvalidClient();
 		}
@@ -129,8 +128,7 @@ public final class OAuth2ClientAuthenticationProvider implements AuthenticationP
 		return OAuth2ClientAuthenticationToken.class.isAssignableFrom(authentication);
 	}
 
-	private boolean authenticatePkceIfAvailable(OAuth2ClientAuthenticationToken clientAuthentication,
-			RegisteredClient registeredClient) {
+	private boolean authenticatePkceIfAvailable(OAuth2ClientAuthenticationToken clientAuthentication) {
 
 		Map<String, Object> parameters = clientAuthentication.getAdditionalParameters();
 		if (CollectionUtils.isEmpty(parameters) || !authorizationCodeGrant(parameters)) {
@@ -149,11 +147,6 @@ public final class OAuth2ClientAuthenticationProvider implements AuthenticationP
 
 		String codeChallenge = (String) authorizationRequest.getAdditionalParameters()
 				.get(PkceParameterNames.CODE_CHALLENGE);
-		if (!StringUtils.hasText(codeChallenge) &&
-				registeredClient.getClientSettings().isRequireProofKey()) {
-			throwInvalidClient();
-		}
-
 		String codeChallengeMethod = (String) authorizationRequest.getAdditionalParameters()
 				.get(PkceParameterNames.CODE_CHALLENGE_METHOD);
 		String codeVerifier = (String) parameters.get(PkceParameterNames.CODE_VERIFIER);
@@ -171,10 +164,10 @@ public final class OAuth2ClientAuthenticationProvider implements AuthenticationP
 	}
 
 	private static boolean codeVerifierValid(String codeVerifier, String codeChallenge, String codeChallengeMethod) {
-		if (!StringUtils.hasText(codeVerifier)) {
+		if (!StringUtils.hasText(codeVerifier) || !StringUtils.hasText(codeChallenge)) {
 			return false;
 		} else if (!StringUtils.hasText(codeChallengeMethod) || "plain".equals(codeChallengeMethod)) {
-			return  codeVerifier.equals(codeChallenge);
+			return codeVerifier.equals(codeChallenge);
 		} else if ("S256".equals(codeChallengeMethod)) {
 			try {
 				MessageDigest md = MessageDigest.getInstance("SHA-256");

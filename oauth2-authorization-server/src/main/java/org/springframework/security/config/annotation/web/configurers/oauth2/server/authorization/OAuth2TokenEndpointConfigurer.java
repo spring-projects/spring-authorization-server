@@ -156,6 +156,8 @@ public final class OAuth2TokenEndpointConfigurer extends AbstractOAuth2Configure
 	}
 
 	private <B extends HttpSecurityBuilder<B>> List<AuthenticationProvider> createDefaultAuthenticationProviders(B builder) {
+		ProviderSettings providerSettings = OAuth2ConfigurerUtils.getProviderSettings(builder);
+
 		List<AuthenticationProvider> authenticationProviders = new ArrayList<>();
 
 		JwtEncoder jwtEncoder = OAuth2ConfigurerUtils.getJwtEncoder(builder);
@@ -165,6 +167,7 @@ public final class OAuth2TokenEndpointConfigurer extends AbstractOAuth2Configure
 				new OAuth2AuthorizationCodeAuthenticationProvider(
 						OAuth2ConfigurerUtils.getAuthorizationService(builder),
 						jwtEncoder);
+		authorizationCodeAuthenticationProvider.setProviderSettings(providerSettings);
 		if (jwtCustomizer != null) {
 			authorizationCodeAuthenticationProvider.setJwtCustomizer(jwtCustomizer);
 		}
@@ -174,6 +177,7 @@ public final class OAuth2TokenEndpointConfigurer extends AbstractOAuth2Configure
 				new OAuth2RefreshTokenAuthenticationProvider(
 						OAuth2ConfigurerUtils.getAuthorizationService(builder),
 						jwtEncoder);
+		refreshTokenAuthenticationProvider.setProviderSettings(providerSettings);
 		if (jwtCustomizer != null) {
 			refreshTokenAuthenticationProvider.setJwtCustomizer(jwtCustomizer);
 		}
@@ -183,6 +187,7 @@ public final class OAuth2TokenEndpointConfigurer extends AbstractOAuth2Configure
 				new OAuth2ClientCredentialsAuthenticationProvider(
 						OAuth2ConfigurerUtils.getAuthorizationService(builder),
 						jwtEncoder);
+		clientCredentialsAuthenticationProvider.setProviderSettings(providerSettings);
 		if (jwtCustomizer != null) {
 			clientCredentialsAuthenticationProvider.setJwtCustomizer(jwtCustomizer);
 		}

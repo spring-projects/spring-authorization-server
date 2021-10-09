@@ -19,7 +19,6 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.function.Consumer;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -90,8 +89,12 @@ public final class OAuth2ClientCredentialsAuthenticationProvider implements Auth
 		this.jwtCustomizer = jwtCustomizer;
 	}
 
-	@Autowired(required = false)
-	protected void setProviderSettings(ProviderSettings providerSettings) {
+	/**
+	 * Sets the {@code ProviderSettings} that customizes the issuer for the generated {@code Jwt}.
+	 *
+	 * @param providerSettings the {@code ProviderSettings} that customizes the issuer for the generated {@code Jwt}
+	 */
+	public void setProviderSettings(ProviderSettings providerSettings) {
 		this.providerSettings = providerSettings;
 	}
 

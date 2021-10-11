@@ -18,6 +18,7 @@ package org.springframework.security.oauth2.server.authorization.jackson2;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 
 import com.fasterxml.jackson.core.Version;
 import com.fasterxml.jackson.databind.module.SimpleModule;
@@ -71,6 +72,7 @@ public class OAuth2AuthorizationServerJackson2Module extends SimpleModule {
 		context.setMixInAnnotations(Collections.unmodifiableMap(Collections.emptyMap()).getClass(),
 				UnmodifiableMapMixin.class);
 		context.setMixInAnnotations(HashSet.class, HashSetMixin.class);
+		context.setMixInAnnotations(LinkedHashSet.class, HashSetMixin.class);
 		context.setMixInAnnotations(OAuth2AuthorizationRequest.class, OAuth2AuthorizationRequestMixin.class);
 		context.setMixInAnnotations(Duration.class, DurationMixin.class);
 		context.setMixInAnnotations(SignatureAlgorithm.class, SignatureAlgorithmMixin.class);

@@ -253,9 +253,12 @@ public class JdbcOAuth2AuthorizationService implements OAuth2AuthorizationServic
 	}
 
 	private OAuth2Authorization findBy(String filter, List<SqlParameterValue> parameters) {
-		PreparedStatementSetter pss = new ArgumentPreparedStatementSetter(parameters.toArray());
-		List<OAuth2Authorization> result = this.jdbcOperations.query(LOAD_AUTHORIZATION_SQL + filter, pss, this.authorizationRowMapper);
-		return !result.isEmpty() ? result.get(0) : null;
+		try (LobCreator lobCreator = getLobHandler().getLobCreator()) {
+			PreparedStatementSetter pss = new LobCreatorArgumentPreparedStatementSetter(lobCreator,
+					parameters.toArray());
+			List<OAuth2Authorization> result = getJdbcOperations().query(LOAD_AUTHORIZATION_SQL + filter, pss, getAuthorizationRowMapper());
+			return !result.isEmpty() ? result.get(0) : null;
+		}
 	}
 
 	/**

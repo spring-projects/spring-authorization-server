@@ -184,7 +184,7 @@ public class OAuth2ClientAuthenticationProviderTests {
 
 	@Test
 	public void authenticateWhenPkceAndInvalidCodeThenThrowOAuth2AuthenticationException() {
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+		RegisteredClient registeredClient = TestRegisteredClients.registeredPublicClient().build();
 		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
 				.thenReturn(registeredClient);
 
@@ -209,7 +209,7 @@ public class OAuth2ClientAuthenticationProviderTests {
 
 	@Test
 	public void authenticateWhenPkceAndRequireProofKeyAndMissingCodeChallengeThenThrowOAuth2AuthenticationException() {
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
+		RegisteredClient registeredClient = TestRegisteredClients.registeredPublicClient()
 				.clientSettings(ClientSettings.builder().requireProofKey(true).build())
 				.build();
 		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
@@ -235,7 +235,7 @@ public class OAuth2ClientAuthenticationProviderTests {
 
 	@Test
 	public void authenticateWhenPkceAndMissingCodeVerifierThenThrowOAuth2AuthenticationException() {
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+		RegisteredClient registeredClient = TestRegisteredClients.registeredPublicClient().build();
 		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
 				.thenReturn(registeredClient);
 
@@ -260,7 +260,7 @@ public class OAuth2ClientAuthenticationProviderTests {
 
 	@Test
 	public void authenticateWhenPkceAndPlainMethodAndInvalidCodeVerifierThenThrowOAuth2AuthenticationException() {
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+		RegisteredClient registeredClient = TestRegisteredClients.registeredPublicClient().build();
 		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
 				.thenReturn(registeredClient);
 
@@ -284,7 +284,7 @@ public class OAuth2ClientAuthenticationProviderTests {
 
 	@Test
 	public void authenticateWhenPkceAndS256MethodAndInvalidCodeVerifierThenThrowOAuth2AuthenticationException() {
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+		RegisteredClient registeredClient = TestRegisteredClients.registeredPublicClient().build();
 		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
 				.thenReturn(registeredClient);
 

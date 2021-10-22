@@ -38,7 +38,6 @@ import org.springframework.security.oauth2.server.authorization.OAuth2Authorizat
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.util.Assert;
-import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 /**
@@ -114,8 +113,8 @@ public final class OAuth2ClientAuthenticationProvider implements AuthenticationP
 			authenticatedCredentials = true;
 		}
 
-		authenticatedCredentials = authenticatedCredentials ||
-				authenticatePkceIfAvailable(clientAuthentication, registeredClient);
+		boolean pkceAuthenticated = authenticatePkceIfAvailable(clientAuthentication, registeredClient);
+		authenticatedCredentials = authenticatedCredentials || pkceAuthenticated;
 		if (!authenticatedCredentials) {
 			throwInvalidClient();
 		}
@@ -133,7 +132,7 @@ public final class OAuth2ClientAuthenticationProvider implements AuthenticationP
 			RegisteredClient registeredClient) {
 
 		Map<String, Object> parameters = clientAuthentication.getAdditionalParameters();
-		if (CollectionUtils.isEmpty(parameters) || !authorizationCodeGrant(parameters)) {
+		if (!authorizationCodeGrant(parameters)) {
 			return false;
 		}
 
@@ -149,9 +148,12 @@ public final class OAuth2ClientAuthenticationProvider implements AuthenticationP
 
 		String codeChallenge = (String) authorizationRequest.getAdditionalParameters()
 				.get(PkceParameterNames.CODE_CHALLENGE);
-		if (!StringUtils.hasText(codeChallenge) &&
-				registeredClient.getClientSettings().isRequireProofKey()) {
-			throwInvalidClient();
+		if (!StringUtils.hasText(codeChallenge)) {
+			if (registeredClient.getClientSettings().isRequireProofKey()) {
+				throwInvalidClient();
+			} else {
+				return false;
+			}
 		}
 
 		String codeChallengeMethod = (String) authorizationRequest.getAdditionalParameters()
@@ -174,7 +176,7 @@ public final class OAuth2ClientAuthenticationProvider implements AuthenticationP
 		if (!StringUtils.hasText(codeVerifier)) {
 			return false;
 		} else if (!StringUtils.hasText(codeChallengeMethod) || "plain".equals(codeChallengeMethod)) {
-			return  codeVerifier.equals(codeChallenge);
+			return codeVerifier.equals(codeChallenge);
 		} else if ("S256".equals(codeChallengeMethod)) {
 			try {
 				MessageDigest md = MessageDigest.getInstance("SHA-256");

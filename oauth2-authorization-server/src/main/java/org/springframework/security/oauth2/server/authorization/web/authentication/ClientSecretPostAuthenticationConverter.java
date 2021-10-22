@@ -77,7 +77,7 @@ public final class ClientSecretPostAuthenticationConverter implements Authentica
 
 	private static Map<String, Object> extractAdditionalParameters(HttpServletRequest request) {
 		Map<String, Object> additionalParameters = Collections.emptyMap();
-		if (OAuth2EndpointUtils.matchesPkceTokenRequest(request)) {
+		if (OAuth2EndpointUtils.matchesAuthorizationCodeGrantRequest(request)) {
 			// Confidential clients can also leverage PKCE
 			additionalParameters = new HashMap<>(OAuth2EndpointUtils.getParameters(request).toSingleValueMap());
 			additionalParameters.remove(OAuth2ParameterNames.CLIENT_ID);

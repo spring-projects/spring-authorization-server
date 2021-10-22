@@ -24,7 +24,6 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.server.ServletServerHttpResponse;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -125,7 +124,7 @@ public final class OidcUserInfoEndpointFilter extends OncePerRequestFilter {
 
 	private void sendUserInfoResponse(HttpServletResponse response, OidcUserInfo userInfo) throws IOException {
 		ServletServerHttpResponse httpResponse = new ServletServerHttpResponse(response);
-		this.userInfoHttpMessageConverter.write(userInfo, MediaType.APPLICATION_JSON, httpResponse);
+		this.userInfoHttpMessageConverter.write(userInfo, null, httpResponse);
 	}
 
 	private void sendErrorResponse(HttpServletResponse response, OAuth2Error error) throws IOException {

@@ -130,18 +130,18 @@ public class OidcUserInfoHttpMessageConverterTests {
 
 		assertThatExceptionOfType(HttpMessageNotReadableException.class)
 				.isThrownBy(() -> this.messageConverter.readInternal(OidcUserInfo.class, response))
-				.withMessageContaining("An error occurred reading the UserInfo")
+				.withMessageContaining("An error occurred reading the UserInfo response")
 				.withMessageContaining(errorMessage);
 	}
 
 	@Test
 	public void readInternalWhenInvalidResponseThenThrowException() {
-		String providerConfigurationResponse = "{}";
-		MockClientHttpResponse response = new MockClientHttpResponse(providerConfigurationResponse.getBytes(), HttpStatus.OK);
+		String userInfoResponse = "{}";
+		MockClientHttpResponse response = new MockClientHttpResponse(userInfoResponse.getBytes(), HttpStatus.OK);
 
 		assertThatExceptionOfType(HttpMessageNotReadableException.class)
 				.isThrownBy(() -> this.messageConverter.readInternal(OidcUserInfo.class, response))
-				.withMessageContaining("An error occurred reading the UserInfo")
+				.withMessageContaining("An error occurred reading the UserInfo response")
 				.withMessageContaining("claims cannot be empty");
 	}
 

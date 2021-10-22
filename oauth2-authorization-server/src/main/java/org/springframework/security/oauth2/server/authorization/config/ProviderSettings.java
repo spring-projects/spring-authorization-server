@@ -100,7 +100,7 @@ public final class ProviderSettings extends AbstractSettings {
 	/**
 	 * Returns the Provider's OpenID Connect 1.0 UserInfo endpoint. The default is {@code /userinfo}.
 	 *
-	 * @return the OpenID Connect 1.0 User Info endpoint
+	 * @return the OpenID Connect 1.0 UserInfo endpoint
 	 */
 	public String getOidcUserInfoEndpoint() {
 		return getSetting(ConfigurationSettingNames.Provider.OIDC_USER_INFO_ENDPOINT);
@@ -215,7 +215,7 @@ public final class ProviderSettings extends AbstractSettings {
 		/**
 		 * Sets the Provider's OpenID Connect 1.0 UserInfo endpoint.
 		 *
-		 * @param oidcUserInfoEndpoint the OpenID Connect 1.0 User Info endpoint
+		 * @param oidcUserInfoEndpoint the OpenID Connect 1.0 UserInfo endpoint
 		 * @return the {@link Builder} for further configuration
 		 */
 		public Builder oidcUserInfoEndpoint(String oidcUserInfoEndpoint) {

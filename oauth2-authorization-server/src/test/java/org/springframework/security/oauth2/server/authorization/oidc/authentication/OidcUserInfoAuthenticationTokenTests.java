@@ -32,6 +32,7 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
  * @author Steve Riesenberg
  */
 public class OidcUserInfoAuthenticationTokenTests {
+
 	@Test
 	public void constructorWhenPrincipalNullThenThrowIllegalArgumentException() {
 		assertThatIllegalArgumentException()
@@ -55,6 +56,6 @@ public class OidcUserInfoAuthenticationTokenTests {
 		OidcUserInfoAuthenticationToken authentication = new OidcUserInfoAuthenticationToken(principal, userInfo);
 		assertThat(authentication.getPrincipal()).isEqualTo(principal);
 		assertThat(authentication.getUserInfo()).isEqualTo(userInfo);
-		assertThat(authentication.isAuthenticated()).isFalse();
+		assertThat(authentication.isAuthenticated()).isTrue();
 	}
 }

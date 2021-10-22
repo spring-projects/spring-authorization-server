@@ -37,7 +37,7 @@ import org.springframework.security.oauth2.core.oidc.StandardClaimNames;
 import org.springframework.util.Assert;
 
 /**
- * A {@link HttpMessageConverter} for an {@link OidcUserInfo OpenID Connect UserInfo Request and Response}.
+ * A {@link HttpMessageConverter} for an {@link OidcUserInfo OpenID Connect UserInfo Response}.
  *
  * @author Ido Salomon
  * @author Steve Riesenberg
@@ -75,7 +75,7 @@ public class OidcUserInfoHttpMessageConverter extends AbstractHttpMessageConvert
 			return this.userInfoConverter.convert(userInfoParameters);
 		} catch (Exception ex) {
 			throw new HttpMessageNotReadableException(
-					"An error occurred reading the UserInfo: " + ex.getMessage(), ex, inputMessage);
+					"An error occurred reading the UserInfo response: " + ex.getMessage(), ex, inputMessage);
 		}
 	}
 
@@ -101,8 +101,7 @@ public class OidcUserInfoHttpMessageConverter extends AbstractHttpMessageConvert
 	 * Sets the {@link Converter} used for converting the UserInfo parameters
 	 * to an {@link OidcUserInfo}.
 	 *
-	 * @param userInfoConverter the {@link Converter} used for converting to an
-	 * {@link OidcUserInfo}
+	 * @param userInfoConverter the {@link Converter} used for converting to an {@link OidcUserInfo}
 	 */
 	public final void setUserInfoConverter(Converter<Map<String, Object>, OidcUserInfo> userInfoConverter) {
 		Assert.notNull(userInfoConverter, "userInfoConverter cannot be null");
@@ -123,7 +122,6 @@ public class OidcUserInfoHttpMessageConverter extends AbstractHttpMessageConvert
 	}
 
 	private static final class MapOidcUserInfoConverter implements Converter<Map<String, Object>, OidcUserInfo> {
-
 		private static final ClaimConversionService CLAIM_CONVERSION_SERVICE = ClaimConversionService.getSharedInstance();
 		private static final TypeDescriptor OBJECT_TYPE_DESCRIPTOR = TypeDescriptor.valueOf(Object.class);
 		private static final TypeDescriptor BOOLEAN_TYPE_DESCRIPTOR = TypeDescriptor.valueOf(Boolean.class);

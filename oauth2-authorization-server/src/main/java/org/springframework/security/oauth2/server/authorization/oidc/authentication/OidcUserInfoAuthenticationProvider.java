@@ -50,9 +50,7 @@ import org.springframework.util.Assert;
  * @see <a href="https://openid.net/specs/openid-connect-core-1_0.html#UserInfo">5.3. UserInfo Endpoint</a>
  */
 public final class OidcUserInfoAuthenticationProvider implements AuthenticationProvider {
-
 	private final OAuth2AuthorizationService authorizationService;
-
 	private Function<OAuth2AuthenticationContext, OidcUserInfo> userInfoMapper = new DefaultOidcUserInfoMapper();
 
 	/**
@@ -107,6 +105,7 @@ public final class OidcUserInfoAuthenticationProvider implements AuthenticationP
 				userInfoAuthentication, context);
 
 		OidcUserInfo userInfo = this.userInfoMapper.apply(authenticationContext);
+
 		return new OidcUserInfoAuthenticationToken(accessTokenAuthentication, userInfo);
 	}
 
@@ -116,7 +115,7 @@ public final class OidcUserInfoAuthenticationProvider implements AuthenticationP
 	}
 
 	/**
-	 * Sets the {@link Function} used when mapping from an {@link OAuth2AuthenticationContext}
+	 * Sets the {@link Function} used to extract claims from an {@link OAuth2AuthenticationContext}
 	 * to an instance of {@link OidcUserInfo} for the UserInfo response.
 	 *
 	 * <p>
@@ -128,7 +127,7 @@ public final class OidcUserInfoAuthenticationProvider implements AuthenticationP
 	 * {@link OAuth2AccessToken} associated with the bearer token used to make the request.</li>
 	 * </ul>
 	 *
-	 * @param userInfoMapper the {@link Function} used when mapping from an {@link OAuth2AuthenticationContext}
+	 * @param userInfoMapper the {@link Function} used to extract claims from an {@link OAuth2AuthenticationContext} to an instance of {@link OidcUserInfo}
 	 */
 	public void setUserInfoMapper(Function<OAuth2AuthenticationContext, OidcUserInfo> userInfoMapper) {
 		Assert.notNull(userInfoMapper, "userInfoMapper cannot be null");
@@ -173,7 +172,7 @@ public final class OidcUserInfoAuthenticationProvider implements AuthenticationP
 			return new OidcUserInfo(scopeRequestedClaims);
 		}
 
-		private Map<String, Object> getClaimsRequestedByScope(Map<String, Object> claims, Set<String> requestedScopes) {
+		private static Map<String, Object> getClaimsRequestedByScope(Map<String, Object> claims, Set<String> requestedScopes) {
 			Set<String> scopeRequestedClaimNames = new HashSet<>(32);
 			scopeRequestedClaimNames.add(StandardClaimNames.SUB);
 
@@ -195,5 +194,7 @@ public final class OidcUserInfoAuthenticationProvider implements AuthenticationP
 
 			return requestedClaims;
 		}
+
 	}
+
 }

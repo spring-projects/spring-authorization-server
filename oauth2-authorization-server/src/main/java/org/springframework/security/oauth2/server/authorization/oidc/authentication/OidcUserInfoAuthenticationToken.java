@@ -33,16 +33,14 @@ import org.springframework.util.Assert;
  * @see OidcUserInfoAuthenticationProvider
  */
 public class OidcUserInfoAuthenticationToken extends AbstractAuthenticationToken {
-
 	private static final long serialVersionUID = Version.SERIAL_VERSION_UID;
-
 	private final Authentication principal;
 	private final OidcUserInfo userInfo;
 
 	/**
 	 * Constructs an {@code OidcUserInfoAuthenticationToken} using the provided parameters.
 	 *
-	 * @param principal the authenticated principal
+	 * @param principal the principal
 	 */
 	public OidcUserInfoAuthenticationToken(Authentication principal) {
 		super(Collections.emptyList());
@@ -64,7 +62,7 @@ public class OidcUserInfoAuthenticationToken extends AbstractAuthenticationToken
 		Assert.notNull(userInfo, "userInfo cannot be null");
 		this.principal = principal;
 		this.userInfo = userInfo;
-		setAuthenticated(principal.isAuthenticated());
+		setAuthenticated(true);
 	}
 
 	@Override
@@ -85,4 +83,5 @@ public class OidcUserInfoAuthenticationToken extends AbstractAuthenticationToken
 	public OidcUserInfo getUserInfo() {
 		return this.userInfo;
 	}
+
 }

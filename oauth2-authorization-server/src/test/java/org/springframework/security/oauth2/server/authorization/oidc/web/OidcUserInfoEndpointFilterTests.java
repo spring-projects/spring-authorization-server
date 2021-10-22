@@ -20,9 +20,9 @@ import java.util.Collections;
 
 import javax.servlet.FilterChain;
 
+import org.junit.Before;
 import org.junit.Test;
 
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageConverter;
@@ -30,9 +30,10 @@ import org.springframework.mock.http.client.MockClientHttpResponse;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.http.converter.OAuth2ErrorHttpMessageConverter;
@@ -59,7 +60,15 @@ import static org.mockito.Mockito.when;
  */
 public class OidcUserInfoEndpointFilterTests {
 	private static final String DEFAULT_OIDC_USER_INFO_ENDPOINT_URI = "/userinfo";
+	private AuthenticationManager authenticationManager;
+	private OidcUserInfoEndpointFilter filter;
 	private final HttpMessageConverter<OAuth2Error> errorHttpResponseConverter = new OAuth2ErrorHttpMessageConverter();
+
+	@Before
+	public void setup() {
+		this.authenticationManager = mock(AuthenticationManager.class);
+		this.filter = new OidcUserInfoEndpointFilter(this.authenticationManager, DEFAULT_OIDC_USER_INFO_ENDPOINT_URI);
+	}
 
 	@Test
 	public void constructorWhenAuthenticationManagerNullThenThrowIllegalArgumentException() {
@@ -70,91 +79,64 @@ public class OidcUserInfoEndpointFilterTests {
 
 	@Test
 	public void constructorWhenUserInfoEndpointUriIsEmptyThenThrowIllegalArgumentException() {
-		AuthenticationManager authenticationManager = mock(AuthenticationManager.class);
 		assertThatIllegalArgumentException()
-				.isThrownBy(() -> new OidcUserInfoEndpointFilter(authenticationManager, ""))
+				.isThrownBy(() -> new OidcUserInfoEndpointFilter(this.authenticationManager, ""))
 				.withMessage("userInfoEndpointUri cannot be empty");
 	}
 
 	@Test
 	public void doFilterWhenNotUserInfoRequestThenNotProcessed() throws Exception {
-		AuthenticationManager authenticationManager = mock(AuthenticationManager.class);
-		OidcUserInfoEndpointFilter userInfoEndpointFilter =
-				new OidcUserInfoEndpointFilter(authenticationManager, DEFAULT_OIDC_USER_INFO_ENDPOINT_URI);
-
 		String requestUri = "/path";
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestUri);
 		request.setServletPath(requestUri);
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		FilterChain filterChain = mock(FilterChain.class);
 
-		userInfoEndpointFilter.doFilter(request, response, filterChain);
+		this.filter.doFilter(request, response, filterChain);
 
 		verify(filterChain).doFilter(request, response);
 	}
 
 	@Test
 	public void doFilterWhenUserInfoRequestPutThenNotProcessed() throws Exception {
-		AuthenticationManager authenticationManager = mock(AuthenticationManager.class);
-		OidcUserInfoEndpointFilter userInfoEndpointFilter =
-				new OidcUserInfoEndpointFilter(authenticationManager, DEFAULT_OIDC_USER_INFO_ENDPOINT_URI);
-
 		String requestUri = DEFAULT_OIDC_USER_INFO_ENDPOINT_URI;
 		MockHttpServletRequest request = new MockHttpServletRequest("PUT", requestUri);
 		request.setServletPath(requestUri);
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		FilterChain filterChain = mock(FilterChain.class);
 
-		userInfoEndpointFilter.doFilter(request, response, filterChain);
+		this.filter.doFilter(request, response, filterChain);
 
-		verifyNoInteractions(authenticationManager);
+		verifyNoInteractions(this.authenticationManager);
 		verify(filterChain).doFilter(request, response);
 	}
 
 	@Test
 	public void doFilterWhenUserInfoRequestGetThenSuccess() throws Exception {
-		JwtAuthenticationToken principal = createJwtAuthenticationToken();
-		SecurityContextHolder.getContext().setAuthentication(principal);
-
-		OidcUserInfoAuthenticationToken authenticationResult = new OidcUserInfoAuthenticationToken(principal, createUserInfo());
-		AuthenticationManager authenticationManager = mock(AuthenticationManager.class);
-		when(authenticationManager.authenticate(any())).thenReturn(authenticationResult);
-		OidcUserInfoEndpointFilter userInfoEndpointFilter = new OidcUserInfoEndpointFilter(authenticationManager);
-
-		String requestUri = DEFAULT_OIDC_USER_INFO_ENDPOINT_URI;
-		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestUri);
-		request.setServletPath(requestUri);
-		MockHttpServletResponse response = new MockHttpServletResponse();
-		FilterChain filterChain = mock(FilterChain.class);
-
-		userInfoEndpointFilter.doFilter(request, response, filterChain);
-
-		verify(authenticationManager).authenticate(any());
-		verifyNoInteractions(filterChain);
-
-		assertThat(response.getContentType()).isEqualTo(MediaType.APPLICATION_JSON_VALUE);
-		assertUserInfoResponse(response.getContentAsString());
+		doFilterWhenUserInfoRequestThenSuccess("GET");
 	}
 
 	@Test
 	public void doFilterWhenUserInfoRequestPostThenSuccess() throws Exception {
+		doFilterWhenUserInfoRequestThenSuccess("POST");
+	}
+
+	private void doFilterWhenUserInfoRequestThenSuccess(String httpMethod) throws Exception {
 		JwtAuthenticationToken principal = createJwtAuthenticationToken();
 		SecurityContextHolder.getContext().setAuthentication(principal);
 
 		OidcUserInfoAuthenticationToken authentication = new OidcUserInfoAuthenticationToken(principal, createUserInfo());
-		AuthenticationManager authenticationManager = mock(AuthenticationManager.class);
-		when(authenticationManager.authenticate(any())).thenReturn(authentication);
-		OidcUserInfoEndpointFilter userInfoEndpointFilter = new OidcUserInfoEndpointFilter(authenticationManager);
+		when(this.authenticationManager.authenticate(any())).thenReturn(authentication);
 
 		String requestUri = DEFAULT_OIDC_USER_INFO_ENDPOINT_URI;
-		MockHttpServletRequest request = new MockHttpServletRequest("POST", requestUri);
+		MockHttpServletRequest request = new MockHttpServletRequest(httpMethod, requestUri);
 		request.setServletPath(requestUri);
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		FilterChain filterChain = mock(FilterChain.class);
 
-		userInfoEndpointFilter.doFilter(request, response, filterChain);
+		this.filter.doFilter(request, response, filterChain);
 
-		verify(authenticationManager).authenticate(any());
+		verify(this.authenticationManager).authenticate(any());
 		verifyNoInteractions(filterChain);
 
 		assertThat(response.getContentType()).isEqualTo(MediaType.APPLICATION_JSON_VALUE);
@@ -162,27 +144,26 @@ public class OidcUserInfoEndpointFilterTests {
 	}
 
 	@Test
-	public void doFilterWhenAuthenticationNullThenInvalidRequestError() throws Exception {
-		AuthenticationManager authenticationManager = mock(AuthenticationManager.class);
-		when(authenticationManager.authenticate(any(Authentication.class)))
-				.thenReturn(new UsernamePasswordAuthenticationToken("user", "password"));
-		OidcUserInfoEndpointFilter userInfoEndpointFilter = new OidcUserInfoEndpointFilter(authenticationManager);
+	public void doFilterWhenUserInfoRequestInvalidTokenThenUnauthorizedError() throws Exception {
+		Authentication principal = new TestingAuthenticationToken("principal", "credentials");
+		SecurityContextHolder.getContext().setAuthentication(principal);
+
+		when(this.authenticationManager.authenticate(any()))
+				.thenThrow(new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_TOKEN));
 
 		String requestUri = DEFAULT_OIDC_USER_INFO_ENDPOINT_URI;
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestUri);
 		request.setServletPath(requestUri);
-		request.addHeader(HttpHeaders.AUTHORIZATION, "Bearer token");
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		FilterChain filterChain = mock(FilterChain.class);
 
-		userInfoEndpointFilter.doFilter(request, response, filterChain);
+		this.filter.doFilter(request, response, filterChain);
 
 		verifyNoInteractions(filterChain);
 
-		assertThat(response.getStatus()).isEqualTo(HttpStatus.BAD_REQUEST.value());
+		assertThat(response.getStatus()).isEqualTo(HttpStatus.UNAUTHORIZED.value());
 		OAuth2Error error = readError(response);
-		assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_REQUEST);
-		assertThat(error.getDescription()).isEqualTo("OpenID Connect 1.0 UserInfo Error: principal cannot be null");
+		assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_TOKEN);
 	}
 
 	private OAuth2Error readError(MockHttpServletResponse response) throws Exception {
@@ -251,4 +232,5 @@ public class OidcUserInfoEndpointFilterTests {
 		assertThat(userInfoResponse).contains("\"address\":\"Champ de Mars\\n5 Av. Anatole France\\n75007 Paris\\nFrance\"");
 		assertThat(userInfoResponse).contains("\"updated_at\":\"1970-01-01T00:00:00Z\"");
 	}
+
 }

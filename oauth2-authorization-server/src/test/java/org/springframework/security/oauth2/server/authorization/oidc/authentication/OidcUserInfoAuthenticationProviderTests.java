@@ -60,9 +60,9 @@ public class OidcUserInfoAuthenticationProviderTests {
 	private OidcUserInfoAuthenticationProvider authenticationProvider;
 
 	@Before
-	public void setUp() throws Exception {
+	public void setUp() {
 		this.authorizationService = mock(OAuth2AuthorizationService.class);
-		this.authenticationProvider = new OidcUserInfoAuthenticationProvider(authorizationService);
+		this.authenticationProvider = new OidcUserInfoAuthenticationProvider(this.authorizationService);
 	}
 
 	@Test
@@ -224,7 +224,7 @@ public class OidcUserInfoAuthenticationProviderTests {
 		assertThat(userInfo.getLocale()).isEqualTo("en-US");
 		assertThat(userInfo.getPhoneNumber()).isEqualTo("+1 (604) 555-1234;ext=5678");
 		assertThat(userInfo.getPhoneNumberVerified()).isEqualTo(false);
-		assertThat(userInfo.getClaimAsString(StandardClaimNames.ADDRESS))
+		assertThat(userInfo.getAddress().getFormatted())
 				.isEqualTo("Champ de Mars\n5 Av. Anatole France\n75007 Paris\nFrance");
 		assertThat(userInfo.getUpdatedAt()).isEqualTo(Instant.parse("1970-01-01T00:00:00Z"));
 
@@ -259,6 +259,7 @@ public class OidcUserInfoAuthenticationProviderTests {
 	}
 
 	private static OidcUserInfo createUserInfo() {
+		// @formatter:off
 		return OidcUserInfo.builder()
 				.subject("user1")
 				.name("First Last")
@@ -278,8 +279,10 @@ public class OidcUserInfoAuthenticationProviderTests {
 				.locale("en-US")
 				.phoneNumber("+1 (604) 555-1234;ext=5678")
 				.phoneNumberVerified("false")
-				.address("Champ de Mars\n5 Av. Anatole France\n75007 Paris\nFrance")
+				.claim("address", Collections.singletonMap("formatted", "Champ de Mars\n5 Av. Anatole France\n75007 Paris\nFrance"))
 				.updatedAt("1970-01-01T00:00:00Z")
 				.build();
+		// @formatter:on
 	}
+
 }

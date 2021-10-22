@@ -57,7 +57,7 @@ public final class OidcUserInfoEndpointConfigurer extends AbstractOAuth2Configur
 
 	/**
 	 * Sets the {@link Function} used to extract claims from an {@link OAuth2AuthenticationContext}
-	 * to an instance of {@link OidcUserInfo}.
+	 * to an instance of {@link OidcUserInfo} for the UserInfo response.
 	 *
 	 * <p>
 	 * The {@link OAuth2AuthenticationContext} gives the mapper access to the {@link OidcUserInfoAuthenticationToken}.
@@ -109,4 +109,5 @@ public final class OidcUserInfoEndpointConfigurer extends AbstractOAuth2Configur
 	RequestMatcher getRequestMatcher() {
 		return this.requestMatcher;
 	}
+
 }

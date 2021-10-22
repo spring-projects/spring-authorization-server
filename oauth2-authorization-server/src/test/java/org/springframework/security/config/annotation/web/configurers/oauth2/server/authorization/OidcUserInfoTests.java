@@ -17,6 +17,7 @@ package org.springframework.security.config.annotation.web.configurers.oauth2.se
 
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Function;
@@ -123,7 +124,7 @@ public class OidcUserInfoTests {
 	}
 
 	@Test
-	public void requestWhenSignedJwtAndCustomUserInfoMapperThenUserInfoResponse() throws Exception {
+	public void requestWhenSignedJwtAndCustomUserInfoMapperThenMapJwtClaimsToUserInfoResponse() throws Exception {
 		this.spring.register(CustomUserInfoConfiguration.class).autowire();
 
 		OAuth2Authorization authorization = createAuthorization();
@@ -159,7 +160,7 @@ public class OidcUserInfoTests {
 				jsonPath("locale").value("en-US"),
 				jsonPath("phone_number").value("+1 (604) 555-1234;ext=5678"),
 				jsonPath("phone_number_verified").value("false"),
-				jsonPath("address").value("Champ de Mars\n5 Av. Anatole France\n75007 Paris\nFrance"),
+				jsonPath("address.formatted").value("Champ de Mars\n5 Av. Anatole France\n75007 Paris\nFrance"),
 				jsonPath("updated_at").value("1970-01-01T00:00:00Z")
 		);
 		// @formatter:on
@@ -210,7 +211,7 @@ public class OidcUserInfoTests {
 				.locale("en-US")
 				.phoneNumber("+1 (604) 555-1234;ext=5678")
 				.phoneNumberVerified("false")
-				.address("Champ de Mars\n5 Av. Anatole France\n75007 Paris\nFrance")
+				.claim("address", Collections.singletonMap("formatted", "Champ de Mars\n5 Av. Anatole France\n75007 Paris\nFrance"))
 				.updatedAt("1970-01-01T00:00:00Z")
 				.build();
 		// @formatter:on
@@ -304,5 +305,7 @@ public class OidcUserInfoTests {
 		JwtEncoder jwtEncoder(JWKSource<SecurityContext> jwkSource) {
 			return new NimbusJwsEncoder(jwkSource);
 		}
+
 	}
+
 }

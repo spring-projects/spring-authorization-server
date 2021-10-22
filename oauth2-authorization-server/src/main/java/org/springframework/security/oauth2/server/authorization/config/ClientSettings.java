@@ -17,6 +17,8 @@ package org.springframework.security.oauth2.server.authorization.config;
 
 import java.util.Map;
 
+import org.springframework.security.oauth2.jose.jws.JwsAlgorithm;
+import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 import org.springframework.util.Assert;
 
 /**
@@ -54,6 +56,27 @@ public final class ClientSettings extends AbstractSettings {
 	}
 
 	/**
+	 * Returns {@code URL} for the Client's JSON Web Key Set {@code (jwks_uri)}
+	 * @return {@code URL} for the Client's JSON Web Key Set {@code (jwks_uri)}
+	 * @since 0.2.1
+	 */
+	public String getJwkSetUrl() {
+		return getSetting(ConfigurationSettingNames.Client.JWK_SET_URL);
+	}
+
+	/**
+	 * Returns {@link SignatureAlgorithm JWS} algorithm that must be used for signing the JWT used to authenticate the
+	 * Client at the Token Endpoint for the {@code private_key_jwt} and {@code client_secret_jwt} authentication methods
+	 * @return {@link SignatureAlgorithm JWS} algorithm that must be used for signing the JWT used to authenticate the
+	 * 	       Client at the Token Endpoint for the {@code private_key_jwt} and {@code client_secret_jwt} authentication
+	 * 	       methods
+	 * @since 0.2.1
+	 */
+	public JwsAlgorithm getTokenEndpointSigningAlgorithm() {
+		return getSetting(ConfigurationSettingNames.Client.TOKEN_ENDPOINT_SIGNING_ALGORITHM);
+	}
+
+	/**
 	 * Constructs a new {@link Builder} with the default settings.
 	 *
 	 * @return the {@link Builder}
@@ -61,7 +84,8 @@ public final class ClientSettings extends AbstractSettings {
 	public static Builder builder() {
 		return new Builder()
 				.requireProofKey(false)
-				.requireAuthorizationConsent(false);
+				.requireAuthorizationConsent(false)
+				.tokenEndpointSigningAlgorithm(SignatureAlgorithm.RS256);
 	}
 
 	/**
@@ -104,6 +128,31 @@ public final class ClientSettings extends AbstractSettings {
 		 */
 		public Builder requireAuthorizationConsent(boolean requireAuthorizationConsent) {
 			return setting(ConfigurationSettingNames.Client.REQUIRE_AUTHORIZATION_CONSENT, requireAuthorizationConsent);
+		}
+
+		/**
+		 * Sets {@code URL} for the Client's JSON Web Key Set
+		 *
+		 * @param jwkSetUrl {@code URL} for the Client's JSON Web Key Set
+		 * @return the {@link Builder} for further configuration
+		 * @since 0.2.1
+		 */
+		public Builder jwkSetUrl(String jwkSetUrl) {
+			return setting(ConfigurationSettingNames.Client.JWK_SET_URL, jwkSetUrl);
+		}
+
+		/**
+		 * Sets {@link SignatureAlgorithm JWS} algorithm that must be used for signing the JWT used to authenticate the
+		 * Client at the Token Endpoint for the {@code private_key_jwt} and {@code client_secret_jwt} authentication methods
+		 *
+		 * @param signingAlgorithm {@link SignatureAlgorithm JWS} algorithm that must be used for signing
+		 *        the JWT used to authenticate the Client at the Token Endpoint for the {@code private_key_jwt} and
+		 *        {@code client_secret_jwt} authentication methods
+		 * @return the {@link Builder} for further configuration
+		 * @since 0.2.1
+		 */
+		public Builder tokenEndpointSigningAlgorithm(JwsAlgorithm signingAlgorithm) {
+			return setting(ConfigurationSettingNames.Client.TOKEN_ENDPOINT_SIGNING_ALGORITHM, signingAlgorithm);
 		}
 
 		/**

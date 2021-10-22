@@ -173,6 +173,20 @@ public final class OidcClientRegistration implements OidcClientMetadataClaimAcce
 		}
 
 		/**
+		 * Sets the {@link SignatureAlgorithm JWS} algorithm that must be used for signing the JWT used to authenticate
+		 * the Client at the Token Endpoint for the {@code private_key_jwt} and {@code client_secret_jwt} authentication
+		 * methods
+		 * @param signingAlgorithm the {@link SignatureAlgorithm JWS} algorithm that must be used for signing
+		 *        the JWT used to authenticate the Client at the Token Endpoint for the {@code private_key_jwt} and
+		 *        {@code client_secret_jwt} authentication methods
+		 * @return the {@link Builder} for further configuration
+		 * @since 0.2.1
+		 */
+		public Builder tokenEndpointAuthenticationSigningAlgorithm(String signingAlgorithm) {
+			return claim(OidcClientMetadataClaimNames.TOKEN_ENDPOINT_AUTH_SIGNING_ALG, signingAlgorithm);
+		}
+
+		/**
 		 * Add the OAuth 2.0 {@code grant_type} that the Client will restrict itself to using, OPTIONAL.
 		 *
 		 * @param grantType the OAuth 2.0 {@code grant_type} that the Client will restrict itself to using
@@ -271,6 +285,16 @@ public final class OidcClientRegistration implements OidcClientMetadataClaimAcce
 		 */
 		public Builder registrationClientUrl(String registrationClientUrl) {
 			return claim(OidcClientMetadataClaimNames.REGISTRATION_CLIENT_URI, registrationClientUrl);
+		}
+
+		/**
+		 * Sets {@code URL} for the Client's JSON Web Key Set {@code (jwks_uri)}
+		 * @param jwksSetUrl {@code URL} for the Client's JSON Web Key Set {@code (jwks_uri)}
+		 * @return the {@link Builder} for further configuration
+		 * @since 0.2.1
+		 */
+		public Builder jwkSetUrl(String jwksSetUrl) {
+			return claim(OidcClientMetadataClaimNames.JWKS_URI, jwksSetUrl);
 		}
 
 		/**

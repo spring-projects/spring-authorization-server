@@ -18,9 +18,6 @@ package org.springframework.security.oauth2.server.authorization.web.authenticat
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -92,16 +89,6 @@ public final class ClientSecretBasicAuthenticationConverter implements Authentic
 		}
 
 		return new OAuth2ClientAuthenticationToken(clientID, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, clientSecret,
-				extractAdditionalParameters(request));
+				OAuth2EndpointUtils.extractAdditionalParameters(request));
 	}
-
-	private static Map<String, Object> extractAdditionalParameters(HttpServletRequest request) {
-		Map<String, Object> additionalParameters = Collections.emptyMap();
-		if (OAuth2EndpointUtils.matchesAuthorizationCodeGrantRequest(request)) {
-			// Confidential clients can also leverage PKCE
-			additionalParameters = new HashMap<>(OAuth2EndpointUtils.getParameters(request).toSingleValueMap());
-		}
-		return additionalParameters;
-	}
-
 }

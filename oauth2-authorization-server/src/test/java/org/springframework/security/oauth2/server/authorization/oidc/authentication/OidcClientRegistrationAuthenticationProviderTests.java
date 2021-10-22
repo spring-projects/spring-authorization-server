@@ -27,6 +27,7 @@ import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
 import org.springframework.security.authentication.TestingAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
@@ -37,6 +38,7 @@ import org.springframework.security.oauth2.core.OAuth2TokenType;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationResponseType;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.oidc.OidcClientRegistration;
+import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 import org.springframework.security.oauth2.jwt.JoseHeader;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -421,6 +423,165 @@ public class OidcClientRegistrationAuthenticationProviderTests {
 
 		assertThat(clientRegistrationResult.getRegistrationClientUrl().toString()).isEqualTo(expectedRegistrationClientUrl);
 		assertThat(clientRegistrationResult.getRegistrationAccessToken()).isEqualTo(jwt.getTokenValue());
+	}
+
+	private OidcClientRegistrationAuthenticationToken jwtClientAuthenticationRegistration(
+			String tokenAuthenticationMethod, String tokenSigningAlgorithm, String jwkSetUrl) {
+		Jwt jwt = createJwtClientRegistration();
+		OAuth2AccessToken jwtAccessToken = new OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER,
+				jwt.getTokenValue(), jwt.getIssuedAt(),
+				jwt.getExpiresAt(), jwt.getClaim(OAuth2ParameterNames.SCOPE));
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(
+				registeredClient, jwtAccessToken, jwt.getClaims()).build();
+		when(this.authorizationService.findByToken(
+				eq(jwtAccessToken.getTokenValue()), eq(OAuth2TokenType.ACCESS_TOKEN)))
+				.thenReturn(authorization);
+		when(this.jwtEncoder.encode(any(), any())).thenReturn(createJwtClientConfiguration());
+
+		JwtAuthenticationToken principal = new JwtAuthenticationToken(
+				jwt, AuthorityUtils.createAuthorityList("SCOPE_client.create"));
+		// @formatter:off
+		OidcClientRegistration.Builder clientRegistrationBuilder = OidcClientRegistration.builder()
+				.clientId("client-id")
+				.clientName("client-name")
+				.redirectUri("https://client.example.com")
+				.grantType(AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
+				.scope("scope1")
+				.tokenEndpointAuthenticationMethod(tokenAuthenticationMethod);
+		// @formatter:on
+
+		if (tokenSigningAlgorithm != null) {
+			clientRegistrationBuilder = clientRegistrationBuilder.tokenEndpointAuthenticationSigningAlgorithm(tokenSigningAlgorithm);
+		}
+
+		if (jwkSetUrl != null) {
+			clientRegistrationBuilder = clientRegistrationBuilder.jwkSetUrl(jwkSetUrl);
+		}
+
+		return new OidcClientRegistrationAuthenticationToken(principal, clientRegistrationBuilder.build());
+	}
+
+	@Test
+	public void authenticateWhenClientRegistrationRequestAndPrivateKeyJwtAndAlgorithmNoneThenThrowOAuth2AuthenticationException() {
+		OidcClientRegistrationAuthenticationToken authentication = jwtClientAuthenticationRegistration(
+				ClientAuthenticationMethod.PRIVATE_KEY_JWT.getValue(), "none", "https://client.example.com/jwks");
+
+		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
+				.isInstanceOf(OAuth2AuthenticationException.class)
+				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError()).extracting("errorCode")
+				.isEqualTo("invalid_client_metadata");
+	}
+
+	@Test
+	public void authenticateWhenClientRegistrationRequestAndPrivateKeyJwtAndMacAlgorithmThenThrowOAuth2AuthenticationException() {
+		OidcClientRegistrationAuthenticationToken authentication = jwtClientAuthenticationRegistration(
+				ClientAuthenticationMethod.PRIVATE_KEY_JWT.getValue(), "HS256", "https://client.example.com/jwks");
+
+		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
+				.isInstanceOf(OAuth2AuthenticationException.class)
+				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError()).extracting("errorCode")
+				.isEqualTo("invalid_client_metadata");
+	}
+
+	@Test
+	public void authenticateWhenClientRegistrationRequestAndPrivateKeyJwtAndNoJwkSetUrlThenThrowOAuth2AuthenticationException() {
+		OidcClientRegistrationAuthenticationToken authentication = jwtClientAuthenticationRegistration(
+				ClientAuthenticationMethod.PRIVATE_KEY_JWT.getValue(), "RS256", null);
+
+		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
+				.isInstanceOf(OAuth2AuthenticationException.class)
+				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError()).extracting("errorCode")
+				.isEqualTo("invalid_client_metadata");
+	}
+
+	@Test
+	public void authenticateWhenClientRegistrationRequestAndClientSecretJwtAndPkiAlgorithmThenThrowOAuth2AuthenticationException() {
+		OidcClientRegistrationAuthenticationToken authentication = jwtClientAuthenticationRegistration(
+				ClientAuthenticationMethod.CLIENT_SECRET_JWT.getValue(), "RS256", "https://client.example.com/jwks");
+
+		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
+				.isInstanceOf(OAuth2AuthenticationException.class)
+				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError()).extracting("errorCode")
+				.isEqualTo("invalid_client_metadata");
+	}
+
+	@Test
+	public void authenticateWhenClientRegistrationAndProperClientSecretJwtRegistrationThenRegistered() {
+		OidcClientRegistrationAuthenticationToken authentication = jwtClientAuthenticationRegistration(
+				ClientAuthenticationMethod.CLIENT_SECRET_JWT.getValue(), "HS512", null);
+
+		Authentication authenticationResult = this.authenticationProvider.authenticate(authentication);
+
+		assertThat(authenticationResult).isNotNull();
+
+		ArgumentCaptor<RegisteredClient> registeredClientCaptor = ArgumentCaptor.forClass(RegisteredClient.class);
+		verify(this.registeredClientRepository).save(registeredClientCaptor.capture());
+		RegisteredClient registeredClientResult = registeredClientCaptor.getValue();
+
+		assertThat(registeredClientResult).isNotNull();
+		assertThat(registeredClientResult.getClientSecret()).hasSizeGreaterThan(32);
+		assertThat(registeredClientResult.getClientSettings().getTokenEndpointSigningAlgorithm()).isEqualTo(MacAlgorithm.HS512);
+	}
+
+	@Test
+	public void authenticateWhenClientRegistrationAndClientSecretJwtAndNullAlgorithmThenDefaultAlgorithmHS256() {
+		OidcClientRegistrationAuthenticationToken authentication = jwtClientAuthenticationRegistration(
+				ClientAuthenticationMethod.CLIENT_SECRET_JWT.getValue(), null, null);
+
+		Authentication authenticationResult = this.authenticationProvider.authenticate(authentication);
+
+		assertThat(authenticationResult).isNotNull();
+
+		ArgumentCaptor<RegisteredClient> registeredClientCaptor = ArgumentCaptor.forClass(RegisteredClient.class);
+		verify(this.registeredClientRepository).save(registeredClientCaptor.capture());
+		RegisteredClient registeredClientResult = registeredClientCaptor.getValue();
+
+		assertThat(registeredClientResult).isNotNull();
+		assertThat(registeredClientResult.getClientSecret()).hasSizeGreaterThan(32);
+		assertThat(registeredClientResult.getClientSettings().getTokenEndpointSigningAlgorithm()).isEqualTo(MacAlgorithm.HS256);
+		assertThat(registeredClientResult.getClientAuthenticationMethods()).contains(ClientAuthenticationMethod.CLIENT_SECRET_JWT);
+	}
+
+	@Test
+	public void authenticateWhenClientRegistrationAndProperPrivateKeyJwtRegistrationThenRegistered() {
+		OidcClientRegistrationAuthenticationToken authentication = jwtClientAuthenticationRegistration(
+				ClientAuthenticationMethod.PRIVATE_KEY_JWT.getValue(), "RS512", "https://client.example.com/jwks");
+
+		OidcClientRegistrationAuthenticationToken authenticationResult =
+				(OidcClientRegistrationAuthenticationToken) this.authenticationProvider.authenticate(authentication);
+
+		assertThat(authenticationResult).isNotNull();
+
+		ArgumentCaptor<RegisteredClient> registeredClientCaptor = ArgumentCaptor.forClass(RegisteredClient.class);
+		verify(this.registeredClientRepository).save(registeredClientCaptor.capture());
+		RegisteredClient registeredClientResult = registeredClientCaptor.getValue();
+
+		assertThat(registeredClientResult).isNotNull();
+		assertThat(registeredClientResult.getClientSettings().getJwkSetUrl()).isEqualTo("https://client.example.com/jwks");
+		assertThat(registeredClientResult.getClientSettings().getTokenEndpointSigningAlgorithm()).isEqualTo(SignatureAlgorithm.RS512);
+
+		assertThat(authenticationResult.getClientRegistration().getTokenEndpointAuthenticationSigningAlgorithm()).isEqualTo("RS512");
+		assertThat(authenticationResult.getClientRegistration().getJwkSetUrl().toString()).isEqualTo("https://client.example.com/jwks");
+		assertThat(registeredClientResult.getClientAuthenticationMethods()).contains(ClientAuthenticationMethod.PRIVATE_KEY_JWT);
+	}
+
+	@Test
+	public void authenticateWhenClientRegistrationAndPrivateKeyJwtAndNullAlgorithmThenDefaultAlgorithmRS256() {
+		OidcClientRegistrationAuthenticationToken authentication = jwtClientAuthenticationRegistration(
+				ClientAuthenticationMethod.PRIVATE_KEY_JWT.getValue(), null, "https://client.example.com/jwks");
+
+		Authentication authenticationResult = this.authenticationProvider.authenticate(authentication);
+
+		assertThat(authenticationResult).isNotNull();
+
+		ArgumentCaptor<RegisteredClient> registeredClientCaptor = ArgumentCaptor.forClass(RegisteredClient.class);
+		verify(this.registeredClientRepository).save(registeredClientCaptor.capture());
+		RegisteredClient registeredClientResult = registeredClientCaptor.getValue();
+
+		assertThat(registeredClientResult).isNotNull();
+		assertThat(registeredClientResult.getClientSettings().getJwkSetUrl()).isEqualTo("https://client.example.com/jwks");
+		assertThat(registeredClientResult.getClientSettings().getTokenEndpointSigningAlgorithm()).isEqualTo(SignatureAlgorithm.RS256);
 	}
 
 	@Test

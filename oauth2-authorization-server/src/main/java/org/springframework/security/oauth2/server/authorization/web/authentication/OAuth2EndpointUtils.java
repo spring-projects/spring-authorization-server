@@ -15,6 +15,8 @@
  */
 package org.springframework.security.oauth2.server.authorization.web.authentication;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
@@ -68,4 +70,14 @@ final class OAuth2EndpointUtils {
 		throw new OAuth2AuthenticationException(error);
 	}
 
+	static Map<String, Object> extractAdditionalParameters(HttpServletRequest request, String...exclusions) {
+		Map<String, Object> additionalParameters = Collections.emptyMap();
+		if (OAuth2EndpointUtils.matchesAuthorizationCodeGrantRequest(request)) {
+			additionalParameters = new HashMap<>(OAuth2EndpointUtils.getParameters(request).toSingleValueMap());
+			for (String exclusion : exclusions) {
+				additionalParameters.remove(exclusion);
+			}
+		}
+		return additionalParameters;
+	}
 }

@@ -16,6 +16,7 @@
 package org.springframework.security.oauth2.core.oidc;
 
 import org.springframework.security.oauth2.jose.jws.JwsAlgorithm;
+import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 
 /**
  * The names of the "claims" defined by OpenID Connect Dynamic Client Registration 1.0
@@ -95,4 +96,17 @@ public interface OidcClientMetadataClaimNames {
 	 */
 	String REGISTRATION_CLIENT_URI = "registration_client_uri";
 
+	/**
+	 * {@code jwks_uri} - {@code URL} for the Client's JSON Web Key Set
+	 * @since 0.2.1
+	 */
+	String JWKS_URI = "jwks_uri";
+
+	/**
+	 * {@code token_endpoint_auth_signing_alg} - {@link SignatureAlgorithm JWS} algorithm that must be used for signing
+	 * the JWT used to authenticate the Client at the Token Endpoint for the {@code private_key_jwt} and {@code client_secret_jwt}
+	 * authentication methods
+	 * @since 0.2.1
+	 */
+	String TOKEN_ENDPOINT_AUTH_SIGNING_ALG = "token_endpoint_auth_signing_alg";
 }

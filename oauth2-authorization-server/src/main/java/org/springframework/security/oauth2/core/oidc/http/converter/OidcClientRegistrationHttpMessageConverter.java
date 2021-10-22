@@ -150,6 +150,8 @@ public class OidcClientRegistrationHttpMessageConverter extends AbstractHttpMess
 			claimConverters.put(OidcClientMetadataClaimNames.RESPONSE_TYPES, collectionStringConverter);
 			claimConverters.put(OidcClientMetadataClaimNames.SCOPE, MapOidcClientRegistrationConverter::convertScope);
 			claimConverters.put(OidcClientMetadataClaimNames.ID_TOKEN_SIGNED_RESPONSE_ALG, stringConverter);
+			claimConverters.put(OidcClientMetadataClaimNames.JWKS_URI, stringConverter);
+			claimConverters.put(OidcClientMetadataClaimNames.TOKEN_ENDPOINT_AUTH_SIGNING_ALG, stringConverter);
 			this.claimTypeConverter = new ClaimTypeConverter(claimConverters);
 		}
 

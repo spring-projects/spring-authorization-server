@@ -41,6 +41,8 @@ import org.springframework.security.oauth2.core.OAuth2TokenType;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationResponseType;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.oidc.OidcClientRegistration;
+import org.springframework.security.oauth2.jose.jws.JwsAlgorithm;
+import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 import org.springframework.security.oauth2.jwt.JoseHeader;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -63,6 +65,7 @@ import org.springframework.web.util.UriComponentsBuilder;
  *
  * @author Ovidiu Popa
  * @author Joe Grandja
+ * @author Rafal Lewczuk
  * @since 0.1.1
  * @see RegisteredClientRepository
  * @see OAuth2AuthorizationService
@@ -196,6 +199,12 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 			throw new OAuth2AuthenticationException("invalid_redirect_uri");
 		}
 
+		if (!isValidJwtClientAuthenticationMetadata(clientRegistrationAuthentication.getClientRegistration())) {
+			// TODO Add OAuth2ErrorCodes.INVALID_CLIENT_METADATA
+			// TODO populate "error_description"
+			throw new OAuth2AuthenticationException("invalid_client_metadata");
+		}
+
 		RegisteredClient registeredClient = createClient(clientRegistrationAuthentication.getClientRegistration());
 		this.registeredClientRepository.save(registeredClient);
 
@@ -283,6 +292,16 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 				.idTokenSignedResponseAlgorithm(registeredClient.getTokenSettings().getIdTokenSignatureAlgorithm().getName())
 				.registrationClientUrl(registrationClientUri);
 
+		ClientSettings clientSettings = registeredClient.getClientSettings();
+
+		if (clientSettings.getJwkSetUrl() != null) {
+			builder.jwkSetUrl(clientSettings.getJwkSetUrl());
+		}
+
+		if (clientSettings.getTokenEndpointSigningAlgorithm() != null) {
+			builder.tokenEndpointAuthenticationSigningAlgorithm(clientSettings.getTokenEndpointSigningAlgorithm().getName());
+		}
+
 		return builder;
 		// @formatter:on
 	}
@@ -328,6 +347,31 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 		return true;
 	}
 
+	private static boolean isValidJwtClientAuthenticationMetadata(OidcClientRegistration clientRegistration) {
+		String authenticationMethod = clientRegistration.getTokenEndpointAuthenticationMethod();
+		String signingAlgorithm = clientRegistration.getTokenEndpointAuthenticationSigningAlgorithm();
+
+		if ("none".equals(signingAlgorithm)) {
+			return false;
+		}
+
+		if (ClientAuthenticationMethod.CLIENT_SECRET_JWT.getValue().equals(authenticationMethod)) {
+			return signingAlgorithm == null || MacAlgorithm.from(signingAlgorithm) != null;
+		}
+
+		if (ClientAuthenticationMethod.PRIVATE_KEY_JWT.getValue().equals(authenticationMethod)) {
+			try {
+				return clientRegistration.getJwkSetUrl() != null && (signingAlgorithm == null
+						|| SignatureAlgorithm.from(signingAlgorithm) != null);
+			} catch (IllegalArgumentException e) {
+				return false;
+			}
+		}
+
+		// TODO return false if token_endpoint_auth_signing_alg or jwks_uri exists but authentication method is not client_secret_jwt nor private_key_jwt ?
+		return true;
+	}
+
 	private static RegisteredClient createClient(OidcClientRegistration clientRegistration) {
 		// @formatter:off
 		RegisteredClient.Builder builder = RegisteredClient.withId(UUID.randomUUID().toString())
@@ -338,8 +382,12 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 
 		if (ClientAuthenticationMethod.CLIENT_SECRET_POST.getValue().equals(clientRegistration.getTokenEndpointAuthenticationMethod())) {
 			builder.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_POST);
+		} else if (ClientAuthenticationMethod.CLIENT_SECRET_JWT.getValue().equals(clientRegistration.getTokenEndpointAuthenticationMethod())) {
+			builder.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_JWT);
+		} else if (ClientAuthenticationMethod.PRIVATE_KEY_JWT.getValue().equals(clientRegistration.getTokenEndpointAuthenticationMethod())) {
+			builder.clientAuthenticationMethod(ClientAuthenticationMethod.PRIVATE_KEY_JWT);
 		} else {
-			builder.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC);
+				builder.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC);
 		}
 
 		builder.redirectUris(redirectUris ->
@@ -362,11 +410,25 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 					scopes.addAll(clientRegistration.getScopes()));
 		}
 
+		ClientSettings.Builder clientSettingsBuilder = ClientSettings.builder()
+				.requireProofKey(true)
+				.requireAuthorizationConsent(true);
+
+		String signatureAlgorithm = clientRegistration.getTokenEndpointAuthenticationSigningAlgorithm();
+
+		if (ClientAuthenticationMethod.CLIENT_SECRET_JWT.getValue().equals(clientRegistration.getTokenEndpointAuthenticationMethod())) {
+			JwsAlgorithm macAlgorithm = signatureAlgorithm != null ? MacAlgorithm.from(signatureAlgorithm) : MacAlgorithm.HS256;
+			clientSettingsBuilder.tokenEndpointSigningAlgorithm(macAlgorithm);
+		}
+
+		if (ClientAuthenticationMethod.PRIVATE_KEY_JWT.getValue().equals(clientRegistration.getTokenEndpointAuthenticationMethod())) {
+			JwsAlgorithm jwsAlgorithm = signatureAlgorithm != null ? SignatureAlgorithm.from(signatureAlgorithm) : SignatureAlgorithm.RS256;
+			clientSettingsBuilder.tokenEndpointSigningAlgorithm(jwsAlgorithm);
+			clientSettingsBuilder.jwkSetUrl(clientRegistration.getJwkSetUrl().toString());
+		}
+
 		builder
-				.clientSettings(ClientSettings.builder()
-						.requireProofKey(true)
-						.requireAuthorizationConsent(true)
-						.build())
+				.clientSettings(clientSettingsBuilder.build())
 				.tokenSettings(TokenSettings.builder()
 						.idTokenSignatureAlgorithm(SignatureAlgorithm.RS256)
 						.build());

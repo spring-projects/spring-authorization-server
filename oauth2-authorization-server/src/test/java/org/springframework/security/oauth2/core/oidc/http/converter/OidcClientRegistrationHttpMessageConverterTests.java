@@ -107,6 +107,8 @@ public class OidcClientRegistrationHttpMessageConverterTests {
 				+"		],\n"
 				+"		\"scope\": \"scope1 scope2\",\n"
 				+"		\"id_token_signed_response_alg\": \"RS256\",\n"
+				+"      \"jwks_uri\": \"https://client.example.com/jwks\",\n"
+				+"      \"token_endpoint_auth_signing_alg\": \"HS256\",\n"
 				+"		\"a-claim\": \"a-value\"\n"
 				+"}\n";
 		// @formatter:on
@@ -126,6 +128,8 @@ public class OidcClientRegistrationHttpMessageConverterTests {
 		assertThat(clientRegistration.getResponseTypes()).containsOnly("code");
 		assertThat(clientRegistration.getScopes()).containsExactlyInAnyOrder("scope1", "scope2");
 		assertThat(clientRegistration.getIdTokenSignedResponseAlgorithm()).isEqualTo("RS256");
+		assertThat(clientRegistration.getJwkSetUrl().toString()).isEqualTo("https://client.example.com/jwks");
+		assertThat(clientRegistration.getTokenEndpointAuthenticationSigningAlgorithm()).isEqualTo("HS256");
 		assertThat(clientRegistration.getClaimAsString("a-claim")).isEqualTo("a-value");
 	}
 
@@ -186,6 +190,8 @@ public class OidcClientRegistrationHttpMessageConverterTests {
 				.idTokenSignedResponseAlgorithm(SignatureAlgorithm.RS256.getName())
 				.registrationAccessToken("registration-access-token")
 				.registrationClientUrl("https://auth-server.com/connect/register?client_id=1")
+				.jwkSetUrl("https://client.example.com/jwks")
+				.tokenEndpointAuthenticationSigningAlgorithm("HS256")
 				.claim("a-claim", "a-value")
 				.build();
 		// @formatter:on
@@ -207,6 +213,8 @@ public class OidcClientRegistrationHttpMessageConverterTests {
 		assertThat(clientRegistrationResponse).contains("\"id_token_signed_response_alg\":\"RS256\"");
 		assertThat(clientRegistrationResponse).contains("\"registration_access_token\":\"registration-access-token\"");
 		assertThat(clientRegistrationResponse).contains("\"registration_client_uri\":\"https://auth-server.com/connect/register?client_id=1\"");
+		assertThat(clientRegistrationResponse).contains("\"jwks_uri\":\"https://client.example.com/jwks\"");
+		assertThat(clientRegistrationResponse).contains("\"token_endpoint_auth_signing_alg\":\"HS256\"");
 		assertThat(clientRegistrationResponse).contains("\"a-claim\":\"a-value\"");
 	}
 

@@ -43,6 +43,7 @@ import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType;
 import org.springframework.security.jackson2.SecurityJackson2Modules;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
+import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.server.authorization.client.JdbcRegisteredClientRepository.RegisteredClientParametersMapper;
 import org.springframework.security.oauth2.server.authorization.client.JdbcRegisteredClientRepository.RegisteredClientRowMapper;
 import org.springframework.security.oauth2.server.authorization.config.ClientSettings;
@@ -143,6 +144,17 @@ public class JdbcRegisteredClientRepositoryTests {
 	@Test
 	public void saveWhenNewThenSaved() {
 		RegisteredClient expectedRegisteredClient = TestRegisteredClients.registeredClient().build();
+		this.registeredClientRepository.save(expectedRegisteredClient);
+		RegisteredClient registeredClient = this.registeredClientRepository.findById(expectedRegisteredClient.getId());
+		assertThat(registeredClient).isEqualTo(expectedRegisteredClient);
+	}
+
+	@Test
+	public void saveWhenCustomTokenEndpointSigningAlgorithmsThenSaved() {
+		RegisteredClient expectedRegisteredClient = TestRegisteredClients.registeredClient()
+				.clientSettings(ClientSettings.builder()
+						.tokenEndpointSigningAlgorithm(MacAlgorithm.HS256).build())
+				.build();
 		this.registeredClientRepository.save(expectedRegisteredClient);
 		RegisteredClient registeredClient = this.registeredClientRepository.findById(expectedRegisteredClient.getId());
 		assertThat(registeredClient).isEqualTo(expectedRegisteredClient);

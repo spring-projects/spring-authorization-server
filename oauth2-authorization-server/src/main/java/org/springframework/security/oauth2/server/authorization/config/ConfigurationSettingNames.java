@@ -48,6 +48,17 @@ public final class ConfigurationSettingNames {
 		 */
 		public static final String REQUIRE_AUTHORIZATION_CONSENT = CLIENT_SETTINGS_NAMESPACE.concat("require-authorization-consent");
 
+		/**
+		 * {@code URL} for the Client's JSON Web Key Set {@code (jwks_uri)}
+		 */
+		public static final String JWK_SET_URL = CLIENT_SETTINGS_NAMESPACE.concat("jwk-set-url");
+
+		/**
+		 * {@link SignatureAlgorithm JWS} algorithm that must be used for signing the JWT used to authenticate the
+		 * Client at the Token Endpoint for the {@code private_key_jwt} and {@code client_secret_jwt} authentication methods
+		 */
+		public static final String TOKEN_ENDPOINT_SIGNING_ALGORITHM = CLIENT_SETTINGS_NAMESPACE.concat("token-endpoint-signing-algorithm");
+
 		private Client() {
 		}
 

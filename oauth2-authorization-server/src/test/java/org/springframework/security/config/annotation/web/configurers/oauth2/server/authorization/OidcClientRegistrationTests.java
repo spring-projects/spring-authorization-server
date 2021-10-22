@@ -15,19 +15,27 @@
  */
 package org.springframework.security.config.annotation.web.configurers.oauth2.server.authorization;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
-
+import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.JWSAlgorithm;
+import com.nimbusds.jose.JWSHeader;
+import com.nimbusds.jose.JWSSigner;
+import com.nimbusds.jose.crypto.MACSigner;
+import com.nimbusds.jose.crypto.RSASSASigner;
+import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
+import com.nimbusds.jose.jwk.KeyUse;
+import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
+import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.SignedJWT;
+import okhttp3.mockwebserver.MockResponse;
+import okhttp3.mockwebserver.MockWebServer;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpHeaders;
@@ -48,11 +56,13 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
 import org.springframework.security.config.annotation.web.configurers.oauth2.server.resource.OAuth2ResourceServerConfigurer;
 import org.springframework.security.config.test.SpringTestRule;
+import org.springframework.security.config.util.ValueCaptureMatcher;
 import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
+import org.springframework.security.oauth2.core.OAuth2TokenType;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AccessTokenResponse;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationResponseType;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
@@ -75,6 +85,15 @@ import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.interfaces.RSAPublicKey;
+import java.util.Base64;
+import java.util.Date;
+import java.util.UUID;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -90,8 +109,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * @author Joe Grandja
  */
 public class OidcClientRegistrationTests {
+	private static final String DEFAULT_ISSUER = "https://auth-server:9000";
 	private static final String DEFAULT_TOKEN_ENDPOINT_URI = "/oauth2/token";
+	private static final String DEFAULT_INTROSPECTION_ENDPOINT_URI = "/oauth2/introspect";
+	private static final String DEFAULT_REVOCATION_ENDPOINT_URI = "/oauth2/revoke";
 	private static final String DEFAULT_OIDC_CLIENT_REGISTRATION_ENDPOINT_URI = "/connect/register";
+	private static final String JWT_ASSERTION_TYPE = "urn:ietf:params:oauth:client-assertion-type:jwt-bearer";
 	private static final HttpMessageConverter<OAuth2AccessTokenResponse> accessTokenHttpResponseConverter =
 			new OAuth2AccessTokenResponseHttpMessageConverter();
 	private static final HttpMessageConverter<OidcClientRegistration> clientRegistrationHttpMessageConverter =
@@ -224,6 +247,139 @@ public class OidcClientRegistrationTests {
 		assertThat(clientConfigurationResponse.getRegistrationAccessToken()).isNull();
 	}
 
+	@Test
+	public void whenClientRegisterationWithClientSecretJwtAuthenticationThenJwtClientAuthenticationSuccess() throws Exception {
+		this.spring.register(AuthorizationServerConfiguration.class).autowire();
+
+		// @formatter:off
+		OidcClientRegistration clientRegistration = OidcClientRegistration.builder()
+				.clientName("client-name")
+				.redirectUri("https://client.example.com")
+				.grantType(AuthorizationGrantType.AUTHORIZATION_CODE.getValue())
+				.grantType(AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
+				.tokenEndpointAuthenticationSigningAlgorithm("HS256")
+				.tokenEndpointAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_JWT.getValue())
+				.scope("scope1")
+				.scope("scope2")
+				.build();
+		// @formatter:on
+
+		OidcClientRegistration clientRegistrationResponse = registerClient(clientRegistration);
+		ValueCaptureMatcher<String> accessTokenCapture = new ValueCaptureMatcher<>();
+
+		// token creation with JWT assertion
+		String clientJwtAssertion = clientSecretJwtAssertion(clientRegistrationResponse, DEFAULT_TOKEN_ENDPOINT_URI);
+		this.mvc.perform(post(DEFAULT_TOKEN_ENDPOINT_URI)
+				.param(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
+				.param(OAuth2ParameterNames.SCOPE, "scope1")
+				.param(OAuth2ParameterNames.CLIENT_ID, clientRegistrationResponse.getClientId())
+				.param(OAuth2ParameterNames.CLIENT_ASSERTION_TYPE, JWT_ASSERTION_TYPE)
+				.param(OAuth2ParameterNames.CLIENT_ASSERTION, clientJwtAssertion))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.access_token").isNotEmpty())
+				.andExpect(jsonPath("$.access_token").value(accessTokenCapture))
+				.andExpect(jsonPath("$.scope").value("scope1"));
+
+		String accessToken = accessTokenCapture.lastValue();
+
+		// token introspection with JWT assertion
+		clientJwtAssertion = clientSecretJwtAssertion(clientRegistrationResponse, DEFAULT_INTROSPECTION_ENDPOINT_URI);
+		this.mvc.perform(post(DEFAULT_INTROSPECTION_ENDPOINT_URI)
+				.param(OAuth2ParameterNames.CLIENT_ID, clientRegistrationResponse.getClientId())
+				.param(OAuth2ParameterNames.CLIENT_ASSERTION_TYPE, JWT_ASSERTION_TYPE)
+				.param(OAuth2ParameterNames.CLIENT_ASSERTION, clientJwtAssertion)
+				.param(OAuth2ParameterNames.TOKEN, accessToken)
+				.param(OAuth2ParameterNames.TOKEN_TYPE_HINT, OAuth2TokenType.ACCESS_TOKEN.getValue()))
+				.andExpect(status().isOk());
+
+		// token revocation with JWT assertion
+		clientJwtAssertion = clientSecretJwtAssertion(clientRegistrationResponse, DEFAULT_REVOCATION_ENDPOINT_URI);
+		this.mvc.perform(post(DEFAULT_REVOCATION_ENDPOINT_URI)
+				.param(OAuth2ParameterNames.CLIENT_ID, clientRegistrationResponse.getClientId())
+				.param(OAuth2ParameterNames.CLIENT_ASSERTION_TYPE, JWT_ASSERTION_TYPE)
+				.param(OAuth2ParameterNames.CLIENT_ASSERTION, clientJwtAssertion)
+				.param(OAuth2ParameterNames.TOKEN, accessToken)
+				.param(OAuth2ParameterNames.TOKEN_TYPE_HINT, OAuth2TokenType.ACCESS_TOKEN.getValue()))
+				.andExpect(status().isOk());
+	}
+
+	@Test
+	public void whenClientRegistrationWithPrivateKeyJwtAuthenticationThenJwtClientAuthenticationSuccess() throws Exception {
+		this.spring.register(AuthorizationServerConfiguration.class).autowire();
+
+		KeyPairGenerator gen = KeyPairGenerator.getInstance("RSA");
+		gen.initialize(2048);
+		KeyPair keyPair = gen.generateKeyPair();
+
+		JWK jwk = new RSAKey.Builder((RSAPublicKey) keyPair.getPublic())
+				.keyUse(KeyUse.SIGNATURE)
+				.keyID(UUID.randomUUID().toString())
+				.build();
+
+		String jwks = "{\"keys\":[" + jwk.toJSONString() + "]}";
+
+		try (MockWebServer server = new MockWebServer()) {
+			String jwkSetUrl = server.url("/.well-known/jwks.json").toString();
+
+			// @formatter:off
+			OidcClientRegistration clientRegistration = OidcClientRegistration.builder()
+					.clientName("client-name")
+					.redirectUri("https://client.example.com")
+					.grantType(AuthorizationGrantType.AUTHORIZATION_CODE.getValue())
+					.grantType(AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
+					.tokenEndpointAuthenticationSigningAlgorithm("RS256")
+					.tokenEndpointAuthenticationMethod(ClientAuthenticationMethod.PRIVATE_KEY_JWT.getValue())
+					.jwkSetUrl(jwkSetUrl)
+					.scope("scope1")
+					.scope("scope2")
+					.build();
+			// @formatter:on
+
+			OidcClientRegistration clientRegistrationResponse = registerClient(clientRegistration);
+			ValueCaptureMatcher<String> accessTokenCapture = new ValueCaptureMatcher<>();
+
+			// token creation with JWT assertion
+			String clientJwtAssertion = privateKeyJwtAssertion(keyPair, clientRegistrationResponse, DEFAULT_TOKEN_ENDPOINT_URI);
+			server.enqueue(new MockResponse().setBody(jwks));
+			this.mvc.perform(post(DEFAULT_TOKEN_ENDPOINT_URI)
+					.param(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
+					.param(OAuth2ParameterNames.SCOPE, "scope1")
+					.param(OAuth2ParameterNames.CLIENT_ID, clientRegistrationResponse.getClientId())
+					.param(OAuth2ParameterNames.CLIENT_ASSERTION_TYPE, JWT_ASSERTION_TYPE)
+					.param(OAuth2ParameterNames.CLIENT_ASSERTION, clientJwtAssertion))
+					.andExpect(status().isOk())
+					.andExpect(jsonPath("$.access_token").isNotEmpty())
+					.andExpect(jsonPath("$.access_token").value(accessTokenCapture))
+					.andExpect(jsonPath("$.scope").value("scope1"));
+
+			String accessToken = accessTokenCapture.lastValue();
+
+				// token introspection with JWT assertion
+				clientJwtAssertion = privateKeyJwtAssertion(keyPair, clientRegistrationResponse, DEFAULT_INTROSPECTION_ENDPOINT_URI);
+				server.enqueue(new MockResponse().setBody(jwks));
+				this.mvc.perform(post(DEFAULT_INTROSPECTION_ENDPOINT_URI)
+						.param(OAuth2ParameterNames.CLIENT_ID, clientRegistrationResponse.getClientId())
+						.param(OAuth2ParameterNames.CLIENT_ASSERTION_TYPE, JWT_ASSERTION_TYPE)
+						.param(OAuth2ParameterNames.CLIENT_ASSERTION, clientJwtAssertion)
+						.param(OAuth2ParameterNames.TOKEN, accessToken)
+						.param(OAuth2ParameterNames.TOKEN_TYPE_HINT, OAuth2TokenType.ACCESS_TOKEN.getValue()))
+						.andExpect(status().isOk());
+
+			// token revocation with JWT assertion
+			clientJwtAssertion = privateKeyJwtAssertion(keyPair, clientRegistrationResponse, DEFAULT_REVOCATION_ENDPOINT_URI);
+			server.enqueue(new MockResponse().setBody(jwks));
+			this.mvc.perform(post(DEFAULT_REVOCATION_ENDPOINT_URI)
+					.param(OAuth2ParameterNames.CLIENT_ID, clientRegistrationResponse.getClientId())
+					.param(OAuth2ParameterNames.CLIENT_ASSERTION_TYPE, JWT_ASSERTION_TYPE)
+					.param(OAuth2ParameterNames.CLIENT_ASSERTION, clientJwtAssertion)
+					.param(OAuth2ParameterNames.TOKEN, accessToken)
+					.param(OAuth2ParameterNames.TOKEN_TYPE_HINT, OAuth2TokenType.ACCESS_TOKEN.getValue()))
+					.andExpect(status().isOk());
+
+			server.shutdown();
+		}
+	}
+
 	private OidcClientRegistration registerClient(OidcClientRegistration clientRegistration) throws Exception {
 		// ***** (1) Obtain the "initial" access token used for registering the client
 
@@ -289,6 +445,31 @@ public class OidcClientRegistrationTests {
 		return clientRegistrationHttpMessageConverter.read(OidcClientRegistration.class, httpResponse);
 	}
 
+	private JWTClaimsSet jwtClientAuthenticationClaims(OidcClientRegistration clientRegistration, String endpointUri) {
+		return  new JWTClaimsSet.Builder()
+				.subject(clientRegistration.getClientId())
+				.issuer(clientRegistration.getClientId())
+				.expirationTime(new Date(new Date().getTime() + 60000))
+				.audience(DEFAULT_ISSUER + endpointUri)
+				.build();
+	}
+
+	private String clientSecretJwtAssertion(OidcClientRegistration clientRegistration, String endpointUri) throws JOSEException {
+		JWTClaimsSet claimsSet = jwtClientAuthenticationClaims(clientRegistration, endpointUri);
+		SignedJWT signedJWT = new SignedJWT(new JWSHeader(JWSAlgorithm.HS256), claimsSet);
+		JWSSigner signer = new MACSigner(clientRegistration.getClientSecret().getBytes(StandardCharsets.UTF_8));
+		signedJWT.sign(signer);
+		return signedJWT.serialize();
+	}
+
+	private String privateKeyJwtAssertion(KeyPair keyPair, OidcClientRegistration clientRegistration, String endpointUri) throws JOSEException {
+		JWTClaimsSet claimsSet = jwtClientAuthenticationClaims(clientRegistration, endpointUri);
+		SignedJWT signedJWT = new SignedJWT(new JWSHeader(JWSAlgorithm.RS256), claimsSet);
+		JWSSigner signer = new RSASSASigner(keyPair.getPrivate());
+		signedJWT.sign(signer);
+		return signedJWT.serialize();
+	}
+
 	@EnableWebSecurity
 	static class AuthorizationServerConfiguration {
 
@@ -348,7 +529,7 @@ public class OidcClientRegistrationTests {
 		@Bean
 		ProviderSettings providerSettings() {
 			return ProviderSettings.builder()
-					.issuer("https://auth-server:9000")
+					.issuer(DEFAULT_ISSUER)
 					.build();
 		}
 

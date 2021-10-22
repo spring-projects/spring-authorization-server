@@ -52,10 +52,14 @@ final class OAuth2EndpointUtils {
 		return parameters;
 	}
 
-	static boolean matchesPkceTokenRequest(HttpServletRequest request) {
+	static boolean matchesAuthorizationCodeGrantRequest(HttpServletRequest request) {
 		return AuthorizationGrantType.AUTHORIZATION_CODE.getValue().equals(
 				request.getParameter(OAuth2ParameterNames.GRANT_TYPE)) &&
-				request.getParameter(OAuth2ParameterNames.CODE) != null &&
+				request.getParameter(OAuth2ParameterNames.CODE) != null;
+	}
+
+	static boolean matchesPkceTokenRequest(HttpServletRequest request) {
+		return matchesAuthorizationCodeGrantRequest(request) &&
 				request.getParameter(PkceParameterNames.CODE_VERIFIER) != null;
 	}
 

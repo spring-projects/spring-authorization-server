@@ -23,14 +23,17 @@ import java.security.Principal;
 import java.text.MessageFormat;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
+import org.assertj.core.matcher.AssertionMatcher;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -52,12 +55,14 @@ import org.springframework.mock.http.client.MockClientHttpResponse;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.TestingAuthenticationToken;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
 import org.springframework.security.config.test.SpringTestRule;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
@@ -77,10 +82,13 @@ import org.springframework.security.oauth2.server.authorization.JdbcOAuth2Author
 import org.springframework.security.oauth2.server.authorization.JdbcOAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.JwtEncodingContext;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
+import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsent;
+import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsentContext;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsentService;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenCustomizer;
 import org.springframework.security.oauth2.server.authorization.TestOAuth2Authorizations;
+import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeRequestAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeRequestAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.client.JdbcRegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.JdbcRegisteredClientRepository.RegisteredClientParametersMapper;
@@ -525,6 +533,60 @@ public class OAuth2AuthorizationCodeGrantTests {
 	}
 
 	@Test
+	public void requestWhenCustomConsentCustomizerConfiguredThenUsed() throws Exception {
+		this.spring.register(AuthorizationServerConfigurationCustomConsentRequest.class).autowire();
+
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
+				.clientSettings(ClientSettings.builder()
+						.requireAuthorizationConsent(true)
+						.setting("custom.allowed-authorities", "authority-1 authority-2")
+						.build())
+				.build();
+		this.registeredClientRepository.save(registeredClient);
+
+		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient)
+				.build();
+		this.authorizationService.save(authorization);
+
+		MvcResult mvcResult = this.mvc.perform(post(DEFAULT_AUTHORIZATION_ENDPOINT_URI)
+				.param(OAuth2ParameterNames.CLIENT_ID, registeredClient.getClientId())
+				.param("authority", "authority-1 authority-2")
+				.param(OAuth2ParameterNames.STATE, "state")
+				.with(user("principal")))
+				.andExpect(status().is3xxRedirection())
+				.andReturn();
+
+		String redirectedUrl = mvcResult.getResponse().getRedirectedUrl();
+		assertThat(redirectedUrl).matches("https://example.com\\?code=.{15,}&state=state");
+
+		String authorizationCode = extractParameterFromRedirectUri(redirectedUrl, "code");
+		OAuth2Authorization authorizationCodeAuthorization = this.authorizationService.findByToken(authorizationCode, AUTHORIZATION_CODE_TOKEN_TYPE);
+
+		mvcResult = this.mvc.perform(post(DEFAULT_TOKEN_ENDPOINT_URI)
+				.params(getTokenRequestParameters(registeredClient, authorizationCodeAuthorization))
+				.header(HttpHeaders.AUTHORIZATION, getAuthorizationHeader(registeredClient)))
+				.andExpect(status().isOk())
+				.andExpect(header().string(HttpHeaders.CACHE_CONTROL, containsString("no-store")))
+				.andExpect(header().string(HttpHeaders.PRAGMA, containsString("no-cache")))
+				.andExpect(jsonPath("$.access_token").isNotEmpty())
+				.andExpect(jsonPath("$.access_token").value(new AssertionMatcher<String>() {
+					@Override
+					public void assertion(String accessToken) throws AssertionError {
+						Jwt jwt = jwtDecoder.decode(accessToken);
+						assertThat(jwt.getClaimAsStringList(AUTHORITIES_CLAIM))
+								.containsExactlyInAnyOrder("authority-1", "authority-2");
+					}
+				}))
+				.andExpect(jsonPath("$.token_type").isNotEmpty())
+				.andExpect(jsonPath("$.expires_in").isNotEmpty())
+				.andExpect(jsonPath("$.refresh_token").isNotEmpty())
+				.andExpect(jsonPath("$.scope").doesNotExist())
+				.andReturn();
+
+		String json = mvcResult.getResponse().getContentAsString();
+	}
+
+	@Test
 	public void requestWhenAuthorizationEndpointCustomizedThenUsed() throws Exception {
 		this.spring.register(AuthorizationServerConfigurationCustomAuthorizationEndpoint.class).autowire();
 
@@ -720,6 +782,100 @@ public class OAuth2AuthorizationCodeGrantTests {
 			return http.build();
 		}
 		// @formatter:on
+	}
+
+	@EnableWebSecurity
+	static class AuthorizationServerConfigurationCustomConsentRequest extends AuthorizationServerConfiguration {
+		@Autowired
+		private RegisteredClientRepository registeredClientRepository;
+
+		@Autowired
+		private OAuth2AuthorizationService authorizationService;
+
+		@Autowired
+		private OAuth2AuthorizationConsentService authorizationConsentService;
+
+		// @formatter:off
+		@Bean
+		public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
+			OAuth2AuthorizationServerConfigurer<HttpSecurity> authorizationServerConfigurer =
+					new OAuth2AuthorizationServerConfigurer<>();
+			authorizationServerConfigurer
+					.authorizationEndpoint(authorizationEndpoint ->
+							authorizationEndpoint.authenticationProvider(createProvider()));
+			RequestMatcher endpointsMatcher = authorizationServerConfigurer.getEndpointsMatcher();
+
+			http
+					.requestMatcher(endpointsMatcher)
+					.authorizeRequests(authorizeRequests ->
+							authorizeRequests.anyRequest().authenticated()
+					)
+					.csrf(csrf -> csrf.ignoringRequestMatchers(endpointsMatcher))
+					.apply(authorizationServerConfigurer);
+			return http.build();
+		}
+		// @formatter:on
+
+		@Bean
+		@Override
+		OAuth2TokenCustomizer<JwtEncodingContext> jwtCustomizer() {
+			return context -> {
+				if (AuthorizationGrantType.AUTHORIZATION_CODE.equals(context.getAuthorizationGrantType()) &&
+						OAuth2TokenType.ACCESS_TOKEN.equals(context.getTokenType())) {
+					OAuth2AuthorizationConsent authorizationConsent = authorizationConsentService.findById(
+							context.getRegisteredClient().getId(), context.getPrincipal().getName());
+
+					Set<String> authorities = new HashSet<>();
+					for (GrantedAuthority authority : authorizationConsent.getAuthorities()) {
+						authorities.add(authority.getAuthority());
+					}
+					context.getClaims().claim(AUTHORITIES_CLAIM, authorities);
+				}
+			};
+		}
+
+		private AuthenticationProvider createProvider() {
+			OAuth2AuthorizationCodeRequestAuthenticationProvider authorizationCodeRequestAuthenticationProvider =
+					new OAuth2AuthorizationCodeRequestAuthenticationProvider(
+							this.registeredClientRepository,
+							this.authorizationService,
+							this.authorizationConsentService);
+			authorizationCodeRequestAuthenticationProvider.setAuthorizationConsentCustomizer(new ConsentCustomizer());
+
+			return authorizationCodeRequestAuthenticationProvider;
+		}
+
+		static class ConsentCustomizer implements Customizer<OAuth2AuthorizationConsentContext> {
+			@Override
+			public void customize(OAuth2AuthorizationConsentContext authorizationConsentContext) {
+				OAuth2AuthorizationConsent.Builder authorizationConsentBuilder =
+						authorizationConsentContext.getAuthorizationConsentBuilder();
+				OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthentication =
+						authorizationConsentContext.getPrincipal();
+				Map<String, Object> additionalParameters =
+						authorizationCodeRequestAuthentication.getAdditionalParameters();
+				RegisteredClient registeredClient = authorizationConsentContext.getRegisteredClient();
+				ClientSettings clientSettings = registeredClient.getClientSettings();
+
+				Set<String> requestedAuthorities = authorities((String) additionalParameters.get("authority"));
+				Set<String> allowedAuthorities = authorities(clientSettings.getSetting("custom.allowed-authorities"));
+				for (String requestedAuthority : requestedAuthorities) {
+					if (allowedAuthorities.contains(requestedAuthority)) {
+						authorizationConsentBuilder.authority(new SimpleGrantedAuthority(requestedAuthority));
+					}
+				}
+			}
+
+			private static Set<String> authorities(String param) {
+				Set<String> authorities = new HashSet<>();
+				if (param != null) {
+					List<String> authorityValues = Arrays.asList(param.split(" "));
+					authorities.addAll(authorityValues);
+				}
+
+				return authorities;
+			}
+		}
 	}
 
 	@EnableWebSecurity

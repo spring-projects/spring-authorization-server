@@ -84,13 +84,13 @@ public interface OidcClientMetadataClaimNames {
 	String ID_TOKEN_SIGNED_RESPONSE_ALG = "id_token_signed_response_alg";
 
 	/**
-	 * {@code registration_access_token} - Registration Access Token that can be used at the Client Configuration Endpoint to perform subsequent operations upon the Client registration
+	 * {@code registration_access_token} - the Registration Access Token that can be used at the Client Configuration Endpoint
 	 * @since 0.2.1
 	 */
 	String REGISTRATION_ACCESS_TOKEN = "registration_access_token";
 
 	/**
-	 * {@code registration_client_uri} - the {@code URL} of the OAuth 2.0 Client Configuration Endpoint
+	 * {@code registration_client_uri} - the {@code URL} of the Client Configuration Endpoint where the Registration Access Token can be used
 	 * @since 0.2.1
 	 */
 	String REGISTRATION_CLIENT_URI = "registration_client_uri";

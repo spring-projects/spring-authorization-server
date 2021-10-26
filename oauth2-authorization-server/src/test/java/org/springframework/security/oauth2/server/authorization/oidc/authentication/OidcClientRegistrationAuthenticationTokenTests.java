@@ -51,14 +51,14 @@ public class OidcClientRegistrationAuthenticationTokenTests {
 	public void constructorWhenClientIdNullThenThrowIllegalArgumentException() {
 		assertThatIllegalArgumentException()
 				.isThrownBy(() -> new OidcClientRegistrationAuthenticationToken(this.principal, (String) null))
-				.withMessage("clientId cannot be null or empty");
+				.withMessage("clientId cannot be empty");
 	}
 
 	@Test
 	public void constructorWhenClientIdEmptyThenThrowIllegalArgumentException() {
 		assertThatIllegalArgumentException()
 				.isThrownBy(() -> new OidcClientRegistrationAuthenticationToken(this.principal, ""))
-				.withMessage("clientId cannot be null or empty");
+				.withMessage("clientId cannot be empty");
 	}
 
 	@Test

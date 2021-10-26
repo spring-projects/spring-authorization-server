@@ -252,23 +252,25 @@ public final class OidcClientRegistration implements OidcClientMetadataClaimAcce
 		}
 
 		/**
-		 * Sets the Registration Access Token that can be used at the Client Configuration Endpoint to perform subsequent operations upon the Client registration, OPTIONAL.
+		 * Sets the Registration Access Token that can be used at the Client Configuration Endpoint, OPTIONAL.
 		 *
-		 * @param registrationAccessToken the Registration Access Token that can be used at the Client Configuration Endpoint to perform subsequent operations upon the Client registration
+		 * @param registrationAccessToken the Registration Access Token that can be used at the Client Configuration Endpoint
 		 * @return the {@link Builder} for further configuration
+		 * @since 0.2.1
 		 */
 		public Builder registrationAccessToken(String registrationAccessToken) {
 			return claim(OidcClientMetadataClaimNames.REGISTRATION_ACCESS_TOKEN, registrationAccessToken);
 		}
 
 		/**
-		 * Sets the {@code URL} of the OAuth 2.0 Client Configuration Endpoint, OPTIONAL.
+		 * Sets the {@code URL} of the Client Configuration Endpoint where the Registration Access Token can be used, OPTIONAL.
 		 *
-		 * @param registrationClientUri the {@code URL} of the OAuth 2.0 Client Configuration Endpoint
+		 * @param registrationClientUrl the {@code URL} of the Client Configuration Endpoint where the Registration Access Token can be used
 		 * @return the {@link Builder} for further configuration
+		 * @since 0.2.1
 		 */
-		public Builder registrationClientUri(String registrationClientUri) {
-			return claim(OidcClientMetadataClaimNames.REGISTRATION_CLIENT_URI, registrationClientUri);
+		public Builder registrationClientUrl(String registrationClientUrl) {
+			return claim(OidcClientMetadataClaimNames.REGISTRATION_CLIENT_URI, registrationClientUrl);
 		}
 
 		/**

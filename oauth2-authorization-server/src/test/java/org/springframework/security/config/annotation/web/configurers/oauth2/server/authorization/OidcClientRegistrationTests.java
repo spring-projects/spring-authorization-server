@@ -18,17 +18,16 @@ package org.springframework.security.config.annotation.web.configurers.oauth2.se
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
-import java.util.stream.Collectors;
 
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
-
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpHeaders;
@@ -138,28 +137,6 @@ public class OidcClientRegistrationTests {
 	public void requestWhenClientRegistrationRequestAuthorizedThenClientRegistrationResponse() throws Exception {
 		this.spring.register(AuthorizationServerConfiguration.class).autowire();
 
-		// ***** (1) Obtain the "initial" access token used for registering the client
-
-		String clientRegistrationScope = "client.create";
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient2()
-				.scope(clientRegistrationScope)
-				.build();
-		this.registeredClientRepository.save(registeredClient);
-
-		MvcResult mvcResult = this.mvc.perform(post(DEFAULT_TOKEN_ENDPOINT_URI)
-				.param(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
-				.param(OAuth2ParameterNames.SCOPE, clientRegistrationScope)
-				.header(HttpHeaders.AUTHORIZATION, "Basic " + encodeBasicAuth(
-						registeredClient.getClientId(), registeredClient.getClientSecret())))
-				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.access_token").isNotEmpty())
-				.andExpect(jsonPath("$.scope").value(clientRegistrationScope))
-				.andReturn();
-
-		OAuth2AccessToken accessToken = readAccessTokenResponse(mvcResult.getResponse()).getAccessToken();
-
-		// ***** (2) Register the client
-
 		// @formatter:off
 		OidcClientRegistration clientRegistration = OidcClientRegistration.builder()
 				.clientName("client-name")
@@ -171,20 +148,8 @@ public class OidcClientRegistrationTests {
 				.build();
 		// @formatter:on
 
-		HttpHeaders httpHeaders = new HttpHeaders();
-		httpHeaders.setBearerAuth(accessToken.getTokenValue());
+		OidcClientRegistration clientRegistrationResponse = registerClient(clientRegistration);
 
-		// Register the client
-		mvcResult = this.mvc.perform(post(DEFAULT_OIDC_CLIENT_REGISTRATION_ENDPOINT_URI)
-				.headers(httpHeaders)
-				.contentType(MediaType.APPLICATION_JSON)
-				.content(getClientRegistrationRequestContent(clientRegistration)))
-				.andExpect(status().isCreated())
-				.andExpect(header().string(HttpHeaders.CACHE_CONTROL, containsString("no-store")))
-				.andExpect(header().string(HttpHeaders.PRAGMA, containsString("no-cache")))
-				.andReturn();
-
-		OidcClientRegistration clientRegistrationResponse = readClientRegistrationResponse(mvcResult.getResponse());
 		assertThat(clientRegistrationResponse.getClientId()).isNotNull();
 		assertThat(clientRegistrationResponse.getClientIdIssuedAt()).isNotNull();
 		assertThat(clientRegistrationResponse.getClientSecret()).isNotNull();
@@ -202,189 +167,13 @@ public class OidcClientRegistrationTests {
 				.isEqualTo(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue());
 		assertThat(clientRegistrationResponse.getIdTokenSignedResponseAlgorithm())
 				.isEqualTo(SignatureAlgorithm.RS256.getName());
-		assertThat(clientRegistrationResponse.getRegistrationClientUri())
-				.isNotNull();
+		assertThat(clientRegistrationResponse.getRegistrationClientUrl()).isNotNull();
 		assertThat(clientRegistrationResponse.getRegistrationAccessToken()).isNotEmpty();
-	}
-
-	@Test
-	public void requestWhenClientConfigurationRequestAndRegisteredClientNotEqualToAuthorizationRegisteredClientThenUnauthorized() throws Exception {
-		this.spring.register(AuthorizationServerConfiguration.class).autowire();
-
-		// ***** (1) Obtain the registration access token used for fetching the registered client configuration
-
-		String clientConfigurationRequestScope = "client.read";
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
-				.scope(clientConfigurationRequestScope)
-				.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
-				.build();
-		this.registeredClientRepository.save(registeredClient);
-
-		RegisteredClient unauthorizedRegisteredClient = TestRegisteredClients.registeredClient()
-				.id("registration-2")
-				.clientId("client-2")
-				.scope(clientConfigurationRequestScope)
-				.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
-				.build();
-		this.registeredClientRepository.save(unauthorizedRegisteredClient);
-
-		MvcResult mvcResult = this.mvc.perform(post(DEFAULT_TOKEN_ENDPOINT_URI)
-						.param(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
-						.param(OAuth2ParameterNames.SCOPE, clientConfigurationRequestScope)
-						.header(HttpHeaders.AUTHORIZATION, "Basic " + encodeBasicAuth(
-								registeredClient.getClientId(), registeredClient.getClientSecret())))
-				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.access_token").isNotEmpty())
-				.andExpect(jsonPath("$.scope").value(clientConfigurationRequestScope))
-				.andReturn();
-
-		OAuth2AccessToken accessToken = readAccessTokenResponse(mvcResult.getResponse()).getAccessToken();
-
-		HttpHeaders httpHeaders = new HttpHeaders();
-		httpHeaders.setBearerAuth(accessToken.getTokenValue());
-
-		// ***** (2) Get RegisteredClient Configuration
-		this.mvc.perform(get(DEFAULT_OIDC_CLIENT_REGISTRATION_ENDPOINT_URI)
-						.headers(httpHeaders)
-						.queryParam(OAuth2ParameterNames.CLIENT_ID, unauthorizedRegisteredClient.getClientId()))
-				.andExpect(status().isUnauthorized());
 	}
 
 	@Test
 	public void requestWhenClientConfigurationRequestAuthorizedThenClientRegistrationResponse() throws Exception {
 		this.spring.register(AuthorizationServerConfiguration.class).autowire();
-
-		// ***** (1) Obtain the registration access token used for fetching the registered client configuration
-
-		String clientConfigurationRequestScope = "client.read";
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
-				.scope(clientConfigurationRequestScope)
-				.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
-				.build();
-		this.registeredClientRepository.save(registeredClient);
-
-		MvcResult mvcResult = this.mvc.perform(post(DEFAULT_TOKEN_ENDPOINT_URI)
-						.param(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
-						.param(OAuth2ParameterNames.SCOPE, clientConfigurationRequestScope)
-						.header(HttpHeaders.AUTHORIZATION, "Basic " + encodeBasicAuth(
-								registeredClient.getClientId(), registeredClient.getClientSecret())))
-				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.access_token").isNotEmpty())
-				.andExpect(jsonPath("$.scope").value(clientConfigurationRequestScope))
-				.andReturn();
-
-		OAuth2AccessToken accessToken = readAccessTokenResponse(mvcResult.getResponse()).getAccessToken();
-
-		HttpHeaders httpHeaders = new HttpHeaders();
-		httpHeaders.setBearerAuth(accessToken.getTokenValue());
-
-		// ***** (2) Get RegisteredClient Configuration
-		mvcResult = this.mvc.perform(get(DEFAULT_OIDC_CLIENT_REGISTRATION_ENDPOINT_URI)
-						.headers(httpHeaders)
-						.queryParam(OAuth2ParameterNames.CLIENT_ID, registeredClient.getClientId()))
-				.andExpect(status().isOk())
-				.andExpect(header().string(HttpHeaders.CACHE_CONTROL, containsString("no-store")))
-				.andExpect(header().string(HttpHeaders.PRAGMA, containsString("no-cache")))
-				.andReturn();
-
-		OidcClientRegistration clientConfigurationResponse = readClientRegistrationResponse(mvcResult.getResponse());
-		assertThat(clientConfigurationResponse.getClientId()).isNotNull().isEqualTo(registeredClient.getClientId());
-		assertThat(clientConfigurationResponse.getClientIdIssuedAt()).isNotNull();
-		assertThat(clientConfigurationResponse.getClientSecret()).isNotNull().isEqualTo(registeredClient.getClientSecret());
-		assertThat(clientConfigurationResponse.getClientSecretExpiresAt()).isNull();
-		assertThat(clientConfigurationResponse.getClientName()).isEqualTo(registeredClient.getClientName());
-		assertThat(clientConfigurationResponse.getRedirectUris())
-				.containsExactlyInAnyOrderElementsOf(registeredClient.getRedirectUris());
-		assertThat(clientConfigurationResponse.getGrantTypes())
-				.containsExactlyInAnyOrderElementsOf(registeredClient.getAuthorizationGrantTypes().stream().map(AuthorizationGrantType::getValue).collect(Collectors.toList()));
-		assertThat(clientConfigurationResponse.getResponseTypes())
-				.containsExactly(OAuth2AuthorizationResponseType.CODE.getValue());
-		assertThat(clientConfigurationResponse.getScopes())
-				.containsExactlyInAnyOrderElementsOf(registeredClient.getScopes());
-		assertThat(clientConfigurationResponse.getTokenEndpointAuthenticationMethod())
-				.isEqualTo(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue());
-		assertThat(clientConfigurationResponse.getIdTokenSignedResponseAlgorithm())
-				.isEqualTo(SignatureAlgorithm.RS256.getName());
-		assertThat(clientConfigurationResponse.getRegistrationClientUri())
-				.isNotNull();
-		assertThat(clientConfigurationResponse.getRegistrationAccessToken()).isNull();
-	}
-
-	@Test
-	public void requestWhenClientConfigurationRequestTwiceSameAccessTokenAuthorizedThenClientRegistrationResponse() throws Exception {
-		this.spring.register(AuthorizationServerConfiguration.class).autowire();
-
-		// ***** (1) Obtain the registration access token used for fetching the registered client configuration
-
-		String clientConfigurationRequestScope = "client.read";
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
-				.scope(clientConfigurationRequestScope)
-				.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
-				.build();
-		this.registeredClientRepository.save(registeredClient);
-
-		MvcResult mvcResult = this.mvc.perform(post(DEFAULT_TOKEN_ENDPOINT_URI)
-						.param(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
-						.param(OAuth2ParameterNames.SCOPE, clientConfigurationRequestScope)
-						.header(HttpHeaders.AUTHORIZATION, "Basic " + encodeBasicAuth(
-								registeredClient.getClientId(), registeredClient.getClientSecret())))
-				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.access_token").isNotEmpty())
-				.andExpect(jsonPath("$.scope").value(clientConfigurationRequestScope))
-				.andReturn();
-
-		OAuth2AccessToken accessToken = readAccessTokenResponse(mvcResult.getResponse()).getAccessToken();
-
-		HttpHeaders httpHeaders = new HttpHeaders();
-		httpHeaders.setBearerAuth(accessToken.getTokenValue());
-
-		// ***** (2) Get RegisteredClient Configuration
-		mvcResult = this.mvc.perform(get(DEFAULT_OIDC_CLIENT_REGISTRATION_ENDPOINT_URI)
-						.headers(httpHeaders)
-						.queryParam(OAuth2ParameterNames.CLIENT_ID, registeredClient.getClientId()))
-				.andExpect(status().isOk())
-				.andExpect(header().string(HttpHeaders.CACHE_CONTROL, containsString("no-store")))
-				.andExpect(header().string(HttpHeaders.PRAGMA, containsString("no-cache")))
-				.andReturn();
-
-		assertClientConfigurationResponse(registeredClient, mvcResult);
-
-		// ***** (3) Get RegisteredClient Configuration with the same access token
-		mvcResult = this.mvc.perform(get(DEFAULT_OIDC_CLIENT_REGISTRATION_ENDPOINT_URI)
-						.headers(httpHeaders)
-						.queryParam(OAuth2ParameterNames.CLIENT_ID, registeredClient.getClientId()))
-				.andExpect(status().isOk())
-				.andExpect(header().string(HttpHeaders.CACHE_CONTROL, containsString("no-store")))
-				.andExpect(header().string(HttpHeaders.PRAGMA, containsString("no-cache")))
-				.andReturn();
-		assertClientConfigurationResponse(registeredClient, mvcResult);
-	}
-
-	@Test
-	public void requestWhenClientRegistrationRequestAndClientConfigurationRequestAuthorizedThenClientRegistrationResponse() throws Exception {
-		this.spring.register(AuthorizationServerConfiguration.class).autowire();
-
-		// ***** (1) Obtain the "initial" access token used for registering the client
-
-		String clientRegistrationScope = "client.create";
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient2()
-				.scope(clientRegistrationScope)
-				.build();
-		this.registeredClientRepository.save(registeredClient);
-
-		MvcResult mvcResult = this.mvc.perform(post(DEFAULT_TOKEN_ENDPOINT_URI)
-						.param(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
-						.param(OAuth2ParameterNames.SCOPE, clientRegistrationScope)
-						.header(HttpHeaders.AUTHORIZATION, "Basic " + encodeBasicAuth(
-								registeredClient.getClientId(), registeredClient.getClientSecret())))
-				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.access_token").isNotEmpty())
-				.andExpect(jsonPath("$.scope").value(clientRegistrationScope))
-				.andReturn();
-
-		OAuth2AccessToken accessToken = readAccessTokenResponse(mvcResult.getResponse()).getAccessToken();
-
-		// ***** (2) Register the client
 
 		// @formatter:off
 		OidcClientRegistration clientRegistration = OidcClientRegistration.builder()
@@ -397,81 +186,80 @@ public class OidcClientRegistrationTests {
 				.build();
 		// @formatter:on
 
+		OidcClientRegistration clientRegistrationResponse = registerClient(clientRegistration);
+
 		HttpHeaders httpHeaders = new HttpHeaders();
-		httpHeaders.setBearerAuth(accessToken.getTokenValue());
-
-		// Register the client
-		mvcResult = this.mvc.perform(post(DEFAULT_OIDC_CLIENT_REGISTRATION_ENDPOINT_URI)
-						.headers(httpHeaders)
-						.contentType(MediaType.APPLICATION_JSON)
-						.content(getClientRegistrationRequestContent(clientRegistration)))
-				.andExpect(status().isCreated())
-				.andExpect(header().string(HttpHeaders.CACHE_CONTROL, containsString("no-store")))
-				.andExpect(header().string(HttpHeaders.PRAGMA, containsString("no-cache")))
-				.andReturn();
-
-		OidcClientRegistration clientRegistrationResponse = readClientRegistrationResponse(mvcResult.getResponse());
-
-
-		httpHeaders = new HttpHeaders();
 		httpHeaders.setBearerAuth(clientRegistrationResponse.getRegistrationAccessToken());
 
-		// ***** (3) Get RegisteredClient Configuration
-		mvcResult = this.mvc.perform(get(clientRegistrationResponse.getRegistrationClientUri().toString())
-						.headers(httpHeaders))
+		MvcResult mvcResult = this.mvc.perform(get(clientRegistrationResponse.getRegistrationClientUrl().toURI())
+				.headers(httpHeaders))
 				.andExpect(status().isOk())
 				.andExpect(header().string(HttpHeaders.CACHE_CONTROL, containsString("no-store")))
 				.andExpect(header().string(HttpHeaders.PRAGMA, containsString("no-cache")))
 				.andReturn();
 
 		OidcClientRegistration clientConfigurationResponse = readClientRegistrationResponse(mvcResult.getResponse());
-		assertThat(clientConfigurationResponse.getClientId()).isNotNull().isEqualTo(clientRegistrationResponse.getClientId());
-		assertThat(clientConfigurationResponse.getClientIdIssuedAt()).isNotNull();
-		assertThat(clientConfigurationResponse.getClientSecret()).isNotNull().isEqualTo(clientRegistrationResponse.getClientSecret());
-		assertThat(clientConfigurationResponse.getClientSecretExpiresAt()).isNull();
+
+		assertThat(clientConfigurationResponse.getClientId()).isEqualTo(clientRegistrationResponse.getClientId());
+		assertThat(clientConfigurationResponse.getClientIdIssuedAt()).isEqualTo(clientRegistrationResponse.getClientIdIssuedAt());
+		assertThat(clientConfigurationResponse.getClientSecret()).isEqualTo(clientRegistrationResponse.getClientSecret());
+		assertThat(clientConfigurationResponse.getClientSecretExpiresAt()).isEqualTo(clientRegistrationResponse.getClientSecretExpiresAt());
 		assertThat(clientConfigurationResponse.getClientName()).isEqualTo(clientRegistrationResponse.getClientName());
 		assertThat(clientConfigurationResponse.getRedirectUris())
 				.containsExactlyInAnyOrderElementsOf(clientRegistrationResponse.getRedirectUris());
 		assertThat(clientConfigurationResponse.getGrantTypes())
 				.containsExactlyInAnyOrderElementsOf(clientRegistrationResponse.getGrantTypes());
 		assertThat(clientConfigurationResponse.getResponseTypes())
-				.containsExactly(OAuth2AuthorizationResponseType.CODE.getValue());
+				.containsExactlyInAnyOrderElementsOf(clientRegistrationResponse.getResponseTypes());
 		assertThat(clientConfigurationResponse.getScopes())
 				.containsExactlyInAnyOrderElementsOf(clientRegistrationResponse.getScopes());
 		assertThat(clientConfigurationResponse.getTokenEndpointAuthenticationMethod())
-				.isEqualTo(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue());
+				.isEqualTo(clientRegistrationResponse.getTokenEndpointAuthenticationMethod());
 		assertThat(clientConfigurationResponse.getIdTokenSignedResponseAlgorithm())
-				.isEqualTo(SignatureAlgorithm.RS256.getName());
-		assertThat(clientConfigurationResponse.getRegistrationClientUri())
-				.isNotNull();
+				.isEqualTo(clientRegistrationResponse.getIdTokenSignedResponseAlgorithm());
+		assertThat(clientConfigurationResponse.getRegistrationClientUrl())
+				.isEqualTo(clientRegistrationResponse.getRegistrationClientUrl());
 		assertThat(clientConfigurationResponse.getRegistrationAccessToken()).isNull();
 	}
 
-	private static void assertClientConfigurationResponse(RegisteredClient registeredClient, MvcResult mvcResult) throws Exception {
-		OidcClientRegistration clientConfigurationResponse;
-		clientConfigurationResponse = readClientRegistrationResponse(mvcResult.getResponse());
-		assertThat(clientConfigurationResponse.getClientId()).isNotNull().isEqualTo(registeredClient.getClientId());
-		assertThat(clientConfigurationResponse.getClientIdIssuedAt()).isNotNull();
-		assertThat(clientConfigurationResponse.getClientSecret()).isNotNull().isEqualTo(registeredClient.getClientSecret());
-		assertThat(clientConfigurationResponse.getClientSecretExpiresAt()).isNull();
-		assertThat(clientConfigurationResponse.getClientName()).isEqualTo(registeredClient.getClientName());
-		assertThat(clientConfigurationResponse.getRedirectUris())
-				.containsExactlyInAnyOrderElementsOf(registeredClient.getRedirectUris());
-		assertThat(clientConfigurationResponse.getGrantTypes())
-				.containsExactlyInAnyOrderElementsOf(registeredClient.getAuthorizationGrantTypes().stream().map(AuthorizationGrantType::getValue).collect(Collectors.toList()));
-		assertThat(clientConfigurationResponse.getResponseTypes())
-				.containsExactly(OAuth2AuthorizationResponseType.CODE.getValue());
-		assertThat(clientConfigurationResponse.getScopes())
-				.containsExactlyInAnyOrderElementsOf(registeredClient.getScopes());
-		assertThat(clientConfigurationResponse.getTokenEndpointAuthenticationMethod())
-				.isEqualTo(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue());
-		assertThat(clientConfigurationResponse.getIdTokenSignedResponseAlgorithm())
-				.isEqualTo(SignatureAlgorithm.RS256.getName());
-		assertThat(clientConfigurationResponse.getRegistrationClientUri())
-				.isNotNull();
-		assertThat(clientConfigurationResponse.getRegistrationAccessToken()).isNull();
-	}
+	private OidcClientRegistration registerClient(OidcClientRegistration clientRegistration) throws Exception {
+		// ***** (1) Obtain the "initial" access token used for registering the client
 
+		String clientRegistrationScope = "client.create";
+		RegisteredClient clientRegistrar = TestRegisteredClients.registeredClient2()
+				.scope(clientRegistrationScope)
+				.build();
+		this.registeredClientRepository.save(clientRegistrar);
+
+		MvcResult mvcResult = this.mvc.perform(post(DEFAULT_TOKEN_ENDPOINT_URI)
+				.param(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
+				.param(OAuth2ParameterNames.SCOPE, clientRegistrationScope)
+				.header(HttpHeaders.AUTHORIZATION, "Basic " + encodeBasicAuth(
+						clientRegistrar.getClientId(), clientRegistrar.getClientSecret())))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.access_token").isNotEmpty())
+				.andExpect(jsonPath("$.scope").value(clientRegistrationScope))
+				.andReturn();
+
+		OAuth2AccessToken accessToken = readAccessTokenResponse(mvcResult.getResponse()).getAccessToken();
+
+		// ***** (2) Register the client
+
+		HttpHeaders httpHeaders = new HttpHeaders();
+		httpHeaders.setBearerAuth(accessToken.getTokenValue());
+
+		// Register the client
+		mvcResult = this.mvc.perform(post(DEFAULT_OIDC_CLIENT_REGISTRATION_ENDPOINT_URI)
+				.headers(httpHeaders)
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(getClientRegistrationRequestContent(clientRegistration)))
+				.andExpect(status().isCreated())
+				.andExpect(header().string(HttpHeaders.CACHE_CONTROL, containsString("no-store")))
+				.andExpect(header().string(HttpHeaders.PRAGMA, containsString("no-cache")))
+				.andReturn();
+
+		return readClientRegistrationResponse(mvcResult.getResponse());
+	}
 
 	private static String encodeBasicAuth(String clientId, String secret) throws Exception {
 		clientId = URLEncoder.encode(clientId, StandardCharsets.UTF_8.name());
@@ -552,8 +340,9 @@ public class OidcClientRegistrationTests {
 
 		@Bean
 		ProviderSettings providerSettings() {
-			return ProviderSettings.builder().issuer("http://auth-server:9000")
-					.oidcClientRegistrationEndpoint("/connect/register").build();
+			return ProviderSettings.builder()
+					.issuer("https://auth-server:9000")
+					.build();
 		}
 
 		@Bean

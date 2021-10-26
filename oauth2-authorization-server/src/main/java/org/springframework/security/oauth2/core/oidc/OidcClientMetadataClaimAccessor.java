@@ -146,12 +146,12 @@ public interface OidcClientMetadataClaimAccessor extends ClaimAccessor {
 	}
 
 	/**
-	 * Returns the {@code URL} of the OAuth 2.0 Client Configuration Endpoint.
+	 * Returns the {@code URL} of the Client Configuration Endpoint where the Registration Access Token can be used.
 	 *
-	 * @return the {@code URL} of the OAuth 2.0 Client Configuration Endpoint
+	 * @return the {@code URL} of the Client Configuration Endpoint where the Registration Access Token can be used
 	 * @since 0.2.1
 	 */
-	default URL getRegistrationClientUri() {
+	default URL getRegistrationClientUrl() {
 		return getClaimAsURL(OidcClientMetadataClaimNames.REGISTRATION_CLIENT_URI);
 	}
 

@@ -2,6 +2,8 @@
 
 This sample integrates `spring-security-oauth2-client` and `spring-security-oauth2-resource-server` with *Spring Authorization Server*.
 
+The username is `user1` and the password is `password`.
+
 == Run the Sample
 
 * Run Authorization Server -> `./gradlew -b samples/boot/oauth2-integration/authorizationserver/spring-security-samples-boot-oauth2-integrated-authorizationserver.gradle bootRun`

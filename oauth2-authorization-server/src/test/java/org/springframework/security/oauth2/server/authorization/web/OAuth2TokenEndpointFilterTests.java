@@ -463,7 +463,7 @@ public class OAuth2TokenEndpointFilterTests {
 		AuthenticationDetailsSource<HttpServletRequest, WebAuthenticationDetails> authenticationDetailsSource =
 				mock(AuthenticationDetailsSource.class);
 		WebAuthenticationDetails webAuthenticationDetails = new WebAuthenticationDetails(request);
-		when(authenticationDetailsSource.buildDetails(request)).thenReturn(webAuthenticationDetails);
+		when(authenticationDetailsSource.buildDetails(any())).thenReturn(webAuthenticationDetails);
 		this.filter.setAuthenticationDetailsSource(authenticationDetailsSource);
 
 		OAuth2AccessToken accessToken = new OAuth2AccessToken(
@@ -484,7 +484,7 @@ public class OAuth2TokenEndpointFilterTests {
 
 		this.filter.doFilter(request, response, filterChain);
 
-		verify(authenticationDetailsSource).buildDetails(request);
+		verify(authenticationDetailsSource).buildDetails(any());
 	}
 
 	@Test

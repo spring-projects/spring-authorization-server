@@ -128,8 +128,10 @@ public class OAuth2ClientAuthenticationProviderTests {
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 				.isInstanceOf(OAuth2AuthenticationException.class)
 				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
-				.extracting("errorCode")
-				.isEqualTo(OAuth2ErrorCodes.INVALID_CLIENT);
+				.satisfies(error -> {
+					assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_CLIENT);
+					assertThat(error.getDescription()).contains(OAuth2ParameterNames.CLIENT_ID);
+				});
 	}
 
 	@Test
@@ -143,8 +145,10 @@ public class OAuth2ClientAuthenticationProviderTests {
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 				.isInstanceOf(OAuth2AuthenticationException.class)
 				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
-				.extracting("errorCode")
-				.isEqualTo(OAuth2ErrorCodes.INVALID_CLIENT);
+				.satisfies(error -> {
+					assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_CLIENT);
+					assertThat(error.getDescription()).contains(OAuth2ParameterNames.CLIENT_SECRET);
+				});
 		verify(this.passwordEncoder).matches(any(), any());
 	}
 
@@ -159,8 +163,10 @@ public class OAuth2ClientAuthenticationProviderTests {
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 				.isInstanceOf(OAuth2AuthenticationException.class)
 				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
-				.extracting("errorCode")
-				.isEqualTo(OAuth2ErrorCodes.INVALID_CLIENT);
+				.satisfies(error -> {
+					assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_CLIENT);
+					assertThat(error.getDescription()).contains("credentials");
+				});
 	}
 
 	@Test
@@ -222,8 +228,10 @@ public class OAuth2ClientAuthenticationProviderTests {
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 				.isInstanceOf(OAuth2AuthenticationException.class)
 				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
-				.extracting("errorCode")
-				.isEqualTo(OAuth2ErrorCodes.INVALID_CLIENT);
+				.satisfies(error -> {
+					assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_CLIENT);
+					assertThat(error.getDescription()).contains(OAuth2ParameterNames.CODE);
+				});
 	}
 
 	@Test
@@ -246,8 +254,10 @@ public class OAuth2ClientAuthenticationProviderTests {
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 				.isInstanceOf(OAuth2AuthenticationException.class)
 				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
-				.extracting("errorCode")
-				.isEqualTo(OAuth2ErrorCodes.INVALID_CLIENT);
+				.satisfies(error -> {
+					assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_CLIENT);
+					assertThat(error.getDescription()).contains(PkceParameterNames.CODE_VERIFIER);
+				});
 	}
 
 	@Test
@@ -270,8 +280,10 @@ public class OAuth2ClientAuthenticationProviderTests {
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 				.isInstanceOf(OAuth2AuthenticationException.class)
 				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
-				.extracting("errorCode")
-				.isEqualTo(OAuth2ErrorCodes.INVALID_CLIENT);
+				.satisfies(error -> {
+					assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_CLIENT);
+					assertThat(error.getDescription()).contains(PkceParameterNames.CODE_VERIFIER);
+				});
 	}
 
 	@Test
@@ -294,8 +306,10 @@ public class OAuth2ClientAuthenticationProviderTests {
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 				.isInstanceOf(OAuth2AuthenticationException.class)
 				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
-				.extracting("errorCode")
-				.isEqualTo(OAuth2ErrorCodes.INVALID_CLIENT);
+				.satisfies(error -> {
+					assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_CLIENT);
+					assertThat(error.getDescription()).contains(PkceParameterNames.CODE_VERIFIER);
+				});
 	}
 
 	@Test
@@ -318,8 +332,10 @@ public class OAuth2ClientAuthenticationProviderTests {
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 				.isInstanceOf(OAuth2AuthenticationException.class)
 				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
-				.extracting("errorCode")
-				.isEqualTo(OAuth2ErrorCodes.INVALID_CLIENT);
+				.satisfies(error -> {
+					assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_CLIENT);
+					assertThat(error.getDescription()).contains(PkceParameterNames.CODE_VERIFIER);
+				});
 	}
 
 	@Test
@@ -437,8 +453,10 @@ public class OAuth2ClientAuthenticationProviderTests {
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 				.isInstanceOf(OAuth2AuthenticationException.class)
 				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
-				.extracting("errorCode")
-				.isEqualTo(OAuth2ErrorCodes.INVALID_CLIENT);
+				.satisfies(error -> {
+					assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_CLIENT);
+					assertThat(error.getDescription()).contains("authentication_method");
+				});
 	}
 
 	private static Map<String, Object> createAuthorizationCodeTokenParameters() {

@@ -178,7 +178,9 @@ public final class OAuth2ClientAuthenticationFilter extends OncePerRequestFilter
 		} else {
 			httpResponse.setStatusCode(HttpStatus.BAD_REQUEST);
 		}
-		this.errorHttpResponseConverter.write(error, null, httpResponse);
+		// We don't want to reveal too much information to the caller so just return the error code
+		OAuth2Error errorResponse = new OAuth2Error(error.getErrorCode());
+		this.errorHttpResponseConverter.write(errorResponse, null, httpResponse);
 	}
 
 }

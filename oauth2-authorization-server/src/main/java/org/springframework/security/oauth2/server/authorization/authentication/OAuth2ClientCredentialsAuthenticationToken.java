@@ -41,10 +41,28 @@ public class OAuth2ClientCredentialsAuthenticationToken extends OAuth2Authorizat
 	 * @param clientPrincipal the authenticated client principal
 	 * @param scopes the requested scope(s)
 	 * @param additionalParameters the additional parameters
+	 * @deprecated Use {@link #OAuth2ClientCredentialsAuthenticationToken(String, Authentication, Set, Map)} instead
 	 */
+	@Deprecated
 	public OAuth2ClientCredentialsAuthenticationToken(Authentication clientPrincipal,
 			@Nullable Set<String> scopes, @Nullable Map<String, Object> additionalParameters) {
 		super(AuthorizationGrantType.CLIENT_CREDENTIALS, clientPrincipal, additionalParameters);
+		this.scopes = Collections.unmodifiableSet(
+				scopes != null ? new HashSet<>(scopes) : Collections.emptySet());
+	}
+
+	/**
+	 * Constructs an {@code OAuth2ClientCredentialsAuthenticationToken} using the provided parameters.
+	 *
+	 * @param issuer the issuer identifier
+	 * @param clientPrincipal the authenticated client principal
+	 * @param scopes the requested scope(s)
+	 * @param additionalParameters the additional parameters
+	 * @since 0.2.1
+	 */
+	public OAuth2ClientCredentialsAuthenticationToken(String issuer, Authentication clientPrincipal,
+			@Nullable Set<String> scopes, @Nullable Map<String, Object> additionalParameters) {
+		super(AuthorizationGrantType.CLIENT_CREDENTIALS, issuer, clientPrincipal, additionalParameters);
 		this.scopes = Collections.unmodifiableSet(
 				scopes != null ? new HashSet<>(scopes) : Collections.emptySet());
 	}

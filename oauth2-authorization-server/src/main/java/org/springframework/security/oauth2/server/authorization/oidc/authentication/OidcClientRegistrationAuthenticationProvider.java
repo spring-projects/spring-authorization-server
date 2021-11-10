@@ -178,9 +178,11 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_CLIENT);
 		}
 
-		OidcClientRegistration clientRegistration = buildRegistration(registeredClient).build();
+		OidcClientRegistration clientRegistration = buildRegistration(
+				registeredClient, clientRegistrationAuthentication.getIssuer())
+				.build();
 
-		return new OidcClientRegistrationAuthenticationToken(
+		return new OidcClientRegistrationAuthenticationToken(clientRegistrationAuthentication.getIssuer(),
 				(Authentication) clientRegistrationAuthentication.getPrincipal(), clientRegistration);
 	}
 
@@ -198,7 +200,8 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 		RegisteredClient registeredClient = createClient(clientRegistrationAuthentication.getClientRegistration());
 		this.registeredClientRepository.save(registeredClient);
 
-		OAuth2Authorization registeredClientAuthorization = registerAccessToken(registeredClient);
+		OAuth2Authorization registeredClientAuthorization = registerAccessToken(
+				registeredClient, clientRegistrationAuthentication.getIssuer());
 
 		// Invalidate the "initial" access token as it can only be used once
 		authorization = OidcAuthenticationProviderUtils.invalidate(authorization, authorizedAccessToken.getToken());
@@ -207,21 +210,22 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 		}
 		this.authorizationService.save(authorization);
 
-		OidcClientRegistration clientRegistration = buildRegistration(registeredClient)
+		OidcClientRegistration clientRegistration = buildRegistration(
+				registeredClient, clientRegistrationAuthentication.getIssuer())
 				.registrationAccessToken(registeredClientAuthorization.getAccessToken().getToken().getTokenValue())
 				.build();
 
-		return new OidcClientRegistrationAuthenticationToken(
+		return new OidcClientRegistrationAuthenticationToken(clientRegistrationAuthentication.getIssuer(),
 				(Authentication) clientRegistrationAuthentication.getPrincipal(), clientRegistration);
 	}
 
-	private OAuth2Authorization registerAccessToken(RegisteredClient registeredClient) {
+	private OAuth2Authorization registerAccessToken(RegisteredClient registeredClient, String issuer) {
 		JoseHeader headers = JwtUtils.headers().build();
 
 		Set<String> authorizedScopes = Collections.singleton(DEFAULT_CLIENT_CONFIGURATION_AUTHORIZED_SCOPE);
 
 		JwtClaimsSet claims = JwtUtils.accessTokenClaims(
-				registeredClient, this.providerSettings.getIssuer(), registeredClient.getClientId(), authorizedScopes)
+				registeredClient, issuer, registeredClient.getClientId(), authorizedScopes)
 				.build();
 
 		Jwt registrationAccessToken = this.jwtEncoder.encode(headers, claims);
@@ -246,7 +250,7 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 		return registeredClientAuthorization;
 	}
 
-	private OidcClientRegistration.Builder buildRegistration(RegisteredClient registeredClient) {
+	private OidcClientRegistration.Builder buildRegistration(RegisteredClient registeredClient, String issuer) {
 		// @formatter:off
 		OidcClientRegistration.Builder builder = OidcClientRegistration.builder()
 				.clientId(registeredClient.getClientId())
@@ -270,7 +274,7 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 					scopes.addAll(registeredClient.getScopes()));
 		}
 
-		String registrationClientUri = UriComponentsBuilder.fromUriString(this.providerSettings.getIssuer())
+		String registrationClientUri = UriComponentsBuilder.fromUriString(issuer)
 				.path(this.providerSettings.getOidcClientRegistrationEndpoint())
 				.queryParam(OAuth2ParameterNames.CLIENT_ID, registeredClient.getClientId())
 				.toUriString();

@@ -213,10 +213,11 @@ public class OAuth2ClientCredentialsGrantTests {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient2().build();
 		this.registeredClientRepository.save(registeredClient);
 
+		String issuer = "https://example.com/issuer1";
 		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(
 				registeredClient, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
 		OAuth2ClientCredentialsAuthenticationToken clientCredentialsAuthentication =
-				new OAuth2ClientCredentialsAuthenticationToken(clientPrincipal, null, null);
+				new OAuth2ClientCredentialsAuthenticationToken(issuer, clientPrincipal, null, null);
 		when(authenticationConverter.convert(any())).thenReturn(clientCredentialsAuthentication);
 
 		OAuth2AccessToken accessToken = new OAuth2AccessToken(

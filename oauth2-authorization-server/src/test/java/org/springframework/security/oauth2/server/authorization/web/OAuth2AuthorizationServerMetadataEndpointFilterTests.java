@@ -146,4 +146,36 @@ public class OAuth2AuthorizationServerMetadataEndpointFilterTests {
 				.withMessage("issuer must be a valid URL");
 	}
 
+	@Test
+	public void doFilterWhenProviderSettingsWithIssuerNotSetThenIssuerResolvesFromRequest() throws Exception {
+		ProviderSettings providerSettings = ProviderSettings.builder().build();
+		OAuth2AuthorizationServerMetadataEndpointFilter filter =
+				new OAuth2AuthorizationServerMetadataEndpointFilter(providerSettings);
+
+		String requestUri = DEFAULT_OAUTH2_AUTHORIZATION_SERVER_METADATA_ENDPOINT_URI;
+		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestUri);
+		request.setServletPath(requestUri);
+		MockHttpServletResponse response = new MockHttpServletResponse();
+		FilterChain filterChain = mock(FilterChain.class);
+
+		filter.doFilter(request, response, filterChain);
+
+		verifyNoInteractions(filterChain);
+
+		assertThat(response.getContentType()).isEqualTo(MediaType.APPLICATION_JSON_VALUE);
+		String authorizationServerMetadataResponse = response.getContentAsString();
+		assertThat(authorizationServerMetadataResponse).contains("\"issuer\":\"http://localhost\"");
+		assertThat(authorizationServerMetadataResponse).contains("\"authorization_endpoint\":\"http://localhost/oauth2/authorize\"");
+		assertThat(authorizationServerMetadataResponse).contains("\"token_endpoint\":\"http://localhost/oauth2/token\"");
+		assertThat(authorizationServerMetadataResponse).contains("\"token_endpoint_auth_methods_supported\":[\"client_secret_basic\",\"client_secret_post\"]");
+		assertThat(authorizationServerMetadataResponse).contains("\"jwks_uri\":\"http://localhost/oauth2/jwks\"");
+		assertThat(authorizationServerMetadataResponse).contains("\"response_types_supported\":[\"code\"]");
+		assertThat(authorizationServerMetadataResponse).contains("\"grant_types_supported\":[\"authorization_code\",\"client_credentials\",\"refresh_token\"]");
+		assertThat(authorizationServerMetadataResponse).contains("\"revocation_endpoint\":\"http://localhost/oauth2/revoke\"");
+		assertThat(authorizationServerMetadataResponse).contains("\"revocation_endpoint_auth_methods_supported\":[\"client_secret_basic\",\"client_secret_post\"]");
+		assertThat(authorizationServerMetadataResponse).contains("\"introspection_endpoint\":\"http://localhost/oauth2/introspect\"");
+		assertThat(authorizationServerMetadataResponse).contains("\"introspection_endpoint_auth_methods_supported\":[\"client_secret_basic\",\"client_secret_post\"]");
+		assertThat(authorizationServerMetadataResponse).contains("\"code_challenge_methods_supported\":[\"plain\",\"S256\"]");
+	}
+
 }

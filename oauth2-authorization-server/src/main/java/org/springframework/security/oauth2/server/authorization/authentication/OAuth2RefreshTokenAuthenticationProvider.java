@@ -26,7 +26,6 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -80,7 +79,6 @@ public final class OAuth2RefreshTokenAuthenticationProvider implements Authentic
 	private final JwtEncoder jwtEncoder;
 	private OAuth2TokenCustomizer<JwtEncodingContext> jwtCustomizer = (context) -> {};
 	private Supplier<String> refreshTokenGenerator = DEFAULT_REFRESH_TOKEN_GENERATOR::generateKey;
-	private ProviderSettings providerSettings;
 
 	/**
 	 * Constructs an {@code OAuth2RefreshTokenAuthenticationProvider} using the provided parameters.
@@ -118,9 +116,8 @@ public final class OAuth2RefreshTokenAuthenticationProvider implements Authentic
 		this.refreshTokenGenerator = refreshTokenGenerator;
 	}
 
-	@Autowired(required = false)
+	@Deprecated
 	protected void setProviderSettings(ProviderSettings providerSettings) {
-		this.providerSettings = providerSettings;
 	}
 
 	@Override
@@ -166,7 +163,7 @@ public final class OAuth2RefreshTokenAuthenticationProvider implements Authentic
 			scopes = authorizedScopes;
 		}
 
-		String issuer = this.providerSettings != null ? this.providerSettings.getIssuer() : null;
+		String issuer = refreshTokenAuthentication.getIssuer();
 
 		JoseHeader.Builder headersBuilder = JwtUtils.headers();
 		JwtClaimsSet.Builder claimsBuilder = JwtUtils.accessTokenClaims(

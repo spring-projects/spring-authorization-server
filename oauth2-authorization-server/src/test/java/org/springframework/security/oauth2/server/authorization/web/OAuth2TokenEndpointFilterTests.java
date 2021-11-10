@@ -489,12 +489,13 @@ public class OAuth2TokenEndpointFilterTests {
 
 	@Test
 	public void doFilterWhenCustomAuthenticationConverterThenUsed() throws Exception {
+		String issuer = "https://example.com/issuer1";
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 		Authentication clientPrincipal = new OAuth2ClientAuthenticationToken(
 				registeredClient, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
 
 		OAuth2AuthorizationCodeAuthenticationToken authorizationCodeAuthentication =
-				new OAuth2AuthorizationCodeAuthenticationToken("code", clientPrincipal, null, null);
+				new OAuth2AuthorizationCodeAuthenticationToken(issuer, "code", clientPrincipal, null, null);
 
 		AuthenticationConverter authenticationConverter = mock(AuthenticationConverter.class);
 		when(authenticationConverter.convert(any())).thenReturn(authorizationCodeAuthentication);
@@ -613,6 +614,8 @@ public class OAuth2TokenEndpointFilterTests {
 		request.addParameter(OAuth2ParameterNames.CLIENT_ID, registeredClient.getClientId());
 		request.addParameter("custom-param-1", "custom-value-1");
 
+		request.setAttribute(WebAttributes.ISSUER, "https://example.com/issuer1");
+
 		return request;
 	}
 
@@ -626,6 +629,8 @@ public class OAuth2TokenEndpointFilterTests {
 		request.addParameter(OAuth2ParameterNames.SCOPE,
 				StringUtils.collectionToDelimitedString(registeredClient.getScopes(), " "));
 		request.addParameter("custom-param-1", "custom-value-1");
+
+		request.setAttribute(WebAttributes.ISSUER, "https://example.com/issuer1");
 
 		return request;
 	}
@@ -641,6 +646,8 @@ public class OAuth2TokenEndpointFilterTests {
 		request.addParameter(OAuth2ParameterNames.SCOPE,
 				StringUtils.collectionToDelimitedString(registeredClient.getScopes(), " "));
 		request.addParameter("custom-param-1", "custom-value-1");
+
+		request.setAttribute(WebAttributes.ISSUER, "https://example.com/issuer1");
 
 		return request;
 	}

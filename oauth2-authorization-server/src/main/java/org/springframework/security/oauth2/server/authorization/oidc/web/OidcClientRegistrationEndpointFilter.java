@@ -38,6 +38,7 @@ import org.springframework.security.oauth2.core.http.converter.OAuth2ErrorHttpMe
 import org.springframework.security.oauth2.core.oidc.OidcClientRegistration;
 import org.springframework.security.oauth2.core.oidc.http.converter.OidcClientRegistrationHttpMessageConverter;
 import org.springframework.security.oauth2.server.authorization.oidc.authentication.OidcClientRegistrationAuthenticationToken;
+import org.springframework.security.oauth2.server.authorization.web.WebAttributes;
 import org.springframework.security.web.util.matcher.AndRequestMatcher;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.OrRequestMatcher;
@@ -148,7 +149,10 @@ public final class OidcClientRegistrationEndpointFilter extends OncePerRequestFi
 		if ("POST".equals(request.getMethod())) {
 			OidcClientRegistration clientRegistration = this.clientRegistrationHttpMessageConverter.read(
 					OidcClientRegistration.class, new ServletServerHttpRequest(request));
-			return new OidcClientRegistrationAuthenticationToken(principal, clientRegistration);
+
+			String issuer = (String) request.getAttribute(WebAttributes.ISSUER);
+
+			return new OidcClientRegistrationAuthenticationToken(issuer, principal, clientRegistration);
 		}
 
 		// client_id (REQUIRED)
@@ -158,7 +162,9 @@ public final class OidcClientRegistrationEndpointFilter extends OncePerRequestFi
 			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_REQUEST);
 		}
 
-		return new OidcClientRegistrationAuthenticationToken(principal, clientId);
+		String issuer = (String) request.getAttribute(WebAttributes.ISSUER);
+
+		return new OidcClientRegistrationAuthenticationToken(issuer, principal, clientId);
 	}
 
 	private void sendClientRegistrationResponse(HttpServletResponse response, HttpStatus httpStatus, OidcClientRegistration clientRegistration) throws IOException {

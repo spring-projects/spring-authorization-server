@@ -88,9 +88,10 @@ public class JwtEncodingContextTests {
 				registeredClient, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
 		OAuth2AuthorizationRequest authorizationRequest = authorization.getAttribute(
 				OAuth2AuthorizationRequest.class.getName());
+		String issuer = "https://provider.com";
 		OAuth2AuthorizationCodeAuthenticationToken authorizationGrant =
 				new OAuth2AuthorizationCodeAuthenticationToken(
-						"code", clientPrincipal, authorizationRequest.getRedirectUri(), null);
+						issuer, "code", clientPrincipal, authorizationRequest.getRedirectUri(), null);
 
 		JwtEncodingContext context = JwtEncodingContext.with(headers, claims)
 				.registeredClient(registeredClient)

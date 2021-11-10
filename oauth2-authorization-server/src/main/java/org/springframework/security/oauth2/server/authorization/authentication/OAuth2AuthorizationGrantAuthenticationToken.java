@@ -39,6 +39,7 @@ import org.springframework.util.Assert;
 public class OAuth2AuthorizationGrantAuthenticationToken extends AbstractAuthenticationToken {
 	private static final long serialVersionUID = Version.SERIAL_VERSION_UID;
 	private final AuthorizationGrantType authorizationGrantType;
+	private final String issuer;
 	private final Authentication clientPrincipal;
 	private final Map<String, Object> additionalParameters;
 
@@ -48,13 +49,40 @@ public class OAuth2AuthorizationGrantAuthenticationToken extends AbstractAuthent
 	 * @param authorizationGrantType the authorization grant type
 	 * @param clientPrincipal the authenticated client principal
 	 * @param additionalParameters the additional parameters
+	 * @deprecated Use {@link #OAuth2AuthorizationGrantAuthenticationToken(AuthorizationGrantType, String, Authentication, Map)} instead
 	 */
+	@Deprecated
 	protected OAuth2AuthorizationGrantAuthenticationToken(AuthorizationGrantType authorizationGrantType,
 			Authentication clientPrincipal, @Nullable Map<String, Object> additionalParameters) {
 		super(Collections.emptyList());
 		Assert.notNull(authorizationGrantType, "authorizationGrantType cannot be null");
 		Assert.notNull(clientPrincipal, "clientPrincipal cannot be null");
 		this.authorizationGrantType = authorizationGrantType;
+		this.issuer = null;
+		this.clientPrincipal = clientPrincipal;
+		this.additionalParameters = Collections.unmodifiableMap(
+				additionalParameters != null ?
+						new HashMap<>(additionalParameters) :
+						Collections.emptyMap());
+	}
+
+	/**
+	 * Sub-class constructor.
+	 *
+	 * @param authorizationGrantType the authorization grant type
+	 * @param issuer the issuer identifier
+	 * @param clientPrincipal the authenticated client principal
+	 * @param additionalParameters the additional parameters
+	 * @since 0.2.1
+	 */
+	protected OAuth2AuthorizationGrantAuthenticationToken(AuthorizationGrantType authorizationGrantType,
+			String issuer, Authentication clientPrincipal, @Nullable Map<String, Object> additionalParameters) {
+		super(Collections.emptyList());
+		Assert.notNull(authorizationGrantType, "authorizationGrantType cannot be null");
+		Assert.hasText(issuer, "issuer cannot be empty");
+		Assert.notNull(clientPrincipal, "clientPrincipal cannot be null");
+		this.authorizationGrantType = authorizationGrantType;
+		this.issuer = issuer;
 		this.clientPrincipal = clientPrincipal;
 		this.additionalParameters = Collections.unmodifiableMap(
 				additionalParameters != null ?
@@ -69,6 +97,16 @@ public class OAuth2AuthorizationGrantAuthenticationToken extends AbstractAuthent
 	 */
 	public AuthorizationGrantType getGrantType() {
 		return this.authorizationGrantType;
+	}
+
+	/**
+	 * Returns the issuer identifier.
+	 *
+	 * @return the issuer identifier
+	 * @since 0.2.1
+	 */
+	public String getIssuer() {
+		return this.issuer;
 	}
 
 	@Override

@@ -132,6 +132,7 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 
 	@Test
 	public void authenticateWhenValidRefreshTokenThenReturnAccessToken() {
+		String issuer = "https://example.com/issuer1";
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();
 		when(this.authorizationService.findByToken(
@@ -142,7 +143,7 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(
 				registeredClient, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
 		OAuth2RefreshTokenAuthenticationToken authentication = new OAuth2RefreshTokenAuthenticationToken(
-				authorization.getRefreshToken().getToken().getTokenValue(), clientPrincipal, null, null);
+				issuer, authorization.getRefreshToken().getToken().getTokenValue(), clientPrincipal, null, null);
 
 		OAuth2AccessTokenAuthenticationToken accessTokenAuthentication =
 				(OAuth2AccessTokenAuthenticationToken) this.authenticationProvider.authenticate(authentication);
@@ -176,6 +177,7 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 
 	@Test
 	public void authenticateWhenValidRefreshTokenThenReturnIdToken() {
+		String issuer = "https://example.com/issuer1";
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().scope(OidcScopes.OPENID).build();
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();
 		when(this.authorizationService.findByToken(
@@ -186,7 +188,7 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(
 				registeredClient, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
 		OAuth2RefreshTokenAuthenticationToken authentication = new OAuth2RefreshTokenAuthenticationToken(
-				authorization.getRefreshToken().getToken().getTokenValue(), clientPrincipal, null, null);
+				issuer, authorization.getRefreshToken().getToken().getTokenValue(), clientPrincipal, null, null);
 
 		OAuth2AccessTokenAuthenticationToken accessTokenAuthentication =
 				(OAuth2AccessTokenAuthenticationToken) this.authenticationProvider.authenticate(authentication);
@@ -243,6 +245,7 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 
 	@Test
 	public void authenticateWhenReuseRefreshTokensFalseThenReturnNewRefreshToken() {
+		String issuer = "https://example.com/issuer1";
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
 				.tokenSettings(TokenSettings.builder().reuseRefreshTokens(false).build())
 				.build();
@@ -255,7 +258,7 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(
 				registeredClient, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
 		OAuth2RefreshTokenAuthenticationToken authentication = new OAuth2RefreshTokenAuthenticationToken(
-				authorization.getRefreshToken().getToken().getTokenValue(), clientPrincipal, null, null);
+				issuer, authorization.getRefreshToken().getToken().getTokenValue(), clientPrincipal, null, null);
 
 		OAuth2AccessTokenAuthenticationToken accessTokenAuthentication =
 				(OAuth2AccessTokenAuthenticationToken) this.authenticationProvider.authenticate(authentication);
@@ -270,6 +273,7 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 
 	@Test
 	public void authenticateWhenRequestedScopesAuthorizedThenAccessTokenIncludesScopes() {
+		String issuer = "https://example.com/issuer1";
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
 				.scope("scope2")
 				.scope("scope3")
@@ -286,7 +290,7 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 		Set<String> requestedScopes = new HashSet<>(authorizedScopes);
 		requestedScopes.remove("scope1");
 		OAuth2RefreshTokenAuthenticationToken authentication = new OAuth2RefreshTokenAuthenticationToken(
-				authorization.getRefreshToken().getToken().getTokenValue(), clientPrincipal, requestedScopes, null);
+				issuer, authorization.getRefreshToken().getToken().getTokenValue(), clientPrincipal, requestedScopes, null);
 
 		OAuth2AccessTokenAuthenticationToken accessTokenAuthentication =
 				(OAuth2AccessTokenAuthenticationToken) this.authenticationProvider.authenticate(authentication);
@@ -296,6 +300,7 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 
 	@Test
 	public void authenticateWhenCustomRefreshTokenGeneratorThenUsed() {
+		String issuer = "https://example.com/issuer1";
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
 				.tokenSettings(TokenSettings.builder().reuseRefreshTokens(false).build())
 				.build();
@@ -317,7 +322,7 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(
 				registeredClient, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
 		OAuth2RefreshTokenAuthenticationToken authentication = new OAuth2RefreshTokenAuthenticationToken(
-				authorization.getRefreshToken().getToken().getTokenValue(), clientPrincipal, null, null);
+				issuer, authorization.getRefreshToken().getToken().getTokenValue(), clientPrincipal, null, null);
 
 		OAuth2AccessTokenAuthenticationToken accessTokenAuthentication =
 				(OAuth2AccessTokenAuthenticationToken) this.authenticationProvider.authenticate(authentication);
@@ -328,6 +333,7 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 
 	@Test
 	public void authenticateWhenRequestedScopesNotAuthorizedThenThrowOAuth2AuthenticationException() {
+		String issuer = "https://example.com/issuer1";
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();
 		when(this.authorizationService.findByToken(
@@ -341,7 +347,7 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 		Set<String> requestedScopes = new HashSet<>(authorizedScopes);
 		requestedScopes.add("unauthorized");
 		OAuth2RefreshTokenAuthenticationToken authentication = new OAuth2RefreshTokenAuthenticationToken(
-				authorization.getRefreshToken().getToken().getTokenValue(), clientPrincipal, requestedScopes, null);
+				issuer, authorization.getRefreshToken().getToken().getTokenValue(), clientPrincipal, requestedScopes, null);
 
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 				.isInstanceOf(OAuth2AuthenticationException.class)
@@ -352,11 +358,12 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 
 	@Test
 	public void authenticateWhenInvalidRefreshTokenThenThrowOAuth2AuthenticationException() {
+		String issuer = "https://example.com/issuer1";
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(
 				registeredClient, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
 		OAuth2RefreshTokenAuthenticationToken authentication = new OAuth2RefreshTokenAuthenticationToken(
-				"invalid", clientPrincipal, null, null);
+				issuer, "invalid", clientPrincipal, null, null);
 
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 				.isInstanceOf(OAuth2AuthenticationException.class)
@@ -367,11 +374,12 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 
 	@Test
 	public void authenticateWhenClientPrincipalNotOAuth2ClientAuthenticationTokenThenThrowOAuth2AuthenticationException() {
+		String issuer = "https://example.com/issuer1";
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 		TestingAuthenticationToken clientPrincipal = new TestingAuthenticationToken(
 				registeredClient.getClientId(), registeredClient.getClientSecret());
 		OAuth2RefreshTokenAuthenticationToken authentication = new OAuth2RefreshTokenAuthenticationToken(
-				"refresh-token", clientPrincipal, null, null);
+				issuer, "refresh-token", clientPrincipal, null, null);
 
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 				.isInstanceOf(OAuth2AuthenticationException.class)
@@ -382,11 +390,12 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 
 	@Test
 	public void authenticateWhenClientPrincipalNotAuthenticatedThenThrowOAuth2AuthenticationException() {
+		String issuer = "https://example.com/issuer1";
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(
 				registeredClient.getClientId(), ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret(), null);
 		OAuth2RefreshTokenAuthenticationToken authentication = new OAuth2RefreshTokenAuthenticationToken(
-				"refresh-token", clientPrincipal, null, null);
+				issuer, "refresh-token", clientPrincipal, null, null);
 
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 				.isInstanceOf(OAuth2AuthenticationException.class)
@@ -397,6 +406,7 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 
 	@Test
 	public void authenticateWhenRefreshTokenIssuedToAnotherClientThenThrowOAuth2AuthenticationException() {
+		String issuer = "https://example.com/issuer1";
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();
 		when(this.authorizationService.findByToken(
@@ -408,7 +418,7 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(
 				registeredClient2, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient2.getClientSecret());
 		OAuth2RefreshTokenAuthenticationToken authentication = new OAuth2RefreshTokenAuthenticationToken(
-				authorization.getRefreshToken().getToken().getTokenValue(), clientPrincipal, null, null);
+				issuer, authorization.getRefreshToken().getToken().getTokenValue(), clientPrincipal, null, null);
 
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 				.isInstanceOf(OAuth2AuthenticationException.class)
@@ -419,6 +429,7 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 
 	@Test
 	public void authenticateWhenClientNotAuthorizedToRefreshTokenThenThrowOAuth2AuthenticationException() {
+		String issuer = "https://example.com/issuer1";
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
 				.authorizationGrantTypes(grantTypes -> grantTypes.remove(AuthorizationGrantType.REFRESH_TOKEN))
 				.build();
@@ -431,7 +442,7 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(
 				registeredClient, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
 		OAuth2RefreshTokenAuthenticationToken authentication = new OAuth2RefreshTokenAuthenticationToken(
-				authorization.getRefreshToken().getToken().getTokenValue(), clientPrincipal, null, null);
+				issuer, authorization.getRefreshToken().getToken().getTokenValue(), clientPrincipal, null, null);
 
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 				.isInstanceOf(OAuth2AuthenticationException.class)
@@ -442,6 +453,7 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 
 	@Test
 	public void authenticateWhenExpiredRefreshTokenThenThrowOAuth2AuthenticationException() {
+		String issuer = "https://example.com/issuer1";
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();
 		OAuth2RefreshToken expiredRefreshToken = new OAuth2RefreshToken(
@@ -455,7 +467,7 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(
 				registeredClient, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
 		OAuth2RefreshTokenAuthenticationToken authentication = new OAuth2RefreshTokenAuthenticationToken(
-				authorization.getRefreshToken().getToken().getTokenValue(), clientPrincipal, null, null);
+				issuer, authorization.getRefreshToken().getToken().getTokenValue(), clientPrincipal, null, null);
 
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 				.isInstanceOf(OAuth2AuthenticationException.class)
@@ -466,6 +478,7 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 
 	@Test
 	public void authenticateWhenRevokedRefreshTokenThenThrowOAuth2AuthenticationException() {
+		String issuer = "https://example.com/issuer1";
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 		OAuth2RefreshToken refreshToken = new OAuth2RefreshToken(
 				"refresh-token", Instant.now().minusSeconds(120), Instant.now().plusSeconds(1000));
@@ -480,7 +493,7 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(
 				registeredClient, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
 		OAuth2RefreshTokenAuthenticationToken authentication = new OAuth2RefreshTokenAuthenticationToken(
-				authorization.getRefreshToken().getToken().getTokenValue(), clientPrincipal, null, null);
+				issuer, authorization.getRefreshToken().getToken().getTokenValue(), clientPrincipal, null, null);
 
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 				.isInstanceOf(OAuth2AuthenticationException.class)

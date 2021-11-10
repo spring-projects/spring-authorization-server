@@ -19,7 +19,6 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.function.Consumer;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -62,7 +61,6 @@ public final class OAuth2ClientCredentialsAuthenticationProvider implements Auth
 	private final OAuth2AuthorizationService authorizationService;
 	private final JwtEncoder jwtEncoder;
 	private OAuth2TokenCustomizer<JwtEncodingContext> jwtCustomizer = (context) -> {};
-	private ProviderSettings providerSettings;
 
 	/**
 	 * Constructs an {@code OAuth2ClientCredentialsAuthenticationProvider} using the provided parameters.
@@ -90,9 +88,8 @@ public final class OAuth2ClientCredentialsAuthenticationProvider implements Auth
 		this.jwtCustomizer = jwtCustomizer;
 	}
 
-	@Autowired(required = false)
+	@Deprecated
 	protected void setProviderSettings(ProviderSettings providerSettings) {
-		this.providerSettings = providerSettings;
 	}
 
 	@Override
@@ -118,7 +115,7 @@ public final class OAuth2ClientCredentialsAuthenticationProvider implements Auth
 			authorizedScopes = new LinkedHashSet<>(clientCredentialsAuthentication.getScopes());
 		}
 
-		String issuer = this.providerSettings != null ? this.providerSettings.getIssuer() : null;
+		String issuer = clientCredentialsAuthentication.getIssuer();
 
 		JoseHeader.Builder headersBuilder = JwtUtils.headers();
 		JwtClaimsSet.Builder claimsBuilder = JwtUtils.accessTokenClaims(

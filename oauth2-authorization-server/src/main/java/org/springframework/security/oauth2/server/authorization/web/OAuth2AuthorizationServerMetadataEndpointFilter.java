@@ -33,6 +33,7 @@ import org.springframework.security.oauth2.core.OAuth2AuthorizationServerMetadat
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationResponseType;
 import org.springframework.security.oauth2.core.http.converter.OAuth2AuthorizationServerMetadataHttpMessageConverter;
 import org.springframework.security.oauth2.server.authorization.config.ProviderSettings;
+import org.springframework.security.web.util.UrlUtils;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
@@ -43,6 +44,7 @@ import org.springframework.web.util.UriComponentsBuilder;
  * A {@code Filter} that processes OAuth 2.0 Authorization Server Metadata Requests.
  *
  * @author Daniel Garnier-Moiroux
+ * @author Joe Grandja
  * @since 0.1.1
  * @see OAuth2AuthorizationServerMetadata
  * @see ProviderSettings
@@ -72,24 +74,32 @@ public final class OAuth2AuthorizationServerMetadataEndpointFilter extends OnceP
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
 			throws ServletException, IOException {
 
+		// Resolve the current issuer identifier
+		String issuer = this.providerSettings.getIssuer();
+		if (issuer == null) {
+			issuer = resolveIssuer(request);
+		}
+		// Set the current issuer identifier as a request attribute (for use by upstream components)
+		request.setAttribute(WebAttributes.ISSUER, issuer);
+
 		if (!this.requestMatcher.matches(request)) {
 			filterChain.doFilter(request, response);
 			return;
 		}
 
 		OAuth2AuthorizationServerMetadata authorizationServerMetadata = OAuth2AuthorizationServerMetadata.builder()
-				.issuer(this.providerSettings.getIssuer())
-				.authorizationEndpoint(asUrl(this.providerSettings.getIssuer(), this.providerSettings.getAuthorizationEndpoint()))
-				.tokenEndpoint(asUrl(this.providerSettings.getIssuer(), this.providerSettings.getTokenEndpoint()))
+				.issuer(issuer)
+				.authorizationEndpoint(asUrl(issuer, this.providerSettings.getAuthorizationEndpoint()))
+				.tokenEndpoint(asUrl(issuer, this.providerSettings.getTokenEndpoint()))
 				.tokenEndpointAuthenticationMethods(clientAuthenticationMethods())
-				.jwkSetUrl(asUrl(this.providerSettings.getIssuer(), this.providerSettings.getJwkSetEndpoint()))
+				.jwkSetUrl(asUrl(issuer, this.providerSettings.getJwkSetEndpoint()))
 				.responseType(OAuth2AuthorizationResponseType.CODE.getValue())
 				.grantType(AuthorizationGrantType.AUTHORIZATION_CODE.getValue())
 				.grantType(AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
 				.grantType(AuthorizationGrantType.REFRESH_TOKEN.getValue())
-				.tokenRevocationEndpoint(asUrl(this.providerSettings.getIssuer(), this.providerSettings.getTokenRevocationEndpoint()))
+				.tokenRevocationEndpoint(asUrl(issuer, this.providerSettings.getTokenRevocationEndpoint()))
 				.tokenRevocationEndpointAuthenticationMethods(clientAuthenticationMethods())
-				.tokenIntrospectionEndpoint(asUrl(this.providerSettings.getIssuer(), this.providerSettings.getTokenIntrospectionEndpoint()))
+				.tokenIntrospectionEndpoint(asUrl(issuer, this.providerSettings.getTokenIntrospectionEndpoint()))
 				.tokenIntrospectionEndpointAuthenticationMethods(clientAuthenticationMethods())
 				.codeChallengeMethod("plain")
 				.codeChallengeMethod("S256")
@@ -98,6 +108,17 @@ public final class OAuth2AuthorizationServerMetadataEndpointFilter extends OnceP
 		ServletServerHttpResponse httpResponse = new ServletServerHttpResponse(response);
 		this.authorizationServerMetadataHttpMessageConverter.write(
 				authorizationServerMetadata, MediaType.APPLICATION_JSON, httpResponse);
+	}
+
+	private static String resolveIssuer(HttpServletRequest request) {
+		// @formatter:off
+		return UriComponentsBuilder.fromHttpUrl(UrlUtils.buildFullRequestUrl(request))
+				.replacePath(request.getContextPath())
+				.replaceQuery(null)
+				.fragment(null)
+				.build()
+				.toUriString();
+		// @formatter:on
 	}
 
 	private static Consumer<List<String>> clientAuthenticationMethods() {

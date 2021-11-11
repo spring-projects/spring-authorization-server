@@ -98,11 +98,11 @@ public final class OidcUserInfoAuthenticationProvider implements AuthenticationP
 			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_TOKEN);
 		}
 
-		Map<Object, Object> context = new HashMap<>();
-		context.put(OAuth2Token.class, accessTokenAuthentication.getToken());
-		context.put(OAuth2Authorization.class, authorization);
-		OAuth2AuthenticationContext authenticationContext = new OAuth2AuthenticationContext(
-				userInfoAuthentication, context);
+		OAuth2AuthenticationContext authenticationContext =
+				OAuth2AuthenticationContext.with(userInfoAuthentication)
+						.put(OAuth2Token.class, accessTokenAuthentication.getToken())
+						.put(OAuth2Authorization.class, authorization)
+						.build();
 
 		OidcUserInfo userInfo = this.userInfoMapper.apply(authenticationContext);
 

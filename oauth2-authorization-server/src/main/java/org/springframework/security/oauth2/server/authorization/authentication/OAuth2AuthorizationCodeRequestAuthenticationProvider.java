@@ -24,12 +24,12 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.AuthenticationProvider;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.keygen.Base64StringKeyGenerator;
@@ -47,7 +47,6 @@ import org.springframework.security.oauth2.core.endpoint.PkceParameterNames;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsent;
-import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsentContext;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsentService;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
@@ -62,6 +61,7 @@ import org.springframework.web.util.UriComponentsBuilder;
  * used in the Authorization Code Grant.
  *
  * @author Joe Grandja
+ * @author Steve Riesenberg
  * @since 0.1.2
  * @see OAuth2AuthorizationCodeRequestAuthenticationToken
  * @see OAuth2AuthorizationCodeAuthenticationProvider
@@ -84,7 +84,7 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 	private final OAuth2AuthorizationConsentService authorizationConsentService;
 	private Supplier<String> authorizationCodeGenerator = DEFAULT_AUTHORIZATION_CODE_GENERATOR::generateKey;
 	private Function<String, OAuth2AuthenticationValidator> authenticationValidatorResolver = DEFAULT_AUTHENTICATION_VALIDATOR_RESOLVER;
-	private Customizer<OAuth2AuthorizationConsentContext> authorizationConsentCustomizer;
+	private Consumer<OAuth2AuthorizationConsentAuthenticationContext> authorizationConsentCustomizer;
 
 	/**
 	 * Constructs an {@code OAuth2AuthorizationCodeRequestAuthenticationProvider} using the provided parameters.
@@ -149,25 +149,26 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 	}
 
 	/**
-	 * Sets the {@link Customizer} providing access to the {@link OAuth2AuthorizationConsentContext} containing an
-	 * {@link OAuth2AuthorizationConsent.Builder}.
+	 * Sets the {@code Consumer} providing access to the {@link OAuth2AuthorizationConsentAuthenticationContext}
+	 * containing an {@link OAuth2AuthorizationConsent.Builder} and additional context information.
 	 *
 	 * <p>
 	 * The following context attributes are available:
 	 * <ul>
 	 * <li>The {@link OAuth2AuthorizationConsent.Builder} used to build the authorization consent
-	 * prior to {@link OAuth2AuthorizationConsentService#save(OAuth2AuthorizationConsent)}</li>
-	 * <li>The {@link Authentication authentication principal} of type
-	 * {@link OAuth2AuthorizationCodeRequestAuthenticationToken}</li>
+	 * prior to {@link OAuth2AuthorizationConsentService#save(OAuth2AuthorizationConsent)}.</li>
+	 * <li>The {@link Authentication} of type
+	 * {@link OAuth2AuthorizationCodeRequestAuthenticationToken}.</li>
+	 * <li>The {@link RegisteredClient} associated with the authorization request.</li>
 	 * <li>The {@link OAuth2Authorization} associated with the state token presented in the
 	 * authorization consent request.</li>
-	 * <li>The {@link OAuth2AuthorizationRequest} requiring the resource owner's consent.</li>
+	 * <li>The {@link OAuth2AuthorizationRequest} associated with the authorization consent request.</li>
 	 * </ul>
 	 *
-	 * @param authorizationConsentCustomizer the {@link Customizer} providing access to the
-	 * {@link OAuth2AuthorizationConsentContext} containing an {@link OAuth2AuthorizationConsent.Builder}
+	 * @param authorizationConsentCustomizer the {@code Consumer} providing access to the
+	 * {@link OAuth2AuthorizationConsentAuthenticationContext} containing an {@link OAuth2AuthorizationConsent.Builder}
 	 */
-	public void setAuthorizationConsentCustomizer(Customizer<OAuth2AuthorizationConsentContext> authorizationConsentCustomizer) {
+	public void setAuthorizationConsentCustomizer(Consumer<OAuth2AuthorizationConsentAuthenticationContext> authorizationConsentCustomizer) {
 		Assert.notNull(authorizationConsentCustomizer, "authorizationConsentCustomizer cannot be null");
 		this.authorizationConsentCustomizer = authorizationConsentCustomizer;
 	}
@@ -328,8 +329,8 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 		Set<String> currentAuthorizedScopes = currentAuthorizationConsent != null ?
 				currentAuthorizationConsent.getScopes() : Collections.emptySet();
 
-		if (authorizedScopes.isEmpty() && currentAuthorizedScopes.isEmpty()
-				&& authorizationCodeRequestAuthentication.getAdditionalParameters().isEmpty()) {
+		if (authorizedScopes.isEmpty() && currentAuthorizedScopes.isEmpty() &&
+				authorizationCodeRequestAuthentication.getAdditionalParameters().isEmpty()) {
 			// Authorization consent denied
 			this.authorizationService.remove(authorization);
 			throwError(OAuth2ErrorCodes.ACCESS_DENIED, OAuth2ParameterNames.CLIENT_ID,
@@ -360,15 +361,14 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 
 		if (this.authorizationConsentCustomizer != null) {
 			// @formatter:off
-			OAuth2AuthorizationConsentContext authorizationConsentContext =
-					OAuth2AuthorizationConsentContext.with(authorizationConsentBuilder)
-							.principal(authorizationCodeRequestAuthentication)
+			OAuth2AuthorizationConsentAuthenticationContext authorizationConsentAuthenticationContext =
+					OAuth2AuthorizationConsentAuthenticationContext.with(authorizationCodeRequestAuthentication, authorizationConsentBuilder)
 							.registeredClient(registeredClient)
 							.authorization(authorization)
 							.authorizationRequest(authorizationRequest)
 							.build();
 			// @formatter:on
-			this.authorizationConsentCustomizer.customize(authorizationConsentContext);
+			this.authorizationConsentCustomizer.accept(authorizationConsentAuthenticationContext);
 		}
 
 		OAuth2AuthorizationConsent authorizationConsent = authorizationConsentBuilder.build();

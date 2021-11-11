@@ -29,6 +29,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
@@ -55,7 +56,6 @@ import org.springframework.mock.http.client.MockClientHttpResponse;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.TestingAuthenticationToken;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
@@ -83,13 +83,13 @@ import org.springframework.security.oauth2.server.authorization.JdbcOAuth2Author
 import org.springframework.security.oauth2.server.authorization.JwtEncodingContext;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsent;
-import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsentContext;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsentService;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenCustomizer;
 import org.springframework.security.oauth2.server.authorization.TestOAuth2Authorizations;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeRequestAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeRequestAuthenticationToken;
+import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationConsentAuthenticationContext;
 import org.springframework.security.oauth2.server.authorization.client.JdbcRegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.JdbcRegisteredClientRepository.RegisteredClientParametersMapper;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
@@ -131,6 +131,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * @author Joe Grandja
  * @author Daniel Garnier-Moiroux
  * @author Dmitriy Dubson
+ * @author Steve Riesenberg
  */
 public class OAuth2AuthorizationCodeGrantTests {
 	private static final String DEFAULT_AUTHORIZATION_ENDPOINT_URI = "/oauth2/authorize";
@@ -582,8 +583,6 @@ public class OAuth2AuthorizationCodeGrantTests {
 				.andExpect(jsonPath("$.refresh_token").isNotEmpty())
 				.andExpect(jsonPath("$.scope").doesNotExist())
 				.andReturn();
-
-		String json = mvcResult.getResponse().getContentAsString();
 	}
 
 	@Test
@@ -822,7 +821,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 			return context -> {
 				if (AuthorizationGrantType.AUTHORIZATION_CODE.equals(context.getAuthorizationGrantType()) &&
 						OAuth2TokenType.ACCESS_TOKEN.equals(context.getTokenType())) {
-					OAuth2AuthorizationConsent authorizationConsent = authorizationConsentService.findById(
+					OAuth2AuthorizationConsent authorizationConsent = this.authorizationConsentService.findById(
 							context.getRegisteredClient().getId(), context.getPrincipal().getName());
 
 					Set<String> authorities = new HashSet<>();
@@ -840,21 +839,22 @@ public class OAuth2AuthorizationCodeGrantTests {
 							this.registeredClientRepository,
 							this.authorizationService,
 							this.authorizationConsentService);
-			authorizationCodeRequestAuthenticationProvider.setAuthorizationConsentCustomizer(new ConsentCustomizer());
+			authorizationCodeRequestAuthenticationProvider.setAuthorizationConsentCustomizer(new AuthorizationConsentCustomizer());
 
 			return authorizationCodeRequestAuthenticationProvider;
 		}
 
-		static class ConsentCustomizer implements Customizer<OAuth2AuthorizationConsentContext> {
+		static class AuthorizationConsentCustomizer implements Consumer<OAuth2AuthorizationConsentAuthenticationContext> {
+
 			@Override
-			public void customize(OAuth2AuthorizationConsentContext authorizationConsentContext) {
+			public void accept(OAuth2AuthorizationConsentAuthenticationContext authorizationConsentAuthenticationContext) {
 				OAuth2AuthorizationConsent.Builder authorizationConsentBuilder =
-						authorizationConsentContext.getAuthorizationConsentBuilder();
+						authorizationConsentAuthenticationContext.getAuthorizationConsent();
 				OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthentication =
-						authorizationConsentContext.getPrincipal();
+						authorizationConsentAuthenticationContext.getAuthentication();
 				Map<String, Object> additionalParameters =
 						authorizationCodeRequestAuthentication.getAdditionalParameters();
-				RegisteredClient registeredClient = authorizationConsentContext.getRegisteredClient();
+				RegisteredClient registeredClient = authorizationConsentAuthenticationContext.getRegisteredClient();
 				ClientSettings clientSettings = registeredClient.getClientSettings();
 
 				Set<String> requestedAuthorities = authorities((String) additionalParameters.get("authority"));

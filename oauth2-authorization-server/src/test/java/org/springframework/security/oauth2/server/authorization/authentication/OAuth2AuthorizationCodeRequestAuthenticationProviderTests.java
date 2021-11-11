@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -29,7 +30,6 @@ import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
 import org.springframework.security.authentication.TestingAuthenticationToken;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.OAuth2AuthorizationCode;
@@ -44,7 +44,6 @@ import org.springframework.security.oauth2.core.endpoint.PkceParameterNames;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsent;
-import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsentContext;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsentService;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.TestOAuth2Authorizations;
@@ -68,6 +67,7 @@ import static org.mockito.Mockito.when;
  * Tests for {@link OAuth2AuthorizationCodeRequestAuthenticationProvider}.
  *
  * @author Joe Grandja
+ * @author Steve Riesenberg
  */
 public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 	private static final OAuth2TokenType STATE_TOKEN_TYPE = new OAuth2TokenType(OAuth2ParameterNames.STATE);
@@ -804,7 +804,7 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 				.thenReturn(authorization);
 
 		@SuppressWarnings("unchecked")
-		Customizer<OAuth2AuthorizationConsentContext> authorizationConsentCustomizer = mock(Customizer.class);
+		Consumer<OAuth2AuthorizationConsentAuthenticationContext> authorizationConsentCustomizer = mock(Consumer.class);
 		this.authenticationProvider.setAuthorizationConsentCustomizer(authorizationConsentCustomizer);
 
 		OAuth2AuthorizationCodeRequestAuthenticationToken authenticationResult =
@@ -812,14 +812,16 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 
 		assertAuthorizationConsentRequestWithAuthorizationCodeResult(registeredClient, authorization, authenticationResult);
 
-		ArgumentCaptor<OAuth2AuthorizationConsentContext> contextCaptor = ArgumentCaptor.forClass(OAuth2AuthorizationConsentContext.class);
-		verify(authorizationConsentCustomizer).customize(contextCaptor.capture());
+		ArgumentCaptor<OAuth2AuthorizationConsentAuthenticationContext> authenticationContextCaptor =
+				ArgumentCaptor.forClass(OAuth2AuthorizationConsentAuthenticationContext.class);
+		verify(authorizationConsentCustomizer).accept(authenticationContextCaptor.capture());
 
-		OAuth2AuthorizationConsentContext context = contextCaptor.getValue();
-		assertThat((Authentication) context.getPrincipal()).isEqualTo(authentication);
-		assertThat(context.get(OAuth2AuthorizationConsent.Builder.class)).isInstanceOf(OAuth2AuthorizationConsent.Builder.class);
-		assertThat(context.get(OAuth2Authorization.class)).isInstanceOf(OAuth2Authorization.class);
-		assertThat(context.get(OAuth2AuthorizationRequest.class)).isInstanceOf(OAuth2AuthorizationRequest.class);
+		OAuth2AuthorizationConsentAuthenticationContext authenticationContext = authenticationContextCaptor.getValue();
+		assertThat(authenticationContext.<Authentication>getAuthentication()).isEqualTo(authentication);
+		assertThat(authenticationContext.getAuthorizationConsent()).isNotNull();
+		assertThat(authenticationContext.getRegisteredClient()).isEqualTo(registeredClient);
+		assertThat(authenticationContext.getAuthorization()).isEqualTo(authorization);
+		assertThat(authenticationContext.getAuthorizationRequest()).isEqualTo(authorizationRequest);
 	}
 
 	private void assertAuthorizationConsentRequestWithAuthorizationCodeResult(

@@ -139,6 +139,16 @@ public abstract class AbstractOAuth2AuthorizationServerMetadata implements OAuth
 		}
 
 		/**
+		 * Use this {@code userinfo_endpoint} in the resulting {@link AbstractOAuth2AuthorizationServerMetadata}, OPTIONAL.
+		 *
+		 * @param userInfoEndpoint the {@code URL} of the OAuth 2.0 UserInfo Endpoint
+		 * @return the {@link AbstractBuilder} for further configuration
+		 */
+		public B userInfoEndpoint(String userInfoEndpoint) {
+			return claim(OAuth2AuthorizationServerMetadataClaimNames.USER_INFO_ENDPOINT, userInfoEndpoint);
+		}
+
+		/**
 		 * Add this OAuth 2.0 {@code scope} to the collection of {@code scopes_supported}
 		 * in the resulting {@link AbstractOAuth2AuthorizationServerMetadata}, RECOMMENDED.
 		 *
@@ -342,6 +352,9 @@ public abstract class AbstractOAuth2AuthorizationServerMetadata implements OAuth
 			}
 			if (getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.JWKS_URI) != null) {
 				validateURL(getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.JWKS_URI), "jwksUri must be a valid URL");
+			}
+			if (getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.USER_INFO_ENDPOINT) != null) {
+				validateURL(getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.USER_INFO_ENDPOINT), "userInfoEndpoint must be a valid URL");
 			}
 			if (getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.SCOPES_SUPPORTED) != null) {
 				Assert.isInstanceOf(List.class, getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.SCOPES_SUPPORTED), "scopes must be of type List");

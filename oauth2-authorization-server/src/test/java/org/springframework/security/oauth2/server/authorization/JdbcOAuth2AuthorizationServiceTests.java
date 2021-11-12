@@ -43,6 +43,7 @@ import org.springframework.jdbc.core.SqlParameterValue;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabase;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseBuilder;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType;
+import org.springframework.jdbc.support.lob.DefaultLobHandler;
 import org.springframework.security.oauth2.core.AbstractOAuth2Token;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
@@ -75,6 +76,7 @@ import static org.mockito.Mockito.when;
 public class JdbcOAuth2AuthorizationServiceTests {
 	private static final String OAUTH2_AUTHORIZATION_SCHEMA_SQL_RESOURCE = "org/springframework/security/oauth2/server/authorization/oauth2-authorization-schema.sql";
 	private static final String CUSTOM_OAUTH2_AUTHORIZATION_SCHEMA_SQL_RESOURCE = "org/springframework/security/oauth2/server/authorization/custom-oauth2-authorization-schema.sql";
+	private static final String OAUTH2_AUTHORIZATION_SCHEMA_CLOB_COLUMN_TYPE_SQL_RESOURCE = "org/springframework/security/oauth2/server/authorization/custom-oauth2-authorization-schema-clob-data-type.sql";
 	private static final OAuth2TokenType AUTHORIZATION_CODE_TOKEN_TYPE = new OAuth2TokenType(OAuth2ParameterNames.CODE);
 	private static final OAuth2TokenType STATE_TOKEN_TYPE = new OAuth2TokenType(OAuth2ParameterNames.STATE);
 	private static final String ID = "id";
@@ -414,6 +416,37 @@ public class JdbcOAuth2AuthorizationServiceTests {
 		db.shutdown();
 	}
 
+	@Test
+	public void tableDefinitionWhenClobSqlTypeThenUpdateAuthorization() {
+		EmbeddedDatabase db = createDb(OAUTH2_AUTHORIZATION_SCHEMA_CLOB_COLUMN_TYPE_SQL_RESOURCE);
+		OAuth2AuthorizationService authorizationService =
+				new JdbcOAuth2AuthorizationService(new JdbcTemplate(db), this.registeredClientRepository);
+		when(this.registeredClientRepository.findById(eq(REGISTERED_CLIENT.getId())))
+				.thenReturn(REGISTERED_CLIENT);
+		OAuth2Authorization originalAuthorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
+				.id(ID)
+				.principalName(PRINCIPAL_NAME)
+				.authorizationGrantType(AUTHORIZATION_GRANT_TYPE)
+				.token(AUTHORIZATION_CODE)
+				.build();
+		authorizationService.save(originalAuthorization);
+
+		OAuth2Authorization authorization = authorizationService.findById(
+				originalAuthorization.getId());
+		assertThat(authorization).isEqualTo(originalAuthorization);
+
+		OAuth2Authorization updatedAuthorization = OAuth2Authorization.from(authorization)
+				.attribute("custom-name-1", "custom-value-1")
+				.build();
+		authorizationService.save(updatedAuthorization);
+
+		authorization = authorizationService.findById(
+				updatedAuthorization.getId());
+		assertThat(authorization).isEqualTo(updatedAuthorization);
+		assertThat(authorization).isNotEqualTo(originalAuthorization);
+		db.shutdown();
+	}
+
 	private static EmbeddedDatabase createDb() {
 		return createDb(OAUTH2_AUTHORIZATION_SCHEMA_SQL_RESOURCE);
 	}
@@ -479,10 +512,13 @@ public class JdbcOAuth2AuthorizationServiceTests {
 
 		private CustomJdbcOAuth2AuthorizationService(JdbcOperations jdbcOperations,
 				RegisteredClientRepository registeredClientRepository) {
-			super(jdbcOperations, registeredClientRepository);
+			super(jdbcOperations, registeredClientRepository, new DefaultLobHandler());
 			setAuthorizationRowMapper(new CustomOAuth2AuthorizationRowMapper(registeredClientRepository));
 			setAuthorizationParametersMapper(new CustomOAuth2AuthorizationParametersMapper());
+
 		}
+
+
 
 		@Override
 		public void save(OAuth2Authorization authorization) {

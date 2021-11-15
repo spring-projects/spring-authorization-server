@@ -61,6 +61,7 @@ public class OidcClientRegistrationAuthenticationToken extends AbstractAuthentic
 	 *
 	 * @param principal the authenticated principal
 	 * @param clientId the client identifier
+	 * @since 0.2.1
 	 */
 	public OidcClientRegistrationAuthenticationToken(Authentication principal, String clientId) {
 		super(Collections.emptyList());

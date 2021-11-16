@@ -36,7 +36,6 @@ import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.SqlParameterValue;
-import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.jackson2.SecurityJackson2Modules;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
@@ -294,7 +293,6 @@ public class JdbcRegisteredClientRepository implements RegisteredClientRepositor
 	 */
 	public static class RegisteredClientParametersMapper implements Function<RegisteredClient, List<SqlParameterValue>> {
 		private ObjectMapper objectMapper = new ObjectMapper();
-		private PasswordEncoder passwordEncoder = PasswordEncoderFactories.createDelegatingPasswordEncoder();
 
 		public RegisteredClientParametersMapper() {
 			ClassLoader classLoader = JdbcRegisteredClientRepository.class.getClassLoader();
@@ -323,7 +321,7 @@ public class JdbcRegisteredClientRepository implements RegisteredClientRepositor
 					new SqlParameterValue(Types.VARCHAR, registeredClient.getId()),
 					new SqlParameterValue(Types.VARCHAR, registeredClient.getClientId()),
 					new SqlParameterValue(Types.TIMESTAMP, clientIdIssuedAt),
-					new SqlParameterValue(Types.VARCHAR, encode(registeredClient.getClientSecret())),
+					new SqlParameterValue(Types.VARCHAR, registeredClient.getClientSecret()),
 					new SqlParameterValue(Types.TIMESTAMP, clientSecretExpiresAt),
 					new SqlParameterValue(Types.VARCHAR, registeredClient.getClientName()),
 					new SqlParameterValue(Types.VARCHAR, StringUtils.collectionToCommaDelimitedString(clientAuthenticationMethods)),
@@ -339,10 +337,11 @@ public class JdbcRegisteredClientRepository implements RegisteredClientRepositor
 			this.objectMapper = objectMapper;
 		}
 
-
+		/**
+		 * @deprecated See javadoc {@link RegisteredClientRepository#save(RegisteredClient)}
+		 */
+		@Deprecated
 		public final void setPasswordEncoder(PasswordEncoder passwordEncoder) {
-			Assert.notNull(passwordEncoder, "passwordEncoder cannot be null");
-			this.passwordEncoder = passwordEncoder;
 		}
 
 		protected final ObjectMapper getObjectMapper() {
@@ -355,13 +354,6 @@ public class JdbcRegisteredClientRepository implements RegisteredClientRepositor
 			} catch (Exception ex) {
 				throw new IllegalArgumentException(ex.getMessage(), ex);
 			}
-		}
-
-		private String encode(String value) {
-			if (value != null) {
-				return this.passwordEncoder.encode(value);
-			}
-			return null;
 		}
 
 	}

@@ -40,9 +40,6 @@ import org.springframework.jdbc.core.SqlParameterValue;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabase;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseBuilder;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType;
-import org.springframework.security.crypto.factory.PasswordEncoderFactories;
-import org.springframework.security.crypto.password.NoOpPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.jackson2.SecurityJackson2Modules;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
@@ -57,11 +54,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
 
 /**
  * Tests for {@link JdbcRegisteredClientRepository}.
@@ -77,27 +71,12 @@ public class JdbcRegisteredClientRepositoryTests {
 	private EmbeddedDatabase db;
 	private JdbcOperations jdbcOperations;
 	private JdbcRegisteredClientRepository registeredClientRepository;
-	private PasswordEncoder passwordEncoder;
 
 	@Before
 	public void setUp() {
 		this.db = createDb(OAUTH2_REGISTERED_CLIENT_SCHEMA_SQL_RESOURCE);
 		this.jdbcOperations = new JdbcTemplate(this.db);
 		this.registeredClientRepository = new JdbcRegisteredClientRepository(this.jdbcOperations);
-		this.passwordEncoder = spy(new PasswordEncoder() {
-			@Override
-			public String encode(CharSequence rawPassword) {
-				return NoOpPasswordEncoder.getInstance().encode(rawPassword);
-			}
-
-			@Override
-			public boolean matches(CharSequence rawPassword, String encodedPassword) {
-				return NoOpPasswordEncoder.getInstance().matches(rawPassword, encodedPassword);
-			}
-		});
-		RegisteredClientParametersMapper registeredClientParametersMapper = new RegisteredClientParametersMapper();
-		registeredClientParametersMapper.setPasswordEncoder(this.passwordEncoder);
-		this.registeredClientRepository.setRegisteredClientParametersMapper(registeredClientParametersMapper);
 	}
 
 	@After
@@ -167,7 +146,6 @@ public class JdbcRegisteredClientRepositoryTests {
 		this.registeredClientRepository.save(expectedRegisteredClient);
 		RegisteredClient registeredClient = this.registeredClientRepository.findById(expectedRegisteredClient.getId());
 		assertThat(registeredClient).isEqualTo(expectedRegisteredClient);
-		verify(this.passwordEncoder).encode(anyString());
 	}
 
 	@Test
@@ -177,7 +155,6 @@ public class JdbcRegisteredClientRepositoryTests {
 		this.registeredClientRepository.save(expectedRegisteredClient);
 		RegisteredClient registeredClient = this.registeredClientRepository.findById(expectedRegisteredClient.getId());
 		assertThat(registeredClient).isEqualTo(expectedRegisteredClient);
-		verifyNoInteractions(this.passwordEncoder);
 	}
 
 	@Test
@@ -185,7 +162,6 @@ public class JdbcRegisteredClientRepositoryTests {
 		RowMapper<RegisteredClient> registeredClientRowMapper = spy(new RegisteredClientRowMapper());
 		this.registeredClientRepository.setRegisteredClientRowMapper(registeredClientRowMapper);
 		RegisteredClientParametersMapper clientParametersMapper = new RegisteredClientParametersMapper();
-		clientParametersMapper.setPasswordEncoder(this.passwordEncoder);
 		Function<RegisteredClient, List<SqlParameterValue>> registeredClientParametersMapper = spy(clientParametersMapper);
 		this.registeredClientRepository.setRegisteredClientParametersMapper(registeredClientParametersMapper);
 
@@ -195,30 +171,6 @@ public class JdbcRegisteredClientRepositoryTests {
 		assertThat(result).isEqualTo(registeredClient);
 		verify(registeredClientRowMapper).mapRow(any(), anyInt());
 		verify(registeredClientParametersMapper).apply(any());
-		verify(this.passwordEncoder).encode(anyString());
-	}
-
-	// gh-389
-	@Test
-	public void saveWhenClientSecretAlreadyEncodedThenNotUpdated() {
-		PasswordEncoder passwordEncoder = spy(PasswordEncoderFactories.createDelegatingPasswordEncoder());
-		RegisteredClientParametersMapper registeredClientParametersMapper = new RegisteredClientParametersMapper();
-		registeredClientParametersMapper.setPasswordEncoder(passwordEncoder);
-		this.registeredClientRepository.setRegisteredClientParametersMapper(registeredClientParametersMapper);
-
-		RegisteredClient originalRegisteredClient = TestRegisteredClients.registeredClient().build();
-		this.registeredClientRepository.save(originalRegisteredClient);
-		verify(passwordEncoder).encode(eq(originalRegisteredClient.getClientSecret()));
-
-		RegisteredClient registeredClient = this.registeredClientRepository.findById(originalRegisteredClient.getId());
-		assertThat(registeredClient).isNotNull();
-		assertThat(passwordEncoder.matches(originalRegisteredClient.getClientSecret(), registeredClient.getClientSecret())).isTrue();
-
-		RegisteredClient updatedRegisteredClient = RegisteredClient.from(registeredClient).clientSecret("updated-client-secret").build();
-		this.registeredClientRepository.save(updatedRegisteredClient);
-		updatedRegisteredClient = this.registeredClientRepository.findById(originalRegisteredClient.getId());
-		assertThat(updatedRegisteredClient).isNotNull();
-		assertThat(passwordEncoder.matches(originalRegisteredClient.getClientSecret(), updatedRegisteredClient.getClientSecret())).isTrue();
 	}
 
 	@Test
@@ -270,17 +222,13 @@ public class JdbcRegisteredClientRepositoryTests {
 	@Test
 	public void tableDefinitionWhenCustomThenAbleToOverride() {
 		EmbeddedDatabase db = createDb(OAUTH2_CUSTOM_REGISTERED_CLIENT_SCHEMA_SQL_RESOURCE);
-		RegisteredClientParametersMapper registeredClientParametersMapper = new RegisteredClientParametersMapper();
-		registeredClientParametersMapper.setPasswordEncoder(this.passwordEncoder);
 		CustomJdbcRegisteredClientRepository registeredClientRepository = new CustomJdbcRegisteredClientRepository(new JdbcTemplate(db));
-		registeredClientRepository.setRegisteredClientParametersMapper(registeredClientParametersMapper);
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 		registeredClientRepository.save(registeredClient);
 		RegisteredClient foundRegisteredClient1 = registeredClientRepository.findById(registeredClient.getId());
 		assertThat(foundRegisteredClient1).isEqualTo(registeredClient);
 		RegisteredClient foundRegisteredClient2 = registeredClientRepository.findByClientId(registeredClient.getClientId());
 		assertThat(foundRegisteredClient2).isEqualTo(registeredClient);
-		verify(this.passwordEncoder).encode(anyString());
 		db.shutdown();
 	}
 

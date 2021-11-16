@@ -32,11 +32,7 @@ import org.springframework.security.oauth2.core.endpoint.OAuth2AccessTokenRespon
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.server.authorization.JwtEncodingContext;
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenCustomizer;
-import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AccessTokenAuthenticationToken;
-import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeAuthenticationProvider;
-import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationGrantAuthenticationToken;
-import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientCredentialsAuthenticationProvider;
-import org.springframework.security.oauth2.server.authorization.authentication.OAuth2RefreshTokenAuthenticationProvider;
+import org.springframework.security.oauth2.server.authorization.authentication.*;
 import org.springframework.security.oauth2.server.authorization.config.ProviderSettings;
 import org.springframework.security.oauth2.server.authorization.web.OAuth2TokenEndpointFilter;
 import org.springframework.security.web.access.intercept.FilterSecurityInterceptor;
@@ -187,6 +183,15 @@ public final class OAuth2TokenEndpointConfigurer extends AbstractOAuth2Configure
 			clientCredentialsAuthenticationProvider.setJwtCustomizer(jwtCustomizer);
 		}
 		authenticationProviders.add(clientCredentialsAuthenticationProvider);
+
+		OAuth2AnonymousAuthenticationProvider anonymousAuthenticationProvider =
+				new OAuth2AnonymousAuthenticationProvider(
+						OAuth2ConfigurerUtils.getAuthorizationService(builder),
+						jwtEncoder);
+		if (jwtCustomizer != null) {
+			anonymousAuthenticationProvider.setJwtCustomizer(jwtCustomizer);
+		}
+		authenticationProviders.add(anonymousAuthenticationProvider);
 
 		return authenticationProviders;
 	}

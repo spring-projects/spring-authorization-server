@@ -11,3 +11,5 @@ The username is `user1` and the password is `password`.
 * Run Resource Server -> `./gradlew -b samples/messages-resource/samples-messages-resource.gradle bootRun`
 * Run Client -> `./gradlew -b samples/messages-client/samples-messages-client.gradle bootRun`
 * Go to `http://127.0.0.1:8080`
+* Log in with the credentials injected into the sample server via the DefaultSecurityCofnig.java.  E.g. "user1", "password"
+

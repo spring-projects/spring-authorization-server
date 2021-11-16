@@ -62,6 +62,8 @@ import org.springframework.security.oauth2.core.oidc.http.converter.OidcClientRe
 import org.springframework.security.oauth2.jose.TestJwks;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.server.authorization.JdbcOAuth2AuthorizationService;
+import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.client.JdbcRegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.JdbcRegisteredClientRepository.RegisteredClientParametersMapper;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
@@ -321,6 +323,11 @@ public class OidcClientRegistrationTests {
 			registeredClientRepository.setRegisteredClientParametersMapper(registeredClientParametersMapper);
 			registeredClientRepository.save(registeredClient);
 			return registeredClientRepository;
+		}
+
+		@Bean
+		OAuth2AuthorizationService authorizationService(JdbcOperations jdbcOperations, RegisteredClientRepository registeredClientRepository) {
+			return new JdbcOAuth2AuthorizationService(jdbcOperations, registeredClientRepository);
 		}
 
 		@Bean

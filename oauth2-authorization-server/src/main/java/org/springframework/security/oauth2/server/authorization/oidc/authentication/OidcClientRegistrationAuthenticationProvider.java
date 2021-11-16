@@ -21,6 +21,7 @@ import java.time.Instant;
 import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -218,7 +219,9 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 	private OAuth2Authorization registerAccessToken(RegisteredClient registeredClient) {
 		JoseHeader headers = JwtUtils.headers().build();
 
-		Set<String> authorizedScopes = Collections.singleton(DEFAULT_CLIENT_CONFIGURATION_AUTHORIZED_SCOPE);
+		Set<String> authorizedScopes = new HashSet<>();
+		authorizedScopes.add(DEFAULT_CLIENT_CONFIGURATION_AUTHORIZED_SCOPE);
+		authorizedScopes = Collections.unmodifiableSet(authorizedScopes);
 
 		JwtClaimsSet claims = JwtUtils.accessTokenClaims(
 				registeredClient, this.providerSettings.getIssuer(), registeredClient.getClientId(), authorizedScopes)

@@ -25,7 +25,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 
-import java.security.Principal;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
@@ -45,7 +44,7 @@ public class OAuth2AnonymousAuthenticationProvider implements AuthenticationProv
 
 	private final OAuth2AuthorizationService authorizationService;
 	private final JwtEncoder jwtEncoder;
-	private OAuth2TokenCustomizer<JwtEncodingContext> jwtCustomizer = (context) -> {};
+	private OAuth2TokenCustomizer<JwtEncodingContext> jwtCustomizer = context -> {};
 	private ProviderSettings providerSettings;
 	private Supplier<String> refreshTokenGenerator = DEFAULT_REFRESH_TOKEN_GENERATOR::generateKey;
 	//private AccountService accountService;  // TODO - also in TE2, this is a request-scoped bean
@@ -114,7 +113,8 @@ public class OAuth2AnonymousAuthenticationProvider implements AuthenticationProv
 		String issuer = this.providerSettings != null ? this.providerSettings.getIssuer() : null;
 
 		// Now generate an account/UIID for this user.
-		String uuid = "generatedAnonymousGuid";  // TODO - should be using account server
+		// TODO - should be using account server
+		String uuid = java.util.UUID.randomUUID().toString();
 		// TODO - Current TE2 Code:
 		// final String uuid = accountService.createAnonymousUser(organization, appUserId,
 		//		UserType.GUESTS);

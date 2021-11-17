@@ -63,7 +63,7 @@ import org.springframework.util.StringUtils;
  * @see AbstractHttpMessageConverter
  * @see OAuth2AccessTokenResponse
  */
-class OAuth2AccessTokenResponseHttpMessageConverter
+public class OAuth2AccessTokenResponseHttpMessageConverter
 		extends AbstractHttpMessageConverter<OAuth2AccessTokenResponse> {
 
 	private static final Charset DEFAULT_CHARSET = StandardCharsets.UTF_8;
@@ -89,7 +89,7 @@ class OAuth2AccessTokenResponseHttpMessageConverter
 
 	private Converter<OAuth2AccessTokenResponse, Map<String, Object>> accessTokenResponseParametersConverter = new DefaultOAuth2AccessTokenResponseMapConverter();
 
-	OAuth2AccessTokenResponseHttpMessageConverter() {
+	public OAuth2AccessTokenResponseHttpMessageConverter() {
 		super(DEFAULT_CHARSET, MediaType.APPLICATION_JSON, new MediaType("application", "*+json"));
 	}
 

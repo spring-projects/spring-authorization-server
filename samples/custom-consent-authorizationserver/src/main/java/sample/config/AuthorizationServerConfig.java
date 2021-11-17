@@ -17,10 +17,16 @@ package sample.config;
 
 import java.util.UUID;
 
+import com.accesso.security.oauth2.server.authorization.authentication.AccessoAccessTokenCustomizer;
+import com.accesso.security.oauth2.server.authorization.authentication.AccessoAccessTokenResponseCustomizer;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
+import org.springframework.security.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.server.authorization.JwtEncodingContext;
+import org.springframework.security.oauth2.server.authorization.OAuth2TokenCustomizer;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AnonymousUserGrantAuthenticationToken;
 import sample.jose.Jwks;
 
@@ -54,12 +60,17 @@ public class AuthorizationServerConfig {
 
 	@Bean
 	@Order(Ordered.HIGHEST_PRECEDENCE)
-	public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
+	public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http,
+			AccessoAccessTokenResponseCustomizer responseCustomizer) throws Exception {
 		OAuth2AuthorizationServerConfigurer<HttpSecurity> authorizationServerConfigurer =
 				new OAuth2AuthorizationServerConfigurer<>();
 		authorizationServerConfigurer
 				.authorizationEndpoint(authorizationEndpoint ->
-						authorizationEndpoint.consentPage(CUSTOM_CONSENT_PAGE_URI));
+						authorizationEndpoint.consentPage(CUSTOM_CONSENT_PAGE_URI))
+				// Accesso-specific token endpoint response - to add attributes
+				.tokenEndpoint(tokenEndpoint ->
+						tokenEndpoint.accessTokenResponseHandler(responseCustomizer));
+
 
 		RequestMatcher endpointsMatcher = authorizationServerConfigurer
 				.getEndpointsMatcher();
@@ -114,4 +125,19 @@ public class AuthorizationServerConfig {
 		return new InMemoryOAuth2AuthorizationConsentService();
 	}
 
+	@Bean
+	public OAuth2TokenCustomizer<JwtEncodingContext> oauth2TokenCustomizer() {
+		// Accesso - specific token content additions.
+		return new AccessoAccessTokenCustomizer();
+	}
+
+	@Bean
+	JwtDecoder jwtDecoder(JWKSource<SecurityContext> jwkSource) {
+		return OAuth2AuthorizationServerConfiguration.jwtDecoder(jwkSource);
+	}
+
+	@Bean
+	public AccessoAccessTokenResponseCustomizer accessoAccessTokenResponseCustomizer(JwtDecoder decoder) {
+		return new AccessoAccessTokenResponseCustomizer(decoder);
+	}
 }

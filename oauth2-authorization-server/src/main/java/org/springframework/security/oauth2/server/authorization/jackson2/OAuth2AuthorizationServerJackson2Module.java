@@ -16,6 +16,7 @@
 package org.springframework.security.oauth2.server.authorization.jackson2;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -24,8 +25,14 @@ import com.fasterxml.jackson.core.Version;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 
 import org.springframework.security.jackson2.SecurityJackson2Modules;
+import org.springframework.security.oauth2.core.AuthorizationGrantType;
+import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
+import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientAuthenticationToken;
+import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
+import org.springframework.security.oauth2.server.authorization.config.ClientSettings;
+import org.springframework.security.oauth2.server.authorization.config.TokenSettings;
 
 /**
  * Jackson {@code Module} for {@code spring-authorization-server}, that registers the
@@ -75,7 +82,14 @@ public class OAuth2AuthorizationServerJackson2Module extends SimpleModule {
 		context.setMixInAnnotations(LinkedHashSet.class, HashSetMixin.class);
 		context.setMixInAnnotations(OAuth2AuthorizationRequest.class, OAuth2AuthorizationRequestMixin.class);
 		context.setMixInAnnotations(Duration.class, DurationMixin.class);
+		context.setMixInAnnotations(Instant.class, InstantMixin.class);
 		context.setMixInAnnotations(SignatureAlgorithm.class, SignatureAlgorithmMixin.class);
+		context.setMixInAnnotations(OAuth2ClientAuthenticationToken.class, OAuth2ClientAuthenticationTokenMixin.class);
+		context.setMixInAnnotations(RegisteredClient.class, RegisteredClientMixin.class);
+		context.setMixInAnnotations(AuthorizationGrantType.class, AuthorizationGrantTypeMixin.class);
+		context.setMixInAnnotations(ClientAuthenticationMethod.class, ClientAuthenticationMethodMixin.class);
+		context.setMixInAnnotations(TokenSettings.class, TokenSettingsMixin.class);
+		context.setMixInAnnotations(ClientSettings.class, ClientSettingsMixin.class);
 	}
 
 }

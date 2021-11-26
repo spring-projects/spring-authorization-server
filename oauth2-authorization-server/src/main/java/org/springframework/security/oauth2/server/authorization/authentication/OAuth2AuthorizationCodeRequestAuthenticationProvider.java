@@ -32,6 +32,7 @@ import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.crypto.keygen.Base64StringKeyGenerator;
 import org.springframework.security.crypto.keygen.StringKeyGenerator;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
@@ -329,25 +330,17 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 		Set<String> currentAuthorizedScopes = currentAuthorizationConsent != null ?
 				currentAuthorizationConsent.getScopes() : Collections.emptySet();
 
-		if (authorizedScopes.isEmpty() && currentAuthorizedScopes.isEmpty() &&
-				authorizationCodeRequestAuthentication.getAdditionalParameters().isEmpty()) {
-			// Authorization consent denied
-			this.authorizationService.remove(authorization);
-			throwError(OAuth2ErrorCodes.ACCESS_DENIED, OAuth2ParameterNames.CLIENT_ID,
-					authorizationCodeRequestAuthentication, registeredClient, authorizationRequest);
-		}
-
-		if (requestedScopes.contains(OidcScopes.OPENID)) {
-			// 'openid' scope is auto-approved as it does not require consent
-			authorizedScopes.add(OidcScopes.OPENID);
-		}
-
 		if (!currentAuthorizedScopes.isEmpty()) {
 			for (String requestedScope : requestedScopes) {
 				if (currentAuthorizedScopes.contains(requestedScope)) {
 					authorizedScopes.add(requestedScope);
 				}
 			}
+		}
+
+		if (!authorizedScopes.isEmpty() && requestedScopes.contains(OidcScopes.OPENID)) {
+			// 'openid' scope is auto-approved as it does not require consent
+			authorizedScopes.add(OidcScopes.OPENID);
 		}
 
 		OAuth2AuthorizationConsent.Builder authorizationConsentBuilder;
@@ -369,6 +362,19 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 							.build();
 			// @formatter:on
 			this.authorizationConsentCustomizer.accept(authorizationConsentAuthenticationContext);
+		}
+
+		Set<GrantedAuthority> authorities = new HashSet<>();
+		authorizationConsentBuilder.authorities(authorities::addAll);
+
+		if (authorities.isEmpty()) {
+			// Authorization consent denied (or revoked)
+			if (currentAuthorizationConsent != null) {
+				this.authorizationConsentService.remove(currentAuthorizationConsent);
+			}
+			this.authorizationService.remove(authorization);
+			throwError(OAuth2ErrorCodes.ACCESS_DENIED, OAuth2ParameterNames.CLIENT_ID,
+					authorizationCodeRequestAuthentication, registeredClient, authorizationRequest);
 		}
 
 		OAuth2AuthorizationConsent authorizationConsent = authorizationConsentBuilder.build();

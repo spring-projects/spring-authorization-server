@@ -85,13 +85,16 @@ public final class OidcConfigurer extends AbstractOAuth2Configurer {
 		}
 
 		List<RequestMatcher> requestMatchers = new ArrayList<>();
-		requestMatchers.add(new AntPathRequestMatcher(
-				"/.well-known/openid-configuration", HttpMethod.GET.name()));
+		ProviderSettings providerSettings = OAuth2ConfigurerUtils.getProviderSettings(builder);
+		if (providerSettings.getIssuer() != null) {
+			requestMatchers.add(new AntPathRequestMatcher(
+					"/.well-known/openid-configuration", HttpMethod.GET.name()));
+		}
 		requestMatchers.add(this.userInfoEndpointConfigurer.getRequestMatcher());
 		if (this.clientRegistrationEndpointConfigurer != null) {
 			requestMatchers.add(this.clientRegistrationEndpointConfigurer.getRequestMatcher());
 		}
-		this.requestMatcher = new OrRequestMatcher(requestMatchers);
+		this.requestMatcher = requestMatchers.size() > 1 ? new OrRequestMatcher(requestMatchers) : requestMatchers.get(0);
 	}
 
 	@Override
@@ -102,9 +105,11 @@ public final class OidcConfigurer extends AbstractOAuth2Configurer {
 		}
 
 		ProviderSettings providerSettings = OAuth2ConfigurerUtils.getProviderSettings(builder);
-		OidcProviderConfigurationEndpointFilter oidcProviderConfigurationEndpointFilter =
-				new OidcProviderConfigurationEndpointFilter(providerSettings);
-		builder.addFilterBefore(postProcess(oidcProviderConfigurationEndpointFilter), AbstractPreAuthenticatedProcessingFilter.class);
+		if (providerSettings.getIssuer() != null) {
+			OidcProviderConfigurationEndpointFilter oidcProviderConfigurationEndpointFilter =
+					new OidcProviderConfigurationEndpointFilter(providerSettings);
+			builder.addFilterBefore(postProcess(oidcProviderConfigurationEndpointFilter), AbstractPreAuthenticatedProcessingFilter.class);
+		}
 	}
 
 	@Override

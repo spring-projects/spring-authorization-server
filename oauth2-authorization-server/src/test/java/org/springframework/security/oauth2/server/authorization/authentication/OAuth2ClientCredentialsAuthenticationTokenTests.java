@@ -35,7 +35,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * @author Alexey Nesterov
  */
 public class OAuth2ClientCredentialsAuthenticationTokenTests {
-	private String issuer = "https://example.com/issuer1";
 	private final RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 	private final OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(
 			this.registeredClient, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, this.registeredClient.getClientSecret());
@@ -43,15 +42,8 @@ public class OAuth2ClientCredentialsAuthenticationTokenTests {
 	private Map<String, Object> additionalParameters = Collections.singletonMap("param1", "value1");
 
 	@Test
-	public void constructorWhenIssuerNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> new OAuth2ClientCredentialsAuthenticationToken(null, this.clientPrincipal, this.scopes, this.additionalParameters))
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("issuer cannot be empty");
-	}
-
-	@Test
 	public void constructorWhenClientPrincipalNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> new OAuth2ClientCredentialsAuthenticationToken(this.issuer, null, this.scopes, this.additionalParameters))
+		assertThatThrownBy(() -> new OAuth2ClientCredentialsAuthenticationToken(null, this.scopes, this.additionalParameters))
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessage("clientPrincipal cannot be null");
 	}
@@ -59,10 +51,9 @@ public class OAuth2ClientCredentialsAuthenticationTokenTests {
 	@Test
 	public void constructorWhenClientPrincipalProvidedThenCreated() {
 		OAuth2ClientCredentialsAuthenticationToken authentication = new OAuth2ClientCredentialsAuthenticationToken(
-				this.issuer, this.clientPrincipal, this.scopes, this.additionalParameters);
+				this.clientPrincipal, this.scopes, this.additionalParameters);
 
 		assertThat(authentication.getGrantType()).isEqualTo(AuthorizationGrantType.CLIENT_CREDENTIALS);
-		assertThat(authentication.getIssuer()).isEqualTo(this.issuer);
 		assertThat(authentication.getPrincipal()).isEqualTo(this.clientPrincipal);
 		assertThat(authentication.getCredentials().toString()).isEmpty();
 		assertThat(authentication.getScopes()).isEqualTo(this.scopes);
@@ -74,10 +65,9 @@ public class OAuth2ClientCredentialsAuthenticationTokenTests {
 		Set<String> expectedScopes = Collections.singleton("test-scope");
 
 		OAuth2ClientCredentialsAuthenticationToken authentication = new OAuth2ClientCredentialsAuthenticationToken(
-				this.issuer, this.clientPrincipal, expectedScopes, this.additionalParameters);
+				this.clientPrincipal, expectedScopes, this.additionalParameters);
 
 		assertThat(authentication.getGrantType()).isEqualTo(AuthorizationGrantType.CLIENT_CREDENTIALS);
-		assertThat(authentication.getIssuer()).isEqualTo(this.issuer);
 		assertThat(authentication.getPrincipal()).isEqualTo(this.clientPrincipal);
 		assertThat(authentication.getCredentials().toString()).isEmpty();
 		assertThat(authentication.getScopes()).isEqualTo(expectedScopes);

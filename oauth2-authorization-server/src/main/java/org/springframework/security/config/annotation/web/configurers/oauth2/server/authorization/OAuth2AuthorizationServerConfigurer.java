@@ -216,17 +216,9 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 
 	@Override
 	public void configure(B builder) {
-		ProviderSettings providerSettings = OAuth2ConfigurerUtils.getProviderSettings(builder);
-
-		// IMPORTANT:
-		// This filter must be registered first as it resolves the current issuer identifier and
-		// sets it as a request attribute under WebAttributes.ISSUER, which may be used by upstream components.
-		OAuth2AuthorizationServerMetadataEndpointFilter authorizationServerMetadataEndpointFilter =
-				new OAuth2AuthorizationServerMetadataEndpointFilter(providerSettings);
-		builder.addFilterBefore(postProcess(authorizationServerMetadataEndpointFilter), AbstractPreAuthenticatedProcessingFilter.class);
-
 		this.configurers.values().forEach(configurer -> configurer.configure(builder));
 
+		ProviderSettings providerSettings = OAuth2ConfigurerUtils.getProviderSettings(builder);
 		AuthenticationManager authenticationManager = builder.getSharedObject(AuthenticationManager.class);
 
 		OAuth2TokenIntrospectionEndpointFilter tokenIntrospectionEndpointFilter =
@@ -246,6 +238,12 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 						OAuth2ConfigurerUtils.getJwkSource(builder),
 						providerSettings.getJwkSetEndpoint());
 		builder.addFilterBefore(postProcess(jwkSetEndpointFilter), AbstractPreAuthenticatedProcessingFilter.class);
+
+		if (providerSettings.getIssuer() != null) {
+			OAuth2AuthorizationServerMetadataEndpointFilter authorizationServerMetadataEndpointFilter =
+					new OAuth2AuthorizationServerMetadataEndpointFilter(providerSettings);
+			builder.addFilterBefore(postProcess(authorizationServerMetadataEndpointFilter), AbstractPreAuthenticatedProcessingFilter.class);
+		}
 	}
 
 	private Map<Class<? extends AbstractOAuth2Configurer>, AbstractOAuth2Configurer> createConfigurers() {

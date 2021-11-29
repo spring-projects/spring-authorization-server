@@ -36,12 +36,12 @@ import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 import org.springframework.security.oauth2.jwt.JoseHeaderNames;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
-import org.springframework.security.oauth2.server.authorization.JwtEncodingContext;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
-import org.springframework.security.oauth2.server.authorization.OAuth2TokenCustomizer;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
+import org.springframework.security.oauth2.server.authorization.JwtEncodingContext;
+import org.springframework.security.oauth2.server.authorization.OAuth2TokenCustomizer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -105,12 +105,11 @@ public class OAuth2ClientCredentialsAuthenticationProviderTests {
 
 	@Test
 	public void authenticateWhenClientPrincipalNotOAuth2ClientAuthenticationTokenThenThrowOAuth2AuthenticationException() {
-		String issuer = "https://example.com/issuer1";
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient2().build();
 		TestingAuthenticationToken clientPrincipal = new TestingAuthenticationToken(
 				registeredClient.getClientId(), registeredClient.getClientSecret());
 		OAuth2ClientCredentialsAuthenticationToken authentication =
-				new OAuth2ClientCredentialsAuthenticationToken(issuer, clientPrincipal, null, null);
+				new OAuth2ClientCredentialsAuthenticationToken(clientPrincipal, null, null);
 
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 				.isInstanceOf(OAuth2AuthenticationException.class)
@@ -121,12 +120,11 @@ public class OAuth2ClientCredentialsAuthenticationProviderTests {
 
 	@Test
 	public void authenticateWhenClientPrincipalNotAuthenticatedThenThrowOAuth2AuthenticationException() {
-		String issuer = "https://example.com/issuer1";
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient2().build();
 		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(
 				registeredClient.getClientId(), ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret(), null);
 		OAuth2ClientCredentialsAuthenticationToken authentication =
-				new OAuth2ClientCredentialsAuthenticationToken(issuer, clientPrincipal, null, null);
+				new OAuth2ClientCredentialsAuthenticationToken(clientPrincipal, null, null);
 
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 				.isInstanceOf(OAuth2AuthenticationException.class)
@@ -137,14 +135,13 @@ public class OAuth2ClientCredentialsAuthenticationProviderTests {
 
 	@Test
 	public void authenticateWhenClientNotAuthorizedToRequestTokenThenThrowOAuth2AuthenticationException() {
-		String issuer = "https://example.com/issuer1";
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient2()
 				.authorizationGrantTypes(grantTypes -> grantTypes.remove(AuthorizationGrantType.CLIENT_CREDENTIALS))
 				.build();
 		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(
 				registeredClient, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
 		OAuth2ClientCredentialsAuthenticationToken authentication =
-				new OAuth2ClientCredentialsAuthenticationToken(issuer, clientPrincipal, null, null);
+				new OAuth2ClientCredentialsAuthenticationToken(clientPrincipal, null, null);
 
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 				.isInstanceOf(OAuth2AuthenticationException.class)
@@ -155,12 +152,11 @@ public class OAuth2ClientCredentialsAuthenticationProviderTests {
 
 	@Test
 	public void authenticateWhenInvalidScopeThenThrowOAuth2AuthenticationException() {
-		String issuer = "https://example.com/issuer1";
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient2().build();
 		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(
 				registeredClient, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
 		OAuth2ClientCredentialsAuthenticationToken authentication = new OAuth2ClientCredentialsAuthenticationToken(
-				issuer, clientPrincipal, Collections.singleton("invalid-scope"), null);
+				clientPrincipal, Collections.singleton("invalid-scope"), null);
 
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 				.isInstanceOf(OAuth2AuthenticationException.class)
@@ -171,13 +167,12 @@ public class OAuth2ClientCredentialsAuthenticationProviderTests {
 
 	@Test
 	public void authenticateWhenScopeRequestedThenAccessTokenContainsScope() {
-		String issuer = "https://example.com/issuer1";
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient2().build();
 		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(
 				registeredClient, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
 		Set<String> requestedScope = Collections.singleton("scope1");
 		OAuth2ClientCredentialsAuthenticationToken authentication =
-				new OAuth2ClientCredentialsAuthenticationToken(issuer, clientPrincipal, requestedScope, null);
+				new OAuth2ClientCredentialsAuthenticationToken(clientPrincipal, requestedScope, null);
 
 		when(this.jwtEncoder.encode(any(), any()))
 				.thenReturn(createJwt(Collections.singleton("mapped-scoped")));
@@ -189,12 +184,11 @@ public class OAuth2ClientCredentialsAuthenticationProviderTests {
 
 	@Test
 	public void authenticateWhenValidAuthenticationThenReturnAccessToken() {
-		String issuer = "https://example.com/issuer1";
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient2().build();
 		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(
 				registeredClient, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
 		OAuth2ClientCredentialsAuthenticationToken authentication =
-				new OAuth2ClientCredentialsAuthenticationToken(issuer, clientPrincipal, null, null);
+				new OAuth2ClientCredentialsAuthenticationToken(clientPrincipal, null, null);
 
 		when(this.jwtEncoder.encode(any(), any())).thenReturn(createJwt(registeredClient.getScopes()));
 

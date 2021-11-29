@@ -36,7 +36,6 @@ import org.springframework.util.Assert;
  */
 public class OidcClientRegistrationAuthenticationToken extends AbstractAuthenticationToken {
 	private static final long serialVersionUID = Version.SERIAL_VERSION_UID;
-	private final String issuer;
 	private final Authentication principal;
 	private final OidcClientRegistration clientRegistration;
 	private final String clientId;
@@ -46,14 +45,11 @@ public class OidcClientRegistrationAuthenticationToken extends AbstractAuthentic
 	 *
 	 * @param principal the authenticated principal
 	 * @param clientRegistration the client registration
-	 * @deprecated Use {@link #OidcClientRegistrationAuthenticationToken(String, Authentication, OidcClientRegistration)} instead
 	 */
-	@Deprecated
 	public OidcClientRegistrationAuthenticationToken(Authentication principal, OidcClientRegistration clientRegistration) {
 		super(Collections.emptyList());
 		Assert.notNull(principal, "principal cannot be null");
 		Assert.notNull(clientRegistration, "clientRegistration cannot be null");
-		this.issuer = null;
 		this.principal = principal;
 		this.clientRegistration = clientRegistration;
 		this.clientId = null;
@@ -63,51 +59,18 @@ public class OidcClientRegistrationAuthenticationToken extends AbstractAuthentic
 	/**
 	 * Constructs an {@code OidcClientRegistrationAuthenticationToken} using the provided parameters.
 	 *
-	 * @param issuer the issuer identifier
-	 * @param principal the authenticated principal
-	 * @param clientRegistration the client registration
-	 * @since 0.2.1
-	 */
-	public OidcClientRegistrationAuthenticationToken(String issuer, Authentication principal, OidcClientRegistration clientRegistration) {
-		super(Collections.emptyList());
-		Assert.hasText(issuer, "issuer cannot be empty");
-		Assert.notNull(principal, "principal cannot be null");
-		Assert.notNull(clientRegistration, "clientRegistration cannot be null");
-		this.issuer = issuer;
-		this.principal = principal;
-		this.clientRegistration = clientRegistration;
-		this.clientId = null;
-		setAuthenticated(principal.isAuthenticated());
-	}
-
-	/**
-	 * Constructs an {@code OidcClientRegistrationAuthenticationToken} using the provided parameters.
-	 *
-	 * @param issuer the issuer identifier
 	 * @param principal the authenticated principal
 	 * @param clientId the client identifier
 	 * @since 0.2.1
 	 */
-	public OidcClientRegistrationAuthenticationToken(String issuer, Authentication principal, String clientId) {
+	public OidcClientRegistrationAuthenticationToken(Authentication principal, String clientId) {
 		super(Collections.emptyList());
-		Assert.hasText(issuer, "issuer cannot be empty");
 		Assert.notNull(principal, "principal cannot be null");
 		Assert.hasText(clientId, "clientId cannot be empty");
-		this.issuer = issuer;
 		this.principal = principal;
 		this.clientRegistration = null;
 		this.clientId = clientId;
 		setAuthenticated(principal.isAuthenticated());
-	}
-
-	/**
-	 * Returns the issuer identifier.
-	 *
-	 * @return the issuer identifier
-	 * @since 0.2.1
-	 */
-	public String getIssuer() {
-		return this.issuer;
 	}
 
 	@Override

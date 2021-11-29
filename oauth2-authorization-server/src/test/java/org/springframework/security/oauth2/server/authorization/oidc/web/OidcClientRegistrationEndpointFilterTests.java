@@ -53,7 +53,6 @@ import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.TestJoseHeaders;
 import org.springframework.security.oauth2.jwt.TestJwtClaimsSets;
 import org.springframework.security.oauth2.server.authorization.oidc.authentication.OidcClientRegistrationAuthenticationToken;
-import org.springframework.security.oauth2.server.authorization.web.WebAttributes;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -189,7 +188,6 @@ public class OidcClientRegistrationEndpointFilterTests {
 		MockHttpServletRequest request = new MockHttpServletRequest("POST", requestUri);
 		request.setServletPath(requestUri);
 		writeClientRegistrationRequest(request, clientRegistrationRequest);
-		request.setAttribute(WebAttributes.ISSUER, "https://example.com/issuer1");
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		FilterChain filterChain = mock(FilterChain.class);
 
@@ -227,13 +225,12 @@ public class OidcClientRegistrationEndpointFilterTests {
 				.build();
 		// @formatter:on
 
-		String issuer = "https://example.com/issuer1";
 		Jwt jwt = createJwt("client.create");
 		JwtAuthenticationToken principal = new JwtAuthenticationToken(
 				jwt, AuthorityUtils.createAuthorityList("SCOPE_client.create"));
 
 		OidcClientRegistrationAuthenticationToken clientRegistrationAuthenticationResult =
-				new OidcClientRegistrationAuthenticationToken(issuer, principal, expectedClientRegistrationResponse);
+				new OidcClientRegistrationAuthenticationToken(principal, expectedClientRegistrationResponse);
 
 		when(this.authenticationManager.authenticate(any())).thenReturn(clientRegistrationAuthenticationResult);
 
@@ -245,7 +242,6 @@ public class OidcClientRegistrationEndpointFilterTests {
 		MockHttpServletRequest request = new MockHttpServletRequest("POST", requestUri);
 		request.setServletPath(requestUri);
 		writeClientRegistrationRequest(request, clientRegistrationRequest);
-		request.setAttribute(WebAttributes.ISSUER, issuer);
 
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		FilterChain filterChain = mock(FilterChain.class);
@@ -374,7 +370,6 @@ public class OidcClientRegistrationEndpointFilterTests {
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestUri);
 		request.setServletPath(requestUri);
 		request.setParameter(OAuth2ParameterNames.CLIENT_ID, "client1");
-		request.setAttribute(WebAttributes.ISSUER, "https://example.com/issuer1");
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		FilterChain filterChain = mock(FilterChain.class);
 
@@ -407,13 +402,12 @@ public class OidcClientRegistrationEndpointFilterTests {
 				.build();
 		// @formatter:on
 
-		String issuer = "https://example.com/issuer1";
 		Jwt jwt = createJwt("client.read");
 		JwtAuthenticationToken principal = new JwtAuthenticationToken(
 				jwt, AuthorityUtils.createAuthorityList("SCOPE_client.read"));
 
 		OidcClientRegistrationAuthenticationToken clientConfigurationAuthenticationResult =
-				new OidcClientRegistrationAuthenticationToken(issuer, principal, expectedClientRegistrationResponse);
+				new OidcClientRegistrationAuthenticationToken(principal, expectedClientRegistrationResponse);
 
 		when(this.authenticationManager.authenticate(any())).thenReturn(clientConfigurationAuthenticationResult);
 
@@ -425,7 +419,6 @@ public class OidcClientRegistrationEndpointFilterTests {
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestUri);
 		request.setServletPath(requestUri);
 		request.setParameter(OAuth2ParameterNames.CLIENT_ID, expectedClientRegistrationResponse.getClientId());
-		request.setAttribute(WebAttributes.ISSUER, issuer);
 
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		FilterChain filterChain = mock(FilterChain.class);

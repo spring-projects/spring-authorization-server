@@ -44,31 +44,10 @@ public class OAuth2RefreshTokenAuthenticationToken extends OAuth2AuthorizationGr
 	 * @param clientPrincipal the authenticated client principal
 	 * @param scopes the requested scope(s)
 	 * @param additionalParameters the additional parameters
-	 * @deprecated Use {@link #OAuth2RefreshTokenAuthenticationToken(String, String, Authentication, Set, Map)} instead
 	 */
-	@Deprecated
 	public OAuth2RefreshTokenAuthenticationToken(String refreshToken, Authentication clientPrincipal,
 			@Nullable Set<String> scopes, @Nullable Map<String, Object> additionalParameters) {
 		super(AuthorizationGrantType.REFRESH_TOKEN, clientPrincipal, additionalParameters);
-		Assert.hasText(refreshToken, "refreshToken cannot be empty");
-		this.refreshToken = refreshToken;
-		this.scopes = Collections.unmodifiableSet(
-				scopes != null ? new HashSet<>(scopes) : Collections.emptySet());
-	}
-
-	/**
-	 * Constructs an {@code OAuth2RefreshTokenAuthenticationToken} using the provided parameters.
-	 *
-	 * @param issuer the issuer identifier
-	 * @param refreshToken the refresh token
-	 * @param clientPrincipal the authenticated client principal
-	 * @param scopes the requested scope(s)
-	 * @param additionalParameters the additional parameters
-	 * @since 0.2.1
-	 */
-	public OAuth2RefreshTokenAuthenticationToken(String issuer, String refreshToken, Authentication clientPrincipal,
-			@Nullable Set<String> scopes, @Nullable Map<String, Object> additionalParameters) {
-		super(AuthorizationGrantType.REFRESH_TOKEN, issuer, clientPrincipal, additionalParameters);
 		Assert.hasText(refreshToken, "refreshToken cannot be empty");
 		this.refreshToken = refreshToken;
 		this.scopes = Collections.unmodifiableSet(

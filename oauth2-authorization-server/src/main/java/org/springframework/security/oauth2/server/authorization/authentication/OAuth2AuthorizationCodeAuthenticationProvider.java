@@ -26,6 +26,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -86,6 +87,7 @@ public final class OAuth2AuthorizationCodeAuthenticationProvider implements Auth
 	private final JwtEncoder jwtEncoder;
 	private OAuth2TokenCustomizer<JwtEncodingContext> jwtCustomizer = (context) -> {};
 	private Supplier<String> refreshTokenGenerator = DEFAULT_REFRESH_TOKEN_GENERATOR::generateKey;
+	private ProviderSettings providerSettings;
 
 	/**
 	 * Constructs an {@code OAuth2AuthorizationCodeAuthenticationProvider} using the provided parameters.
@@ -122,8 +124,9 @@ public final class OAuth2AuthorizationCodeAuthenticationProvider implements Auth
 		this.refreshTokenGenerator = refreshTokenGenerator;
 	}
 
-	@Deprecated
+	@Autowired(required = false)
 	protected void setProviderSettings(ProviderSettings providerSettings) {
+		this.providerSettings = providerSettings;
 	}
 
 	@Override
@@ -164,7 +167,7 @@ public final class OAuth2AuthorizationCodeAuthenticationProvider implements Auth
 			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_GRANT);
 		}
 
-		String issuer = authorizationCodeAuthentication.getIssuer();
+		String issuer = this.providerSettings != null ? this.providerSettings.getIssuer() : null;
 		Set<String> authorizedScopes = authorization.getAttribute(
 				OAuth2Authorization.AUTHORIZED_SCOPE_ATTRIBUTE_NAME);
 

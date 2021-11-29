@@ -124,7 +124,7 @@ public final class OAuth2AuthorizationCodeAuthenticationProvider implements Auth
 		this.refreshTokenGenerator = refreshTokenGenerator;
 	}
 
-	@Autowired(required = false)
+	@Autowired
 	protected void setProviderSettings(ProviderSettings providerSettings) {
 		this.providerSettings = providerSettings;
 	}

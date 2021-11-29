@@ -118,7 +118,7 @@ public final class OAuth2RefreshTokenAuthenticationProvider implements Authentic
 		this.refreshTokenGenerator = refreshTokenGenerator;
 	}
 
-	@Autowired(required = false)
+	@Autowired
 	protected void setProviderSettings(ProviderSettings providerSettings) {
 		this.providerSettings = providerSettings;
 	}

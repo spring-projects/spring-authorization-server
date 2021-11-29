@@ -120,7 +120,7 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 		this.jwtEncoder = jwtEncoder;
 	}
 
-	@Autowired(required = false)
+	@Autowired
 	protected void setProviderSettings(ProviderSettings providerSettings) {
 		this.providerSettings = providerSettings;
 	}

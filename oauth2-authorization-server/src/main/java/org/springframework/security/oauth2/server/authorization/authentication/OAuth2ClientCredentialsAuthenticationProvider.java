@@ -90,7 +90,7 @@ public final class OAuth2ClientCredentialsAuthenticationProvider implements Auth
 		this.jwtCustomizer = jwtCustomizer;
 	}
 
-	@Autowired(required = false)
+	@Autowired
 	protected void setProviderSettings(ProviderSettings providerSettings) {
 		this.providerSettings = providerSettings;
 	}

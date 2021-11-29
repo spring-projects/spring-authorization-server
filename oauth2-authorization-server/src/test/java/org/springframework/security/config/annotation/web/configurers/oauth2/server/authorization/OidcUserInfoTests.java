@@ -38,7 +38,6 @@ import org.springframework.security.config.annotation.web.configuration.OAuth2Au
 import org.springframework.security.config.annotation.web.configurers.oauth2.server.resource.OAuth2ResourceServerConfigurer;
 import org.springframework.security.config.test.SpringTestRule;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
-import org.springframework.security.oauth2.core.authentication.OAuth2AuthenticationContext;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
 import org.springframework.security.oauth2.core.oidc.OidcUserInfo;
@@ -59,6 +58,7 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
 import org.springframework.security.oauth2.server.authorization.config.ProviderSettings;
+import org.springframework.security.oauth2.server.authorization.oidc.authentication.OidcUserInfoAuthenticationContext;
 import org.springframework.security.oauth2.server.authorization.oidc.authentication.OidcUserInfoAuthenticationToken;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.security.web.SecurityFilterChain;
@@ -230,7 +230,7 @@ public class OidcUserInfoTests {
 					.getEndpointsMatcher();
 
 			// Custom User Info Mapper that retrieves claims from a signed JWT
-			Function<OAuth2AuthenticationContext, OidcUserInfo> userInfoMapper = context -> {
+			Function<OidcUserInfoAuthenticationContext, OidcUserInfo> userInfoMapper = context -> {
 				OidcUserInfoAuthenticationToken authentication = context.getAuthentication();
 				JwtAuthenticationToken principal = (JwtAuthenticationToken) authentication.getPrincipal();
 

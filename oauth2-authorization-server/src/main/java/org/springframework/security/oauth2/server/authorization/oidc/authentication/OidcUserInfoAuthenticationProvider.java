@@ -29,9 +29,7 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
-import org.springframework.security.oauth2.core.OAuth2Token;
 import org.springframework.security.oauth2.core.OAuth2TokenType;
-import org.springframework.security.oauth2.core.authentication.OAuth2AuthenticationContext;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
 import org.springframework.security.oauth2.core.oidc.OidcUserInfo;
@@ -51,7 +49,7 @@ import org.springframework.util.Assert;
  */
 public final class OidcUserInfoAuthenticationProvider implements AuthenticationProvider {
 	private final OAuth2AuthorizationService authorizationService;
-	private Function<OAuth2AuthenticationContext, OidcUserInfo> userInfoMapper = new DefaultOidcUserInfoMapper();
+	private Function<OidcUserInfoAuthenticationContext, OidcUserInfo> userInfoMapper = new DefaultOidcUserInfoMapper();
 
 	/**
 	 * Constructs an {@code OidcUserInfoAuthenticationProvider} using the provided parameters.
@@ -98,12 +96,11 @@ public final class OidcUserInfoAuthenticationProvider implements AuthenticationP
 			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_TOKEN);
 		}
 
-		Map<Object, Object> context = new HashMap<>();
-		context.put(OAuth2Token.class, accessTokenAuthentication.getToken());
-		context.put(OAuth2Authorization.class, authorization);
-		OAuth2AuthenticationContext authenticationContext = new OAuth2AuthenticationContext(
-				userInfoAuthentication, context);
-
+		OidcUserInfoAuthenticationContext authenticationContext =
+				OidcUserInfoAuthenticationContext.with(userInfoAuthentication)
+						.accessToken(authorizedAccessToken.getToken())
+						.authorization(authorization)
+						.build();
 		OidcUserInfo userInfo = this.userInfoMapper.apply(authenticationContext);
 
 		return new OidcUserInfoAuthenticationToken(accessTokenAuthentication, userInfo);
@@ -115,26 +112,26 @@ public final class OidcUserInfoAuthenticationProvider implements AuthenticationP
 	}
 
 	/**
-	 * Sets the {@link Function} used to extract claims from an {@link OAuth2AuthenticationContext}
+	 * Sets the {@link Function} used to extract claims from {@link OidcUserInfoAuthenticationContext}
 	 * to an instance of {@link OidcUserInfo} for the UserInfo response.
 	 *
 	 * <p>
-	 * The {@link OAuth2AuthenticationContext} gives the mapper access to the {@link OidcUserInfoAuthenticationToken}.
-	 * In addition, the following context attributes are supported:
+	 * The {@link OidcUserInfoAuthenticationContext} gives the mapper access to the {@link OidcUserInfoAuthenticationToken},
+	 * as well as, the following context attributes:
 	 * <ul>
-	 * <li>{@code OAuth2Token.class} - The {@link OAuth2Token} containing the bearer token used to make the request.</li>
-	 * <li>{@code OAuth2Authorization.class} - The {@link OAuth2Authorization} containing the {@link OidcIdToken} and
+	 * <li>{@link OidcUserInfoAuthenticationContext#getAccessToken()} containing the bearer token used to make the request.</li>
+	 * <li>{@link OidcUserInfoAuthenticationContext#getAuthorization()} containing the {@link OidcIdToken} and
 	 * {@link OAuth2AccessToken} associated with the bearer token used to make the request.</li>
 	 * </ul>
 	 *
-	 * @param userInfoMapper the {@link Function} used to extract claims from an {@link OAuth2AuthenticationContext} to an instance of {@link OidcUserInfo}
+	 * @param userInfoMapper the {@link Function} used to extract claims from {@link OidcUserInfoAuthenticationContext} to an instance of {@link OidcUserInfo}
 	 */
-	public void setUserInfoMapper(Function<OAuth2AuthenticationContext, OidcUserInfo> userInfoMapper) {
+	public void setUserInfoMapper(Function<OidcUserInfoAuthenticationContext, OidcUserInfo> userInfoMapper) {
 		Assert.notNull(userInfoMapper, "userInfoMapper cannot be null");
 		this.userInfoMapper = userInfoMapper;
 	}
 
-	private static final class DefaultOidcUserInfoMapper implements Function<OAuth2AuthenticationContext, OidcUserInfo> {
+	private static final class DefaultOidcUserInfoMapper implements Function<OidcUserInfoAuthenticationContext, OidcUserInfo> {
 
 		private static final List<String> EMAIL_CLAIMS = Arrays.asList(
 				StandardClaimNames.EMAIL,
@@ -162,10 +159,10 @@ public final class OidcUserInfoAuthenticationProvider implements AuthenticationP
 		);
 
 		@Override
-		public OidcUserInfo apply(OAuth2AuthenticationContext authenticationContext) {
-			OAuth2Authorization authorization = authenticationContext.get(OAuth2Authorization.class);
+		public OidcUserInfo apply(OidcUserInfoAuthenticationContext authenticationContext) {
+			OAuth2Authorization authorization = authenticationContext.getAuthorization();
 			OidcIdToken idToken = authorization.getToken(OidcIdToken.class).getToken();
-			OAuth2AccessToken accessToken = authorization.getAccessToken().getToken();
+			OAuth2AccessToken accessToken = authenticationContext.getAccessToken();
 			Map<String, Object> scopeRequestedClaims = getClaimsRequestedByScope(idToken.getClaims(),
 					accessToken.getScopes());
 

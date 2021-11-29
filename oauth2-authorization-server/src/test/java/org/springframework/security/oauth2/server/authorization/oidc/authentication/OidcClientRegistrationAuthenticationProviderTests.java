@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 the original author or authors.
+ * Copyright 2020-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -55,6 +56,8 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
 import org.springframework.security.oauth2.server.authorization.config.ClientSettings;
 import org.springframework.security.oauth2.server.authorization.config.ProviderSettings;
+import org.springframework.security.oauth2.server.authorization.context.ProviderContext;
+import org.springframework.security.oauth2.server.authorization.context.ProviderContextHolder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -87,10 +90,15 @@ public class OidcClientRegistrationAuthenticationProviderTests {
 		this.registeredClientRepository = mock(RegisteredClientRepository.class);
 		this.authorizationService = mock(OAuth2AuthorizationService.class);
 		this.jwtEncoder = mock(JwtEncoder.class);
-		this.providerSettings = ProviderSettings.builder().issuer("https://auth-server:9000").build();
+		this.providerSettings = ProviderSettings.builder().issuer("https://provider.com").build();
+		ProviderContextHolder.setProviderContext(new ProviderContext(this.providerSettings, null));
 		this.authenticationProvider = new OidcClientRegistrationAuthenticationProvider(
 				this.registeredClientRepository, this.authorizationService, this.jwtEncoder);
-		this.authenticationProvider.setProviderSettings(this.providerSettings);
+	}
+
+	@After
+	public void cleanup() {
+		ProviderContextHolder.resetProviderContext();
 	}
 
 	@Test
@@ -549,8 +557,9 @@ public class OidcClientRegistrationAuthenticationProviderTests {
 		assertThat(clientRegistrationResult.getIdTokenSignedResponseAlgorithm())
 				.isEqualTo(registeredClientResult.getTokenSettings().getIdTokenSignatureAlgorithm().getName());
 
-		String expectedRegistrationClientUrl = UriComponentsBuilder.fromUriString(this.providerSettings.getIssuer())
-				.path(this.providerSettings.getOidcClientRegistrationEndpoint())
+		ProviderContext providerContext = ProviderContextHolder.getProviderContext();
+		String expectedRegistrationClientUrl = UriComponentsBuilder.fromUriString(providerContext.getIssuer())
+				.path(providerContext.getProviderSettings().getOidcClientRegistrationEndpoint())
 				.queryParam(OAuth2ParameterNames.CLIENT_ID, registeredClientResult.getClientId()).toUriString();
 
 		assertThat(clientRegistrationResult.getRegistrationClientUrl().toString()).isEqualTo(expectedRegistrationClientUrl);
@@ -744,8 +753,9 @@ public class OidcClientRegistrationAuthenticationProviderTests {
 		assertThat(clientRegistrationResult.getIdTokenSignedResponseAlgorithm())
 				.isEqualTo(registeredClient.getTokenSettings().getIdTokenSignatureAlgorithm().getName());
 
-		String expectedRegistrationClientUrl = UriComponentsBuilder.fromUriString(this.providerSettings.getIssuer())
-				.path(this.providerSettings.getOidcClientRegistrationEndpoint())
+		ProviderContext providerContext = ProviderContextHolder.getProviderContext();
+		String expectedRegistrationClientUrl = UriComponentsBuilder.fromUriString(providerContext.getIssuer())
+				.path(providerContext.getProviderSettings().getOidcClientRegistrationEndpoint())
 				.queryParam(OAuth2ParameterNames.CLIENT_ID, registeredClient.getClientId()).toUriString();
 
 		assertThat(clientRegistrationResult.getRegistrationClientUrl().toString()).isEqualTo(expectedRegistrationClientUrl);

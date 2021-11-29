@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 the original author or authors.
+ * Copyright 2020-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ import org.springframework.security.oauth2.core.oidc.OidcScopes;
 import org.springframework.security.oauth2.core.oidc.http.converter.OidcProviderConfigurationHttpMessageConverter;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 import org.springframework.security.oauth2.server.authorization.config.ProviderSettings;
+import org.springframework.security.oauth2.server.authorization.context.ProviderContextHolder;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
@@ -79,12 +80,14 @@ public final class OidcProviderConfigurationEndpointFilter extends OncePerReques
 			return;
 		}
 
+		String issuer = ProviderContextHolder.getProviderContext().getIssuer();
+
 		OidcProviderConfiguration providerConfiguration = OidcProviderConfiguration.builder()
-				.issuer(this.providerSettings.getIssuer())
-				.authorizationEndpoint(asUrl(this.providerSettings.getIssuer(), this.providerSettings.getAuthorizationEndpoint()))
-				.tokenEndpoint(asUrl(this.providerSettings.getIssuer(), this.providerSettings.getTokenEndpoint()))
+				.issuer(issuer)
+				.authorizationEndpoint(asUrl(issuer, this.providerSettings.getAuthorizationEndpoint()))
+				.tokenEndpoint(asUrl(issuer, this.providerSettings.getTokenEndpoint()))
 				.tokenEndpointAuthenticationMethods(clientAuthenticationMethods())
-				.jwkSetUrl(asUrl(this.providerSettings.getIssuer(), this.providerSettings.getJwkSetEndpoint()))
+				.jwkSetUrl(asUrl(issuer, this.providerSettings.getJwkSetEndpoint()))
 				.responseType(OAuth2AuthorizationResponseType.CODE.getValue())
 				.grantType(AuthorizationGrantType.AUTHORIZATION_CODE.getValue())
 				.grantType(AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())

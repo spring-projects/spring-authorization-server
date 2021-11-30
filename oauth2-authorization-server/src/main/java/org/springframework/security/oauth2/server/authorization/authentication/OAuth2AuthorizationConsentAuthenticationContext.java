@@ -17,7 +17,6 @@ package org.springframework.security.oauth2.server.authorization.authentication;
 
 import java.util.Map;
 
-import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.authentication.OAuth2AuthenticationContext;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
@@ -78,14 +77,13 @@ public final class OAuth2AuthorizationConsentAuthenticationContext extends OAuth
 	}
 
 	/**
-	 * Constructs a new {@link Builder} with the provided {@link Authentication} and {@link OAuth2AuthorizationConsent.Builder}.
+	 * Constructs a new {@link Builder} with the provided {@link OAuth2AuthorizationCodeRequestAuthenticationToken}.
 	 *
-	 * @param authentication the {@link Authentication}
-	 * @param authorizationConsentBuilder the {@link OAuth2AuthorizationConsent.Builder}
+	 * @param authentication the {@link OAuth2AuthorizationCodeRequestAuthenticationToken}
 	 * @return the {@link Builder}
 	 */
-	public static Builder with(Authentication authentication, OAuth2AuthorizationConsent.Builder authorizationConsentBuilder) {
-		return new Builder(authentication, authorizationConsentBuilder);
+	public static Builder with(OAuth2AuthorizationCodeRequestAuthenticationToken authentication) {
+		return new Builder(authentication);
 	}
 
 	/**
@@ -93,10 +91,18 @@ public final class OAuth2AuthorizationConsentAuthenticationContext extends OAuth
 	 */
 	public static final class Builder extends AbstractBuilder<OAuth2AuthorizationConsentAuthenticationContext, Builder> {
 
-		private Builder(Authentication authentication, OAuth2AuthorizationConsent.Builder authorizationConsentBuilder) {
+		private Builder(OAuth2AuthorizationCodeRequestAuthenticationToken authentication) {
 			super(authentication);
-			Assert.notNull(authorizationConsentBuilder, "authorizationConsentBuilder cannot be null");
-			put(OAuth2AuthorizationConsent.Builder.class, authorizationConsentBuilder);
+		}
+
+		/**
+		 * Sets the {@link OAuth2AuthorizationConsent.Builder authorization consent builder}.
+		 *
+		 * @param authorizationConsent the {@link OAuth2AuthorizationConsent.Builder}
+		 * @return the {@link Builder} for further configuration
+		 */
+		public Builder authorizationConsent(OAuth2AuthorizationConsent.Builder authorizationConsent) {
+			return put(OAuth2AuthorizationConsent.Builder.class, authorizationConsent);
 		}
 
 		/**
@@ -135,6 +141,7 @@ public final class OAuth2AuthorizationConsentAuthenticationContext extends OAuth
 		 * @return the {@link OAuth2AuthorizationConsentAuthenticationContext}
 		 */
 		public OAuth2AuthorizationConsentAuthenticationContext build() {
+			Assert.notNull(get(OAuth2AuthorizationConsent.Builder.class), "authorizationConsentBuilder cannot be null");
 			Assert.notNull(get(RegisteredClient.class), "registeredClient cannot be null");
 			Assert.notNull(get(OAuth2Authorization.class), "authorization cannot be null");
 			Assert.notNull(get(OAuth2AuthorizationRequest.class), "authorizationRequest cannot be null");

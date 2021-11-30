@@ -355,7 +355,8 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 		if (this.authorizationConsentCustomizer != null) {
 			// @formatter:off
 			OAuth2AuthorizationConsentAuthenticationContext authorizationConsentAuthenticationContext =
-					OAuth2AuthorizationConsentAuthenticationContext.with(authorizationCodeRequestAuthentication, authorizationConsentBuilder)
+					OAuth2AuthorizationConsentAuthenticationContext.with(authorizationCodeRequestAuthentication)
+							.authorizationConsent(authorizationConsentBuilder)
 							.registeredClient(registeredClient)
 							.authorization(authorization)
 							.authorizationRequest(authorizationRequest)

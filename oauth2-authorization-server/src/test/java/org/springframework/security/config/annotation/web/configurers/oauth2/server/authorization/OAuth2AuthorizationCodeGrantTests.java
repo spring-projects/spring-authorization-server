@@ -37,9 +37,11 @@ import com.nimbusds.jose.proc.SecurityContext;
 import org.assertj.core.matcher.AssertionMatcher;
 import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -56,6 +58,7 @@ import org.springframework.mock.http.client.MockClientHttpResponse;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.TestingAuthenticationToken;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
@@ -102,6 +105,8 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
+import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -116,6 +121,10 @@ import static org.hamcrest.CoreMatchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
@@ -154,6 +163,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 	private static AuthenticationProvider authorizationRequestAuthenticationProvider;
 	private static AuthenticationSuccessHandler authorizationResponseHandler;
 	private static AuthenticationFailureHandler authorizationErrorResponseHandler;
+	private static SecurityContextRepository securityContextRepository;
 	private static String consentPage = "/oauth2/consent";
 
 	@Rule
@@ -187,6 +197,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 		authorizationRequestAuthenticationProvider = mock(AuthenticationProvider.class);
 		authorizationResponseHandler = mock(AuthenticationSuccessHandler.class);
 		authorizationErrorResponseHandler = mock(AuthenticationFailureHandler.class);
+		securityContextRepository = spy(new HttpSessionSecurityContextRepository());
 		db = new EmbeddedDatabaseBuilder()
 				.generateUniqueName(true)
 				.setType(EmbeddedDatabaseType.HSQL)
@@ -195,6 +206,11 @@ public class OAuth2AuthorizationCodeGrantTests {
 				.addScript("org/springframework/security/oauth2/server/authorization/oauth2-authorization-consent-schema.sql")
 				.addScript("org/springframework/security/oauth2/server/authorization/client/oauth2-registered-client-schema.sql")
 				.build();
+	}
+
+	@Before
+	public void setup() {
+		reset(securityContextRepository);
 	}
 
 	@After
@@ -615,6 +631,48 @@ public class OAuth2AuthorizationCodeGrantTests {
 		verify(authorizationResponseHandler).onAuthenticationSuccess(any(), any(), eq(authorizationCodeRequestAuthenticationResult));
 	}
 
+	// gh-482
+	@Test
+	public void requestWhenClientObtainsAccessTokenThenClientAuthenticationNotPersisted() throws Exception {
+		this.spring.register(AuthorizationServerConfigurationWithSecurityContextRepository.class).autowire();
+
+		RegisteredClient registeredClient = TestRegisteredClients.registeredPublicClient().build();
+		this.registeredClientRepository.save(registeredClient);
+
+		MvcResult mvcResult = this.mvc.perform(get(DEFAULT_AUTHORIZATION_ENDPOINT_URI)
+				.params(getAuthorizationRequestParameters(registeredClient))
+				.param(PkceParameterNames.CODE_CHALLENGE, S256_CODE_CHALLENGE)
+				.param(PkceParameterNames.CODE_CHALLENGE_METHOD, "S256")
+				.with(user("user")))
+				.andExpect(status().is3xxRedirection())
+				.andReturn();
+
+		ArgumentCaptor<org.springframework.security.core.context.SecurityContext> securityContextCaptor =
+				ArgumentCaptor.forClass(org.springframework.security.core.context.SecurityContext.class);
+		verify(securityContextRepository, times(2)).saveContext(securityContextCaptor.capture(), any(), any());
+		securityContextCaptor.getAllValues().forEach(securityContext ->
+				assertThat(securityContext.getAuthentication()).isInstanceOf(UsernamePasswordAuthenticationToken.class));
+		reset(securityContextRepository);
+
+		String authorizationCode = extractParameterFromRedirectUri(mvcResult.getResponse().getRedirectedUrl(), "code");
+		OAuth2Authorization authorizationCodeAuthorization = this.authorizationService.findByToken(authorizationCode, AUTHORIZATION_CODE_TOKEN_TYPE);
+
+		this.mvc.perform(post(DEFAULT_TOKEN_ENDPOINT_URI)
+				.params(getTokenRequestParameters(registeredClient, authorizationCodeAuthorization))
+				.param(OAuth2ParameterNames.CLIENT_ID, registeredClient.getClientId())
+				.param(PkceParameterNames.CODE_VERIFIER, S256_CODE_VERIFIER))
+				.andExpect(header().string(HttpHeaders.CACHE_CONTROL, containsString("no-store")))
+				.andExpect(header().string(HttpHeaders.PRAGMA, containsString("no-cache")))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.access_token").isNotEmpty())
+				.andExpect(jsonPath("$.token_type").isNotEmpty())
+				.andExpect(jsonPath("$.expires_in").isNotEmpty())
+				.andExpect(jsonPath("$.refresh_token").doesNotExist())
+				.andExpect(jsonPath("$.scope").isNotEmpty());
+
+		verify(securityContextRepository, never()).saveContext(any(), any(), any());
+	}
+
 	private static MultiValueMap<String, String> getAuthorizationRequestParameters(RegisteredClient registeredClient) {
 		MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
 		parameters.set(OAuth2ParameterNames.RESPONSE_TYPE, OAuth2AuthorizationResponseType.CODE.getValue());
@@ -737,6 +795,29 @@ public class OAuth2AuthorizationCodeGrantTests {
 
 		}
 
+	}
+
+	@EnableWebSecurity
+	static class AuthorizationServerConfigurationWithSecurityContextRepository extends AuthorizationServerConfiguration {
+		// @formatter:off
+		@Bean
+		public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
+			OAuth2AuthorizationServerConfigurer<HttpSecurity> authorizationServerConfigurer =
+					new OAuth2AuthorizationServerConfigurer<>();
+			RequestMatcher endpointsMatcher = authorizationServerConfigurer.getEndpointsMatcher();
+
+			http
+					.requestMatcher(endpointsMatcher)
+					.authorizeRequests(authorizeRequests ->
+							authorizeRequests.anyRequest().authenticated()
+					)
+					.csrf(csrf -> csrf.ignoringRequestMatchers(endpointsMatcher))
+					.securityContext(securityContext ->
+							securityContext.securityContextRepository(securityContextRepository))
+					.apply(authorizationServerConfigurer);
+			return http.build();
+		}
+		// @formatter:on
 	}
 
 	@EnableWebSecurity

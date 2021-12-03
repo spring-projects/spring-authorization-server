@@ -19,6 +19,14 @@ import java.net.URI;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import javax.servlet.AsyncContext;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletRequestWrapper;
+import javax.servlet.http.HttpServletResponse;
+
+import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -26,6 +34,9 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.HttpSecurityBuilder;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.ExceptionHandlingConfigurer;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.Transient;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsentService;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2TokenIntrospectionAuthenticationProvider;
@@ -39,6 +50,10 @@ import org.springframework.security.oauth2.server.authorization.web.OAuth2TokenR
 import org.springframework.security.web.access.intercept.FilterSecurityInterceptor;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.preauth.AbstractPreAuthenticatedProcessingFilter;
+import org.springframework.security.web.context.HttpRequestResponseHolder;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
+import org.springframework.security.web.context.SaveContextOnUpdateOrErrorResponseWrapper;
+import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.OrRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
@@ -212,6 +227,105 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 							this.tokenRevocationEndpointMatcher)
 			);
 		}
+
+		// gh-482
+		initSecurityContextRepository(builder);
+	}
+
+	private void initSecurityContextRepository(B builder) {
+		// TODO This is a temporary fix and should be removed after upgrading to Spring Security 5.7.0 GA.
+		//
+		// See:
+		// Prevent Save @Transient Authentication with existing HttpSession
+		// https://github.com/spring-projects/spring-security/pull/9993
+
+		final SecurityContextRepository securityContextRepository = builder.getSharedObject(SecurityContextRepository.class);
+		if (!(securityContextRepository instanceof HttpSessionSecurityContextRepository)) {
+			return;
+		}
+
+		SecurityContextRepository securityContextRepositoryTransientNotSaved = new SecurityContextRepository() {
+			// OAuth2ClientAuthenticationToken is @Transient and is accepted by
+			// OAuth2TokenEndpointFilter, OAuth2TokenIntrospectionEndpointFilter and OAuth2TokenRevocationEndpointFilter
+			private final RequestMatcher clientAuthenticationRequestMatcher = new OrRequestMatcher(
+					getRequestMatcher(OAuth2TokenEndpointConfigurer.class),
+					OAuth2AuthorizationServerConfigurer.this.tokenIntrospectionEndpointMatcher,
+					OAuth2AuthorizationServerConfigurer.this.tokenRevocationEndpointMatcher);
+
+			// JwtAuthenticationToken is @Transient and is accepted by
+			// OidcUserInfoEndpointFilter and OidcClientRegistrationEndpointFilter
+			private final RequestMatcher jwtAuthenticationRequestMatcher = getRequestMatcher(OidcConfigurer.class);
+
+			@Override
+			public SecurityContext loadContext(HttpRequestResponseHolder requestResponseHolder) {
+				final HttpServletRequest unwrappedRequest = requestResponseHolder.getRequest();
+				final HttpServletResponse unwrappedResponse = requestResponseHolder.getResponse();
+
+				SecurityContext securityContext = securityContextRepository.loadContext(requestResponseHolder);
+
+				if (this.clientAuthenticationRequestMatcher.matches(unwrappedRequest) ||
+						this.jwtAuthenticationRequestMatcher.matches(unwrappedRequest)) {
+
+					final SaveContextOnUpdateOrErrorResponseWrapper transientAuthenticationResponseWrapper =
+							new SaveContextOnUpdateOrErrorResponseWrapper(unwrappedResponse, false) {
+
+						@Override
+						protected void saveContext(SecurityContext context) {
+							// @Transient Authentication should not be saved
+							if (context.getAuthentication() != null) {
+								Assert.state(isTransientAuthentication(context.getAuthentication()), "Expected @Transient Authentication");
+							}
+						}
+
+					};
+					// Override the default HttpSessionSecurityContextRepository.SaveToSessionResponseWrapper
+					requestResponseHolder.setResponse(transientAuthenticationResponseWrapper);
+
+					final HttpServletRequestWrapper transientAuthenticationRequestWrapper =
+							new HttpServletRequestWrapper(unwrappedRequest) {
+
+						@Override
+						public AsyncContext startAsync() {
+							transientAuthenticationResponseWrapper.disableSaveOnResponseCommitted();
+							return super.startAsync();
+						}
+
+						@Override
+						public AsyncContext startAsync(ServletRequest servletRequest, ServletResponse servletResponse)
+								throws IllegalStateException {
+							transientAuthenticationResponseWrapper.disableSaveOnResponseCommitted();
+							return super.startAsync(servletRequest, servletResponse);
+						}
+
+					};
+					// Override the default HttpSessionSecurityContextRepository.SaveToSessionRequestWrapper
+					requestResponseHolder.setRequest(transientAuthenticationRequestWrapper);
+				}
+
+				return securityContext;
+			}
+
+			@Override
+			public void saveContext(SecurityContext context, HttpServletRequest request, HttpServletResponse response) {
+				Authentication authentication = context.getAuthentication();
+				if (authentication == null || isTransientAuthentication(authentication)) {
+					return;
+				}
+				securityContextRepository.saveContext(context, request, response);
+			}
+
+			@Override
+			public boolean containsContext(HttpServletRequest request) {
+				return securityContextRepository.containsContext(request);
+			}
+
+			private boolean isTransientAuthentication(Authentication authentication) {
+				return AnnotationUtils.getAnnotation(authentication.getClass(), Transient.class) != null;
+			}
+
+		};
+
+		builder.setSharedObject(SecurityContextRepository.class, securityContextRepositoryTransientNotSaved);
 	}
 
 	@Override

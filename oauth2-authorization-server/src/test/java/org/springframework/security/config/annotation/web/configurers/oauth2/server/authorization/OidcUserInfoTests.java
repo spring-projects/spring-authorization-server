@@ -26,6 +26,8 @@ import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
+import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -62,10 +64,17 @@ import org.springframework.security.oauth2.server.authorization.oidc.authenticat
 import org.springframework.security.oauth2.server.authorization.oidc.authentication.OidcUserInfoAuthenticationToken;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
+import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultMatcher;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.ResultMatcher.matchAll;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -79,6 +88,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 public class OidcUserInfoTests {
 	private static final String DEFAULT_OIDC_USER_INFO_ENDPOINT_URI = "/userinfo";
+	private static SecurityContextRepository securityContextRepository;
 
 	@Rule
 	public final SpringTestRule spring = new SpringTestRule();
@@ -91,6 +101,16 @@ public class OidcUserInfoTests {
 
 	@Autowired
 	private OAuth2AuthorizationService authorizationService;
+
+	@BeforeClass
+	public static void init() {
+		securityContextRepository = spy(new HttpSessionSecurityContextRepository());
+	}
+
+	@Before
+	public void setup() {
+		reset(securityContextRepository);
+	}
 
 	@Test
 	public void requestWhenUserInfoRequestGetThenUserInfoResponse() throws Exception {
@@ -138,6 +158,25 @@ public class OidcUserInfoTests {
 				.andExpect(status().is2xxSuccessful())
 				.andExpect(userInfoResponse());
 		// @formatter:on
+	}
+
+	// gh-482
+	@Test
+	public void requestWhenUserInfoRequestThenBearerTokenAuthenticationNotPersisted() throws Exception {
+		this.spring.register(AuthorizationServerConfigurationWithSecurityContextRepository.class).autowire();
+
+		OAuth2Authorization authorization = createAuthorization();
+		this.authorizationService.save(authorization);
+
+		OAuth2AccessToken accessToken = authorization.getAccessToken().getToken();
+		// @formatter:off
+		this.mvc.perform(get(DEFAULT_OIDC_USER_INFO_ENDPOINT_URI)
+				.header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken.getTokenValue()))
+				.andExpect(status().is2xxSuccessful())
+				.andExpect(userInfoResponse());
+		// @formatter:on
+
+		verify(securityContextRepository, never()).saveContext(any(), any(), any());
 	}
 
 	private static ResultMatcher userInfoResponse() {
@@ -251,6 +290,34 @@ public class OidcUserInfoTests {
 							.userInfoMapper(userInfoMapper)
 						)
 					);
+			// @formatter:on
+
+			return http.build();
+		}
+	}
+
+	@EnableWebSecurity
+	static class AuthorizationServerConfigurationWithSecurityContextRepository extends AuthorizationServerConfiguration {
+
+		@Bean
+		@Override
+		SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+			OAuth2AuthorizationServerConfigurer<HttpSecurity> authorizationServerConfigurer =
+					new OAuth2AuthorizationServerConfigurer<>();
+			RequestMatcher endpointsMatcher = authorizationServerConfigurer
+					.getEndpointsMatcher();
+
+			// @formatter:off
+			http
+				.requestMatcher(endpointsMatcher)
+				.authorizeRequests(authorizeRequests ->
+					authorizeRequests.anyRequest().authenticated()
+				)
+				.csrf(csrf -> csrf.ignoringRequestMatchers(endpointsMatcher))
+				.oauth2ResourceServer(OAuth2ResourceServerConfigurer::jwt)
+				.securityContext(securityContext ->
+					securityContext.securityContextRepository(securityContextRepository))
+				.apply(authorizationServerConfigurer);
 			// @formatter:on
 
 			return http.build();

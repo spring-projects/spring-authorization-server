@@ -17,17 +17,18 @@ package org.springframework.security.oauth2.server.authorization.jackson2;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
+
+import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 
 /**
- * This mixin class is used to serialize/deserialize {@link MacAlgorithm}.
+ * This mixin class is used to serialize/deserialize {@link SignatureAlgorithm}.
  *
- * @author Rafal Lewczuk
- * @since 0.2.1
- * @see MacAlgorithm
+ * @author Joe Grandja
+ * @since 0.1.2
+ * @see SignatureAlgorithm
  */
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS)
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY, getterVisibility = JsonAutoDetect.Visibility.NONE,
 		isGetterVisibility = JsonAutoDetect.Visibility.NONE)
-public class MacAlgorithmMixin {
+abstract class JwsAlgorithmMixin {
 }

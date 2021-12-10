@@ -16,6 +16,8 @@
 package org.springframework.security.oauth2.core.oidc;
 
 import java.io.Serializable;
+import java.net.URI;
+import java.net.URL;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -24,8 +26,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
+import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.Version;
+import org.springframework.security.oauth2.jose.jws.JwsAlgorithm;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.util.Assert;
 
 /**
@@ -173,17 +178,17 @@ public final class OidcClientRegistration implements OidcClientMetadataClaimAcce
 		}
 
 		/**
-		 * Sets the {@link SignatureAlgorithm JWS} algorithm that must be used for signing the JWT used to authenticate
-		 * the Client at the Token Endpoint for the {@code private_key_jwt} and {@code client_secret_jwt} authentication
-		 * methods
-		 * @param signingAlgorithm the {@link SignatureAlgorithm JWS} algorithm that must be used for signing
-		 *        the JWT used to authenticate the Client at the Token Endpoint for the {@code private_key_jwt} and
-		 *        {@code client_secret_jwt} authentication methods
+		 * Sets the {@link JwsAlgorithm JWS} algorithm that must be used for signing the {@link Jwt JWT} used to authenticate
+		 * the Client at the Token Endpoint for the {@link ClientAuthenticationMethod#PRIVATE_KEY_JWT private_key_jwt} and
+		 * {@link ClientAuthenticationMethod#CLIENT_SECRET_JWT client_secret_jwt} authentication methods, OPTIONAL.
+
+		 * @param authenticationSigningAlgorithm the {@link JwsAlgorithm JWS} algorithm that must be used for signing the {@link Jwt JWT}
+		 *                                       used to authenticate the Client at the Token Endpoint
 		 * @return the {@link Builder} for further configuration
-		 * @since 0.2.1
+		 * @since 0.2.2
 		 */
-		public Builder tokenEndpointAuthenticationSigningAlgorithm(String signingAlgorithm) {
-			return claim(OidcClientMetadataClaimNames.TOKEN_ENDPOINT_AUTH_SIGNING_ALG, signingAlgorithm);
+		public Builder tokenEndpointAuthenticationSigningAlgorithm(String authenticationSigningAlgorithm) {
+			return claim(OidcClientMetadataClaimNames.TOKEN_ENDPOINT_AUTH_SIGNING_ALG, authenticationSigningAlgorithm);
 		}
 
 		/**
@@ -256,6 +261,17 @@ public final class OidcClientRegistration implements OidcClientMetadataClaimAcce
 		}
 
 		/**
+		 * Sets the {@code URL} for the Client's JSON Web Key Set, OPTIONAL.
+		 *
+		 * @param jwkSetUrl the {@code URL} for the Client's JSON Web Key Set
+		 * @return the {@link Builder} for further configuration
+		 * @since 0.2.2
+		 */
+		public Builder jwkSetUrl(String jwkSetUrl) {
+			return claim(OidcClientMetadataClaimNames.JWKS_URI, jwkSetUrl);
+		}
+
+		/**
 		 * Sets the {@link SignatureAlgorithm JWS} algorithm required for signing the {@link OidcIdToken ID Token} issued to the Client, OPTIONAL.
 		 *
 		 * @param idTokenSignedResponseAlgorithm the {@link SignatureAlgorithm JWS} algorithm required for signing the {@link OidcIdToken ID Token} issued to the Client
@@ -285,16 +301,6 @@ public final class OidcClientRegistration implements OidcClientMetadataClaimAcce
 		 */
 		public Builder registrationClientUrl(String registrationClientUrl) {
 			return claim(OidcClientMetadataClaimNames.REGISTRATION_CLIENT_URI, registrationClientUrl);
-		}
-
-		/**
-		 * Sets {@code URL} for the Client's JSON Web Key Set {@code (jwks_uri)}
-		 * @param jwksSetUrl {@code URL} for the Client's JSON Web Key Set {@code (jwks_uri)}
-		 * @return the {@link Builder} for further configuration
-		 * @since 0.2.1
-		 */
-		public Builder jwkSetUrl(String jwksSetUrl) {
-			return claim(OidcClientMetadataClaimNames.JWKS_URI, jwksSetUrl);
 		}
 
 		/**
@@ -363,6 +369,9 @@ public final class OidcClientRegistration implements OidcClientMetadataClaimAcce
 				Assert.isInstanceOf(List.class, this.claims.get(OidcClientMetadataClaimNames.SCOPE), "scope must be of type List");
 				Assert.notEmpty((List<?>) this.claims.get(OidcClientMetadataClaimNames.SCOPE), "scope cannot be empty");
 			}
+			if (this.claims.get(OidcClientMetadataClaimNames.JWKS_URI) != null) {
+				validateURL(this.claims.get(OidcClientMetadataClaimNames.JWKS_URI), "jwksUri must be a valid URL");
+			}
 		}
 
 		@SuppressWarnings("unchecked")
@@ -382,5 +391,18 @@ public final class OidcClientRegistration implements OidcClientMetadataClaimAcce
 			valuesConsumer.accept(values);
 		}
 
+		private static void validateURL(Object url, String errorMessage) {
+			if (URL.class.isAssignableFrom(url.getClass())) {
+				return;
+			}
+
+			try {
+				new URI(url.toString()).toURL();
+			} catch (Exception ex) {
+				throw new IllegalArgumentException(errorMessage, ex);
+			}
+		}
+
 	}
+
 }

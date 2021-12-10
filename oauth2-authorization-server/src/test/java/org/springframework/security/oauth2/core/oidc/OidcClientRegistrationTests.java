@@ -15,6 +15,7 @@
  */
 package org.springframework.security.oauth2.core.oidc;
 
+import java.net.URL;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
@@ -46,8 +47,7 @@ public class OidcClientRegistrationTests {
 	// @formatter:on
 
 	@Test
-	public void buildWhenAllClaimsProvidedThenCreated() {
-
+	public void buildWhenAllClaimsProvidedThenCreated() throws Exception {
 		// @formatter:off
 		Instant clientIdIssuedAt = Instant.now();
 		Instant clientSecretExpiresAt = clientIdIssuedAt.plus(30, ChronoUnit.DAYS);
@@ -58,14 +58,14 @@ public class OidcClientRegistrationTests {
 				.clientSecretExpiresAt(clientSecretExpiresAt)
 				.clientName("client-name")
 				.redirectUri("https://client.example.com")
-				.jwkSetUrl("https://client.example.com/jwks")
-				.tokenEndpointAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue())
+				.tokenEndpointAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_JWT.getValue())
 				.tokenEndpointAuthenticationSigningAlgorithm(MacAlgorithm.HS256.getName())
 				.grantType(AuthorizationGrantType.AUTHORIZATION_CODE.getValue())
 				.grantType(AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
 				.responseType(OAuth2AuthorizationResponseType.CODE.getValue())
 				.scope("scope1")
 				.scope("scope2")
+				.jwkSetUrl("https://client.example.com/jwks")
 				.idTokenSignedResponseAlgorithm(SignatureAlgorithm.RS256.getName())
 				.registrationAccessToken("registration-access-token")
 				.registrationClientUrl("https://auth-server.com/connect/register?client_id=1")
@@ -78,12 +78,13 @@ public class OidcClientRegistrationTests {
 		assertThat(clientRegistration.getClientSecret()).isEqualTo("client-secret");
 		assertThat(clientRegistration.getClientSecretExpiresAt()).isEqualTo(clientSecretExpiresAt);
 		assertThat(clientRegistration.getClientName()).isEqualTo("client-name");
-		assertThat(clientRegistration.getJwkSetUrl().toString()).isEqualTo("https://client.example.com/jwks");
 		assertThat(clientRegistration.getRedirectUris()).containsOnly("https://client.example.com");
-		assertThat(clientRegistration.getTokenEndpointAuthenticationMethod()).isEqualTo(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue());
+		assertThat(clientRegistration.getTokenEndpointAuthenticationMethod()).isEqualTo(ClientAuthenticationMethod.CLIENT_SECRET_JWT.getValue());
+		assertThat(clientRegistration.getTokenEndpointAuthenticationSigningAlgorithm()).isEqualTo(MacAlgorithm.HS256.getName());
 		assertThat(clientRegistration.getGrantTypes()).containsExactlyInAnyOrder("authorization_code", "client_credentials");
 		assertThat(clientRegistration.getResponseTypes()).containsOnly("code");
 		assertThat(clientRegistration.getScopes()).containsExactlyInAnyOrder("scope1", "scope2");
+		assertThat(clientRegistration.getJwkSetUrl()).isEqualTo(new URL("https://client.example.com/jwks"));
 		assertThat(clientRegistration.getIdTokenSignedResponseAlgorithm()).isEqualTo("RS256");
 		assertThat(clientRegistration.getRegistrationAccessToken()).isEqualTo("registration-access-token");
 		assertThat(clientRegistration.getRegistrationClientUrl().toString()).isEqualTo("https://auth-server.com/connect/register?client_id=1");
@@ -97,7 +98,7 @@ public class OidcClientRegistrationTests {
 	}
 
 	@Test
-	public void withClaimsWhenClaimsProvidedThenCreated() {
+	public void withClaimsWhenClaimsProvidedThenCreated() throws Exception {
 		Instant clientIdIssuedAt = Instant.now();
 		Instant clientSecretExpiresAt = clientIdIssuedAt.plus(30, ChronoUnit.DAYS);
 		HashMap<String, Object> claims = new HashMap<>();
@@ -107,13 +108,13 @@ public class OidcClientRegistrationTests {
 		claims.put(OidcClientMetadataClaimNames.CLIENT_SECRET_EXPIRES_AT, clientSecretExpiresAt);
 		claims.put(OidcClientMetadataClaimNames.CLIENT_NAME, "client-name");
 		claims.put(OidcClientMetadataClaimNames.REDIRECT_URIS, Collections.singletonList("https://client.example.com"));
-		claims.put(OidcClientMetadataClaimNames.JWKS_URI, "https://client.example.com/jwks");
-		claims.put(OidcClientMetadataClaimNames.TOKEN_ENDPOINT_AUTH_METHOD, ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue());
+		claims.put(OidcClientMetadataClaimNames.TOKEN_ENDPOINT_AUTH_METHOD, ClientAuthenticationMethod.CLIENT_SECRET_JWT.getValue());
 		claims.put(OidcClientMetadataClaimNames.TOKEN_ENDPOINT_AUTH_SIGNING_ALG, MacAlgorithm.HS256.getName());
 		claims.put(OidcClientMetadataClaimNames.GRANT_TYPES, Arrays.asList(
 				AuthorizationGrantType.AUTHORIZATION_CODE.getValue(), AuthorizationGrantType.CLIENT_CREDENTIALS.getValue()));
 		claims.put(OidcClientMetadataClaimNames.RESPONSE_TYPES, Collections.singletonList("code"));
 		claims.put(OidcClientMetadataClaimNames.SCOPE, Arrays.asList("scope1", "scope2"));
+		claims.put(OidcClientMetadataClaimNames.JWKS_URI, "https://client.example.com/jwks");
 		claims.put(OidcClientMetadataClaimNames.ID_TOKEN_SIGNED_RESPONSE_ALG, SignatureAlgorithm.RS256.getName());
 		claims.put(OidcClientMetadataClaimNames.REGISTRATION_ACCESS_TOKEN, "registration-access-token");
 		claims.put(OidcClientMetadataClaimNames.REGISTRATION_CLIENT_URI, "https://auth-server.com/connect/register?client_id=1");
@@ -127,12 +128,12 @@ public class OidcClientRegistrationTests {
 		assertThat(clientRegistration.getClientSecretExpiresAt()).isEqualTo(clientSecretExpiresAt);
 		assertThat(clientRegistration.getClientName()).isEqualTo("client-name");
 		assertThat(clientRegistration.getRedirectUris()).containsOnly("https://client.example.com");
-		assertThat(clientRegistration.getJwkSetUrl().toString()).isEqualTo("https://client.example.com/jwks");
-		assertThat(clientRegistration.getTokenEndpointAuthenticationMethod()).isEqualTo(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue());
+		assertThat(clientRegistration.getTokenEndpointAuthenticationMethod()).isEqualTo(ClientAuthenticationMethod.CLIENT_SECRET_JWT.getValue());
 		assertThat(clientRegistration.getTokenEndpointAuthenticationSigningAlgorithm()).isEqualTo(MacAlgorithm.HS256.getName());
 		assertThat(clientRegistration.getGrantTypes()).containsExactlyInAnyOrder("authorization_code", "client_credentials");
 		assertThat(clientRegistration.getResponseTypes()).containsOnly("code");
 		assertThat(clientRegistration.getScopes()).containsExactlyInAnyOrder("scope1", "scope2");
+		assertThat(clientRegistration.getJwkSetUrl()).isEqualTo(new URL("https://client.example.com/jwks"));
 		assertThat(clientRegistration.getIdTokenSignedResponseAlgorithm()).isEqualTo("RS256");
 		assertThat(clientRegistration.getRegistrationAccessToken()).isEqualTo("registration-access-token");
 		assertThat(clientRegistration.getRegistrationClientUrl().toString()).isEqualTo("https://auth-server.com/connect/register?client_id=1");
@@ -363,6 +364,16 @@ public class OidcClientRegistrationTests {
 		// @formatter:on
 
 		assertThat(clientRegistration.getScopes()).containsExactly("scope1");
+	}
+
+	@Test
+	public void buildWhenJwksUriNotUrlThenThrowIllegalArgumentException() {
+		OidcClientRegistration.Builder builder = this.minimalBuilder
+				.claim(OidcClientMetadataClaimNames.JWKS_URI, "not an url");
+
+		assertThatIllegalArgumentException()
+				.isThrownBy(builder::build)
+				.withMessage("jwksUri must be a valid URL");
 	}
 
 	@Test

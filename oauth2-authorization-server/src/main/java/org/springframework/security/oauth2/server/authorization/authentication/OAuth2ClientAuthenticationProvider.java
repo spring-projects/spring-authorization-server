@@ -18,15 +18,17 @@ package org.springframework.security.oauth2.server.authorization.authentication;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Function;
+import java.util.function.Predicate;
+
+import javax.crypto.spec.SecretKeySpec;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -49,6 +51,7 @@ import org.springframework.security.oauth2.jose.jws.JwsAlgorithm;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtClaimNames;
 import org.springframework.security.oauth2.jwt.JwtClaimValidator;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtDecoderFactory;
@@ -61,9 +64,9 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.config.ProviderSettings;
 import org.springframework.util.Assert;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
-
-import javax.crypto.spec.SecretKeySpec;
+import org.springframework.web.util.UriComponentsBuilder;
 
 /**
  * An {@link AuthenticationProvider} implementation used for authenticating an OAuth 2.0 Client.
@@ -80,16 +83,13 @@ import javax.crypto.spec.SecretKeySpec;
  * @see PasswordEncoder
  */
 public final class OAuth2ClientAuthenticationProvider implements AuthenticationProvider {
-	private static final String CLIENT_AUTHENTICATION_ERROR_URI = "https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-01#section-3.2.1";
-
+	private static final String CLIENT_AUTHENTICATION_ERROR_URI = "https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-04#section-3.2.1";
 	private static final ClientAuthenticationMethod JWT_CLIENT_ASSERTION_AUTHENTICATION_METHOD =
 			new ClientAuthenticationMethod("urn:ietf:params:oauth:client-assertion-type:jwt-bearer");
-
 	private static final OAuth2TokenType AUTHORIZATION_CODE_TOKEN_TYPE = new OAuth2TokenType(OAuth2ParameterNames.CODE);
 	private final RegisteredClientRepository registeredClientRepository;
 	private final OAuth2AuthorizationService authorizationService;
-	private JwtDecoderFactory<RegisteredClient> jwtDecoderFactory;
-	private ProviderSettings providerSettings;
+	private final JwtClientAssertionDecoderFactory jwtClientAssertionDecoderFactory;
 	private PasswordEncoder passwordEncoder;
 
 	/**
@@ -104,8 +104,8 @@ public final class OAuth2ClientAuthenticationProvider implements AuthenticationP
 		Assert.notNull(authorizationService, "authorizationService cannot be null");
 		this.registeredClientRepository = registeredClientRepository;
 		this.authorizationService = authorizationService;
+		this.jwtClientAssertionDecoderFactory = new JwtClientAssertionDecoderFactory();
 		this.passwordEncoder = PasswordEncoderFactories.createDelegatingPasswordEncoder();
-		this.jwtDecoderFactory = new RegisteredClientJwtAssertionDecoderFactory();
 	}
 
 	/**
@@ -123,7 +123,7 @@ public final class OAuth2ClientAuthenticationProvider implements AuthenticationP
 
 	@Autowired
 	protected void setProviderSettings(ProviderSettings providerSettings) {
-		this.providerSettings = providerSettings;
+		this.jwtClientAssertionDecoderFactory.setProviderSettings(providerSettings);
 	}
 
 	@Override
@@ -132,11 +132,16 @@ public final class OAuth2ClientAuthenticationProvider implements AuthenticationP
 				(OAuth2ClientAuthenticationToken) authentication;
 
 		return JWT_CLIENT_ASSERTION_AUTHENTICATION_METHOD.equals(clientAuthentication.getClientAuthenticationMethod()) ?
-				authenticateClientAssertion(authentication) :
-				authenticationClientCredentials(authentication);
+				authenticateJwtClientAssertion(authentication) :
+				authenticateClientCredentials(authentication);
 	}
 
-	private Authentication authenticationClientCredentials(Authentication authentication) throws AuthenticationException {
+	@Override
+	public boolean supports(Class<?> authentication) {
+		return OAuth2ClientAuthenticationToken.class.isAssignableFrom(authentication);
+	}
+
+	private Authentication authenticateClientCredentials(Authentication authentication) throws AuthenticationException {
 		OAuth2ClientAuthenticationToken clientAuthentication =
 				(OAuth2ClientAuthenticationToken) authentication;
 
@@ -171,7 +176,7 @@ public final class OAuth2ClientAuthenticationProvider implements AuthenticationP
 				clientAuthentication.getClientAuthenticationMethod(), clientAuthentication.getCredentials());
 	}
 
-	private Authentication authenticateClientAssertion(Authentication authentication) throws AuthenticationException {
+	private Authentication authenticateJwtClientAssertion(Authentication authentication) throws AuthenticationException {
 		OAuth2ClientAuthenticationToken clientAuthentication =
 				(OAuth2ClientAuthenticationToken) authentication;
 
@@ -181,26 +186,20 @@ public final class OAuth2ClientAuthenticationProvider implements AuthenticationP
 			throwInvalidClient(OAuth2ParameterNames.CLIENT_ID);
 		}
 
-		Set<ClientAuthenticationMethod> allowedAuthenticationMethods = registeredClient.getClientAuthenticationMethods();
-
-		if (!allowedAuthenticationMethods.contains(ClientAuthenticationMethod.CLIENT_SECRET_JWT) &&
-				!allowedAuthenticationMethods.contains(ClientAuthenticationMethod.PRIVATE_KEY_JWT)) {
+		if (!registeredClient.getClientAuthenticationMethods().contains(ClientAuthenticationMethod.PRIVATE_KEY_JWT) &&
+				!registeredClient.getClientAuthenticationMethods().contains(ClientAuthenticationMethod.CLIENT_SECRET_JWT)) {
 			throwInvalidClient("authentication_method");
 		}
 
 		boolean credentialsAuthenticated = false;
 
+		Jwt jwtAssertion = null;
+		JwtDecoder jwtDecoder = this.jwtClientAssertionDecoderFactory.createDecoder(registeredClient);
 		try {
-			JwtDecoder jwtDecoder = this.jwtDecoderFactory.createDecoder(registeredClient);
-			Jwt jwt = jwtDecoder.decode(clientAuthentication.getCredentials().toString());
-			List<String> aud = jwt.getClaimAsStringList("aud");
-			String issuer = getIssuerUri(clientAuthentication.getRequestUri());
-			if (aud == null || !aud.contains(issuer)) {
-				throwInvalidClient(OAuth2ParameterNames.CLIENT_ASSERTION);
-			}
+			jwtAssertion = jwtDecoder.decode(clientAuthentication.getCredentials().toString());
 			credentialsAuthenticated = true;
-		} catch (JwtException e) {
-			throwInvalidClient(OAuth2ParameterNames.CLIENT_ASSERTION);
+		} catch (JwtException ex) {
+			throwInvalidClient(OAuth2ParameterNames.CLIENT_ASSERTION, ex);
 		}
 
 		boolean pkceAuthenticated = authenticatePkceIfAvailable(clientAuthentication, registeredClient);
@@ -209,29 +208,12 @@ public final class OAuth2ClientAuthenticationProvider implements AuthenticationP
 			throwInvalidClient("credentials");
 		}
 
-		JwsAlgorithm tokenEndpointSigningAlgorithm = registeredClient.getClientSettings().getTokenEndpointSigningAlgorithm();
-		ClientAuthenticationMethod clientAuthentiationMethod = tokenEndpointSigningAlgorithm instanceof MacAlgorithm ?
-				ClientAuthenticationMethod.CLIENT_SECRET_JWT : ClientAuthenticationMethod.PRIVATE_KEY_JWT;
+		ClientAuthenticationMethod clientAuthenticationMethod =
+				registeredClient.getClientSettings().getTokenEndpointAuthenticationSigningAlgorithm() instanceof SignatureAlgorithm ?
+						ClientAuthenticationMethod.PRIVATE_KEY_JWT :
+						ClientAuthenticationMethod.CLIENT_SECRET_JWT;
 
-		return new OAuth2ClientAuthenticationToken(registeredClient,
-				clientAuthentiationMethod, clientAuthentication.getCredentials());
-	}
-
-	private String getIssuerUri(String requestUri) throws AuthenticationException {
-		if (requestUri.endsWith(providerSettings.getTokenEndpoint())) {
-			return providerSettings.getIssuer() + providerSettings.getTokenEndpoint();
-		} else if (requestUri.endsWith(providerSettings.getTokenIntrospectionEndpoint())) {
-			return providerSettings.getIssuer() + providerSettings.getTokenIntrospectionEndpoint();
-		} else if (requestUri.endsWith(providerSettings.getTokenRevocationEndpoint())) {
-			return providerSettings.getIssuer() + providerSettings.getTokenRevocationEndpoint();
-		}
-		throwInvalidClient(OAuth2ParameterNames.CLIENT_ASSERTION);
-		return null;
-	}
-
-	@Override
-	public boolean supports(Class<?> authentication) {
-		return OAuth2ClientAuthenticationToken.class.isAssignableFrom(authentication);
+		return new OAuth2ClientAuthenticationToken(registeredClient, clientAuthenticationMethod, jwtAssertion);
 	}
 
 	private boolean authenticatePkceIfAvailable(OAuth2ClientAuthenticationToken clientAuthentication,
@@ -298,29 +280,21 @@ public final class OAuth2ClientAuthenticationProvider implements AuthenticationP
 	}
 
 	private static void throwInvalidClient(String parameterName) {
+		throwInvalidClient(parameterName, null);
+	}
+
+	private static void throwInvalidClient(String parameterName, Throwable cause) {
 		OAuth2Error error = new OAuth2Error(
 				OAuth2ErrorCodes.INVALID_CLIENT,
 				"Client authentication failed: " + parameterName,
 				CLIENT_AUTHENTICATION_ERROR_URI);
-		throw new OAuth2AuthenticationException(error);
+		throw new OAuth2AuthenticationException(error, error.toString(), cause);
 	}
 
-	private static class CachedJwtDecoder {
-		private final NimbusJwtDecoder jwtDecoder;
-		private final RegisteredClient registeredClient;
-
-		CachedJwtDecoder(NimbusJwtDecoder jwtDecoder, RegisteredClient registeredClient) {
-			this.jwtDecoder = jwtDecoder;
-			this.registeredClient = registeredClient;
-		}
-	}
-
-	private static class RegisteredClientJwtAssertionDecoderFactory implements JwtDecoderFactory<RegisteredClient> {
-
-		private static final String CLIENT_ASSERTION_ERROR_URI = "https://datatracker.ietf.org/doc/html/rfc7523#section-3";
+	private static class JwtClientAssertionDecoderFactory implements JwtDecoderFactory<RegisteredClient> {
+		private static final String JWT_CLIENT_AUTHENTICATION_ERROR_URI = "https://datatracker.ietf.org/doc/html/rfc7523#section-3";
 
 		private static final Map<JwsAlgorithm, String> JCA_ALGORITHM_MAPPINGS;
-
 		static {
 			Map<JwsAlgorithm, String> mappings = new HashMap<>();
 			mappings.put(MacAlgorithm.HS256, "HmacSHA256");
@@ -329,68 +303,100 @@ public final class OAuth2ClientAuthenticationProvider implements AuthenticationP
 			JCA_ALGORITHM_MAPPINGS = Collections.unmodifiableMap(mappings);
 		}
 
-		private final Function<RegisteredClient, JwsAlgorithm> jwsAlgorithmResolver =
-				rc -> rc.getClientSettings().getTokenEndpointSigningAlgorithm();
+		private final Map<String, JwtDecoder> jwtDecoders = new ConcurrentHashMap<>();
+		private List<String> providerAudience = Collections.emptyList();
 
-		private final Map<String, CachedJwtDecoder> cachedDecoders = new ConcurrentHashMap<>();
+		private void setProviderSettings(ProviderSettings providerSettings) {
+			this.providerAudience = getProviderAudience(providerSettings);
+		}
 
 		@Override
 		public JwtDecoder createDecoder(RegisteredClient registeredClient) {
 			Assert.notNull(registeredClient, "registeredClient cannot be null");
-
-			CachedJwtDecoder cachedDecoder = this.cachedDecoders.get(registeredClient.getClientId());
-			if (cachedDecoder != null && registeredClient.equals(cachedDecoder.registeredClient)) {
-				return cachedDecoder.jwtDecoder;
-			}
-
-			cachedDecoder = new CachedJwtDecoder(buildDecoder(registeredClient), registeredClient);
-			cachedDecoder.jwtDecoder.setJwtValidator(createTokenValidator(registeredClient));
-			this.cachedDecoders.put(registeredClient.getClientId(), cachedDecoder);
-			return cachedDecoder.jwtDecoder;
+			return this.jwtDecoders.computeIfAbsent(registeredClient.getId(), (key) -> {
+				NimbusJwtDecoder jwtDecoder = buildDecoder(registeredClient);
+				jwtDecoder.setJwtValidator(createJwtValidator(registeredClient));
+				return jwtDecoder;
+			});
 		}
 
 		private NimbusJwtDecoder buildDecoder(RegisteredClient registeredClient) {
-			JwsAlgorithm jwsAlgorithm = this.jwsAlgorithmResolver.apply(registeredClient);
-
-			if (jwsAlgorithm != null && SignatureAlgorithm.class.isAssignableFrom(jwsAlgorithm.getClass())) {
+			JwsAlgorithm jwsAlgorithm = registeredClient.getClientSettings().getTokenEndpointAuthenticationSigningAlgorithm();
+			if (jwsAlgorithm instanceof SignatureAlgorithm) {
 				String jwkSetUrl = registeredClient.getClientSettings().getJwkSetUrl();
 				if (!StringUtils.hasText(jwkSetUrl)) {
 					OAuth2Error oauth2Error = new OAuth2Error(OAuth2ErrorCodes.INVALID_CLIENT,
-							"misconfigured client", CLIENT_ASSERTION_ERROR_URI);
-					throw new OAuth2AuthenticationException(oauth2Error, oauth2Error.toString());
+							"Failed to find a Signature Verifier for Client: '"
+									+ registeredClient.getId()
+									+ "'. Check to ensure you have configured the JWK Set URL.",
+							JWT_CLIENT_AUTHENTICATION_ERROR_URI);
+					throw new OAuth2AuthenticationException(oauth2Error);
 				}
 				return NimbusJwtDecoder.withJwkSetUri(jwkSetUrl).jwsAlgorithm((SignatureAlgorithm) jwsAlgorithm).build();
 			}
-
-			if (jwsAlgorithm != null && MacAlgorithm.class.isAssignableFrom(jwsAlgorithm.getClass())) {
+			if (jwsAlgorithm instanceof MacAlgorithm) {
 				String clientSecret = registeredClient.getClientSecret();
 				if (!StringUtils.hasText(clientSecret)) {
 					OAuth2Error oauth2Error = new OAuth2Error(OAuth2ErrorCodes.INVALID_CLIENT,
-							"misconfigured client", CLIENT_ASSERTION_ERROR_URI);
-					throw new OAuth2AuthenticationException(oauth2Error, oauth2Error.toString());
+							"Failed to find a Signature Verifier for Client: '"
+									+ registeredClient.getId()
+									+ "'. Check to ensure you have configured the client secret.",
+							JWT_CLIENT_AUTHENTICATION_ERROR_URI);
+					throw new OAuth2AuthenticationException(oauth2Error);
 				}
 				SecretKeySpec secretKeySpec = new SecretKeySpec(clientSecret.getBytes(StandardCharsets.UTF_8),
 						JCA_ALGORITHM_MAPPINGS.get(jwsAlgorithm));
 				return NimbusJwtDecoder.withSecretKey(secretKeySpec).macAlgorithm((MacAlgorithm) jwsAlgorithm).build();
 			}
-
 			OAuth2Error oauth2Error = new OAuth2Error(OAuth2ErrorCodes.INVALID_CLIENT,
-					"misconfigured client", CLIENT_ASSERTION_ERROR_URI);
-			throw new OAuth2AuthenticationException(oauth2Error, oauth2Error.toString());
+					"Failed to find a Signature Verifier for Client: '"
+							+ registeredClient.getId()
+							+ "'. Check to ensure you have configured a valid JWS Algorithm: '" + jwsAlgorithm + "'.",
+					JWT_CLIENT_AUTHENTICATION_ERROR_URI);
+			throw new OAuth2AuthenticationException(oauth2Error);
 		}
 
-		private OAuth2TokenValidator<Jwt> createTokenValidator(RegisteredClient registeredClient) {
+		private OAuth2TokenValidator<Jwt> createJwtValidator(RegisteredClient registeredClient) {
 			String clientId = registeredClient.getClientId();
 			return new DelegatingOAuth2TokenValidator<>(
-					new JwtClaimValidator<String>("iss", clientId::equals),      // RFC 7523 section 3 (iss)
-					new JwtClaimValidator<String>("sub", clientId::equals),      // RFC 7523 section 3 (sub)
-					new JwtClaimValidator<>("exp", Objects::nonNull),            // RFC 7523 section 3 (exp != null)
-					new JwtTimestampValidator()                                  // RFC 7523 section 3 (exp, nbf)
+					new JwtClaimValidator<>(JwtClaimNames.ISS, clientId::equals),
+					new JwtClaimValidator<>(JwtClaimNames.SUB, clientId::equals),
+					new JwtClaimValidator<>(JwtClaimNames.AUD, containsProviderAudience()),
+					new JwtClaimValidator<>(JwtClaimNames.EXP, Objects::nonNull),
+					new JwtTimestampValidator()
 			);
-			// The `aud` claim is not verified here
-
-			// TODO RFC 7523 section 3 #7: JWT may contain "jti" claim that provides unique identified for the token (OPTIONAL)
 		}
+
+		private Predicate<List<String>> containsProviderAudience() {
+			return (audienceClaim) -> {
+				if (CollectionUtils.isEmpty(audienceClaim)) {
+					return false;
+				}
+				for (String audience : audienceClaim) {
+					if (this.providerAudience.contains(audience)) {
+						return true;
+					}
+				}
+				return false;
+			};
+		}
+
+		private static List<String> getProviderAudience(ProviderSettings providerSettings) {
+			if (!StringUtils.hasText(providerSettings.getIssuer())) {
+				return Collections.emptyList();
+			}
+			List<String> providerAudience = new ArrayList<>();
+			providerAudience.add(providerSettings.getIssuer());
+			providerAudience.add(asUrl(providerSettings.getIssuer(), providerSettings.getTokenEndpoint()));
+			providerAudience.add(asUrl(providerSettings.getIssuer(), providerSettings.getTokenIntrospectionEndpoint()));
+			providerAudience.add(asUrl(providerSettings.getIssuer(), providerSettings.getTokenRevocationEndpoint()));
+			return providerAudience;
+		}
+
+		private static String asUrl(String issuer, String endpoint) {
+			return UriComponentsBuilder.fromUriString(issuer).path(endpoint).build().toUriString();
+		}
+
 	}
 
 }

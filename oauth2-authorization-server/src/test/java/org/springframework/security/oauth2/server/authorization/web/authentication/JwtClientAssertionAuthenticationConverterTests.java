@@ -13,45 +13,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.springframework.security.oauth2.server.authorization.web.authentication;
 
 import org.junit.Test;
+
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
-import org.springframework.security.oauth2.core.endpoint.PkceParameterNames;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientAuthenticationToken;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.entry;
 
 /**
- * Tests for {@link JwtClientAssertionAuthenticationConverter}
+ * Tests for {@link JwtClientAssertionAuthenticationConverter}.
  *
  * @author Rafal Lewczuk
  */
 public class JwtClientAssertionAuthenticationConverterTests {
-
-	private JwtClientAssertionAuthenticationConverter converter = new JwtClientAssertionAuthenticationConverter();
-
 	private static final String JWT_BEARER_TYPE = "urn:ietf:params:oauth:client-assertion-type:jwt-bearer";
-
-	private void shouldThrow(MockHttpServletRequest request, String errorCode) {
-		assertThatThrownBy(() -> this.converter.convert(request))
-				.isInstanceOf(OAuth2AuthenticationException.class)
-				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
-				.extracting("errorCode")
-				.isEqualTo(errorCode);
-	}
+	private final JwtClientAssertionAuthenticationConverter converter = new JwtClientAssertionAuthenticationConverter();
 
 	@Test
-	public void convertWhenClientAssertionTypeNullThenReturnNull() {
+	public void convertWhenMissingClientAssertionTypeThenReturnNull() {
 		MockHttpServletRequest request = new MockHttpServletRequest();
-		request.addParameter(OAuth2ParameterNames.CLIENT_ASSERTION, "some_jwt_assertion");
+		request.addParameter(OAuth2ParameterNames.CLIENT_ASSERTION, "jwt-assertion");
 		Authentication authentication = this.converter.convert(request);
 		assertThat(authentication).isNull();
 	}
@@ -65,84 +55,74 @@ public class JwtClientAssertionAuthenticationConverterTests {
 	}
 
 	@Test
-	public void convertWhenMissingClientIdThenInvalidRequestError() {
+	public void convertWhenMultipleClientAssertionTypeThenInvalidRequestError() {
 		MockHttpServletRequest request = new MockHttpServletRequest();
 		request.addParameter(OAuth2ParameterNames.CLIENT_ASSERTION_TYPE, JWT_BEARER_TYPE);
-		request.addParameter(OAuth2ParameterNames.CLIENT_ASSERTION, "some_jwt_assertion");
-		shouldThrow(request, OAuth2ErrorCodes.INVALID_REQUEST);
+		request.addParameter(OAuth2ParameterNames.CLIENT_ASSERTION_TYPE, "other-client-assertion-type");
+		request.addParameter(OAuth2ParameterNames.CLIENT_ASSERTION, "jwt-assertion");
+		assertThrown(request, OAuth2ErrorCodes.INVALID_REQUEST);
 	}
 
 	@Test
-	public void convertWhenMultipleClientIdThenInvalidRequestError() {
+	public void convertWhenNotJwtAssertionTypeThenReturnNull() {
 		MockHttpServletRequest request = new MockHttpServletRequest();
-		request.addParameter(OAuth2ParameterNames.CLIENT_ID, "some_client");
-		request.addParameter(OAuth2ParameterNames.CLIENT_ID, "other_client");
-		request.addParameter(OAuth2ParameterNames.CLIENT_ASSERTION_TYPE, JWT_BEARER_TYPE);
-		request.addParameter(OAuth2ParameterNames.CLIENT_ASSERTION, "some_jwt_assertion");
-		shouldThrow(request, OAuth2ErrorCodes.INVALID_REQUEST);
-	}
-
-	@Test
-	public void convertWhenBadAssertionTypeThenInvalidRequestError() {
-		MockHttpServletRequest request = new MockHttpServletRequest();
-		request.addParameter(OAuth2ParameterNames.CLIENT_ID, "some_client");
-		request.addParameter(OAuth2ParameterNames.CLIENT_ASSERTION_TYPE, "borken");
-		request.addParameter(OAuth2ParameterNames.CLIENT_ASSERTION, "some_jwt_assertion");
-		shouldThrow(request, OAuth2ErrorCodes.INVALID_REQUEST);
-	}
-
-	@Test
-	public void convertWhenMissingClientJwtAssertionTypeThenDoNotProcessClientIdAndReturnNull() {
-		MockHttpServletRequest request = new MockHttpServletRequest();
-		request.addParameter(OAuth2ParameterNames.CLIENT_ID, "some_client");
-		request.addParameter(OAuth2ParameterNames.CLIENT_ID, "throw_something_when_client_id_is_processed");
+		request.addParameter(OAuth2ParameterNames.CLIENT_ASSERTION_TYPE, "other-client-assertion-type");
+		request.addParameter(OAuth2ParameterNames.CLIENT_ASSERTION, "other-assertion");
 		Authentication authentication = this.converter.convert(request);
 		assertThat(authentication).isNull();
 	}
 
 	@Test
-	public void convertWhenMultipleAssertionsThenInvalidRequestError() {
+	public void convertWhenMultipleClientAssertionThenInvalidRequestError() {
 		MockHttpServletRequest request = new MockHttpServletRequest();
-		request.addParameter(OAuth2ParameterNames.CLIENT_ID, "some_client");
 		request.addParameter(OAuth2ParameterNames.CLIENT_ASSERTION_TYPE, JWT_BEARER_TYPE);
-		request.addParameter(OAuth2ParameterNames.CLIENT_ASSERTION, "some_jwt_assertion");
-		request.addParameter(OAuth2ParameterNames.CLIENT_ASSERTION, "other_jwt_assertion");
-		shouldThrow(request, OAuth2ErrorCodes.INVALID_REQUEST);
+		request.addParameter(OAuth2ParameterNames.CLIENT_ASSERTION, "jwt-assertion");
+		request.addParameter(OAuth2ParameterNames.CLIENT_ASSERTION, "other-jwt-assertion");
+		assertThrown(request, OAuth2ErrorCodes.INVALID_REQUEST);
 	}
 
 	@Test
-	public void convertWhenValidAssertionJwt() {
+	public void convertWhenMissingClientIdThenInvalidRequestError() {
 		MockHttpServletRequest request = new MockHttpServletRequest();
-		request.addParameter(OAuth2ParameterNames.CLIENT_ID, "some_client");
 		request.addParameter(OAuth2ParameterNames.CLIENT_ASSERTION_TYPE, JWT_BEARER_TYPE);
-		request.addParameter(OAuth2ParameterNames.CLIENT_ASSERTION, "some_jwt_assertion");
-		request.setRequestURI("/oauth2/token");
-		OAuth2ClientAuthenticationToken authentication = (OAuth2ClientAuthenticationToken) this.converter.convert(request);
-		assertThat(authentication).isNotNull();
-		assertThat(authentication.getRequestUri()).isEqualTo("/oauth2/token");
-		assertThat(authentication.getPrincipal()).isEqualTo("some_client");
-		assertThat(authentication.getCredentials()).isEqualTo("some_jwt_assertion");
+		request.addParameter(OAuth2ParameterNames.CLIENT_ASSERTION, "jwt-assertion");
+		assertThrown(request, OAuth2ErrorCodes.INVALID_REQUEST);
 	}
 
 	@Test
-	public void convertWhenConfidentialClientWithPkceParametersThenAdditionalParametersIncluded() {
+	public void convertWhenMultipleClientIdThenInvalidRequestError() {
 		MockHttpServletRequest request = new MockHttpServletRequest();
+		request.addParameter(OAuth2ParameterNames.CLIENT_ASSERTION_TYPE, JWT_BEARER_TYPE);
+		request.addParameter(OAuth2ParameterNames.CLIENT_ASSERTION, "jwt-assertion");
+		request.addParameter(OAuth2ParameterNames.CLIENT_ID, "client-1");
+		request.addParameter(OAuth2ParameterNames.CLIENT_ID, "client-2");
+		assertThrown(request, OAuth2ErrorCodes.INVALID_REQUEST);
+	}
+
+	@Test
+	public void convertWhenJwtAssertionThenReturnClientAuthenticationToken() {
+		MockHttpServletRequest request = new MockHttpServletRequest();
+		request.addParameter(OAuth2ParameterNames.CLIENT_ASSERTION_TYPE, JWT_BEARER_TYPE);
+		request.addParameter(OAuth2ParameterNames.CLIENT_ASSERTION, "jwt-assertion");
+		request.addParameter(OAuth2ParameterNames.CLIENT_ID, "client-1");
 		request.addParameter(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.AUTHORIZATION_CODE.getValue());
 		request.addParameter(OAuth2ParameterNames.CODE, "code");
-		request.addParameter(PkceParameterNames.CODE_VERIFIER, "code-verifier-1");
-		request.addParameter(OAuth2ParameterNames.CLIENT_ID, "some_client");
-		request.addParameter(OAuth2ParameterNames.CLIENT_ASSERTION_TYPE, JWT_BEARER_TYPE);
-		request.addParameter(OAuth2ParameterNames.CLIENT_ASSERTION, "some_jwt_assertion");
-		request.setRequestURI("/oauth2/token");
 		OAuth2ClientAuthenticationToken authentication = (OAuth2ClientAuthenticationToken) this.converter.convert(request);
-		assertThat(authentication).isNotNull();
-		assertThat(authentication.getRequestUri()).isEqualTo("/oauth2/token");
-		assertThat(authentication.getPrincipal()).isEqualTo("some_client");
-		assertThat(authentication.getCredentials()).isEqualTo("some_jwt_assertion");
+		assertThat(authentication.getPrincipal()).isEqualTo("client-1");
+		assertThat(authentication.getCredentials()).isEqualTo("jwt-assertion");
+		assertThat(authentication.getClientAuthenticationMethod().getValue()).isEqualTo(JWT_BEARER_TYPE);
 		assertThat(authentication.getAdditionalParameters())
 				.containsOnly(
 						entry(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.AUTHORIZATION_CODE.getValue()),
-						entry(OAuth2ParameterNames.CODE, "code"),
-						entry(PkceParameterNames.CODE_VERIFIER, "code-verifier-1"));
+						entry(OAuth2ParameterNames.CODE, "code"));
 	}
+
+	private void assertThrown(MockHttpServletRequest request, String errorCode) {
+		assertThatThrownBy(() -> this.converter.convert(request))
+				.isInstanceOf(OAuth2AuthenticationException.class)
+				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+				.extracting("errorCode")
+				.isEqualTo(errorCode);
+	}
+
 }

@@ -89,6 +89,7 @@ public final class ClientSecretBasicAuthenticationConverter implements Authentic
 		}
 
 		return new OAuth2ClientAuthenticationToken(clientID, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, clientSecret,
-				OAuth2EndpointUtils.extractAdditionalParameters(request));
+				OAuth2EndpointUtils.getParametersIfMatchesAuthorizationCodeGrantRequest(request));
 	}
+
 }

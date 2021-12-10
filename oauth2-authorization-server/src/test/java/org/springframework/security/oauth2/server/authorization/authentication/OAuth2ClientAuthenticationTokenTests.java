@@ -33,22 +33,15 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 public class OAuth2ClientAuthenticationTokenTests {
 
 	@Test
-	public void constructorWhenRequestUriNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> new OAuth2ClientAuthenticationToken(null, "clientId", ClientAuthenticationMethod.CLIENT_SECRET_BASIC, "secret", null))
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("requestUri cannot be empty");
-	}
-
-	@Test
 	public void constructorWhenClientIdNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> new OAuth2ClientAuthenticationToken("issuer", null, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, "secret", null))
+		assertThatThrownBy(() -> new OAuth2ClientAuthenticationToken(null, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, "secret", null))
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessage("clientId cannot be empty");
 	}
 
 	@Test
 	public void constructorWhenClientAuthenticationMethodNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> new OAuth2ClientAuthenticationToken("issuer", "clientId", null, "clientSecret", null))
+		assertThatThrownBy(() -> new OAuth2ClientAuthenticationToken("clientId", null, "clientSecret", null))
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessage("clientAuthenticationMethod cannot be null");
 	}
@@ -62,10 +55,9 @@ public class OAuth2ClientAuthenticationTokenTests {
 
 	@Test
 	public void constructorWhenClientCredentialsProvidedThenCreated() {
-		OAuth2ClientAuthenticationToken authentication = new OAuth2ClientAuthenticationToken("issuer", "clientId",
+		OAuth2ClientAuthenticationToken authentication = new OAuth2ClientAuthenticationToken("clientId",
 				ClientAuthenticationMethod.CLIENT_SECRET_BASIC, "secret", null);
 		assertThat(authentication.isAuthenticated()).isFalse();
-		assertThat(authentication.getRequestUri()).isEqualTo("issuer");
 		assertThat(authentication.getPrincipal().toString()).isEqualTo("clientId");
 		assertThat(authentication.getCredentials()).isEqualTo("secret");
 		assertThat(authentication.getRegisteredClient()).isNull();

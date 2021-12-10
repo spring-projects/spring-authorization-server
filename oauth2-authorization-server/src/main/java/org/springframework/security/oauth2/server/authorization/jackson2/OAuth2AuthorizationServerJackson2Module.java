@@ -37,7 +37,7 @@ import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
  * <li>{@link HashSetMixin}</li>
  * <li>{@link OAuth2AuthorizationRequestMixin}</li>
  * <li>{@link DurationMixin}</li>
- * <li>{@link SignatureAlgorithmMixin}</li>
+ * <li>{@link JwsAlgorithmMixin}</li>
  * </ul>
  *
  * If not already enabled, default typing will be automatically enabled as type info is
@@ -59,7 +59,7 @@ import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
  * @see HashSetMixin
  * @see OAuth2AuthorizationRequestMixin
  * @see DurationMixin
- * @see SignatureAlgorithmMixin
+ * @see JwsAlgorithmMixin
  */
 public class OAuth2AuthorizationServerJackson2Module extends SimpleModule {
 
@@ -76,8 +76,8 @@ public class OAuth2AuthorizationServerJackson2Module extends SimpleModule {
 		context.setMixInAnnotations(LinkedHashSet.class, HashSetMixin.class);
 		context.setMixInAnnotations(OAuth2AuthorizationRequest.class, OAuth2AuthorizationRequestMixin.class);
 		context.setMixInAnnotations(Duration.class, DurationMixin.class);
-		context.setMixInAnnotations(SignatureAlgorithm.class, SignatureAlgorithmMixin.class);
-		context.setMixInAnnotations(MacAlgorithm.class, MacAlgorithmMixin.class);
+		context.setMixInAnnotations(SignatureAlgorithm.class, JwsAlgorithmMixin.class);
+		context.setMixInAnnotations(MacAlgorithm.class, JwsAlgorithmMixin.class);
 	}
 
 }

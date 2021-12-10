@@ -15,6 +15,7 @@
  */
 package org.springframework.security.oauth2.core.oidc.http.converter;
 
+import java.net.URL;
 import java.time.Instant;
 import java.util.Map;
 
@@ -30,6 +31,7 @@ import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationResponseType;
 import org.springframework.security.oauth2.core.oidc.OidcClientRegistration;
+import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -86,7 +88,7 @@ public class OidcClientRegistrationHttpMessageConverterTests {
 	}
 
 	@Test
-	public void readInternalWhenValidParametersThenSuccess() {
+	public void readInternalWhenValidParametersThenSuccess() throws Exception {
 		// @formatter:off
 		String clientRegistrationRequest = "{\n"
 				+"		\"client_id\": \"client-id\",\n"
@@ -97,7 +99,8 @@ public class OidcClientRegistrationHttpMessageConverterTests {
 				+"		\"redirect_uris\": [\n"
 				+ "			\"https://client.example.com\"\n"
 				+ "		],\n"
-				+"		\"token_endpoint_auth_method\": \"client_secret_basic\",\n"
+				+"		\"token_endpoint_auth_method\": \"client_secret_jwt\",\n"
+				+"		\"token_endpoint_auth_signing_alg\": \"HS256\",\n"
 				+"		\"grant_types\": [\n"
 				+"			\"authorization_code\",\n"
 				+"			\"client_credentials\"\n"
@@ -106,9 +109,8 @@ public class OidcClientRegistrationHttpMessageConverterTests {
 				+"			\"code\"\n"
 				+"		],\n"
 				+"		\"scope\": \"scope1 scope2\",\n"
+				+"		\"jwks_uri\": \"https://client.example.com/jwks\",\n"
 				+"		\"id_token_signed_response_alg\": \"RS256\",\n"
-				+"      \"jwks_uri\": \"https://client.example.com/jwks\",\n"
-				+"      \"token_endpoint_auth_signing_alg\": \"HS256\",\n"
 				+"		\"a-claim\": \"a-value\"\n"
 				+"}\n";
 		// @formatter:on
@@ -123,13 +125,13 @@ public class OidcClientRegistrationHttpMessageConverterTests {
 		assertThat(clientRegistration.getClientSecretExpiresAt()).isEqualTo(Instant.ofEpochSecond(1607637467L));
 		assertThat(clientRegistration.getClientName()).isEqualTo("client-name");
 		assertThat(clientRegistration.getRedirectUris()).containsOnly("https://client.example.com");
-		assertThat(clientRegistration.getTokenEndpointAuthenticationMethod()).isEqualTo(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue());
+		assertThat(clientRegistration.getTokenEndpointAuthenticationMethod()).isEqualTo(ClientAuthenticationMethod.CLIENT_SECRET_JWT.getValue());
+		assertThat(clientRegistration.getTokenEndpointAuthenticationSigningAlgorithm()).isEqualTo(MacAlgorithm.HS256.getName());
 		assertThat(clientRegistration.getGrantTypes()).containsExactlyInAnyOrder("authorization_code", "client_credentials");
 		assertThat(clientRegistration.getResponseTypes()).containsOnly("code");
 		assertThat(clientRegistration.getScopes()).containsExactlyInAnyOrder("scope1", "scope2");
+		assertThat(clientRegistration.getJwkSetUrl()).isEqualTo(new URL("https://client.example.com/jwks"));
 		assertThat(clientRegistration.getIdTokenSignedResponseAlgorithm()).isEqualTo("RS256");
-		assertThat(clientRegistration.getJwkSetUrl().toString()).isEqualTo("https://client.example.com/jwks");
-		assertThat(clientRegistration.getTokenEndpointAuthenticationSigningAlgorithm()).isEqualTo("HS256");
 		assertThat(clientRegistration.getClaimAsString("a-claim")).isEqualTo("a-value");
 	}
 
@@ -181,17 +183,17 @@ public class OidcClientRegistrationHttpMessageConverterTests {
 				.clientSecretExpiresAt(Instant.ofEpochSecond(1607637467))
 				.clientName("client-name")
 				.redirectUri("https://client.example.com")
-				.tokenEndpointAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue())
+				.tokenEndpointAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_JWT.getValue())
+				.tokenEndpointAuthenticationSigningAlgorithm(MacAlgorithm.HS256.getName())
 				.grantType(AuthorizationGrantType.AUTHORIZATION_CODE.getValue())
 				.grantType(AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
 				.responseType(OAuth2AuthorizationResponseType.CODE.getValue())
 				.scope("scope1")
 				.scope("scope2")
+				.jwkSetUrl("https://client.example.com/jwks")
 				.idTokenSignedResponseAlgorithm(SignatureAlgorithm.RS256.getName())
 				.registrationAccessToken("registration-access-token")
 				.registrationClientUrl("https://auth-server.com/connect/register?client_id=1")
-				.jwkSetUrl("https://client.example.com/jwks")
-				.tokenEndpointAuthenticationSigningAlgorithm("HS256")
 				.claim("a-claim", "a-value")
 				.build();
 		// @formatter:on
@@ -206,15 +208,15 @@ public class OidcClientRegistrationHttpMessageConverterTests {
 		assertThat(clientRegistrationResponse).contains("\"client_secret_expires_at\":1607637467");
 		assertThat(clientRegistrationResponse).contains("\"client_name\":\"client-name\"");
 		assertThat(clientRegistrationResponse).contains("\"redirect_uris\":[\"https://client.example.com\"]");
-		assertThat(clientRegistrationResponse).contains("\"token_endpoint_auth_method\":\"client_secret_basic\"");
+		assertThat(clientRegistrationResponse).contains("\"token_endpoint_auth_method\":\"client_secret_jwt\"");
+		assertThat(clientRegistrationResponse).contains("\"token_endpoint_auth_signing_alg\":\"HS256\"");
 		assertThat(clientRegistrationResponse).contains("\"grant_types\":[\"authorization_code\",\"client_credentials\"]");
 		assertThat(clientRegistrationResponse).contains("\"response_types\":[\"code\"]");
 		assertThat(clientRegistrationResponse).contains("\"scope\":\"scope1 scope2\"");
+		assertThat(clientRegistrationResponse).contains("\"jwks_uri\":\"https://client.example.com/jwks\"");
 		assertThat(clientRegistrationResponse).contains("\"id_token_signed_response_alg\":\"RS256\"");
 		assertThat(clientRegistrationResponse).contains("\"registration_access_token\":\"registration-access-token\"");
 		assertThat(clientRegistrationResponse).contains("\"registration_client_uri\":\"https://auth-server.com/connect/register?client_id=1\"");
-		assertThat(clientRegistrationResponse).contains("\"jwks_uri\":\"https://client.example.com/jwks\"");
-		assertThat(clientRegistrationResponse).contains("\"token_endpoint_auth_signing_alg\":\"HS256\"");
 		assertThat(clientRegistrationResponse).contains("\"a-claim\":\"a-value\"");
 	}
 

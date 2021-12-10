@@ -15,8 +15,9 @@
  */
 package org.springframework.security.oauth2.core.oidc;
 
+import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.jose.jws.JwsAlgorithm;
-import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
+import org.springframework.security.oauth2.jwt.Jwt;
 
 /**
  * The names of the "claims" defined by OpenID Connect Dynamic Client Registration 1.0
@@ -65,6 +66,14 @@ public interface OidcClientMetadataClaimNames {
 	String TOKEN_ENDPOINT_AUTH_METHOD = "token_endpoint_auth_method";
 
 	/**
+	 * {@code token_endpoint_auth_signing_alg} - the {@link JwsAlgorithm JWS} algorithm that must be used for signing the {@link Jwt JWT}
+	 * used to authenticate the Client at the Token Endpoint for the {@link ClientAuthenticationMethod#PRIVATE_KEY_JWT private_key_jwt} and
+	 * {@link ClientAuthenticationMethod#CLIENT_SECRET_JWT client_secret_jwt} authentication methods
+	 * @since 0.2.2
+	 */
+	String TOKEN_ENDPOINT_AUTH_SIGNING_ALG = "token_endpoint_auth_signing_alg";
+
+	/**
 	 * {@code grant_types} - the OAuth 2.0 {@code grant_type} values that the Client will restrict itself to using
 	 */
 	String GRANT_TYPES = "grant_types";
@@ -78,6 +87,12 @@ public interface OidcClientMetadataClaimNames {
 	 * {@code scope} - a space-separated list of OAuth 2.0 {@code scope} values that the Client will restrict itself to using
 	 */
 	String SCOPE = "scope";
+
+	/**
+	 * {@code jwks_uri} - the {@code URL} for the Client's JSON Web Key Set
+	 * @since 0.2.2
+	 */
+	String JWKS_URI = "jwks_uri";
 
 	/**
 	 * {@code id_token_signed_response_alg} - the {@link JwsAlgorithm JWS} algorithm required for signing the {@link OidcIdToken ID Token} issued to the Client
@@ -96,17 +111,4 @@ public interface OidcClientMetadataClaimNames {
 	 */
 	String REGISTRATION_CLIENT_URI = "registration_client_uri";
 
-	/**
-	 * {@code jwks_uri} - {@code URL} for the Client's JSON Web Key Set
-	 * @since 0.2.1
-	 */
-	String JWKS_URI = "jwks_uri";
-
-	/**
-	 * {@code token_endpoint_auth_signing_alg} - {@link SignatureAlgorithm JWS} algorithm that must be used for signing
-	 * the JWT used to authenticate the Client at the Token Endpoint for the {@code private_key_jwt} and {@code client_secret_jwt}
-	 * authentication methods
-	 * @since 0.2.1
-	 */
-	String TOKEN_ENDPOINT_AUTH_SIGNING_ALG = "token_endpoint_auth_signing_alg";
 }

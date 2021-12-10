@@ -16,8 +16,8 @@
 package org.springframework.security.oauth2.server.authorization.config;
 
 import org.junit.Test;
+
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
-import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -31,10 +31,9 @@ public class ClientSettingsTests {
 	@Test
 	public void buildWhenDefaultThenDefaultsAreSet() {
 		ClientSettings clientSettings = ClientSettings.builder().build();
-		assertThat(clientSettings.getSettings()).hasSize(3);
+		assertThat(clientSettings.getSettings()).hasSize(2);
 		assertThat(clientSettings.isRequireProofKey()).isFalse();
 		assertThat(clientSettings.isRequireAuthorizationConsent()).isFalse();
-		assertThat(clientSettings.getTokenEndpointSigningAlgorithm()).isEqualTo(SignatureAlgorithm.RS256);
 	}
 
 	@Test
@@ -54,19 +53,19 @@ public class ClientSettingsTests {
 	}
 
 	@Test
-	public void tokenEndpointAlgorithmWhenHS256ThenSet() {
+	public void tokenEndpointAuthenticationSigningAlgorithmWhenHS256ThenSet() {
 		ClientSettings clientSettings = ClientSettings.builder()
-				.tokenEndpointSigningAlgorithm(MacAlgorithm.HS256)
+				.tokenEndpointAuthenticationSigningAlgorithm(MacAlgorithm.HS256)
 				.build();
-		assertThat(clientSettings.getTokenEndpointSigningAlgorithm()).isEqualTo(MacAlgorithm.HS256);
+		assertThat(clientSettings.getTokenEndpointAuthenticationSigningAlgorithm()).isEqualTo(MacAlgorithm.HS256);
 	}
 
 	@Test
-	public void whenJwkSetUrlSetThenSet() {
+	public void jwkSetUrlWhenProvidedThenSet() {
 		ClientSettings clientSettings = ClientSettings.builder()
-				.jwkSetUrl("https://auth-server:9000/jwks")
+				.jwkSetUrl("https://client.example.com/jwks")
 				.build();
-		assertThat(clientSettings.getJwkSetUrl()).isEqualTo("https://auth-server:9000/jwks");
+		assertThat(clientSettings.getJwkSetUrl()).isEqualTo("https://client.example.com/jwks");
 	}
 
 	@Test
@@ -75,7 +74,7 @@ public class ClientSettingsTests {
 				.setting("name1", "value1")
 				.settings(settings -> settings.put("name2", "value2"))
 				.build();
-		assertThat(clientSettings.getSettings()).hasSize(5);
+		assertThat(clientSettings.getSettings()).hasSize(4);
 		assertThat(clientSettings.<String>getSetting("name1")).isEqualTo("value1");
 		assertThat(clientSettings.<String>getSetting("name2")).isEqualTo("value2");
 	}

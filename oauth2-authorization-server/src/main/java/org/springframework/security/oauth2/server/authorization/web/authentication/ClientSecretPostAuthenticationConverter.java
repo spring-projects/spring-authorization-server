@@ -69,10 +69,12 @@ public final class ClientSecretPostAuthenticationConverter implements Authentica
 			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_REQUEST);
 		}
 
-		Map<String, Object> additionalParameters = OAuth2EndpointUtils.extractAdditionalParameters(request,
-				OAuth2ParameterNames.CLIENT_ID, OAuth2ParameterNames.CLIENT_SECRET);
+		Map<String, Object> additionalParameters = OAuth2EndpointUtils.getParametersIfMatchesAuthorizationCodeGrantRequest(request,
+				OAuth2ParameterNames.CLIENT_ID,
+				OAuth2ParameterNames.CLIENT_SECRET);
 
 		return new OAuth2ClientAuthenticationToken(clientId, ClientAuthenticationMethod.CLIENT_SECRET_POST, clientSecret,
 				additionalParameters);
 	}
+
 }

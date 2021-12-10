@@ -54,6 +54,17 @@ final class OAuth2EndpointUtils {
 		return parameters;
 	}
 
+	static Map<String, Object> getParametersIfMatchesAuthorizationCodeGrantRequest(HttpServletRequest request, String... exclusions) {
+		if (!matchesAuthorizationCodeGrantRequest(request)) {
+			return Collections.emptyMap();
+		}
+		Map<String, Object> parameters = new HashMap<>(getParameters(request).toSingleValueMap());
+		for (String exclusion : exclusions) {
+			parameters.remove(exclusion);
+		}
+		return parameters;
+	}
+
 	static boolean matchesAuthorizationCodeGrantRequest(HttpServletRequest request) {
 		return AuthorizationGrantType.AUTHORIZATION_CODE.getValue().equals(
 				request.getParameter(OAuth2ParameterNames.GRANT_TYPE)) &&
@@ -70,14 +81,4 @@ final class OAuth2EndpointUtils {
 		throw new OAuth2AuthenticationException(error);
 	}
 
-	static Map<String, Object> extractAdditionalParameters(HttpServletRequest request, String...exclusions) {
-		Map<String, Object> additionalParameters = Collections.emptyMap();
-		if (OAuth2EndpointUtils.matchesAuthorizationCodeGrantRequest(request)) {
-			additionalParameters = new HashMap<>(OAuth2EndpointUtils.getParameters(request).toSingleValueMap());
-			for (String exclusion : exclusions) {
-				additionalParameters.remove(exclusion);
-			}
-		}
-		return additionalParameters;
-	}
 }

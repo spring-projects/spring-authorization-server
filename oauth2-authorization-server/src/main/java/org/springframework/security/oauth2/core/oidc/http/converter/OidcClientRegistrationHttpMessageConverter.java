@@ -15,6 +15,7 @@
  */
 package org.springframework.security.oauth2.core.oidc.http.converter;
 
+import java.net.URL;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
@@ -130,6 +131,7 @@ public class OidcClientRegistrationHttpMessageConverter extends AbstractHttpMess
 		private static final TypeDescriptor OBJECT_TYPE_DESCRIPTOR = TypeDescriptor.valueOf(Object.class);
 		private static final TypeDescriptor STRING_TYPE_DESCRIPTOR = TypeDescriptor.valueOf(String.class);
 		private static final TypeDescriptor INSTANT_TYPE_DESCRIPTOR = TypeDescriptor.valueOf(Instant.class);
+		private static final TypeDescriptor URL_TYPE_DESCRIPTOR = TypeDescriptor.valueOf(URL.class);
 		private static final Converter<Object, ?> INSTANT_CONVERTER = getConverter(INSTANT_TYPE_DESCRIPTOR);
 		private final ClaimTypeConverter claimTypeConverter;
 
@@ -137,6 +139,7 @@ public class OidcClientRegistrationHttpMessageConverter extends AbstractHttpMess
 			Converter<Object, ?> stringConverter = getConverter(STRING_TYPE_DESCRIPTOR);
 			Converter<Object, ?> collectionStringConverter = getConverter(
 					TypeDescriptor.collection(Collection.class, STRING_TYPE_DESCRIPTOR));
+			Converter<Object, ?> urlConverter = getConverter(URL_TYPE_DESCRIPTOR);
 
 			Map<String, Converter<Object, ?>> claimConverters = new HashMap<>();
 			claimConverters.put(OidcClientMetadataClaimNames.CLIENT_ID, stringConverter);
@@ -146,12 +149,12 @@ public class OidcClientRegistrationHttpMessageConverter extends AbstractHttpMess
 			claimConverters.put(OidcClientMetadataClaimNames.CLIENT_NAME, stringConverter);
 			claimConverters.put(OidcClientMetadataClaimNames.REDIRECT_URIS, collectionStringConverter);
 			claimConverters.put(OidcClientMetadataClaimNames.TOKEN_ENDPOINT_AUTH_METHOD, stringConverter);
+			claimConverters.put(OidcClientMetadataClaimNames.TOKEN_ENDPOINT_AUTH_SIGNING_ALG, stringConverter);
 			claimConverters.put(OidcClientMetadataClaimNames.GRANT_TYPES, collectionStringConverter);
 			claimConverters.put(OidcClientMetadataClaimNames.RESPONSE_TYPES, collectionStringConverter);
 			claimConverters.put(OidcClientMetadataClaimNames.SCOPE, MapOidcClientRegistrationConverter::convertScope);
+			claimConverters.put(OidcClientMetadataClaimNames.JWKS_URI, urlConverter);
 			claimConverters.put(OidcClientMetadataClaimNames.ID_TOKEN_SIGNED_RESPONSE_ALG, stringConverter);
-			claimConverters.put(OidcClientMetadataClaimNames.JWKS_URI, stringConverter);
-			claimConverters.put(OidcClientMetadataClaimNames.TOKEN_ENDPOINT_AUTH_SIGNING_ALG, stringConverter);
 			this.claimTypeConverter = new ClaimTypeConverter(claimConverters);
 		}
 

@@ -38,6 +38,7 @@ import org.springframework.security.web.authentication.AuthenticationFailureHand
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
+import org.springframework.util.Assert;
 
 /**
  * Configurer for the OAuth 2.0 Token Revocation Endpoint.
@@ -80,6 +81,7 @@ public final class OAuth2TokenRevocationEndpointConfigurer extends AbstractOAuth
 	 * @return the {@link OAuth2TokenRevocationEndpointConfigurer} for further configuration
 	 */
 	public OAuth2TokenRevocationEndpointConfigurer authenticationProvider(AuthenticationProvider authenticationProvider) {
+		Assert.notNull(authenticationProvider, "authenticationProvider cannot be null");
 		this.authenticationProviders.add(authenticationProvider);
 		return this;
 	}

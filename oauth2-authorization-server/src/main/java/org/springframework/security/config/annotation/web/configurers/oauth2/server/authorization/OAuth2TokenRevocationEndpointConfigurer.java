@@ -15,6 +15,12 @@
  */
 package org.springframework.security.config.annotation.web.configurers.oauth2.server.authorization;
 
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+
+import javax.servlet.http.HttpServletRequest;
+
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -32,11 +38,6 @@ import org.springframework.security.web.authentication.AuthenticationFailureHand
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
-
-import javax.servlet.http.HttpServletRequest;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
 
 /**
  * Configurer for the OAuth 2.0 Token Revocation Endpoint.
@@ -127,9 +128,7 @@ public final class OAuth2TokenRevocationEndpointConfigurer extends AbstractOAuth
 
 		OAuth2TokenRevocationEndpointFilter revocationEndpointFilter =
 				new OAuth2TokenRevocationEndpointFilter(
-						authenticationManager,
-						providerSettings.getTokenRevocationEndpoint()
-				);
+						authenticationManager, providerSettings.getTokenRevocationEndpoint());
 		if (this.revocationRequestConverter != null) {
 			revocationEndpointFilter.setRevocationRequestConverter(this.revocationRequestConverter);
 		}

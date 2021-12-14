@@ -21,6 +21,7 @@ import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageConverter;
@@ -116,7 +117,6 @@ public final class OAuth2TokenRevocationEndpointFilter extends OncePerRequestFil
 			this.errorResponseHandler.onAuthenticationFailure(request, response, ex);
 		}
 	}
-
 
 	/**
 	 * Sets the {@link AuthenticationConverter} used when attempting to extract a Revoke Token Request from {@link HttpServletRequest}

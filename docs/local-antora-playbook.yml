@@ -1,0 +1,16 @@
+site:
+  title: Spring Authorization Server
+  url: https://docs.spring.io/spring-authorization-server
+  start_page: reference::index.adoc
+asciidoc:
+  attributes:
+    page-pagination: true
+content:
+  sources:
+    - url: ../
+      branches: [guides]
+      start_path: docs
+ui:
+  bundle:
+    url: https://github.com/spring-io/antora-ui-spring/releases/download/latest/ui-bundle.zip
+    snapshot: true

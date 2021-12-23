@@ -1,0 +1,11 @@
+name: reference
+version: 0.2.2
+prerelease: '-SNAPSHOT'
+
+title: Spring Authorization Server
+display_version: latest
+start_page: ROOT:index.adoc
+nav:
+  - modules/ROOT/nav.adoc
+  - modules/guides/nav.adoc
+  - modules/appendix/nav.adoc

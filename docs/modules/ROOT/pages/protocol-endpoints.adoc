@@ -1,0 +1,48 @@
+= Protocol Endpoints
+
+This page is under construction.
+
+[[oauth2-authorization-endpoint]]
+== OAuth 2.0 Authorization Endpoint
+
+This section is under construction.
+
+[[oauth2-token-endpoint]]
+== OAuth 2.0 Token Endpoint
+
+This section is under construction.
+
+[[oauth2-token-introspection-endpoint]]
+== OAuth 2.0 Token Introspection Endpoint
+
+This section is under construction.
+
+[[oauth2-token-revocation-endpoint]]
+== OAuth 2.0 Token Revocation Endpoint
+
+This section is under construction.
+
+[[oauth2-authorization-server-metadata-endpoint]]
+== OAuth 2.0 Authorization Server Metadata Endpoint
+
+This section is under construction.
+
+[[jwk-set-endpoint]]
+== JWK Set Endpoint
+
+This section is under construction.
+
+[[openid-connect-provider-configuration-endpoint]]
+== OpenID Connect 1.0 Provider Configuration Endpoint
+
+This section is under construction.
+
+[[openid-connect-user-info-endpoint]]
+== OpenID Connect 1.0 UserInfo Endpoint
+
+This section is under construction.
+
+[[openid-connect-client-registration-endpoint]]
+== OpenID Connect 1.0 Client Registration Endpoint
+
+This section is under construction.

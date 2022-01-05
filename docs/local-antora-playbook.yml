@@ -8,7 +8,7 @@ asciidoc:
 content:
   sources:
     - url: ../
-      branches: [guides]
+      branches: [main]
       start_path: docs
 ui:
   bundle:

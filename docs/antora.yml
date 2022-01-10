@@ -9,7 +9,3 @@ nav:
   - modules/ROOT/nav.adoc
   - modules/guides/nav.adoc
   - modules/appendix/nav.adoc
-asciidoc:
-  attributes:
-    docs-dir: ../../..
-    root-dir: ../../../..

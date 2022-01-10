@@ -5,7 +5,7 @@ logging:
   level:
     root: INFO
     org.springframework.web: INFO
-    org.springframework.security: trace
+    org.springframework.security: INFO
     org.springframework.security.oauth2: INFO
 #    org.springframework.boot.autoconfigure: DEBUG
 

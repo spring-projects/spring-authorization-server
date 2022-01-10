@@ -27,6 +27,7 @@ import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
 import org.springframework.security.authentication.TestingAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
@@ -36,7 +37,9 @@ import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.OAuth2TokenType;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationResponseType;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
+import org.springframework.security.oauth2.core.oidc.OidcClientMetadataClaimNames;
 import org.springframework.security.oauth2.core.oidc.OidcClientRegistration;
+import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 import org.springframework.security.oauth2.jwt.JoseHeader;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -50,6 +53,7 @@ import org.springframework.security.oauth2.server.authorization.TestOAuth2Author
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
+import org.springframework.security.oauth2.server.authorization.config.ClientSettings;
 import org.springframework.security.oauth2.server.authorization.config.ProviderSettings;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -284,8 +288,11 @@ public class OidcClientRegistrationAuthenticationProviderTests {
 
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 				.isInstanceOf(OAuth2AuthenticationException.class)
-				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError()).extracting("errorCode")
-				.isEqualTo("invalid_redirect_uri");
+				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+				.satisfies(error -> {
+					assertThat(error.getErrorCode()).isEqualTo("invalid_redirect_uri");
+					assertThat(error.getDescription()).contains(OidcClientMetadataClaimNames.REDIRECT_URIS);
+				});
 		verify(this.authorizationService).findByToken(
 				eq(jwtAccessToken.getTokenValue()), eq(OAuth2TokenType.ACCESS_TOKEN));
 	}
@@ -316,10 +323,137 @@ public class OidcClientRegistrationAuthenticationProviderTests {
 
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 				.isInstanceOf(OAuth2AuthenticationException.class)
-				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError()).extracting("errorCode")
-				.isEqualTo("invalid_redirect_uri");
+				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+				.satisfies(error -> {
+					assertThat(error.getErrorCode()).isEqualTo("invalid_redirect_uri");
+					assertThat(error.getDescription()).contains(OidcClientMetadataClaimNames.REDIRECT_URIS);
+				});
 		verify(this.authorizationService).findByToken(
 				eq(jwtAccessToken.getTokenValue()), eq(OAuth2TokenType.ACCESS_TOKEN));
+	}
+
+	@Test
+	public void authenticateWhenClientRegistrationRequestAndInvalidTokenEndpointAuthenticationMethodThenThrowOAuth2AuthenticationException() {
+		Jwt jwt = createJwtClientRegistration();
+		OAuth2AccessToken jwtAccessToken = new OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER,
+				jwt.getTokenValue(), jwt.getIssuedAt(),
+				jwt.getExpiresAt(), jwt.getClaim(OAuth2ParameterNames.SCOPE));
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(
+				registeredClient, jwtAccessToken, jwt.getClaims()).build();
+		when(this.authorizationService.findByToken(
+				eq(jwtAccessToken.getTokenValue()), eq(OAuth2TokenType.ACCESS_TOKEN)))
+				.thenReturn(authorization);
+
+		JwtAuthenticationToken principal = new JwtAuthenticationToken(
+				jwt, AuthorityUtils.createAuthorityList("SCOPE_client.create"));
+		// @formatter:off
+		OidcClientRegistration.Builder builder = OidcClientRegistration.builder()
+				.redirectUri("https://client.example.com");
+		// @formatter:on
+
+		String invalidClientMetadataErrorCode = "invalid_client_metadata";
+
+		// @formatter:off
+		builder
+				.tokenEndpointAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue())
+				.tokenEndpointAuthenticationSigningAlgorithm(MacAlgorithm.HS256.getName());
+		assertWhenClientRegistrationRequestInvalidThenThrowOAuth2AuthenticationException(principal, builder.build(),
+				invalidClientMetadataErrorCode, OidcClientMetadataClaimNames.TOKEN_ENDPOINT_AUTH_METHOD);
+		// @formatter:on
+
+		// @formatter:off
+		builder
+				.tokenEndpointAuthenticationMethod(ClientAuthenticationMethod.PRIVATE_KEY_JWT.getValue())
+				.tokenEndpointAuthenticationSigningAlgorithm("none");
+		assertWhenClientRegistrationRequestInvalidThenThrowOAuth2AuthenticationException(principal, builder.build(),
+				invalidClientMetadataErrorCode, OidcClientMetadataClaimNames.TOKEN_ENDPOINT_AUTH_METHOD);
+		// @formatter:on
+
+		// @formatter:off
+		builder
+				.tokenEndpointAuthenticationMethod(ClientAuthenticationMethod.PRIVATE_KEY_JWT.getValue())
+				.tokenEndpointAuthenticationSigningAlgorithm(SignatureAlgorithm.RS256.getName());
+		assertWhenClientRegistrationRequestInvalidThenThrowOAuth2AuthenticationException(principal, builder.build(),
+				invalidClientMetadataErrorCode, OidcClientMetadataClaimNames.TOKEN_ENDPOINT_AUTH_METHOD);
+		// @formatter:on
+
+		// @formatter:off
+		builder
+				.tokenEndpointAuthenticationMethod(ClientAuthenticationMethod.PRIVATE_KEY_JWT.getValue())
+				.jwkSetUrl("https://client.example.com/jwks")
+				.tokenEndpointAuthenticationSigningAlgorithm(MacAlgorithm.HS256.getName());
+		assertWhenClientRegistrationRequestInvalidThenThrowOAuth2AuthenticationException(principal, builder.build(),
+				invalidClientMetadataErrorCode, OidcClientMetadataClaimNames.TOKEN_ENDPOINT_AUTH_METHOD);
+		// @formatter:on
+
+		// @formatter:off
+		builder
+				.tokenEndpointAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_JWT.getValue())
+				.tokenEndpointAuthenticationSigningAlgorithm(SignatureAlgorithm.RS256.getName());
+		assertWhenClientRegistrationRequestInvalidThenThrowOAuth2AuthenticationException(principal, builder.build(),
+				invalidClientMetadataErrorCode, OidcClientMetadataClaimNames.TOKEN_ENDPOINT_AUTH_METHOD);
+		// @formatter:on
+	}
+
+	private void assertWhenClientRegistrationRequestInvalidThenThrowOAuth2AuthenticationException(
+			Authentication principal, OidcClientRegistration clientRegistration, String errorCode, String errorDescription) {
+
+		OidcClientRegistrationAuthenticationToken authentication = new OidcClientRegistrationAuthenticationToken(
+				principal, clientRegistration);
+
+		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
+				.isInstanceOf(OAuth2AuthenticationException.class)
+				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+				.satisfies(error -> {
+					assertThat(error.getErrorCode()).isEqualTo(errorCode);
+					assertThat(error.getDescription()).contains(errorDescription);
+				});
+	}
+
+	@Test
+	public void authenticateWhenClientRegistrationRequestAndTokenEndpointAuthenticationSigningAlgorithmNotProvidedThenDefaults() {
+		Jwt jwt = createJwtClientRegistration();
+		OAuth2AccessToken jwtAccessToken = new OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER,
+				jwt.getTokenValue(), jwt.getIssuedAt(),
+				jwt.getExpiresAt(), jwt.getClaim(OAuth2ParameterNames.SCOPE));
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(
+				registeredClient, jwtAccessToken, jwt.getClaims()).build();
+		when(this.authorizationService.findByToken(
+				eq(jwtAccessToken.getTokenValue()), eq(OAuth2TokenType.ACCESS_TOKEN)))
+				.thenReturn(authorization);
+		when(this.jwtEncoder.encode(any(), any())).thenReturn(createJwtClientConfiguration());
+
+		JwtAuthenticationToken principal = new JwtAuthenticationToken(
+				jwt, AuthorityUtils.createAuthorityList("SCOPE_client.create"));
+		// @formatter:off
+		OidcClientRegistration.Builder builder = OidcClientRegistration.builder()
+				.grantType(AuthorizationGrantType.AUTHORIZATION_CODE.getValue())
+				.redirectUri("https://client.example.com")
+				.scope("scope1");
+		// @formatter:on
+
+		// @formatter:off
+		builder
+				.tokenEndpointAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_JWT.getValue());
+		// @formatter:on
+		OidcClientRegistrationAuthenticationToken authentication = new OidcClientRegistrationAuthenticationToken(
+				principal, builder.build());
+		OidcClientRegistrationAuthenticationToken authenticationResult =
+				(OidcClientRegistrationAuthenticationToken) this.authenticationProvider.authenticate(authentication);
+		assertThat(authenticationResult.getClientRegistration().getTokenEndpointAuthenticationSigningAlgorithm())
+				.isEqualTo(MacAlgorithm.HS256.getName());
+
+		// @formatter:off
+		builder
+				.tokenEndpointAuthenticationMethod(ClientAuthenticationMethod.PRIVATE_KEY_JWT.getValue())
+				.jwkSetUrl("https://client.example.com/jwks");
+		// @formatter:on
+		authentication = new OidcClientRegistrationAuthenticationToken(principal, builder.build());
+		authenticationResult = (OidcClientRegistrationAuthenticationToken) this.authenticationProvider.authenticate(authentication);
+		assertThat(authenticationResult.getClientRegistration().getTokenEndpointAuthenticationSigningAlgorithm())
+				.isEqualTo(SignatureAlgorithm.RS256.getName());
 	}
 
 	@Test
@@ -546,7 +680,16 @@ public class OidcClientRegistrationAuthenticationProviderTests {
 				jwt.getTokenValue(), jwt.getIssuedAt(),
 				jwt.getExpiresAt(), jwt.getClaim(OAuth2ParameterNames.SCOPE));
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
-				.clientName("client-name")
+				.clientAuthenticationMethods((clientAuthenticationMethods) -> {
+					clientAuthenticationMethods.clear();
+					clientAuthenticationMethods.add(ClientAuthenticationMethod.PRIVATE_KEY_JWT);
+				})
+				.clientSettings(
+						ClientSettings.builder()
+								.tokenEndpointAuthenticationSigningAlgorithm(SignatureAlgorithm.RS512)
+								.jwkSetUrl("https://client.example.com/jwks")
+								.build()
+				)
 				.build();
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(
 				registeredClient, jwtAccessToken, jwt.getClaims()).build();
@@ -594,6 +737,10 @@ public class OidcClientRegistrationAuthenticationProviderTests {
 				.containsExactlyInAnyOrderElementsOf(registeredClient.getScopes());
 		assertThat(clientRegistrationResult.getTokenEndpointAuthenticationMethod())
 				.isEqualTo(registeredClient.getClientAuthenticationMethods().iterator().next().getValue());
+		assertThat(clientRegistrationResult.getTokenEndpointAuthenticationSigningAlgorithm())
+				.isEqualTo(registeredClient.getClientSettings().getTokenEndpointAuthenticationSigningAlgorithm().getName());
+		assertThat(clientRegistrationResult.getJwkSetUrl().toString())
+				.isEqualTo(registeredClient.getClientSettings().getJwkSetUrl());
 		assertThat(clientRegistrationResult.getIdTokenSignedResponseAlgorithm())
 				.isEqualTo(registeredClient.getTokenSettings().getIdTokenSignatureAlgorithm().getName());
 

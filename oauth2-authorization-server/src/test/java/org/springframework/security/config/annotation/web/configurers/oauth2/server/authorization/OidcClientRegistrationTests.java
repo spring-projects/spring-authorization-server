@@ -15,15 +15,18 @@
  */
 package org.springframework.security.config.annotation.web.configurers.oauth2.server.authorization;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Collections;
 
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
+import okhttp3.mockwebserver.MockResponse;
+import okhttp3.mockwebserver.MockWebServer;
 import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
@@ -61,7 +64,12 @@ import org.springframework.security.oauth2.core.oidc.OidcClientRegistration;
 import org.springframework.security.oauth2.core.oidc.http.converter.OidcClientRegistrationHttpMessageConverter;
 import org.springframework.security.oauth2.jose.TestJwks;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
+import org.springframework.security.oauth2.jwt.JoseHeader;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.JwtEncoder;
+import org.springframework.security.oauth2.jwt.NimbusJwsEncoder;
 import org.springframework.security.oauth2.server.authorization.JdbcOAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.client.JdbcRegisteredClientRepository;
@@ -69,11 +77,13 @@ import org.springframework.security.oauth2.server.authorization.client.JdbcRegis
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
+import org.springframework.security.oauth2.server.authorization.config.ClientSettings;
 import org.springframework.security.oauth2.server.authorization.config.ProviderSettings;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.containsString;
@@ -98,6 +108,8 @@ public class OidcClientRegistrationTests {
 			new OidcClientRegistrationHttpMessageConverter();
 	private static EmbeddedDatabase db;
 	private static JWKSource<SecurityContext> jwkSource;
+	private static JWKSet clientJwkSet;
+	private static JwtEncoder jwtClientAssertionEncoder;
 
 	@Rule
 	public final SpringTestRule spring = new SpringTestRule();
@@ -111,10 +123,19 @@ public class OidcClientRegistrationTests {
 	@Autowired
 	private RegisteredClientRepository registeredClientRepository;
 
+	@Autowired
+	private ProviderSettings providerSettings;
+
+	private MockWebServer server;
+	private String clientJwkSetUrl;
+
+
 	@BeforeClass
 	public static void init() {
 		JWKSet jwkSet = new JWKSet(TestJwks.DEFAULT_RSA_JWK);
 		jwkSource = (jwkSelector, securityContext) -> jwkSelector.select(jwkSet);
+		clientJwkSet = new JWKSet(TestJwks.generateRsaJwk().build());
+		jwtClientAssertionEncoder = new NimbusJwsEncoder((jwkSelector, securityContext) -> jwkSelector.select(clientJwkSet));
 		db = new EmbeddedDatabaseBuilder()
 				.generateUniqueName(true)
 				.setType(EmbeddedDatabaseType.HSQL)
@@ -124,8 +145,22 @@ public class OidcClientRegistrationTests {
 				.build();
 	}
 
+	@Before
+	public void setup() throws Exception {
+		this.server = new MockWebServer();
+		this.server.start();
+		this.clientJwkSetUrl = this.server.url("/jwks").toString();
+		// @formatter:off
+		MockResponse response = new MockResponse()
+				.setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+				.setBody(clientJwkSet.toString());
+		// @formatter:on
+		this.server.enqueue(response);
+	}
+
 	@After
-	public void tearDown() {
+	public void tearDown() throws Exception {
+		this.server.shutdown();
 		jdbcOperations.update("truncate table oauth2_authorization");
 		jdbcOperations.update("truncate table oauth2_registered_client");
 	}
@@ -228,16 +263,36 @@ public class OidcClientRegistrationTests {
 		// ***** (1) Obtain the "initial" access token used for registering the client
 
 		String clientRegistrationScope = "client.create";
-		RegisteredClient clientRegistrar = TestRegisteredClients.registeredClient2()
+		// @formatter:off
+		RegisteredClient clientRegistrar = RegisteredClient.withId("client-registrar-1")
+				.clientId("client-registrar-1")
+				.clientAuthenticationMethod(ClientAuthenticationMethod.PRIVATE_KEY_JWT)
+				.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
 				.scope(clientRegistrationScope)
+				.clientSettings(
+						ClientSettings.builder()
+								.jwkSetUrl(this.clientJwkSetUrl)
+								.tokenEndpointAuthenticationSigningAlgorithm(SignatureAlgorithm.RS256)
+								.build()
+				)
 				.build();
+		// @formatter:on
 		this.registeredClientRepository.save(clientRegistrar);
+
+		// @formatter:off
+		JoseHeader joseHeader = JoseHeader.withAlgorithm(SignatureAlgorithm.RS256)
+				.build();
+		JwtClaimsSet jwtClaimsSet = jwtClientAssertionClaims(clientRegistrar)
+				.build();
+		// @formatter:on
+		Jwt jwtAssertion = jwtClientAssertionEncoder.encode(joseHeader, jwtClaimsSet);
 
 		MvcResult mvcResult = this.mvc.perform(post(DEFAULT_TOKEN_ENDPOINT_URI)
 				.param(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
 				.param(OAuth2ParameterNames.SCOPE, clientRegistrationScope)
-				.header(HttpHeaders.AUTHORIZATION, "Basic " + encodeBasicAuth(
-						clientRegistrar.getClientId(), clientRegistrar.getClientSecret())))
+				.param(OAuth2ParameterNames.CLIENT_ASSERTION_TYPE, "urn:ietf:params:oauth:client-assertion-type:jwt-bearer")
+				.param(OAuth2ParameterNames.CLIENT_ASSERTION, jwtAssertion.getTokenValue())
+				.param(OAuth2ParameterNames.CLIENT_ID, clientRegistrar.getClientId()))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.access_token").isNotEmpty())
 				.andExpect(jsonPath("$.scope").value(clientRegistrationScope))
@@ -263,12 +318,19 @@ public class OidcClientRegistrationTests {
 		return readClientRegistrationResponse(mvcResult.getResponse());
 	}
 
-	private static String encodeBasicAuth(String clientId, String secret) throws Exception {
-		clientId = URLEncoder.encode(clientId, StandardCharsets.UTF_8.name());
-		secret = URLEncoder.encode(secret, StandardCharsets.UTF_8.name());
-		String credentialsString = clientId + ":" + secret;
-		byte[] encodedBytes = Base64.getEncoder().encode(credentialsString.getBytes(StandardCharsets.UTF_8));
-		return new String(encodedBytes, StandardCharsets.UTF_8);
+	private JwtClaimsSet.Builder jwtClientAssertionClaims(RegisteredClient registeredClient) {
+		Instant issuedAt = Instant.now();
+		Instant expiresAt = issuedAt.plus(1, ChronoUnit.HOURS);
+		return JwtClaimsSet.builder()
+				.issuer(registeredClient.getClientId())
+				.subject(registeredClient.getClientId())
+				.audience(Collections.singletonList(asUrl(this.providerSettings.getIssuer(), this.providerSettings.getTokenEndpoint())))
+				.issuedAt(issuedAt)
+				.expiresAt(expiresAt);
+	}
+
+	private static String asUrl(String uri, String path) {
+		return UriComponentsBuilder.fromUriString(uri).path(path).build().toUriString();
 	}
 
 	private static OAuth2AccessTokenResponse readAccessTokenResponse(MockHttpServletResponse response) throws Exception {

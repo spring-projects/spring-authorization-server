@@ -15,8 +15,6 @@
  */
 package org.springframework.security.oauth2.server.authorization.web.authentication;
 
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
@@ -71,18 +69,12 @@ public final class ClientSecretPostAuthenticationConverter implements Authentica
 			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_REQUEST);
 		}
 
+		Map<String, Object> additionalParameters = OAuth2EndpointUtils.getParametersIfMatchesAuthorizationCodeGrantRequest(request,
+				OAuth2ParameterNames.CLIENT_ID,
+				OAuth2ParameterNames.CLIENT_SECRET);
+
 		return new OAuth2ClientAuthenticationToken(clientId, ClientAuthenticationMethod.CLIENT_SECRET_POST, clientSecret,
-				extractAdditionalParameters(request));
+				additionalParameters);
 	}
 
-	private static Map<String, Object> extractAdditionalParameters(HttpServletRequest request) {
-		Map<String, Object> additionalParameters = Collections.emptyMap();
-		if (OAuth2EndpointUtils.matchesAuthorizationCodeGrantRequest(request)) {
-			// Confidential clients can also leverage PKCE
-			additionalParameters = new HashMap<>(OAuth2EndpointUtils.getParameters(request).toSingleValueMap());
-			additionalParameters.remove(OAuth2ParameterNames.CLIENT_ID);
-			additionalParameters.remove(OAuth2ParameterNames.CLIENT_SECRET);
-		}
-		return additionalParameters;
-	}
 }

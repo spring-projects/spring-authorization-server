@@ -36,11 +36,14 @@ import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
+import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.OAuth2TokenType;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationResponseType;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
+import org.springframework.security.oauth2.core.oidc.OidcClientMetadataClaimNames;
 import org.springframework.security.oauth2.core.oidc.OidcClientRegistration;
+import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 import org.springframework.security.oauth2.jwt.JoseHeader;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -56,6 +59,7 @@ import org.springframework.security.oauth2.server.authorization.config.TokenSett
 import org.springframework.security.oauth2.server.resource.authentication.AbstractOAuth2TokenAuthenticationToken;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 import org.springframework.web.util.UriComponentsBuilder;
 
 /**
@@ -63,6 +67,7 @@ import org.springframework.web.util.UriComponentsBuilder;
  *
  * @author Ovidiu Popa
  * @author Joe Grandja
+ * @author Rafal Lewczuk
  * @since 0.1.1
  * @see RegisteredClientRepository
  * @see OAuth2AuthorizationService
@@ -193,7 +198,12 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 
 		if (!isValidRedirectUris(clientRegistrationAuthentication.getClientRegistration().getRedirectUris())) {
 			// TODO Add OAuth2ErrorCodes.INVALID_REDIRECT_URI
-			throw new OAuth2AuthenticationException("invalid_redirect_uri");
+			throwInvalidClientRegistration("invalid_redirect_uri", OidcClientMetadataClaimNames.REDIRECT_URIS);
+		}
+
+		if (!isValidTokenEndpointAuthenticationMethod(clientRegistrationAuthentication.getClientRegistration())) {
+			// TODO Add OAuth2ErrorCodes.INVALID_CLIENT_METADATA
+			throwInvalidClientRegistration("invalid_client_metadata", OidcClientMetadataClaimNames.TOKEN_ENDPOINT_AUTH_METHOD);
 		}
 
 		RegisteredClient registeredClient = createClient(clientRegistrationAuthentication.getClientRegistration());
@@ -283,6 +293,16 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 				.idTokenSignedResponseAlgorithm(registeredClient.getTokenSettings().getIdTokenSignatureAlgorithm().getName())
 				.registrationClientUrl(registrationClientUri);
 
+		ClientSettings clientSettings = registeredClient.getClientSettings();
+
+		if (clientSettings.getJwkSetUrl() != null) {
+			builder.jwkSetUrl(clientSettings.getJwkSetUrl());
+		}
+
+		if (clientSettings.getTokenEndpointAuthenticationSigningAlgorithm() != null) {
+			builder.tokenEndpointAuthenticationSigningAlgorithm(clientSettings.getTokenEndpointAuthenticationSigningAlgorithm().getName());
+		}
+
 		return builder;
 		// @formatter:on
 	}
@@ -328,6 +348,30 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 		return true;
 	}
 
+	private static boolean isValidTokenEndpointAuthenticationMethod(OidcClientRegistration clientRegistration) {
+		String authenticationMethod = clientRegistration.getTokenEndpointAuthenticationMethod();
+		String authenticationSigningAlgorithm = clientRegistration.getTokenEndpointAuthenticationSigningAlgorithm();
+
+		if (!ClientAuthenticationMethod.PRIVATE_KEY_JWT.getValue().equals(authenticationMethod) &&
+				!ClientAuthenticationMethod.CLIENT_SECRET_JWT.getValue().equals(authenticationMethod)) {
+			return !StringUtils.hasText(authenticationSigningAlgorithm);
+		}
+
+		if ("none".equals(authenticationSigningAlgorithm)) {
+			return false;
+		}
+
+		if (ClientAuthenticationMethod.PRIVATE_KEY_JWT.getValue().equals(authenticationMethod)) {
+			return clientRegistration.getJwkSetUrl() != null &&
+					(!StringUtils.hasText(authenticationSigningAlgorithm) ||
+							SignatureAlgorithm.from(authenticationSigningAlgorithm) != null);
+		} else {
+			// client_secret_jwt
+			return !StringUtils.hasText(authenticationSigningAlgorithm) ||
+					MacAlgorithm.from(authenticationSigningAlgorithm) != null;
+		}
+	}
+
 	private static RegisteredClient createClient(OidcClientRegistration clientRegistration) {
 		// @formatter:off
 		RegisteredClient.Builder builder = RegisteredClient.withId(UUID.randomUUID().toString())
@@ -338,6 +382,10 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 
 		if (ClientAuthenticationMethod.CLIENT_SECRET_POST.getValue().equals(clientRegistration.getTokenEndpointAuthenticationMethod())) {
 			builder.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_POST);
+		} else if (ClientAuthenticationMethod.CLIENT_SECRET_JWT.getValue().equals(clientRegistration.getTokenEndpointAuthenticationMethod())) {
+			builder.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_JWT);
+		} else if (ClientAuthenticationMethod.PRIVATE_KEY_JWT.getValue().equals(clientRegistration.getTokenEndpointAuthenticationMethod())) {
+			builder.clientAuthenticationMethod(ClientAuthenticationMethod.PRIVATE_KEY_JWT);
 		} else {
 			builder.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC);
 		}
@@ -362,17 +410,41 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 					scopes.addAll(clientRegistration.getScopes()));
 		}
 
+		ClientSettings.Builder clientSettingsBuilder = ClientSettings.builder()
+				.requireProofKey(true)
+				.requireAuthorizationConsent(true);
+
+		if (ClientAuthenticationMethod.CLIENT_SECRET_JWT.getValue().equals(clientRegistration.getTokenEndpointAuthenticationMethod())) {
+			MacAlgorithm macAlgorithm = MacAlgorithm.from(clientRegistration.getTokenEndpointAuthenticationSigningAlgorithm());
+			if (macAlgorithm == null) {
+				macAlgorithm = MacAlgorithm.HS256;
+			}
+			clientSettingsBuilder.tokenEndpointAuthenticationSigningAlgorithm(macAlgorithm);
+		} else if (ClientAuthenticationMethod.PRIVATE_KEY_JWT.getValue().equals(clientRegistration.getTokenEndpointAuthenticationMethod())) {
+			SignatureAlgorithm signatureAlgorithm = SignatureAlgorithm.from(clientRegistration.getTokenEndpointAuthenticationSigningAlgorithm());
+			if (signatureAlgorithm == null) {
+				signatureAlgorithm = SignatureAlgorithm.RS256;
+			}
+			clientSettingsBuilder.tokenEndpointAuthenticationSigningAlgorithm(signatureAlgorithm);
+			clientSettingsBuilder.jwkSetUrl(clientRegistration.getJwkSetUrl().toString());
+		}
+
 		builder
-				.clientSettings(ClientSettings.builder()
-						.requireProofKey(true)
-						.requireAuthorizationConsent(true)
-						.build())
+				.clientSettings(clientSettingsBuilder.build())
 				.tokenSettings(TokenSettings.builder()
 						.idTokenSignatureAlgorithm(SignatureAlgorithm.RS256)
 						.build());
 
 		return builder.build();
 		// @formatter:on
+	}
+
+	private static void throwInvalidClientRegistration(String errorCode, String fieldName) {
+		OAuth2Error error = new OAuth2Error(
+				errorCode,
+				"Invalid Client Registration: " + fieldName,
+				"https://openid.net/specs/openid-connect-registration-1_0.html#RegistrationError");
+		throw new OAuth2AuthenticationException(error);
 	}
 
 }

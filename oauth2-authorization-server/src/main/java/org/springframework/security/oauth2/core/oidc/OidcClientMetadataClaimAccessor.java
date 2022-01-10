@@ -20,7 +20,10 @@ import java.time.Instant;
 import java.util.List;
 
 import org.springframework.security.oauth2.core.ClaimAccessor;
+import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
+import org.springframework.security.oauth2.jose.jws.JwsAlgorithm;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
+import org.springframework.security.oauth2.jwt.Jwt;
 
 /**
  * A {@link ClaimAccessor} for the "claims" that are contained
@@ -100,6 +103,18 @@ public interface OidcClientMetadataClaimAccessor extends ClaimAccessor {
 	}
 
 	/**
+	 * Returns the {@link JwsAlgorithm JWS} algorithm that must be used for signing the {@link Jwt JWT} used to authenticate
+	 * the Client at the Token Endpoint for the {@link ClientAuthenticationMethod#PRIVATE_KEY_JWT private_key_jwt} and
+	 * {@link ClientAuthenticationMethod#CLIENT_SECRET_JWT client_secret_jwt} authentication methods {@code (token_endpoint_auth_signing_alg)}.
+	 *
+	 * @return the {@link JwsAlgorithm JWS} algorithm that must be used for signing the {@link Jwt JWT} used to authenticate the Client at the Token Endpoint
+	 * @since 0.2.2
+	 */
+	default String getTokenEndpointAuthenticationSigningAlgorithm() {
+		return getClaimAsString(OidcClientMetadataClaimNames.TOKEN_ENDPOINT_AUTH_SIGNING_ALG);
+	}
+
+	/**
 	 * Returns the OAuth 2.0 {@code grant_type} values that the Client will restrict itself to using {@code (grant_types)}.
 	 *
 	 * @return the OAuth 2.0 {@code grant_type} values that the Client will restrict itself to using
@@ -124,6 +139,16 @@ public interface OidcClientMetadataClaimAccessor extends ClaimAccessor {
 	 */
 	default List<String> getScopes() {
 		return getClaimAsStringList(OidcClientMetadataClaimNames.SCOPE);
+	}
+
+	/**
+	 * Returns the {@code URL} for the Client's JSON Web Key Set {@code (jwks_uri)}.
+	 *
+	 * @return the {@code URL} for the Client's JSON Web Key Set {@code (jwks_uri)}
+	 * @since 0.2.2
+	 */
+	default URL getJwkSetUrl() {
+		return getClaimAsURL(OidcClientMetadataClaimNames.JWKS_URI);
 	}
 
 	/**

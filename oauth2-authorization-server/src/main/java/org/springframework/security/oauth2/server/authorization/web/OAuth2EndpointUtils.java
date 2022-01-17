@@ -28,7 +28,7 @@ import org.springframework.util.MultiValueMap;
  * @author Joe Grandja
  * @since 0.0.1
  */
-final class OAuth2EndpointUtils {
+public final class OAuth2EndpointUtils {
 
 	private OAuth2EndpointUtils() {
 	}

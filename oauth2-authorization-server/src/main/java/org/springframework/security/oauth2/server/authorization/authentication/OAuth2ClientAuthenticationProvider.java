@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 the original author or authors.
+ * Copyright 2020-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -228,7 +228,7 @@ public final class OAuth2ClientAuthenticationProvider implements AuthenticationP
 				(String) parameters.get(OAuth2ParameterNames.CODE),
 				AUTHORIZATION_CODE_TOKEN_TYPE);
 		if (authorization == null) {
-			throwInvalidClient(OAuth2ParameterNames.CODE);
+			throwInvalidGrant(OAuth2ParameterNames.CODE);
 		}
 
 		OAuth2AuthorizationRequest authorizationRequest = authorization.getAttribute(
@@ -238,7 +238,7 @@ public final class OAuth2ClientAuthenticationProvider implements AuthenticationP
 				.get(PkceParameterNames.CODE_CHALLENGE);
 		if (!StringUtils.hasText(codeChallenge)) {
 			if (registeredClient.getClientSettings().isRequireProofKey()) {
-				throwInvalidClient(PkceParameterNames.CODE_CHALLENGE);
+				throwInvalidGrant(PkceParameterNames.CODE_CHALLENGE);
 			} else {
 				return false;
 			}
@@ -248,7 +248,7 @@ public final class OAuth2ClientAuthenticationProvider implements AuthenticationP
 				.get(PkceParameterNames.CODE_CHALLENGE_METHOD);
 		String codeVerifier = (String) parameters.get(PkceParameterNames.CODE_VERIFIER);
 		if (!codeVerifierValid(codeVerifier, codeChallenge, codeChallengeMethod)) {
-			throwInvalidClient(PkceParameterNames.CODE_VERIFIER);
+			throwInvalidGrant(PkceParameterNames.CODE_VERIFIER);
 		}
 
 		return true;
@@ -291,10 +291,20 @@ public final class OAuth2ClientAuthenticationProvider implements AuthenticationP
 		throw new OAuth2AuthenticationException(error, error.toString(), cause);
 	}
 
+	private static void throwInvalidGrant(String parameterName) {
+		OAuth2Error error = new OAuth2Error(
+				OAuth2ErrorCodes.INVALID_GRANT,
+				"Client authentication failed: " + parameterName,
+				null
+		);
+		throw new OAuth2AuthenticationException(error);
+	}
+
 	private static class JwtClientAssertionDecoderFactory implements JwtDecoderFactory<RegisteredClient> {
 		private static final String JWT_CLIENT_AUTHENTICATION_ERROR_URI = "https://datatracker.ietf.org/doc/html/rfc7523#section-3";
 
 		private static final Map<JwsAlgorithm, String> JCA_ALGORITHM_MAPPINGS;
+
 		static {
 			Map<JwsAlgorithm, String> mappings = new HashMap<>();
 			mappings.put(MacAlgorithm.HS256, "HmacSHA256");

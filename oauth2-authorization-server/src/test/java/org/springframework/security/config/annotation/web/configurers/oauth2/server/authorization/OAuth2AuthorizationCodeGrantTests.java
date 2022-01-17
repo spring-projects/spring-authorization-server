@@ -396,7 +396,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 	}
 
 	@Test
-	public void requestWhenConfidentialClientWithPkceAndMissingCodeVerifierThenUnauthorized() throws Exception {
+	public void requestWhenConfidentialClientWithPkceAndMissingCodeVerifierThenBadRequest() throws Exception {
 		this.spring.register(AuthorizationServerConfiguration.class).autowire();
 
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
@@ -421,7 +421,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 				.params(getTokenRequestParameters(registeredClient, authorizationCodeAuthorization))
 				.param(OAuth2ParameterNames.CLIENT_ID, registeredClient.getClientId())
 				.header(HttpHeaders.AUTHORIZATION, getAuthorizationHeader(registeredClient)))
-				.andExpect(status().isUnauthorized());
+				.andExpect(status().isBadRequest());
 	}
 
 	@Test

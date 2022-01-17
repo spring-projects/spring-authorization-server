@@ -279,7 +279,7 @@ public class OAuth2ClientAuthenticationProviderTests {
 				.isInstanceOf(OAuth2AuthenticationException.class)
 				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
 				.satisfies(error -> {
-					assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_CLIENT);
+					assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_GRANT);
 					assertThat(error.getDescription()).contains(OAuth2ParameterNames.CODE);
 				});
 	}
@@ -305,7 +305,7 @@ public class OAuth2ClientAuthenticationProviderTests {
 				.isInstanceOf(OAuth2AuthenticationException.class)
 				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
 				.satisfies(error -> {
-					assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_CLIENT);
+					assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_GRANT);
 					assertThat(error.getDescription()).contains(PkceParameterNames.CODE_VERIFIER);
 				});
 	}
@@ -331,7 +331,7 @@ public class OAuth2ClientAuthenticationProviderTests {
 				.isInstanceOf(OAuth2AuthenticationException.class)
 				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
 				.satisfies(error -> {
-					assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_CLIENT);
+					assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_GRANT);
 					assertThat(error.getDescription()).contains(PkceParameterNames.CODE_VERIFIER);
 				});
 	}
@@ -357,7 +357,7 @@ public class OAuth2ClientAuthenticationProviderTests {
 				.isInstanceOf(OAuth2AuthenticationException.class)
 				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
 				.satisfies(error -> {
-					assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_CLIENT);
+					assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_GRANT);
 					assertThat(error.getDescription()).contains(PkceParameterNames.CODE_VERIFIER);
 				});
 	}
@@ -383,7 +383,7 @@ public class OAuth2ClientAuthenticationProviderTests {
 				.isInstanceOf(OAuth2AuthenticationException.class)
 				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
 				.satisfies(error -> {
-					assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_CLIENT);
+					assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_GRANT);
 					assertThat(error.getDescription()).contains(PkceParameterNames.CODE_VERIFIER);
 				});
 	}

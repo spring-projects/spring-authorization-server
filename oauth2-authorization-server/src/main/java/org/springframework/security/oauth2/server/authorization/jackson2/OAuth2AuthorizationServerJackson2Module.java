@@ -15,18 +15,20 @@
  */
 package org.springframework.security.oauth2.server.authorization.jackson2;
 
-import java.time.Duration;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-
 import com.fasterxml.jackson.core.Version;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-
 import org.springframework.security.jackson2.SecurityJackson2Modules;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
+import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsentResource;
+import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationResource;
+import org.springframework.security.oauth2.server.authorization.client.RegisteredClientResource;
+
+import java.time.Duration;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 
 /**
  * Jackson {@code Module} for {@code spring-authorization-server}, that registers the
@@ -78,6 +80,10 @@ public class OAuth2AuthorizationServerJackson2Module extends SimpleModule {
 		context.setMixInAnnotations(Duration.class, DurationMixin.class);
 		context.setMixInAnnotations(SignatureAlgorithm.class, JwsAlgorithmMixin.class);
 		context.setMixInAnnotations(MacAlgorithm.class, JwsAlgorithmMixin.class);
+		context.setMixInAnnotations(RegisteredClientResource.class, ResourceMixin.class);
+		context.setMixInAnnotations(OAuth2AuthorizationResource.class, ResourceMixin.class);
+		context.setMixInAnnotations(OAuth2AuthorizationResource.OAuth2TokenResource.class, ResourceMixin.class);
+		context.setMixInAnnotations(OAuth2AuthorizationConsentResource.class, ResourceMixin.class);
 	}
 
 }

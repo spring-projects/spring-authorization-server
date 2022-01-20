@@ -52,11 +52,6 @@ public interface OAuth2AuthorizationServerMetadataClaimNames {
 	String JWKS_URI = "jwks_uri";
 
 	/**
-	 * {@code userinfo_endpoint} - the {@code URL} of the OAuth 2.0 UserInfo Endpoint
-	 */
-	String USER_INFO_ENDPOINT = "userinfo_endpoint";
-
-	/**
 	 * {@code scopes_supported} - the OAuth 2.0 {@code scope} values supported
 	 */
 	String SCOPES_SUPPORTED = "scopes_supported";

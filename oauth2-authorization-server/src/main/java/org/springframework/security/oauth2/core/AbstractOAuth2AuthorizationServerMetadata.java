@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 the original author or authors.
+ * Copyright 2020-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -136,16 +136,6 @@ public abstract class AbstractOAuth2AuthorizationServerMetadata implements OAuth
 		 */
 		public B jwkSetUrl(String jwkSetUrl) {
 			return claim(OAuth2AuthorizationServerMetadataClaimNames.JWKS_URI, jwkSetUrl);
-		}
-
-		/**
-		 * Use this {@code userinfo_endpoint} in the resulting {@link AbstractOAuth2AuthorizationServerMetadata}, OPTIONAL.
-		 *
-		 * @param userInfoEndpoint the {@code URL} of the OAuth 2.0 UserInfo Endpoint
-		 * @return the {@link AbstractBuilder} for further configuration
-		 */
-		public B userInfoEndpoint(String userInfoEndpoint) {
-			return claim(OAuth2AuthorizationServerMetadataClaimNames.USER_INFO_ENDPOINT, userInfoEndpoint);
 		}
 
 		/**
@@ -353,9 +343,6 @@ public abstract class AbstractOAuth2AuthorizationServerMetadata implements OAuth
 			if (getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.JWKS_URI) != null) {
 				validateURL(getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.JWKS_URI), "jwksUri must be a valid URL");
 			}
-			if (getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.USER_INFO_ENDPOINT) != null) {
-				validateURL(getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.USER_INFO_ENDPOINT), "userInfoEndpoint must be a valid URL");
-			}
 			if (getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.SCOPES_SUPPORTED) != null) {
 				Assert.isInstanceOf(List.class, getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.SCOPES_SUPPORTED), "scopes must be of type List");
 				Assert.notEmpty((List<?>) getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.SCOPES_SUPPORTED), "scopes cannot be empty");
@@ -404,7 +391,7 @@ public abstract class AbstractOAuth2AuthorizationServerMetadata implements OAuth
 			valuesConsumer.accept(values);
 		}
 
-		private static void validateURL(Object url, String errorMessage) {
+		protected static void validateURL(Object url, String errorMessage) {
 			if (URL.class.isAssignableFrom(url.getClass())) {
 				return;
 			}

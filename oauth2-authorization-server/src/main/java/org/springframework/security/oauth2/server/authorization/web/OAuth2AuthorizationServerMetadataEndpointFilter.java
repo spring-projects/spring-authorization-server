@@ -86,7 +86,6 @@ public final class OAuth2AuthorizationServerMetadataEndpointFilter extends OnceP
 				.tokenEndpoint(asUrl(issuer, this.providerSettings.getTokenEndpoint()))
 				.tokenEndpointAuthenticationMethods(clientAuthenticationMethods())
 				.jwkSetUrl(asUrl(issuer, this.providerSettings.getJwkSetEndpoint()))
-				.userInfoEndpoint(asUrl(this.providerSettings.getIssuer(), this.providerSettings.getOidcUserInfoEndpoint()))
 				.responseType(OAuth2AuthorizationResponseType.CODE.getValue())
 				.grantType(AuthorizationGrantType.AUTHORIZATION_CODE.getValue())
 				.grantType(AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())

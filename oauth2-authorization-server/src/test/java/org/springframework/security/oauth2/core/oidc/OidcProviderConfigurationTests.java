@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 the original author or authors.
+ * Copyright 2020-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,6 +59,7 @@ public class OidcProviderConfigurationTests {
 				.grantType("client_credentials")
 				.subjectType("public")
 				.idTokenSigningAlgorithm("RS256")
+				.userInfoEndpoint("https://example.com/issuer1/userinfo")
 				.tokenEndpointAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue())
 				.claim("a-claim", "a-value")
 				.build();
@@ -72,6 +73,7 @@ public class OidcProviderConfigurationTests {
 		assertThat(providerConfiguration.getGrantTypes()).containsExactlyInAnyOrder("authorization_code", "client_credentials");
 		assertThat(providerConfiguration.getSubjectTypes()).containsExactly("public");
 		assertThat(providerConfiguration.getIdTokenSigningAlgorithms()).containsExactly("RS256");
+		assertThat(providerConfiguration.getUserInfoEndpoint()).isEqualTo(url("https://example.com/issuer1/userinfo"));
 		assertThat(providerConfiguration.getTokenEndpointAuthenticationMethods()).containsExactly(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue());
 		assertThat(providerConfiguration.<String>getClaim("a-claim")).isEqualTo("a-value");
 	}
@@ -112,6 +114,7 @@ public class OidcProviderConfigurationTests {
 		claims.put(OidcProviderMetadataClaimNames.RESPONSE_TYPES_SUPPORTED, Collections.singletonList("code"));
 		claims.put(OidcProviderMetadataClaimNames.SUBJECT_TYPES_SUPPORTED, Collections.singletonList("public"));
 		claims.put(OidcProviderMetadataClaimNames.ID_TOKEN_SIGNING_ALG_VALUES_SUPPORTED, Collections.singletonList("RS256"));
+		claims.put(OidcProviderMetadataClaimNames.USER_INFO_ENDPOINT, "https://example.com/issuer1/userinfo");
 		claims.put("some-claim", "some-value");
 
 		OidcProviderConfiguration providerConfiguration = OidcProviderConfiguration.withClaims(claims).build();
@@ -125,6 +128,7 @@ public class OidcProviderConfigurationTests {
 		assertThat(providerConfiguration.getGrantTypes()).isNull();
 		assertThat(providerConfiguration.getSubjectTypes()).containsExactly("public");
 		assertThat(providerConfiguration.getIdTokenSigningAlgorithms()).containsExactly("RS256");
+		assertThat(providerConfiguration.getUserInfoEndpoint()).isEqualTo(url("https://example.com/issuer1/userinfo"));
 		assertThat(providerConfiguration.getTokenEndpointAuthenticationMethods()).isNull();
 		assertThat(providerConfiguration.<String>getClaim("some-claim")).isEqualTo("some-value");
 	}
@@ -140,6 +144,7 @@ public class OidcProviderConfigurationTests {
 		claims.put(OidcProviderMetadataClaimNames.RESPONSE_TYPES_SUPPORTED, Collections.singletonList("code"));
 		claims.put(OidcProviderMetadataClaimNames.SUBJECT_TYPES_SUPPORTED, Collections.singletonList("public"));
 		claims.put(OidcProviderMetadataClaimNames.ID_TOKEN_SIGNING_ALG_VALUES_SUPPORTED, Collections.singletonList("RS256"));
+		claims.put(OidcProviderMetadataClaimNames.USER_INFO_ENDPOINT, url("https://example.com/issuer1/userinfo"));
 		claims.put("some-claim", "some-value");
 
 		OidcProviderConfiguration providerConfiguration = OidcProviderConfiguration.withClaims(claims).build();
@@ -153,6 +158,7 @@ public class OidcProviderConfigurationTests {
 		assertThat(providerConfiguration.getGrantTypes()).isNull();
 		assertThat(providerConfiguration.getSubjectTypes()).containsExactly("public");
 		assertThat(providerConfiguration.getIdTokenSigningAlgorithms()).containsExactly("RS256");
+		assertThat(providerConfiguration.getUserInfoEndpoint()).isEqualTo(url("https://example.com/issuer1/userinfo"));
 		assertThat(providerConfiguration.getTokenEndpointAuthenticationMethods()).isNull();
 		assertThat(providerConfiguration.<String>getClaim("some-claim")).isEqualTo("some-value");
 	}
@@ -378,6 +384,16 @@ public class OidcProviderConfigurationTests {
 		assertThatIllegalArgumentException()
 				.isThrownBy(builder::build)
 				.withMessageContaining("idTokenSigningAlgorithms cannot be empty");
+	}
+
+	@Test
+	public void buildWhenUserInfoEndpointNotUrlThenThrowIllegalArgumentException() {
+		OidcProviderConfiguration.Builder builder = this.minimalConfigurationBuilder
+				.claims((claims) -> claims.put(OidcProviderMetadataClaimNames.USER_INFO_ENDPOINT, "not an url"));
+
+		assertThatIllegalArgumentException()
+				.isThrownBy(builder::build)
+				.withMessage("userInfoEndpoint must be a valid URL");
 	}
 
 	@Test

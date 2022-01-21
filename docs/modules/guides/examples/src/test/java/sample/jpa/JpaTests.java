@@ -82,7 +82,7 @@ import static sample.util.RegisteredClients.messagingClient;
 public class JpaTests {
 
 	private static final Pattern HIDDEN_STATE_INPUT_PATTERN = Pattern.compile(".+<input type=\"hidden\" name=\"state\" value=\"([^\"]+)\">.+");
-	private static final TypeReference<Map<String, Object>> TOKEN_RESPONSE_TYPE_REFERENCE = new TypeReference<Map<String, Object>>() {
+	private static final TypeReference<Map<String, Object>> TOKEN_RESPONSE_TYPE_REFERENCE = new TypeReference<>() {
 	};
 
 	public final SpringTestContext spring = new SpringTestContext(this);

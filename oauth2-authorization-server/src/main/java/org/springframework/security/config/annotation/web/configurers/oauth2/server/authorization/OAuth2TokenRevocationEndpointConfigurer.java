@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 the original author or authors.
+ * Copyright 2020-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,11 +48,11 @@ import org.springframework.security.web.util.matcher.RequestMatcher;
  * @see OAuth2TokenRevocationEndpointFilter
  */
 public final class OAuth2TokenRevocationEndpointConfigurer extends AbstractOAuth2Configurer {
-	private final List<AuthenticationProvider> authenticationProviders = new LinkedList<>();
+	private RequestMatcher requestMatcher;
 	private AuthenticationConverter revocationRequestConverter;
+	private final List<AuthenticationProvider> authenticationProviders = new LinkedList<>();
 	private AuthenticationSuccessHandler revocationResponseHandler;
 	private AuthenticationFailureHandler errorResponseHandler;
-	private RequestMatcher requestMatcher;
 
 	/**
 	 * Restrict for internal use only.
@@ -130,13 +130,13 @@ public final class OAuth2TokenRevocationEndpointConfigurer extends AbstractOAuth
 				new OAuth2TokenRevocationEndpointFilter(
 						authenticationManager, providerSettings.getTokenRevocationEndpoint());
 		if (this.revocationRequestConverter != null) {
-			revocationEndpointFilter.setRevocationRequestConverter(this.revocationRequestConverter);
+			revocationEndpointFilter.setAuthenticationConverter(this.revocationRequestConverter);
 		}
 		if (this.revocationResponseHandler != null) {
-			revocationEndpointFilter.setRevocationResponseHandler(this.revocationResponseHandler);
+			revocationEndpointFilter.setAuthenticationSuccessHandler(this.revocationResponseHandler);
 		}
 		if (this.errorResponseHandler != null) {
-			revocationEndpointFilter.setErrorResponseHandler(this.errorResponseHandler);
+			revocationEndpointFilter.setAuthenticationFailureHandler(this.errorResponseHandler);
 		}
 		builder.addFilterAfter(postProcess(revocationEndpointFilter), FilterSecurityInterceptor.class);
 	}

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 the original author or authors.
+ * Copyright 2020-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,13 +66,12 @@ public final class OAuth2TokenRevocationEndpointFilter extends OncePerRequestFil
 
 	private final AuthenticationManager authenticationManager;
 	private final RequestMatcher tokenRevocationEndpointMatcher;
-	private AuthenticationConverter revocationRequestConverter =
+	private AuthenticationConverter authenticationConverter =
 			new DefaultTokenRevocationAuthenticationConverter();
 	private final HttpMessageConverter<OAuth2Error> errorHttpResponseConverter =
 			new OAuth2ErrorHttpMessageConverter();
-
-	private AuthenticationSuccessHandler revocationResponseHandler = this::sendRevocationSuccessResponse;
-	private AuthenticationFailureHandler errorResponseHandler = this::sendErrorResponse;
+	private AuthenticationSuccessHandler authenticationSuccessHandler = this::sendRevocationSuccessResponse;
+	private AuthenticationFailureHandler authenticationFailureHandler = this::sendErrorResponse;
 
 	/**
 	 * Constructs an {@code OAuth2TokenRevocationEndpointFilter} using the provided parameters.
@@ -108,13 +107,13 @@ public final class OAuth2TokenRevocationEndpointFilter extends OncePerRequestFil
 		}
 
 		try {
-			Authentication tokenRevocationAuthentication = this.revocationRequestConverter.convert(request);
-
-			Authentication authentication = this.authenticationManager.authenticate(tokenRevocationAuthentication);
-			this.revocationResponseHandler.onAuthenticationSuccess(request, response, authentication);
+			Authentication tokenRevocationAuthentication = this.authenticationConverter.convert(request);
+			Authentication tokenRevocationAuthenticationResult =
+					this.authenticationManager.authenticate(tokenRevocationAuthentication);
+			this.authenticationSuccessHandler.onAuthenticationSuccess(request, response, tokenRevocationAuthenticationResult);
 		} catch (OAuth2AuthenticationException ex) {
 			SecurityContextHolder.clearContext();
-			this.errorResponseHandler.onAuthenticationFailure(request, response, ex);
+			this.authenticationFailureHandler.onAuthenticationFailure(request, response, ex);
 		}
 	}
 
@@ -122,35 +121,35 @@ public final class OAuth2TokenRevocationEndpointFilter extends OncePerRequestFil
 	 * Sets the {@link AuthenticationConverter} used when attempting to extract a Revoke Token Request from {@link HttpServletRequest}
 	 * to an instance of {@link OAuth2TokenRevocationAuthenticationToken} used for authenticating the client.
 	 *
-	 * @param revocationRequestConverter the {@link AuthenticationConverter} used when attempting to extract client credentials from {@link HttpServletRequest}
+	 * @param authenticationConverter the {@link AuthenticationConverter} used when attempting to extract client credentials from {@link HttpServletRequest}
 	 * @since 0.2.2
 	 */
-	public void setRevocationRequestConverter(AuthenticationConverter revocationRequestConverter) {
-		Assert.notNull(revocationRequestConverter, "revocationRequestConverter cannot be null");
-		this.revocationRequestConverter = revocationRequestConverter;
+	public void setAuthenticationConverter(AuthenticationConverter authenticationConverter) {
+		Assert.notNull(authenticationConverter, "authenticationConverter cannot be null");
+		this.authenticationConverter = authenticationConverter;
 	}
 
 	/**
 	 * Sets the {@link AuthenticationSuccessHandler} used for handling an {@link OAuth2TokenRevocationAuthenticationToken}.
 	 *
-	 * @param revocationResponseHandler the {@link AuthenticationSuccessHandler} used for handling an {@link OAuth2TokenRevocationAuthenticationToken}
+	 * @param authenticationSuccessHandler the {@link AuthenticationSuccessHandler} used for handling an {@link OAuth2TokenRevocationAuthenticationToken}
 	 * @since 0.2.2
 	 */
-	public void setRevocationResponseHandler(AuthenticationSuccessHandler revocationResponseHandler) {
-		Assert.notNull(revocationResponseHandler, "revocationResponseHandler cannot be null");
-		this.revocationResponseHandler = revocationResponseHandler;
+	public void setAuthenticationSuccessHandler(AuthenticationSuccessHandler authenticationSuccessHandler) {
+		Assert.notNull(authenticationSuccessHandler, "authenticationSuccessHandler cannot be null");
+		this.authenticationSuccessHandler = authenticationSuccessHandler;
 	}
 
 	/**
 	 * Sets the {@link AuthenticationFailureHandler} used for handling an {@link OAuth2AuthenticationException}
 	 * and returning the {@link OAuth2Error Error Response}.
 	 *
-	 * @param errorResponseHandler the {@link AuthenticationFailureHandler} used for handling an {@link OAuth2AuthenticationException}
+	 * @param authenticationFailureHandler the {@link AuthenticationFailureHandler} used for handling an {@link OAuth2AuthenticationException}
 	 * @since 0.2.2
 	 */
-	public void setErrorResponseHandler(AuthenticationFailureHandler errorResponseHandler) {
-		Assert.notNull(errorResponseHandler, "errorResponseHandler cannot be null");
-		this.errorResponseHandler = errorResponseHandler;
+	public void setAuthenticationFailureHandler(AuthenticationFailureHandler authenticationFailureHandler) {
+		Assert.notNull(authenticationFailureHandler, "authenticationFailureHandler cannot be null");
+		this.authenticationFailureHandler = authenticationFailureHandler;
 	}
 
 	private void sendRevocationSuccessResponse(HttpServletRequest request, HttpServletResponse response, Authentication authentication) {
@@ -167,7 +166,7 @@ public final class OAuth2TokenRevocationEndpointFilter extends OncePerRequestFil
 
 	private static void throwError(String errorCode, String parameterName) {
 		OAuth2Error error = new OAuth2Error(errorCode, "OAuth 2.0 Token Revocation Parameter: " + parameterName,
-				"https://tools.ietf.org/html/rfc7009#section-2.1");
+				"https://datatracker.ietf.org/doc/html/rfc7009#section-2.1");
 		throw new OAuth2AuthenticationException(error);
 	}
 

@@ -8,7 +8,7 @@ asciidoc:
 content:
   sources:
     - url: ../
-      branches: [jpa-guide]
+      branches: [guides]
       start_path: docs
 ui:
   bundle:

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 the original author or authors.
+ * Copyright 2020-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -94,6 +94,7 @@ public class OidcProviderConfigurationHttpMessageConverterTests {
 				+ "		\"authorization_endpoint\": \"https://example.com/issuer1/oauth2/authorize\",\n"
 				+ "		\"token_endpoint\": \"https://example.com/issuer1/oauth2/token\",\n"
 				+ "		\"jwks_uri\": \"https://example.com/issuer1/oauth2/jwks\",\n"
+				+ "		\"userinfo_endpoint\": \"https://example.com/issuer1/userinfo\",\n"
 				+ "		\"scopes_supported\": [\"openid\"],\n"
 				+ "		\"response_types_supported\": [\"code\"],\n"
 				+ "		\"grant_types_supported\": [\"authorization_code\", \"client_credentials\"],\n"
@@ -112,6 +113,7 @@ public class OidcProviderConfigurationHttpMessageConverterTests {
 		assertThat(providerConfiguration.getAuthorizationEndpoint()).isEqualTo(new URL("https://example.com/issuer1/oauth2/authorize"));
 		assertThat(providerConfiguration.getTokenEndpoint()).isEqualTo(new URL("https://example.com/issuer1/oauth2/token"));
 		assertThat(providerConfiguration.getJwkSetUrl()).isEqualTo(new URL("https://example.com/issuer1/oauth2/jwks"));
+		assertThat(providerConfiguration.getUserInfoEndpoint()).isEqualTo(new URL("https://example.com/issuer1/userinfo"));
 		assertThat(providerConfiguration.getScopes()).containsExactly("openid");
 		assertThat(providerConfiguration.getResponseTypes()).containsExactly("code");
 		assertThat(providerConfiguration.getGrantTypes()).containsExactlyInAnyOrder("authorization_code", "client_credentials");
@@ -155,6 +157,7 @@ public class OidcProviderConfigurationHttpMessageConverterTests {
 						.authorizationEndpoint("https://example.com/issuer1/oauth2/authorize")
 						.tokenEndpoint("https://example.com/issuer1/oauth2/token")
 						.jwkSetUrl("https://example.com/issuer1/oauth2/jwks")
+						.userInfoEndpoint("https://example.com/issuer1/userinfo")
 						.scope("openid")
 						.responseType("code")
 						.grantType("authorization_code")
@@ -174,6 +177,7 @@ public class OidcProviderConfigurationHttpMessageConverterTests {
 		assertThat(providerConfigurationResponse).contains("\"authorization_endpoint\":\"https://example.com/issuer1/oauth2/authorize\"");
 		assertThat(providerConfigurationResponse).contains("\"token_endpoint\":\"https://example.com/issuer1/oauth2/token\"");
 		assertThat(providerConfigurationResponse).contains("\"jwks_uri\":\"https://example.com/issuer1/oauth2/jwks\"");
+		assertThat(providerConfigurationResponse).contains("\"userinfo_endpoint\":\"https://example.com/issuer1/userinfo\"");
 		assertThat(providerConfigurationResponse).contains("\"scopes_supported\":[\"openid\"]");
 		assertThat(providerConfigurationResponse).contains("\"response_types_supported\":[\"code\"]");
 		assertThat(providerConfigurationResponse).contains("\"grant_types_supported\":[\"authorization_code\",\"client_credentials\"]");

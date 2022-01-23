@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 the original author or authors.
+ * Copyright 2020-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,6 +56,8 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 import org.springframework.security.oauth2.server.authorization.config.ClientSettings;
 import org.springframework.security.oauth2.server.authorization.config.ProviderSettings;
 import org.springframework.security.oauth2.server.authorization.config.TokenSettings;
+import org.springframework.security.oauth2.server.authorization.context.ProviderContext;
+import org.springframework.security.oauth2.server.authorization.context.ProviderContextHolder;
 import org.springframework.security.oauth2.server.resource.authentication.AbstractOAuth2TokenAuthenticationToken;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
@@ -85,7 +87,6 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 	private final RegisteredClientRepository registeredClientRepository;
 	private final OAuth2AuthorizationService authorizationService;
 	private JwtEncoder jwtEncoder;
-	private ProviderSettings providerSettings;
 
 	/**
 	 * Constructs an {@code OidcClientRegistrationAuthenticationProvider} using the provided parameters.
@@ -126,9 +127,8 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 		this.jwtEncoder = jwtEncoder;
 	}
 
-	@Autowired
+	@Deprecated
 	protected void setProviderSettings(ProviderSettings providerSettings) {
-		this.providerSettings = providerSettings;
 	}
 
 	@Override
@@ -233,8 +233,9 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 		authorizedScopes.add(DEFAULT_CLIENT_CONFIGURATION_AUTHORIZED_SCOPE);
 		authorizedScopes = Collections.unmodifiableSet(authorizedScopes);
 
+		String issuer = ProviderContextHolder.getProviderContext().getIssuer();
 		JwtClaimsSet claims = JwtUtils.accessTokenClaims(
-				registeredClient, this.providerSettings.getIssuer(), registeredClient.getClientId(), authorizedScopes)
+				registeredClient, issuer, registeredClient.getClientId(), authorizedScopes)
 				.build();
 
 		Jwt registrationAccessToken = this.jwtEncoder.encode(headers, claims);
@@ -283,8 +284,9 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 					scopes.addAll(registeredClient.getScopes()));
 		}
 
-		String registrationClientUri = UriComponentsBuilder.fromUriString(this.providerSettings.getIssuer())
-				.path(this.providerSettings.getOidcClientRegistrationEndpoint())
+		ProviderContext providerContext = ProviderContextHolder.getProviderContext();
+		String registrationClientUri = UriComponentsBuilder.fromUriString(providerContext.getIssuer())
+				.path(providerContext.getProviderSettings().getOidcClientRegistrationEndpoint())
 				.queryParam(OAuth2ParameterNames.CLIENT_ID, registeredClient.getClientId())
 				.toUriString();
 

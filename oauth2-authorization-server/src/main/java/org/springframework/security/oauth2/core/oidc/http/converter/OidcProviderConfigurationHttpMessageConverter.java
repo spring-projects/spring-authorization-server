@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright 2020-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -140,6 +140,7 @@ public class OidcProviderConfigurationHttpMessageConverter
 			claimConverters.put(OidcProviderMetadataClaimNames.TOKEN_ENDPOINT, urlConverter);
 			claimConverters.put(OidcProviderMetadataClaimNames.TOKEN_ENDPOINT_AUTH_METHODS_SUPPORTED, collectionStringConverter);
 			claimConverters.put(OidcProviderMetadataClaimNames.JWKS_URI, urlConverter);
+			claimConverters.put(OidcProviderMetadataClaimNames.USER_INFO_ENDPOINT, urlConverter);
 			claimConverters.put(OidcProviderMetadataClaimNames.RESPONSE_TYPES_SUPPORTED, collectionStringConverter);
 			claimConverters.put(OidcProviderMetadataClaimNames.GRANT_TYPES_SUPPORTED, collectionStringConverter);
 			claimConverters.put(OidcProviderMetadataClaimNames.SUBJECT_TYPES_SUPPORTED, collectionStringConverter);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 the original author or authors.
+ * Copyright 2020-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,9 @@ package org.springframework.security.oauth2.jwt;
  * @see <a target="_blank" href="https://datatracker.ietf.org/doc/html/rfc7516">JSON Web Encryption (JWE)</a>
  * @see <a target="_blank" href="https://datatracker.ietf.org/doc/html/rfc7515#section-3.1">JWS Compact Serialization</a>
  * @see <a target="_blank" href="https://datatracker.ietf.org/doc/html/rfc7516#section-3.1">JWE Compact Serialization</a>
+ * @deprecated See <a target="_blank" href="https://github.com/spring-projects/spring-authorization-server/issues/596">gh-596</a>
  */
+@Deprecated
 @FunctionalInterface
 public interface JwtEncoder {
 

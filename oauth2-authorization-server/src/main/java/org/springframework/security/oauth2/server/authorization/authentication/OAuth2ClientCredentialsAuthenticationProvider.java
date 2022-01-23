@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 the original author or authors.
+ * Copyright 2020-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.function.Consumer;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -38,6 +37,7 @@ import org.springframework.security.oauth2.server.authorization.OAuth2Authorizat
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenCustomizer;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.config.ProviderSettings;
+import org.springframework.security.oauth2.server.authorization.context.ProviderContextHolder;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 
@@ -62,7 +62,6 @@ public final class OAuth2ClientCredentialsAuthenticationProvider implements Auth
 	private final OAuth2AuthorizationService authorizationService;
 	private final JwtEncoder jwtEncoder;
 	private OAuth2TokenCustomizer<JwtEncodingContext> jwtCustomizer = (context) -> {};
-	private ProviderSettings providerSettings;
 
 	/**
 	 * Constructs an {@code OAuth2ClientCredentialsAuthenticationProvider} using the provided parameters.
@@ -90,9 +89,8 @@ public final class OAuth2ClientCredentialsAuthenticationProvider implements Auth
 		this.jwtCustomizer = jwtCustomizer;
 	}
 
-	@Autowired
+	@Deprecated
 	protected void setProviderSettings(ProviderSettings providerSettings) {
-		this.providerSettings = providerSettings;
 	}
 
 	@Override
@@ -118,7 +116,7 @@ public final class OAuth2ClientCredentialsAuthenticationProvider implements Auth
 			authorizedScopes = new LinkedHashSet<>(clientCredentialsAuthentication.getScopes());
 		}
 
-		String issuer = this.providerSettings != null ? this.providerSettings.getIssuer() : null;
+		String issuer = ProviderContextHolder.getProviderContext().getIssuer();
 
 		JoseHeader.Builder headersBuilder = JwtUtils.headers();
 		JwtClaimsSet.Builder claimsBuilder = JwtUtils.accessTokenClaims(

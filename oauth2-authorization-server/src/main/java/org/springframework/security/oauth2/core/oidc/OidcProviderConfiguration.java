@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 the original author or authors.
+ * Copyright 2020-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -119,6 +119,17 @@ public final class OidcProviderConfiguration extends AbstractOAuth2Authorization
 		}
 
 		/**
+		 * Use this {@code userinfo_endpoint} in the resulting {@link OidcProviderConfiguration}, OPTIONAL.
+		 *
+		 * @param userInfoEndpoint the {@code URL} of the OpenID Connect 1.0 UserInfo Endpoint
+		 * @return the {@link Builder} for further configuration
+		 * @since 0.2.2
+		 */
+		public Builder userInfoEndpoint(String userInfoEndpoint) {
+			return claim(OidcProviderMetadataClaimNames.USER_INFO_ENDPOINT, userInfoEndpoint);
+		}
+
+		/**
 		 * Validate the claims and build the {@link OidcProviderConfiguration}.
 		 * <p>
 		 * The following claims are REQUIRED:
@@ -144,6 +155,9 @@ public final class OidcProviderConfiguration extends AbstractOAuth2Authorization
 			Assert.notNull(getClaims().get(OidcProviderMetadataClaimNames.ID_TOKEN_SIGNING_ALG_VALUES_SUPPORTED), "idTokenSigningAlgorithms cannot be null");
 			Assert.isInstanceOf(List.class, getClaims().get(OidcProviderMetadataClaimNames.ID_TOKEN_SIGNING_ALG_VALUES_SUPPORTED), "idTokenSigningAlgorithms must be of type List");
 			Assert.notEmpty((List<?>) getClaims().get(OidcProviderMetadataClaimNames.ID_TOKEN_SIGNING_ALG_VALUES_SUPPORTED), "idTokenSigningAlgorithms cannot be empty");
+			if (getClaims().get(OidcProviderMetadataClaimNames.USER_INFO_ENDPOINT) != null) {
+				validateURL(getClaims().get(OidcProviderMetadataClaimNames.USER_INFO_ENDPOINT), "userInfoEndpoint must be a valid URL");
+			}
 		}
 
 		@SuppressWarnings("unchecked")

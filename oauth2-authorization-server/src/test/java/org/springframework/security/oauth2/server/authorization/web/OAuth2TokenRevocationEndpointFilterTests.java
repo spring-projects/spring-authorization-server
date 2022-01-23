@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 the original author or authors.
+ * Copyright 2020-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -101,24 +101,24 @@ public class OAuth2TokenRevocationEndpointFilterTests {
 	}
 
 	@Test
-	public void setRevocationRequestConverterWhenNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> this.filter.setRevocationRequestConverter(null))
+	public void setAuthenticationConverterWhenNullThenThrowIllegalArgumentException() {
+		assertThatThrownBy(() -> this.filter.setAuthenticationConverter(null))
 				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("revocationRequestConverter cannot be null");
+				.hasMessage("authenticationConverter cannot be null");
 	}
 
 	@Test
-	public void setRevocationResponseHandlerWhenNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> this.filter.setRevocationResponseHandler(null))
+	public void setAuthenticationSuccessHandlerWhenNullThenThrowIllegalArgumentException() {
+		assertThatThrownBy(() -> this.filter.setAuthenticationSuccessHandler(null))
 				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("revocationResponseHandler cannot be null");
+				.hasMessage("authenticationSuccessHandler cannot be null");
 	}
 
 	@Test
-	public void setErrorResponseHandlerWhenNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> this.filter.setErrorResponseHandler(null))
+	public void setAuthenticationFailureHandlerWhenNullThenThrowIllegalArgumentException() {
+		assertThatThrownBy(() -> this.filter.setAuthenticationFailureHandler(null))
 				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("errorResponseHandler cannot be null");
+				.hasMessage("authenticationFailureHandler cannot be null");
 	}
 
 	@Test
@@ -217,7 +217,7 @@ public class OAuth2TokenRevocationEndpointFilterTests {
 
 		AuthenticationConverter authenticationConverter = mock(AuthenticationConverter.class);
 		when(authenticationConverter.convert(any())).thenReturn(tokenRevocationAuthentication);
-		this.filter.setRevocationRequestConverter(authenticationConverter);
+		this.filter.setAuthenticationConverter(authenticationConverter);
 
 		when(this.authenticationManager.authenticate(any())).thenReturn(tokenRevocationAuthentication);
 
@@ -236,9 +236,6 @@ public class OAuth2TokenRevocationEndpointFilterTests {
 
 	@Test
 	public void doFilterWhenCustomAuthenticationSuccessHandlerThenUsed() throws Exception {
-		AuthenticationSuccessHandler authenticationSuccessHandler = mock(AuthenticationSuccessHandler.class);
-		this.filter.setRevocationResponseHandler(authenticationSuccessHandler);
-
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 		Authentication clientPrincipal = new OAuth2ClientAuthenticationToken(
 				registeredClient, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
@@ -249,6 +246,9 @@ public class OAuth2TokenRevocationEndpointFilterTests {
 		OAuth2TokenRevocationAuthenticationToken tokenRevocationAuthentication =
 				new OAuth2TokenRevocationAuthenticationToken(
 						accessToken, clientPrincipal);
+
+		AuthenticationSuccessHandler authenticationSuccessHandler = mock(AuthenticationSuccessHandler.class);
+		this.filter.setAuthenticationSuccessHandler(authenticationSuccessHandler);
 
 		when(this.authenticationManager.authenticate(any())).thenReturn(tokenRevocationAuthentication);
 
@@ -267,12 +267,12 @@ public class OAuth2TokenRevocationEndpointFilterTests {
 
 	@Test
 	public void doFilterWhenCustomAuthenticationFailureHandlerThenUsed() throws Exception {
-		AuthenticationFailureHandler authenticationFailureHandler = mock(AuthenticationFailureHandler.class);
-		this.filter.setErrorResponseHandler(authenticationFailureHandler);
-
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 		Authentication clientPrincipal = new OAuth2ClientAuthenticationToken(
 				registeredClient, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
+
+		AuthenticationFailureHandler authenticationFailureHandler = mock(AuthenticationFailureHandler.class);
+		this.filter.setAuthenticationFailureHandler(authenticationFailureHandler);
 
 		when(this.authenticationManager.authenticate(any())).thenThrow(OAuth2AuthenticationException.class);
 

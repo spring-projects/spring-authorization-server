@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 the original author or authors.
+ * Copyright 2020-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +19,15 @@ import javax.servlet.FilterChain;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.junit.After;
 import org.junit.Test;
 
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.oauth2.server.authorization.config.ProviderSettings;
+import org.springframework.security.oauth2.server.authorization.context.ProviderContext;
+import org.springframework.security.oauth2.server.authorization.context.ProviderContextHolder;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
@@ -40,6 +43,11 @@ import static org.mockito.Mockito.verifyNoInteractions;
  */
 public class OidcProviderConfigurationEndpointFilterTests {
 	private static final String DEFAULT_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI = "/.well-known/openid-configuration";
+
+	@After
+	public void cleanup() {
+		ProviderContextHolder.resetProviderContext();
+	}
 
 	@Test
 	public void constructorWhenProviderSettingsNullThenThrowIllegalArgumentException() {
@@ -82,16 +90,20 @@ public class OidcProviderConfigurationEndpointFilterTests {
 
 	@Test
 	public void doFilterWhenConfigurationRequestThenConfigurationResponse() throws Exception {
+		String issuer = "https://example.com/issuer1";
 		String authorizationEndpoint = "/oauth2/v1/authorize";
 		String tokenEndpoint = "/oauth2/v1/token";
 		String jwkSetEndpoint = "/oauth2/v1/jwks";
+		String userInfoEndpoint = "/userinfo";
 
 		ProviderSettings providerSettings = ProviderSettings.builder()
-				.issuer("https://example.com/issuer1")
+				.issuer(issuer)
 				.authorizationEndpoint(authorizationEndpoint)
 				.tokenEndpoint(tokenEndpoint)
 				.jwkSetEndpoint(jwkSetEndpoint)
+				.oidcUserInfoEndpoint(userInfoEndpoint)
 				.build();
+		ProviderContextHolder.setProviderContext(new ProviderContext(providerSettings, null));
 		OidcProviderConfigurationEndpointFilter filter =
 				new OidcProviderConfigurationEndpointFilter(providerSettings);
 
@@ -116,6 +128,7 @@ public class OidcProviderConfigurationEndpointFilterTests {
 		assertThat(providerConfigurationResponse).contains("\"grant_types_supported\":[\"authorization_code\",\"client_credentials\",\"refresh_token\"]");
 		assertThat(providerConfigurationResponse).contains("\"subject_types_supported\":[\"public\"]");
 		assertThat(providerConfigurationResponse).contains("\"id_token_signing_alg_values_supported\":[\"RS256\"]");
+		assertThat(providerConfigurationResponse).contains("\"userinfo_endpoint\":\"https://example.com/issuer1/userinfo\"");
 		assertThat(providerConfigurationResponse).contains("\"token_endpoint_auth_methods_supported\":[\"client_secret_basic\",\"client_secret_post\",\"client_secret_jwt\",\"private_key_jwt\"]");
 	}
 
@@ -124,6 +137,7 @@ public class OidcProviderConfigurationEndpointFilterTests {
 		ProviderSettings providerSettings = ProviderSettings.builder()
 				.issuer("https://this is an invalid URL")
 				.build();
+		ProviderContextHolder.setProviderContext(new ProviderContext(providerSettings, null));
 		OidcProviderConfigurationEndpointFilter filter =
 				new OidcProviderConfigurationEndpointFilter(providerSettings);
 

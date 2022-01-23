@@ -1,7 +1,0 @@
-.xref:index.adoc[Reference Manual]
-* xref:overview.adoc[Overview]
-* xref:getting-help.adoc[Getting Help]
-* xref:getting-started.adoc[Getting Started]
-* xref:configuration-model.adoc[Configuration Model]
-* xref:core-components.adoc[Core Components]
-* xref:protocol-endpoints.adoc[Protocol Endpoints]

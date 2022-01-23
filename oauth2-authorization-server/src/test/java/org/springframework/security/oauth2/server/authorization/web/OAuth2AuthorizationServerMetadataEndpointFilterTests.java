@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 the original author or authors.
+ * Copyright 2020-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +19,15 @@ import javax.servlet.FilterChain;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.junit.After;
 import org.junit.Test;
 
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.oauth2.server.authorization.config.ProviderSettings;
+import org.springframework.security.oauth2.server.authorization.context.ProviderContext;
+import org.springframework.security.oauth2.server.authorization.context.ProviderContextHolder;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
@@ -40,6 +43,11 @@ import static org.mockito.Mockito.verifyNoInteractions;
  */
 public class OAuth2AuthorizationServerMetadataEndpointFilterTests {
 	private static final String DEFAULT_OAUTH2_AUTHORIZATION_SERVER_METADATA_ENDPOINT_URI = "/.well-known/oauth-authorization-server";
+
+	@After
+	public void cleanup() {
+		ProviderContextHolder.resetProviderContext();
+	}
 
 	@Test
 	public void constructorWhenProviderSettingsNullThenThrowIllegalArgumentException() {
@@ -82,6 +90,7 @@ public class OAuth2AuthorizationServerMetadataEndpointFilterTests {
 
 	@Test
 	public void doFilterWhenAuthorizationServerMetadataRequestThenMetadataResponse() throws Exception {
+		String issuer = "https://example.com/issuer1";
 		String authorizationEndpoint = "/oauth2/v1/authorize";
 		String tokenEndpoint = "/oauth2/v1/token";
 		String jwkSetEndpoint = "/oauth2/v1/jwks";
@@ -89,13 +98,14 @@ public class OAuth2AuthorizationServerMetadataEndpointFilterTests {
 		String tokenIntrospectionEndpoint = "/oauth2/v1/introspect";
 
 		ProviderSettings providerSettings = ProviderSettings.builder()
-				.issuer("https://example.com/issuer1")
+				.issuer(issuer)
 				.authorizationEndpoint(authorizationEndpoint)
 				.tokenEndpoint(tokenEndpoint)
 				.jwkSetEndpoint(jwkSetEndpoint)
 				.tokenRevocationEndpoint(tokenRevocationEndpoint)
 				.tokenIntrospectionEndpoint(tokenIntrospectionEndpoint)
 				.build();
+		ProviderContextHolder.setProviderContext(new ProviderContext(providerSettings, null));
 		OAuth2AuthorizationServerMetadataEndpointFilter filter =
 				new OAuth2AuthorizationServerMetadataEndpointFilter(providerSettings);
 
@@ -130,6 +140,7 @@ public class OAuth2AuthorizationServerMetadataEndpointFilterTests {
 		ProviderSettings providerSettings = ProviderSettings.builder()
 				.issuer("https://this is an invalid URL")
 				.build();
+		ProviderContextHolder.setProviderContext(new ProviderContext(providerSettings, null));
 		OAuth2AuthorizationServerMetadataEndpointFilter filter =
 				new OAuth2AuthorizationServerMetadataEndpointFilter(providerSettings);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 the original author or authors.
+ * Copyright 2020-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -85,16 +85,13 @@ public final class OidcConfigurer extends AbstractOAuth2Configurer {
 		}
 
 		List<RequestMatcher> requestMatchers = new ArrayList<>();
-		ProviderSettings providerSettings = OAuth2ConfigurerUtils.getProviderSettings(builder);
-		if (providerSettings.getIssuer() != null) {
-			requestMatchers.add(new AntPathRequestMatcher(
-					"/.well-known/openid-configuration", HttpMethod.GET.name()));
-		}
+		requestMatchers.add(new AntPathRequestMatcher(
+				"/.well-known/openid-configuration", HttpMethod.GET.name()));
 		requestMatchers.add(this.userInfoEndpointConfigurer.getRequestMatcher());
 		if (this.clientRegistrationEndpointConfigurer != null) {
 			requestMatchers.add(this.clientRegistrationEndpointConfigurer.getRequestMatcher());
 		}
-		this.requestMatcher = requestMatchers.size() > 1 ? new OrRequestMatcher(requestMatchers) : requestMatchers.get(0);
+		this.requestMatcher = new OrRequestMatcher(requestMatchers);
 	}
 
 	@Override
@@ -105,11 +102,9 @@ public final class OidcConfigurer extends AbstractOAuth2Configurer {
 		}
 
 		ProviderSettings providerSettings = OAuth2ConfigurerUtils.getProviderSettings(builder);
-		if (providerSettings.getIssuer() != null) {
-			OidcProviderConfigurationEndpointFilter oidcProviderConfigurationEndpointFilter =
-					new OidcProviderConfigurationEndpointFilter(providerSettings);
-			builder.addFilterBefore(postProcess(oidcProviderConfigurationEndpointFilter), AbstractPreAuthenticatedProcessingFilter.class);
-		}
+		OidcProviderConfigurationEndpointFilter oidcProviderConfigurationEndpointFilter =
+				new OidcProviderConfigurationEndpointFilter(providerSettings);
+		builder.addFilterBefore(postProcess(oidcProviderConfigurationEndpointFilter), AbstractPreAuthenticatedProcessingFilter.class);
 	}
 
 	@Override

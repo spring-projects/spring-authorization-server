@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 the original author or authors.
+ * Copyright 2020-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,12 +46,14 @@ import org.springframework.security.oauth2.server.authorization.web.NimbusJwkSet
 import org.springframework.security.oauth2.server.authorization.web.OAuth2AuthorizationServerMetadataEndpointFilter;
 import org.springframework.security.oauth2.server.authorization.web.OAuth2TokenIntrospectionEndpointFilter;
 import org.springframework.security.oauth2.server.authorization.web.OAuth2TokenRevocationEndpointFilter;
+import org.springframework.security.oauth2.server.authorization.web.ProviderContextFilter;
 import org.springframework.security.web.access.intercept.FilterSecurityInterceptor;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.preauth.AbstractPreAuthenticatedProcessingFilter;
 import org.springframework.security.web.context.HttpRequestResponseHolder;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.SaveContextOnUpdateOrErrorResponseWrapper;
+import org.springframework.security.web.context.SecurityContextPersistenceFilter;
 import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.OrRequestMatcher;
@@ -341,6 +343,9 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 		ProviderSettings providerSettings = OAuth2ConfigurerUtils.getProviderSettings(builder);
 		AuthenticationManager authenticationManager = builder.getSharedObject(AuthenticationManager.class);
 
+		ProviderContextFilter providerContextFilter = new ProviderContextFilter(providerSettings);
+		builder.addFilterAfter(postProcess(providerContextFilter), SecurityContextPersistenceFilter.class);
+
 		OAuth2TokenIntrospectionEndpointFilter tokenIntrospectionEndpointFilter =
 				new OAuth2TokenIntrospectionEndpointFilter(
 						authenticationManager,
@@ -353,11 +358,9 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 						providerSettings.getJwkSetEndpoint());
 		builder.addFilterBefore(postProcess(jwkSetEndpointFilter), AbstractPreAuthenticatedProcessingFilter.class);
 
-		if (providerSettings.getIssuer() != null) {
-			OAuth2AuthorizationServerMetadataEndpointFilter authorizationServerMetadataEndpointFilter =
-					new OAuth2AuthorizationServerMetadataEndpointFilter(providerSettings);
-			builder.addFilterBefore(postProcess(authorizationServerMetadataEndpointFilter), AbstractPreAuthenticatedProcessingFilter.class);
-		}
+		OAuth2AuthorizationServerMetadataEndpointFilter authorizationServerMetadataEndpointFilter =
+				new OAuth2AuthorizationServerMetadataEndpointFilter(providerSettings);
+		builder.addFilterBefore(postProcess(authorizationServerMetadataEndpointFilter), AbstractPreAuthenticatedProcessingFilter.class);
 	}
 
 	private Map<Class<? extends AbstractOAuth2Configurer>, AbstractOAuth2Configurer> createConfigurers() {

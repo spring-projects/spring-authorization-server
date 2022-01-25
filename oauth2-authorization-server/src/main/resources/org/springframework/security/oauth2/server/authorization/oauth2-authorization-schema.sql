@@ -1,3 +1,8 @@
+/*
+IMPORTANT:
+    If using PostgreSQL, update ALL columns defined with 'blob' to 'text',
+    as PostgreSQL does not support the 'blob' data type.
+*/
 CREATE TABLE oauth2_authorization (
     id varchar(100) NOT NULL,
     registered_client_id varchar(100) NOT NULL,

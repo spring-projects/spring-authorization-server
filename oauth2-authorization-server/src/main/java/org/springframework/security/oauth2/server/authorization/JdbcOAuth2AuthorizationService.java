@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 the original author or authors.
+ * Copyright 2020-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -141,9 +141,10 @@ public class JdbcOAuth2AuthorizationService implements OAuth2AuthorizationServic
 
 	private static final String REMOVE_AUTHORIZATION_SQL = "DELETE FROM " + TABLE_NAME + " WHERE " + PK_FILTER;
 
+	private static int tokenColumnDataType;
+
 	private final JdbcOperations jdbcOperations;
 	private final LobHandler lobHandler;
-	private static int tokenColumnType;
 	private RowMapper<OAuth2Authorization> authorizationRowMapper;
 	private Function<OAuth2Authorization, List<SqlParameterValue>> authorizationParametersMapper;
 
@@ -172,14 +173,12 @@ public class JdbcOAuth2AuthorizationService implements OAuth2AuthorizationServic
 		Assert.notNull(lobHandler, "lobHandler cannot be null");
 		this.jdbcOperations = jdbcOperations;
 		this.lobHandler = lobHandler;
-		tokenColumnType = getColumnDataType(jdbcOperations, "access_token_value");
 		OAuth2AuthorizationRowMapper authorizationRowMapper = new OAuth2AuthorizationRowMapper(registeredClientRepository);
 		authorizationRowMapper.setLobHandler(lobHandler);
 		this.authorizationRowMapper = authorizationRowMapper;
-		OAuth2AuthorizationParametersMapper authorizationParametersMapper = new OAuth2AuthorizationParametersMapper();
-		this.authorizationParametersMapper = authorizationParametersMapper;
+		this.authorizationParametersMapper = new OAuth2AuthorizationParametersMapper();
+		tokenColumnDataType = getColumnDataType(jdbcOperations, "access_token_value", Types.BLOB);
 	}
-
 
 	@Override
 	public void save(OAuth2Authorization authorization) {
@@ -259,10 +258,9 @@ public class JdbcOAuth2AuthorizationService implements OAuth2AuthorizationServic
 	}
 
 	private SqlParameterValue mapTokenToSqlParameter(String token) {
-		if (Types.BLOB == tokenColumnType) {
-			return new SqlParameterValue(Types.BLOB, token.getBytes(StandardCharsets.UTF_8));
-		}
-		return new SqlParameterValue(tokenColumnType, token);
+		return Types.BLOB == tokenColumnDataType ?
+				new SqlParameterValue(Types.BLOB, token.getBytes(StandardCharsets.UTF_8)) :
+				new SqlParameterValue(tokenColumnDataType, token);
 	}
 
 	private OAuth2Authorization findBy(String filter, List<SqlParameterValue> parameters) {
@@ -425,17 +423,15 @@ public class JdbcOAuth2AuthorizationService implements OAuth2AuthorizationServic
 
 		private String getTokenValue(ResultSet rs, String tokenColumn) throws SQLException {
 			String tokenValue = null;
-			if (Types.CLOB == tokenColumnType) {
-				tokenValue = this.lobHandler.getClobAsString(rs, tokenColumn);
-			}
-			if (Types.VARCHAR == tokenColumnType) {
-				tokenValue = rs.getString(tokenColumn);
-			}
-			if (Types.BLOB == tokenColumnType) {
-				byte[] tokenValueByte = this.lobHandler.getBlobAsBytes(rs, tokenColumn);
-				if (tokenValueByte != null) {
-					tokenValue = new String(tokenValueByte, StandardCharsets.UTF_8);
+			if (Types.BLOB == tokenColumnDataType) {
+				byte[] tokenValueBytes = this.lobHandler.getBlobAsBytes(rs, tokenColumn);
+				if (tokenValueBytes != null) {
+					tokenValue = new String(tokenValueBytes, StandardCharsets.UTF_8);
 				}
+			} else if (Types.CLOB == tokenColumnDataType) {
+				tokenValue = this.lobHandler.getClobAsString(rs, tokenColumn);
+			} else {
+				tokenValue = rs.getString(tokenColumn);
 			}
 			return tokenValue;
 		}
@@ -559,13 +555,12 @@ public class JdbcOAuth2AuthorizationService implements OAuth2AuthorizationServic
 				}
 				metadata = writeMap(token.getMetadata());
 			}
-			if (Types.BLOB == tokenColumnType && StringUtils.hasText(tokenValue)) {
-				byte[] tokenValueAsBytes = tokenValue.getBytes(StandardCharsets.UTF_8);
-				parameters.add(new SqlParameterValue(tokenColumnType, tokenValueAsBytes));
+			if (Types.BLOB == tokenColumnDataType && StringUtils.hasText(tokenValue)) {
+				byte[] tokenValueBytes = tokenValue.getBytes(StandardCharsets.UTF_8);
+				parameters.add(new SqlParameterValue(Types.BLOB, tokenValueBytes));
 			} else {
-				parameters.add(new SqlParameterValue(tokenColumnType, tokenValue));
+				parameters.add(new SqlParameterValue(tokenColumnDataType, tokenValue));
 			}
-
 			parameters.add(new SqlParameterValue(Types.TIMESTAMP, tokenIssuedAt));
 			parameters.add(new SqlParameterValue(Types.TIMESTAMP, tokenExpiresAt));
 			parameters.add(new SqlParameterValue(Types.VARCHAR, metadata));
@@ -582,22 +577,25 @@ public class JdbcOAuth2AuthorizationService implements OAuth2AuthorizationServic
 
 	}
 
-	private static int getColumnDataType(JdbcOperations jdbcOperations, String columnName){
-			return jdbcOperations.execute((ConnectionCallback<Integer>) con -> {
-				DatabaseMetaData databaseMetaData = con.getMetaData();
-				ResultSet rs = databaseMetaData.getColumns(null, null, TABLE_NAME, columnName);
-				if (rs.next()) {
-					return rs.getInt("DATA_TYPE");
-				}
-				// NOTE: When using HSQL: When a database object is created with one of the CREATE statements if the name is enclosed in double quotes, the exact name is used as the case-normal form.
-				// But if it is not enclosed in double quotes, the name is converted to uppercase and this uppercase version is stored in the database as the case-normal form
-				rs = databaseMetaData.getColumns(null, null, TABLE_NAME.toUpperCase(), columnName.toUpperCase());
-				if (rs.next()) {
-					return rs.getInt("DATA_TYPE");
-				}
-				return Types.NULL;
-			});
-		}
+	private static Integer getColumnDataType(JdbcOperations jdbcOperations, String columnName, int defaultDataType) {
+		return jdbcOperations.execute((ConnectionCallback<Integer>) conn -> {
+			DatabaseMetaData databaseMetaData = conn.getMetaData();
+			ResultSet rs = databaseMetaData.getColumns(null, null, TABLE_NAME, columnName);
+			if (rs.next()) {
+				return rs.getInt("DATA_TYPE");
+			}
+			// NOTE: (Applies to HSQL)
+			// When a database object is created with one of the CREATE statements or renamed with the ALTER statement,
+			// if the name is enclosed in double quotes, the exact name is used as the case-normal form.
+			// But if it is not enclosed in double quotes,
+			// the name is converted to uppercase and this uppercase version is stored in the database as the case-normal form.
+			rs = databaseMetaData.getColumns(null, null, TABLE_NAME.toUpperCase(), columnName.toUpperCase());
+			if (rs.next()) {
+				return rs.getInt("DATA_TYPE");
+			}
+			return defaultDataType;
+		});
+	}
 
 	private static final class LobCreatorArgumentPreparedStatementSetter extends ArgumentPreparedStatementSetter {
 		private final LobCreator lobCreator;

@@ -81,7 +81,7 @@ public final class OAuth2TokenRevocationEndpointConfigurer extends AbstractOAuth
 	 * @return the {@link OAuth2TokenRevocationEndpointConfigurer} for further configuration
 	 */
 	public OAuth2TokenRevocationEndpointConfigurer authenticationProvider(AuthenticationProvider authenticationProvider) {
-		Assert.notNull(authenticationProvider, "AuthenticationProvider cannot be null");
+		Assert.notNull(authenticationProvider, "authenticationProvider cannot be null");
 		this.authenticationProviders.add(authenticationProvider);
 		return this;
 	}

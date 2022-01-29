@@ -82,7 +82,7 @@ public final class OAuth2ClientAuthenticationConfigurer extends AbstractOAuth2Co
 	 * @return the {@link OAuth2ClientAuthenticationConfigurer} for further configuration
 	 */
 	public OAuth2ClientAuthenticationConfigurer authenticationProvider(AuthenticationProvider authenticationProvider) {
-		Assert.notNull(authenticationProvider, "AuthenticationProvider cannot be null");
+		Assert.notNull(authenticationProvider, "authenticationProvider cannot be null");
 		this.authenticationProviders.add(authenticationProvider);
 		return this;
 	}

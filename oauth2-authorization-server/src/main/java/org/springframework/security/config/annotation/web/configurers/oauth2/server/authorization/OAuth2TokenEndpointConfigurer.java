@@ -88,7 +88,7 @@ public final class OAuth2TokenEndpointConfigurer extends AbstractOAuth2Configure
 	 * @return the {@link OAuth2TokenEndpointConfigurer} for further configuration
 	 */
 	public OAuth2TokenEndpointConfigurer authenticationProvider(AuthenticationProvider authenticationProvider) {
-		Assert.notNull(authenticationProvider, "AuthenticationProvider cannot be null");
+		Assert.notNull(authenticationProvider, "authenticationProvider cannot be null");
 		this.authenticationProviders.add(authenticationProvider);
 		return this;
 	}

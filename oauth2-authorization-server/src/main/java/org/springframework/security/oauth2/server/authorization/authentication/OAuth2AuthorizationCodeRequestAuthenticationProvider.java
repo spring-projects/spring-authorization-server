@@ -555,8 +555,7 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 					.build();
 			authorizationCodeRequestAuthenticationResult.setAuthenticated(authorizationCodeRequestAuthentication.isAuthenticated());
 		}
-
-		OAuth2Error error = new OAuth2Error(errorCode, "OAuth 2.0 Parameter: " + parameterName, errorUri);
+		OAuth2Error error = errorCode.equals(OAuth2ErrorCodes.ACCESS_DENIED) ? new OAuth2Error(errorCode, "User Denied Access", errorUri) : new OAuth2Error(errorCode, "OAuth 2.0 Parameter: " + parameterName, errorUri);
 		throw new OAuth2AuthorizationCodeRequestAuthenticationException(error, authorizationCodeRequestAuthenticationResult);
 	}
 

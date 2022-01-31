@@ -755,7 +755,7 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 				.isInstanceOf(OAuth2AuthorizationCodeRequestAuthenticationException.class)
 				.satisfies(ex ->
 						assertAuthenticationException((OAuth2AuthorizationCodeRequestAuthenticationException) ex,
-								OAuth2ErrorCodes.ACCESS_DENIED, OAuth2ParameterNames.CLIENT_ID, authorizationRequest.getRedirectUri())
+								OAuth2ErrorCodes.ACCESS_DENIED, "User Denied Access", authorizationRequest.getRedirectUri())
 				);
 
 		verify(this.authorizationService).remove(eq(authorization));
@@ -905,7 +905,7 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 				.isInstanceOf(OAuth2AuthorizationCodeRequestAuthenticationException.class)
 				.satisfies(ex ->
 						assertAuthenticationException((OAuth2AuthorizationCodeRequestAuthenticationException) ex,
-								OAuth2ErrorCodes.ACCESS_DENIED, OAuth2ParameterNames.CLIENT_ID, authorizationRequest.getRedirectUri())
+								OAuth2ErrorCodes.ACCESS_DENIED, "User Denied Access", authorizationRequest.getRedirectUri())
 				);
 
 		verify(this.authorizationConsentService).remove(eq(previousAuthorizationConsent));

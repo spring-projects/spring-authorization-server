@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns="http://www.w3.org/1999/xhtml" xmlns:th="https://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Spring Security Example</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-/Y6pD6FV/Vv2HJnA6t+vslU6fwYXjCFtcEpHbNJ0lyAFsXTsjBbfaDjzALeQsN6M" crossorigin="anonymous">
+    <link href="https://getbootstrap.com/docs/4.0/examples/signin/signin.css" rel="stylesheet" crossorigin="anonymous"/>
+</head>
+<body>
+<div class="container">
+    <form class="form-signin" method="post" th:action="@{/login}">
+        <div th:if="${param.error}" class="alert alert-danger" role="alert">
+            Invalid username or password.
+        </div>
+        <div th:if="${param.logout}" class="alert alert-success" role="alert">
+            You have been logged out.
+        </div>
+        <h2 class="form-signin-heading">Sign In</h2>
+        <p>
+            <label for="username" class="sr-only">Username</label>
+            <input type="text" id="username" name="username" class="form-control" placeholder="Username" required autofocus>
+        </p>
+        <p>
+            <label for="password" class="sr-only">Password</label>
+            <input type="password" id="password" name="password" class="form-control" placeholder="Password" required>
+        </p>
+        <button class="btn btn-lg btn-primary btn-block" type="submit">Sign in</button>
+        <a class="btn btn-light btn-block bg-white" href="/oauth2/authorization/google-idp" role="link" style="text-transform: none;">
+            <img width="20" style="margin-right: 5px;" alt="Sign in with Google" src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/Google_%22G%22_Logo.svg/512px-Google_%22G%22_Logo.svg.png" />
+            Sign in with Google
+        </a>
+        <a class="btn btn-light btn-block bg-white" href="/oauth2/authorization/github-idp" role="link" style="text-transform: none;">
+            <img width="24" style="margin-right: 5px;" alt="Sign in with GitHub" src="https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png" />
+            Sign in with Github
+        </a>
+    </form>
+</div>
+</body>
+</html>

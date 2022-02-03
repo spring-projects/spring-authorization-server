@@ -51,23 +51,18 @@ public class OAuth2AuthorizationConsentAuthenticationContextTests {
 
 	@Test
 	public void withWhenAuthenticationNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> OAuth2AuthorizationConsentAuthenticationContext.with(null, this.authorizationConsentBuilder))
+		assertThatThrownBy(() -> OAuth2AuthorizationConsentAuthenticationContext.with(null))
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessage("authentication cannot be null");
 	}
 
 	@Test
-	public void withWhenAuthorizationConsentBuilderNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> OAuth2AuthorizationConsentAuthenticationContext.with(this.authorizationCodeRequestAuthentication, null))
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("authorizationConsentBuilder cannot be null");
-	}
-
-	@Test
 	public void setWhenValueNullThenThrowIllegalArgumentException() {
 		OAuth2AuthorizationConsentAuthenticationContext.Builder builder =
-				OAuth2AuthorizationConsentAuthenticationContext.with(this.authorizationCodeRequestAuthentication, this.authorizationConsentBuilder);
+				OAuth2AuthorizationConsentAuthenticationContext.with(this.authorizationCodeRequestAuthentication);
 
+		assertThatThrownBy(() -> builder.authorizationConsent(null))
+				.isInstanceOf(IllegalArgumentException.class);
 		assertThatThrownBy(() -> builder.registeredClient(null))
 				.isInstanceOf(IllegalArgumentException.class);
 		assertThatThrownBy(() -> builder.authorization(null))
@@ -81,7 +76,12 @@ public class OAuth2AuthorizationConsentAuthenticationContextTests {
 	@Test
 	public void buildWhenRequiredValueNullThenThrowIllegalArgumentException() {
 		OAuth2AuthorizationConsentAuthenticationContext.Builder builder =
-				OAuth2AuthorizationConsentAuthenticationContext.with(this.authorizationCodeRequestAuthentication, this.authorizationConsentBuilder);
+				OAuth2AuthorizationConsentAuthenticationContext.with(this.authorizationCodeRequestAuthentication);
+
+		assertThatThrownBy(builder::build)
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("authorizationConsentBuilder cannot be null");
+		builder.authorizationConsent(this.authorizationConsentBuilder);
 
 		assertThatThrownBy(builder::build)
 				.isInstanceOf(IllegalArgumentException.class)
@@ -104,7 +104,8 @@ public class OAuth2AuthorizationConsentAuthenticationContextTests {
 	@Test
 	public void buildWhenAllValuesProvidedThenAllValuesAreSet() {
 		OAuth2AuthorizationConsentAuthenticationContext context =
-				OAuth2AuthorizationConsentAuthenticationContext.with(this.authorizationCodeRequestAuthentication, this.authorizationConsentBuilder)
+				OAuth2AuthorizationConsentAuthenticationContext.with(this.authorizationCodeRequestAuthentication)
+						.authorizationConsent(this.authorizationConsentBuilder)
 						.registeredClient(this.registeredClient)
 						.authorization(this.authorization)
 						.authorizationRequest(this.authorizationRequest)

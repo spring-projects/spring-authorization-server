@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 the original author or authors.
+ * Copyright 2020-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.crypto.keygen.Base64StringKeyGenerator;
 import org.springframework.security.crypto.keygen.StringKeyGenerator;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
@@ -184,10 +185,10 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 					authorizationCodeRequestAuthentication, null);
 		}
 
-		OAuth2AuthenticationContext authenticationContext =
-				OAuth2AuthenticationContext.with(authorizationCodeRequestAuthentication)
-						.put(RegisteredClient.class, registeredClient)
-						.build();
+		Map<Object, Object> context = new HashMap<>();
+		context.put(RegisteredClient.class, registeredClient);
+		OAuth2AuthenticationContext authenticationContext = new OAuth2AuthenticationContext(
+				authorizationCodeRequestAuthentication, context);
 
 		OAuth2AuthenticationValidator redirectUriValidator = resolveAuthenticationValidator(OAuth2ParameterNames.REDIRECT_URI);
 		redirectUriValidator.validate(authenticationContext);
@@ -329,25 +330,17 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 		Set<String> currentAuthorizedScopes = currentAuthorizationConsent != null ?
 				currentAuthorizationConsent.getScopes() : Collections.emptySet();
 
-		if (authorizedScopes.isEmpty() && currentAuthorizedScopes.isEmpty() &&
-				authorizationCodeRequestAuthentication.getAdditionalParameters().isEmpty()) {
-			// Authorization consent denied
-			this.authorizationService.remove(authorization);
-			throwError(OAuth2ErrorCodes.ACCESS_DENIED, OAuth2ParameterNames.CLIENT_ID,
-					authorizationCodeRequestAuthentication, registeredClient, authorizationRequest);
-		}
-
-		if (requestedScopes.contains(OidcScopes.OPENID)) {
-			// 'openid' scope is auto-approved as it does not require consent
-			authorizedScopes.add(OidcScopes.OPENID);
-		}
-
 		if (!currentAuthorizedScopes.isEmpty()) {
 			for (String requestedScope : requestedScopes) {
 				if (currentAuthorizedScopes.contains(requestedScope)) {
 					authorizedScopes.add(requestedScope);
 				}
 			}
+		}
+
+		if (!authorizedScopes.isEmpty() && requestedScopes.contains(OidcScopes.OPENID)) {
+			// 'openid' scope is auto-approved as it does not require consent
+			authorizedScopes.add(OidcScopes.OPENID);
 		}
 
 		OAuth2AuthorizationConsent.Builder authorizationConsentBuilder;
@@ -362,13 +355,27 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 		if (this.authorizationConsentCustomizer != null) {
 			// @formatter:off
 			OAuth2AuthorizationConsentAuthenticationContext authorizationConsentAuthenticationContext =
-					OAuth2AuthorizationConsentAuthenticationContext.with(authorizationCodeRequestAuthentication, authorizationConsentBuilder)
+					OAuth2AuthorizationConsentAuthenticationContext.with(authorizationCodeRequestAuthentication)
+							.authorizationConsent(authorizationConsentBuilder)
 							.registeredClient(registeredClient)
 							.authorization(authorization)
 							.authorizationRequest(authorizationRequest)
 							.build();
 			// @formatter:on
 			this.authorizationConsentCustomizer.accept(authorizationConsentAuthenticationContext);
+		}
+
+		Set<GrantedAuthority> authorities = new HashSet<>();
+		authorizationConsentBuilder.authorities(authorities::addAll);
+
+		if (authorities.isEmpty()) {
+			// Authorization consent denied (or revoked)
+			if (currentAuthorizationConsent != null) {
+				this.authorizationConsentService.remove(currentAuthorizationConsent);
+			}
+			this.authorizationService.remove(authorization);
+			throwError(OAuth2ErrorCodes.ACCESS_DENIED, OAuth2ParameterNames.CLIENT_ID,
+					authorizationCodeRequestAuthentication, registeredClient, authorizationRequest);
 		}
 
 		OAuth2AuthorizationConsent authorizationConsent = authorizationConsentBuilder.build();
@@ -570,8 +577,6 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 				.scopes(authorizationCodeRequestAuthentication.getScopes())
 				.state(authorizationCodeRequestAuthentication.getState())
 				.additionalParameters(authorizationCodeRequestAuthentication.getAdditionalParameters())
-				.consentRequired(authorizationCodeRequestAuthentication.isConsentRequired())
-				.consent(authorizationCodeRequestAuthentication.isConsent())
 				.authorizationCode(authorizationCodeRequestAuthentication.getAuthorizationCode());
 	}
 

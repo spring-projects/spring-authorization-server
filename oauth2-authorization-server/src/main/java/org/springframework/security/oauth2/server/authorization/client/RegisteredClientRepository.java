@@ -31,6 +31,9 @@ public interface RegisteredClientRepository {
 	/**
 	 * Saves the registered client.
 	 *
+	 * <p>
+	 * IMPORTANT: Sensitive information should be encoded externally from the implementation, e.g. {@link RegisteredClient#getClientSecret()}
+	 *
 	 * @param registeredClient the {@link RegisteredClient}
 	 */
 	void save(RegisteredClient registeredClient);

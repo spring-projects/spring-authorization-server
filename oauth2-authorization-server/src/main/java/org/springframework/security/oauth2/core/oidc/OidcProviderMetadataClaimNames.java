@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 the original author or authors.
+ * Copyright 2020-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,5 +38,11 @@ public interface OidcProviderMetadataClaimNames extends OAuth2AuthorizationServe
 	 * {@code id_token_signing_alg_values_supported} - the {@link JwsAlgorithm JWS} signing algorithms supported for the {@link OidcIdToken ID Token}
 	 */
 	String ID_TOKEN_SIGNING_ALG_VALUES_SUPPORTED = "id_token_signing_alg_values_supported";
+
+	/**
+	 * {@code userinfo_endpoint} - the {@code URL} of the OpenID Connect 1.0 UserInfo Endpoint
+	 * @since 0.2.2
+	 */
+	String USER_INFO_ENDPOINT = "userinfo_endpoint";
 
 }

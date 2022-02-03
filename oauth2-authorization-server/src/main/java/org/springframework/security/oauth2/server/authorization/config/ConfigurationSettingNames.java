@@ -15,8 +15,11 @@
  */
 package org.springframework.security.oauth2.server.authorization.config;
 
+import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
+import org.springframework.security.oauth2.jose.jws.JwsAlgorithm;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
+import org.springframework.security.oauth2.jwt.Jwt;
 
 /**
  * The names for all the configuration settings.
@@ -47,6 +50,20 @@ public final class ConfigurationSettingNames {
 		 * This applies to all interactive flows (e.g. {@code authorization_code} and {@code device_code}).
 		 */
 		public static final String REQUIRE_AUTHORIZATION_CONSENT = CLIENT_SETTINGS_NAMESPACE.concat("require-authorization-consent");
+
+		/**
+		 * Set the {@code URL} for the Client's JSON Web Key Set.
+		 * @since 0.2.2
+		 */
+		public static final String JWK_SET_URL = CLIENT_SETTINGS_NAMESPACE.concat("jwk-set-url");
+
+		/**
+		 * Set the {@link JwsAlgorithm JWS} algorithm that must be used for signing the {@link Jwt JWT}
+		 * used to authenticate the Client at the Token Endpoint for the {@link ClientAuthenticationMethod#PRIVATE_KEY_JWT private_key_jwt} and
+		 * {@link ClientAuthenticationMethod#CLIENT_SECRET_JWT client_secret_jwt} authentication methods.
+		 * @since 0.2.2
+		 */
+		public static final String TOKEN_ENDPOINT_AUTHENTICATION_SIGNING_ALGORITHM = CLIENT_SETTINGS_NAMESPACE.concat("token-endpoint-authentication-signing-algorithm");
 
 		private Client() {
 		}

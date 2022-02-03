@@ -1,13 +1,13 @@
 if (!project.hasProperty("springVersion")) {
-	ext.springVersion = "5.3.9"
+	ext.springVersion = "5.3.15"
 }
 
 if (!project.hasProperty("springSecurityVersion")) {
-	ext.springSecurityVersion = "5.5.2"
+	ext.springSecurityVersion = "5.5.4"
 }
 
 if (!project.hasProperty("reactorVersion")) {
-	ext.reactorVersion = "2020.0.10"
+	ext.reactorVersion = "2020.0.15"
 }
 
 if (!project.hasProperty("locksDisabled")) {
@@ -21,7 +21,7 @@ dependencyManagement {
 		mavenBom "org.springframework:spring-framework-bom:$springVersion"
 		mavenBom "org.springframework.security:spring-security-bom:$springSecurityVersion"
 		mavenBom "io.projectreactor:reactor-bom:$reactorVersion"
-        mavenBom "com.fasterxml.jackson:jackson-bom:2.12.4"
+        mavenBom "com.fasterxml.jackson:jackson-bom:2.12.6"
 	}
 
 	dependencies {

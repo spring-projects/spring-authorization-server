@@ -17,6 +17,8 @@ package org.springframework.security.oauth2.server.authorization.config;
 
 import org.junit.Test;
 
+import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -48,6 +50,22 @@ public class ClientSettingsTests {
 				.requireAuthorizationConsent(true)
 				.build();
 		assertThat(clientSettings.isRequireAuthorizationConsent()).isTrue();
+	}
+
+	@Test
+	public void tokenEndpointAuthenticationSigningAlgorithmWhenHS256ThenSet() {
+		ClientSettings clientSettings = ClientSettings.builder()
+				.tokenEndpointAuthenticationSigningAlgorithm(MacAlgorithm.HS256)
+				.build();
+		assertThat(clientSettings.getTokenEndpointAuthenticationSigningAlgorithm()).isEqualTo(MacAlgorithm.HS256);
+	}
+
+	@Test
+	public void jwkSetUrlWhenProvidedThenSet() {
+		ClientSettings clientSettings = ClientSettings.builder()
+				.jwkSetUrl("https://client.example.com/jwks")
+				.build();
+		assertThat(clientSettings.getJwkSetUrl()).isEqualTo("https://client.example.com/jwks");
 	}
 
 	@Test

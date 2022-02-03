@@ -118,11 +118,20 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationConverter impleme
 			}
 		}
 
-		// state (RECOMMENDED)
+		// state
+		// RECOMMENDED for Authorization Request
 		String state = parameters.getFirst(OAuth2ParameterNames.STATE);
-		if (StringUtils.hasText(state) &&
-				parameters.get(OAuth2ParameterNames.STATE).size() != 1) {
-			throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.STATE);
+		if (authorizationRequest) {
+			if (StringUtils.hasText(state) &&
+					parameters.get(OAuth2ParameterNames.STATE).size() != 1) {
+				throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.STATE);
+			}
+		} else {
+			// REQUIRED for Authorization Consent Request
+			if (!StringUtils.hasText(state) ||
+					parameters.get(OAuth2ParameterNames.STATE).size() != 1) {
+				throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.STATE);
+			}
 		}
 
 		// code_challenge (REQUIRED for public clients) - RFC 7636 (PKCE)

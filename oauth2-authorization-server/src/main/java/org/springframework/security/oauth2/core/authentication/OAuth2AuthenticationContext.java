@@ -41,9 +41,7 @@ public class OAuth2AuthenticationContext implements Context {
 	 *
 	 * @param authentication the {@code Authentication}
 	 * @param context a {@code Map} of additional context information
-	 * @deprecated Use {@link #with(Authentication)} instead
 	 */
-	@Deprecated
 	public OAuth2AuthenticationContext(Authentication authentication, @Nullable Map<Object, Object> context) {
 		Assert.notNull(authentication, "authentication cannot be null");
 		Map<Object, Object> ctx = new HashMap<>();
@@ -54,7 +52,13 @@ public class OAuth2AuthenticationContext implements Context {
 		this.context = Collections.unmodifiableMap(ctx);
 	}
 
-	protected OAuth2AuthenticationContext(Map<Object, Object> context) {
+	/**
+	 * Constructs an {@code OAuth2AuthenticationContext} using the provided parameters.
+	 *
+	 * @param context a {@code Map} of context information, must contain the {@code Authentication}
+	 * @since 0.2.1
+	 */
+	public OAuth2AuthenticationContext(Map<Object, Object> context) {
 		Assert.notEmpty(context, "context cannot be empty");
 		Assert.notNull(context.get(Authentication.class), "authentication cannot be null");
 		this.context = Collections.unmodifiableMap(new HashMap<>(context));
@@ -85,36 +89,11 @@ public class OAuth2AuthenticationContext implements Context {
 	}
 
 	/**
-	 * Constructs a new {@link Builder} with the provided {@link Authentication}.
-	 *
-	 * @param authentication the {@link Authentication}
-	 * @return the {@link Builder}
-	 */
-	public static Builder with(Authentication authentication) {
-		return new Builder(authentication);
-	}
-
-	/**
-	 * A builder for {@link OAuth2AuthenticationContext}.
-	 */
-	public static final class Builder extends AbstractBuilder<OAuth2AuthenticationContext, Builder> {
-
-		private Builder(Authentication authentication) {
-			super(authentication);
-		}
-
-		@Override
-		public OAuth2AuthenticationContext build() {
-			return new OAuth2AuthenticationContext(getContext());
-		}
-
-	}
-
-	/**
 	 * A builder for subclasses of {@link OAuth2AuthenticationContext}.
 	 *
 	 * @param <T> the type of the authentication context
 	 * @param <B> the type of the builder
+	 * @since 0.2.1
 	 */
 	protected static abstract class AbstractBuilder<T extends OAuth2AuthenticationContext, B extends AbstractBuilder<T, B>> {
 		private final Map<Object, Object> context = new HashMap<>();

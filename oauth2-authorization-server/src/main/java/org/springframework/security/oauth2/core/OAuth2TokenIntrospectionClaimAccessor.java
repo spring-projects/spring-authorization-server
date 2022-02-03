@@ -41,7 +41,9 @@ import java.util.List;
  * @see OAuth2TokenIntrospectionClaimNames
  * @see <a target="_blank" href=
  * "https://tools.ietf.org/html/rfc7662#section-2.2">Introspection Response</a>
+ * @deprecated See <a target="_blank" href="https://github.com/spring-projects/spring-authorization-server/issues/597">gh-597</a>
  */
+@Deprecated
 public interface OAuth2TokenIntrospectionClaimAccessor extends ClaimAccessor {
 
 	/**

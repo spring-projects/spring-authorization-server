@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 the original author or authors.
+ * Copyright 2020-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,9 @@ import org.springframework.util.Assert;
  * @see <a target="_blank" href="https://datatracker.ietf.org/doc/html/rfc7519#section-5">JWT JOSE Header</a>
  * @see <a target="_blank" href="https://datatracker.ietf.org/doc/html/rfc7515#section-4">JWS JOSE Header</a>
  * @see <a target="_blank" href="https://datatracker.ietf.org/doc/html/rfc7516#section-4">JWE JOSE Header</a>
+ * @deprecated See <a target="_blank" href="https://github.com/spring-projects/spring-authorization-server/issues/596">gh-596</a>
  */
+@Deprecated
 public final class JoseHeader {
 	private final Map<String, Object> headers;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 the original author or authors.
+ * Copyright 2020-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,6 +75,7 @@ import static org.mockito.Mockito.when;
 public class JdbcOAuth2AuthorizationServiceTests {
 	private static final String OAUTH2_AUTHORIZATION_SCHEMA_SQL_RESOURCE = "org/springframework/security/oauth2/server/authorization/oauth2-authorization-schema.sql";
 	private static final String CUSTOM_OAUTH2_AUTHORIZATION_SCHEMA_SQL_RESOURCE = "org/springframework/security/oauth2/server/authorization/custom-oauth2-authorization-schema.sql";
+	private static final String OAUTH2_AUTHORIZATION_SCHEMA_CLOB_DATA_TYPE_SQL_RESOURCE = "org/springframework/security/oauth2/server/authorization/custom-oauth2-authorization-schema-clob-data-type.sql";
 	private static final OAuth2TokenType AUTHORIZATION_CODE_TOKEN_TYPE = new OAuth2TokenType(OAuth2ParameterNames.CODE);
 	private static final OAuth2TokenType STATE_TOKEN_TYPE = new OAuth2TokenType(OAuth2ParameterNames.STATE);
 	private static final String ID = "id";
@@ -411,6 +412,38 @@ public class JdbcOAuth2AuthorizationServiceTests {
 		assertThat(foundAuthorization1).isEqualTo(originalAuthorization);
 		OAuth2Authorization foundAuthorization2 = authorizationService.findByToken(state, STATE_TOKEN_TYPE);
 		assertThat(foundAuthorization2).isEqualTo(originalAuthorization);
+		db.shutdown();
+	}
+
+	@Test
+	public void tableDefinitionWhenClobSqlTypeThenAuthorizationUpdated() {
+		when(this.registeredClientRepository.findById(eq(REGISTERED_CLIENT.getId())))
+				.thenReturn(REGISTERED_CLIENT);
+
+		EmbeddedDatabase db = createDb(OAUTH2_AUTHORIZATION_SCHEMA_CLOB_DATA_TYPE_SQL_RESOURCE);
+		OAuth2AuthorizationService authorizationService =
+				new JdbcOAuth2AuthorizationService(new JdbcTemplate(db), this.registeredClientRepository);
+		OAuth2Authorization originalAuthorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
+				.id(ID)
+				.principalName(PRINCIPAL_NAME)
+				.authorizationGrantType(AUTHORIZATION_GRANT_TYPE)
+				.token(AUTHORIZATION_CODE)
+				.build();
+		authorizationService.save(originalAuthorization);
+
+		OAuth2Authorization authorization = authorizationService.findById(
+				originalAuthorization.getId());
+		assertThat(authorization).isEqualTo(originalAuthorization);
+
+		OAuth2Authorization updatedAuthorization = OAuth2Authorization.from(authorization)
+				.attribute("custom-name-1", "custom-value-1")
+				.build();
+		authorizationService.save(updatedAuthorization);
+
+		authorization = authorizationService.findById(
+				updatedAuthorization.getId());
+		assertThat(authorization).isEqualTo(updatedAuthorization);
+		assertThat(authorization).isNotEqualTo(originalAuthorization);
 		db.shutdown();
 	}
 

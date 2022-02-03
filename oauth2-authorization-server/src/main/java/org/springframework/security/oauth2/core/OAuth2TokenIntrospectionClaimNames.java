@@ -34,7 +34,9 @@ package org.springframework.security.oauth2.core;
  *
  * @author Josh Cummings
  * @since 5.2
+ * @deprecated See <a target="_blank" href="https://github.com/spring-projects/spring-authorization-server/issues/597">gh-597</a>
  */
+@Deprecated
 public interface OAuth2TokenIntrospectionClaimNames {
 
 	/**

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 the original author or authors.
+ * Copyright 2020-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -868,7 +868,52 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 	}
 
 	@Test
-	public void authenticateWhenConsentRequestWithPreviouslyApprovedThenAuthorizationConsentUpdated() {
+	public void authenticateWhenConsentRequestApproveNoneAndRevokePreviouslyApprovedThenAuthorizationConsentRemoved() {
+		String previouslyApprovedScope = "message.read";
+		String requestedScope = "message.write";
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
+				.scopes(scopes -> {
+					scopes.clear();
+					scopes.add(previouslyApprovedScope);
+					scopes.add(requestedScope);
+				})
+				.build();
+		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
+				.thenReturn(registeredClient);
+		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient)
+				.principalName(this.principal.getName())
+				.build();
+		OAuth2AuthorizationRequest authorizationRequest = authorization.getAttribute(OAuth2AuthorizationRequest.class.getName());
+		OAuth2AuthorizationCodeRequestAuthenticationToken authentication =
+				authorizationConsentRequestAuthentication(registeredClient, this.principal)
+						.scopes(new HashSet<>())	// No scopes approved
+						.build();
+		when(this.authorizationService.findByToken(eq(authentication.getState()), eq(STATE_TOKEN_TYPE)))
+				.thenReturn(authorization);
+		OAuth2AuthorizationConsent previousAuthorizationConsent =
+				OAuth2AuthorizationConsent.withId(authorization.getRegisteredClientId(), authorization.getPrincipalName())
+						.scope(previouslyApprovedScope)
+						.build();
+		when(this.authorizationConsentService.findById(eq(authorization.getRegisteredClientId()), eq(authorization.getPrincipalName())))
+				.thenReturn(previousAuthorizationConsent);
+
+		// Revoke all (including previously approved)
+		this.authenticationProvider.setAuthorizationConsentCustomizer((authorizationConsentContext) ->
+				authorizationConsentContext.getAuthorizationConsent().authorities(Set::clear));
+
+		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
+				.isInstanceOf(OAuth2AuthorizationCodeRequestAuthenticationException.class)
+				.satisfies(ex ->
+						assertAuthenticationException((OAuth2AuthorizationCodeRequestAuthenticationException) ex,
+								OAuth2ErrorCodes.ACCESS_DENIED, OAuth2ParameterNames.CLIENT_ID, authorizationRequest.getRedirectUri())
+				);
+
+		verify(this.authorizationConsentService).remove(eq(previousAuthorizationConsent));
+		verify(this.authorizationService).remove(eq(authorization));
+	}
+
+	@Test
+	public void authenticateWhenConsentRequestApproveSomeAndPreviouslyApprovedThenAuthorizationConsentUpdated() {
 		String previouslyApprovedScope = "message.read";
 		String requestedScope = "message.write";
 		String otherPreviouslyApprovedScope = "other.scope";
@@ -923,7 +968,7 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 	}
 
 	@Test
-	public void authenticateWhenConsentRequestApproveNoneButPreviouslyApprovedThenAuthorizationConsentNotUpdated() {
+	public void authenticateWhenConsentRequestApproveNoneAndPreviouslyApprovedThenAuthorizationConsentNotUpdated() {
 		String previouslyApprovedScope = "message.read";
 		String requestedScope = "message.write";
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
@@ -968,6 +1013,12 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 		OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthentication =
 				authenticationException.getAuthorizationCodeRequestAuthentication();
 		assertThat(authorizationCodeRequestAuthentication.getRedirectUri()).isEqualTo(redirectUri);
+
+		// gh-595
+		if (OAuth2ErrorCodes.ACCESS_DENIED.equals(errorCode)) {
+			assertThat(authorizationCodeRequestAuthentication.isConsent()).isFalse();
+			assertThat(authorizationCodeRequestAuthentication.isConsentRequired()).isFalse();
+		}
 	}
 
 	private static OAuth2AuthorizationCodeRequestAuthenticationToken.Builder authorizationCodeRequestAuthentication(

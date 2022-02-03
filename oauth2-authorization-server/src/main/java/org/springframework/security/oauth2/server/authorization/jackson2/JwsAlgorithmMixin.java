@@ -30,5 +30,5 @@ import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS)
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY, getterVisibility = JsonAutoDetect.Visibility.NONE,
 		isGetterVisibility = JsonAutoDetect.Visibility.NONE)
-abstract class SignatureAlgorithmMixin {
+abstract class JwsAlgorithmMixin {
 }

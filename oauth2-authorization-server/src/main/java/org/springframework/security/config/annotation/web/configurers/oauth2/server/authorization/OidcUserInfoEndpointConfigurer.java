@@ -22,12 +22,10 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.ObjectPostProcessor;
 import org.springframework.security.config.annotation.web.HttpSecurityBuilder;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
-import org.springframework.security.oauth2.core.OAuth2Token;
-import org.springframework.security.oauth2.core.authentication.OAuth2AuthenticationContext;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.security.oauth2.core.oidc.OidcUserInfo;
-import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.config.ProviderSettings;
+import org.springframework.security.oauth2.server.authorization.oidc.authentication.OidcUserInfoAuthenticationContext;
 import org.springframework.security.oauth2.server.authorization.oidc.authentication.OidcUserInfoAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.oidc.authentication.OidcUserInfoAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.oidc.web.OidcUserInfoEndpointFilter;
@@ -46,7 +44,7 @@ import org.springframework.security.web.util.matcher.RequestMatcher;
  */
 public final class OidcUserInfoEndpointConfigurer extends AbstractOAuth2Configurer {
 	private RequestMatcher requestMatcher;
-	private Function<OAuth2AuthenticationContext, OidcUserInfo> userInfoMapper;
+	private Function<OidcUserInfoAuthenticationContext, OidcUserInfo> userInfoMapper;
 
 	/**
 	 * Restrict for internal use only.
@@ -56,22 +54,22 @@ public final class OidcUserInfoEndpointConfigurer extends AbstractOAuth2Configur
 	}
 
 	/**
-	 * Sets the {@link Function} used to extract claims from an {@link OAuth2AuthenticationContext}
+	 * Sets the {@link Function} used to extract claims from {@link OidcUserInfoAuthenticationContext}
 	 * to an instance of {@link OidcUserInfo} for the UserInfo response.
 	 *
 	 * <p>
-	 * The {@link OAuth2AuthenticationContext} gives the mapper access to the {@link OidcUserInfoAuthenticationToken}.
-	 * In addition, the following context attributes are supported:
+	 * The {@link OidcUserInfoAuthenticationContext} gives the mapper access to the {@link OidcUserInfoAuthenticationToken},
+	 * as well as, the following context attributes:
 	 * <ul>
-	 * <li>{@code OAuth2Token.class} - The {@link OAuth2Token} containing the bearer token used to make the request.</li>
-	 * <li>{@code OAuth2Authorization.class} - The {@link OAuth2Authorization} containing the {@link OidcIdToken} and
+	 * <li>{@link OidcUserInfoAuthenticationContext#getAccessToken()} containing the bearer token used to make the request.</li>
+	 * <li>{@link OidcUserInfoAuthenticationContext#getAuthorization()} containing the {@link OidcIdToken} and
 	 * {@link OAuth2AccessToken} associated with the bearer token used to make the request.</li>
 	 * </ul>
 	 *
-	 * @param userInfoMapper the {@link Function} used to extract claims from an {@link OAuth2AuthenticationContext} to an instance of {@link OidcUserInfo}
+	 * @param userInfoMapper the {@link Function} used to extract claims from {@link OidcUserInfoAuthenticationContext} to an instance of {@link OidcUserInfo}
 	 * @return the {@link OidcUserInfoEndpointConfigurer} for further configuration
 	 */
-	public OidcUserInfoEndpointConfigurer userInfoMapper(Function<OAuth2AuthenticationContext, OidcUserInfo> userInfoMapper) {
+	public OidcUserInfoEndpointConfigurer userInfoMapper(Function<OidcUserInfoAuthenticationContext, OidcUserInfo> userInfoMapper) {
 		this.userInfoMapper = userInfoMapper;
 		return this;
 	}

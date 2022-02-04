@@ -18,6 +18,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.temporal.ChronoUnit;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -62,12 +63,14 @@ public class AccessoAccessTokenResponseCustomizer implements AuthenticationSucce
 		if (refreshToken != null) {
 			builder.refreshToken(refreshToken.getTokenValue());
 		}
+
+		// Start of customization
+		additionalParameters = addAccessoResponseParameters(additionalParameters, accessTokenAuthentication);
+		// End of customization
+
 		if (!CollectionUtils.isEmpty(additionalParameters)) {
 			builder.additionalParameters(additionalParameters);
 		}
-		// Start of customization
-		addAccessoResponseParameters(builder, accessTokenAuthentication);
-		// End of customization
 
 		OAuth2AccessTokenResponse accessTokenResponse = builder.build();
 		ServletServerHttpResponse httpResponse = new ServletServerHttpResponse(response);
@@ -77,16 +80,15 @@ public class AccessoAccessTokenResponseCustomizer implements AuthenticationSucce
 	// Based on what I see in the TE2 token endpoint, it just echos/adds all custom
 	// token attributes into the http response as well, so this is coded to do exactly
 	// that.
-	void addAccessoResponseParameters(OAuth2AccessTokenResponse.Builder builder,
+	Map<String, Object> addAccessoResponseParameters(Map<String, Object> currentAdditionalParameters,
 			OAuth2AccessTokenAuthenticationToken authentication) {
 		String accessTokenJwt = authentication.getAccessToken().getTokenValue();
 		Jwt jwt = decoder.decode(accessTokenJwt);
 		Map<String, Object> claims = jwt.getClaims();
-		Set<String> stdFields = Stream.of("access_token", "refresh_token", "scope", "token_type", "expires_in")
+		Set<String> stdFields = Stream.of("access_token", "refresh_token", "scope", "token_type", "expires_in", "id_token")
 				.collect(Collectors.toSet());
-		Map<String, Object> additionalParams = claims.entrySet().stream()
-				.filter(entry -> ! stdFields.contains(entry.getKey()))
+		return Stream.concat( currentAdditionalParameters.entrySet().stream(),
+				claims.entrySet().stream().filter(entry -> ! stdFields.contains(entry.getKey())))
 				.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-		builder.additionalParameters(additionalParams);
 	}
 }

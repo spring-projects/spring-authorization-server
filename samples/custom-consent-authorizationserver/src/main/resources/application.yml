@@ -8,3 +8,24 @@ logging:
     org.springframework.security: INFO
     org.springframework.security.oauth2: INFO
 #    org.springframework.boot.autoconfigure: DEBUG
+
+accesso:
+  client.externalauth.config:
+    messaging-client-auth0: # corresponds to the registrationId in the client.
+      # TODO - the code isn't yet using the ${issuer-uri}/.well-known/oidc-configuration info (OIDC discovery)
+      # to figure out what the actual authorization endpoint, etc. are.
+      issuer-uri: https://login.qa.alterramtnco.com/authorize
+      ext-client-id: cXh7PcRRglXTsBpytg5sNza3Y2MDcbom
+      ext-client-secret: TODO of this won't work...
+      scope-map:
+        openid: openid
+        profile: profile
+        offline_access:
+    messaging-client-accesso:
+      issuer-uri: https://login.qa.alterramtnco.com/authorize
+      ext-client-id: cXh7PcRRglXTsBpytg5sNza3Y2MDcbom
+      ext-client-secret: TODO of this won't work...
+      scope-map:
+        openid: openid
+        profile: profile
+        offline_access: offline

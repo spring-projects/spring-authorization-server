@@ -4,9 +4,16 @@ dependencies {
 	compile 'org.springframework.boot:spring-boot-starter-web'
 	compile 'org.springframework.boot:spring-boot-starter-thymeleaf'
 	compile 'org.springframework.boot:spring-boot-starter-security'
+	compile 'org.springframework.security:spring-security-oauth2-client:5.5.4'
+
+	compileOnly 'org.projectlombok:lombok:1.18.22'
+	annotationProcessor 'org.projectlombok:lombok:1.18.22'
+
 	compile project(':spring-security-oauth2-authorization-server')
 
 	testCompile 'org.springframework.boot:spring-boot-starter-test'
 	testCompile 'org.springframework.security:spring-security-test'
 	testCompile 'net.sourceforge.htmlunit:htmlunit'
+	testCompileOnly 'org.projectlombok:lombok:1.18.22'
+	testAnnotationProcessor 'org.projectlombok:lombok:1.18.22'
 }

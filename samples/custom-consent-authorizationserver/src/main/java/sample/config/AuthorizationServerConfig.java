@@ -19,15 +19,22 @@ import java.util.UUID;
 
 import com.accesso.security.oauth2.server.authorization.authentication.AccessoAccessTokenCustomizer;
 import com.accesso.security.oauth2.server.authorization.authentication.AccessoAccessTokenResponseCustomizer;
+import com.accesso.security.oauth2.server.authorization.authentication.AccessoLoginUrlAuthenticationEntryPoint;
+import com.accesso.security.oauth2.server.authorization.config.ClientExternalAuthenticationConfig;
+import org.springframework.security.config.annotation.web.configurers.oauth2.server.authorization.OAuth2ExternalAuthorizationEndpointConfigurer;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
 import org.springframework.security.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
+import org.springframework.security.config.annotation.web.configurers.oauth2.server.resource.OAuth2ResourceServerConfigurer;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.server.authorization.JwtEncodingContext;
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenCustomizer;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AnonymousUserGrantAuthenticationToken;
+import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver;
+import org.springframework.security.oauth2.server.resource.web.DefaultBearerTokenResolver;
+import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import sample.jose.Jwks;
 
 import org.springframework.context.annotation.Bean;
@@ -50,6 +57,8 @@ import org.springframework.security.oauth2.server.authorization.config.ProviderS
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 
+import javax.annotation.Resource;
+
 /**
  * @author Joe Grandja
  * @author Daniel Garnier-Moiroux
@@ -61,7 +70,8 @@ public class AuthorizationServerConfig {
 	@Bean
 	@Order(Ordered.HIGHEST_PRECEDENCE)
 	public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http,
-			AccessoAccessTokenResponseCustomizer responseCustomizer) throws Exception {
+			AccessoAccessTokenResponseCustomizer responseCustomizer,
+			ClientExternalAuthenticationConfig externalAuthConfig) throws Exception {
 		OAuth2AuthorizationServerConfigurer<HttpSecurity> authorizationServerConfigurer =
 				new OAuth2AuthorizationServerConfigurer<>();
 		authorizationServerConfigurer
@@ -71,6 +81,7 @@ public class AuthorizationServerConfig {
 				.tokenEndpoint(tokenEndpoint ->
 						tokenEndpoint.accessTokenResponseHandler(responseCustomizer));
 
+		// WIP: authorizationServerConfigurer.addConfigurer(new OAuth2ExternalAuthorizationEndpointConfigurer());
 
 		RequestMatcher endpointsMatcher = authorizationServerConfigurer
 				.getEndpointsMatcher();
@@ -82,30 +93,48 @@ public class AuthorizationServerConfig {
 			)
 			.csrf(csrf -> csrf.ignoringRequestMatchers(endpointsMatcher))
 			.apply(authorizationServerConfigurer);
-		return http.formLogin(Customizer.withDefaults()).build();
+
+		http.formLogin(Customizer.withDefaults());
+		// Didn't work: http.formLogin(formLoginConfigurer -> formLoginConfigurer.loginProcessingUrl("https://some-other-sso.example/login"));
+
+		// The login page is reached via the exception handlers use of the authenticationEntryPoint.  Normally this is
+		// just an instance of LoginUrlAuthenticationEntryPoint which determines where the redirect the user so that
+		// a Username/password login form can be shown.  We override that here with one that understands how to redirect
+		// based on clientId to either own login page or an external OAuth2 server.
+		http.exceptionHandling(exceptionHandling -> exceptionHandling
+				.authenticationEntryPoint(new AccessoLoginUrlAuthenticationEntryPoint("/login", externalAuthConfig))
+		);
+		return http.build();
 	}
 
 	// @formatter:off
 	@Bean
 	public RegisteredClientRepository registeredClientRepository() {
-		RegisteredClient registeredClient = RegisteredClient.withId(UUID.randomUUID().toString())
-				.clientId("messaging-client")
-				.clientSecret("{noop}secret")
+		RegisteredClient registeredClient = makeRegisteredClient("messaging-client", "messaging-client-oidc");
+		RegisteredClient registeredClient_Auth0 = makeRegisteredClient("messaging-client-auth0", "oauth2");
+		return new InMemoryRegisteredClientRepository(registeredClient, registeredClient_Auth0);
+	}
+	// @formatter:on
+
+	// Used to generate soem client registrations for testing different client behaviors.
+	// (the original demo just had 1)
+	private RegisteredClient makeRegisteredClient(String clientId, String registrationId) {
+		return RegisteredClient.withId(UUID.randomUUID().toString())
+				.clientId(clientId)
+				.clientSecret("{noop}secret-"+clientId)
 				.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
 				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
 				.authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
 				.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
 				.authorizationGrantType(OAuth2AnonymousUserGrantAuthenticationToken.ANONYMOUS_GRANT)
-				.redirectUri("http://127.0.0.1:8080/login/oauth2/code/messaging-client-oidc")
-				.redirectUri("http://127.0.0.1:8080/authorized")
+				.redirectUri("http://127.0.0.1:3000/login/oauth2/code/" + registrationId)
+				.redirectUri("http://127.0.0.1:3000/authorized")
 				.scope(OidcScopes.OPENID)
 				.scope("message.read")
 				.scope("message.write")
 				.clientSettings(ClientSettings.builder().requireAuthorizationConsent(true).build())
 				.build();
-		return new InMemoryRegisteredClientRepository(registeredClient);
 	}
-	// @formatter:on
 
 	@Bean
 	public JWKSource<SecurityContext> jwkSource() {
@@ -140,4 +169,43 @@ public class AuthorizationServerConfig {
 	public AccessoAccessTokenResponseCustomizer accessoAccessTokenResponseCustomizer(JwtDecoder decoder) {
 		return new AccessoAccessTokenResponseCustomizer(decoder);
 	}
+
+	// Additional Injection of security per
+	// https://stackoverflow.com/questions/69484979/spring-authorization-server-how-to-use-login-form-hosted-on-a-separate-applicat/69577014#69577014
+
+	/*
+	@Bean
+	@Order(1)
+	public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
+		OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http);
+		// @formatter:off
+		http
+				.exceptionHandling(exceptionHandling -> exceptionHandling
+						.authenticationEntryPoint(new LoginUrlAuthenticationEntryPoint("https://some-other-sso.example/login"))
+				);
+		// @formatter:on
+		return http.build();
+	}
+
+	@Bean
+	@Order(2)
+	public SecurityFilterChain standardSecurityFilterChain(HttpSecurity http) throws Exception {
+		// @formatter:off
+		http
+				.authorizeRequests(authorize -> authorize
+						.anyRequest().authenticated()
+				)
+				.oauth2ResourceServer(OAuth2ResourceServerConfigurer::jwt);
+		// @formatter:on
+
+		return http.build();
+	}
+
+	@Bean
+	public BearerTokenResolver bearerTokenResolver() {
+		DefaultBearerTokenResolver bearerTokenResolver = new DefaultBearerTokenResolver();
+		bearerTokenResolver.setAllowUriQueryParameter(true);
+		return bearerTokenResolver;
+	}
+	*/
 }

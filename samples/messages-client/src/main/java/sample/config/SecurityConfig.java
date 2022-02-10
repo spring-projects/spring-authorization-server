@@ -15,6 +15,7 @@
  */
 package sample.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -30,6 +31,11 @@ import static org.springframework.security.config.Customizer.withDefaults;
 @EnableWebSecurity
 public class SecurityConfig {
 
+	// Meant to be injected via environment so that the client can be run with different clientIds in
+	// different circumstances.
+	@Value("${oauth2.clientId}")
+	String clientId;
+
 	@Bean
 	WebSecurityCustomizer webSecurityCustomizer() {
 		return (web) -> web.ignoring().antMatchers("/webjars/**");
@@ -43,7 +49,7 @@ public class SecurityConfig {
 				authorizeRequests.anyRequest().authenticated()
 			)
 			.oauth2Login(oauth2Login ->
-				oauth2Login.loginPage("/oauth2/authorization/messaging-client-oidc"))
+				oauth2Login.loginPage("/oauth2/authorization/" + clientId))
 			.oauth2Client(withDefaults());
 		return http.build();
 	}

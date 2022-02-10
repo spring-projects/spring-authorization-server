@@ -9,7 +9,20 @@ The username is `user1` and the password is `password`.
 * Run Authorization Server -> `./gradlew -b samples/default-authorizationserver/samples-default-authorizationserver.gradle bootRun`
 ** *IMPORTANT:* Make sure to modify your `/etc/hosts` file to avoid problems with session cookie overwrites between `messages-client` and `default-authorizationserver`. Simply add the entry `127.0.0.1	auth-server`
 * Run Resource Server -> `./gradlew -b samples/messages-resource/samples-messages-resource.gradle bootRun`
-* Run Client -> `./gradlew -b samples/messages-client/samples-messages-client.gradle bootRun`
-* Go to `http://127.0.0.1:8080`
-* Log in with the credentials injected into the sample server via the DefaultSecurityCofnig.java.  E.g. "user1", "password"
+* Run Client -> `./gradlew -Doauth2.clientId=messaging-client-oidc -b samples/messages-client/samples-messages-client.gradle bootRun`
+* Go to `http://127.0.0.3000`  (don't use localhost)
+* Note: to demonstrate federated identity, the client was changed to run at port :3000
+corresponding to a redirect_uri configured in the Alterra Auth0 QA environment.  So that we can demo that end-to-end.
+The messaging client's "oauth2.clientId" environment property configures which of several OAuth2
+client_ids it will run as.  I.e. the way that it identifies itself to the auth-server, and permits
+you to see how the auth-server responds when a client_id is configured as using external authentication.
+The available clientIds are (per the messaging clients' application.yaml properties)
+
+** `messaging-client-oidc` - a standard client not using any external auth.  I.e. you will see the login screen provided by the auth-server directly.
+This is the client that comes with the stock codebase.
+** `messaging-client-auth0` - a client_id which is configured in the server (see server's application.yaml file) to be
+handled using external authentication via the Alterra QA Auth0 site.
+
+* When working with local auth, Log in with the credentials injected into the sample server via the DefaultSecurityCofnig.java.  E.g. "user1", "password"
+* If working with Alterra or Okta, just create an account normally.
 

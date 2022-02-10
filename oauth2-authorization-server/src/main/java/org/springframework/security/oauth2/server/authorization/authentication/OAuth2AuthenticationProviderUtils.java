@@ -30,12 +30,12 @@ import org.springframework.security.oauth2.server.authorization.OAuth2Authorizat
  * @author Joe Grandja
  * @since 0.0.3
  */
-final class OAuth2AuthenticationProviderUtils {
+public final class OAuth2AuthenticationProviderUtils {
 
 	private OAuth2AuthenticationProviderUtils() {
 	}
 
-	static OAuth2ClientAuthenticationToken getAuthenticatedClientElseThrowInvalidClient(Authentication authentication) {
+	public static OAuth2ClientAuthenticationToken getAuthenticatedClientElseThrowInvalidClient(Authentication authentication) {
 		OAuth2ClientAuthenticationToken clientPrincipal = null;
 		if (OAuth2ClientAuthenticationToken.class.isAssignableFrom(authentication.getPrincipal().getClass())) {
 			clientPrincipal = (OAuth2ClientAuthenticationToken) authentication.getPrincipal();
@@ -46,7 +46,7 @@ final class OAuth2AuthenticationProviderUtils {
 		throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_CLIENT);
 	}
 
-	static <T extends AbstractOAuth2Token> OAuth2Authorization invalidate(
+	public static <T extends AbstractOAuth2Token> OAuth2Authorization invalidate(
 			OAuth2Authorization authorization, T token) {
 
 		// @formatter:off

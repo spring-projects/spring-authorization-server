@@ -17,11 +17,15 @@ package sample;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.ComponentScan;
 
 /**
  * @author Daniel Garnier-Moiroux
  */
 @SpringBootApplication
+@ComponentScan(
+	basePackages = { "com.accesso.security.oauth2.server", "sample" }
+)
 public class CustomConsentAuthorizationServerApplication {
 
 	public static void main(String[] args) {

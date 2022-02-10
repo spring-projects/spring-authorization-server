@@ -227,7 +227,7 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 	@Test
 	public void authenticateWhenRedirectUriIPv4LoopbackAndDifferentPortThenReturnAuthorizationCode() {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
-				.redirectUri("https://127.0.0.1:8080")
+				.redirectUri("https://127.0.0.1:3000")
 				.build();
 		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
 				.thenReturn(registeredClient);
@@ -246,7 +246,7 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 	@Test
 	public void authenticateWhenRedirectUriIPv6LoopbackAndDifferentPortThenReturnAuthorizationCode() {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
-				.redirectUri("https://[::1]:8080")
+				.redirectUri("https://[::1]:3000")
 				.build();
 		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
 				.thenReturn(registeredClient);

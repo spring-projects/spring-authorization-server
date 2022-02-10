@@ -37,16 +37,16 @@ import org.springframework.util.StringUtils;
  * @author Joe Grandja
  * @since 0.1.0
  */
-final class JwtUtils {
+public final class JwtUtils {
 
 	private JwtUtils() {
 	}
 
-	static JoseHeader.Builder headers() {
+	public static JoseHeader.Builder headers() {
 		return JoseHeader.withAlgorithm(SignatureAlgorithm.RS256);
 	}
 
-	static JwtClaimsSet.Builder accessTokenClaims(RegisteredClient registeredClient,
+	public static JwtClaimsSet.Builder accessTokenClaims(RegisteredClient registeredClient,
 			String issuer, String subject, Set<String> authorizedScopes) {
 
 		Instant issuedAt = Instant.now();
@@ -71,7 +71,7 @@ final class JwtUtils {
 		return claimsBuilder;
 	}
 
-	static JwtClaimsSet.Builder idTokenClaims(RegisteredClient registeredClient,
+	public static JwtClaimsSet.Builder idTokenClaims(RegisteredClient registeredClient,
 			String issuer, String subject, String nonce) {
 
 		Instant issuedAt = Instant.now();

@@ -22,7 +22,6 @@ import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -36,22 +35,26 @@ import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2AuthorizationCode;
+import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.OAuth2RefreshToken;
+import org.springframework.security.oauth2.core.OAuth2Token;
 import org.springframework.security.oauth2.core.OAuth2TokenType;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
 import org.springframework.security.oauth2.core.oidc.endpoint.OidcParameterNames;
-import org.springframework.security.oauth2.jwt.JoseHeader;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
+import org.springframework.security.oauth2.server.authorization.DefaultOAuth2TokenContext;
 import org.springframework.security.oauth2.server.authorization.JwtEncodingContext;
+import org.springframework.security.oauth2.server.authorization.JwtGenerator;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
+import org.springframework.security.oauth2.server.authorization.OAuth2TokenContext;
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenCustomizer;
+import org.springframework.security.oauth2.server.authorization.OAuth2TokenGenerator;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.config.ProviderSettings;
 import org.springframework.security.oauth2.server.authorization.context.ProviderContextHolder;
@@ -70,13 +73,12 @@ import static org.springframework.security.oauth2.server.authorization.authentic
  * @see OAuth2AccessTokenAuthenticationToken
  * @see OAuth2AuthorizationCodeRequestAuthenticationProvider
  * @see OAuth2AuthorizationService
- * @see JwtEncoder
- * @see OAuth2TokenCustomizer
- * @see JwtEncodingContext
- * @see <a target="_blank" href="https://tools.ietf.org/html/rfc6749#section-4.1">Section 4.1 Authorization Code Grant</a>
- * @see <a target="_blank" href="https://tools.ietf.org/html/rfc6749#section-4.1.3">Section 4.1.3 Access Token Request</a>
+ * @see OAuth2TokenGenerator
+ * @see <a target="_blank" href="https://datatracker.ietf.org/doc/html/rfc6749#section-4.1">Section 4.1 Authorization Code Grant</a>
+ * @see <a target="_blank" href="https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.3">Section 4.1.3 Access Token Request</a>
  */
 public final class OAuth2AuthorizationCodeAuthenticationProvider implements AuthenticationProvider {
+	private static final String ERROR_URI = "https://datatracker.ietf.org/doc/html/rfc6749#section-5.2";
 	private static final OAuth2TokenType AUTHORIZATION_CODE_TOKEN_TYPE =
 			new OAuth2TokenType(OAuth2ParameterNames.CODE);
 	private static final OAuth2TokenType ID_TOKEN_TOKEN_TYPE =
@@ -84,21 +86,37 @@ public final class OAuth2AuthorizationCodeAuthenticationProvider implements Auth
 	private static final StringKeyGenerator DEFAULT_REFRESH_TOKEN_GENERATOR =
 			new Base64StringKeyGenerator(Base64.getUrlEncoder().withoutPadding(), 96);
 	private final OAuth2AuthorizationService authorizationService;
-	private final JwtEncoder jwtEncoder;
-	private OAuth2TokenCustomizer<JwtEncodingContext> jwtCustomizer = (context) -> {};
+	private final OAuth2TokenGenerator<? extends OAuth2Token> tokenGenerator;
 	private Supplier<String> refreshTokenGenerator = DEFAULT_REFRESH_TOKEN_GENERATOR::generateKey;
 
 	/**
 	 * Constructs an {@code OAuth2AuthorizationCodeAuthenticationProvider} using the provided parameters.
 	 *
+	 * @deprecated Use {@link #OAuth2AuthorizationCodeAuthenticationProvider(OAuth2AuthorizationService, OAuth2TokenGenerator)} instead
 	 * @param authorizationService the authorization service
 	 * @param jwtEncoder the jwt encoder
 	 */
+	@Deprecated
 	public OAuth2AuthorizationCodeAuthenticationProvider(OAuth2AuthorizationService authorizationService, JwtEncoder jwtEncoder) {
 		Assert.notNull(authorizationService, "authorizationService cannot be null");
 		Assert.notNull(jwtEncoder, "jwtEncoder cannot be null");
 		this.authorizationService = authorizationService;
-		this.jwtEncoder = jwtEncoder;
+		this.tokenGenerator = new JwtGenerator(jwtEncoder);
+	}
+
+	/**
+	 * Constructs an {@code OAuth2AuthorizationCodeAuthenticationProvider} using the provided parameters.
+	 *
+	 * @param authorizationService the authorization service
+	 * @param tokenGenerator the token generator
+	 * @since 0.2.3
+	 */
+	public OAuth2AuthorizationCodeAuthenticationProvider(OAuth2AuthorizationService authorizationService,
+			OAuth2TokenGenerator<? extends OAuth2Token> tokenGenerator) {
+		Assert.notNull(authorizationService, "authorizationService cannot be null");
+		Assert.notNull(tokenGenerator, "tokenGenerator cannot be null");
+		this.authorizationService = authorizationService;
+		this.tokenGenerator = tokenGenerator;
 	}
 
 	/**
@@ -106,11 +124,15 @@ public final class OAuth2AuthorizationCodeAuthenticationProvider implements Auth
 	 * {@link JwtEncodingContext.Builder#headers(Consumer) headers} and/or
 	 * {@link JwtEncodingContext.Builder#claims(Consumer) claims} for the generated {@link Jwt}.
 	 *
+	 * @deprecated Use {@link JwtGenerator#setJwtCustomizer(OAuth2TokenCustomizer)} instead
 	 * @param jwtCustomizer the {@link OAuth2TokenCustomizer} that customizes the headers and/or claims for the generated {@code Jwt}
 	 */
+	@Deprecated
 	public void setJwtCustomizer(OAuth2TokenCustomizer<JwtEncodingContext> jwtCustomizer) {
 		Assert.notNull(jwtCustomizer, "jwtCustomizer cannot be null");
-		this.jwtCustomizer = jwtCustomizer;
+		if (this.tokenGenerator instanceof JwtGenerator) {
+			((JwtGenerator) this.tokenGenerator).setJwtCustomizer(jwtCustomizer);
+		}
 	}
 
 	/**
@@ -165,96 +187,65 @@ public final class OAuth2AuthorizationCodeAuthenticationProvider implements Auth
 			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_GRANT);
 		}
 
-		String issuer = ProviderContextHolder.getProviderContext().getIssuer();
-		Set<String> authorizedScopes = authorization.getAttribute(
-				OAuth2Authorization.AUTHORIZED_SCOPE_ATTRIBUTE_NAME);
-
-		JoseHeader.Builder headersBuilder = JwtUtils.headers();
-		JwtClaimsSet.Builder claimsBuilder = JwtUtils.accessTokenClaims(
-				registeredClient, issuer, authorization.getPrincipalName(),
-				authorizedScopes);
-
 		// @formatter:off
-		JwtEncodingContext context = JwtEncodingContext.with(headersBuilder, claimsBuilder)
+		DefaultOAuth2TokenContext.Builder tokenContextBuilder = DefaultOAuth2TokenContext.builder()
 				.registeredClient(registeredClient)
 				.principal(authorization.getAttribute(Principal.class.getName()))
+				.providerContext(ProviderContextHolder.getProviderContext())
 				.authorization(authorization)
-				.authorizedScopes(authorizedScopes)
-				.tokenType(OAuth2TokenType.ACCESS_TOKEN)
+				.authorizedScopes(authorization.getAttribute(OAuth2Authorization.AUTHORIZED_SCOPE_ATTRIBUTE_NAME))
 				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-				.authorizationGrant(authorizationCodeAuthentication)
-				.build();
+				.authorizationGrant(authorizationCodeAuthentication);
 		// @formatter:on
 
-		this.jwtCustomizer.customize(context);
+		OAuth2Authorization.Builder authorizationBuilder = OAuth2Authorization.from(authorization);
 
-		JoseHeader headers = context.getHeaders().build();
-		JwtClaimsSet claims = context.getClaims().build();
-		Jwt jwtAccessToken = this.jwtEncoder.encode(headers, claims);
-
+		// ----- Access token -----
+		OAuth2TokenContext tokenContext = tokenContextBuilder.tokenType(OAuth2TokenType.ACCESS_TOKEN).build();
+		OAuth2Token generatedAccessToken = this.tokenGenerator.generate(tokenContext);
+		if (generatedAccessToken == null) {
+			OAuth2Error error = new OAuth2Error(OAuth2ErrorCodes.SERVER_ERROR,
+					"The token generator failed to generate the access token.", ERROR_URI);
+			throw new OAuth2AuthenticationException(error);
+		}
 		OAuth2AccessToken accessToken = new OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER,
-				jwtAccessToken.getTokenValue(), jwtAccessToken.getIssuedAt(),
-				jwtAccessToken.getExpiresAt(), authorizedScopes);
+				generatedAccessToken.getTokenValue(), generatedAccessToken.getIssuedAt(),
+				generatedAccessToken.getExpiresAt(), tokenContext.getAuthorizedScopes());
+		if (generatedAccessToken instanceof Jwt) {
+			authorizationBuilder.token(accessToken, (metadata) ->
+					metadata.put(OAuth2Authorization.Token.CLAIMS_METADATA_NAME, ((Jwt) generatedAccessToken).getClaims()));
+		} else {
+			authorizationBuilder.accessToken(accessToken);
+		}
 
+		// ----- Refresh token -----
 		OAuth2RefreshToken refreshToken = null;
 		if (registeredClient.getAuthorizationGrantTypes().contains(AuthorizationGrantType.REFRESH_TOKEN) &&
 				// Do not issue refresh token to public client
 				!clientPrincipal.getClientAuthenticationMethod().equals(ClientAuthenticationMethod.NONE)) {
 			refreshToken = generateRefreshToken(registeredClient.getTokenSettings().getRefreshTokenTimeToLive());
+			authorizationBuilder.refreshToken(refreshToken);
 		}
 
-		Jwt jwtIdToken = null;
-		if (authorizationRequest.getScopes().contains(OidcScopes.OPENID)) {
-			String nonce = (String) authorizationRequest.getAdditionalParameters().get(OidcParameterNames.NONCE);
-
-			headersBuilder = JwtUtils.headers();
-			claimsBuilder = JwtUtils.idTokenClaims(
-					registeredClient, issuer, authorization.getPrincipalName(), nonce);
-
-			// @formatter:off
-			context = JwtEncodingContext.with(headersBuilder, claimsBuilder)
-					.registeredClient(registeredClient)
-					.principal(authorization.getAttribute(Principal.class.getName()))
-					.authorization(authorization)
-					.authorizedScopes(authorizedScopes)
-					.tokenType(ID_TOKEN_TOKEN_TYPE)
-					.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-					.authorizationGrant(authorizationCodeAuthentication)
-					.build();
-			// @formatter:on
-
-			this.jwtCustomizer.customize(context);
-
-			headers = context.getHeaders().build();
-			claims = context.getClaims().build();
-			jwtIdToken = this.jwtEncoder.encode(headers, claims);
-		}
-
+		// ----- ID token -----
 		OidcIdToken idToken;
-		if (jwtIdToken != null) {
-			idToken = new OidcIdToken(jwtIdToken.getTokenValue(), jwtIdToken.getIssuedAt(),
-					jwtIdToken.getExpiresAt(), jwtIdToken.getClaims());
+		if (authorizationRequest.getScopes().contains(OidcScopes.OPENID)) {
+			tokenContext = tokenContextBuilder.tokenType(ID_TOKEN_TOKEN_TYPE).build();
+			OAuth2Token generatedIdToken = this.tokenGenerator.generate(tokenContext);
+			if (!(generatedIdToken instanceof Jwt)) {
+				OAuth2Error error = new OAuth2Error(OAuth2ErrorCodes.SERVER_ERROR,
+						"The token generator failed to generate the ID token.", ERROR_URI);
+				throw new OAuth2AuthenticationException(error);
+			}
+			idToken = new OidcIdToken(generatedIdToken.getTokenValue(), generatedIdToken.getIssuedAt(),
+					generatedIdToken.getExpiresAt(), ((Jwt) generatedIdToken).getClaims());
+			authorizationBuilder.token(idToken, (metadata) ->
+					metadata.put(OAuth2Authorization.Token.CLAIMS_METADATA_NAME, idToken.getClaims()));
 		} else {
 			idToken = null;
 		}
 
-		// @formatter:off
-		OAuth2Authorization.Builder authorizationBuilder = OAuth2Authorization.from(authorization)
-				.token(accessToken,
-						(metadata) ->
-								metadata.put(OAuth2Authorization.Token.CLAIMS_METADATA_NAME, jwtAccessToken.getClaims())
-				);
-		if (refreshToken != null) {
-			authorizationBuilder.refreshToken(refreshToken);
-		}
-		if (idToken != null) {
-			authorizationBuilder
-					.token(idToken,
-							(metadata) ->
-									metadata.put(OAuth2Authorization.Token.CLAIMS_METADATA_NAME, idToken.getClaims()));
-		}
 		authorization = authorizationBuilder.build();
-		// @formatter:on
 
 		// Invalidate the authorization code as it can only be used once
 		authorization = OAuth2AuthenticationProviderUtils.invalidate(authorization, authorizationCode.getToken());

@@ -37,8 +37,10 @@ import org.springframework.security.config.annotation.web.configurers.ExceptionH
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.Transient;
 import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.oauth2.core.OAuth2Token;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsentService;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
+import org.springframework.security.oauth2.server.authorization.OAuth2TokenGenerator;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2TokenIntrospectionAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.config.ProviderSettings;
@@ -143,6 +145,19 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 	public OAuth2AuthorizationServerConfigurer<B> providerSettings(ProviderSettings providerSettings) {
 		Assert.notNull(providerSettings, "providerSettings cannot be null");
 		getBuilder().setSharedObject(ProviderSettings.class, providerSettings);
+		return this;
+	}
+
+	/**
+	 * Sets the token generator.
+	 *
+	 * @param tokenGenerator the token generator
+	 * @return the {@link OAuth2AuthorizationServerConfigurer} for further configuration
+	 * @since 0.2.3
+	 */
+	public OAuth2AuthorizationServerConfigurer<B> tokenGenerator(OAuth2TokenGenerator<? extends OAuth2Token> tokenGenerator) {
+		Assert.notNull(tokenGenerator, "tokenGenerator cannot be null");
+		getBuilder().setSharedObject(OAuth2TokenGenerator.class, tokenGenerator);
 		return this;
 	}
 

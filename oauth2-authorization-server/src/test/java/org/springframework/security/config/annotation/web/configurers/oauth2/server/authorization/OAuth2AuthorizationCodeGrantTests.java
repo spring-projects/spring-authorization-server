@@ -84,11 +84,14 @@ import org.springframework.security.oauth2.jwt.NimbusJwsEncoder;
 import org.springframework.security.oauth2.server.authorization.JdbcOAuth2AuthorizationConsentService;
 import org.springframework.security.oauth2.server.authorization.JdbcOAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.JwtEncodingContext;
+import org.springframework.security.oauth2.server.authorization.JwtGenerator;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsent;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsentService;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
+import org.springframework.security.oauth2.server.authorization.OAuth2TokenContext;
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenCustomizer;
+import org.springframework.security.oauth2.server.authorization.OAuth2TokenGenerator;
 import org.springframework.security.oauth2.server.authorization.TestOAuth2Authorizations;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeRequestAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeRequestAuthenticationToken;
@@ -183,6 +186,9 @@ public class OAuth2AuthorizationCodeGrantTests {
 
 	@Autowired
 	private JwtDecoder jwtDecoder;
+
+	@Autowired(required = false)
+	private OAuth2TokenGenerator<?> tokenGenerator;
 
 	@BeforeClass
 	public static void init() {
@@ -425,8 +431,8 @@ public class OAuth2AuthorizationCodeGrantTests {
 	}
 
 	@Test
-	public void requestWhenCustomJwtEncoderThenUsed() throws Exception {
-		this.spring.register(AuthorizationServerConfigurationWithJwtEncoder.class).autowire();
+	public void requestWhenCustomTokenGeneratorThenUsed() throws Exception {
+		this.spring.register(AuthorizationServerConfigurationWithTokenGenerator.class).autowire();
 
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 		this.registeredClientRepository.save(registeredClient);
@@ -436,7 +442,10 @@ public class OAuth2AuthorizationCodeGrantTests {
 
 		this.mvc.perform(post(DEFAULT_TOKEN_ENDPOINT_URI)
 				.params(getTokenRequestParameters(registeredClient, authorization))
-				.header(HttpHeaders.AUTHORIZATION, getAuthorizationHeader(registeredClient)));
+				.header(HttpHeaders.AUTHORIZATION, getAuthorizationHeader(registeredClient)))
+				.andExpect(status().isOk());
+
+		verify(this.tokenGenerator).generate(any());
 	}
 
 	@Test
@@ -822,12 +831,25 @@ public class OAuth2AuthorizationCodeGrantTests {
 
 	@EnableWebSecurity
 	@Import(OAuth2AuthorizationServerConfiguration.class)
-	static class AuthorizationServerConfigurationWithJwtEncoder extends AuthorizationServerConfiguration {
+	static class AuthorizationServerConfigurationWithTokenGenerator extends AuthorizationServerConfiguration {
 
 		@Bean
 		JwtEncoder jwtEncoder() {
 			return jwtEncoder;
 		}
+
+		@Bean
+		OAuth2TokenGenerator<?> tokenGenerator() {
+			JwtGenerator jwtGenerator = new JwtGenerator(jwtEncoder());
+			jwtGenerator.setJwtCustomizer(jwtCustomizer());
+			return spy(new OAuth2TokenGenerator<Jwt>() {
+				@Override
+				public Jwt generate(OAuth2TokenContext context) {
+					return jwtGenerator.generate(context);
+				}
+			});
+		}
+
 	}
 
 	@EnableWebSecurity

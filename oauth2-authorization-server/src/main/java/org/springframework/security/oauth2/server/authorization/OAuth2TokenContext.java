@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 the original author or authors.
+ * Copyright 2020-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,15 +27,17 @@ import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.OAuth2TokenType;
 import org.springframework.security.oauth2.core.context.Context;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
+import org.springframework.security.oauth2.server.authorization.context.ProviderContext;
 import org.springframework.util.Assert;
 
 /**
- * A context that holds information associated to an OAuth 2.0 Token
- * and is used by an {@link OAuth2TokenCustomizer} for customizing the token attributes.
+ * A context that holds information (to be) associated to an OAuth 2.0 Token
+ * and is used by an {@link OAuth2TokenGenerator} and {@link OAuth2TokenCustomizer}.
  *
  * @author Joe Grandja
  * @since 0.1.0
  * @see Context
+ * @see OAuth2TokenGenerator
  * @see OAuth2TokenCustomizer
  */
 public interface OAuth2TokenContext extends Context {
@@ -57,6 +59,16 @@ public interface OAuth2TokenContext extends Context {
 	 */
 	default <T extends Authentication> T getPrincipal() {
 		return get(AbstractBuilder.PRINCIPAL_AUTHENTICATION_KEY);
+	}
+
+	/**
+	 * Returns the {@link ProviderContext provider context}.
+	 *
+	 * @return the {@link ProviderContext}
+	 * @since 0.2.3
+	 */
+	default ProviderContext getProviderContext() {
+		return get(ProviderContext.class);
 	}
 
 	/**
@@ -139,6 +151,17 @@ public interface OAuth2TokenContext extends Context {
 		 */
 		public B principal(Authentication principal) {
 			return put(PRINCIPAL_AUTHENTICATION_KEY, principal);
+		}
+
+		/**
+		 * Sets the {@link ProviderContext provider context}.
+		 *
+		 * @param providerContext the {@link ProviderContext}
+		 * @return the {@link AbstractBuilder} for further configuration
+		 * @since 0.2.3
+		 */
+		public B providerContext(ProviderContext providerContext) {
+			return put(ProviderContext.class, providerContext);
 		}
 
 		/**

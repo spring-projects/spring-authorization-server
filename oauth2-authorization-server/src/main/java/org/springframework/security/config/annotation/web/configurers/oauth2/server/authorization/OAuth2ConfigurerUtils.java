@@ -26,14 +26,17 @@ import org.springframework.beans.factory.NoUniqueBeanDefinitionException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.ResolvableType;
 import org.springframework.security.config.annotation.web.HttpSecurityBuilder;
+import org.springframework.security.oauth2.core.OAuth2Token;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.NimbusJwsEncoder;
 import org.springframework.security.oauth2.server.authorization.InMemoryOAuth2AuthorizationConsentService;
 import org.springframework.security.oauth2.server.authorization.InMemoryOAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.JwtEncodingContext;
+import org.springframework.security.oauth2.server.authorization.JwtGenerator;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsentService;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenCustomizer;
+import org.springframework.security.oauth2.server.authorization.OAuth2TokenGenerator;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.config.ProviderSettings;
 import org.springframework.util.StringUtils;
@@ -82,7 +85,25 @@ final class OAuth2ConfigurerUtils {
 		return authorizationConsentService;
 	}
 
-	static <B extends HttpSecurityBuilder<B>> JwtEncoder getJwtEncoder(B builder) {
+	@SuppressWarnings("unchecked")
+	static <B extends HttpSecurityBuilder<B>> OAuth2TokenGenerator<? extends OAuth2Token> getTokenGenerator(B builder) {
+		OAuth2TokenGenerator<? extends OAuth2Token> tokenGenerator = builder.getSharedObject(OAuth2TokenGenerator.class);
+		if (tokenGenerator == null) {
+			tokenGenerator = getOptionalBean(builder, OAuth2TokenGenerator.class);
+			if (tokenGenerator == null) {
+				JwtGenerator jwtGenerator = new JwtGenerator(getJwtEncoder(builder));
+				OAuth2TokenCustomizer<JwtEncodingContext> jwtCustomizer = getJwtCustomizer(builder);
+				if (jwtCustomizer != null) {
+					jwtGenerator.setJwtCustomizer(jwtCustomizer);
+				}
+				tokenGenerator = jwtGenerator;
+			}
+			builder.setSharedObject(OAuth2TokenGenerator.class, tokenGenerator);
+		}
+		return tokenGenerator;
+	}
+
+	private static <B extends HttpSecurityBuilder<B>> JwtEncoder getJwtEncoder(B builder) {
 		JwtEncoder jwtEncoder = builder.getSharedObject(JwtEncoder.class);
 		if (jwtEncoder == null) {
 			jwtEncoder = getOptionalBean(builder, JwtEncoder.class);
@@ -107,7 +128,7 @@ final class OAuth2ConfigurerUtils {
 	}
 
 	@SuppressWarnings("unchecked")
-	static <B extends HttpSecurityBuilder<B>> OAuth2TokenCustomizer<JwtEncodingContext> getJwtCustomizer(B builder) {
+	private static <B extends HttpSecurityBuilder<B>> OAuth2TokenCustomizer<JwtEncodingContext> getJwtCustomizer(B builder) {
 		OAuth2TokenCustomizer<JwtEncodingContext> jwtCustomizer = builder.getSharedObject(OAuth2TokenCustomizer.class);
 		if (jwtCustomizer == null) {
 			ResolvableType type = ResolvableType.forClassWithGenerics(OAuth2TokenCustomizer.class, JwtEncodingContext.class);

@@ -48,8 +48,11 @@ import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.TestJoseHeaders;
 import org.springframework.security.oauth2.jwt.TestJwtClaimsSets;
+import org.springframework.security.oauth2.server.authorization.JwtGenerator;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
+import org.springframework.security.oauth2.server.authorization.OAuth2TokenContext;
+import org.springframework.security.oauth2.server.authorization.OAuth2TokenGenerator;
 import org.springframework.security.oauth2.server.authorization.TestOAuth2Authorizations;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
@@ -66,8 +69,10 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -82,6 +87,7 @@ public class OidcClientRegistrationAuthenticationProviderTests {
 	private RegisteredClientRepository registeredClientRepository;
 	private OAuth2AuthorizationService authorizationService;
 	private JwtEncoder jwtEncoder;
+	private OAuth2TokenGenerator<?> tokenGenerator;
 	private ProviderSettings providerSettings;
 	private OidcClientRegistrationAuthenticationProvider authenticationProvider;
 
@@ -90,10 +96,17 @@ public class OidcClientRegistrationAuthenticationProviderTests {
 		this.registeredClientRepository = mock(RegisteredClientRepository.class);
 		this.authorizationService = mock(OAuth2AuthorizationService.class);
 		this.jwtEncoder = mock(JwtEncoder.class);
+		JwtGenerator jwtGenerator = new JwtGenerator(this.jwtEncoder);
+		this.tokenGenerator = spy(new OAuth2TokenGenerator<Jwt>() {
+			@Override
+			public Jwt generate(OAuth2TokenContext context) {
+				return jwtGenerator.generate(context);
+			}
+		});
 		this.providerSettings = ProviderSettings.builder().issuer("https://provider.com").build();
 		ProviderContextHolder.setProviderContext(new ProviderContext(this.providerSettings, null));
 		this.authenticationProvider = new OidcClientRegistrationAuthenticationProvider(
-				this.registeredClientRepository, this.authorizationService, this.jwtEncoder);
+				this.registeredClientRepository, this.authorizationService, this.tokenGenerator);
 	}
 
 	@After
@@ -118,8 +131,15 @@ public class OidcClientRegistrationAuthenticationProviderTests {
 	@Test
 	public void constructorWhenJwtEncoderNullThenThrowIllegalArgumentException() {
 		assertThatIllegalArgumentException()
-				.isThrownBy(() -> new OidcClientRegistrationAuthenticationProvider(this.registeredClientRepository, this.authorizationService, null))
+				.isThrownBy(() -> new OidcClientRegistrationAuthenticationProvider(this.registeredClientRepository, this.authorizationService, (JwtEncoder) null))
 				.withMessage("jwtEncoder cannot be null");
+	}
+
+	@Test
+	public void constructorWhenTokenGeneratorNullThenThrowIllegalArgumentException() {
+		assertThatIllegalArgumentException()
+				.isThrownBy(() -> new OidcClientRegistrationAuthenticationProvider(this.registeredClientRepository, this.authorizationService, (OAuth2TokenGenerator<?>) null))
+				.withMessage("tokenGenerator cannot be null");
 	}
 
 	@Test
@@ -462,6 +482,46 @@ public class OidcClientRegistrationAuthenticationProviderTests {
 		authenticationResult = (OidcClientRegistrationAuthenticationToken) this.authenticationProvider.authenticate(authentication);
 		assertThat(authenticationResult.getClientRegistration().getTokenEndpointAuthenticationSigningAlgorithm())
 				.isEqualTo(SignatureAlgorithm.RS256.getName());
+	}
+
+	@Test
+	public void authenticateWhenRegistrationAccessTokenNotGeneratedThenThrowOAuth2AuthenticationException() {
+		Jwt jwt = createJwtClientRegistration();
+		OAuth2AccessToken jwtAccessToken = new OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER,
+				jwt.getTokenValue(), jwt.getIssuedAt(),
+				jwt.getExpiresAt(), jwt.getClaim(OAuth2ParameterNames.SCOPE));
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(
+				registeredClient, jwtAccessToken, jwt.getClaims()).build();
+		when(this.authorizationService.findByToken(
+				eq(jwtAccessToken.getTokenValue()), eq(OAuth2TokenType.ACCESS_TOKEN)))
+				.thenReturn(authorization);
+
+		doReturn(null).when(this.tokenGenerator).generate(any());
+
+		JwtAuthenticationToken principal = new JwtAuthenticationToken(
+				jwt, AuthorityUtils.createAuthorityList("SCOPE_client.create"));
+		// @formatter:off
+		OidcClientRegistration clientRegistration = OidcClientRegistration.builder()
+				.clientName("client-name")
+				.redirectUri("https://client.example.com")
+				.grantType(AuthorizationGrantType.AUTHORIZATION_CODE.getValue())
+				.grantType(AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
+				.scope("scope1")
+				.scope("scope2")
+				.build();
+		// @formatter:on
+
+		OidcClientRegistrationAuthenticationToken authentication = new OidcClientRegistrationAuthenticationToken(
+				principal, clientRegistration);
+
+		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
+				.isInstanceOf(OAuth2AuthenticationException.class)
+				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+				.satisfies(error -> {
+					assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.SERVER_ERROR);
+					assertThat(error.getDescription()).contains("The token generator failed to generate the registration access token.");
+				});
 	}
 
 	@Test

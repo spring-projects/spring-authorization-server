@@ -47,9 +47,12 @@ import org.springframework.security.oauth2.jwt.JoseHeaderNames;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.server.authorization.JwtEncodingContext;
+import org.springframework.security.oauth2.server.authorization.JwtGenerator;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
+import org.springframework.security.oauth2.server.authorization.OAuth2TokenContext;
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenCustomizer;
+import org.springframework.security.oauth2.server.authorization.OAuth2TokenGenerator;
 import org.springframework.security.oauth2.server.authorization.TestOAuth2Authorizations;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
@@ -58,11 +61,12 @@ import org.springframework.security.oauth2.server.authorization.config.TokenSett
 import org.springframework.security.oauth2.server.authorization.context.ProviderContext;
 import org.springframework.security.oauth2.server.authorization.context.ProviderContextHolder;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.entry;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
-import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
@@ -81,6 +85,7 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 	private OAuth2AuthorizationService authorizationService;
 	private JwtEncoder jwtEncoder;
 	private OAuth2TokenCustomizer<JwtEncodingContext> jwtCustomizer;
+	private OAuth2TokenGenerator<?> tokenGenerator;
 	private OAuth2RefreshTokenAuthenticationProvider authenticationProvider;
 
 	@Before
@@ -88,10 +93,17 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 		this.authorizationService = mock(OAuth2AuthorizationService.class);
 		this.jwtEncoder = mock(JwtEncoder.class);
 		when(this.jwtEncoder.encode(any(), any())).thenReturn(createJwt(Collections.singleton("scope1")));
-		this.authenticationProvider = new OAuth2RefreshTokenAuthenticationProvider(
-				this.authorizationService, this.jwtEncoder);
 		this.jwtCustomizer = mock(OAuth2TokenCustomizer.class);
-		this.authenticationProvider.setJwtCustomizer(this.jwtCustomizer);
+		JwtGenerator jwtGenerator = new JwtGenerator(this.jwtEncoder);
+		jwtGenerator.setJwtCustomizer(this.jwtCustomizer);
+		this.tokenGenerator = spy(new OAuth2TokenGenerator<Jwt>() {
+			@Override
+			public Jwt generate(OAuth2TokenContext context) {
+				return jwtGenerator.generate(context);
+			}
+		});
+		this.authenticationProvider = new OAuth2RefreshTokenAuthenticationProvider(
+				this.authorizationService, this.tokenGenerator);
 		ProviderSettings providerSettings = ProviderSettings.builder().issuer("https://provider.com").build();
 		ProviderContextHolder.setProviderContext(new ProviderContext(providerSettings, null));
 	}
@@ -111,10 +123,17 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 
 	@Test
 	public void constructorWhenJwtEncoderNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> new OAuth2RefreshTokenAuthenticationProvider(this.authorizationService, null))
+		assertThatThrownBy(() -> new OAuth2RefreshTokenAuthenticationProvider(this.authorizationService, (JwtEncoder) null))
 				.isInstanceOf(IllegalArgumentException.class)
 				.extracting(Throwable::getMessage)
 				.isEqualTo("jwtEncoder cannot be null");
+	}
+
+	@Test
+	public void constructorWhenTokenGeneratorNullThenThrowIllegalArgumentException() {
+		assertThatThrownBy(() -> new OAuth2RefreshTokenAuthenticationProvider(this.authorizationService, (OAuth2TokenGenerator<?>) null))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("tokenGenerator cannot be null");
 	}
 
 	@Test
@@ -498,6 +517,70 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
 				.extracting("errorCode")
 				.isEqualTo(OAuth2ErrorCodes.INVALID_GRANT);
+	}
+
+	@Test
+	public void authenticateWhenAccessTokenNotGeneratedThenThrowOAuth2AuthenticationException() {
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();
+		when(this.authorizationService.findByToken(
+				eq(authorization.getRefreshToken().getToken().getTokenValue()),
+				eq(OAuth2TokenType.REFRESH_TOKEN)))
+				.thenReturn(authorization);
+
+		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(
+				registeredClient, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
+		OAuth2RefreshTokenAuthenticationToken authentication = new OAuth2RefreshTokenAuthenticationToken(
+				authorization.getRefreshToken().getToken().getTokenValue(), clientPrincipal, null, null);
+
+		doAnswer(answer -> {
+			OAuth2TokenContext context = answer.getArgument(0);
+			if (OAuth2TokenType.ACCESS_TOKEN.equals(context.getTokenType())) {
+				return null;
+			} else {
+				return answer.callRealMethod();
+			}
+		}).when(this.tokenGenerator).generate(any());
+
+		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
+				.isInstanceOf(OAuth2AuthenticationException.class)
+				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+				.satisfies(error -> {
+					assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.SERVER_ERROR);
+					assertThat(error.getDescription()).contains("The token generator failed to generate the access token.");
+				});
+	}
+
+	@Test
+	public void authenticateWhenIdTokenNotGeneratedThenThrowOAuth2AuthenticationException() {
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().scope(OidcScopes.OPENID).build();
+		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();
+		when(this.authorizationService.findByToken(
+				eq(authorization.getRefreshToken().getToken().getTokenValue()),
+				eq(OAuth2TokenType.REFRESH_TOKEN)))
+				.thenReturn(authorization);
+
+		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(
+				registeredClient, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
+		OAuth2RefreshTokenAuthenticationToken authentication = new OAuth2RefreshTokenAuthenticationToken(
+				authorization.getRefreshToken().getToken().getTokenValue(), clientPrincipal, null, null);
+
+		doAnswer(answer -> {
+			OAuth2TokenContext context = answer.getArgument(0);
+			if (OidcParameterNames.ID_TOKEN.equals(context.getTokenType().getValue())) {
+				return null;
+			} else {
+				return answer.callRealMethod();
+			}
+		}).when(this.tokenGenerator).generate(any());
+
+		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
+				.isInstanceOf(OAuth2AuthenticationException.class)
+				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+				.satisfies(error -> {
+					assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.SERVER_ERROR);
+					assertThat(error.getDescription()).contains("The token generator failed to generate the ID token.");
+				});
 	}
 
 	private static Jwt createJwt(Set<String> scope) {

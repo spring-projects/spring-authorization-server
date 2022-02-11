@@ -38,6 +38,7 @@ import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
+import org.springframework.security.oauth2.core.OAuth2Token;
 import org.springframework.security.oauth2.core.OAuth2TokenType;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationResponseType;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
@@ -45,12 +46,15 @@ import org.springframework.security.oauth2.core.oidc.OidcClientMetadataClaimName
 import org.springframework.security.oauth2.core.oidc.OidcClientRegistration;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
-import org.springframework.security.oauth2.jwt.JoseHeader;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
+import org.springframework.security.oauth2.server.authorization.DefaultOAuth2TokenContext;
+import org.springframework.security.oauth2.server.authorization.JwtGenerator;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
+import org.springframework.security.oauth2.server.authorization.OAuth2TokenContext;
+import org.springframework.security.oauth2.server.authorization.OAuth2TokenGenerator;
+import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.config.ClientSettings;
@@ -73,11 +77,12 @@ import org.springframework.web.util.UriComponentsBuilder;
  * @since 0.1.1
  * @see RegisteredClientRepository
  * @see OAuth2AuthorizationService
- * @see JwtEncoder
+ * @see OAuth2TokenGenerator
  * @see <a href="https://openid.net/specs/openid-connect-registration-1_0.html#ClientRegistration">3. Client Registration Endpoint</a>
  * @see <a href="https://openid.net/specs/openid-connect-registration-1_0.html#ClientConfigurationEndpoint">4. Client Configuration Endpoint</a>
  */
 public final class OidcClientRegistrationAuthenticationProvider implements AuthenticationProvider {
+	private static final String ERROR_URI = "https://openid.net/specs/openid-connect-registration-1_0.html#RegistrationError";
 	private static final StringKeyGenerator CLIENT_ID_GENERATOR = new Base64StringKeyGenerator(
 			Base64.getUrlEncoder().withoutPadding(), 32);
 	private static final StringKeyGenerator CLIENT_SECRET_GENERATOR = new Base64StringKeyGenerator(
@@ -86,7 +91,7 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 	private static final String DEFAULT_CLIENT_CONFIGURATION_AUTHORIZED_SCOPE = "client.read";
 	private final RegisteredClientRepository registeredClientRepository;
 	private final OAuth2AuthorizationService authorizationService;
-	private JwtEncoder jwtEncoder;
+	private OAuth2TokenGenerator<? extends OAuth2Token> tokenGenerator;
 
 	/**
 	 * Constructs an {@code OidcClientRegistrationAuthenticationProvider} using the provided parameters.
@@ -110,7 +115,9 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 	 * @param registeredClientRepository the repository of registered clients
 	 * @param authorizationService the authorization service
 	 * @param jwtEncoder the jwt encoder
+	 * @deprecated Use {@link #OidcClientRegistrationAuthenticationProvider(RegisteredClientRepository, OAuth2AuthorizationService, OAuth2TokenGenerator)} instead
 	 */
+	@Deprecated
 	public OidcClientRegistrationAuthenticationProvider(RegisteredClientRepository registeredClientRepository,
 			OAuth2AuthorizationService authorizationService, JwtEncoder jwtEncoder) {
 		Assert.notNull(registeredClientRepository, "registeredClientRepository cannot be null");
@@ -118,13 +125,31 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 		Assert.notNull(jwtEncoder, "jwtEncoder cannot be null");
 		this.registeredClientRepository = registeredClientRepository;
 		this.authorizationService = authorizationService;
-		this.jwtEncoder = jwtEncoder;
+		this.tokenGenerator = new JwtGenerator(jwtEncoder);
+	}
+
+	/**
+	 * Constructs an {@code OidcClientRegistrationAuthenticationProvider} using the provided parameters.
+	 *
+	 * @param registeredClientRepository the repository of registered clients
+	 * @param authorizationService the authorization service
+	 * @param tokenGenerator the token generator
+	 * @since 0.2.3
+	 */
+	public OidcClientRegistrationAuthenticationProvider(RegisteredClientRepository registeredClientRepository,
+			OAuth2AuthorizationService authorizationService, OAuth2TokenGenerator<? extends OAuth2Token> tokenGenerator) {
+		Assert.notNull(registeredClientRepository, "registeredClientRepository cannot be null");
+		Assert.notNull(authorizationService, "authorizationService cannot be null");
+		Assert.notNull(tokenGenerator, "tokenGenerator cannot be null");
+		this.registeredClientRepository = registeredClientRepository;
+		this.authorizationService = authorizationService;
+		this.tokenGenerator = tokenGenerator;
 	}
 
 	@Deprecated
 	@Autowired(required = false)
 	protected void setJwtEncoder(JwtEncoder jwtEncoder) {
-		this.jwtEncoder = jwtEncoder;
+		this.tokenGenerator = new JwtGenerator(jwtEncoder);
 	}
 
 	@Deprecated
@@ -227,37 +252,52 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 	}
 
 	private OAuth2Authorization registerAccessToken(RegisteredClient registeredClient) {
-		JoseHeader headers = JwtUtils.headers().build();
+		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient,
+				registeredClient.getClientAuthenticationMethods().iterator().next(), registeredClient.getClientSecret());
 
 		Set<String> authorizedScopes = new HashSet<>();
 		authorizedScopes.add(DEFAULT_CLIENT_CONFIGURATION_AUTHORIZED_SCOPE);
 		authorizedScopes = Collections.unmodifiableSet(authorizedScopes);
 
-		String issuer = ProviderContextHolder.getProviderContext().getIssuer();
-		JwtClaimsSet claims = JwtUtils.accessTokenClaims(
-				registeredClient, issuer, registeredClient.getClientId(), authorizedScopes)
-				.build();
-
-		Jwt registrationAccessToken = this.jwtEncoder.encode(headers, claims);
-
-		OAuth2AccessToken accessToken = new OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER,
-				registrationAccessToken.getTokenValue(), registrationAccessToken.getIssuedAt(),
-				registrationAccessToken.getExpiresAt(), authorizedScopes);
-
 		// @formatter:off
-		OAuth2Authorization registeredClientAuthorization = OAuth2Authorization.withRegisteredClient(registeredClient)
-				.principalName(registeredClient.getClientId())
+		OAuth2TokenContext tokenContext = DefaultOAuth2TokenContext.builder()
+				.registeredClient(registeredClient)
+				.principal(clientPrincipal)
+				.providerContext(ProviderContextHolder.getProviderContext())
+				.authorizedScopes(authorizedScopes)
+				.tokenType(OAuth2TokenType.ACCESS_TOKEN)
 				.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
-				.token(accessToken,
-						(metadata) ->
-								metadata.put(OAuth2Authorization.Token.CLAIMS_METADATA_NAME, registrationAccessToken.getClaims()))
-				.attribute(OAuth2Authorization.AUTHORIZED_SCOPE_ATTRIBUTE_NAME, authorizedScopes)
 				.build();
 		// @formatter:on
 
-		this.authorizationService.save(registeredClientAuthorization);
+		OAuth2Token registrationAccessToken = this.tokenGenerator.generate(tokenContext);
+		if (registrationAccessToken == null) {
+			OAuth2Error error = new OAuth2Error(OAuth2ErrorCodes.SERVER_ERROR,
+					"The token generator failed to generate the registration access token.", ERROR_URI);
+			throw new OAuth2AuthenticationException(error);
+		}
+		OAuth2AccessToken accessToken = new OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER,
+				registrationAccessToken.getTokenValue(), registrationAccessToken.getIssuedAt(),
+				registrationAccessToken.getExpiresAt(), tokenContext.getAuthorizedScopes());
 
-		return registeredClientAuthorization;
+		// @formatter:off
+		OAuth2Authorization.Builder authorizationBuilder = OAuth2Authorization.withRegisteredClient(registeredClient)
+				.principalName(registeredClient.getClientId())
+				.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
+				.attribute(OAuth2Authorization.AUTHORIZED_SCOPE_ATTRIBUTE_NAME, authorizedScopes);
+		// @formatter:on
+		if (registrationAccessToken instanceof Jwt) {
+			authorizationBuilder.token(accessToken, (metadata) ->
+					metadata.put(OAuth2Authorization.Token.CLAIMS_METADATA_NAME, ((Jwt) registrationAccessToken).getClaims()));
+		} else {
+			authorizationBuilder.accessToken(accessToken);
+		}
+
+		OAuth2Authorization authorization = authorizationBuilder.build();
+
+		this.authorizationService.save(authorization);
+
+		return authorization;
 	}
 
 	private OidcClientRegistration.Builder buildRegistration(RegisteredClient registeredClient) {
@@ -445,7 +485,7 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 		OAuth2Error error = new OAuth2Error(
 				errorCode,
 				"Invalid Client Registration: " + fieldName,
-				"https://openid.net/specs/openid-connect-registration-1_0.html#RegistrationError");
+				ERROR_URI);
 		throw new OAuth2AuthenticationException(error);
 	}
 

@@ -38,9 +38,12 @@ import org.springframework.security.oauth2.jwt.JoseHeaderNames;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.server.authorization.JwtEncodingContext;
+import org.springframework.security.oauth2.server.authorization.JwtGenerator;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
+import org.springframework.security.oauth2.server.authorization.OAuth2TokenContext;
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenCustomizer;
+import org.springframework.security.oauth2.server.authorization.OAuth2TokenGenerator;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
 import org.springframework.security.oauth2.server.authorization.config.ProviderSettings;
@@ -50,7 +53,9 @@ import org.springframework.security.oauth2.server.authorization.context.Provider
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -64,16 +69,24 @@ public class OAuth2ClientCredentialsAuthenticationProviderTests {
 	private OAuth2AuthorizationService authorizationService;
 	private JwtEncoder jwtEncoder;
 	private OAuth2TokenCustomizer<JwtEncodingContext> jwtCustomizer;
+	private OAuth2TokenGenerator<?> tokenGenerator;
 	private OAuth2ClientCredentialsAuthenticationProvider authenticationProvider;
 
 	@Before
 	public void setUp() {
 		this.authorizationService = mock(OAuth2AuthorizationService.class);
 		this.jwtEncoder = mock(JwtEncoder.class);
-		this.authenticationProvider = new OAuth2ClientCredentialsAuthenticationProvider(
-				this.authorizationService, this.jwtEncoder);
 		this.jwtCustomizer = mock(OAuth2TokenCustomizer.class);
-		this.authenticationProvider.setJwtCustomizer(this.jwtCustomizer);
+		JwtGenerator jwtGenerator = new JwtGenerator(this.jwtEncoder);
+		jwtGenerator.setJwtCustomizer(this.jwtCustomizer);
+		this.tokenGenerator = spy(new OAuth2TokenGenerator<Jwt>() {
+			@Override
+			public Jwt generate(OAuth2TokenContext context) {
+				return jwtGenerator.generate(context);
+			}
+		});
+		this.authenticationProvider = new OAuth2ClientCredentialsAuthenticationProvider(
+				this.authorizationService, this.tokenGenerator);
 		ProviderSettings providerSettings = ProviderSettings.builder().issuer("https://provider.com").build();
 		ProviderContextHolder.setProviderContext(new ProviderContext(providerSettings, null));
 	}
@@ -92,9 +105,16 @@ public class OAuth2ClientCredentialsAuthenticationProviderTests {
 
 	@Test
 	public void constructorWhenJwtEncoderNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> new OAuth2ClientCredentialsAuthenticationProvider(this.authorizationService, null))
+		assertThatThrownBy(() -> new OAuth2ClientCredentialsAuthenticationProvider(this.authorizationService, (JwtEncoder) null))
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessage("jwtEncoder cannot be null");
+	}
+
+	@Test
+	public void constructorWhenTokenGeneratorNullThenThrowIllegalArgumentException() {
+		assertThatThrownBy(() -> new OAuth2ClientCredentialsAuthenticationProvider(this.authorizationService, (OAuth2TokenGenerator<?>) null))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("tokenGenerator cannot be null");
 	}
 
 	@Test
@@ -191,6 +211,25 @@ public class OAuth2ClientCredentialsAuthenticationProviderTests {
 		OAuth2AccessTokenAuthenticationToken accessTokenAuthentication =
 				(OAuth2AccessTokenAuthenticationToken) this.authenticationProvider.authenticate(authentication);
 		assertThat(accessTokenAuthentication.getAccessToken().getScopes()).isEqualTo(requestedScope);
+	}
+
+	@Test
+	public void authenticateWhenAccessTokenNotGeneratedThenThrowOAuth2AuthenticationException() {
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient2().build();
+		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(
+				registeredClient, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
+		OAuth2ClientCredentialsAuthenticationToken authentication =
+				new OAuth2ClientCredentialsAuthenticationToken(clientPrincipal, null, null);
+
+		doReturn(null).when(this.tokenGenerator).generate(any());
+
+		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
+				.isInstanceOf(OAuth2AuthenticationException.class)
+				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+				.satisfies(error -> {
+					assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.SERVER_ERROR);
+					assertThat(error.getDescription()).contains("The token generator failed to generate the access token.");
+				});
 	}
 
 	@Test

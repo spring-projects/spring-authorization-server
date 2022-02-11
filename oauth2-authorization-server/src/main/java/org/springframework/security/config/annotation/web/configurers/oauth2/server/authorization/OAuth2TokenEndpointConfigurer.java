@@ -28,10 +28,10 @@ import org.springframework.security.config.annotation.ObjectPostProcessor;
 import org.springframework.security.config.annotation.web.HttpSecurityBuilder;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
+import org.springframework.security.oauth2.core.OAuth2Token;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AccessTokenResponse;
-import org.springframework.security.oauth2.jwt.JwtEncoder;
-import org.springframework.security.oauth2.server.authorization.JwtEncodingContext;
-import org.springframework.security.oauth2.server.authorization.OAuth2TokenCustomizer;
+import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
+import org.springframework.security.oauth2.server.authorization.OAuth2TokenGenerator;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AccessTokenAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationGrantAuthenticationToken;
@@ -160,34 +160,19 @@ public final class OAuth2TokenEndpointConfigurer extends AbstractOAuth2Configure
 	private <B extends HttpSecurityBuilder<B>> List<AuthenticationProvider> createDefaultAuthenticationProviders(B builder) {
 		List<AuthenticationProvider> authenticationProviders = new ArrayList<>();
 
-		JwtEncoder jwtEncoder = OAuth2ConfigurerUtils.getJwtEncoder(builder);
-		OAuth2TokenCustomizer<JwtEncodingContext> jwtCustomizer = OAuth2ConfigurerUtils.getJwtCustomizer(builder);
+		OAuth2AuthorizationService authorizationService = OAuth2ConfigurerUtils.getAuthorizationService(builder);
+		OAuth2TokenGenerator<? extends OAuth2Token> tokenGenerator = OAuth2ConfigurerUtils.getTokenGenerator(builder);
 
 		OAuth2AuthorizationCodeAuthenticationProvider authorizationCodeAuthenticationProvider =
-				new OAuth2AuthorizationCodeAuthenticationProvider(
-						OAuth2ConfigurerUtils.getAuthorizationService(builder),
-						jwtEncoder);
-		if (jwtCustomizer != null) {
-			authorizationCodeAuthenticationProvider.setJwtCustomizer(jwtCustomizer);
-		}
+				new OAuth2AuthorizationCodeAuthenticationProvider(authorizationService, tokenGenerator);
 		authenticationProviders.add(authorizationCodeAuthenticationProvider);
 
 		OAuth2RefreshTokenAuthenticationProvider refreshTokenAuthenticationProvider =
-				new OAuth2RefreshTokenAuthenticationProvider(
-						OAuth2ConfigurerUtils.getAuthorizationService(builder),
-						jwtEncoder);
-		if (jwtCustomizer != null) {
-			refreshTokenAuthenticationProvider.setJwtCustomizer(jwtCustomizer);
-		}
+				new OAuth2RefreshTokenAuthenticationProvider(authorizationService, tokenGenerator);
 		authenticationProviders.add(refreshTokenAuthenticationProvider);
 
 		OAuth2ClientCredentialsAuthenticationProvider clientCredentialsAuthenticationProvider =
-				new OAuth2ClientCredentialsAuthenticationProvider(
-						OAuth2ConfigurerUtils.getAuthorizationService(builder),
-						jwtEncoder);
-		if (jwtCustomizer != null) {
-			clientCredentialsAuthenticationProvider.setJwtCustomizer(jwtCustomizer);
-		}
+				new OAuth2ClientCredentialsAuthenticationProvider(authorizationService, tokenGenerator);
 		authenticationProviders.add(clientCredentialsAuthenticationProvider);
 
 		return authenticationProviders;

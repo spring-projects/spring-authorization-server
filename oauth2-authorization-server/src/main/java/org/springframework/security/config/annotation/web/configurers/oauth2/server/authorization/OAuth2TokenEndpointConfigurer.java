@@ -54,6 +54,7 @@ public final class OAuth2TokenEndpointConfigurer extends AbstractOAuth2Configure
 	private RequestMatcher requestMatcher;
 	private AuthenticationConverter accessTokenRequestConverter;
 	private final List<AuthenticationProvider> authenticationProviders = new LinkedList<>();
+	private final List<AuthenticationProvider> additionalAuthenticationProviders = new LinkedList<>();
 	private AuthenticationSuccessHandler accessTokenResponseHandler;
 	private AuthenticationFailureHandler errorResponseHandler;
 
@@ -84,6 +85,15 @@ public final class OAuth2TokenEndpointConfigurer extends AbstractOAuth2Configure
 	 */
 	public OAuth2TokenEndpointConfigurer authenticationProvider(AuthenticationProvider authenticationProvider) {
 		this.authenticationProviders.add(authenticationProvider);
+		return this;
+	}
+
+	/**
+	 * Adds an {@link AuthenticationProvider} used for authenticating a type of {@link OAuth2AuthorizationGrantAuthenticationToken}
+	 * to the default set of authentication providers.
+	 */
+	public OAuth2TokenEndpointConfigurer additionalAuthenticationProvider(AuthenticationProvider authenticationProvider) {
+		this.additionalAuthenticationProviders.add(authenticationProvider);
 		return this;
 	}
 
@@ -121,6 +131,7 @@ public final class OAuth2TokenEndpointConfigurer extends AbstractOAuth2Configure
 				!this.authenticationProviders.isEmpty() ?
 						this.authenticationProviders :
 						createDefaultAuthenticationProviders(builder);
+		authenticationProviders.addAll(this.additionalAuthenticationProviders);
 		authenticationProviders.forEach(authenticationProvider ->
 				builder.authenticationProvider(postProcess(authenticationProvider)));
 	}

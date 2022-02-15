@@ -20,21 +20,20 @@ import java.util.UUID;
 import com.accesso.security.oauth2.server.authorization.authentication.AccessoAccessTokenCustomizer;
 import com.accesso.security.oauth2.server.authorization.authentication.AccessoAccessTokenResponseCustomizer;
 import com.accesso.security.oauth2.server.authorization.authentication.AccessoLoginUrlAuthenticationEntryPoint;
+import com.accesso.security.oauth2.server.authorization.authentication.OAuth2ExternalAuthorizationCodeAuthenticationProvider;
 import com.accesso.security.oauth2.server.authorization.config.ClientExternalAuthenticationConfig;
-import org.springframework.security.config.annotation.web.configurers.oauth2.server.authorization.OAuth2ExternalAuthorizationEndpointConfigurer;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
 import org.springframework.security.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
-import org.springframework.security.config.annotation.web.configurers.oauth2.server.resource.OAuth2ResourceServerConfigurer;
+import org.springframework.security.config.annotation.web.configurers.oauth2.server.authorization.OAuth2ConfigurerUtils;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.server.authorization.JwtEncodingContext;
+import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenCustomizer;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AnonymousUserGrantAuthenticationToken;
-import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver;
-import org.springframework.security.oauth2.server.resource.web.DefaultBearerTokenResolver;
-import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import sample.jose.Jwks;
 
 import org.springframework.context.annotation.Bean;
@@ -57,8 +56,6 @@ import org.springframework.security.oauth2.server.authorization.config.ProviderS
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 
-import javax.annotation.Resource;
-
 /**
  * @author Joe Grandja
  * @author Daniel Garnier-Moiroux
@@ -71,12 +68,19 @@ public class AuthorizationServerConfig {
 	@Order(Ordered.HIGHEST_PRECEDENCE)
 	public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http,
 			AccessoAccessTokenResponseCustomizer responseCustomizer,
-			ClientExternalAuthenticationConfig externalAuthConfig) throws Exception {
+			ClientExternalAuthenticationConfig externalAuthConfig ) throws Exception {
 		OAuth2AuthorizationServerConfigurer<HttpSecurity> authorizationServerConfigurer =
 				new OAuth2AuthorizationServerConfigurer<>();
+		OAuth2ExternalAuthorizationCodeAuthenticationProvider externalProvider =
+				new OAuth2ExternalAuthorizationCodeAuthenticationProvider(
+						OAuth2ConfigurerUtils.getAuthorizationService(http), externalAuthConfig,
+						OAuth2ConfigurerUtils.getJwtEncoder(http));
 		authorizationServerConfigurer
 				.authorizationEndpoint(authorizationEndpoint ->
 						authorizationEndpoint.consentPage(CUSTOM_CONSENT_PAGE_URI))
+				// Accesso-specific AuthProvider that handles federated authorization_codes.
+				.tokenEndpoint(tokenEndpoint ->
+						tokenEndpoint.additionalAuthenticationProvider(externalProvider))
 				// Accesso-specific token endpoint response - to add attributes
 				.tokenEndpoint(tokenEndpoint ->
 						tokenEndpoint.accessTokenResponseHandler(responseCustomizer));

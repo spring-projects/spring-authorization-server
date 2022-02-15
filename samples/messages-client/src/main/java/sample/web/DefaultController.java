@@ -15,8 +15,11 @@
  */
 package sample.web;
 
+import org.springframework.security.core.annotation.CurrentSecurityContext;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
+
+import java.security.Principal;
 
 /**
  * @author Joe Grandja
@@ -31,7 +34,10 @@ public class DefaultController {
 	}
 
 	@GetMapping("/index")
-	public String index() {
+	public String index(
+			@CurrentSecurityContext(expression = "authentication.principal")
+			Principal principal) {
+		System.out.println("Authenticated as: " + principal);
 		return "index";
 	}
 }

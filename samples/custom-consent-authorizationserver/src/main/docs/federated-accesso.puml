@@ -1,0 +1,24 @@
+@startuml
+actor "Client App" as Guest
+participant "Accesso Identity Service" as IDsvc
+participant "External Auth Service" as Auth0
+
+...
+
+Guest -> IDsvc: OAuth2 Authorization Requests
+IDsvc --> Guest: Redirect to Auth0 login page for external login
+Guest -> Auth0: Requests authorization URI
+Auth0 -> Auth0: Positively Authenticates guest\nand confirms desired scope of access
+Auth0 -> Guest: Redirects with authorization_code
+
+Guest -> IDsvc: /token?grant_type=authorization_code\nwith private client credentials
+IDsvc -> Auth0: /token?grant_type=authorization_code\nwith private client credentials
+Auth0 --> IDsvc: issued id, access, and refresh tokens
+alt if Have never seen this subject (user)
+IDsvc -> IDsvc: create TE2 user based on idtoken
+end
+IDsvc -> IDsvc: wrap access token in Accesso JWT token
+IDsvc --> Guest: access and refresh tokens
+...
+
+@enduml

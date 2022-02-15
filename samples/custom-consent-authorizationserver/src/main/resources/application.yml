@@ -15,17 +15,18 @@ accesso:
       # TODO - the code isn't yet using the ${issuer-uri}/.well-known/oidc-configuration info (OIDC discovery)
       # to figure out what the actual authorization endpoint, etc. are.
       issuer-uri: https://login.qa.alterramtnco.com/authorize
+      token-uri: https://login.qa.alterramtnco.com/oauth/token
+      jwk-uri: https://login.qa.alterramtnco.com/.well-known/jwks.json
       ext-client-id: cXh7PcRRglXTsBpytg5sNza3Y2MDcbom
-      ext-client-secret: TODO of this won't work...
+      ext-client-secret: 36HHlGhpd-qsBZQj14tHrm1HOAPXAWjQR5hVJg4t9J3Zo9UOKL5F3ckEt0BghYZU
       scope-map:
         openid: openid
-        profile: profile
-        offline_access:
+# All these can be enabled, but the userinfo endpoint needs to be working.
+#        openid: openid profile email offline_access
     messaging-client-accesso:
-      issuer-uri: https://login.qa.alterramtnco.com/authorize
-      ext-client-id: cXh7PcRRglXTsBpytg5sNza3Y2MDcbom
-      ext-client-secret: TODO of this won't work...
+      issuer-uri: TODO
+      token-uri: TODO
+      ext-client-id: TODO
+      ext-client-secret: TODO
       scope-map:
         openid: openid
-        profile: profile
-        offline_access: offline

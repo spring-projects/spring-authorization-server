@@ -9,15 +9,20 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * This class extends the basic functionality of the LoginUrlAuthenticationEntryPoint class
@@ -65,16 +70,28 @@ public class AccessoLoginUrlAuthenticationEntryPoint extends LoginUrlAuthenticat
 
 		// TODO - in a full implementation of this "issuerUrl" would be used to pull the openid-configuration
 		// data in full, so we would have all the endpoints and that way we just need to have that correct.
+
+		Set<String> stdParamNames = Stream.of( OAuth2ParameterNames.RESPONSE_TYPE, OAuth2ParameterNames.CLIENT_ID,
+				OAuth2ParameterNames.SCOPE, OAuth2ParameterNames.REDIRECT_URI ).collect(Collectors.toSet());
+		// All/Any additional parameters which are passed through are included in the forwarding so that features
+		// like Nonce and PKCE will work.
+		LinkedMultiValueMap<String,String> additionalParams = new LinkedMultiValueMap<>();
+		request.getParameterMap().entrySet().stream()
+				.filter( e-> !stdParamNames.contains(e.getKey()) )
+				.forEach( e -> additionalParams.put( e.getKey(), Arrays.asList(e.getValue()) ));
 		final String authorizationRequestUri = UriComponentsBuilder
 				.fromUriString( clientExternalConfig.getIssuerUri() )
 				.queryParam(OAuth2ParameterNames.RESPONSE_TYPE, request.getParameter(OAuth2ParameterNames.RESPONSE_TYPE))
 				.queryParam(OAuth2ParameterNames.CLIENT_ID, clientExternalConfig.getExtClientId())
 				.queryParam(OAuth2ParameterNames.SCOPE,
-						String.join(" ", mapper.mapScopes(clientExternalConfig, request.getParameterValues(OAuth2ParameterNames.SCOPE))))
-				.queryParam(OAuth2ParameterNames.STATE, request.getParameter(OAuth2ParameterNames.STATE))
+						String.join(" ", mapper.mapScopes(clientExternalConfig,
+								request.getParameterValues(OAuth2ParameterNames.SCOPE))))
 				.queryParam(OAuth2ParameterNames.REDIRECT_URI, request.getParameter(OAuth2ParameterNames.REDIRECT_URI))
+				.queryParams(additionalParams)
 				.toUriString();
 		return authorizationRequestUri;
 	}
+
+
 
 }

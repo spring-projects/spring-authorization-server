@@ -7,7 +7,7 @@ logging:
     org.springframework.web: INFO
     org.springframework.security: INFO
     org.springframework.security.oauth2: INFO
-#    org.springframework.boot.autoconfigure: DEBUG
+    # org.springframework.boot.autoconfigure: DEBUG
 
 spring:
   thymeleaf:
@@ -23,7 +23,7 @@ spring:
             authorization-grant-type: authorization_code
             redirect-uri: "http://127.0.0.1:3000/login/oauth2/code/oauth2"
             scope: openid
-            client-name: auth0
+            client-name: messaging-client-auth0
           messaging-client-oidc:  # this is the registrationId used below
             provider: spring
             client-id: messaging-client

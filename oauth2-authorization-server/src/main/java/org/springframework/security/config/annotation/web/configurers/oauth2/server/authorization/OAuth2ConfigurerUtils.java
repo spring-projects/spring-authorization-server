@@ -44,7 +44,7 @@ import org.springframework.util.StringUtils;
  * @author Joe Grandja
  * @since 0.1.2
  */
-final class OAuth2ConfigurerUtils {
+public final class OAuth2ConfigurerUtils {
 
 	private OAuth2ConfigurerUtils() {
 	}
@@ -58,7 +58,7 @@ final class OAuth2ConfigurerUtils {
 		return registeredClientRepository;
 	}
 
-	static <B extends HttpSecurityBuilder<B>> OAuth2AuthorizationService getAuthorizationService(B builder) {
+	public static <B extends HttpSecurityBuilder<B>> OAuth2AuthorizationService getAuthorizationService(B builder) {
 		OAuth2AuthorizationService authorizationService = builder.getSharedObject(OAuth2AuthorizationService.class);
 		if (authorizationService == null) {
 			authorizationService = getOptionalBean(builder, OAuth2AuthorizationService.class);
@@ -82,7 +82,7 @@ final class OAuth2ConfigurerUtils {
 		return authorizationConsentService;
 	}
 
-	static <B extends HttpSecurityBuilder<B>> JwtEncoder getJwtEncoder(B builder) {
+	public static <B extends HttpSecurityBuilder<B>> JwtEncoder getJwtEncoder(B builder) {
 		JwtEncoder jwtEncoder = builder.getSharedObject(JwtEncoder.class);
 		if (jwtEncoder == null) {
 			jwtEncoder = getOptionalBean(builder, JwtEncoder.class);

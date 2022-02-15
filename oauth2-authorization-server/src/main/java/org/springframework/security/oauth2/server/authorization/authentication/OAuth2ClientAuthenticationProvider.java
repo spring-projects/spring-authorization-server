@@ -228,7 +228,9 @@ public final class OAuth2ClientAuthenticationProvider implements AuthenticationP
 				(String) parameters.get(OAuth2ParameterNames.CODE),
 				AUTHORIZATION_CODE_TOKEN_TYPE);
 		if (authorization == null) {
-			throwInvalidGrant(OAuth2ParameterNames.CODE);
+			// Changed to permit authorization_codes from external providers, which other AuthenticationProviders
+			// may be able to handle.
+			return false;
 		}
 
 		OAuth2AuthorizationRequest authorizationRequest = authorization.getAttribute(

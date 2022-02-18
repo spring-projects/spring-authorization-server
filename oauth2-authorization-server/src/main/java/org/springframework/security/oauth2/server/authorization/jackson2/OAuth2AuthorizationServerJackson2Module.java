@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 the original author or authors.
+ * Copyright 2020-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.fasterxml.jackson.core.Version;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 
 import org.springframework.security.jackson2.SecurityJackson2Modules;
+import org.springframework.security.oauth2.core.OAuth2TokenFormat;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
@@ -38,6 +39,7 @@ import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
  * <li>{@link OAuth2AuthorizationRequestMixin}</li>
  * <li>{@link DurationMixin}</li>
  * <li>{@link JwsAlgorithmMixin}</li>
+ * <li>{@link OAuth2TokenFormatMixin}</li>
  * </ul>
  *
  * If not already enabled, default typing will be automatically enabled as type info is
@@ -60,6 +62,7 @@ import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
  * @see OAuth2AuthorizationRequestMixin
  * @see DurationMixin
  * @see JwsAlgorithmMixin
+ * @see OAuth2TokenFormatMixin
  */
 public class OAuth2AuthorizationServerJackson2Module extends SimpleModule {
 
@@ -78,6 +81,7 @@ public class OAuth2AuthorizationServerJackson2Module extends SimpleModule {
 		context.setMixInAnnotations(Duration.class, DurationMixin.class);
 		context.setMixInAnnotations(SignatureAlgorithm.class, JwsAlgorithmMixin.class);
 		context.setMixInAnnotations(MacAlgorithm.class, JwsAlgorithmMixin.class);
+		context.setMixInAnnotations(OAuth2TokenFormat.class, OAuth2TokenFormatMixin.class);
 	}
 
 }

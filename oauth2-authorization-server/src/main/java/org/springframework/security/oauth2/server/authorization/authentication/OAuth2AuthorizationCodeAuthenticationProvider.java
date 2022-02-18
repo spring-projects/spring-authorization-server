@@ -27,6 +27,7 @@ import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
+import org.springframework.security.oauth2.core.ClaimAccessor;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
@@ -47,6 +48,7 @@ import org.springframework.security.oauth2.server.authorization.DefaultOAuth2Tok
 import org.springframework.security.oauth2.server.authorization.DelegatingOAuth2TokenGenerator;
 import org.springframework.security.oauth2.server.authorization.JwtEncodingContext;
 import org.springframework.security.oauth2.server.authorization.JwtGenerator;
+import org.springframework.security.oauth2.server.authorization.OAuth2AccessTokenGenerator;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.OAuth2RefreshTokenGenerator;
@@ -103,8 +105,8 @@ public final class OAuth2AuthorizationCodeAuthenticationProvider implements Auth
 		Assert.notNull(jwtEncoder, "jwtEncoder cannot be null");
 		this.authorizationService = authorizationService;
 		this.jwtGenerator = new JwtGenerator(jwtEncoder);
-		this.tokenGenerator = new DelegatingOAuth2TokenGenerator(
-				this.jwtGenerator, new OAuth2RefreshTokenGenerator());
+		this.tokenGenerator = new DelegatingOAuth2TokenGenerator(this.jwtGenerator,
+				new OAuth2AccessTokenGenerator(), new OAuth2RefreshTokenGenerator());
 	}
 
 	/**
@@ -216,9 +218,9 @@ public final class OAuth2AuthorizationCodeAuthenticationProvider implements Auth
 		OAuth2AccessToken accessToken = new OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER,
 				generatedAccessToken.getTokenValue(), generatedAccessToken.getIssuedAt(),
 				generatedAccessToken.getExpiresAt(), tokenContext.getAuthorizedScopes());
-		if (generatedAccessToken instanceof Jwt) {
+		if (generatedAccessToken instanceof ClaimAccessor) {
 			authorizationBuilder.token(accessToken, (metadata) ->
-					metadata.put(OAuth2Authorization.Token.CLAIMS_METADATA_NAME, ((Jwt) generatedAccessToken).getClaims()));
+					metadata.put(OAuth2Authorization.Token.CLAIMS_METADATA_NAME, ((ClaimAccessor) generatedAccessToken).getClaims()));
 		} else {
 			authorizationBuilder.accessToken(accessToken);
 		}

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 the original author or authors.
+ * Copyright 2020-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.springframework.security.oauth2.server.authorization.config;
 import java.time.Duration;
 import java.util.Map;
 
+import org.springframework.security.oauth2.core.OAuth2TokenFormat;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 import org.springframework.util.Assert;
@@ -43,6 +44,17 @@ public final class TokenSettings extends AbstractSettings {
 	 */
 	public Duration getAccessTokenTimeToLive() {
 		return getSetting(ConfigurationSettingNames.Token.ACCESS_TOKEN_TIME_TO_LIVE);
+	}
+
+	/**
+	 * Returns the token format for an access token.
+	 * The default is {@link OAuth2TokenFormat#SELF_CONTAINED}.
+	 *
+	 * @return the token format for an access token
+	 * @since 0.2.3
+	 */
+	public OAuth2TokenFormat getAccessTokenFormat() {
+		return getSetting(ConfigurationSettingNames.Token.ACCESS_TOKEN_FORMAT);
 	}
 
 	/**
@@ -80,6 +92,7 @@ public final class TokenSettings extends AbstractSettings {
 	public static Builder builder() {
 		return new Builder()
 				.accessTokenTimeToLive(Duration.ofMinutes(5))
+				.accessTokenFormat(OAuth2TokenFormat.SELF_CONTAINED)
 				.reuseRefreshTokens(true)
 				.refreshTokenTimeToLive(Duration.ofMinutes(60))
 				.idTokenSignatureAlgorithm(SignatureAlgorithm.RS256);
@@ -115,6 +128,18 @@ public final class TokenSettings extends AbstractSettings {
 			Assert.notNull(accessTokenTimeToLive, "accessTokenTimeToLive cannot be null");
 			Assert.isTrue(accessTokenTimeToLive.getSeconds() > 0, "accessTokenTimeToLive must be greater than Duration.ZERO");
 			return setting(ConfigurationSettingNames.Token.ACCESS_TOKEN_TIME_TO_LIVE, accessTokenTimeToLive);
+		}
+
+		/**
+		 * Set the token format for an access token.
+		 *
+		 * @param accessTokenFormat the token format for an access token
+		 * @return the {@link Builder} for further configuration
+		 * @since 0.2.3
+		 */
+		public Builder accessTokenFormat(OAuth2TokenFormat accessTokenFormat) {
+			Assert.notNull(accessTokenFormat, "accessTokenFormat cannot be null");
+			return setting(ConfigurationSettingNames.Token.ACCESS_TOKEN_FORMAT, accessTokenFormat);
 		}
 
 		/**

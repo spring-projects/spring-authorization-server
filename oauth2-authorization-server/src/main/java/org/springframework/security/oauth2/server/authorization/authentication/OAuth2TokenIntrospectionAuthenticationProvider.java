@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 the original author or authors.
+ * Copyright 2020-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,15 +18,14 @@ package org.springframework.security.oauth2.server.authorization.authentication;
 import java.net.URL;
 import java.time.Instant;
 import java.util.List;
-import java.util.Map;
 
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.oauth2.core.AbstractOAuth2Token;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
+import org.springframework.security.oauth2.core.OAuth2TokenClaimAccessor;
 import org.springframework.security.oauth2.core.OAuth2TokenIntrospection;
-import org.springframework.security.oauth2.jwt.JwtClaimAccessor;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
@@ -121,25 +120,23 @@ public final class OAuth2TokenIntrospectionAuthenticationProvider implements Aut
 			tokenClaims.scopes(scopes -> scopes.addAll(accessToken.getScopes()));
 			tokenClaims.tokenType(accessToken.getTokenType().getValue());
 
-			Map<String, Object> claims = authorizedToken.getClaims();
-			if (!CollectionUtils.isEmpty(claims)) {
-				// Assuming JWT as it's the only (currently) supported access token format
-				JwtClaimAccessor jwtClaims = () -> claims;
+			if (!CollectionUtils.isEmpty(authorizedToken.getClaims())) {
+				OAuth2TokenClaimAccessor accessTokenClaims = authorizedToken::getClaims;
 
-				Instant notBefore = jwtClaims.getNotBefore();
+				Instant notBefore = accessTokenClaims.getNotBefore();
 				if (notBefore != null) {
 					tokenClaims.notBefore(notBefore);
 				}
-				tokenClaims.subject(jwtClaims.getSubject());
-				List<String> audience = jwtClaims.getAudience();
+				tokenClaims.subject(accessTokenClaims.getSubject());
+				List<String> audience = accessTokenClaims.getAudience();
 				if (!CollectionUtils.isEmpty(audience)) {
 					tokenClaims.audiences(audiences -> audiences.addAll(audience));
 				}
-				URL issuer = jwtClaims.getIssuer();
+				URL issuer = accessTokenClaims.getIssuer();
 				if (issuer != null) {
 					tokenClaims.issuer(issuer.toExternalForm());
 				}
-				String jti = jwtClaims.getId();
+				String jti = accessTokenClaims.getId();
 				if (StringUtils.hasText(jti)) {
 					tokenClaims.id(jti);
 				}

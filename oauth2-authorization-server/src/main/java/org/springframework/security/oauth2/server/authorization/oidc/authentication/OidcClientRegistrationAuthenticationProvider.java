@@ -33,6 +33,7 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.keygen.Base64StringKeyGenerator;
 import org.springframework.security.crypto.keygen.StringKeyGenerator;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
+import org.springframework.security.oauth2.core.ClaimAccessor;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
@@ -46,7 +47,6 @@ import org.springframework.security.oauth2.core.oidc.OidcClientMetadataClaimName
 import org.springframework.security.oauth2.core.oidc.OidcClientRegistration;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.server.authorization.DefaultOAuth2TokenContext;
 import org.springframework.security.oauth2.server.authorization.JwtGenerator;
@@ -286,9 +286,9 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 				.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
 				.attribute(OAuth2Authorization.AUTHORIZED_SCOPE_ATTRIBUTE_NAME, authorizedScopes);
 		// @formatter:on
-		if (registrationAccessToken instanceof Jwt) {
+		if (registrationAccessToken instanceof ClaimAccessor) {
 			authorizationBuilder.token(accessToken, (metadata) ->
-					metadata.put(OAuth2Authorization.Token.CLAIMS_METADATA_NAME, ((Jwt) registrationAccessToken).getClaims()));
+					metadata.put(OAuth2Authorization.Token.CLAIMS_METADATA_NAME, ((ClaimAccessor) registrationAccessToken).getClaims()));
 		} else {
 			authorizationBuilder.accessToken(accessToken);
 		}

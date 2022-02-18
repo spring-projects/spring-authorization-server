@@ -26,6 +26,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
 import javax.servlet.http.HttpServletResponse;
 
+import com.nimbusds.jose.jwk.source.JWKSource;
+
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -367,11 +369,12 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 						providerSettings.getTokenIntrospectionEndpoint());
 		builder.addFilterAfter(postProcess(tokenIntrospectionEndpointFilter), FilterSecurityInterceptor.class);
 
-		NimbusJwkSetEndpointFilter jwkSetEndpointFilter =
-				new NimbusJwkSetEndpointFilter(
-						OAuth2ConfigurerUtils.getJwkSource(builder),
-						providerSettings.getJwkSetEndpoint());
-		builder.addFilterBefore(postProcess(jwkSetEndpointFilter), AbstractPreAuthenticatedProcessingFilter.class);
+		JWKSource<com.nimbusds.jose.proc.SecurityContext> jwkSource = OAuth2ConfigurerUtils.getJwkSource(builder);
+		if (jwkSource != null) {
+			NimbusJwkSetEndpointFilter jwkSetEndpointFilter = new NimbusJwkSetEndpointFilter(
+					jwkSource, providerSettings.getJwkSetEndpoint());
+			builder.addFilterBefore(postProcess(jwkSetEndpointFilter), AbstractPreAuthenticatedProcessingFilter.class);
+		}
 
 		OAuth2AuthorizationServerMetadataEndpointFilter authorizationServerMetadataEndpointFilter =
 				new OAuth2AuthorizationServerMetadataEndpointFilter(providerSettings);

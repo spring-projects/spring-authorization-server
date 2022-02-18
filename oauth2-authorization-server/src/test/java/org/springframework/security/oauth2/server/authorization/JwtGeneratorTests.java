@@ -29,6 +29,7 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
+import org.springframework.security.oauth2.core.OAuth2TokenFormat;
 import org.springframework.security.oauth2.core.OAuth2TokenType;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
@@ -45,6 +46,7 @@ import org.springframework.security.oauth2.server.authorization.authentication.O
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
 import org.springframework.security.oauth2.server.authorization.config.ProviderSettings;
+import org.springframework.security.oauth2.server.authorization.config.TokenSettings;
 import org.springframework.security.oauth2.server.authorization.context.ProviderContext;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -93,6 +95,24 @@ public class JwtGeneratorTests {
 		// @formatter:off
 		OAuth2TokenContext tokenContext = DefaultOAuth2TokenContext.builder()
 				.tokenType(new OAuth2TokenType("unsupported_token_type"))
+				.build();
+		// @formatter:on
+
+		assertThat(this.jwtGenerator.generate(tokenContext)).isNull();
+	}
+
+	@Test
+	public void generateWhenUnsupportedTokenFormatThenReturnNull() {
+		// @formatter:off
+		TokenSettings tokenSettings = TokenSettings.builder()
+				.accessTokenFormat(new OAuth2TokenFormat("unsupported_token_format"))
+				.build();
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
+				.tokenSettings(tokenSettings)
+				.build();
+		OAuth2TokenContext tokenContext = DefaultOAuth2TokenContext.builder()
+				.registeredClient(registeredClient)
+				.tokenType(OAuth2TokenType.ACCESS_TOKEN)
 				.build();
 		// @formatter:on
 

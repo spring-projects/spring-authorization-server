@@ -23,6 +23,7 @@ import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
+import org.springframework.security.oauth2.core.ClaimAccessor;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
@@ -32,8 +33,10 @@ import org.springframework.security.oauth2.core.OAuth2TokenType;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.server.authorization.DefaultOAuth2TokenContext;
+import org.springframework.security.oauth2.server.authorization.DelegatingOAuth2TokenGenerator;
 import org.springframework.security.oauth2.server.authorization.JwtEncodingContext;
 import org.springframework.security.oauth2.server.authorization.JwtGenerator;
+import org.springframework.security.oauth2.server.authorization.OAuth2AccessTokenGenerator;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenContext;
@@ -65,6 +68,9 @@ public final class OAuth2ClientCredentialsAuthenticationProvider implements Auth
 	private final OAuth2AuthorizationService authorizationService;
 	private final OAuth2TokenGenerator<? extends OAuth2Token> tokenGenerator;
 
+	// TODO Remove after removing @Deprecated OAuth2ClientCredentialsAuthenticationProvider(OAuth2AuthorizationService, JwtEncoder)
+	private JwtGenerator jwtGenerator;
+
 	/**
 	 * Constructs an {@code OAuth2ClientCredentialsAuthenticationProvider} using the provided parameters.
 	 *
@@ -78,7 +84,9 @@ public final class OAuth2ClientCredentialsAuthenticationProvider implements Auth
 		Assert.notNull(authorizationService, "authorizationService cannot be null");
 		Assert.notNull(jwtEncoder, "jwtEncoder cannot be null");
 		this.authorizationService = authorizationService;
-		this.tokenGenerator = new JwtGenerator(jwtEncoder);
+		this.jwtGenerator = new JwtGenerator(jwtEncoder);
+		this.tokenGenerator = new DelegatingOAuth2TokenGenerator(
+				this.jwtGenerator, new OAuth2AccessTokenGenerator());
 	}
 
 	/**
@@ -107,8 +115,8 @@ public final class OAuth2ClientCredentialsAuthenticationProvider implements Auth
 	@Deprecated
 	public void setJwtCustomizer(OAuth2TokenCustomizer<JwtEncodingContext> jwtCustomizer) {
 		Assert.notNull(jwtCustomizer, "jwtCustomizer cannot be null");
-		if (this.tokenGenerator instanceof JwtGenerator) {
-			((JwtGenerator) this.tokenGenerator).setJwtCustomizer(jwtCustomizer);
+		if (this.jwtGenerator != null) {
+			this.jwtGenerator.setJwtCustomizer(jwtCustomizer);
 		}
 	}
 
@@ -167,9 +175,9 @@ public final class OAuth2ClientCredentialsAuthenticationProvider implements Auth
 				.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
 				.attribute(OAuth2Authorization.AUTHORIZED_SCOPE_ATTRIBUTE_NAME, authorizedScopes);
 		// @formatter:on
-		if (generatedAccessToken instanceof Jwt) {
+		if (generatedAccessToken instanceof ClaimAccessor) {
 			authorizationBuilder.token(accessToken, (metadata) ->
-					metadata.put(OAuth2Authorization.Token.CLAIMS_METADATA_NAME, ((Jwt) generatedAccessToken).getClaims()));
+					metadata.put(OAuth2Authorization.Token.CLAIMS_METADATA_NAME, ((ClaimAccessor) generatedAccessToken).getClaims()));
 		} else {
 			authorizationBuilder.accessToken(accessToken);
 		}

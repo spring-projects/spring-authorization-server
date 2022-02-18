@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 the original author or authors.
+ * Copyright 2020-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import java.time.Duration;
 
 import org.junit.Test;
 
+import org.springframework.security.oauth2.core.OAuth2TokenFormat;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -34,8 +35,9 @@ public class TokenSettingsTests {
 	@Test
 	public void buildWhenDefaultThenDefaultsAreSet() {
 		TokenSettings tokenSettings = TokenSettings.builder().build();
-		assertThat(tokenSettings.getSettings()).hasSize(4);
+		assertThat(tokenSettings.getSettings()).hasSize(5);
 		assertThat(tokenSettings.getAccessTokenTimeToLive()).isEqualTo(Duration.ofMinutes(5));
+		assertThat(tokenSettings.getAccessTokenFormat()).isEqualTo(OAuth2TokenFormat.SELF_CONTAINED);
 		assertThat(tokenSettings.isReuseRefreshTokens()).isTrue();
 		assertThat(tokenSettings.getRefreshTokenTimeToLive()).isEqualTo(Duration.ofMinutes(60));
 		assertThat(tokenSettings.getIdTokenSignatureAlgorithm()).isEqualTo(SignatureAlgorithm.RS256);
@@ -66,6 +68,22 @@ public class TokenSettingsTests {
 				.isInstanceOf(IllegalArgumentException.class)
 				.extracting(Throwable::getMessage)
 				.isEqualTo("accessTokenTimeToLive must be greater than Duration.ZERO");
+	}
+
+	@Test
+	public void accessTokenFormatWhenProvidedThenSet() {
+		TokenSettings tokenSettings = TokenSettings.builder()
+				.accessTokenFormat(OAuth2TokenFormat.REFERENCE)
+				.build();
+		assertThat(tokenSettings.getAccessTokenFormat()).isEqualTo(OAuth2TokenFormat.REFERENCE);
+	}
+
+	@Test
+	public void accessTokenFormatWhenNullThenThrowIllegalArgumentException() {
+		assertThatThrownBy(() -> TokenSettings.builder().accessTokenFormat(null))
+				.isInstanceOf(IllegalArgumentException.class)
+				.extracting(Throwable::getMessage)
+				.isEqualTo("accessTokenFormat cannot be null");
 	}
 
 	@Test
@@ -118,7 +136,7 @@ public class TokenSettingsTests {
 				.setting("name1", "value1")
 				.settings(settings -> settings.put("name2", "value2"))
 				.build();
-		assertThat(tokenSettings.getSettings()).hasSize(6);
+		assertThat(tokenSettings.getSettings()).hasSize(7);
 		assertThat(tokenSettings.<String>getSetting("name1")).isEqualTo("value1");
 		assertThat(tokenSettings.<String>getSetting("name2")).isEqualTo("value2");
 	}

@@ -23,6 +23,7 @@ import java.util.function.Consumer;
 import org.springframework.lang.Nullable;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
+import org.springframework.security.oauth2.core.OAuth2TokenFormat;
 import org.springframework.security.oauth2.core.OAuth2TokenType;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
@@ -73,6 +74,10 @@ public final class JwtGenerator implements OAuth2TokenGenerator<Jwt> {
 		if (context.getTokenType() == null ||
 				(!OAuth2TokenType.ACCESS_TOKEN.equals(context.getTokenType()) &&
 						!OidcParameterNames.ID_TOKEN.equals(context.getTokenType().getValue()))) {
+			return null;
+		}
+		if (OAuth2TokenType.ACCESS_TOKEN.equals(context.getTokenType()) &&
+				!OAuth2TokenFormat.SELF_CONTAINED.equals(context.getRegisteredClient().getTokenSettings().getAccessTokenFormat())) {
 			return null;
 		}
 

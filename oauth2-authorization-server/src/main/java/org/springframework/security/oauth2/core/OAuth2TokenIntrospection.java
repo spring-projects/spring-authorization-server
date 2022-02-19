@@ -34,6 +34,7 @@ import org.springframework.util.Assert;
  *
  * @author Gerardo Roza
  * @author Joe Grandja
+ * @author Gaurav Tiwari
  * @since 0.1.1
  * @see OAuth2TokenIntrospectionClaimAccessor
  * @see <a target="_blank" href="https://tools.ietf.org/html/rfc7662#section-2.2">Section 2.2 Introspection Response</a>
@@ -258,6 +259,28 @@ public final class OAuth2TokenIntrospection implements OAuth2TokenIntrospectionC
 		}
 
 		/**
+		 * Adds custom claims if corresponding keys don't exist in present set of claims.
+		 *
+		 * @since 0.2.3
+		 * @param presentedClaims map of all claims
+		 * @return the {@link Builder} for further configuration
+		 */
+		public Builder withCustomClaims(Map<String, Object> presentedClaims) {
+
+			if (presentedClaims != null && !presentedClaims.isEmpty()) {
+
+				presentedClaims.keySet().forEach(key -> {
+					if (!this.claims.containsKey(key)) {
+						this.claim(key, presentedClaims.get(key));
+					}
+				});
+
+			}
+
+			return this;
+		}
+
+		/**
 		 * Provides access to every {@link #claim(String, Object)} declared so far with
 		 * the possibility to add, replace, or remove.
 		 *
@@ -312,15 +335,6 @@ public final class OAuth2TokenIntrospection implements OAuth2TokenIntrospectionC
 			((List<String>) this.claims.get(name)).add(value);
 		}
 
-		@SuppressWarnings("unchecked")
-		private void acceptClaimValues(String name, Consumer<List<String>> valuesConsumer) {
-			Assert.hasText(name, "name cannot be empty");
-			Assert.notNull(valuesConsumer, "valuesConsumer cannot be null");
-			this.claims.computeIfAbsent(name, k -> new LinkedList<String>());
-			List<String> values = (List<String>) this.claims.get(name);
-			valuesConsumer.accept(values);
-		}
-
 		private static void validateURL(Object url, String errorMessage) {
 			if (URL.class.isAssignableFrom(url.getClass())) {
 				return;
@@ -331,6 +345,15 @@ public final class OAuth2TokenIntrospection implements OAuth2TokenIntrospectionC
 			} catch (Exception ex) {
 				throw new IllegalArgumentException(errorMessage, ex);
 			}
+		}
+
+		@SuppressWarnings("unchecked")
+		private void acceptClaimValues(String name, Consumer<List<String>> valuesConsumer) {
+			Assert.hasText(name, "name cannot be empty");
+			Assert.notNull(valuesConsumer, "valuesConsumer cannot be null");
+			this.claims.computeIfAbsent(name, k -> new LinkedList<String>());
+			List<String> values = (List<String>) this.claims.get(name);
+			valuesConsumer.accept(values);
 		}
 	}
 }

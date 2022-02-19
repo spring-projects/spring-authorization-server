@@ -54,6 +54,7 @@ import static org.mockito.Mockito.when;
  *
  * @author Gerardo Roza
  * @author Joe Grandja
+ * @author Gaurav Tiwari
  */
 public class OAuth2TokenIntrospectionAuthenticationProviderTests {
 	private RegisteredClientRepository registeredClientRepository;
@@ -259,6 +260,61 @@ public class OAuth2TokenIntrospectionAuthenticationProviderTests {
 		assertThat(tokenClaims.getAudience()).containsExactlyInAnyOrderElementsOf(claimsSet.getAudience());
 		assertThat(tokenClaims.getIssuer()).isEqualTo(claimsSet.getIssuer());
 		assertThat(tokenClaims.getId()).isEqualTo(claimsSet.getId());
+	}
+
+	@Test
+	public void authenticateWhenValidAccessTokenAndCustomClaimThenActiveAndCustomClaimInResponse() {
+		RegisteredClient authorizedClient = TestRegisteredClients.registeredClient().build();
+		Instant issuedAt = Instant.now();
+		Instant expiresAt = issuedAt.plus(Duration.ofHours(1));
+		OAuth2AccessToken accessToken = new OAuth2AccessToken(
+				OAuth2AccessToken.TokenType.BEARER, "access-token", issuedAt, expiresAt,
+				new HashSet<>(Arrays.asList("scope1", "scope2")));
+
+		// @formatter:off
+		OAuth2TokenClaimsSet claimsSet = OAuth2TokenClaimsSet.builder()
+				.issuer("https://provider.com")
+				.subject("subject")
+				.audience(Collections.singletonList(authorizedClient.getClientId()))
+				.issuedAt(issuedAt)
+				.notBefore(issuedAt)
+				.expiresAt(expiresAt)
+				.claim("custom-claim", "custom-claim-value")
+				.id("id")
+				.build();
+		// @formatter:on
+
+		OAuth2Authorization authorization = TestOAuth2Authorizations
+				.authorization(authorizedClient, accessToken, claimsSet.getClaims())
+				.build();
+		when(this.authorizationService.findByToken(eq(accessToken.getTokenValue()), isNull()))
+				.thenReturn(authorization);
+		when(this.registeredClientRepository.findById(eq(authorizedClient.getId()))).thenReturn(authorizedClient);
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient2().build();
+		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(
+				registeredClient, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
+
+		OAuth2TokenIntrospectionAuthenticationToken authentication = new OAuth2TokenIntrospectionAuthenticationToken(
+				accessToken.getTokenValue(), clientPrincipal, null, null);
+		OAuth2TokenIntrospectionAuthenticationToken authenticationResult =
+				(OAuth2TokenIntrospectionAuthenticationToken) this.authenticationProvider.authenticate(authentication);
+
+		verify(this.authorizationService).findByToken(eq(authentication.getToken()), isNull());
+		verify(this.registeredClientRepository).findById(eq(authorizedClient.getId()));
+		assertThat(authenticationResult.isAuthenticated()).isTrue();
+		OAuth2TokenIntrospection tokenClaims = authenticationResult.getTokenClaims();
+		assertThat(tokenClaims.isActive()).isTrue();
+		assertThat(tokenClaims.getClientId()).isEqualTo(authorizedClient.getClientId());
+		assertThat(tokenClaims.getIssuedAt()).isEqualTo(accessToken.getIssuedAt());
+		assertThat(tokenClaims.getExpiresAt()).isEqualTo(accessToken.getExpiresAt());
+		assertThat(tokenClaims.getScopes()).containsExactlyInAnyOrderElementsOf(accessToken.getScopes());
+		assertThat(tokenClaims.getTokenType()).isEqualTo(accessToken.getTokenType().getValue());
+		assertThat(tokenClaims.getNotBefore()).isEqualTo(claimsSet.getNotBefore());
+		assertThat(tokenClaims.getSubject()).isEqualTo(claimsSet.getSubject());
+		assertThat(tokenClaims.getAudience()).containsExactlyInAnyOrderElementsOf(claimsSet.getAudience());
+		assertThat(tokenClaims.getIssuer()).isEqualTo(claimsSet.getIssuer());
+		assertThat(tokenClaims.getId()).isEqualTo(claimsSet.getId());
+		assertThat((String) tokenClaims.getClaim("custom-claim")).isEqualTo("custom-claim-value");
 	}
 
 	@Test

@@ -41,6 +41,7 @@ import static org.springframework.security.oauth2.server.authorization.authentic
  *
  * @author Gerardo Roza
  * @author Joe Grandja
+ * @author Gaurav Tiwari
  * @since 0.1.1
  * @see OAuth2TokenIntrospectionAuthenticationToken
  * @see RegisteredClientRepository
@@ -142,6 +143,8 @@ public final class OAuth2TokenIntrospectionAuthenticationProvider implements Aut
 				}
 			}
 		}
+
+		tokenClaims.withCustomClaims(authorizedToken.getClaims());
 
 		return tokenClaims.build();
 	}

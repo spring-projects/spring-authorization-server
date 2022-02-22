@@ -17,6 +17,7 @@ package org.springframework.security.oauth2.server.authorization.oidc.web;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 
 import javax.servlet.FilterChain;
@@ -24,6 +25,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.springframework.core.convert.converter.Converter;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.server.ServletServerHttpResponse;
@@ -101,6 +103,21 @@ public final class OidcProviderConfigurationEndpointFilter extends OncePerReques
 		ServletServerHttpResponse httpResponse = new ServletServerHttpResponse(response);
 		this.providerConfigurationHttpMessageConverter.write(
 				providerConfiguration, MediaType.APPLICATION_JSON, httpResponse);
+	}
+
+	/**
+	 * Sets the {@link Converter} used for converting the {@link OidcProviderConfiguration} to a
+	 * {@code Map} representation of the OpenID Provider Configuration.
+	 *
+	 * @param providerConfigurationParametersConverter the {@link Converter} used for converting to a
+	 * {@code Map} representation of the OpenID Provider Configuration
+	 *
+	 * @since 0.2.3
+	 */
+	public void setProviderConfigurationParametersConverter(
+			Converter<OidcProviderConfiguration, Map<String, Object>> providerConfigurationParametersConverter) {
+		Assert.notNull(providerConfigurationParametersConverter, "providerConfigurationParametersConverter cannot be null");
+		this.providerConfigurationHttpMessageConverter.setProviderConfigurationParametersConverter(providerConfigurationParametersConverter);
 	}
 
 	private static Consumer<List<String>> clientAuthenticationMethods() {

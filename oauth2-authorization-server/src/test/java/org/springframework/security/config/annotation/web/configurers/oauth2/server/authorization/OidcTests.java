@@ -58,6 +58,7 @@ import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.OAuth2AuthorizationCode;
+import org.springframework.security.oauth2.core.OAuth2Token;
 import org.springframework.security.oauth2.core.OAuth2TokenType;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AccessTokenResponse;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationResponseType;
@@ -69,11 +70,13 @@ import org.springframework.security.oauth2.jose.TestJwks;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwsEncoder;
+import org.springframework.security.oauth2.server.authorization.DelegatingOAuth2TokenGenerator;
 import org.springframework.security.oauth2.server.authorization.JdbcOAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.JwtEncodingContext;
 import org.springframework.security.oauth2.server.authorization.JwtGenerator;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
+import org.springframework.security.oauth2.server.authorization.OAuth2RefreshTokenGenerator;
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenContext;
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenCustomizer;
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenGenerator;
@@ -262,7 +265,7 @@ public class OidcTests {
 						registeredClient.getClientId(), registeredClient.getClientSecret())))
 				.andExpect(status().isOk());
 
-		verify(this.tokenGenerator, times(2)).generate(any());
+		verify(this.tokenGenerator, times(3)).generate(any());
 	}
 
 	private static MultiValueMap<String, String> getAuthorizationRequestParameters(RegisteredClient registeredClient) {
@@ -404,10 +407,13 @@ public class OidcTests {
 		OAuth2TokenGenerator<?> tokenGenerator() {
 			JwtGenerator jwtGenerator = new JwtGenerator(new NimbusJwsEncoder(jwkSource()));
 			jwtGenerator.setJwtCustomizer(jwtCustomizer());
-			return spy(new OAuth2TokenGenerator<Jwt>() {
+			OAuth2RefreshTokenGenerator refreshTokenGenerator = new OAuth2RefreshTokenGenerator();
+			OAuth2TokenGenerator<OAuth2Token> delegatingTokenGenerator =
+					new DelegatingOAuth2TokenGenerator(jwtGenerator, refreshTokenGenerator);
+			return spy(new OAuth2TokenGenerator<OAuth2Token>() {
 				@Override
-				public Jwt generate(OAuth2TokenContext context) {
-					return jwtGenerator.generate(context);
+				public OAuth2Token generate(OAuth2TokenContext context) {
+					return delegatingTokenGenerator.generate(context);
 				}
 			});
 		}

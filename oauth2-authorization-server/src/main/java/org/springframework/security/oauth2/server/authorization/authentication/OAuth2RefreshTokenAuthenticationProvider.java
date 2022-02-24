@@ -16,9 +16,7 @@
 package org.springframework.security.oauth2.server.authorization.authentication;
 
 import java.security.Principal;
-import java.time.Duration;
 import java.time.Instant;
-import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -29,8 +27,6 @@ import java.util.function.Supplier;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.crypto.keygen.Base64StringKeyGenerator;
-import org.springframework.security.crypto.keygen.StringKeyGenerator;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
@@ -45,10 +41,12 @@ import org.springframework.security.oauth2.core.oidc.endpoint.OidcParameterNames
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.server.authorization.DefaultOAuth2TokenContext;
+import org.springframework.security.oauth2.server.authorization.DelegatingOAuth2TokenGenerator;
 import org.springframework.security.oauth2.server.authorization.JwtEncodingContext;
 import org.springframework.security.oauth2.server.authorization.JwtGenerator;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
+import org.springframework.security.oauth2.server.authorization.OAuth2RefreshTokenGenerator;
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenContext;
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenCustomizer;
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenGenerator;
@@ -76,11 +74,14 @@ import static org.springframework.security.oauth2.server.authorization.authentic
 public final class OAuth2RefreshTokenAuthenticationProvider implements AuthenticationProvider {
 	private static final String ERROR_URI = "https://datatracker.ietf.org/doc/html/rfc6749#section-5.2";
 	private static final OAuth2TokenType ID_TOKEN_TOKEN_TYPE = new OAuth2TokenType(OidcParameterNames.ID_TOKEN);
-	private static final StringKeyGenerator DEFAULT_REFRESH_TOKEN_GENERATOR =
-			new Base64StringKeyGenerator(Base64.getUrlEncoder().withoutPadding(), 96);
 	private final OAuth2AuthorizationService authorizationService;
 	private final OAuth2TokenGenerator<? extends OAuth2Token> tokenGenerator;
-	private Supplier<String> refreshTokenGenerator = DEFAULT_REFRESH_TOKEN_GENERATOR::generateKey;
+
+	// TODO Remove after removing @Deprecated OAuth2RefreshTokenAuthenticationProvider(OAuth2AuthorizationService, JwtEncoder)
+	private JwtGenerator jwtGenerator;
+
+	@Deprecated
+	private Supplier<String> refreshTokenGenerator;
 
 	/**
 	 * Constructs an {@code OAuth2RefreshTokenAuthenticationProvider} using the provided parameters.
@@ -95,7 +96,9 @@ public final class OAuth2RefreshTokenAuthenticationProvider implements Authentic
 		Assert.notNull(authorizationService, "authorizationService cannot be null");
 		Assert.notNull(jwtEncoder, "jwtEncoder cannot be null");
 		this.authorizationService = authorizationService;
-		this.tokenGenerator = new JwtGenerator(jwtEncoder);
+		this.jwtGenerator = new JwtGenerator(jwtEncoder);
+		this.tokenGenerator = new DelegatingOAuth2TokenGenerator(
+				this.jwtGenerator, new OAuth2RefreshTokenGenerator());
 	}
 
 	/**
@@ -124,16 +127,18 @@ public final class OAuth2RefreshTokenAuthenticationProvider implements Authentic
 	@Deprecated
 	public void setJwtCustomizer(OAuth2TokenCustomizer<JwtEncodingContext> jwtCustomizer) {
 		Assert.notNull(jwtCustomizer, "jwtCustomizer cannot be null");
-		if (this.tokenGenerator instanceof JwtGenerator) {
-			((JwtGenerator) this.tokenGenerator).setJwtCustomizer(jwtCustomizer);
+		if (this.jwtGenerator != null) {
+			this.jwtGenerator.setJwtCustomizer(jwtCustomizer);
 		}
 	}
 
 	/**
 	 * Sets the {@code Supplier<String>} that generates the value for the {@link OAuth2RefreshToken}.
 	 *
+	 * @deprecated Use {@link OAuth2RefreshTokenGenerator} instead
 	 * @param refreshTokenGenerator the {@code Supplier<String>} that generates the value for the {@link OAuth2RefreshToken}
 	 */
+	@Deprecated
 	public void setRefreshTokenGenerator(Supplier<String> refreshTokenGenerator) {
 		Assert.notNull(refreshTokenGenerator, "refreshTokenGenerator cannot be null");
 		this.refreshTokenGenerator = refreshTokenGenerator;
@@ -222,7 +227,20 @@ public final class OAuth2RefreshTokenAuthenticationProvider implements Authentic
 		// ----- Refresh token -----
 		OAuth2RefreshToken currentRefreshToken = refreshToken.getToken();
 		if (!registeredClient.getTokenSettings().isReuseRefreshTokens()) {
-			currentRefreshToken = generateRefreshToken(registeredClient.getTokenSettings().getRefreshTokenTimeToLive());
+			if (this.refreshTokenGenerator != null) {
+				Instant issuedAt = Instant.now();
+				Instant expiresAt = issuedAt.plus(registeredClient.getTokenSettings().getRefreshTokenTimeToLive());
+				currentRefreshToken = new OAuth2RefreshToken(this.refreshTokenGenerator.get(), issuedAt, expiresAt);
+			} else {
+				tokenContext = tokenContextBuilder.tokenType(OAuth2TokenType.REFRESH_TOKEN).build();
+				OAuth2Token generatedRefreshToken = this.tokenGenerator.generate(tokenContext);
+				if (!(generatedRefreshToken instanceof OAuth2RefreshToken)) {
+					OAuth2Error error = new OAuth2Error(OAuth2ErrorCodes.SERVER_ERROR,
+							"The token generator failed to generate the refresh token.", ERROR_URI);
+					throw new OAuth2AuthenticationException(error);
+				}
+				currentRefreshToken = (OAuth2RefreshToken) generatedRefreshToken;
+			}
 			authorizationBuilder.refreshToken(currentRefreshToken);
 		}
 
@@ -261,12 +279,6 @@ public final class OAuth2RefreshTokenAuthenticationProvider implements Authentic
 	@Override
 	public boolean supports(Class<?> authentication) {
 		return OAuth2RefreshTokenAuthenticationToken.class.isAssignableFrom(authentication);
-	}
-
-	private OAuth2RefreshToken generateRefreshToken(Duration tokenTimeToLive) {
-		Instant issuedAt = Instant.now();
-		Instant expiresAt = issuedAt.plus(tokenTimeToLive);
-		return new OAuth2RefreshToken(this.refreshTokenGenerator.get(), issuedAt, expiresAt);
 	}
 
 }

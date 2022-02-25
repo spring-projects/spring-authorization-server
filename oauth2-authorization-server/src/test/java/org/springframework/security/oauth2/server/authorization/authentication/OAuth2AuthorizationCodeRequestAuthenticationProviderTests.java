@@ -46,11 +46,15 @@ import org.springframework.security.oauth2.server.authorization.OAuth2Authorizat
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsent;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsentService;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
+import org.springframework.security.oauth2.server.authorization.OAuth2TokenGenerator;
 import org.springframework.security.oauth2.server.authorization.TestOAuth2Authorizations;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
 import org.springframework.security.oauth2.server.authorization.config.ClientSettings;
+import org.springframework.security.oauth2.server.authorization.config.ProviderSettings;
+import org.springframework.security.oauth2.server.authorization.context.ProviderContext;
+import org.springframework.security.oauth2.server.authorization.context.ProviderContextHolder;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -86,6 +90,8 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 				this.registeredClientRepository, this.authorizationService, this.authorizationConsentService);
 		this.principal = new TestingAuthenticationToken("principalName", "password");
 		this.principal.setAuthenticated(true);
+		ProviderSettings providerSettings = ProviderSettings.builder().issuer("https://provider.com").build();
+		ProviderContextHolder.setProviderContext(new ProviderContext(providerSettings, null));
 	}
 
 	@Test
@@ -119,7 +125,10 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 
 	@Test
 	public void setAuthorizationCodeGeneratorWhenNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> this.authenticationProvider.setAuthorizationCodeGenerator(null))
+		assertThatThrownBy(() -> this.authenticationProvider.setAuthorizationCodeGenerator((Supplier<String>) null))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("authorizationCodeGenerator cannot be null");
+		assertThatThrownBy(() -> this.authenticationProvider.setAuthorizationCodeGenerator((OAuth2TokenGenerator<OAuth2AuthorizationCode>) null))
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessage("authorizationCodeGenerator cannot be null");
 	}
@@ -531,6 +540,29 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 
 		verify(authorizationCodeGenerator).get();
 		assertThat(authenticationResult.getAuthorizationCode().getTokenValue()).isEqualTo(authorizationCodeGenerator.get());
+	}
+
+	@Test
+	public void authenticateWhenAuthorizationCodeNotGeneratedThenThrowOAuth2AuthorizationCodeRequestAuthenticationException() {
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
+				.thenReturn(registeredClient);
+
+		@SuppressWarnings("unchecked")
+		OAuth2TokenGenerator<OAuth2AuthorizationCode> authorizationCodeGenerator = mock(OAuth2TokenGenerator.class);
+		this.authenticationProvider.setAuthorizationCodeGenerator(authorizationCodeGenerator);
+
+		OAuth2AuthorizationCodeRequestAuthenticationToken authentication =
+				authorizationCodeRequestAuthentication(registeredClient, this.principal)
+						.build();
+
+		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
+				.isInstanceOf(OAuth2AuthorizationCodeRequestAuthenticationException.class)
+				.extracting(ex -> ((OAuth2AuthorizationCodeRequestAuthenticationException) ex).getError())
+				.satisfies(error -> {
+					assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.SERVER_ERROR);
+					assertThat(error.getDescription()).contains("The token generator failed to generate the authorization code.");
+				});
 	}
 
 	@Test

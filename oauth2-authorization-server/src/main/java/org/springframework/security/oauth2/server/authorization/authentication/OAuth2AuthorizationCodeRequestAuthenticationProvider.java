@@ -28,6 +28,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import org.springframework.lang.Nullable;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
@@ -46,12 +47,16 @@ import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequ
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.endpoint.PkceParameterNames;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
+import org.springframework.security.oauth2.server.authorization.DefaultOAuth2TokenContext;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsent;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsentService;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
+import org.springframework.security.oauth2.server.authorization.OAuth2TokenContext;
+import org.springframework.security.oauth2.server.authorization.OAuth2TokenGenerator;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
+import org.springframework.security.oauth2.server.authorization.context.ProviderContextHolder;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 import org.springframework.web.util.UriComponents;
@@ -72,10 +77,9 @@ import org.springframework.web.util.UriComponentsBuilder;
  * @see <a target="_blank" href="https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.1">Section 4.1.1 Authorization Request</a>
  */
 public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implements AuthenticationProvider {
-	private static final OAuth2TokenType STATE_TOKEN_TYPE = new OAuth2TokenType(OAuth2ParameterNames.STATE);
+	private static final String ERROR_URI = "https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.2.1";
 	private static final String PKCE_ERROR_URI = "https://datatracker.ietf.org/doc/html/rfc7636#section-4.4.1";
-	private static final StringKeyGenerator DEFAULT_AUTHORIZATION_CODE_GENERATOR =
-			new Base64StringKeyGenerator(Base64.getUrlEncoder().withoutPadding(), 96);
+	private static final OAuth2TokenType STATE_TOKEN_TYPE = new OAuth2TokenType(OAuth2ParameterNames.STATE);
 	private static final StringKeyGenerator DEFAULT_STATE_GENERATOR =
 			new Base64StringKeyGenerator(Base64.getUrlEncoder());
 	private static final Function<String, OAuth2AuthenticationValidator> DEFAULT_AUTHENTICATION_VALIDATOR_RESOLVER =
@@ -83,7 +87,11 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 	private final RegisteredClientRepository registeredClientRepository;
 	private final OAuth2AuthorizationService authorizationService;
 	private final OAuth2AuthorizationConsentService authorizationConsentService;
-	private Supplier<String> authorizationCodeGenerator = DEFAULT_AUTHORIZATION_CODE_GENERATOR::generateKey;
+
+	@Deprecated
+	private Supplier<String> authorizationCodeSupplier;
+
+	private OAuth2TokenGenerator<OAuth2AuthorizationCode> authorizationCodeGenerator = new OAuth2AuthorizationCodeGenerator();
 	private Function<String, OAuth2AuthenticationValidator> authenticationValidatorResolver = DEFAULT_AUTHENTICATION_VALIDATOR_RESOLVER;
 	private Consumer<OAuth2AuthorizationConsentAuthenticationContext> authorizationConsentCustomizer;
 
@@ -122,9 +130,22 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 	/**
 	 * Sets the {@code Supplier<String>} that generates the value for the {@link OAuth2AuthorizationCode}.
 	 *
+	 * @deprecated Use {@link #setAuthorizationCodeGenerator(OAuth2TokenGenerator)} instead
 	 * @param authorizationCodeGenerator the {@code Supplier<String>} that generates the value for the {@link OAuth2AuthorizationCode}
 	 */
+	@Deprecated
 	public void setAuthorizationCodeGenerator(Supplier<String> authorizationCodeGenerator) {
+		Assert.notNull(authorizationCodeGenerator, "authorizationCodeGenerator cannot be null");
+		this.authorizationCodeSupplier = authorizationCodeGenerator;
+	}
+
+	/**
+	 * Sets the {@link OAuth2TokenGenerator} that generates the {@link OAuth2AuthorizationCode}.
+	 *
+	 * @param authorizationCodeGenerator the {@link OAuth2TokenGenerator} that generates the {@link OAuth2AuthorizationCode}
+	 * @since 0.2.3
+	 */
+	public void setAuthorizationCodeGenerator(OAuth2TokenGenerator<OAuth2AuthorizationCode> authorizationCodeGenerator) {
 		Assert.notNull(authorizationCodeGenerator, "authorizationCodeGenerator cannot be null");
 		this.authorizationCodeGenerator = authorizationCodeGenerator;
 	}
@@ -258,7 +279,22 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 					.build();
 		}
 
-		OAuth2AuthorizationCode authorizationCode = generateAuthorizationCode();
+		OAuth2AuthorizationCode authorizationCode;
+		if (this.authorizationCodeSupplier != null) {
+			Instant issuedAt = Instant.now();
+			Instant expiresAt = issuedAt.plus(5, ChronoUnit.MINUTES);		// TODO Allow configuration for authorization code time-to-live
+			authorizationCode = new OAuth2AuthorizationCode(this.authorizationCodeSupplier.get(), issuedAt, expiresAt);
+		} else {
+			OAuth2TokenContext tokenContext = createAuthorizationCodeTokenContext(
+					authorizationCodeRequestAuthentication, registeredClient, null, authorizationRequest.getScopes());
+			authorizationCode = this.authorizationCodeGenerator.generate(tokenContext);
+			if (authorizationCode == null) {
+				OAuth2Error error = new OAuth2Error(OAuth2ErrorCodes.SERVER_ERROR,
+						"The token generator failed to generate the authorization code.", ERROR_URI);
+				throw new OAuth2AuthorizationCodeRequestAuthenticationException(error, null);
+			}
+		}
+
 		OAuth2Authorization authorization = authorizationBuilder(registeredClient, principal, authorizationRequest)
 				.token(authorizationCode)
 				.attribute(OAuth2Authorization.AUTHORIZED_SCOPE_ATTRIBUTE_NAME, authorizationRequest.getScopes())
@@ -284,12 +320,6 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 		return authenticationValidator != null ?
 				authenticationValidator :
 				DEFAULT_AUTHENTICATION_VALIDATOR_RESOLVER.apply(parameterName);
-	}
-
-	private OAuth2AuthorizationCode generateAuthorizationCode() {
-		Instant issuedAt = Instant.now();
-		Instant expiresAt = issuedAt.plus(5, ChronoUnit.MINUTES);		// TODO Allow configuration for authorization code time-to-live
-		return new OAuth2AuthorizationCode(this.authorizationCodeGenerator.get(), issuedAt, expiresAt);
 	}
 
 	private Authentication authenticateAuthorizationConsent(Authentication authentication) throws AuthenticationException {
@@ -383,7 +413,21 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 			this.authorizationConsentService.save(authorizationConsent);
 		}
 
-		OAuth2AuthorizationCode authorizationCode = generateAuthorizationCode();
+		OAuth2AuthorizationCode authorizationCode;
+		if (this.authorizationCodeSupplier != null) {
+			Instant issuedAt = Instant.now();
+			Instant expiresAt = issuedAt.plus(5, ChronoUnit.MINUTES);		// TODO Allow configuration for authorization code time-to-live
+			authorizationCode = new OAuth2AuthorizationCode(this.authorizationCodeSupplier.get(), issuedAt, expiresAt);
+		} else {
+			OAuth2TokenContext tokenContext = createAuthorizationCodeTokenContext(
+					authorizationCodeRequestAuthentication, registeredClient, authorization, authorizedScopes);
+			authorizationCode = this.authorizationCodeGenerator.generate(tokenContext);
+			if (authorizationCode == null) {
+				OAuth2Error error = new OAuth2Error(OAuth2ErrorCodes.SERVER_ERROR,
+						"The token generator failed to generate the authorization code.", ERROR_URI);
+				throw new OAuth2AuthorizationCodeRequestAuthenticationException(error, null);
+			}
+		}
 
 		OAuth2Authorization updatedAuthorization = OAuth2Authorization.from(authorization)
 				.token(authorizationCode)
@@ -422,6 +466,28 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
 				.attribute(Principal.class.getName(), principal)
 				.attribute(OAuth2AuthorizationRequest.class.getName(), authorizationRequest);
+	}
+
+	private static OAuth2TokenContext createAuthorizationCodeTokenContext(
+			OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthentication,
+			RegisteredClient registeredClient, OAuth2Authorization authorization, Set<String> authorizedScopes) {
+
+		// @formatter:off
+		DefaultOAuth2TokenContext.Builder tokenContextBuilder = DefaultOAuth2TokenContext.builder()
+				.registeredClient(registeredClient)
+				.principal((Authentication) authorizationCodeRequestAuthentication.getPrincipal())
+				.providerContext(ProviderContextHolder.getProviderContext())
+				.tokenType(new OAuth2TokenType(OAuth2ParameterNames.CODE))
+				.authorizedScopes(authorizedScopes)
+				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+				.authorizationGrant(authorizationCodeRequestAuthentication);
+		// @formatter:on
+
+		if (authorization != null) {
+			tokenContextBuilder.authorization(authorization);
+		}
+
+		return tokenContextBuilder.build();
 	}
 
 	private static boolean requireAuthorizationConsent(RegisteredClient registeredClient,
@@ -522,7 +588,7 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 	private static void throwError(String errorCode, String parameterName,
 			OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthentication,
 			RegisteredClient registeredClient, OAuth2AuthorizationRequest authorizationRequest) {
-		throwError(errorCode, parameterName, "https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.2.1",
+		throwError(errorCode, parameterName, ERROR_URI,
 				authorizationCodeRequestAuthentication, registeredClient, authorizationRequest);
 	}
 
@@ -578,6 +644,24 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 				.state(authorizationCodeRequestAuthentication.getState())
 				.additionalParameters(authorizationCodeRequestAuthentication.getAdditionalParameters())
 				.authorizationCode(authorizationCodeRequestAuthentication.getAuthorizationCode());
+	}
+
+	private static class OAuth2AuthorizationCodeGenerator implements OAuth2TokenGenerator<OAuth2AuthorizationCode> {
+		private final StringKeyGenerator authorizationCodeGenerator =
+				new Base64StringKeyGenerator(Base64.getUrlEncoder().withoutPadding(), 96);
+
+		@Nullable
+		@Override
+		public OAuth2AuthorizationCode generate(OAuth2TokenContext context) {
+			if (context.getTokenType() == null ||
+					!OAuth2ParameterNames.CODE.equals(context.getTokenType().getValue())) {
+				return null;
+			}
+			Instant issuedAt = Instant.now();
+			Instant expiresAt = issuedAt.plus(5, ChronoUnit.MINUTES);		// TODO Allow configuration for authorization code time-to-live
+			return new OAuth2AuthorizationCode(this.authorizationCodeGenerator.generateKey(), issuedAt, expiresAt);
+		}
+
 	}
 
 	private static class DefaultRedirectUriOAuth2AuthenticationValidator implements OAuth2AuthenticationValidator {

@@ -23,6 +23,7 @@ import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
 import sample.jose.Jwks;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
@@ -106,8 +107,8 @@ public class AuthorizationServerConfig {
 	}
 
 	@Bean
-	public ProviderSettings providerSettings() {
-		return ProviderSettings.builder().issuer("http://auth-server:9000").build();
+	public ProviderSettings providerSettings(@Value("${server.port:9000}") String port) {
+		return ProviderSettings.builder().issuer("http://auth-server:"+port).build();
 	}
 
 	@Bean

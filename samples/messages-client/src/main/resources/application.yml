@@ -41,7 +41,7 @@ spring:
             client-name: messaging-client-client-credentials
         provider:
           spring:
-            issuer-uri: http://auth-server:9000
+            issuer-uri: http://localhost:9000
 
 messages:
   base-uri: http://127.0.0.1:8090/messages

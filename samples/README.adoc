@@ -7,7 +7,6 @@ The username is `user1` and the password is `password`.
 == Run the Sample
 
 * Run Authorization Server -> `./gradlew -b samples/default-authorizationserver/samples-default-authorizationserver.gradle bootRun`
-** *IMPORTANT:* Make sure to modify your `/etc/hosts` file to avoid problems with session cookie overwrites between `messages-client` and `default-authorizationserver`. Simply add the entry `127.0.0.1	auth-server`
 * Run Resource Server -> `./gradlew -b samples/messages-resource/samples-messages-resource.gradle bootRun`
 * Run Client -> `./gradlew -b samples/messages-client/samples-messages-client.gradle bootRun`
 * Go to `http://127.0.0.1:8080`

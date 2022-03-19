@@ -211,6 +211,41 @@ public class OidcTests {
 	}
 
 	@Test
+	public void loadContextWhenIssuerWithQueryThenThrowException() {
+		assertThatThrownBy(
+				() -> this.spring.register(AuthorizationServerConfigurationWithInvalidQueryIssuerUrl.class).autowire()
+		);
+	}
+
+	@Test
+	public void loadContextWhenIssuerWithFragmentThenThrowException() {
+		assertThatThrownBy(
+				() -> this.spring.register(AuthorizationServerConfigurationWithInvalidFragmentIssuerUrl.class).autowire()
+		);
+	}
+
+	@Test
+	public void loadContextWhenIssuerWithQueryAndFragmentThenThrowException() {
+		assertThatThrownBy(
+				() -> this.spring.register(AuthorizationServerConfigurationWithInvalidQueryAndFragmentIssuerUrl.class).autowire()
+		);
+	}
+
+	@Test
+	public void loadContextWhenIssuerEndWithQuestionMarkCharacterThenThrowException() {
+		assertThatThrownBy(
+				() -> this.spring.register(AuthorizationServerConfigurationWithInvalidIssuerUrlEndWithQuestionMarkCharacter.class).autowire()
+		);
+	}
+
+	@Test
+	public void loadContextWhenIssuerEndWithNumberSignCharacterThenThrowException() {
+		assertThatThrownBy(
+				() -> this.spring.register(AuthorizationServerConfigurationWithInvalidIssuerUrlEndWithNumberSignCharacter.class).autowire()
+		);
+	}
+
+	@Test
 	public void requestWhenAuthenticationRequestThenTokenResponseIncludesIdToken() throws Exception {
 		this.spring.register(AuthorizationServerConfiguration.class).autowire();
 
@@ -456,6 +491,56 @@ public class OidcTests {
 		@Bean
 		ProviderSettings providerSettings() {
 			return ProviderSettings.builder().issuer("https://not a valid uri").build();
+		}
+	}
+
+	@EnableWebSecurity
+	@Import(OAuth2AuthorizationServerConfiguration.class)
+	static class AuthorizationServerConfigurationWithInvalidQueryIssuerUrl extends AuthorizationServerConfiguration {
+
+		@Bean
+		ProviderSettings providerSettings() {
+			return ProviderSettings.builder().issuer("https://localhost:9000?something=any").build();
+		}
+	}
+
+	@EnableWebSecurity
+	@Import(OAuth2AuthorizationServerConfiguration.class)
+	static class AuthorizationServerConfigurationWithInvalidFragmentIssuerUrl extends AuthorizationServerConfiguration {
+
+		@Bean
+		ProviderSettings providerSettings() {
+			return ProviderSettings.builder().issuer("https://localhost:9000#fragment").build();
+		}
+	}
+
+	@EnableWebSecurity
+	@Import(OAuth2AuthorizationServerConfiguration.class)
+	static class AuthorizationServerConfigurationWithInvalidQueryAndFragmentIssuerUrl extends AuthorizationServerConfiguration {
+
+		@Bean
+		ProviderSettings providerSettings() {
+			return ProviderSettings.builder().issuer("https://localhost:9000?something=any#fragment").build();
+		}
+	}
+
+	@EnableWebSecurity
+	@Import(OAuth2AuthorizationServerConfiguration.class)
+	static class AuthorizationServerConfigurationWithInvalidIssuerUrlEndWithQuestionMarkCharacter extends AuthorizationServerConfiguration {
+
+		@Bean
+		ProviderSettings providerSettings() {
+			return ProviderSettings.builder().issuer("https://localhost:9000?").build();
+		}
+	}
+
+	@EnableWebSecurity
+	@Import(OAuth2AuthorizationServerConfiguration.class)
+	static class AuthorizationServerConfigurationWithInvalidIssuerUrlEndWithNumberSignCharacter extends AuthorizationServerConfiguration {
+
+		@Bean
+		ProviderSettings providerSettings() {
+			return ProviderSettings.builder().issuer("https://localhost:9000/#").build();
 		}
 	}
 

@@ -427,10 +427,16 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 
 	private static void validateProviderSettings(ProviderSettings providerSettings) {
 		if (providerSettings.getIssuer() != null) {
+			URI issuerUri;
 			try {
-				new URI(providerSettings.getIssuer()).toURL();
+				issuerUri = new URI(providerSettings.getIssuer());
+				issuerUri.toURL();
 			} catch (Exception ex) {
 				throw new IllegalArgumentException("issuer must be a valid URL", ex);
+			}
+			// rfc8414 https://datatracker.ietf.org/doc/html/rfc8414#section-2
+			if (issuerUri.getQuery() != null || issuerUri.getFragment() != null) {
+				throw new IllegalArgumentException("issuer cannot contain query or fragment component");
 			}
 		}
 	}

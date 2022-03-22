@@ -186,6 +186,16 @@ public class OidcTests {
 				.andExpect(jsonPath("issuer").value(ISSUER_URL));
 	}
 
+	// gh-632
+	@Test
+	public void requestWhenConfigurationRequestAndUserAuthenticatedThenReturnConfigurationResponse() throws Exception {
+		this.spring.register(AuthorizationServerConfiguration.class).autowire();
+
+		this.mvc.perform(get(DEFAULT_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI)
+				.with(user("user")))
+				.andExpect(status().is2xxSuccessful());
+	}
+
 	@Test
 	public void loadContextWhenIssuerNotValidUrlThenThrowException() {
 		assertThatThrownBy(

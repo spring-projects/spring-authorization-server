@@ -16,7 +16,9 @@
 package org.springframework.security.config.annotation.web.configurers.oauth2.server.authorization;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
@@ -40,8 +42,7 @@ import org.springframework.security.web.util.matcher.RequestMatcher;
  * @see OidcProviderConfigurationEndpointFilter
  */
 public final class OidcConfigurer extends AbstractOAuth2Configurer {
-	private final OidcUserInfoEndpointConfigurer userInfoEndpointConfigurer;
-	private OidcClientRegistrationEndpointConfigurer clientRegistrationEndpointConfigurer;
+	private final Map<Class<? extends AbstractOAuth2Configurer>, AbstractOAuth2Configurer> configurers = new LinkedHashMap<>();
 	private RequestMatcher requestMatcher;
 
 	/**
@@ -49,7 +50,7 @@ public final class OidcConfigurer extends AbstractOAuth2Configurer {
 	 */
 	OidcConfigurer(ObjectPostProcessor<Object> objectPostProcessor) {
 		super(objectPostProcessor);
-		this.userInfoEndpointConfigurer = new OidcUserInfoEndpointConfigurer(objectPostProcessor);
+		addConfigurer(OidcUserInfoEndpointConfigurer.class, new OidcUserInfoEndpointConfigurer(objectPostProcessor));
 	}
 
 	/**
@@ -59,10 +60,14 @@ public final class OidcConfigurer extends AbstractOAuth2Configurer {
 	 * @return the {@link OidcConfigurer} for further configuration
 	 */
 	public OidcConfigurer clientRegistrationEndpoint(Customizer<OidcClientRegistrationEndpointConfigurer> clientRegistrationEndpointCustomizer) {
-		if (this.clientRegistrationEndpointConfigurer == null) {
-			this.clientRegistrationEndpointConfigurer = new OidcClientRegistrationEndpointConfigurer(getObjectPostProcessor());
+		OidcClientRegistrationEndpointConfigurer clientRegistrationEndpointConfigurer =
+				getConfigurer(OidcClientRegistrationEndpointConfigurer.class);
+		if (clientRegistrationEndpointConfigurer == null) {
+			addConfigurer(OidcClientRegistrationEndpointConfigurer.class,
+					new OidcClientRegistrationEndpointConfigurer(getObjectPostProcessor()));
+			clientRegistrationEndpointConfigurer = getConfigurer(OidcClientRegistrationEndpointConfigurer.class);
 		}
-		clientRegistrationEndpointCustomizer.customize(this.clientRegistrationEndpointConfigurer);
+		clientRegistrationEndpointCustomizer.customize(clientRegistrationEndpointConfigurer);
 		return this;
 	}
 
@@ -73,32 +78,40 @@ public final class OidcConfigurer extends AbstractOAuth2Configurer {
 	 * @return the {@link OidcConfigurer} for further configuration
 	 */
 	public OidcConfigurer userInfoEndpoint(Customizer<OidcUserInfoEndpointConfigurer> userInfoEndpointCustomizer) {
-		userInfoEndpointCustomizer.customize(this.userInfoEndpointConfigurer);
+		userInfoEndpointCustomizer.customize(getConfigurer(OidcUserInfoEndpointConfigurer.class));
 		return this;
 	}
 
 	@Override
 	<B extends HttpSecurityBuilder<B>> void init(B builder) {
-		this.userInfoEndpointConfigurer.init(builder);
-		if (this.clientRegistrationEndpointConfigurer != null) {
-			this.clientRegistrationEndpointConfigurer.init(builder);
+		OidcUserInfoEndpointConfigurer userInfoEndpointConfigurer =
+				getConfigurer(OidcUserInfoEndpointConfigurer.class);
+		userInfoEndpointConfigurer.init(builder);
+		OidcClientRegistrationEndpointConfigurer clientRegistrationEndpointConfigurer =
+				getConfigurer(OidcClientRegistrationEndpointConfigurer.class);
+		if (clientRegistrationEndpointConfigurer != null) {
+			clientRegistrationEndpointConfigurer.init(builder);
 		}
 
 		List<RequestMatcher> requestMatchers = new ArrayList<>();
 		requestMatchers.add(new AntPathRequestMatcher(
 				"/.well-known/openid-configuration", HttpMethod.GET.name()));
-		requestMatchers.add(this.userInfoEndpointConfigurer.getRequestMatcher());
-		if (this.clientRegistrationEndpointConfigurer != null) {
-			requestMatchers.add(this.clientRegistrationEndpointConfigurer.getRequestMatcher());
+		requestMatchers.add(userInfoEndpointConfigurer.getRequestMatcher());
+		if (clientRegistrationEndpointConfigurer != null) {
+			requestMatchers.add(clientRegistrationEndpointConfigurer.getRequestMatcher());
 		}
 		this.requestMatcher = new OrRequestMatcher(requestMatchers);
 	}
 
 	@Override
 	<B extends HttpSecurityBuilder<B>> void configure(B builder) {
-		this.userInfoEndpointConfigurer.configure(builder);
-		if (this.clientRegistrationEndpointConfigurer != null) {
-			this.clientRegistrationEndpointConfigurer.configure(builder);
+		OidcUserInfoEndpointConfigurer userInfoEndpointConfigurer =
+				getConfigurer(OidcUserInfoEndpointConfigurer.class);
+		userInfoEndpointConfigurer.configure(builder);
+		OidcClientRegistrationEndpointConfigurer clientRegistrationEndpointConfigurer =
+				getConfigurer(OidcClientRegistrationEndpointConfigurer.class);
+		if (clientRegistrationEndpointConfigurer != null) {
+			clientRegistrationEndpointConfigurer.configure(builder);
 		}
 
 		ProviderSettings providerSettings = OAuth2ConfigurerUtils.getProviderSettings(builder);
@@ -110,6 +123,15 @@ public final class OidcConfigurer extends AbstractOAuth2Configurer {
 	@Override
 	RequestMatcher getRequestMatcher() {
 		return this.requestMatcher;
+	}
+
+	@SuppressWarnings("unchecked")
+	<T> T getConfigurer(Class<T> type) {
+		return (T) this.configurers.get(type);
+	}
+
+	private <T extends AbstractOAuth2Configurer> void addConfigurer(Class<T> configurerType, T configurer) {
+		this.configurers.put(configurerType, configurer);
 	}
 
 }

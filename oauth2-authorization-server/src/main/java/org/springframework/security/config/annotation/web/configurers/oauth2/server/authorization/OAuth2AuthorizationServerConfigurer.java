@@ -16,7 +16,9 @@
 package org.springframework.security.config.annotation.web.configurers.oauth2.server.authorization;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.servlet.AsyncContext;
@@ -270,16 +272,9 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 		}
 
 		SecurityContextRepository securityContextRepositoryTransientNotSaved = new SecurityContextRepository() {
-			// OAuth2ClientAuthenticationToken is @Transient and is accepted by
-			// OAuth2TokenEndpointFilter, OAuth2TokenIntrospectionEndpointFilter and OAuth2TokenRevocationEndpointFilter
-			private final RequestMatcher clientAuthenticationRequestMatcher = new OrRequestMatcher(
-					getRequestMatcher(OAuth2TokenEndpointConfigurer.class),
-					getRequestMatcher(OAuth2TokenRevocationEndpointConfigurer.class),
-					OAuth2AuthorizationServerConfigurer.this.tokenIntrospectionEndpointMatcher);
 
-			// JwtAuthenticationToken is @Transient and is accepted by
-			// OidcUserInfoEndpointFilter and OidcClientRegistrationEndpointFilter
-			private final RequestMatcher jwtAuthenticationRequestMatcher = getRequestMatcher(OidcConfigurer.class);
+			private final RequestMatcher clientAuthenticationRequestMatcher = initClientAuthenticationRequestMatcher();
+			private final RequestMatcher jwtAuthenticationRequestMatcher = initJwtAuthenticationRequestMatcher();
 
 			@Override
 			public SecurityContext loadContext(HttpRequestResponseHolder requestResponseHolder) {
@@ -346,6 +341,35 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 
 			private boolean isTransientAuthentication(Authentication authentication) {
 				return AnnotationUtils.getAnnotation(authentication.getClass(), Transient.class) != null;
+			}
+
+			private RequestMatcher initClientAuthenticationRequestMatcher() {
+				// OAuth2ClientAuthenticationToken is @Transient and is accepted by
+				// OAuth2TokenEndpointFilter, OAuth2TokenIntrospectionEndpointFilter and OAuth2TokenRevocationEndpointFilter
+
+				List<RequestMatcher> requestMatchers = new ArrayList<>();
+				requestMatchers.add(getRequestMatcher(OAuth2TokenEndpointConfigurer.class));
+				requestMatchers.add(getRequestMatcher(OAuth2TokenRevocationEndpointConfigurer.class));
+				requestMatchers.add(OAuth2AuthorizationServerConfigurer.this.tokenIntrospectionEndpointMatcher);
+				return new OrRequestMatcher(requestMatchers);
+			}
+
+			private RequestMatcher initJwtAuthenticationRequestMatcher() {
+				// JwtAuthenticationToken is @Transient and is accepted by
+				// OidcUserInfoEndpointFilter and OidcClientRegistrationEndpointFilter
+
+				List<RequestMatcher> requestMatchers = new ArrayList<>();
+				requestMatchers.add(
+						getConfigurer(OidcConfigurer.class)
+								.getConfigurer(OidcUserInfoEndpointConfigurer.class).getRequestMatcher()
+				);
+				OidcClientRegistrationEndpointConfigurer clientRegistrationEndpointConfigurer =
+						getConfigurer(OidcConfigurer.class)
+								.getConfigurer(OidcClientRegistrationEndpointConfigurer.class);
+				if (clientRegistrationEndpointConfigurer != null) {
+					requestMatchers.add(clientRegistrationEndpointConfigurer.getRequestMatcher());
+				}
+				return new OrRequestMatcher(requestMatchers);
 			}
 
 		};

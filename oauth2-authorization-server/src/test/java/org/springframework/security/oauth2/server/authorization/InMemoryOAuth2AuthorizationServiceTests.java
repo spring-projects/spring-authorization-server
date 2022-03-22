@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 the original author or authors.
+ * Copyright 2020-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -130,6 +130,43 @@ public class InMemoryOAuth2AuthorizationServiceTests {
 				updatedAuthorization.getId());
 		assertThat(authorization).isEqualTo(updatedAuthorization);
 		assertThat(authorization).isNotEqualTo(originalAuthorization);
+	}
+
+	@Test
+	public void saveWhenInitializedAuthorizationsReachMaxThenOldestRemoved() {
+		int maxInitializedAuthorizations = 5;
+		InMemoryOAuth2AuthorizationService authorizationService =
+				new InMemoryOAuth2AuthorizationService(maxInitializedAuthorizations);
+
+		OAuth2Authorization initialAuthorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
+				.id(ID + "-initial")
+				.principalName(PRINCIPAL_NAME)
+				.authorizationGrantType(AUTHORIZATION_GRANT_TYPE)
+				.attribute(OAuth2ParameterNames.STATE, "state-initial")
+				.build();
+		authorizationService.save(initialAuthorization);
+
+		OAuth2Authorization authorization = authorizationService.findById(initialAuthorization.getId());
+		assertThat(authorization).isEqualTo(initialAuthorization);
+		authorization = authorizationService.findByToken(
+				initialAuthorization.getAttribute(OAuth2ParameterNames.STATE), STATE_TOKEN_TYPE);
+		assertThat(authorization).isEqualTo(initialAuthorization);
+
+		for (int i = 0; i < maxInitializedAuthorizations; i++) {
+			authorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
+					.id(ID + "-" + i)
+					.principalName(PRINCIPAL_NAME)
+					.authorizationGrantType(AUTHORIZATION_GRANT_TYPE)
+					.attribute(OAuth2ParameterNames.STATE, "state-" + i)
+					.build();
+			authorizationService.save(authorization);
+		}
+
+		authorization = authorizationService.findById(initialAuthorization.getId());
+		assertThat(authorization).isNull();
+		authorization = authorizationService.findByToken(
+				initialAuthorization.getAttribute(OAuth2ParameterNames.STATE), STATE_TOKEN_TYPE);
+		assertThat(authorization).isNull();
 	}
 
 	@Test

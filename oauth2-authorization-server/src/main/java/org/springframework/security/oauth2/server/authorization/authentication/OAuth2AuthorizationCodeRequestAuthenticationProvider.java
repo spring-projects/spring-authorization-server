@@ -266,8 +266,6 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 					.build();
 			this.authorizationService.save(authorization);
 
-			// TODO Need to remove 'in-flight' authorization if consent step is not completed (e.g. approved or cancelled)
-
 			Set<String> currentAuthorizedScopes = currentAuthorizationConsent != null ?
 					currentAuthorizationConsent.getScopes() : null;
 

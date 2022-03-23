@@ -18,7 +18,6 @@ package org.springframework.security.oauth2.server.authorization.token;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
-import java.util.function.Consumer;
 
 import org.springframework.lang.Nullable;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
@@ -161,8 +160,8 @@ public final class JwtGenerator implements OAuth2TokenGenerator<Jwt> {
 
 	/**
 	 * Sets the {@link OAuth2TokenCustomizer} that customizes the
-	 * {@link JwtEncodingContext.Builder#headers(Consumer) headers} and/or
-	 * {@link JwtEncodingContext.Builder#claims(Consumer) claims} for the generated {@link Jwt}.
+	 * {@link JwtEncodingContext#getHeaders() headers} and/or
+	 * {@link JwtEncodingContext#getClaims() claims} for the generated {@link Jwt}.
 	 *
 	 * @param jwtCustomizer the {@link OAuth2TokenCustomizer} that customizes the headers and/or claims for the generated {@code Jwt}
 	 */

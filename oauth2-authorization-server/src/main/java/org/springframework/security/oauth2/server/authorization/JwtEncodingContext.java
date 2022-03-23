@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 the original author or authors.
+ * Copyright 2020-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,7 +58,8 @@ public final class JwtEncodingContext implements OAuth2TokenContext {
 	}
 
 	/**
-	 * Returns the {@link JoseHeader.Builder headers}.
+	 * Returns the {@link JoseHeader.Builder headers}
+	 * allowing the ability to add, replace, or remove.
 	 *
 	 * @return the {@link JoseHeader.Builder}
 	 */
@@ -67,7 +68,8 @@ public final class JwtEncodingContext implements OAuth2TokenContext {
 	}
 
 	/**
-	 * Returns the {@link JwtClaimsSet.Builder claims}.
+	 * Returns the {@link JwtClaimsSet.Builder claims}
+	 * allowing the ability to add, replace, or remove.
 	 *
 	 * @return the {@link JwtClaimsSet.Builder}
 	 */
@@ -102,9 +104,11 @@ public final class JwtEncodingContext implements OAuth2TokenContext {
 		 * A {@code Consumer} of the {@link JoseHeader.Builder headers}
 		 * allowing the ability to add, replace, or remove.
 		 *
+		 * @deprecated Use {@link #getHeaders()} instead
 		 * @param headersConsumer a {@code Consumer} of the {@link JoseHeader.Builder headers}
 		 * @return the {@link Builder} for further configuration
 		 */
+		@Deprecated
 		public Builder headers(Consumer<JoseHeader.Builder> headersConsumer) {
 			headersConsumer.accept(get(JoseHeader.Builder.class));
 			return this;
@@ -114,9 +118,11 @@ public final class JwtEncodingContext implements OAuth2TokenContext {
 		 * A {@code Consumer} of the {@link JwtClaimsSet.Builder claims}
 		 * allowing the ability to add, replace, or remove.
 		 *
+		 * @deprecated Use {@link #getClaims()} instead
 		 * @param claimsConsumer a {@code Consumer} of the {@link JwtClaimsSet.Builder claims}
 		 * @return the {@link Builder} for further configuration
 		 */
+		@Deprecated
 		public Builder claims(Consumer<JwtClaimsSet.Builder> claimsConsumer) {
 			claimsConsumer.accept(get(JwtClaimsSet.Builder.class));
 			return this;

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.security.oauth2.server.authorization;
+package org.springframework.security.oauth2.server.authorization.token;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -21,7 +21,7 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 import org.springframework.lang.Nullable;
-import org.springframework.security.oauth2.core.OAuth2TokenClaimsSet;
+import org.springframework.security.oauth2.server.authorization.OAuth2TokenContext;
 import org.springframework.util.Assert;
 
 /**

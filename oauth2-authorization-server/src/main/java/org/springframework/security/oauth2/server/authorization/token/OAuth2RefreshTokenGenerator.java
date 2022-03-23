@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.security.oauth2.server.authorization;
+package org.springframework.security.oauth2.server.authorization.token;
 
 import java.time.Instant;
 import java.util.Base64;
@@ -23,6 +23,7 @@ import org.springframework.security.crypto.keygen.Base64StringKeyGenerator;
 import org.springframework.security.crypto.keygen.StringKeyGenerator;
 import org.springframework.security.oauth2.core.OAuth2RefreshToken;
 import org.springframework.security.oauth2.core.OAuth2TokenType;
+import org.springframework.security.oauth2.server.authorization.OAuth2TokenContext;
 
 /**
  * An {@link OAuth2TokenGenerator} that generates an {@link OAuth2RefreshToken}.

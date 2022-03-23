@@ -13,11 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.security.oauth2.core;
+package org.springframework.security.oauth2.server.authorization.token;
 
 import java.net.URL;
 import java.time.Instant;
 import java.util.List;
+
+import org.springframework.security.oauth2.core.ClaimAccessor;
 
 /**
  * A {@link ClaimAccessor} for the "claims" that may be contained in an {@link OAuth2TokenClaimsSet}.

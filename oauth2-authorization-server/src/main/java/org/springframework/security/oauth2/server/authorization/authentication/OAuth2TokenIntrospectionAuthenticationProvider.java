@@ -16,23 +16,25 @@
 package org.springframework.security.oauth2.server.authorization.authentication;
 
 import java.net.URL;
-import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import org.springframework.core.convert.TypeDescriptor;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.oauth2.core.AbstractOAuth2Token;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
-import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenClaimAccessor;
 import org.springframework.security.oauth2.core.OAuth2TokenIntrospection;
+import org.springframework.security.oauth2.core.OAuth2TokenIntrospectionClaimNames;
+import org.springframework.security.oauth2.core.converter.ClaimConversionService;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
-import org.springframework.util.StringUtils;
 
 import static org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthenticationProviderUtils.getAuthenticatedClientElseThrowInvalidClient;
 
@@ -41,7 +43,6 @@ import static org.springframework.security.oauth2.server.authorization.authentic
  *
  * @author Gerardo Roza
  * @author Joe Grandja
- * @author Gaurav Tiwari
  * @since 0.1.1
  * @see OAuth2TokenIntrospectionAuthenticationToken
  * @see RegisteredClientRepository
@@ -49,6 +50,9 @@ import static org.springframework.security.oauth2.server.authorization.authentic
  * @see <a target="_blank" href="https://tools.ietf.org/html/rfc7662#section-2.1">Section 2.1 Introspection Request</a>
  */
 public final class OAuth2TokenIntrospectionAuthenticationProvider implements AuthenticationProvider {
+	private static final TypeDescriptor OBJECT_TYPE_DESCRIPTOR = TypeDescriptor.valueOf(Object.class);
+	private static final TypeDescriptor LIST_STRING_TYPE_DESCRIPTOR =
+			TypeDescriptor.collection(List.class, TypeDescriptor.valueOf(String.class));
 	private final RegisteredClientRepository registeredClientRepository;
 	private final OAuth2AuthorizationService authorizationService;
 
@@ -103,8 +107,15 @@ public final class OAuth2TokenIntrospectionAuthenticationProvider implements Aut
 	private static OAuth2TokenIntrospection withActiveTokenClaims(
 			OAuth2Authorization.Token<AbstractOAuth2Token> authorizedToken, RegisteredClient authorizedClient) {
 
-		OAuth2TokenIntrospection.Builder tokenClaims = OAuth2TokenIntrospection.builder(true)
-				.clientId(authorizedClient.getClientId());
+		OAuth2TokenIntrospection.Builder tokenClaims;
+		if (!CollectionUtils.isEmpty(authorizedToken.getClaims())) {
+			Map<String, Object> claims = convertClaimsIfNecessary(authorizedToken.getClaims());
+			tokenClaims = OAuth2TokenIntrospection.withClaims(claims).active(true);
+		} else {
+			tokenClaims = OAuth2TokenIntrospection.builder(true);
+		}
+
+		tokenClaims.clientId(authorizedClient.getClientId());
 
 		// TODO Set "username"
 
@@ -118,34 +129,43 @@ public final class OAuth2TokenIntrospectionAuthenticationProvider implements Aut
 
 		if (OAuth2AccessToken.class.isAssignableFrom(token.getClass())) {
 			OAuth2AccessToken accessToken = (OAuth2AccessToken) token;
-			tokenClaims.scopes(scopes -> scopes.addAll(accessToken.getScopes()));
 			tokenClaims.tokenType(accessToken.getTokenType().getValue());
-
-			if (!CollectionUtils.isEmpty(authorizedToken.getClaims())) {
-				OAuth2TokenClaimAccessor accessTokenClaims = authorizedToken::getClaims;
-
-				Instant notBefore = accessTokenClaims.getNotBefore();
-				if (notBefore != null) {
-					tokenClaims.notBefore(notBefore);
-				}
-				tokenClaims.subject(accessTokenClaims.getSubject());
-				List<String> audience = accessTokenClaims.getAudience();
-				if (!CollectionUtils.isEmpty(audience)) {
-					tokenClaims.audiences(audiences -> audiences.addAll(audience));
-				}
-				URL issuer = accessTokenClaims.getIssuer();
-				if (issuer != null) {
-					tokenClaims.issuer(issuer.toExternalForm());
-				}
-				String jti = accessTokenClaims.getId();
-				if (StringUtils.hasText(jti)) {
-					tokenClaims.id(jti);
-				}
-			}
 		}
-
-		tokenClaims.withCustomClaims(authorizedToken.getClaims());
 
 		return tokenClaims.build();
 	}
+
+	private static Map<String, Object> convertClaimsIfNecessary(Map<String, Object> claims) {
+		Map<String, Object> convertedClaims = new HashMap<>(claims);
+
+		Object value = claims.get(OAuth2TokenIntrospectionClaimNames.ISS);
+		if (value != null && !(value instanceof URL)) {
+			URL convertedValue = ClaimConversionService.getSharedInstance()
+					.convert(value, URL.class);
+			if (convertedValue != null) {
+				convertedClaims.put(OAuth2TokenIntrospectionClaimNames.ISS, convertedValue);
+			}
+		}
+
+		value = claims.get(OAuth2TokenIntrospectionClaimNames.SCOPE);
+		if (value != null && !(value instanceof List)) {
+			Object convertedValue = ClaimConversionService.getSharedInstance()
+					.convert(value, OBJECT_TYPE_DESCRIPTOR, LIST_STRING_TYPE_DESCRIPTOR);
+			if (convertedValue != null) {
+				convertedClaims.put(OAuth2TokenIntrospectionClaimNames.SCOPE, convertedValue);
+			}
+		}
+
+		value = claims.get(OAuth2TokenIntrospectionClaimNames.AUD);
+		if (value != null && !(value instanceof List)) {
+			Object convertedValue = ClaimConversionService.getSharedInstance()
+					.convert(value, OBJECT_TYPE_DESCRIPTOR, LIST_STRING_TYPE_DESCRIPTOR);
+			if (convertedValue != null) {
+				convertedClaims.put(OAuth2TokenIntrospectionClaimNames.AUD, convertedValue);
+			}
+		}
+
+		return convertedClaims;
+	}
+
 }

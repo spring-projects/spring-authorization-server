@@ -70,12 +70,12 @@ public final class OAuth2TokenIntrospectionEndpointFilter extends OncePerRequest
 
 	private final AuthenticationManager authenticationManager;
 	private final RequestMatcher tokenIntrospectionEndpointMatcher;
-	private AuthenticationConverter tokenIntrospectionAuthenticationConverter =
+	private AuthenticationConverter authenticationConverter =
 			new DefaultTokenIntrospectionAuthenticationConverter();
 	private final HttpMessageConverter<OAuth2TokenIntrospection> tokenIntrospectionHttpResponseConverter =
 			new OAuth2TokenIntrospectionHttpMessageConverter();
 	private final HttpMessageConverter<OAuth2Error> errorHttpResponseConverter = new OAuth2ErrorHttpMessageConverter();
-	private AuthenticationSuccessHandler authenticationSuccessHandler = this::sendTokenIntrospectionResponse;;
+	private AuthenticationSuccessHandler authenticationSuccessHandler = this::sendIntrospectionResponse;
 	private AuthenticationFailureHandler authenticationFailureHandler = this::sendErrorResponse;
 
 	/**
@@ -112,14 +112,10 @@ public final class OAuth2TokenIntrospectionEndpointFilter extends OncePerRequest
 		}
 
 		try {
-			OAuth2TokenIntrospectionAuthenticationToken tokenIntrospectionAuthentication =
-					(OAuth2TokenIntrospectionAuthenticationToken) this.tokenIntrospectionAuthenticationConverter.convert(request);
-
-			OAuth2TokenIntrospectionAuthenticationToken tokenIntrospectionAuthenticationResult =
-					(OAuth2TokenIntrospectionAuthenticationToken) this.authenticationManager.authenticate(tokenIntrospectionAuthentication);
-
+			Authentication tokenIntrospectionAuthentication = this.authenticationConverter.convert(request);
+			Authentication tokenIntrospectionAuthenticationResult =
+					this.authenticationManager.authenticate(tokenIntrospectionAuthentication);
 			this.authenticationSuccessHandler.onAuthenticationSuccess(request, response, tokenIntrospectionAuthenticationResult);
-
 		} catch (OAuth2AuthenticationException ex) {
 			SecurityContextHolder.clearContext();
 			this.authenticationFailureHandler.onAuthenticationFailure(request, response, ex);
@@ -127,50 +123,52 @@ public final class OAuth2TokenIntrospectionEndpointFilter extends OncePerRequest
 	}
 
 	/**
-	 * Sets the {@link AuthenticationConverter} used when attempting to extract a Token Introspection Request from
-	 * {@link HttpServletRequest} to an instance of {@link OAuth2TokenIntrospectionAuthenticationToken} used for authenticating the request.
+	 * Sets the {@link AuthenticationConverter} used when attempting to extract an Introspection Request from {@link HttpServletRequest}
+	 * to an instance of {@link OAuth2TokenIntrospectionAuthenticationToken} used for authenticating the request.
 	 *
-	 * @param authenticationConverter the {@link AuthenticationConverter} used when attempting to extract a Token Introspection Request from {@link HttpServletRequest}
+	 * @param authenticationConverter the {@link AuthenticationConverter} used when attempting to extract an Introspection Request from {@link HttpServletRequest}
 	 * @since 0.2.3
 	 */
 	public void setAuthenticationConverter(AuthenticationConverter authenticationConverter) {
-		Assert.notNull(authenticationConverter, "authenticationConverter cannot be null.");
-		this.tokenIntrospectionAuthenticationConverter = authenticationConverter;
+		Assert.notNull(authenticationConverter, "authenticationConverter cannot be null");
+		this.authenticationConverter = authenticationConverter;
 	}
 
 	/**
-	 * Sets the {@link AuthenticationSuccessHandler} used for handling an {@link OAuth2TokenIntrospectionAuthenticationToken}
+	 * Sets the {@link AuthenticationSuccessHandler} used for handling an {@link OAuth2TokenIntrospectionAuthenticationToken}.
 	 *
 	 * @param authenticationSuccessHandler the {@link AuthenticationSuccessHandler} used for handling an {@link OAuth2TokenIntrospectionAuthenticationToken}
 	 * @since 0.2.3
 	 */
 	public void setAuthenticationSuccessHandler(AuthenticationSuccessHandler authenticationSuccessHandler) {
-		Assert.notNull(authenticationSuccessHandler, "authenticationSuccessHandler cannot be null.");
+		Assert.notNull(authenticationSuccessHandler, "authenticationSuccessHandler cannot be null");
 		this.authenticationSuccessHandler = authenticationSuccessHandler;
 	}
 
 	/**
-	 * Sets the {@link AuthenticationFailureHandler} used for handling an {@link OAuth2AuthenticationException} and
-	 * returning {@link OAuth2Error Error Resonse}.
+	 * Sets the {@link AuthenticationFailureHandler} used for handling an {@link OAuth2AuthenticationException}
+	 * and returning the {@link OAuth2Error Error Resonse}.
 	 *
-	 * @param authenticationFailureHandler the {@link .AuthenticationFailureHandler} used for handling {@link OAuth2AuthenticationException}
+	 * @param authenticationFailureHandler the {@link AuthenticationFailureHandler} used for handling an {@link OAuth2AuthenticationException}
 	 * @since 0.2.3
 	 */
 	public void setAuthenticationFailureHandler(AuthenticationFailureHandler authenticationFailureHandler) {
-		Assert.notNull(authenticationFailureHandler, "authenticationFailureHandler cannot be null.");
+		Assert.notNull(authenticationFailureHandler, "authenticationFailureHandler cannot be null");
 		this.authenticationFailureHandler = authenticationFailureHandler;
 	}
 
-	private void sendTokenIntrospectionResponse(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException {
+	private void sendIntrospectionResponse(HttpServletRequest request, HttpServletResponse response,
+			Authentication authentication) throws IOException {
 
-		OAuth2TokenIntrospectionAuthenticationToken tokenIntrospectionAuthenticationResult = (OAuth2TokenIntrospectionAuthenticationToken) authentication;
-		OAuth2TokenIntrospection tokenClaims = tokenIntrospectionAuthenticationResult.getTokenClaims();
-
+		OAuth2TokenIntrospectionAuthenticationToken tokenIntrospectionAuthentication =
+				(OAuth2TokenIntrospectionAuthenticationToken) authentication;
+		OAuth2TokenIntrospection tokenClaims = tokenIntrospectionAuthentication.getTokenClaims();
 		ServletServerHttpResponse httpResponse = new ServletServerHttpResponse(response);
 		this.tokenIntrospectionHttpResponseConverter.write(tokenClaims, null, httpResponse);
 	}
 
-	private void sendErrorResponse(HttpServletRequest request, HttpServletResponse response, AuthenticationException exception) throws IOException {
+	private void sendErrorResponse(HttpServletRequest request, HttpServletResponse response,
+			AuthenticationException exception) throws IOException {
 		OAuth2Error error = ((OAuth2AuthenticationException) exception).getError();
 		ServletServerHttpResponse httpResponse = new ServletServerHttpResponse(response);
 		httpResponse.setStatusCode(HttpStatus.BAD_REQUEST);
@@ -179,7 +177,7 @@ public final class OAuth2TokenIntrospectionEndpointFilter extends OncePerRequest
 
 	private static void throwError(String errorCode, String parameterName) {
 		OAuth2Error error = new OAuth2Error(errorCode, "OAuth 2.0 Token Introspection Parameter: " + parameterName,
-				"https://tools.ietf.org/html/rfc7662#section-2.1");
+				"https://datatracker.ietf.org/doc/html/rfc7662#section-2.1");
 		throw new OAuth2AuthenticationException(error);
 	}
 
@@ -217,5 +215,7 @@ public final class OAuth2TokenIntrospectionEndpointFilter extends OncePerRequest
 			return new OAuth2TokenIntrospectionAuthenticationToken(
 					token, clientPrincipal, tokenTypeHint, additionalParameters);
 		}
+
 	}
+
 }

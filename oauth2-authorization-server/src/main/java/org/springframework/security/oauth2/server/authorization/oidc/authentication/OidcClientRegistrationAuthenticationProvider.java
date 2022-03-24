@@ -48,12 +48,9 @@ import org.springframework.security.oauth2.core.oidc.OidcClientRegistration;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
-import org.springframework.security.oauth2.server.authorization.token.DefaultOAuth2TokenContext;
-import org.springframework.security.oauth2.server.authorization.token.JwtGenerator;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenContext;
-import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenGenerator;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
@@ -62,6 +59,9 @@ import org.springframework.security.oauth2.server.authorization.config.ProviderS
 import org.springframework.security.oauth2.server.authorization.config.TokenSettings;
 import org.springframework.security.oauth2.server.authorization.context.ProviderContext;
 import org.springframework.security.oauth2.server.authorization.context.ProviderContextHolder;
+import org.springframework.security.oauth2.server.authorization.token.DefaultOAuth2TokenContext;
+import org.springframework.security.oauth2.server.authorization.token.JwtGenerator;
+import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenGenerator;
 import org.springframework.security.oauth2.server.resource.authentication.AbstractOAuth2TokenAuthenticationToken;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
@@ -305,8 +305,11 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 		OidcClientRegistration.Builder builder = OidcClientRegistration.builder()
 				.clientId(registeredClient.getClientId())
 				.clientIdIssuedAt(registeredClient.getClientIdIssuedAt())
-				.clientSecret(registeredClient.getClientSecret())
 				.clientName(registeredClient.getClientName());
+
+		if (registeredClient.getClientSecret() != null) {
+			builder.clientSecret(registeredClient.getClientSecret());
+		}
 
 		builder.redirectUris(redirectUris ->
 				redirectUris.addAll(registeredClient.getRedirectUris()));
@@ -419,17 +422,22 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 		RegisteredClient.Builder builder = RegisteredClient.withId(UUID.randomUUID().toString())
 				.clientId(CLIENT_ID_GENERATOR.generateKey())
 				.clientIdIssuedAt(Instant.now())
-				.clientSecret(CLIENT_SECRET_GENERATOR.generateKey())
 				.clientName(clientRegistration.getClientName());
 
 		if (ClientAuthenticationMethod.CLIENT_SECRET_POST.getValue().equals(clientRegistration.getTokenEndpointAuthenticationMethod())) {
-			builder.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_POST);
+			builder
+					.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_POST)
+					.clientSecret(CLIENT_SECRET_GENERATOR.generateKey());
 		} else if (ClientAuthenticationMethod.CLIENT_SECRET_JWT.getValue().equals(clientRegistration.getTokenEndpointAuthenticationMethod())) {
-			builder.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_JWT);
+			builder
+					.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_JWT)
+					.clientSecret(CLIENT_SECRET_GENERATOR.generateKey());
 		} else if (ClientAuthenticationMethod.PRIVATE_KEY_JWT.getValue().equals(clientRegistration.getTokenEndpointAuthenticationMethod())) {
 			builder.clientAuthenticationMethod(ClientAuthenticationMethod.PRIVATE_KEY_JWT);
 		} else {
-			builder.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC);
+			builder
+					.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
+					.clientSecret(CLIENT_SECRET_GENERATOR.generateKey());
 		}
 
 		builder.redirectUris(redirectUris ->

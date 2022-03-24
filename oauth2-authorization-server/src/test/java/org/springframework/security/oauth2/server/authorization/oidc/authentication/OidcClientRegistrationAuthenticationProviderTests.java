@@ -48,11 +48,9 @@ import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.TestJoseHeaders;
 import org.springframework.security.oauth2.jwt.TestJwtClaimsSets;
-import org.springframework.security.oauth2.server.authorization.token.JwtGenerator;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenContext;
-import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenGenerator;
 import org.springframework.security.oauth2.server.authorization.TestOAuth2Authorizations;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
@@ -61,6 +59,8 @@ import org.springframework.security.oauth2.server.authorization.config.ClientSet
 import org.springframework.security.oauth2.server.authorization.config.ProviderSettings;
 import org.springframework.security.oauth2.server.authorization.context.ProviderContext;
 import org.springframework.security.oauth2.server.authorization.context.ProviderContextHolder;
+import org.springframework.security.oauth2.server.authorization.token.JwtGenerator;
+import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenGenerator;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -472,6 +472,7 @@ public class OidcClientRegistrationAuthenticationProviderTests {
 				(OidcClientRegistrationAuthenticationToken) this.authenticationProvider.authenticate(authentication);
 		assertThat(authenticationResult.getClientRegistration().getTokenEndpointAuthenticationSigningAlgorithm())
 				.isEqualTo(MacAlgorithm.HS256.getName());
+		assertThat(authenticationResult.getClientRegistration().getClientSecret()).isNotNull();
 
 		// @formatter:off
 		builder
@@ -482,6 +483,7 @@ public class OidcClientRegistrationAuthenticationProviderTests {
 		authenticationResult = (OidcClientRegistrationAuthenticationToken) this.authenticationProvider.authenticate(authentication);
 		assertThat(authenticationResult.getClientRegistration().getTokenEndpointAuthenticationSigningAlgorithm())
 				.isEqualTo(SignatureAlgorithm.RS256.getName());
+		assertThat(authenticationResult.getClientRegistration().getClientSecret()).isNull();
 	}
 
 	@Test

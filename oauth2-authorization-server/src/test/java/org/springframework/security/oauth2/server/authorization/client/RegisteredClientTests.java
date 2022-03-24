@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 the original author or authors.
+ * Copyright 2020-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -382,4 +382,32 @@ public class RegisteredClientTests {
 		assertThat(registration.getRedirectUris()).doesNotContain(newRedirectUri);
 		assertThat(updated.getRedirectUris()).containsExactly(newRedirectUri);
 	}
+
+	@Test
+	public void buildWhenPublicClientTypeThenDefaultSettings() {
+		Instant clientIdIssuedAt = Instant.now();
+		RegisteredClient registration = RegisteredClient.withId(ID)
+				.clientId(CLIENT_ID)
+				.clientIdIssuedAt(clientIdIssuedAt)
+				.clientName("client-name")
+				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+				.clientAuthenticationMethod(ClientAuthenticationMethod.NONE)
+				.redirectUris(redirectUris -> redirectUris.addAll(REDIRECT_URIS))
+				.scopes(scopes -> scopes.addAll(SCOPES))
+				.build();
+
+		assertThat(registration.getId()).isEqualTo(ID);
+		assertThat(registration.getClientId()).isEqualTo(CLIENT_ID);
+		assertThat(registration.getClientIdIssuedAt()).isEqualTo(clientIdIssuedAt);
+		assertThat(registration.getClientName()).isEqualTo("client-name");
+		assertThat(registration.getAuthorizationGrantTypes())
+				.isEqualTo(Collections.singleton(AuthorizationGrantType.AUTHORIZATION_CODE));
+		assertThat(registration.getClientAuthenticationMethods())
+				.isEqualTo(Collections.singleton(ClientAuthenticationMethod.NONE));
+		assertThat(registration.getRedirectUris()).isEqualTo(REDIRECT_URIS);
+		assertThat(registration.getScopes()).isEqualTo(SCOPES);
+		assertThat(registration.getClientSettings().isRequireProofKey()).isTrue();
+		assertThat(registration.getClientSettings().isRequireAuthorizationConsent()).isTrue();
+	}
+
 }

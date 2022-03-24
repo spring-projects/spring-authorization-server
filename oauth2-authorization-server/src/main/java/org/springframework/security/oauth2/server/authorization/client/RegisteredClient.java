@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 the original author or authors.
+ * Copyright 2020-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -250,10 +250,10 @@ public class RegisteredClient implements Serializable {
 		private String clientSecret;
 		private Instant clientSecretExpiresAt;
 		private String clientName;
-		private Set<ClientAuthenticationMethod> clientAuthenticationMethods = new HashSet<>();
-		private Set<AuthorizationGrantType> authorizationGrantTypes = new HashSet<>();
-		private Set<String> redirectUris = new HashSet<>();
-		private Set<String> scopes = new HashSet<>();
+		private final Set<ClientAuthenticationMethod> clientAuthenticationMethods = new HashSet<>();
+		private final Set<AuthorizationGrantType> authorizationGrantTypes = new HashSet<>();
+		private final Set<String> redirectUris = new HashSet<>();
+		private final Set<String> scopes = new HashSet<>();
 		private ClientSettings clientSettings;
 		private TokenSettings tokenSettings;
 
@@ -483,9 +483,29 @@ public class RegisteredClient implements Serializable {
 			if (CollectionUtils.isEmpty(this.clientAuthenticationMethods)) {
 				this.clientAuthenticationMethods.add(ClientAuthenticationMethod.CLIENT_SECRET_BASIC);
 			}
+			if (this.clientSettings == null) {
+				ClientSettings.Builder builder = ClientSettings.builder();
+				if (isPublicClientType()) {
+					// @formatter:off
+					builder
+							.requireProofKey(true)
+							.requireAuthorizationConsent(true);
+					// @formatter:on
+				}
+				this.clientSettings = builder.build();
+			}
+			if (this.tokenSettings == null) {
+				this.tokenSettings = TokenSettings.builder().build();
+			}
 			validateScopes();
 			validateRedirectUris();
 			return create();
+		}
+
+		private boolean isPublicClientType() {
+			return this.authorizationGrantTypes.contains(AuthorizationGrantType.AUTHORIZATION_CODE) &&
+					this.clientAuthenticationMethods.size() == 1 &&
+					this.clientAuthenticationMethods.contains(ClientAuthenticationMethod.NONE);
 		}
 
 		private RegisteredClient create() {
@@ -505,10 +525,8 @@ public class RegisteredClient implements Serializable {
 					new HashSet<>(this.redirectUris));
 			registeredClient.scopes = Collections.unmodifiableSet(
 					new HashSet<>(this.scopes));
-			registeredClient.clientSettings = this.clientSettings != null ?
-					this.clientSettings : ClientSettings.builder().build();
-			registeredClient.tokenSettings = this.tokenSettings != null ?
-					this.tokenSettings : TokenSettings.builder().build();
+			registeredClient.clientSettings = this.clientSettings;
+			registeredClient.tokenSettings = this.tokenSettings;
 
 			return registeredClient;
 		}

@@ -1,7 +1,23 @@
-apply plugin: 'io.spring.convention.spring-sample-boot'
+plugins {
+	id "org.springframework.boot" version "2.5.12"
+	id "io.spring.dependency-management" version "1.0.11.RELEASE"
+	id "java"
+}
+
+group = project.rootProject.group
+version = project.rootProject.version
+sourceCompatibility = "11"
+
+repositories {
+	mavenCentral()
+}
 
 dependencies {
-	compile 'org.springframework.boot:spring-boot-starter-web'
-	compile 'org.springframework.boot:spring-boot-starter-security'
-	compile 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
+	implementation "org.springframework.boot:spring-boot-starter-web"
+	implementation "org.springframework.boot:spring-boot-starter-security"
+	implementation "org.springframework.boot:spring-boot-starter-oauth2-resource-server"
+}
+
+tasks.named("test") {
+	useJUnitPlatform()
 }

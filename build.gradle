@@ -1,47 +1,13 @@
-buildscript {
-	dependencies {
-		classpath 'io.spring.gradle:spring-build-conventions:0.0.38'
-		classpath "org.springframework.boot:spring-boot-gradle-plugin:$springBootVersion"
-		classpath 'io.spring.nohttp:nohttp-gradle:0.0.8'
-	}
-	repositories {
-		maven {
-			url = 'https://repo.spring.io/plugins-snapshot'
-			if (project.hasProperty('artifactoryUsername')) {
-				credentials {
-					username "$artifactoryUsername"
-					password "$artifactoryPassword"
-				}
-			}
-		}
-		maven { url 'https://plugins.gradle.org/m2/' }
-	}
+plugins {
+	id "io.spring.convention.root"
 }
 
-apply plugin: 'io.spring.nohttp'
-apply plugin: 'locks'
-apply plugin: 'io.spring.convention.root'
+group = "org.springframework.security"
+description = "Spring Authorization Server"
 
-group = 'org.springframework.security'
-description = 'Spring Authorization Server'
-
-ext.snapshotBuild = version.contains("SNAPSHOT")
-
-repositories {
-	mavenCentral()
-}
-
-dependencyManagementExport.projects = subprojects.findAll { !it.name.contains('-boot') }
-
-subprojects {
-	plugins.withType(JavaPlugin) {
-		project.sourceCompatibility = "1.8"
+if (hasProperty("buildScan")) {
+	buildScan {
+		termsOfServiceUrl = "https://gradle.com/terms-of-service"
+		termsOfServiceAgree = "yes"
 	}
-	tasks.withType(JavaCompile) {
-		options.encoding = "UTF-8"
-	}
-}
-
-nohttp {
-	allowlistFile = project.file("etc/nohttp/allowlist.lines")
 }

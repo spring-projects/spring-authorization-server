@@ -1,14 +1,25 @@
-apply plugin: "java-gradle-plugin"
-
-repositories {
-	mavenCentral()
+plugins {
+	id "java-gradle-plugin"
+	id "java"
+	id "groovy"
 }
 
-gradlePlugin {
-	plugins {
-		locks {
-			id = "locks"
-			implementationClass = "lock.GlobalLockPlugin"
-		}
-	}
+sourceCompatibility = JavaVersion.VERSION_11
+
+repositories {
+	gradlePluginPortal()
+	mavenCentral()
+	maven { url "https://repo.spring.io/plugins-release/" }
+}
+
+dependencies {
+	implementation "com.github.ben-manes:gradle-versions-plugin:0.38.0"
+	implementation "io.github.gradle-nexus:publish-plugin:1.1.0"
+	implementation "io.spring.javaformat:spring-javaformat-gradle-plugin:0.0.31"
+	implementation "io.spring.nohttp:nohttp-gradle:0.0.10"
+	implementation "org.jetbrains.kotlin:kotlin-gradle-plugin:1.6.10"
+	implementation "org.hidetake:gradle-ssh-plugin:2.10.1"
+	implementation "org.jfrog.buildinfo:build-info-extractor-gradle:4.26.1"
+	implementation "org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:2.7.1"
+	implementation "org.springframework:spring-core:5.3.17"
 }

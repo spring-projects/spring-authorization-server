@@ -1,0 +1,25 @@
+plugins {
+	id "java-platform"
+}
+
+javaPlatform {
+	allowDependencies()
+}
+
+dependencies {
+	api platform("org.springframework:spring-framework-bom:$springFrameworkVersion")
+	api platform("org.springframework.security:spring-security-bom:$springSecurityVersion")
+	api platform("org.junit:junit-bom:5.8.2")
+	api platform("com.fasterxml.jackson:jackson-bom:2.13.2")
+	constraints {
+		api "com.nimbusds:nimbus-jose-jwt:9.10.1"
+		api "javax.servlet:javax.servlet-api:4.0.1"
+		api "junit:junit:4.13.2"
+		api "org.assertj:assertj-core:3.22.0"
+		api "org.mockito:mockito-core:3.12.4"
+		api "com.squareup.okhttp3:mockwebserver:3.14.9"
+		api "com.squareup.okhttp3:okhttp:3.14.9"
+		api "com.jayway.jsonpath:json-path:2.7.0"
+		api "org.hsqldb:hsqldb:2.6.1"
+	}
+}

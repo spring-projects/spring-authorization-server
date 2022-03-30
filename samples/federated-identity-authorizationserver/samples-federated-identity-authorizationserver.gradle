@@ -1,19 +1,30 @@
-apply plugin: 'io.spring.convention.spring-sample-boot'
+plugins {
+	id "org.springframework.boot" version "2.5.12"
+	id "io.spring.dependency-management" version "1.0.11.RELEASE"
+	id "java"
+}
+
+group = project.rootProject.group
+version = project.rootProject.version
+sourceCompatibility = "11"
+
+repositories {
+	mavenCentral()
+}
 
 dependencies {
-	compile 'org.springframework.boot:spring-boot-starter-web'
-	compile 'org.springframework.boot:spring-boot-starter-security'
-	compile 'org.springframework.boot:spring-boot-starter-oauth2-client'
-	compile 'org.springframework.boot:spring-boot-starter-thymeleaf'
-	compile 'org.thymeleaf.extras:thymeleaf-extras-springsecurity5'
-	compile 'org.webjars:webjars-locator-core'
-	compile 'org.webjars:bootstrap:3.4.1'
-	compile 'org.webjars:jquery:3.4.1'
-	compile 'org.springframework.boot:spring-boot-starter-jdbc'
-	compile project(':spring-security-oauth2-authorization-server')
-	runtimeOnly 'com.h2database:h2'
+	implementation "org.springframework.boot:spring-boot-starter-web"
+	implementation "org.springframework.boot:spring-boot-starter-security"
+	implementation "org.springframework.boot:spring-boot-starter-oauth2-client"
+	implementation "org.springframework.boot:spring-boot-starter-thymeleaf"
+	implementation "org.springframework.boot:spring-boot-starter-jdbc"
+	implementation "org.webjars:webjars-locator-core"
+	implementation "org.webjars:bootstrap:3.4.1"
+	implementation "org.webjars:jquery:3.4.1"
+	implementation project(":spring-security-oauth2-authorization-server")
+	runtimeOnly "com.h2database:h2"
+}
 
-	testCompile 'org.springframework.boot:spring-boot-starter-test'
-	testCompile 'org.springframework.security:spring-security-test'
-	testCompile 'net.sourceforge.htmlunit:htmlunit'
+tasks.named("test") {
+	useJUnitPlatform()
 }

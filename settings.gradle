@@ -6,23 +6,49 @@ pluginManagement {
 }
 
 plugins {
-	id "com.gradle.enterprise" version "3.8"
+	id "com.gradle.enterprise" version "3.9"
 	id "io.spring.ge.conventions" version "0.0.9"
 }
 
-rootProject.name = 'spring-authorization-server'
-
-FileTree buildFiles = fileTree(rootDir) {
-	include '**/*.gradle'
-	exclude 'build', '**/gradle', 'settings.gradle', 'buildSrc', '/build.gradle', '.*', 'out'
+dependencyResolutionManagement {
+	repositories {
+		mavenCentral()
+	}
 }
 
-buildFiles.each { File buildFile ->
-	String projectName = buildFile.name.replace('.gradle', '');
-	String projectPath = ':' + projectName;
-	include projectPath
-	def project = findProject("${projectPath}")
-	project.name = projectName
-	project.projectDir = buildFile.parentFile
-	project.buildFileName = buildFile.name
+rootProject.name = "spring-authorization-server"
+
+def buildFiles = fileTree(rootDir) {
+	def excludes = gradle.startParameter.projectProperties.get("excludeProjects")?.split(",")
+	include "**/*.gradle", "**/*.gradle.kts"
+	exclude "build", "**/gradle", "settings.gradle", "buildSrc", "/build.gradle", ".*", "out"
+	if (excludes) {
+		exclude excludes
+	}
+}
+
+buildFiles.forEach { buildFile ->
+	def isDefaultName = buildFile.name == "build.gradle" || buildFile.name == "build.gradle.kts"
+	def isKotlin = buildFile.name.endsWith ".kts"
+	if (isDefaultName) {
+		def buildFilePath = buildFile.parentFile.absolutePath
+		def projectPath = buildFilePath.replace((String) rootDir.absolutePath, "").replace(File.separator, ":")
+		include projectPath
+	} else {
+		def projectName
+		if (isKotlin) {
+			projectName = buildFile.name.replace(".gradle.kts", "")
+		} else {
+			projectName = buildFile.name.replace(".gradle", "")
+		}
+
+
+		def projectPath = ":$projectName"
+		include projectPath
+
+		def project = findProject(projectPath)
+		project.name = projectName
+		project.projectDir = buildFile.parentFile
+		project.buildFileName = buildFile.name
+	}
 }

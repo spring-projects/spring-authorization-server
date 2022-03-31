@@ -13,8 +13,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-        jdk: [8,11,12]
+        os: [ubuntu-latest, windows-latest]
+        jdk: [11]
       fail-fast: false
     steps:
       - uses: actions/checkout@v2
@@ -32,7 +32,7 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v1
         with:
-          java-version: 8
+          java-version: 11
       - name: Test
         run: echo Testing against snapshots
   sonar:
@@ -43,7 +43,7 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v1
         with:
-          java-version: 8
+          java-version: 11
       - name: Sonar
         run: echo Running Sonarqube static code analysis
   artifacts:
@@ -55,7 +55,7 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v1
         with:
-          java-version: 8
+          java-version: 11
       - name: Deploy Artifacts
         run: echo Deploying Artifacts
   docs:
@@ -67,7 +67,7 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v1
         with:
-          java-version: 8
+          java-version: 11
       - name: Deploy Docs
         run: echo Deploying Docs
   schema:
@@ -79,6 +79,6 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v1
         with:
-          java-version: 8
+          java-version: 11
       - name: Deploy Schema
         run: echo Deploying Schema

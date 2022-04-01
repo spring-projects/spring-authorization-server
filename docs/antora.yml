@@ -1,9 +1,9 @@
 name: reference
-version: 0.2.2
+version: ~
 prerelease: '-SNAPSHOT'
 
 title: Spring Authorization Server
-display_version: latest
+display_version: 0.3.0
 start_page: ROOT:index.adoc
 nav:
   - modules/ROOT/nav.adoc

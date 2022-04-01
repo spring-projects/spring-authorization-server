@@ -1,4 +1,7 @@
+[[getting-started]]
 = Getting Started
+:toc: left
+:toclevels: 1
 
 This page is under construction.
 

@@ -1,8 +1,12 @@
+[[how-to]]
 = "How-to" Guides
+:toc: left
+:toclevels: 3
 
 This page is under construction.
 
-== Table of contents
+[[how-to-overview]]
+== Overview
 
 ** Obtain an access token using a specific grant_type:
 *** `authorization_code`
@@ -22,7 +26,4 @@ This page is under construction.
 ** Deny access for a revoked JWT access token
 *** Introspect / revoke an access token
 ** Provide a JWK source backed by a key rotation strategy
-** Implement the core services with JPA:
-*** `RegisteredClientRepository`
-*** `OAuth2AuthorizationService`
-*** `OAuth2AuthorizationConsentService`
+** xref:guides/how-to-jpa.adoc[Implement core services with JPA]

@@ -1,3 +1,23 @@
 plugins {
 	id "io.spring.convention.docs"
 }
+
+asciidoctor {
+	attributes([
+			"spring-authorization-server-version": project.version,
+			"examples-dir": "examples",
+			"docs-java": "$sourceDir/examples/src/main/java",
+			"chomp": "default headers packages",
+			"toc": "left",
+			"toclevels": "4"
+	])
+}
+
+docsZip {
+	from (api) {
+		into "api"
+	}
+	from(asciidoctor) {
+		into "reference/html"
+	}
+}

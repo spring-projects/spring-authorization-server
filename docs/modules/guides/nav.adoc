@@ -1,2 +1,0 @@
-.xref:index.adoc["How-to" Guides]
-* xref:how-to-jpa.adoc[Implement core services with JPA]

@@ -1,4 +1,7 @@
+[[protocol-endpoints]]
 = Protocol Endpoints
+:toc: left
+:toclevels: 1
 
 This page is under construction.
 

@@ -1,4 +1,7 @@
+[[core-components]]
 = Core Components
+:toc: left
+:toclevels: 1
 
 This page is under construction.
 

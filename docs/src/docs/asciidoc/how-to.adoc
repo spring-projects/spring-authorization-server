@@ -4,12 +4,12 @@
 [[how-to-overview]]
 == Overview
 
+* xref:guides/how-to-userinfo.adoc[Customize the OpenID Connect 1.0 UserInfo response]
 * xref:guides/how-to-jpa.adoc[Implement core services with JPA]
 
 [[how-to-coming-soon]]
 == Coming Soon
 
-* Customize the OpenID Connect 1.0 UserInfo response (https://github.com/spring-projects/spring-authorization-server/issues/537[#537])
 * Authenticate using social login, e.g. Google (https://github.com/spring-projects/spring-authorization-server/issues/538[#538])
 * Authenticate a user in a Single Page Application with PKCE (https://github.com/spring-projects/spring-authorization-server/issues/539[#539])
 * Deny access for a revoked JWT access token (https://github.com/spring-projects/spring-authorization-server/issues/543[#543])

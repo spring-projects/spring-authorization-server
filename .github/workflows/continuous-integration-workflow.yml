@@ -9,8 +9,6 @@ on:
 
 env:
   RUN_JOBS: ${{ github.repository == 'spring-projects/spring-authorization-server' }}
-  DEPLOY_ARTIFACTS: false
-  DEPLOY_DOCS: false
 
 jobs:
   prerequisites:
@@ -96,7 +94,6 @@ jobs:
       - name: Setup Gradle
         uses: gradle/gradle-build-action@v2
       - name: Deploy Artifacts
-        if: env.DEPLOY_ARTIFACTS == 'true'
         env:
           GRADLE_ENTERPRISE_CACHE_USERNAME: ${{ secrets.GRADLE_ENTERPRISE_CACHE_USER }}
           GRADLE_ENTERPRISE_CACHE_PASSWORD: ${{ secrets.GRADLE_ENTERPRISE_CACHE_PASSWORD }}
@@ -121,7 +118,6 @@ jobs:
       - name: Setup Gradle
         uses: gradle/gradle-build-action@v2
       - name: Deploy Docs
-        if: env.DEPLOY_DOCS == 'true'
         env:
           GRADLE_ENTERPRISE_CACHE_USERNAME: ${{ secrets.GRADLE_ENTERPRISE_CACHE_USER }}
           GRADLE_ENTERPRISE_CACHE_PASSWORD: ${{ secrets.GRADLE_ENTERPRISE_CACHE_PASSWORD }}

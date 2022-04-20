@@ -54,7 +54,7 @@ a cross-platform, self-contained bootstrap mechanism for the build.
 === Prerequisites
 https://help.github.com/set-up-git-redirect[Git] and the https://www.oracle.com/technetwork/java/javase/downloads[JDK8 build].
 
-Be sure that your `JAVA_HOME` environment variable points to the `jdk1.8.0` folder extracted from the JDK download.
+Be sure that your `JAVA_HOME` environment variable points to the `jdk11` folder extracted from the JDK download.
 
 === Check out sources
 [indent=0]

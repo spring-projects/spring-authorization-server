@@ -24,7 +24,3 @@ dependencies {
 	implementation project(":spring-security-oauth2-authorization-server")
 	runtimeOnly "com.h2database:h2"
 }
-
-tasks.named("test") {
-	useJUnitPlatform()
-}

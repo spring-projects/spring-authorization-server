@@ -19,13 +19,7 @@ dependencies {
 	implementation project(":spring-security-oauth2-authorization-server")
 
 	testImplementation "org.springframework.boot:spring-boot-starter-test"
-	testImplementation "org.junit.jupiter:junit-jupiter"
-	testImplementation "junit:junit"
-	testImplementation "org.junit.vintage:junit-vintage-engine"
 	testImplementation "org.springframework.security:spring-security-test"
+	testImplementation "junit:junit"
 	testImplementation "net.sourceforge.htmlunit:htmlunit"
-}
-
-tasks.named("test") {
-	useJUnitPlatform()
 }

@@ -24,7 +24,3 @@ dependencies {
 	implementation "org.webjars:bootstrap:3.4.1"
 	implementation "org.webjars:jquery:3.4.1"
 }
-
-tasks.named("test") {
-	useJUnitPlatform()
-}

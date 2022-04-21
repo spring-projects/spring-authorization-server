@@ -135,7 +135,8 @@ public class JpaOAuth2AuthorizationService implements OAuth2AuthorizationService
 					OAuth2AccessToken.TokenType.BEARER,
 					entity.getAccessTokenValue(),
 					entity.getAccessTokenIssuedAt(),
-					entity.getAccessTokenExpiresAt());
+					entity.getAccessTokenExpiresAt(),
+					StringUtils.commaDelimitedListToSet(entity.getAccessTokenScopes()));
 			builder.token(accessToken, metadata -> metadata.putAll(parseMap(entity.getAccessTokenMetadata())));
 		}
 

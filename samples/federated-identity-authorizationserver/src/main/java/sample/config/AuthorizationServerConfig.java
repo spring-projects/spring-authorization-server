@@ -21,6 +21,9 @@ import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
+import org.springframework.security.config.annotation.web.configurers.oauth2.server.authorization.OAuth2AuthorizationServerConfigurer;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
+import org.springframework.security.web.util.matcher.RequestMatcher;
 import sample.jose.Jwks;
 import sample.security.FederatedIdentityConfigurer;
 import sample.security.FederatedIdentityIdTokenCustomizer;
@@ -61,8 +64,24 @@ public class AuthorizationServerConfig {
 
 	@Bean
 	@Order(Ordered.HIGHEST_PRECEDENCE)
-	public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
-		OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http);
+	public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http,
+			OAuth2AuthorizedClientService authorizedClientService) throws Exception {
+		// Adding authorizedClientService to AuthorizationEndpoint to permit capture of upstream access_token
+		OAuth2AuthorizationServerConfigurer<HttpSecurity> authorizationServerConfigurer =
+				new OAuth2AuthorizationServerConfigurer<>();
+		authorizationServerConfigurer
+				.authorizationEndpoint(authEndpoint ->
+						authEndpoint.setOAuth2AuthorizedClientService(authorizedClientService));
+
+		// Some of this is a copy of what's in applyDefaultSecurity()
+		RequestMatcher endpointsMatcher = authorizationServerConfigurer
+				.getEndpointsMatcher();
+		http.requestMatcher(endpointsMatcher)
+				.authorizeRequests(authorizeRequests ->
+						authorizeRequests.anyRequest().authenticated()
+				)
+				.csrf(csrf -> csrf.ignoringRequestMatchers(endpointsMatcher))
+				.apply(authorizationServerConfigurer);
 		http.apply(new FederatedIdentityConfigurer());
 		return http.formLogin(Customizer.withDefaults()).build();
 	}

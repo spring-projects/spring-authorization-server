@@ -23,6 +23,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -36,10 +37,15 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.crypto.keygen.Base64StringKeyGenerator;
 import org.springframework.security.crypto.keygen.StringKeyGenerator;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
+import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2AuthorizationCode;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
+import org.springframework.security.oauth2.core.OAuth2RefreshToken;
 import org.springframework.security.oauth2.core.OAuth2TokenType;
 import org.springframework.security.oauth2.core.authentication.OAuth2AuthenticationContext;
 import org.springframework.security.oauth2.core.authentication.OAuth2AuthenticationValidator;
@@ -87,6 +93,7 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 	private final RegisteredClientRepository registeredClientRepository;
 	private final OAuth2AuthorizationService authorizationService;
 	private final OAuth2AuthorizationConsentService authorizationConsentService;
+	private OAuth2AuthorizedClientService oauth2AuthorizedClientService;
 
 	@Deprecated
 	private Supplier<String> authorizationCodeSupplier;
@@ -110,6 +117,7 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 		this.registeredClientRepository = registeredClientRepository;
 		this.authorizationService = authorizationService;
 		this.authorizationConsentService = authorizationConsentService;
+
 	}
 
 	@Override
@@ -148,6 +156,17 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 	public void setAuthorizationCodeGenerator(OAuth2TokenGenerator<OAuth2AuthorizationCode> authorizationCodeGenerator) {
 		Assert.notNull(authorizationCodeGenerator, "authorizationCodeGenerator cannot be null");
 		this.authorizationCodeGenerator = authorizationCodeGenerator;
+	}
+
+	/**
+	 * Sets the {@link OAuth2AuthorizedClientService} that can be used to access the upstream authorization
+	 * that is achieved when federated identity is used.
+	 * @param authorizedClientService the {@link OAuth2AuthorizedClientService} that is to be used to check for
+	 *                                Authorizations based on OAuth2ClientAuthorization when authorization_codes
+	 *                                are being issued for an Authenticated end user
+	 */
+	public void setOAuth2AuthorizedClientService(OAuth2AuthorizedClientService authorizedClientService) {
+		this.oauth2AuthorizedClientService = authorizedClientService;
 	}
 
 	/**
@@ -247,6 +266,23 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 			return authorizationCodeRequestAuthentication;
 		}
 
+		// This code makes it possible for us to save the access_token and refresh_token received from
+		// an upstream provider (in a federated auth scenario) with the authorization code we are about
+		// to issue.
+		Optional<OAuth2AccessToken> federatedAccessToken = Optional.empty();
+		Optional<OAuth2RefreshToken> federatedRefreshToken = Optional.empty();
+		if (oauth2AuthorizedClientService != null && OAuth2AuthenticationToken.class.isInstance(principal)) {
+			OAuth2AuthenticationToken oauth2Authentication = (OAuth2AuthenticationToken) authorizationCodeRequestAuthentication.getPrincipal();
+			OAuth2AuthorizedClient authorizedClient =
+					this.oauth2AuthorizedClientService.loadAuthorizedClient(
+							oauth2Authentication.getAuthorizedClientRegistrationId(),
+							oauth2Authentication.getName());
+			if (authorizedClient != null) {
+				federatedAccessToken = Optional.of(authorizedClient.getAccessToken());
+				federatedRefreshToken = Optional.ofNullable(authorizedClient.getRefreshToken());
+			}
+		}
+
 		OAuth2AuthorizationRequest authorizationRequest = OAuth2AuthorizationRequest.authorizationCode()
 				.authorizationUri(authorizationCodeRequestAuthentication.getAuthorizationUri())
 				.clientId(registeredClient.getClientId())
@@ -293,10 +329,17 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 			}
 		}
 
-		OAuth2Authorization authorization = authorizationBuilder(registeredClient, principal, authorizationRequest)
+		OAuth2Authorization.Builder builder = authorizationBuilder(registeredClient, principal, authorizationRequest)
 				.token(authorizationCode)
-				.attribute(OAuth2Authorization.AUTHORIZED_SCOPE_ATTRIBUTE_NAME, authorizationRequest.getScopes())
-				.build();
+				.attribute(OAuth2Authorization.AUTHORIZED_SCOPE_ATTRIBUTE_NAME, authorizationRequest.getScopes());
+		// TODO - determine why putting the Optional into the attribute causes 302 failures from token endpoint.
+		if (federatedAccessToken.isPresent()) {
+			builder.attribute(OAuth2Authorization.class.getName().concat("FEDERATED_ACCESS_TOKEN"), federatedAccessToken.get());
+		}
+		if (federatedRefreshToken.isPresent()) {
+			builder.attribute(OAuth2Authorization.class.getName().concat("FEDERATED_REFRESH_TOKEN"), federatedRefreshToken.get());
+		}
+		OAuth2Authorization authorization = builder.build();
 		this.authorizationService.save(authorization);
 
 		String redirectUri = authorizationRequest.getRedirectUri();

@@ -23,12 +23,14 @@ import java.util.Map;
 import java.util.Set;
 
 import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.oidc.IdTokenClaimNames;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.security.oauth2.core.oidc.endpoint.OidcParameterNames;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.oauth2.server.authorization.JwtEncodingContext;
+import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenCustomizer;
 
 /**
@@ -69,6 +71,16 @@ public final class FederatedIdentityIdTokenCustomizer implements OAuth2TokenCust
 				// Add all other claims directly to id_token
 				existingClaims.putAll(thirdPartyClaims);
 			});
+		}
+		else {
+			// Example of how the original access token can be retained as a claim
+			// within the access_token issued by spring-authentication-service.
+			OAuth2Authorization authorization = context.getAuthorization();
+			OAuth2AccessToken access_token = authorization.getAttribute(
+						OAuth2Authorization.class.getName().concat("FEDERATED_ACCESS_TOKEN"));
+			if (access_token != null) {
+				context.getClaims().claim("upstream_access_token", access_token.getTokenValue());
+			}
 		}
 	}
 

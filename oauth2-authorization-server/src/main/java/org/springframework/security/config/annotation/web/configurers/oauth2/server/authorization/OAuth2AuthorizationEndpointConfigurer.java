@@ -25,6 +25,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.ObjectPostProcessor;
 import org.springframework.security.config.annotation.web.HttpSecurityBuilder;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationResponse;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeRequestAuthenticationException;
@@ -57,6 +58,7 @@ public final class OAuth2AuthorizationEndpointConfigurer extends AbstractOAuth2C
 	private AuthenticationSuccessHandler authorizationResponseHandler;
 	private AuthenticationFailureHandler errorResponseHandler;
 	private String consentPage;
+	private OAuth2AuthorizedClientService oauth2AuthorizedClientService;
 
 	/**
 	 * Restrict for internal use only.
@@ -190,6 +192,15 @@ public final class OAuth2AuthorizationEndpointConfigurer extends AbstractOAuth2C
 		builder.addFilterBefore(postProcess(authorizationEndpointFilter), AbstractPreAuthenticatedProcessingFilter.class);
 	}
 
+	/**
+	 * In cases where a federated authorization model is being used setting an OAuth2AuthorizedClientService (optional)
+	 * makes it possible to preserve the original (upstream) access_token and refresh_token.
+	 * @param service - a
+	 */
+	public void setOAuth2AuthorizedClientService(OAuth2AuthorizedClientService service) {
+		this.oauth2AuthorizedClientService = service;
+	}
+
 	@Override
 	RequestMatcher getRequestMatcher() {
 		return this.requestMatcher;
@@ -203,6 +214,10 @@ public final class OAuth2AuthorizationEndpointConfigurer extends AbstractOAuth2C
 						OAuth2ConfigurerUtils.getRegisteredClientRepository(builder),
 						OAuth2ConfigurerUtils.getAuthorizationService(builder),
 						OAuth2ConfigurerUtils.getAuthorizationConsentService(builder));
+		if (this.oauth2AuthorizedClientService != null) {
+			authorizationCodeRequestAuthenticationProvider.setOAuth2AuthorizedClientService(this.oauth2AuthorizedClientService);
+		}
+
 		authenticationProviders.add(authorizationCodeRequestAuthenticationProvider);
 
 		return authenticationProviders;

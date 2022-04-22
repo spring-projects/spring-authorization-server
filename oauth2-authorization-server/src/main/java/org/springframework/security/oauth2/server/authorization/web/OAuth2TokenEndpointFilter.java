@@ -18,6 +18,7 @@ package org.springframework.security.oauth2.server.authorization.web;
 import java.io.IOException;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 import javax.servlet.FilterChain;
@@ -126,15 +127,29 @@ public final class OAuth2TokenEndpointFilter extends OncePerRequestFilter {
 	 * @param tokenEndpointUri the endpoint {@code URI} for access token requests
 	 */
 	public OAuth2TokenEndpointFilter(AuthenticationManager authenticationManager, String tokenEndpointUri) {
-		Assert.notNull(authenticationManager, "authenticationManager cannot be null");
-		Assert.hasText(tokenEndpointUri, "tokenEndpointUri cannot be empty");
-		this.authenticationManager = authenticationManager;
-		this.tokenEndpointMatcher = new AntPathRequestMatcher(tokenEndpointUri, HttpMethod.POST.name());
-		this.authenticationConverter = new DelegatingAuthenticationConverter(
+		this(authenticationManager, tokenEndpointUri,
 				Arrays.asList(
 						new OAuth2AuthorizationCodeAuthenticationConverter(),
 						new OAuth2RefreshTokenAuthenticationConverter(),
-						new OAuth2ClientCredentialsAuthenticationConverter()));
+						new OAuth2ClientCredentialsAuthenticationConverter()
+				));
+	}
+
+	/**
+	 * Constructs an {@code OAuth2TokenEndpointFilter} using the provided parameters.
+	 *
+	 * @param authenticationManager the authentication manager
+	 * @param tokenEndpointUri the endpoint {@code URI} for access token requests
+	 * @param authenticationConverters list of authentication converters to be supported.
+	 */
+	public OAuth2TokenEndpointFilter(AuthenticationManager authenticationManager, String tokenEndpointUri,
+			List<AuthenticationConverter> authenticationConverters) {
+		Assert.notNull(authenticationManager, "authenticationManager cannot be null");
+		Assert.hasText(tokenEndpointUri, "tokenEndpointUri cannot be empty");
+		Assert.notEmpty(authenticationConverters, "authenticationConverters cannot be empty");
+		this.authenticationManager = authenticationManager;
+		this.tokenEndpointMatcher = new AntPathRequestMatcher(tokenEndpointUri, HttpMethod.POST.name());
+		this.authenticationConverter = new DelegatingAuthenticationConverter(authenticationConverters);
 	}
 
 	@Override

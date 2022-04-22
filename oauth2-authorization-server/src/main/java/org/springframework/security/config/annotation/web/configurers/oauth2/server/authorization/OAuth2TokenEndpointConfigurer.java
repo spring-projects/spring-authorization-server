@@ -16,6 +16,7 @@
 package org.springframework.security.config.annotation.web.configurers.oauth2.server.authorization;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -39,6 +40,9 @@ import org.springframework.security.oauth2.server.authorization.authentication.O
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2RefreshTokenAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.config.ProviderSettings;
 import org.springframework.security.oauth2.server.authorization.web.OAuth2TokenEndpointFilter;
+import org.springframework.security.oauth2.server.authorization.web.authentication.OAuth2AuthorizationCodeAuthenticationConverter;
+import org.springframework.security.oauth2.server.authorization.web.authentication.OAuth2ClientCredentialsAuthenticationConverter;
+import org.springframework.security.oauth2.server.authorization.web.authentication.OAuth2RefreshTokenAuthenticationConverter;
 import org.springframework.security.web.access.intercept.FilterSecurityInterceptor;
 import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
@@ -59,8 +63,11 @@ public final class OAuth2TokenEndpointConfigurer extends AbstractOAuth2Configure
 	private RequestMatcher requestMatcher;
 	private AuthenticationConverter accessTokenRequestConverter;
 	private final List<AuthenticationProvider> authenticationProviders = new LinkedList<>();
+	private List<AuthenticationConverter> authenticationConverters = new LinkedList<>();
 	private AuthenticationSuccessHandler accessTokenResponseHandler;
 	private AuthenticationFailureHandler errorResponseHandler;
+	private final List<AuthenticationConverter> additionalAuthenticationConverters = new LinkedList<>();
+	private final List<AuthenticationProvider> additionalAuthenticationProviders = new LinkedList<>();
 
 	/**
 	 * Restrict for internal use only.
@@ -94,6 +101,15 @@ public final class OAuth2TokenEndpointConfigurer extends AbstractOAuth2Configure
 	}
 
 	/**
+	 * Adds an {@link AuthenticationProvider} used for authenticating a type of {@link OAuth2AuthorizationGrantAuthenticationToken}
+	 * to the default set of authentication providers.
+	 */
+	public OAuth2TokenEndpointConfigurer additionalAuthenticationProvider(AuthenticationProvider authenticationProvider) {
+		this.additionalAuthenticationProviders.add(authenticationProvider);
+		return this;
+	}
+
+	/**
 	 * Sets the {@link AuthenticationSuccessHandler} used for handling an {@link OAuth2AccessTokenAuthenticationToken}
 	 * and returning the {@link OAuth2AccessTokenResponse Access Token Response}.
 	 *
@@ -117,6 +133,30 @@ public final class OAuth2TokenEndpointConfigurer extends AbstractOAuth2Configure
 		return this;
 	}
 
+	/**
+	 * Adds an {@link AuthenticationConverter} used for handling associated type(s) of authorization requests.
+	 *
+	 * @param authenticationConverter the {@link AuthenticationConverter} used for handling authentication requests for some additional grant_type
+	 * @return the {@link OAuth2TokenEndpointConfigurer} for further configuration
+	 */
+	public OAuth2TokenEndpointConfigurer authenticationConverter(AuthenticationConverter authenticationConverter ) {
+		this.additionalAuthenticationConverters.add(authenticationConverter);
+		return this;
+	}
+
+	/**
+	 * Adds an {@link AuthenticationConverter} used for converting inbound requests to Authentication objects}.
+	 * It can be used in combination with additional AuthenticationProviders to extend the grant_types which can
+	 * be handled by the token endpoint.
+	 *
+	 * @param authenticationConverter the {@link AuthenticationConverter} used for handling authentication requests for some additional grant_type
+	 * @return the {@link OAuth2TokenEndpointConfigurer} for further configuration
+	 */
+	public OAuth2TokenEndpointConfigurer additionalAuthenticationConverter(AuthenticationConverter authenticationConverter ) {
+		this.additionalAuthenticationConverters.add(authenticationConverter);
+		return this;
+	}
+
 	@Override
 	<B extends HttpSecurityBuilder<B>> void init(B builder) {
 		ProviderSettings providerSettings = OAuth2ConfigurerUtils.getProviderSettings(builder);
@@ -127,6 +167,7 @@ public final class OAuth2TokenEndpointConfigurer extends AbstractOAuth2Configure
 				!this.authenticationProviders.isEmpty() ?
 						this.authenticationProviders :
 						createDefaultAuthenticationProviders(builder);
+		authenticationProviders.addAll(this.additionalAuthenticationProviders);
 		authenticationProviders.forEach(authenticationProvider ->
 				builder.authenticationProvider(postProcess(authenticationProvider)));
 	}
@@ -136,10 +177,18 @@ public final class OAuth2TokenEndpointConfigurer extends AbstractOAuth2Configure
 		AuthenticationManager authenticationManager = builder.getSharedObject(AuthenticationManager.class);
 		ProviderSettings providerSettings = OAuth2ConfigurerUtils.getProviderSettings(builder);
 
+		List<AuthenticationConverter> authenticationConverters =
+				!this.authenticationConverters.isEmpty() ?
+						this.authenticationConverters :
+						defaultAuthenticationConverters();
+		authenticationConverters.addAll(this.additionalAuthenticationConverters);
+
 		OAuth2TokenEndpointFilter tokenEndpointFilter =
 				new OAuth2TokenEndpointFilter(
 						authenticationManager,
-						providerSettings.getTokenEndpoint());
+						providerSettings.getTokenEndpoint(),
+						authenticationConverters);
+		
 		if (this.accessTokenRequestConverter != null) {
 			tokenEndpointFilter.setAuthenticationConverter(this.accessTokenRequestConverter);
 		}
@@ -178,4 +227,12 @@ public final class OAuth2TokenEndpointConfigurer extends AbstractOAuth2Configure
 		return authenticationProviders;
 	}
 
+	private List<AuthenticationConverter> defaultAuthenticationConverters() {
+		List<AuthenticationConverter> authenticationRequestConverters = List.of(
+				new OAuth2AuthorizationCodeAuthenticationConverter(),
+				new OAuth2RefreshTokenAuthenticationConverter(),
+				new OAuth2ClientCredentialsAuthenticationConverter()
+		);
+		return authenticationRequestConverters;
+	}
 }

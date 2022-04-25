@@ -9,19 +9,19 @@
 [[jpa-getting-started]]
 == Getting Started
 
-In this guide, we will demonstrate how to implement the xref:{docs-dir}/core-components.adoc#core-components[core services] of xref:{docs-dir}/index.adoc#top[Spring Authorization Server] with JPA. The purpose of this guide is to provide a starting point for implementing these services yourself, with the intention that you will make modifications as necessary to suit your needs.
+In this guide, we will demonstrate how to implement the xref:{docs-dir}/core-model-components.adoc#core-model-components[core services] of xref:{docs-dir}/index.adoc#top[Spring Authorization Server] with JPA. The purpose of this guide is to provide a starting point for implementing these services yourself, with the intention that you will make modifications as necessary to suit your needs.
 
 [[jpa-define-data-model]]
 == Define the data model
 
-This guide seeks to provide a starting point for the data model and uses the simplest possible structure and data types. To come up with the initial schema, we begin by reviewing the xref:{docs-dir}/core-components.adoc#core-components[domain objects] used by the core services. Please note:
+This guide seeks to provide a starting point for the data model and uses the simplest possible structure and data types. To come up with the initial schema, we begin by reviewing the xref:{docs-dir}/core-model-components.adoc#core-model-components[domain objects] used by the core services. Please note:
 
 NOTE: Except for token, state, metadata, settings and claims values, we will use the JPA default column length of 255 for all columns. In reality, the length and even type of columns you use may need to be customized. Your mileage may vary and you are encouraged to experiment and test before deploying to production.
 
 [[jpa-client-schema]]
 === Client Schema
 
-The xref:{docs-dir}/core-components.adoc#registered-client-repository[`RegisteredClient`] domain object contains a few multi-valued fields and some settings fields that require storing arbitrary key/value data. The following is an example that we will use to create a JPA entity.
+The xref:{docs-dir}/core-model-components.adoc#registered-client[`RegisteredClient`] domain object contains a few multi-valued fields and some settings fields that require storing arbitrary key/value data. The following is an example that we will use to create a JPA entity.
 
 .Client Schema
 [source,sql]
@@ -32,7 +32,7 @@ include::{examples-dir}/src/main/resources/oauth2-registered-client-schema.sql[]
 [[jpa-authorization-schema]]
 === Authorization Schema
 
-The xref:{docs-dir}/core-components.adoc#oauth2-authorization-service[`OAuth2Authorization`] domain object is more complex, and contains several multi-valued fields as well as numerous arbitrarily long token values, metadata, settings and claims values. The built-in JDBC implementation utilizes a flattened structure that prefers performance over normalization, which we adopt here as well.
+The xref:{docs-dir}/core-model-components.adoc#oauth2-authorization[`OAuth2Authorization`] domain object is more complex, and contains several multi-valued fields as well as numerous arbitrarily long token values, metadata, settings and claims values. The built-in JDBC implementation utilizes a flattened structure that prefers performance over normalization, which we adopt here as well.
 
 CAUTION: It has been difficult to find a flattened database schema that works well in all cases and with all database vendors. You may need to normalize or heavily alter the following schema for your needs.
 
@@ -47,7 +47,7 @@ include::{examples-dir}/src/main/resources/oauth2-authorization-schema.sql[]
 [[jpa-authorization-consent-schema]]
 === Authorization Consent Schema
 
-The xref:{docs-dir}/core-components.adoc#oauth2-authorization-consent-service[`OAuth2AuthorizationConsent`] domain object is the simplest to model, and only contains a single multi-valued field in addition to a composite key.  The following is an example that we will use to create a JPA entity.
+The xref:{docs-dir}/core-model-components.adoc#oauth2-authorization-consent[`OAuth2AuthorizationConsent`] domain object is the simplest to model, and only contains a single multi-valued field in addition to a composite key.  The following is an example that we will use to create a JPA entity.
 
 .Authorization Consent Schema
 [source,sql]
@@ -65,7 +65,7 @@ NOTE: The following entities are minimally annotated and are just examples. They
 [[jpa-client-entity]]
 === Client Entity
 
-The following is an example of the `Client` entity which is used to persist information mapped from the xref:{docs-dir}/core-components.adoc#registered-client-repository[`RegisteredClient`] domain object.
+The following is an example of the `Client` entity which is used to persist information mapped from the xref:{docs-dir}/core-model-components.adoc#registered-client[`RegisteredClient`] domain object.
 
 .Client Entity
 [source,java]
@@ -76,7 +76,7 @@ include::{examples-dir}/src/main/java/sample/jpa/Client.java[tag=class]
 [[jpa-authorization-entity]]
 === Authorization Entity
 
-The following is an example of the `Authorization` entity which is used to persist information mapped from the xref:{docs-dir}/core-components.adoc#oauth2-authorization-service[`OAuth2Authorization`] domain object.
+The following is an example of the `Authorization` entity which is used to persist information mapped from the xref:{docs-dir}/core-model-components.adoc#oauth2-authorization[`OAuth2Authorization`] domain object.
 
 .Authorization Entity
 [source,java]
@@ -87,7 +87,7 @@ include::{examples-dir}/src/main/java/sample/jpa/Authorization.java[tag=class]
 [[jpa-authorization-consent-entity]]
 === Authorization Consent Entity
 
-The following is an example of the `AuthorizationConsent` entity which is used to persist information mapped from the xref:{docs-dir}/core-components.adoc#oauth2-authorization-consent-service[`OAuth2AuthorizationConsent`] domain object.
+The following is an example of the `AuthorizationConsent` entity which is used to persist information mapped from the xref:{docs-dir}/core-model-components.adoc#oauth2-authorization-consent[`OAuth2AuthorizationConsent`] domain object.
 
 .Authorization Consent Entity
 [source,java]
@@ -143,7 +143,7 @@ CAUTION: Keep in mind that writing JSON data to text columns with a fixed length
 [[jpa-registered-client-repository]]
 === Registered Client Repository
 
-The following is an example of the `JpaRegisteredClientRepository` which uses a <<jpa-client-repository,`ClientRepository`>> for persisting a <<jpa-client-entity,`Client`>>, and maps to/from the xref:{docs-dir}/core-components.adoc#registered-client-repository[`RegisteredClient`] domain object.
+The following is an example of the `JpaRegisteredClientRepository` which uses a <<jpa-client-repository,`ClientRepository`>> for persisting a <<jpa-client-entity,`Client`>>, and maps to/from the xref:{docs-dir}/core-model-components.adoc#registered-client[`RegisteredClient`] domain object.
 
 .`RegisteredClientRepository` Implementation
 [source,java]
@@ -154,7 +154,7 @@ include::{examples-dir}/src/main/java/sample/jpa/JpaRegisteredClientRepository.j
 [[jpa-authorization-service]]
 === Authorization Service
 
-The following is an example of the `JpaOAuth2AuthorizationService` which uses an <<jpa-authorization-repository,`AuthorizationRepository`>> for persisting an <<jpa-authorization-entity,`Authorization`>>, and maps to/from the xref:{docs-dir}/core-components.adoc#oauth2-authorization-service[`OAuth2Authorization`] domain object.
+The following is an example of the `JpaOAuth2AuthorizationService` which uses an <<jpa-authorization-repository,`AuthorizationRepository`>> for persisting an <<jpa-authorization-entity,`Authorization`>>, and maps to/from the xref:{docs-dir}/core-model-components.adoc#oauth2-authorization[`OAuth2Authorization`] domain object.
 
 .`OAuth2AuthorizationService` Implementation
 [source,java]
@@ -165,7 +165,7 @@ include::{examples-dir}/src/main/java/sample/jpa/JpaOAuth2AuthorizationService.j
 [[jpa-authorization-consent-service]]
 === Authorization Consent Service
 
-The following is an example of the `JpaOAuth2AuthorizationConsentService` which uses an <<jpa-authorization-consent-repository,`AuthorizationConsentRepository`>> for persisting an <<jpa-authorization-consent-entity,`AuthorizationConsent`>>, and maps to/from the xref:{docs-dir}/core-components.adoc#oauth2-authorization-consent-service[`OAuth2AuthorizationConsent`] domain object.
+The following is an example of the `JpaOAuth2AuthorizationConsentService` which uses an <<jpa-authorization-consent-repository,`AuthorizationConsentRepository`>> for persisting an <<jpa-authorization-consent-entity,`AuthorizationConsent`>>, and maps to/from the xref:{docs-dir}/core-model-components.adoc#oauth2-authorization-consent[`OAuth2AuthorizationConsent`] domain object.
 
 .`OAuth2AuthorizationConsentService` Implementation
 [source,java]

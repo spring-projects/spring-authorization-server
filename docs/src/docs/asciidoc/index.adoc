@@ -8,7 +8,7 @@ xref:overview.adoc[Overview] :: Introduction and list of supported features
 xref:getting-help.adoc[Getting Help] :: Links to samples, questions and issues
 xref:getting-started.adoc[Getting Started] :: System requirements, dependencies and developing your first application
 xref:configuration-model.adoc[Configuration Model] :: Configuration and provider settings
-xref:core-components.adoc[Core Components] :: Domain objects and  service interfaces
+xref:core-model-components.adoc[Core Model / Components] :: Core domain model and component interfaces
 xref:protocol-endpoints.adoc[Protocol Endpoints] :: Specifications and endpoints
 xref:how-to.adoc["How-to" Guides] :: Guides to get the most from Spring Authorization Server
 xref:appendix.adoc[Appendices] :: Additional information

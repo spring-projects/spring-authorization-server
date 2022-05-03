@@ -21,10 +21,11 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 import org.springframework.lang.Nullable;
-import org.springframework.security.oauth2.jwt.JoseHeader;
+import org.springframework.security.oauth2.jwt.JwsHeader;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
+import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.util.Assert;
 
 /**
@@ -33,9 +34,9 @@ import org.springframework.util.Assert;
  * @author Joe Grandja
  * @since 0.1.0
  * @see OAuth2TokenContext
- * @see JoseHeader.Builder
+ * @see JwsHeader.Builder
  * @see JwtClaimsSet.Builder
- * @see JwtEncoder#encode(JoseHeader, JwtClaimsSet)
+ * @see JwtEncoder#encode(JwtEncoderParameters)
  */
 public final class JwtEncodingContext implements OAuth2TokenContext {
 	private final Map<Object, Object> context;
@@ -58,13 +59,13 @@ public final class JwtEncodingContext implements OAuth2TokenContext {
 	}
 
 	/**
-	 * Returns the {@link JoseHeader.Builder headers}
+	 * Returns the {@link JwsHeader.Builder headers}
 	 * allowing the ability to add, replace, or remove.
 	 *
-	 * @return the {@link JoseHeader.Builder}
+	 * @return the {@link JwsHeader.Builder}
 	 */
-	public JoseHeader.Builder getHeaders() {
-		return get(JoseHeader.Builder.class);
+	public JwsHeader.Builder getHeaders() {
+		return get(JwsHeader.Builder.class);
 	}
 
 	/**
@@ -84,7 +85,7 @@ public final class JwtEncodingContext implements OAuth2TokenContext {
 	 * @param claimsBuilder the claims to initialize the builder
 	 * @return the {@link Builder}
 	 */
-	public static Builder with(JoseHeader.Builder headersBuilder, JwtClaimsSet.Builder claimsBuilder) {
+	public static Builder with(JwsHeader.Builder headersBuilder, JwtClaimsSet.Builder claimsBuilder) {
 		return new Builder(headersBuilder, claimsBuilder);
 	}
 
@@ -93,24 +94,24 @@ public final class JwtEncodingContext implements OAuth2TokenContext {
 	 */
 	public static final class Builder extends AbstractBuilder<JwtEncodingContext, Builder> {
 
-		private Builder(JoseHeader.Builder headersBuilder, JwtClaimsSet.Builder claimsBuilder) {
+		private Builder(JwsHeader.Builder headersBuilder, JwtClaimsSet.Builder claimsBuilder) {
 			Assert.notNull(headersBuilder, "headersBuilder cannot be null");
 			Assert.notNull(claimsBuilder, "claimsBuilder cannot be null");
-			put(JoseHeader.Builder.class, headersBuilder);
+			put(JwsHeader.Builder.class, headersBuilder);
 			put(JwtClaimsSet.Builder.class, claimsBuilder);
 		}
 
 		/**
-		 * A {@code Consumer} of the {@link JoseHeader.Builder headers}
+		 * A {@code Consumer} of the {@link JwsHeader.Builder headers}
 		 * allowing the ability to add, replace, or remove.
 		 *
 		 * @deprecated Use {@link #getHeaders()} instead
-		 * @param headersConsumer a {@code Consumer} of the {@link JoseHeader.Builder headers}
+		 * @param headersConsumer a {@code Consumer} of the {@link JwsHeader.Builder headers}
 		 * @return the {@link Builder} for further configuration
 		 */
 		@Deprecated
-		public Builder headers(Consumer<JoseHeader.Builder> headersConsumer) {
-			headersConsumer.accept(get(JoseHeader.Builder.class));
+		public Builder headers(Consumer<JwsHeader.Builder> headersConsumer) {
+			headersConsumer.accept(get(JwsHeader.Builder.class));
 			return this;
 		}
 

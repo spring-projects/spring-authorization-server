@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 the original author or authors.
+ * Copyright 2020-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,10 +47,10 @@ import org.springframework.security.oauth2.core.http.converter.OAuth2ErrorHttpMe
 import org.springframework.security.oauth2.core.oidc.OidcClientRegistration;
 import org.springframework.security.oauth2.core.oidc.http.converter.OidcClientRegistrationHttpMessageConverter;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
-import org.springframework.security.oauth2.jwt.JoseHeader;
+import org.springframework.security.oauth2.jwt.JwsHeader;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
-import org.springframework.security.oauth2.jwt.TestJoseHeaders;
+import org.springframework.security.oauth2.jwt.TestJwsHeaders;
 import org.springframework.security.oauth2.jwt.TestJwtClaimsSets;
 import org.springframework.security.oauth2.server.authorization.oidc.authentication.OidcClientRegistrationAuthenticationToken;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
@@ -473,13 +473,13 @@ public class OidcClientRegistrationEndpointFilterTests {
 
 	private static Jwt createJwt(String scope) {
 		// @formatter:off
-		JoseHeader joseHeader = TestJoseHeaders.joseHeader()
+		JwsHeader jwsHeader = TestJwsHeaders.jwsHeader()
 				.build();
 		JwtClaimsSet jwtClaimsSet = TestJwtClaimsSets.jwtClaimsSet()
 				.claim(OAuth2ParameterNames.SCOPE, Collections.singleton(scope))
 				.build();
 		Jwt jwt = Jwt.withTokenValue("jwt-access-token")
-				.headers(headers -> headers.putAll(joseHeader.getHeaders()))
+				.headers(headers -> headers.putAll(jwsHeader.getHeaders()))
 				.claims(claims -> claims.putAll(jwtClaimsSet.getClaims()))
 				.build();
 		// @formatter:on

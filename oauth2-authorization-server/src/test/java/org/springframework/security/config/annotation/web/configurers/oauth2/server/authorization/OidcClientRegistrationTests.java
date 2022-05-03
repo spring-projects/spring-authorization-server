@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 the original author or authors.
+ * Copyright 2020-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,12 +64,13 @@ import org.springframework.security.oauth2.core.oidc.OidcClientRegistration;
 import org.springframework.security.oauth2.core.oidc.http.converter.OidcClientRegistrationHttpMessageConverter;
 import org.springframework.security.oauth2.jose.TestJwks;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
-import org.springframework.security.oauth2.jwt.JoseHeader;
+import org.springframework.security.oauth2.jwt.JwsHeader;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
-import org.springframework.security.oauth2.jwt.NimbusJwsEncoder;
+import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
+import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.security.oauth2.server.authorization.JdbcOAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.client.JdbcRegisteredClientRepository;
@@ -135,7 +136,7 @@ public class OidcClientRegistrationTests {
 		JWKSet jwkSet = new JWKSet(TestJwks.DEFAULT_RSA_JWK);
 		jwkSource = (jwkSelector, securityContext) -> jwkSelector.select(jwkSet);
 		clientJwkSet = new JWKSet(TestJwks.generateRsaJwk().build());
-		jwtClientAssertionEncoder = new NimbusJwsEncoder((jwkSelector, securityContext) -> jwkSelector.select(clientJwkSet));
+		jwtClientAssertionEncoder = new NimbusJwtEncoder((jwkSelector, securityContext) -> jwkSelector.select(clientJwkSet));
 		db = new EmbeddedDatabaseBuilder()
 				.generateUniqueName(true)
 				.setType(EmbeddedDatabaseType.HSQL)
@@ -280,12 +281,12 @@ public class OidcClientRegistrationTests {
 		this.registeredClientRepository.save(clientRegistrar);
 
 		// @formatter:off
-		JoseHeader joseHeader = JoseHeader.withAlgorithm(SignatureAlgorithm.RS256)
+		JwsHeader jwsHeader = JwsHeader.with(SignatureAlgorithm.RS256)
 				.build();
 		JwtClaimsSet jwtClaimsSet = jwtClientAssertionClaims(clientRegistrar)
 				.build();
 		// @formatter:on
-		Jwt jwtAssertion = jwtClientAssertionEncoder.encode(joseHeader, jwtClaimsSet);
+		Jwt jwtAssertion = jwtClientAssertionEncoder.encode(JwtEncoderParameters.from(jwsHeader, jwtClaimsSet));
 
 		MvcResult mvcResult = this.mvc.perform(post(DEFAULT_TOKEN_ENDPOINT_URI)
 				.param(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 the original author or authors.
+ * Copyright 2020-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,9 +23,9 @@ import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.OAuth2TokenType;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
-import org.springframework.security.oauth2.jwt.JoseHeader;
+import org.springframework.security.oauth2.jwt.JwsHeader;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
-import org.springframework.security.oauth2.jwt.TestJoseHeaders;
+import org.springframework.security.oauth2.jwt.TestJwsHeaders;
 import org.springframework.security.oauth2.jwt.TestJwtClaimsSets;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationGrantAuthenticationToken;
@@ -52,7 +52,7 @@ public class JwtEncodingContextTests {
 
 	@Test
 	public void withWhenClaimsNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> JwtEncodingContext.with(TestJoseHeaders.joseHeader(), null))
+		assertThatThrownBy(() -> JwtEncodingContext.with(TestJwsHeaders.jwsHeader(), null))
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessage("claimsBuilder cannot be null");
 	}
@@ -60,7 +60,7 @@ public class JwtEncodingContextTests {
 	@Test
 	public void setWhenValueNullThenThrowIllegalArgumentException() {
 		JwtEncodingContext.Builder builder = JwtEncodingContext
-				.with(TestJoseHeaders.joseHeader(), TestJwtClaimsSets.jwtClaimsSet());
+				.with(TestJwsHeaders.jwsHeader(), TestJwtClaimsSets.jwtClaimsSet());
 		assertThatThrownBy(() -> builder.registeredClient(null))
 				.isInstanceOf(IllegalArgumentException.class);
 		assertThatThrownBy(() -> builder.principal(null))
@@ -79,7 +79,7 @@ public class JwtEncodingContextTests {
 
 	@Test
 	public void buildWhenAllValuesProvidedThenAllValuesAreSet() {
-		JoseHeader.Builder headers = TestJoseHeaders.joseHeader();
+		JwsHeader.Builder headers = TestJwsHeaders.jwsHeader();
 		JwtClaimsSet.Builder claims = TestJwtClaimsSets.jwtClaimsSet();
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 		TestingAuthenticationToken principal = new TestingAuthenticationToken("principal", "password");

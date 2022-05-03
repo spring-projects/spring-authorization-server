@@ -30,10 +30,11 @@ import org.springframework.security.oauth2.core.oidc.IdTokenClaimNames;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.security.oauth2.core.oidc.endpoint.OidcParameterNames;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
-import org.springframework.security.oauth2.jwt.JoseHeader;
+import org.springframework.security.oauth2.jwt.JwsHeader;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
+import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.security.oauth2.server.authorization.JwtEncodingContext;
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenContext;
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenCustomizer;
@@ -127,7 +128,7 @@ public final class JwtGenerator implements OAuth2TokenGenerator<Jwt> {
 		}
 		// @formatter:on
 
-		JoseHeader.Builder headersBuilder = JoseHeader.withAlgorithm(SignatureAlgorithm.RS256);
+		JwsHeader.Builder headersBuilder = JwsHeader.with(SignatureAlgorithm.RS256);
 
 		if (this.jwtCustomizer != null) {
 			// @formatter:off
@@ -150,10 +151,10 @@ public final class JwtGenerator implements OAuth2TokenGenerator<Jwt> {
 			this.jwtCustomizer.customize(jwtContext);
 		}
 
-		JoseHeader headers = headersBuilder.build();
+		JwsHeader headers = headersBuilder.build();
 		JwtClaimsSet claims = claimsBuilder.build();
 
-		Jwt jwt = this.jwtEncoder.encode(headers, claims);
+		Jwt jwt = this.jwtEncoder.encode(JwtEncoderParameters.from(headers, claims));
 
 		return jwt;
 	}

@@ -81,7 +81,7 @@ import org.springframework.security.oauth2.jose.TestJwks;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
-import org.springframework.security.oauth2.jwt.NimbusJwsEncoder;
+import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.security.oauth2.server.authorization.token.DelegatingOAuth2TokenGenerator;
 import org.springframework.security.oauth2.server.authorization.JdbcOAuth2AuthorizationConsentService;
 import org.springframework.security.oauth2.server.authorization.JdbcOAuth2AuthorizationService;
@@ -161,7 +161,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 
 	private static EmbeddedDatabase db;
 	private static JWKSource<SecurityContext> jwkSource;
-	private static NimbusJwsEncoder jwtEncoder;
+	private static NimbusJwtEncoder jwtEncoder;
 	private static ProviderSettings providerSettings;
 	private static HttpMessageConverter<OAuth2AccessTokenResponse> accessTokenHttpResponseConverter =
 			new OAuth2AccessTokenResponseHttpMessageConverter();
@@ -197,7 +197,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 	public static void init() {
 		JWKSet jwkSet = new JWKSet(TestJwks.DEFAULT_RSA_JWK);
 		jwkSource = (jwkSelector, securityContext) -> jwkSelector.select(jwkSet);
-		jwtEncoder = new NimbusJwsEncoder(jwkSource);
+		jwtEncoder = new NimbusJwtEncoder(jwkSource);
 		providerSettings = ProviderSettings.builder()
 				.authorizationEndpoint("/test/authorize")
 				.tokenEndpoint("/test/token")

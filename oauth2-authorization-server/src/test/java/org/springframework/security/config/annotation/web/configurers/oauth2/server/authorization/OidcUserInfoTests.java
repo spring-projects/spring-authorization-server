@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 the original author or authors.
+ * Copyright 2020-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,12 +45,13 @@ import org.springframework.security.oauth2.core.oidc.OidcScopes;
 import org.springframework.security.oauth2.core.oidc.OidcUserInfo;
 import org.springframework.security.oauth2.jose.TestJwks;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
-import org.springframework.security.oauth2.jwt.JoseHeader;
+import org.springframework.security.oauth2.jwt.JwsHeader;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
-import org.springframework.security.oauth2.jwt.NimbusJwsEncoder;
+import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
+import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.security.oauth2.server.authorization.InMemoryOAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
@@ -207,13 +208,13 @@ public class OidcUserInfoTests {
 	}
 
 	private OAuth2Authorization createAuthorization() {
-		JoseHeader headers = JoseHeader.withAlgorithm(SignatureAlgorithm.RS256).build();
+		JwsHeader headers = JwsHeader.with(SignatureAlgorithm.RS256).build();
 		// @formatter:off
 		JwtClaimsSet claimSet = JwtClaimsSet.builder()
 				.claims(claims -> claims.putAll(createUserInfo().getClaims()))
 				.build();
 		// @formatter:on
-		Jwt jwt = this.jwtEncoder.encode(headers, claimSet);
+		Jwt jwt = this.jwtEncoder.encode(JwtEncoderParameters.from(headers, claimSet));
 
 		Instant now = Instant.now();
 		Set<String> scopes = new HashSet<>(Arrays.asList(
@@ -371,7 +372,7 @@ public class OidcUserInfoTests {
 
 		@Bean
 		JwtEncoder jwtEncoder(JWKSource<SecurityContext> jwkSource) {
-			return new NimbusJwsEncoder(jwkSource);
+			return new NimbusJwtEncoder(jwkSource);
 		}
 
 		@Bean

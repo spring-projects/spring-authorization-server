@@ -42,11 +42,11 @@ import org.springframework.security.oauth2.core.oidc.OidcClientMetadataClaimName
 import org.springframework.security.oauth2.core.oidc.OidcClientRegistration;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
-import org.springframework.security.oauth2.jwt.JoseHeader;
+import org.springframework.security.oauth2.jwt.JwsHeader;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
-import org.springframework.security.oauth2.jwt.TestJoseHeaders;
+import org.springframework.security.oauth2.jwt.TestJwsHeaders;
 import org.springframework.security.oauth2.jwt.TestJwtClaimsSets;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
@@ -451,7 +451,7 @@ public class OidcClientRegistrationAuthenticationProviderTests {
 		when(this.authorizationService.findByToken(
 				eq(jwtAccessToken.getTokenValue()), eq(OAuth2TokenType.ACCESS_TOKEN)))
 				.thenReturn(authorization);
-		when(this.jwtEncoder.encode(any(), any())).thenReturn(createJwtClientConfiguration());
+		when(this.jwtEncoder.encode(any())).thenReturn(createJwtClientConfiguration());
 
 		JwtAuthenticationToken principal = new JwtAuthenticationToken(
 				jwt, AuthorityUtils.createAuthorityList("SCOPE_client.create"));
@@ -538,7 +538,7 @@ public class OidcClientRegistrationAuthenticationProviderTests {
 		when(this.authorizationService.findByToken(
 				eq(jwtAccessToken.getTokenValue()), eq(OAuth2TokenType.ACCESS_TOKEN)))
 				.thenReturn(authorization);
-		when(this.jwtEncoder.encode(any(), any())).thenReturn(createJwtClientConfiguration());
+		when(this.jwtEncoder.encode(any())).thenReturn(createJwtClientConfiguration());
 
 		JwtAuthenticationToken principal = new JwtAuthenticationToken(
 				jwt, AuthorityUtils.createAuthorityList("SCOPE_client.create"));
@@ -565,7 +565,7 @@ public class OidcClientRegistrationAuthenticationProviderTests {
 				eq(jwtAccessToken.getTokenValue()), eq(OAuth2TokenType.ACCESS_TOKEN));
 		verify(this.registeredClientRepository).save(registeredClientCaptor.capture());
 		verify(this.authorizationService, times(2)).save(authorizationCaptor.capture());
-		verify(this.jwtEncoder).encode(any(), any());
+		verify(this.jwtEncoder).encode(any());
 
 		// assert "registration" access token, which should be used for subsequent calls to client configuration endpoint
 		OAuth2Authorization authorizationResult = authorizationCaptor.getAllValues().get(0);
@@ -834,13 +834,13 @@ public class OidcClientRegistrationAuthenticationProviderTests {
 
 	private static Jwt createJwt(Set<String> scopes) {
 		// @formatter:off
-		JoseHeader joseHeader = TestJoseHeaders.joseHeader()
+		JwsHeader jwsHeader = TestJwsHeaders.jwsHeader()
 				.build();
 		JwtClaimsSet jwtClaimsSet = TestJwtClaimsSets.jwtClaimsSet()
 				.claim(OAuth2ParameterNames.SCOPE, scopes)
 				.build();
 		Jwt jwt = Jwt.withTokenValue("jwt-access-token")
-				.headers(headers -> headers.putAll(joseHeader.getHeaders()))
+				.headers(headers -> headers.putAll(jwsHeader.getHeaders()))
 				.claims(claims -> claims.putAll(jwtClaimsSet.getClaims()))
 				.build();
 		// @formatter:on

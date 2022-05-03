@@ -44,12 +44,13 @@ import org.springframework.security.oauth2.jose.TestKeys;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 import org.springframework.security.oauth2.jwt.BadJwtException;
-import org.springframework.security.oauth2.jwt.JoseHeader;
+import org.springframework.security.oauth2.jwt.JwsHeader;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
+import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.security.oauth2.jwt.JwtValidationException;
-import org.springframework.security.oauth2.jwt.NimbusJwsEncoder;
+import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.TestOAuth2Authorizations;
@@ -303,7 +304,7 @@ public class JwtClientAssertionAuthenticationProviderTests {
 				.thenReturn(registeredClient);
 
 		// @formatter:off
-		JoseHeader joseHeader = JoseHeader.withAlgorithm(MacAlgorithm.HS256)
+		JwsHeader jwsHeader = JwsHeader.with(MacAlgorithm.HS256)
 				.build();
 		JwtClaimsSet jwtClaimsSet = JwtClaimsSet.builder()
 				.issuer("invalid-iss")
@@ -313,7 +314,7 @@ public class JwtClientAssertionAuthenticationProviderTests {
 		// @formatter:on
 
 		JwtEncoder jwsEncoder = createEncoder(TestKeys.DEFAULT_ENCODED_SECRET_KEY, "HmacSHA256");
-		Jwt jwtAssertion = jwsEncoder.encode(joseHeader, jwtClaimsSet);
+		Jwt jwtAssertion = jwsEncoder.encode(JwtEncoderParameters.from(jwsHeader, jwtClaimsSet));
 
 		OAuth2ClientAuthenticationToken authentication = new OAuth2ClientAuthenticationToken(
 				registeredClient.getClientId(), JWT_CLIENT_ASSERTION_AUTHENTICATION_METHOD, jwtAssertion.getTokenValue(), null);
@@ -346,14 +347,14 @@ public class JwtClientAssertionAuthenticationProviderTests {
 				.thenReturn(registeredClient);
 
 		// @formatter:off
-		JoseHeader joseHeader = JoseHeader.withAlgorithm(MacAlgorithm.HS256)
+		JwsHeader jwsHeader = JwsHeader.with(MacAlgorithm.HS256)
 				.build();
 		JwtClaimsSet jwtClaimsSet = jwtClientAssertionClaims(registeredClient)
 				.build();
 		// @formatter:on
 
 		JwtEncoder jwsEncoder = createEncoder(TestKeys.DEFAULT_ENCODED_SECRET_KEY, "HmacSHA256");
-		Jwt jwtAssertion = jwsEncoder.encode(joseHeader, jwtClaimsSet);
+		Jwt jwtAssertion = jwsEncoder.encode(JwtEncoderParameters.from(jwsHeader, jwtClaimsSet));
 
 		OAuth2ClientAuthenticationToken authentication = new OAuth2ClientAuthenticationToken(
 				registeredClient.getClientId(), JWT_CLIENT_ASSERTION_AUTHENTICATION_METHOD, jwtAssertion.getTokenValue(), null);
@@ -392,14 +393,14 @@ public class JwtClientAssertionAuthenticationProviderTests {
 		Map<String, Object> parameters = createPkceTokenParameters(S256_CODE_VERIFIER);
 
 		// @formatter:off
-		JoseHeader joseHeader = JoseHeader.withAlgorithm(MacAlgorithm.HS256)
+		JwsHeader jwsHeader = JwsHeader.with(MacAlgorithm.HS256)
 				.build();
 		JwtClaimsSet jwtClaimsSet = jwtClientAssertionClaims(registeredClient)
 				.build();
 		// @formatter:on
 
 		JwtEncoder jwsEncoder = createEncoder(TestKeys.DEFAULT_ENCODED_SECRET_KEY, "HmacSHA256");
-		Jwt jwtAssertion = jwsEncoder.encode(joseHeader, jwtClaimsSet);
+		Jwt jwtAssertion = jwsEncoder.encode(JwtEncoderParameters.from(jwsHeader, jwtClaimsSet));
 
 		OAuth2ClientAuthenticationToken authentication = new OAuth2ClientAuthenticationToken(
 				registeredClient.getClientId(), JWT_CLIENT_ASSERTION_AUTHENTICATION_METHOD, jwtAssertion.getTokenValue(), parameters);
@@ -430,7 +431,7 @@ public class JwtClientAssertionAuthenticationProviderTests {
 		OctetSequenceKey secretKeyJwk = TestJwks.jwk(secretKey).build();
 		JWKSource<SecurityContext> jwkSource = (jwkSelector, securityContext) ->
 				jwkSelector.select(new JWKSet(secretKeyJwk));
-		return new NimbusJwsEncoder(jwkSource);
+		return new NimbusJwtEncoder(jwkSource);
 	}
 
 	private static String asUrl(String uri, String path) {

@@ -36,11 +36,11 @@ import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.oidc.IdTokenClaimNames;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
 import org.springframework.security.oauth2.core.oidc.endpoint.OidcParameterNames;
-import org.springframework.security.oauth2.jose.jws.JwsAlgorithm;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
-import org.springframework.security.oauth2.jwt.JoseHeader;
+import org.springframework.security.oauth2.jwt.JwsHeader;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
+import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.security.oauth2.server.authorization.JwtEncodingContext;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenContext;
@@ -200,14 +200,13 @@ public class JwtGeneratorTests {
 		assertThat(jwtEncodingContext.getAuthorizationGrantType()).isEqualTo(tokenContext.getAuthorizationGrantType());
 		assertThat(jwtEncodingContext.<Authentication>getAuthorizationGrant()).isEqualTo(tokenContext.getAuthorizationGrant());
 
-		ArgumentCaptor<JoseHeader> joseHeaderCaptor = ArgumentCaptor.forClass(JoseHeader.class);
-		ArgumentCaptor<JwtClaimsSet> jwtClaimsSetCaptor = ArgumentCaptor.forClass(JwtClaimsSet.class);
-		verify(this.jwtEncoder).encode(joseHeaderCaptor.capture(), jwtClaimsSetCaptor.capture());
+		ArgumentCaptor<JwtEncoderParameters> jwtEncoderParametersCaptor = ArgumentCaptor.forClass(JwtEncoderParameters.class);
+		verify(this.jwtEncoder).encode(jwtEncoderParametersCaptor.capture());
 
-		JoseHeader joseHeader = joseHeaderCaptor.getValue();
-		assertThat(joseHeader.<JwsAlgorithm>getAlgorithm()).isEqualTo(SignatureAlgorithm.RS256);
+		JwsHeader jwsHeader = jwtEncoderParametersCaptor.getValue().getJwsHeader();
+		assertThat(jwsHeader.getAlgorithm()).isEqualTo(SignatureAlgorithm.RS256);
 
-		JwtClaimsSet jwtClaimsSet = jwtClaimsSetCaptor.getValue();
+		JwtClaimsSet jwtClaimsSet = jwtEncoderParametersCaptor.getValue().getClaims();
 		assertThat(jwtClaimsSet.getIssuer().toExternalForm()).isEqualTo(tokenContext.getProviderContext().getIssuer());
 		assertThat(jwtClaimsSet.getSubject()).isEqualTo(tokenContext.getAuthorization().getPrincipalName());
 		assertThat(jwtClaimsSet.getAudience()).containsExactly(tokenContext.getRegisteredClient().getClientId());

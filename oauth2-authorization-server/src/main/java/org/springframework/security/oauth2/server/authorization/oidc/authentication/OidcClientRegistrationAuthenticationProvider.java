@@ -222,8 +222,7 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 		checkScopeForRegistration(authorizedAccessToken);
 
 		if (!isValidRedirectUris(clientRegistrationAuthentication.getClientRegistration().getRedirectUris())) {
-			// TODO Add OAuth2ErrorCodes.INVALID_REDIRECT_URI
-			throwInvalidClientRegistration("invalid_redirect_uri", OidcClientMetadataClaimNames.REDIRECT_URIS);
+			throwInvalidClientRegistration(OAuth2ErrorCodes.INVALID_REDIRECT_URI, OidcClientMetadataClaimNames.REDIRECT_URIS);
 		}
 
 		if (!isValidTokenEndpointAuthenticationMethod(clientRegistrationAuthentication.getClientRegistration())) {

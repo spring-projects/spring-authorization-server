@@ -318,7 +318,7 @@ public class OidcClientRegistrationAuthenticationProviderTests {
 				.isInstanceOf(OAuth2AuthenticationException.class)
 				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
 				.satisfies(error -> {
-					assertThat(error.getErrorCode()).isEqualTo("invalid_redirect_uri");
+					assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_REDIRECT_URI);
 					assertThat(error.getDescription()).contains(OidcClientMetadataClaimNames.REDIRECT_URIS);
 				});
 		verify(this.authorizationService).findByToken(
@@ -353,7 +353,7 @@ public class OidcClientRegistrationAuthenticationProviderTests {
 				.isInstanceOf(OAuth2AuthenticationException.class)
 				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
 				.satisfies(error -> {
-					assertThat(error.getErrorCode()).isEqualTo("invalid_redirect_uri");
+					assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_REDIRECT_URI);
 					assertThat(error.getDescription()).contains(OidcClientMetadataClaimNames.REDIRECT_URIS);
 				});
 		verify(this.authorizationService).findByToken(

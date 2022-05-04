@@ -18,7 +18,7 @@ Ideally, that would include a https://stackoverflow.com/help/minimal-reproducibl
 
 == Submitting Pull Requests
 This project uses https://help.github.com/en/github/collaborating-with-issues-and-pull-requests/about-pull-requests[pull requests] for the community to suggest changes to the project.
-There are a few imporant things to keep in mind when submitting a pull request:
+There are a few important things to keep in mind when submitting a pull request:
 
 * Expect feedback and to make changes to your contributions.
 * Unless it is a minor change:

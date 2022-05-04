@@ -27,22 +27,25 @@ import org.springframework.security.oauth2.jose.jws.JwsAlgorithm;
  * @see OAuth2AuthorizationServerMetadataClaimNames
  * @see <a target="_blank" href="https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderMetadata">3. OpenID Provider Metadata</a>
  */
-public interface OidcProviderMetadataClaimNames extends OAuth2AuthorizationServerMetadataClaimNames {
+public final class OidcProviderMetadataClaimNames extends OAuth2AuthorizationServerMetadataClaimNames {
 
 	/**
 	 * {@code subject_types_supported} - the Subject Identifier types supported
 	 */
-	String SUBJECT_TYPES_SUPPORTED = "subject_types_supported";
+	public static final String SUBJECT_TYPES_SUPPORTED = "subject_types_supported";
 
 	/**
 	 * {@code id_token_signing_alg_values_supported} - the {@link JwsAlgorithm JWS} signing algorithms supported for the {@link OidcIdToken ID Token}
 	 */
-	String ID_TOKEN_SIGNING_ALG_VALUES_SUPPORTED = "id_token_signing_alg_values_supported";
+	public static final String ID_TOKEN_SIGNING_ALG_VALUES_SUPPORTED = "id_token_signing_alg_values_supported";
 
 	/**
 	 * {@code userinfo_endpoint} - the {@code URL} of the OpenID Connect 1.0 UserInfo Endpoint
 	 * @since 0.2.2
 	 */
-	String USER_INFO_ENDPOINT = "userinfo_endpoint";
+	public static final String USER_INFO_ENDPOINT = "userinfo_endpoint";
+
+	private OidcProviderMetadataClaimNames() {
+	}
 
 }

@@ -27,43 +27,46 @@ import org.springframework.security.oauth2.core.OAuth2Token;
  * @see OAuth2TokenClaimsSet
  * @see OAuth2Token
  */
-public interface OAuth2TokenClaimNames {
+public final class OAuth2TokenClaimNames {
 
 	/**
 	 * {@code iss} - the Issuer claim identifies the principal that issued the OAuth 2.0 Token
 	 */
-	String ISS = "iss";
+	public static final String ISS = "iss";
 
 	/**
 	 * {@code sub} - the Subject claim identifies the principal that is the subject of the OAuth 2.0 Token
 	 */
-	String SUB = "sub";
+	public static final String SUB = "sub";
 
 	/**
 	 * {@code aud} - the Audience claim identifies the recipient(s) that the OAuth 2.0 Token is intended for
 	 */
-	String AUD = "aud";
+	public static final String AUD = "aud";
 
 	/**
 	 * {@code exp} - the Expiration time claim identifies the expiration time on or after
 	 * which the OAuth 2.0 Token MUST NOT be accepted for processing
 	 */
-	String EXP = "exp";
+	public static final String EXP = "exp";
 
 	/**
 	 * {@code nbf} - the Not Before claim identifies the time before which the OAuth 2.0 Token
 	 * MUST NOT be accepted for processing
 	 */
-	String NBF = "nbf";
+	public static final String NBF = "nbf";
 
 	/**
 	 * {@code iat} - The Issued at claim identifies the time at which the OAuth 2.0 Token was issued
 	 */
-	String IAT = "iat";
+	public static final String IAT = "iat";
 
 	/**
 	 * {@code jti} - The ID claim provides a unique identifier for the OAuth 2.0 Token
 	 */
-	String JTI = "jti";
+	public static final String JTI = "jti";
+
+	private OAuth2TokenClaimNames() {
+	}
 
 }

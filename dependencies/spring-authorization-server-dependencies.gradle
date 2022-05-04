@@ -15,7 +15,7 @@ dependencies {
 		api "javax.servlet:javax.servlet-api:4.0.1"
 		api "junit:junit:4.13.2"
 		api "org.assertj:assertj-core:3.22.0"
-		api "org.mockito:mockito-core:3.12.4"
+		api "org.mockito:mockito-core:4.0.0"
 		api "com.squareup.okhttp3:mockwebserver:3.14.9"
 		api "com.squareup.okhttp3:okhttp:3.14.9"
 		api "com.jayway.jsonpath:json-path:2.7.0"

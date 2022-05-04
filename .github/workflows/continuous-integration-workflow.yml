@@ -80,7 +80,7 @@ jobs:
           GRADLE_ENTERPRISE_ACCESS_KEY: ${{ secrets.GRADLE_ENTERPRISE_SECRET_ACCESS_KEY }}
           ARTIFACTORY_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
           ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
-        run: ./gradlew test --refresh-dependencies -Duser.name=spring-builds+github -PartifactoryUsername="$ARTIFACTORY_USERNAME" -PartifactoryPassword="$ARTIFACTORY_PASSWORD" -PforceMavenRepositories=snapshot -PspringFrameworkVersion='5.3.+' -PspringSecurityVersion='5.5.+' -PlocksDisabled --stacktrace
+        run: ./gradlew test --refresh-dependencies -Duser.name=spring-builds+github -PartifactoryUsername="$ARTIFACTORY_USERNAME" -PartifactoryPassword="$ARTIFACTORY_PASSWORD" -PforceMavenRepositories=snapshot -PspringFrameworkVersion='5.3.+' -PspringSecurityVersion='5.6.+' -PlocksDisabled --stacktrace
   deploy_artifacts:
     name: Deploy Artifacts
     needs: [build, snapshot_tests]

@@ -19,7 +19,6 @@ import org.springframework.lang.Nullable;
 import org.springframework.security.oauth2.core.ClaimAccessor;
 import org.springframework.security.oauth2.core.OAuth2Token;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
-import org.springframework.security.oauth2.server.authorization.OAuth2TokenContext;
 
 /**
  * Implementations of this interface are responsible for generating an {@link OAuth2Token}

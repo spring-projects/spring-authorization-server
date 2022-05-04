@@ -20,7 +20,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.springframework.lang.Nullable;
-import org.springframework.security.oauth2.server.authorization.OAuth2TokenContext;
 import org.springframework.util.Assert;
 
 /**

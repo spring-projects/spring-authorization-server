@@ -21,7 +21,6 @@ import java.util.List;
 
 import org.springframework.lang.Nullable;
 import org.springframework.security.oauth2.core.OAuth2Token;
-import org.springframework.security.oauth2.server.authorization.OAuth2TokenContext;
 import org.springframework.util.Assert;
 
 /**

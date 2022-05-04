@@ -439,7 +439,7 @@ public OAuth2TokenCustomizer<OAuth2TokenClaimsContext> accessTokenCustomizer() {
 If the `OAuth2TokenGenerator` is not provided as a `@Bean` or is not configured through the `OAuth2AuthorizationServerConfigurer`, an `OAuth2TokenCustomizer<OAuth2TokenClaimsContext>` `@Bean` will automatically be configured with an `OAuth2AccessTokenGenerator`.
 
 An `OAuth2TokenCustomizer<JwtEncodingContext>` declared with a generic type of `JwtEncodingContext` (`implements OAuth2TokenContext`) provides the ability to customize the headers and claims of a `Jwt`.
-`JwtEncodingContext.getHeaders()` provides access to the `JoseHeader.Builder`, allowing the ability to add, replace, and remove headers.
+`JwtEncodingContext.getHeaders()` provides access to the `JwsHeader.Builder`, allowing the ability to add, replace, and remove headers.
 `JwtEncodingContext.getClaims()` provides access to the `JwtClaimsSet.Builder`, allowing the ability to add, replace, and remove claims.
 
 The following example shows how to implement an `OAuth2TokenCustomizer<JwtEncodingContext>` and configure it with a `JwtGenerator`:
@@ -460,7 +460,7 @@ public OAuth2TokenGenerator<?> tokenGenerator() {
 @Bean
 public OAuth2TokenCustomizer<JwtEncodingContext> jwtCustomizer() {
 	return context -> {
-		JoseHeader.Builder headers = context.getHeaders();
+		JwsHeader.Builder headers = context.getHeaders();
 		JwtClaimsSet.Builder claims = context.getClaims();
 		if (context.getTokenType().equals(OAuth2TokenType.ACCESS_TOKEN)) {
 			// Customize headers/claims for access_token

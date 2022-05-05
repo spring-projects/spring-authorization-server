@@ -18,7 +18,6 @@ package org.springframework.security.oauth2.server.authorization.token;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Consumer;
 
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
@@ -80,18 +79,6 @@ public final class OAuth2TokenClaimsContext implements OAuth2TokenContext {
 		private Builder(OAuth2TokenClaimsSet.Builder claimsBuilder) {
 			Assert.notNull(claimsBuilder, "claimsBuilder cannot be null");
 			put(OAuth2TokenClaimsSet.Builder.class, claimsBuilder);
-		}
-
-		/**
-		 * A {@code Consumer} of the {@link OAuth2TokenClaimsSet.Builder claims}
-		 * allowing the ability to add, replace, or remove.
-		 *
-		 * @param claimsConsumer a {@code Consumer} of the {@link OAuth2TokenClaimsSet.Builder claims}
-		 * @return the {@link Builder} for further configuration
-		 */
-		public Builder claims(Consumer<OAuth2TokenClaimsSet.Builder> claimsConsumer) {
-			claimsConsumer.accept(get(OAuth2TokenClaimsSet.Builder.class));
-			return this;
 		}
 
 		/**

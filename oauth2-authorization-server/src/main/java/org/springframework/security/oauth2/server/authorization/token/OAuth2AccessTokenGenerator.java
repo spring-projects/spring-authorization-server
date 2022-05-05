@@ -21,7 +21,6 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.function.Consumer;
 
 import org.springframework.lang.Nullable;
 import org.springframework.security.crypto.keygen.Base64StringKeyGenerator;
@@ -119,7 +118,7 @@ public final class OAuth2AccessTokenGenerator implements OAuth2TokenGenerator<OA
 
 	/**
 	 * Sets the {@link OAuth2TokenCustomizer} that customizes the
-	 * {@link OAuth2TokenClaimsContext.Builder#claims(Consumer) claims} for the {@link OAuth2AccessToken}.
+	 * {@link OAuth2TokenClaimsContext#getClaims() claims} for the {@link OAuth2AccessToken}.
 	 *
 	 * @param accessTokenCustomizer the {@link OAuth2TokenCustomizer} that customizes the claims for the {@code OAuth2AccessToken}
 	 */

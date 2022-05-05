@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 the original author or authors.
+ * Copyright 2020-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,10 @@
 package org.springframework.security.oauth2.server.authorization.oidc.authentication;
 
 import org.springframework.security.authentication.AuthenticationProvider;
-import org.springframework.security.oauth2.core.AbstractOAuth2Token;
-import org.springframework.security.oauth2.core.OAuth2RefreshToken;
-import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.core.OAuth2AuthorizationCode;
+import org.springframework.security.oauth2.core.OAuth2RefreshToken;
+import org.springframework.security.oauth2.core.OAuth2Token;
+import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 
 /**
  * Utility methods for the OpenID Connect 1.0 {@link AuthenticationProvider}'s.
@@ -32,7 +32,7 @@ final class OidcAuthenticationProviderUtils {
 	private OidcAuthenticationProviderUtils() {
 	}
 
-	static <T extends AbstractOAuth2Token> OAuth2Authorization invalidate(
+	static <T extends OAuth2Token> OAuth2Authorization invalidate(
 			OAuth2Authorization authorization, T token) {
 
 		// @formatter:off

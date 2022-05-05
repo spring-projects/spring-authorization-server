@@ -24,8 +24,8 @@ import org.springframework.core.convert.TypeDescriptor;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.oauth2.core.AbstractOAuth2Token;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
+import org.springframework.security.oauth2.core.OAuth2Token;
 import org.springframework.security.oauth2.core.OAuth2TokenIntrospection;
 import org.springframework.security.oauth2.core.OAuth2TokenIntrospectionClaimNames;
 import org.springframework.security.oauth2.core.converter.ClaimConversionService;
@@ -85,7 +85,7 @@ public final class OAuth2TokenIntrospectionAuthenticationProvider implements Aut
 			return tokenIntrospectionAuthentication;
 		}
 
-		OAuth2Authorization.Token<AbstractOAuth2Token> authorizedToken =
+		OAuth2Authorization.Token<OAuth2Token> authorizedToken =
 				authorization.getToken(tokenIntrospectionAuthentication.getToken());
 		if (!authorizedToken.isActive()) {
 			return new OAuth2TokenIntrospectionAuthenticationToken(tokenIntrospectionAuthentication.getToken(),
@@ -105,7 +105,7 @@ public final class OAuth2TokenIntrospectionAuthenticationProvider implements Aut
 	}
 
 	private static OAuth2TokenIntrospection withActiveTokenClaims(
-			OAuth2Authorization.Token<AbstractOAuth2Token> authorizedToken, RegisteredClient authorizedClient) {
+			OAuth2Authorization.Token<OAuth2Token> authorizedToken, RegisteredClient authorizedClient) {
 
 		OAuth2TokenIntrospection.Builder tokenClaims;
 		if (!CollectionUtils.isEmpty(authorizedToken.getClaims())) {
@@ -119,7 +119,7 @@ public final class OAuth2TokenIntrospectionAuthenticationProvider implements Aut
 
 		// TODO Set "username"
 
-		AbstractOAuth2Token token = authorizedToken.getToken();
+		OAuth2Token token = authorizedToken.getToken();
 		if (token.getIssuedAt() != null) {
 			tokenClaims.issuedAt(token.getIssuedAt());
 		}

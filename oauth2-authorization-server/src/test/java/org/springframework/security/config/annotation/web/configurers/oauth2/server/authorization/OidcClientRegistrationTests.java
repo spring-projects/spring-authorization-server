@@ -378,10 +378,9 @@ public class OidcClientRegistrationTests {
 		// @formatter:on
 
 		@Bean
-		RegisteredClientRepository registeredClientRepository(JdbcOperations jdbcOperations, PasswordEncoder passwordEncoder) {
+		RegisteredClientRepository registeredClientRepository(JdbcOperations jdbcOperations) {
 			RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 			RegisteredClientParametersMapper registeredClientParametersMapper = new RegisteredClientParametersMapper();
-			registeredClientParametersMapper.setPasswordEncoder(passwordEncoder);
 			JdbcRegisteredClientRepository registeredClientRepository = new JdbcRegisteredClientRepository(jdbcOperations);
 			registeredClientRepository.setRegisteredClientParametersMapper(registeredClientParametersMapper);
 			registeredClientRepository.save(registeredClient);

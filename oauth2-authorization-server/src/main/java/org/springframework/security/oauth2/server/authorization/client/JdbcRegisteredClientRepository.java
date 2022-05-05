@@ -36,7 +36,6 @@ import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.SqlParameterValue;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.jackson2.SecurityJackson2Modules;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
@@ -341,13 +340,6 @@ public class JdbcRegisteredClientRepository implements RegisteredClientRepositor
 		public final void setObjectMapper(ObjectMapper objectMapper) {
 			Assert.notNull(objectMapper, "objectMapper cannot be null");
 			this.objectMapper = objectMapper;
-		}
-
-		/**
-		 * @deprecated See javadoc {@link RegisteredClientRepository#save(RegisteredClient)}
-		 */
-		@Deprecated
-		public final void setPasswordEncoder(PasswordEncoder passwordEncoder) {
 		}
 
 		protected final ObjectMapper getObjectMapper() {

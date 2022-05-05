@@ -26,7 +26,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -47,19 +46,16 @@ import org.springframework.security.oauth2.core.oidc.OidcClientMetadataClaimName
 import org.springframework.security.oauth2.core.oidc.OidcClientRegistration;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
-import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.config.ClientSettings;
-import org.springframework.security.oauth2.server.authorization.config.ProviderSettings;
 import org.springframework.security.oauth2.server.authorization.config.TokenSettings;
 import org.springframework.security.oauth2.server.authorization.context.ProviderContext;
 import org.springframework.security.oauth2.server.authorization.context.ProviderContextHolder;
 import org.springframework.security.oauth2.server.authorization.token.DefaultOAuth2TokenContext;
-import org.springframework.security.oauth2.server.authorization.token.JwtGenerator;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenContext;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenGenerator;
 import org.springframework.security.oauth2.server.resource.authentication.AbstractOAuth2TokenAuthenticationToken;
@@ -91,42 +87,7 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 	private static final String DEFAULT_CLIENT_CONFIGURATION_AUTHORIZED_SCOPE = "client.read";
 	private final RegisteredClientRepository registeredClientRepository;
 	private final OAuth2AuthorizationService authorizationService;
-	private OAuth2TokenGenerator<? extends OAuth2Token> tokenGenerator;
-
-	/**
-	 * Constructs an {@code OidcClientRegistrationAuthenticationProvider} using the provided parameters.
-	 *
-	 * @param registeredClientRepository the repository of registered clients
-	 * @param authorizationService the authorization service
-	 * @deprecated Use {@link #OidcClientRegistrationAuthenticationProvider(RegisteredClientRepository, OAuth2AuthorizationService, JwtEncoder)} instead
-	 */
-	@Deprecated
-	public OidcClientRegistrationAuthenticationProvider(RegisteredClientRepository registeredClientRepository,
-			OAuth2AuthorizationService authorizationService) {
-		Assert.notNull(registeredClientRepository, "registeredClientRepository cannot be null");
-		Assert.notNull(authorizationService, "authorizationService cannot be null");
-		this.registeredClientRepository = registeredClientRepository;
-		this.authorizationService = authorizationService;
-	}
-
-	/**
-	 * Constructs an {@code OidcClientRegistrationAuthenticationProvider} using the provided parameters.
-	 *
-	 * @param registeredClientRepository the repository of registered clients
-	 * @param authorizationService the authorization service
-	 * @param jwtEncoder the jwt encoder
-	 * @deprecated Use {@link #OidcClientRegistrationAuthenticationProvider(RegisteredClientRepository, OAuth2AuthorizationService, OAuth2TokenGenerator)} instead
-	 */
-	@Deprecated
-	public OidcClientRegistrationAuthenticationProvider(RegisteredClientRepository registeredClientRepository,
-			OAuth2AuthorizationService authorizationService, JwtEncoder jwtEncoder) {
-		Assert.notNull(registeredClientRepository, "registeredClientRepository cannot be null");
-		Assert.notNull(authorizationService, "authorizationService cannot be null");
-		Assert.notNull(jwtEncoder, "jwtEncoder cannot be null");
-		this.registeredClientRepository = registeredClientRepository;
-		this.authorizationService = authorizationService;
-		this.tokenGenerator = new JwtGenerator(jwtEncoder);
-	}
+	private final OAuth2TokenGenerator<? extends OAuth2Token> tokenGenerator;
 
 	/**
 	 * Constructs an {@code OidcClientRegistrationAuthenticationProvider} using the provided parameters.
@@ -144,16 +105,6 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 		this.registeredClientRepository = registeredClientRepository;
 		this.authorizationService = authorizationService;
 		this.tokenGenerator = tokenGenerator;
-	}
-
-	@Deprecated
-	@Autowired(required = false)
-	protected void setJwtEncoder(JwtEncoder jwtEncoder) {
-		this.tokenGenerator = new JwtGenerator(jwtEncoder);
-	}
-
-	@Deprecated
-	protected void setProviderSettings(ProviderSettings providerSettings) {
 	}
 
 	@Override

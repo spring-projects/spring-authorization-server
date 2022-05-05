@@ -117,28 +117,21 @@ public class OidcClientRegistrationAuthenticationProviderTests {
 	@Test
 	public void constructorWhenRegisteredClientRepositoryNullThenThrowIllegalArgumentException() {
 		assertThatIllegalArgumentException()
-				.isThrownBy(() -> new OidcClientRegistrationAuthenticationProvider(null, this.authorizationService, this.jwtEncoder))
+				.isThrownBy(() -> new OidcClientRegistrationAuthenticationProvider(null, this.authorizationService, this.tokenGenerator))
 				.withMessage("registeredClientRepository cannot be null");
 	}
 
 	@Test
 	public void constructorWhenAuthorizationServiceNullThenThrowIllegalArgumentException() {
 		assertThatIllegalArgumentException()
-				.isThrownBy(() -> new OidcClientRegistrationAuthenticationProvider(this.registeredClientRepository, null, this.jwtEncoder))
+				.isThrownBy(() -> new OidcClientRegistrationAuthenticationProvider(this.registeredClientRepository, null, this.tokenGenerator))
 				.withMessage("authorizationService cannot be null");
-	}
-
-	@Test
-	public void constructorWhenJwtEncoderNullThenThrowIllegalArgumentException() {
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> new OidcClientRegistrationAuthenticationProvider(this.registeredClientRepository, this.authorizationService, (JwtEncoder) null))
-				.withMessage("jwtEncoder cannot be null");
 	}
 
 	@Test
 	public void constructorWhenTokenGeneratorNullThenThrowIllegalArgumentException() {
 		assertThatIllegalArgumentException()
-				.isThrownBy(() -> new OidcClientRegistrationAuthenticationProvider(this.registeredClientRepository, this.authorizationService, (OAuth2TokenGenerator<?>) null))
+				.isThrownBy(() -> new OidcClientRegistrationAuthenticationProvider(this.registeredClientRepository, this.authorizationService, null))
 				.withMessage("tokenGenerator cannot be null");
 	}
 

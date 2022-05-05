@@ -250,10 +250,9 @@ public class OAuth2TokenRevocationTests {
 		}
 
 		@Bean
-		RegisteredClientRepository registeredClientRepository(JdbcOperations jdbcOperations, PasswordEncoder passwordEncoder) {
+		RegisteredClientRepository registeredClientRepository(JdbcOperations jdbcOperations) {
 			JdbcRegisteredClientRepository jdbcRegisteredClientRepository = new JdbcRegisteredClientRepository(jdbcOperations);
 			RegisteredClientParametersMapper registeredClientParametersMapper = new RegisteredClientParametersMapper();
-			registeredClientParametersMapper.setPasswordEncoder(passwordEncoder);
 			jdbcRegisteredClientRepository.setRegisteredClientParametersMapper(registeredClientParametersMapper);
 			return jdbcRegisteredClientRepository;
 		}

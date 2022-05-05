@@ -18,7 +18,6 @@ package org.springframework.security.oauth2.server.authorization.token;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Consumer;
 
 import org.springframework.lang.Nullable;
 import org.springframework.security.oauth2.jwt.JwsHeader;
@@ -99,34 +98,6 @@ public final class JwtEncodingContext implements OAuth2TokenContext {
 			Assert.notNull(claimsBuilder, "claimsBuilder cannot be null");
 			put(JwsHeader.Builder.class, headersBuilder);
 			put(JwtClaimsSet.Builder.class, claimsBuilder);
-		}
-
-		/**
-		 * A {@code Consumer} of the {@link JwsHeader.Builder headers}
-		 * allowing the ability to add, replace, or remove.
-		 *
-		 * @deprecated Use {@link #getHeaders()} instead
-		 * @param headersConsumer a {@code Consumer} of the {@link JwsHeader.Builder headers}
-		 * @return the {@link Builder} for further configuration
-		 */
-		@Deprecated
-		public Builder headers(Consumer<JwsHeader.Builder> headersConsumer) {
-			headersConsumer.accept(get(JwsHeader.Builder.class));
-			return this;
-		}
-
-		/**
-		 * A {@code Consumer} of the {@link JwtClaimsSet.Builder claims}
-		 * allowing the ability to add, replace, or remove.
-		 *
-		 * @deprecated Use {@link #getClaims()} instead
-		 * @param claimsConsumer a {@code Consumer} of the {@link JwtClaimsSet.Builder claims}
-		 * @return the {@link Builder} for further configuration
-		 */
-		@Deprecated
-		public Builder claims(Consumer<JwtClaimsSet.Builder> claimsConsumer) {
-			claimsConsumer.accept(get(JwtClaimsSet.Builder.class));
-			return this;
 		}
 
 		/**

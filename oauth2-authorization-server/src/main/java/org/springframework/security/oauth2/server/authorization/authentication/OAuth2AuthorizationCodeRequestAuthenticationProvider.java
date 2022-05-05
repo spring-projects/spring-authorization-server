@@ -26,7 +26,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 import org.springframework.lang.Nullable;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
@@ -87,10 +86,6 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 	private final RegisteredClientRepository registeredClientRepository;
 	private final OAuth2AuthorizationService authorizationService;
 	private final OAuth2AuthorizationConsentService authorizationConsentService;
-
-	@Deprecated
-	private Supplier<String> authorizationCodeSupplier;
-
 	private OAuth2TokenGenerator<OAuth2AuthorizationCode> authorizationCodeGenerator = new OAuth2AuthorizationCodeGenerator();
 	private Function<String, OAuth2AuthenticationValidator> authenticationValidatorResolver = DEFAULT_AUTHENTICATION_VALIDATOR_RESOLVER;
 	private Consumer<OAuth2AuthorizationConsentAuthenticationContext> authorizationConsentCustomizer;
@@ -125,18 +120,6 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 	@Override
 	public boolean supports(Class<?> authentication) {
 		return OAuth2AuthorizationCodeRequestAuthenticationToken.class.isAssignableFrom(authentication);
-	}
-
-	/**
-	 * Sets the {@code Supplier<String>} that generates the value for the {@link OAuth2AuthorizationCode}.
-	 *
-	 * @deprecated Use {@link #setAuthorizationCodeGenerator(OAuth2TokenGenerator)} instead
-	 * @param authorizationCodeGenerator the {@code Supplier<String>} that generates the value for the {@link OAuth2AuthorizationCode}
-	 */
-	@Deprecated
-	public void setAuthorizationCodeGenerator(Supplier<String> authorizationCodeGenerator) {
-		Assert.notNull(authorizationCodeGenerator, "authorizationCodeGenerator cannot be null");
-		this.authorizationCodeSupplier = authorizationCodeGenerator;
 	}
 
 	/**
@@ -277,20 +260,13 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 					.build();
 		}
 
-		OAuth2AuthorizationCode authorizationCode;
-		if (this.authorizationCodeSupplier != null) {
-			Instant issuedAt = Instant.now();
-			Instant expiresAt = issuedAt.plus(5, ChronoUnit.MINUTES);		// TODO Allow configuration for authorization code time-to-live
-			authorizationCode = new OAuth2AuthorizationCode(this.authorizationCodeSupplier.get(), issuedAt, expiresAt);
-		} else {
-			OAuth2TokenContext tokenContext = createAuthorizationCodeTokenContext(
-					authorizationCodeRequestAuthentication, registeredClient, null, authorizationRequest.getScopes());
-			authorizationCode = this.authorizationCodeGenerator.generate(tokenContext);
-			if (authorizationCode == null) {
-				OAuth2Error error = new OAuth2Error(OAuth2ErrorCodes.SERVER_ERROR,
-						"The token generator failed to generate the authorization code.", ERROR_URI);
-				throw new OAuth2AuthorizationCodeRequestAuthenticationException(error, null);
-			}
+		OAuth2TokenContext tokenContext = createAuthorizationCodeTokenContext(
+				authorizationCodeRequestAuthentication, registeredClient, null, authorizationRequest.getScopes());
+		OAuth2AuthorizationCode authorizationCode = this.authorizationCodeGenerator.generate(tokenContext);
+		if (authorizationCode == null) {
+			OAuth2Error error = new OAuth2Error(OAuth2ErrorCodes.SERVER_ERROR,
+					"The token generator failed to generate the authorization code.", ERROR_URI);
+			throw new OAuth2AuthorizationCodeRequestAuthenticationException(error, null);
 		}
 
 		OAuth2Authorization authorization = authorizationBuilder(registeredClient, principal, authorizationRequest)
@@ -411,20 +387,13 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 			this.authorizationConsentService.save(authorizationConsent);
 		}
 
-		OAuth2AuthorizationCode authorizationCode;
-		if (this.authorizationCodeSupplier != null) {
-			Instant issuedAt = Instant.now();
-			Instant expiresAt = issuedAt.plus(5, ChronoUnit.MINUTES);		// TODO Allow configuration for authorization code time-to-live
-			authorizationCode = new OAuth2AuthorizationCode(this.authorizationCodeSupplier.get(), issuedAt, expiresAt);
-		} else {
-			OAuth2TokenContext tokenContext = createAuthorizationCodeTokenContext(
-					authorizationCodeRequestAuthentication, registeredClient, authorization, authorizedScopes);
-			authorizationCode = this.authorizationCodeGenerator.generate(tokenContext);
-			if (authorizationCode == null) {
-				OAuth2Error error = new OAuth2Error(OAuth2ErrorCodes.SERVER_ERROR,
-						"The token generator failed to generate the authorization code.", ERROR_URI);
-				throw new OAuth2AuthorizationCodeRequestAuthenticationException(error, null);
-			}
+		OAuth2TokenContext tokenContext = createAuthorizationCodeTokenContext(
+				authorizationCodeRequestAuthentication, registeredClient, authorization, authorizedScopes);
+		OAuth2AuthorizationCode authorizationCode = this.authorizationCodeGenerator.generate(tokenContext);
+		if (authorizationCode == null) {
+			OAuth2Error error = new OAuth2Error(OAuth2ErrorCodes.SERVER_ERROR,
+					"The token generator failed to generate the authorization code.", ERROR_URI);
+			throw new OAuth2AuthorizationCodeRequestAuthenticationException(error, null);
 		}
 
 		OAuth2Authorization updatedAuthorization = OAuth2Authorization.from(authorization)

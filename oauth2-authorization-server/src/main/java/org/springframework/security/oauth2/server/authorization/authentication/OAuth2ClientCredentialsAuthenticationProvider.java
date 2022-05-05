@@ -17,7 +17,6 @@ package org.springframework.security.oauth2.server.authorization.authentication;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
-import java.util.function.Consumer;
 
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
@@ -30,20 +29,12 @@ import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.OAuth2Token;
 import org.springframework.security.oauth2.core.OAuth2TokenType;
-import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
-import org.springframework.security.oauth2.server.authorization.config.ProviderSettings;
 import org.springframework.security.oauth2.server.authorization.context.ProviderContextHolder;
 import org.springframework.security.oauth2.server.authorization.token.DefaultOAuth2TokenContext;
-import org.springframework.security.oauth2.server.authorization.token.DelegatingOAuth2TokenGenerator;
-import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext;
-import org.springframework.security.oauth2.server.authorization.token.JwtGenerator;
-import org.springframework.security.oauth2.server.authorization.token.OAuth2AccessTokenGenerator;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenContext;
-import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenGenerator;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
@@ -68,27 +59,6 @@ public final class OAuth2ClientCredentialsAuthenticationProvider implements Auth
 	private final OAuth2AuthorizationService authorizationService;
 	private final OAuth2TokenGenerator<? extends OAuth2Token> tokenGenerator;
 
-	// TODO Remove after removing @Deprecated OAuth2ClientCredentialsAuthenticationProvider(OAuth2AuthorizationService, JwtEncoder)
-	private JwtGenerator jwtGenerator;
-
-	/**
-	 * Constructs an {@code OAuth2ClientCredentialsAuthenticationProvider} using the provided parameters.
-	 *
-	 * @deprecated Use {@link #OAuth2ClientCredentialsAuthenticationProvider(OAuth2AuthorizationService, OAuth2TokenGenerator)} instead
-	 * @param authorizationService the authorization service
-	 * @param jwtEncoder the jwt encoder
-	 */
-	@Deprecated
-	public OAuth2ClientCredentialsAuthenticationProvider(OAuth2AuthorizationService authorizationService,
-			JwtEncoder jwtEncoder) {
-		Assert.notNull(authorizationService, "authorizationService cannot be null");
-		Assert.notNull(jwtEncoder, "jwtEncoder cannot be null");
-		this.authorizationService = authorizationService;
-		this.jwtGenerator = new JwtGenerator(jwtEncoder);
-		this.tokenGenerator = new DelegatingOAuth2TokenGenerator(
-				this.jwtGenerator, new OAuth2AccessTokenGenerator());
-	}
-
 	/**
 	 * Constructs an {@code OAuth2ClientCredentialsAuthenticationProvider} using the provided parameters.
 	 *
@@ -102,26 +72,6 @@ public final class OAuth2ClientCredentialsAuthenticationProvider implements Auth
 		Assert.notNull(tokenGenerator, "tokenGenerator cannot be null");
 		this.authorizationService = authorizationService;
 		this.tokenGenerator = tokenGenerator;
-	}
-
-	/**
-	 * Sets the {@link OAuth2TokenCustomizer} that customizes the
-	 * {@link JwtEncodingContext.Builder#headers(Consumer) headers} and/or
-	 * {@link JwtEncodingContext.Builder#claims(Consumer) claims} for the generated {@link Jwt}.
-	 *
-	 * @deprecated Use {@link JwtGenerator#setJwtCustomizer(OAuth2TokenCustomizer)} instead
-	 * @param jwtCustomizer the {@link OAuth2TokenCustomizer} that customizes the headers and/or claims for the generated {@code Jwt}
-	 */
-	@Deprecated
-	public void setJwtCustomizer(OAuth2TokenCustomizer<JwtEncodingContext> jwtCustomizer) {
-		Assert.notNull(jwtCustomizer, "jwtCustomizer cannot be null");
-		if (this.jwtGenerator != null) {
-			this.jwtGenerator.setJwtCustomizer(jwtCustomizer);
-		}
-	}
-
-	@Deprecated
-	protected void setProviderSettings(ProviderSettings providerSettings) {
 	}
 
 	@Override

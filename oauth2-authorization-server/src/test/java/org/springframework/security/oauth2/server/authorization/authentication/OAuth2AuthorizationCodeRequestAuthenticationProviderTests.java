@@ -23,7 +23,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -46,7 +45,6 @@ import org.springframework.security.oauth2.server.authorization.OAuth2Authorizat
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsent;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsentService;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
-import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenGenerator;
 import org.springframework.security.oauth2.server.authorization.TestOAuth2Authorizations;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
@@ -55,6 +53,7 @@ import org.springframework.security.oauth2.server.authorization.config.ClientSet
 import org.springframework.security.oauth2.server.authorization.config.ProviderSettings;
 import org.springframework.security.oauth2.server.authorization.context.ProviderContext;
 import org.springframework.security.oauth2.server.authorization.context.ProviderContextHolder;
+import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenGenerator;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -62,7 +61,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -125,10 +123,7 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 
 	@Test
 	public void setAuthorizationCodeGeneratorWhenNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> this.authenticationProvider.setAuthorizationCodeGenerator((Supplier<String>) null))
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("authorizationCodeGenerator cannot be null");
-		assertThatThrownBy(() -> this.authenticationProvider.setAuthorizationCodeGenerator((OAuth2TokenGenerator<OAuth2AuthorizationCode>) null))
+		assertThatThrownBy(() -> this.authenticationProvider.setAuthorizationCodeGenerator(null))
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessage("authorizationCodeGenerator cannot be null");
 	}
@@ -512,34 +507,6 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 				(OAuth2AuthorizationCodeRequestAuthenticationToken) this.authenticationProvider.authenticate(authentication);
 
 		assertAuthorizationCodeRequestWithAuthorizationCodeResult(registeredClient, authentication, authenticationResult);
-	}
-
-	@Test
-	public void authenticateWhenCustomAuthorizationCodeGeneratorThenUsed() {
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
-		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
-				.thenReturn(registeredClient);
-
-		@SuppressWarnings("unchecked")
-		Supplier<String> authorizationCodeGenerator = spy(new Supplier<String>() {
-			@Override
-			public String get() {
-				return "custom-code";
-			}
-		});
-		this.authenticationProvider.setAuthorizationCodeGenerator(authorizationCodeGenerator);
-
-		OAuth2AuthorizationCodeRequestAuthenticationToken authentication =
-				authorizationCodeRequestAuthentication(registeredClient, this.principal)
-						.build();
-
-		OAuth2AuthorizationCodeRequestAuthenticationToken authenticationResult =
-				(OAuth2AuthorizationCodeRequestAuthenticationToken) this.authenticationProvider.authenticate(authentication);
-
-		assertAuthorizationCodeRequestWithAuthorizationCodeResult(registeredClient, authentication, authenticationResult);
-
-		verify(authorizationCodeGenerator).get();
-		assertThat(authenticationResult.getAuthorizationCode().getTokenValue()).isEqualTo(authorizationCodeGenerator.get());
 	}
 
 	@Test

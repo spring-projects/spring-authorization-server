@@ -23,7 +23,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Supplier;
 
 import org.junit.After;
 import org.junit.Before;
@@ -128,39 +127,17 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 
 	@Test
 	public void constructorWhenAuthorizationServiceNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> new OAuth2RefreshTokenAuthenticationProvider(null, this.jwtEncoder))
+		assertThatThrownBy(() -> new OAuth2RefreshTokenAuthenticationProvider(null, this.tokenGenerator))
 				.isInstanceOf(IllegalArgumentException.class)
 				.extracting(Throwable::getMessage)
 				.isEqualTo("authorizationService cannot be null");
 	}
 
 	@Test
-	public void constructorWhenJwtEncoderNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> new OAuth2RefreshTokenAuthenticationProvider(this.authorizationService, (JwtEncoder) null))
-				.isInstanceOf(IllegalArgumentException.class)
-				.extracting(Throwable::getMessage)
-				.isEqualTo("jwtEncoder cannot be null");
-	}
-
-	@Test
 	public void constructorWhenTokenGeneratorNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> new OAuth2RefreshTokenAuthenticationProvider(this.authorizationService, (OAuth2TokenGenerator<?>) null))
+		assertThatThrownBy(() -> new OAuth2RefreshTokenAuthenticationProvider(this.authorizationService, null))
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessage("tokenGenerator cannot be null");
-	}
-
-	@Test
-	public void setJwtCustomizerWhenNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> this.authenticationProvider.setJwtCustomizer(null))
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("jwtCustomizer cannot be null");
-	}
-
-	@Test
-	public void setRefreshTokenGeneratorWhenNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> this.authenticationProvider.setRefreshTokenGenerator(null))
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("refreshTokenGenerator cannot be null");
 	}
 
 	@Test
@@ -335,38 +312,6 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 				(OAuth2AccessTokenAuthenticationToken) this.authenticationProvider.authenticate(authentication);
 
 		assertThat(accessTokenAuthentication.getAccessToken().getScopes()).isEqualTo(requestedScopes);
-	}
-
-	@Test
-	public void authenticateWhenCustomRefreshTokenGeneratorThenUsed() {
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
-				.tokenSettings(TokenSettings.builder().reuseRefreshTokens(false).build())
-				.build();
-		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();
-		when(this.authorizationService.findByToken(
-				eq(authorization.getRefreshToken().getToken().getTokenValue()),
-				eq(OAuth2TokenType.REFRESH_TOKEN)))
-				.thenReturn(authorization);
-
-		@SuppressWarnings("unchecked")
-		Supplier<String> refreshTokenGenerator = spy(new Supplier<String>() {
-			@Override
-			public String get() {
-				return "custom-refresh-token";
-			}
-		});
-		this.authenticationProvider.setRefreshTokenGenerator(refreshTokenGenerator);
-
-		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(
-				registeredClient, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
-		OAuth2RefreshTokenAuthenticationToken authentication = new OAuth2RefreshTokenAuthenticationToken(
-				authorization.getRefreshToken().getToken().getTokenValue(), clientPrincipal, null, null);
-
-		OAuth2AccessTokenAuthenticationToken accessTokenAuthentication =
-				(OAuth2AccessTokenAuthenticationToken) this.authenticationProvider.authenticate(authentication);
-
-		verify(refreshTokenGenerator).get();
-		assertThat(accessTokenAuthentication.getRefreshToken().getTokenValue()).isEqualTo(refreshTokenGenerator.get());
 	}
 
 	@Test

@@ -11,4 +11,3 @@ xref:configuration-model.adoc[Configuration Model] :: Configuration and provider
 xref:core-model-components.adoc[Core Model / Components] :: Core domain model and component interfaces
 xref:protocol-endpoints.adoc[Protocol Endpoints] :: Specifications and endpoints
 xref:how-to.adoc["How-to" Guides] :: Guides to get the most from Spring Authorization Server
-xref:appendix.adoc[Appendices] :: Additional information

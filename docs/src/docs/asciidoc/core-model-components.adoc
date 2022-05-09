@@ -117,7 +117,7 @@ public RegisteredClientRepository registeredClientRepository() {
 }
 ----
 
-Alternatively, you can configure the `RegisteredClientRepository` through the xref:configuration-model.adoc#oauth2-authorization-server-configurer[`OAuth2AuthorizationServerConfigurer`]:
+Alternatively, you can configure the `RegisteredClientRepository` through the xref:configuration-model.adoc#customizing-the-configuration[`OAuth2AuthorizationServerConfigurer`]:
 
 [source,java]
 ----
@@ -207,7 +207,7 @@ public OAuth2AuthorizationService authorizationService() {
 }
 ----
 
-Alternatively, you can configure the `OAuth2AuthorizationService` through the xref:configuration-model.adoc#oauth2-authorization-server-configurer[`OAuth2AuthorizationServerConfigurer`]:
+Alternatively, you can configure the `OAuth2AuthorizationService` through the xref:configuration-model.adoc#customizing-the-configuration[`OAuth2AuthorizationServerConfigurer`]:
 
 [source,java]
 ----
@@ -276,7 +276,7 @@ public OAuth2AuthorizationConsentService authorizationConsentService() {
 }
 ----
 
-Alternatively, you can configure the `OAuth2AuthorizationConsentService` through the xref:configuration-model.adoc#oauth2-authorization-server-configurer[`OAuth2AuthorizationServerConfigurer`]:
+Alternatively, you can configure the `OAuth2AuthorizationConsentService` through the xref:configuration-model.adoc#customizing-the-configuration[`OAuth2AuthorizationServerConfigurer`]:
 
 [source,java]
 ----
@@ -329,7 +329,7 @@ public interface OAuth2TokenContext extends Context {
 ----
 <1> `getRegisteredClient()`: The <<registered-client, RegisteredClient>> associated with the authorization grant.
 <2> `getPrincipal()`: The `Authentication` instance of the resource owner (or client).
-<3> `getProviderContext()`: The xref:configuration-model.adoc#provider-context[`ProviderContext`] object that holds information related to the provider.
+<3> `getProviderContext()`: The xref:configuration-model.adoc#configuring-provider-settings[`ProviderContext`] object that holds information related to the provider.
 <4> `getAuthorization()`: The <<oauth2-authorization, OAuth2Authorization>> associated with the authorization grant.
 <5> `getAuthorizedScopes()`: The scope(s) authorized for the client.
 <6> `getTokenType()`: The `OAuth2TokenType` to generate. The supported values are `code`, `access_token`, `refresh_token`, and `id_token`.
@@ -382,7 +382,7 @@ public OAuth2TokenGenerator<?> tokenGenerator() {
 }
 ----
 
-Alternatively, you can configure the `OAuth2TokenGenerator` through the xref:configuration-model.adoc#oauth2-authorization-server-configurer[`OAuth2AuthorizationServerConfigurer`]:
+Alternatively, you can configure the `OAuth2TokenGenerator` through the xref:configuration-model.adoc#customizing-the-configuration[`OAuth2AuthorizationServerConfigurer`]:
 
 [source,java]
 ----

@@ -3,17 +3,94 @@
 :toc: left
 :toclevels: 1
 
-This page is under construction.
-
 [[oauth2-authorization-endpoint]]
 == OAuth2 Authorization Endpoint
 
-This section is under construction.
+`OAuth2AuthorizationEndpointConfigurer` provides the ability to customize the https://datatracker.ietf.org/doc/html/rfc6749#section-3.1[OAuth2 Authorization endpoint].
+It defines extension points that let you customize the pre-processing, main processing, and post-processing logic for https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.1[OAuth2 authorization requests].
+
+`OAuth2AuthorizationEndpointConfigurer` provides the following configuration options:
+
+[source,java]
+----
+@Bean
+public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
+	OAuth2AuthorizationServerConfigurer<HttpSecurity> authorizationServerConfigurer =
+		new OAuth2AuthorizationServerConfigurer<>();
+	http.apply(authorizationServerConfigurer);
+
+	authorizationServerConfigurer
+		.authorizationEndpoint(authorizationEndpoint ->
+			authorizationEndpoint
+				.authorizationRequestConverter(authorizationRequestConverter)   <1>
+				.authenticationProvider(authenticationProvider) <2>
+				.authorizationResponseHandler(authorizationResponseHandler) <3>
+				.errorResponseHandler(errorResponseHandler) <4>
+				.consentPage("/oauth2/v1/authorize")    <5>
+		);
+
+	return http.build();
+}
+----
+<1> `authorizationRequestConverter()`: The `AuthenticationConverter` (_pre-processor_) used when attempting to extract an https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.1[OAuth2 authorization request] (or consent) from `HttpServletRequest` to an instance of `OAuth2AuthorizationCodeRequestAuthenticationToken`.
+<2> `authenticationProvider()`: The `AuthenticationProvider` (_main processor_) used for authenticating the `OAuth2AuthorizationCodeRequestAuthenticationToken`. (One or more may be added to replace the defaults.)
+<3> `authorizationResponseHandler()`: The `AuthenticationSuccessHandler` (_post-processor_) used for handling an "`authenticated`" `OAuth2AuthorizationCodeRequestAuthenticationToken` and returning the https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.2[OAuth2AuthorizationResponse].
+<4> `errorResponseHandler()`: The `AuthenticationFailureHandler` (_post-processor_) used for handling an `OAuth2AuthorizationCodeRequestAuthenticationException` and returning the https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.2.1[OAuth2Error response].
+<5> `consentPage()`: The `URI` of the custom consent page to redirect resource owners to if consent is required during the authorization request flow.
+
+`OAuth2AuthorizationEndpointConfigurer` configures the `OAuth2AuthorizationEndpointFilter` and registers it with the OAuth2 authorization server `SecurityFilterChain` `@Bean`.
+`OAuth2AuthorizationEndpointFilter` is the `Filter` that processes OAuth2 authorization requests (and consents).
+
+`OAuth2AuthorizationEndpointFilter` is configured with the following defaults:
+
+* `*AuthenticationConverter*` -- An `OAuth2AuthorizationCodeRequestAuthenticationConverter`.
+* `*AuthenticationManager*` -- An `AuthenticationManager` composed of `OAuth2AuthorizationCodeRequestAuthenticationProvider`.
+* `*AuthenticationSuccessHandler*` -- An internal implementation that handles an "`authenticated`" `OAuth2AuthorizationCodeRequestAuthenticationToken` and returns the `OAuth2AuthorizationResponse`.
+* `*AuthenticationFailureHandler*` -- An internal implementation that uses the `OAuth2Error` associated with the `OAuth2AuthorizationCodeRequestAuthenticationException` and returns the `OAuth2Error` response.
 
 [[oauth2-token-endpoint]]
 == OAuth2 Token Endpoint
 
-This section is under construction.
+`OAuth2TokenEndpointConfigurer` provides the ability to customize the https://datatracker.ietf.org/doc/html/rfc6749#section-3.2[OAuth2 Token endpoint].
+It defines extension points that let you customize the pre-processing, main processing, and post-processing logic for https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.3[OAuth2 access token requests].
+
+`OAuth2TokenEndpointConfigurer` provides the following configuration options:
+[source,java]
+----
+@Bean
+public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
+	OAuth2AuthorizationServerConfigurer<HttpSecurity> authorizationServerConfigurer =
+		new OAuth2AuthorizationServerConfigurer<>();
+	http.apply(authorizationServerConfigurer);
+
+	authorizationServerConfigurer
+		.tokenEndpoint(tokenEndpoint ->
+			tokenEndpoint
+				.accessTokenRequestConverter(accessTokenRequestConverter)   <1>
+				.authenticationProvider(authenticationProvider) <2>
+				.accessTokenResponseHandler(accessTokenResponseHandler) <3>
+				.errorResponseHandler(errorResponseHandler) <4>
+		);
+
+	return http.build();
+}
+----
+<1> `accessTokenRequestConverter()`: The `AuthenticationConverter` (_pre-processor_) used when attempting to extract an https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.3[OAuth2 access token request] from `HttpServletRequest` to an instance of `OAuth2AuthorizationGrantAuthenticationToken`.
+<2> `authenticationProvider()`: The `AuthenticationProvider` (_main processor_) used for authenticating the `OAuth2AuthorizationGrantAuthenticationToken`. (One or more may be added to replace the defaults.)
+<3> `accessTokenResponseHandler()`: The `AuthenticationSuccessHandler` (_post-processor_) used for handling an `OAuth2AccessTokenAuthenticationToken` and returning the https://datatracker.ietf.org/doc/html/rfc6749#section-5.1[`OAuth2AccessTokenResponse`].
+<4> `errorResponseHandler()`: The `AuthenticationFailureHandler` (_post-processor_) used for handling an `OAuth2AuthenticationException` and returning the https://datatracker.ietf.org/doc/html/rfc6749#section-5.2[OAuth2Error response].
+
+`OAuth2TokenEndpointConfigurer` configures the `OAuth2TokenEndpointFilter` and registers it with the OAuth2 authorization server `SecurityFilterChain` `@Bean`.
+`OAuth2TokenEndpointFilter` is the `Filter` that processes OAuth2 access token requests.
+
+The supported https://datatracker.ietf.org/doc/html/rfc6749#section-1.3[authorization grant types] are `authorization_code`, `refresh_token`, and `client_credentials`.
+
+`OAuth2TokenEndpointFilter` is configured with the following defaults:
+
+* `*AuthenticationConverter*` -- A `DelegatingAuthenticationConverter` composed of `OAuth2AuthorizationCodeAuthenticationConverter`, `OAuth2RefreshTokenAuthenticationConverter`, and `OAuth2ClientCredentialsAuthenticationConverter`.
+* `*AuthenticationManager*` -- An `AuthenticationManager` composed of `OAuth2AuthorizationCodeAuthenticationProvider`, `OAuth2RefreshTokenAuthenticationProvider`, and `OAuth2ClientCredentialsAuthenticationProvider`.
+* `*AuthenticationSuccessHandler*` -- An internal implementation that handles an `OAuth2AccessTokenAuthenticationToken` and returns the `OAuth2AccessTokenResponse`.
+* `*AuthenticationFailureHandler*` -- An internal implementation that uses the `OAuth2Error` associated with the `OAuth2AuthenticationException` and returns the `OAuth2Error` response.
 
 [[oauth2-token-introspection-endpoint]]
 == OAuth2 Token Introspection Endpoint

@@ -15,6 +15,7 @@
  */
 package org.springframework.security.oauth2.server.authorization.authentication;
 
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -87,7 +88,7 @@ public final class OAuth2ClientCredentialsAuthenticationProvider implements Auth
 			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.UNAUTHORIZED_CLIENT);
 		}
 
-		Set<String> authorizedScopes = registeredClient.getScopes();		// Default to configured scopes
+		Set<String> authorizedScopes = Collections.EMPTY_SET; // Empty by default
 		if (!CollectionUtils.isEmpty(clientCredentialsAuthentication.getScopes())) {
 			for (String requestedScope : clientCredentialsAuthentication.getScopes()) {
 				if (!registeredClient.getScopes().contains(requestedScope)) {

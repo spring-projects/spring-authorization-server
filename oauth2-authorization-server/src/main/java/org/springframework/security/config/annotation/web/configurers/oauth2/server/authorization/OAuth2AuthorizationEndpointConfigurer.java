@@ -30,6 +30,8 @@ import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationResp
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeRequestAuthenticationException;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeRequestAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeRequestAuthenticationToken;
+import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ConsentHandler;
+import org.springframework.security.oauth2.server.authorization.authentication.SimpleUrlOAuth2ConsentHandler;
 import org.springframework.security.oauth2.server.authorization.config.ProviderSettings;
 import org.springframework.security.oauth2.server.authorization.web.OAuth2AuthorizationEndpointFilter;
 import org.springframework.security.web.authentication.AuthenticationConverter;
@@ -57,6 +59,7 @@ public final class OAuth2AuthorizationEndpointConfigurer extends AbstractOAuth2C
 	private AuthenticationSuccessHandler authorizationResponseHandler;
 	private AuthenticationFailureHandler errorResponseHandler;
 	private String consentPage;
+	private OAuth2ConsentHandler consentHandler;
 
 	/**
 	 * Restrict for internal use only.
@@ -147,6 +150,11 @@ public final class OAuth2AuthorizationEndpointConfigurer extends AbstractOAuth2C
 		return this;
 	}
 
+	public OAuth2AuthorizationEndpointConfigurer consentHandler(OAuth2ConsentHandler consentHandler) {
+		this.consentHandler = consentHandler;
+		return this;
+	}
+
 	@Override
 	<B extends HttpSecurityBuilder<B>> void init(B builder) {
 		ProviderSettings providerSettings = OAuth2ConfigurerUtils.getProviderSettings(builder);
@@ -184,8 +192,10 @@ public final class OAuth2AuthorizationEndpointConfigurer extends AbstractOAuth2C
 		if (this.errorResponseHandler != null) {
 			authorizationEndpointFilter.setAuthenticationFailureHandler(this.errorResponseHandler);
 		}
-		if (StringUtils.hasText(this.consentPage)) {
-			authorizationEndpointFilter.setConsentPage(this.consentPage);
+		if (this.consentHandler != null) {
+			authorizationEndpointFilter.setConsentHandler(this.consentHandler);
+		} else if (StringUtils.hasText(this.consentPage)) {
+			authorizationEndpointFilter.setConsentHandler(new SimpleUrlOAuth2ConsentHandler(this.consentPage));
 		}
 		builder.addFilterBefore(postProcess(authorizationEndpointFilter), AbstractPreAuthenticatedProcessingFilter.class);
 	}

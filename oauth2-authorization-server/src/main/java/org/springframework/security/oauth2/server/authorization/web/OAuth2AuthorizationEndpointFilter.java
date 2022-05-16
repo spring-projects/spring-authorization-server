@@ -16,9 +16,6 @@
 package org.springframework.security.oauth2.server.authorization.web;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.HashSet;
-import java.util.Set;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
@@ -27,7 +24,6 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -36,17 +32,17 @@ import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationResponse;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
+import org.springframework.security.oauth2.server.authorization.authentication.DefaultOAuth2ConsentPageHandler;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeRequestAuthenticationException;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeRequestAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeRequestAuthenticationToken;
+import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ConsentHandler;
 import org.springframework.security.oauth2.server.authorization.web.authentication.OAuth2AuthorizationCodeRequestAuthenticationConverter;
 import org.springframework.security.web.DefaultRedirectStrategy;
 import org.springframework.security.web.RedirectStrategy;
 import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
-import org.springframework.security.web.util.RedirectUrlBuilder;
-import org.springframework.security.web.util.UrlUtils;
 import org.springframework.security.web.util.matcher.AndRequestMatcher;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.NegatedRequestMatcher;
@@ -85,7 +81,7 @@ public final class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilte
 	private AuthenticationConverter authenticationConverter;
 	private AuthenticationSuccessHandler authenticationSuccessHandler = this::sendAuthorizationResponse;
 	private AuthenticationFailureHandler authenticationFailureHandler = this::sendErrorResponse;
-	private String consentPage;
+	private OAuth2ConsentHandler consentHandler = new DefaultOAuth2ConsentPageHandler();
 
 	/**
 	 * Constructs an {@code OAuth2AuthorizationEndpointFilter} using the provided parameters.
@@ -157,7 +153,8 @@ public final class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilte
 			}
 
 			if (authorizationCodeRequestAuthenticationResult.isConsentRequired()) {
-				sendAuthorizationConsent(request, response, authorizationCodeRequestAuthentication, authorizationCodeRequestAuthenticationResult);
+				consentHandler.handleConsent(request, response, authorizationCodeRequestAuthentication,
+						authorizationCodeRequestAuthenticationResult);
 				return;
 			}
 
@@ -203,52 +200,12 @@ public final class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilte
 	}
 
 	/**
-	 * Specify the URI to redirect Resource Owners to if consent is required. A default consent
-	 * page will be generated when this attribute is not specified.
+	 * consentHandler is used to handle the consent process.
 	 *
-	 * @param consentPage the URI of the custom consent page to redirect to if consent is required (e.g. "/oauth2/consent")
+	 * @param consentHandler the consentHandler to set
 	 */
-	public void setConsentPage(String consentPage) {
-		this.consentPage = consentPage;
-	}
-
-	private void sendAuthorizationConsent(HttpServletRequest request, HttpServletResponse response,
-			OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthentication,
-			OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthenticationResult) throws IOException {
-
-		String clientId = authorizationCodeRequestAuthenticationResult.getClientId();
-		Authentication principal = (Authentication) authorizationCodeRequestAuthenticationResult.getPrincipal();
-		Set<String> requestedScopes = authorizationCodeRequestAuthentication.getScopes();
-		Set<String> authorizedScopes = authorizationCodeRequestAuthenticationResult.getScopes();
-		String state = authorizationCodeRequestAuthenticationResult.getState();
-
-		if (hasConsentUri()) {
-			String redirectUri = UriComponentsBuilder.fromUriString(resolveConsentUri(request))
-					.queryParam(OAuth2ParameterNames.SCOPE, String.join(" ", requestedScopes))
-					.queryParam(OAuth2ParameterNames.CLIENT_ID, clientId)
-					.queryParam(OAuth2ParameterNames.STATE, state)
-					.toUriString();
-			this.redirectStrategy.sendRedirect(request, response, redirectUri);
-		} else {
-			DefaultConsentPage.displayConsent(request, response, clientId, principal, requestedScopes, authorizedScopes, state);
-		}
-	}
-
-	private boolean hasConsentUri() {
-		return StringUtils.hasText(this.consentPage);
-	}
-
-	private String resolveConsentUri(HttpServletRequest request) {
-		if (UrlUtils.isAbsoluteUrl(this.consentPage)) {
-			return this.consentPage;
-		}
-		RedirectUrlBuilder urlBuilder = new RedirectUrlBuilder();
-		urlBuilder.setScheme(request.getScheme());
-		urlBuilder.setServerName(request.getServerName());
-		urlBuilder.setPort(request.getServerPort());
-		urlBuilder.setContextPath(request.getContextPath());
-		urlBuilder.setPathInfo(this.consentPage);
-		return urlBuilder.getUrl();
+	public void setConsentHandler(OAuth2ConsentHandler consentHandler) {
+		this.consentHandler = consentHandler;
 	}
 
 	private void sendAuthorizationResponse(HttpServletRequest request, HttpServletResponse response,
@@ -296,107 +253,4 @@ public final class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilte
 		this.redirectStrategy.sendRedirect(request, response, uriBuilder.toUriString());
 	}
 
-	/**
-	 * For internal use only.
-	 */
-	private static class DefaultConsentPage {
-		private static final MediaType TEXT_HTML_UTF8 = new MediaType("text", "html", StandardCharsets.UTF_8);
-
-		private static void displayConsent(HttpServletRequest request, HttpServletResponse response,
-				String clientId, Authentication principal, Set<String> requestedScopes, Set<String> authorizedScopes, String state)
-				throws IOException {
-
-			String consentPage = generateConsentPage(request, clientId, principal, requestedScopes, authorizedScopes, state);
-			response.setContentType(TEXT_HTML_UTF8.toString());
-			response.setContentLength(consentPage.getBytes(StandardCharsets.UTF_8).length);
-			response.getWriter().write(consentPage);
-		}
-
-		private static String generateConsentPage(HttpServletRequest request,
-				String clientId, Authentication principal, Set<String> requestedScopes, Set<String> authorizedScopes, String state) {
-			Set<String> scopesToAuthorize = new HashSet<>();
-			Set<String> scopesPreviouslyAuthorized = new HashSet<>();
-			for (String scope : requestedScopes) {
-				if (authorizedScopes.contains(scope)) {
-					scopesPreviouslyAuthorized.add(scope);
-				} else if (!scope.equals(OidcScopes.OPENID)) { // openid scope does not require consent
-					scopesToAuthorize.add(scope);
-				}
-			}
-
-			StringBuilder builder = new StringBuilder();
-
-			builder.append("<!DOCTYPE html>");
-			builder.append("<html lang=\"en\">");
-			builder.append("<head>");
-			builder.append("    <meta charset=\"utf-8\">");
-			builder.append("    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1, shrink-to-fit=no\">");
-			builder.append("    <link rel=\"stylesheet\" href=\"https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css\" integrity=\"sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z\" crossorigin=\"anonymous\">");
-			builder.append("    <title>Consent required</title>");
-			builder.append("	<script>");
-			builder.append("		function cancelConsent() {");
-			builder.append("			document.consent_form.reset();");
-			builder.append("			document.consent_form.submit();");
-			builder.append("		}");
-			builder.append("	</script>");
-			builder.append("</head>");
-			builder.append("<body>");
-			builder.append("<div class=\"container\">");
-			builder.append("    <div class=\"py-5\">");
-			builder.append("        <h1 class=\"text-center\">Consent required</h1>");
-			builder.append("    </div>");
-			builder.append("    <div class=\"row\">");
-			builder.append("        <div class=\"col text-center\">");
-			builder.append("            <p><span class=\"font-weight-bold text-primary\">" + clientId + "</span> wants to access your account <span class=\"font-weight-bold\">" + principal.getName() + "</span></p>");
-			builder.append("        </div>");
-			builder.append("    </div>");
-			builder.append("    <div class=\"row pb-3\">");
-			builder.append("        <div class=\"col text-center\">");
-			builder.append("            <p>The following permissions are requested by the above app.<br/>Please review these and consent if you approve.</p>");
-			builder.append("        </div>");
-			builder.append("    </div>");
-			builder.append("    <div class=\"row\">");
-			builder.append("        <div class=\"col text-center\">");
-			builder.append("            <form name=\"consent_form\" method=\"post\" action=\"" + request.getRequestURI() + "\">");
-			builder.append("                <input type=\"hidden\" name=\"client_id\" value=\"" + clientId + "\">");
-			builder.append("                <input type=\"hidden\" name=\"state\" value=\"" + state + "\">");
-
-			for (String scope : scopesToAuthorize) {
-				builder.append("                <div class=\"form-group form-check py-1\">");
-				builder.append("                    <input class=\"form-check-input\" type=\"checkbox\" name=\"scope\" value=\"" + scope + "\" id=\"" + scope + "\">");
-				builder.append("                    <label class=\"form-check-label\" for=\"" + scope + "\">" + scope + "</label>");
-				builder.append("                </div>");
-			}
-
-			if (!scopesPreviouslyAuthorized.isEmpty()) {
-				builder.append("                <p>You have already granted the following permissions to the above app:</p>");
-				for (String scope : scopesPreviouslyAuthorized) {
-					builder.append("                <div class=\"form-group form-check py-1\">");
-					builder.append("                    <input class=\"form-check-input\" type=\"checkbox\" name=\"scope\" id=\"" + scope + "\" checked disabled>");
-					builder.append("                    <label class=\"form-check-label\" for=\"" + scope + "\">" + scope + "</label>");
-					builder.append("                </div>");
-				}
-			}
-
-			builder.append("                <div class=\"form-group pt-3\">");
-			builder.append("                    <button class=\"btn btn-primary btn-lg\" type=\"submit\" id=\"submit-consent\">Submit Consent</button>");
-			builder.append("                </div>");
-			builder.append("                <div class=\"form-group\">");
-			builder.append("                    <button class=\"btn btn-link regular\" type=\"button\" onclick=\"cancelConsent();\" id=\"cancel-consent\">Cancel</button>");
-			builder.append("                </div>");
-			builder.append("            </form>");
-			builder.append("        </div>");
-			builder.append("    </div>");
-			builder.append("    <div class=\"row pt-4\">");
-			builder.append("        <div class=\"col text-center\">");
-			builder.append("            <p><small>Your consent to provide access is required.<br/>If you do not approve, click Cancel, in which case no information will be shared with the app.</small></p>");
-			builder.append("        </div>");
-			builder.append("    </div>");
-			builder.append("</div>");
-			builder.append("</body>");
-			builder.append("</html>");
-
-			return builder.toString();
-		}
-	}
 }

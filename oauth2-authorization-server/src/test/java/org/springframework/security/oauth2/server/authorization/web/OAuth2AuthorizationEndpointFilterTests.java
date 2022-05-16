@@ -50,6 +50,7 @@ import org.springframework.security.oauth2.core.endpoint.PkceParameterNames;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeRequestAuthenticationException;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeRequestAuthenticationToken;
+import org.springframework.security.oauth2.server.authorization.authentication.SimpleUrlOAuth2ConsentHandler;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
 import org.springframework.security.web.authentication.AuthenticationConverter;
@@ -407,7 +408,7 @@ public class OAuth2AuthorizationEndpointFilterTests {
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		FilterChain filterChain = mock(FilterChain.class);
 
-		this.filter.setConsentPage("/oauth2/custom-consent");
+		this.filter.setConsentHandler(new SimpleUrlOAuth2ConsentHandler("/oauth2/custom-consent"));
 		this.filter.doFilter(request, response, filterChain);
 
 		verify(this.authenticationManager).authenticate(any());

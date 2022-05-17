@@ -189,7 +189,13 @@ public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity h
 [[jwk-set-endpoint]]
 == JWK Set Endpoint
 
-This section is under construction.
+`OAuth2AuthorizationServerConfigurer` provides support for the https://datatracker.ietf.org/doc/html/rfc7517[JWK Set endpoint].
+
+`OAuth2AuthorizationServerConfigurer` configures the `NimbusJwkSetEndpointFilter` and registers it with the OAuth2 authorization server `SecurityFilterChain` `@Bean`.
+`NimbusJwkSetEndpointFilter` is the `Filter` that returns the https://datatracker.ietf.org/doc/html/rfc7517#section-5[JWK Set].
+
+[NOTE]
+The JWK Set endpoint is configured *only* if a `JWKSource<SecurityContext>` `@Bean` is registered.
 
 [[oidc-provider-configuration-endpoint]]
 == OpenID Connect 1.0 Provider Configuration Endpoint

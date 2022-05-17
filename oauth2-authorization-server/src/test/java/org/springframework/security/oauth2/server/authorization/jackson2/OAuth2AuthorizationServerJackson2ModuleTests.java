@@ -71,4 +71,11 @@ public class OAuth2AuthorizationServerJackson2ModuleTests {
 		String json = this.objectMapper.writeValueAsString(set);
 		assertThat(this.objectMapper.readValue(json, STRING_SET)).isEqualTo(set);
 	}
+
+	@Test
+	public void readValueWhenUnmodifiableMapWithLongThenSuccess() throws Exception {
+		Map<String, Object> map = Collections.unmodifiableMap(new HashMap<>(Collections.singletonMap("ver", 1L)));
+		String json = this.objectMapper.writeValueAsString(map);
+		assertThat(this.objectMapper.readValue(json, STRING_OBJECT_MAP)).isEqualTo(map);
+	}
 }

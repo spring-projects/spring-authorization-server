@@ -2,6 +2,8 @@
 = Spring Authorization Server Reference
 Joe Grandja, Steve Riesenberg
 v{spring-authorization-server-version}
+:docinfo: private-footer
+:nofooter:
 
 [horizontal]
 xref:overview.adoc[Overview] :: Introduction and list of supported features

@@ -1,7 +1,7 @@
 <productname>Spring Authorization Server</productname>
 <releaseinfo>{spring-authorization-server-version}</releaseinfo>
 <copyright>
-<year>2020-2022</year>
+<year>2020-{docyear}</year>
 </copyright>
 <legalnotice>
     <para>

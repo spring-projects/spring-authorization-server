@@ -181,7 +181,10 @@ public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity h
 [[oauth2-authorization-server-metadata-endpoint]]
 == OAuth2 Authorization Server Metadata Endpoint
 
-This section is under construction.
+`OAuth2AuthorizationServerConfigurer` provides support for the https://tools.ietf.org/html/rfc8414[OAuth2 Authorization Server Metadata endpoint].
+
+`OAuth2AuthorizationServerConfigurer` configures the `OAuth2AuthorizationServerMetadataEndpointFilter` and registers it with the OAuth2 authorization server `SecurityFilterChain` `@Bean`.
+`OAuth2AuthorizationServerMetadataEndpointFilter` is the `Filter` that processes https://tools.ietf.org/html/rfc8414[OAuth2 authorization server metadata requests] and returns the https://datatracker.ietf.org/doc/html/rfc8414#section-3.2[OAuth2 authorization server metadata response].
 
 [[jwk-set-endpoint]]
 == JWK Set Endpoint

@@ -95,7 +95,45 @@ The supported https://datatracker.ietf.org/doc/html/rfc6749#section-1.3[authoriz
 [[oauth2-token-introspection-endpoint]]
 == OAuth2 Token Introspection Endpoint
 
-This section is under construction.
+`OAuth2TokenIntrospectionEndpointConfigurer` provides the ability to customize the https://tools.ietf.org/html/rfc7662[OAuth2 Token Introspection endpoint].
+It defines extension points that let you customize the pre-processing, main processing, and post-processing logic for https://datatracker.ietf.org/doc/html/rfc7662#section-2.1[OAuth2 introspection requests].
+
+`OAuth2TokenIntrospectionEndpointConfigurer` provides the following configuration options:
+
+[source,java]
+----
+@Bean
+public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
+	OAuth2AuthorizationServerConfigurer<HttpSecurity> authorizationServerConfigurer =
+		new OAuth2AuthorizationServerConfigurer<>();
+	http.apply(authorizationServerConfigurer);
+
+	authorizationServerConfigurer
+		.tokenIntrospectionEndpoint(tokenIntrospectionEndpoint ->
+			tokenIntrospectionEndpoint
+				.introspectionRequestConverter(introspectionRequestConverter)   <1>
+				.authenticationProvider(authenticationProvider) <2>
+				.introspectionResponseHandler(introspectionResponseHandler) <3>
+				.errorResponseHandler(errorResponseHandler) <4>
+		);
+
+	return http.build();
+}
+----
+<1> `introspectionRequestConverter()`: The `AuthenticationConverter` (_pre-processor_) used when attempting to extract an https://datatracker.ietf.org/doc/html/rfc7662#section-2.1[OAuth2 introspection request] from `HttpServletRequest` to an instance of `OAuth2TokenIntrospectionAuthenticationToken`.
+<2> `authenticationProvider()`: The `AuthenticationProvider` (_main processor_) used for authenticating the `OAuth2TokenIntrospectionAuthenticationToken`. (One or more may be added to replace the defaults.)
+<3> `introspectionResponseHandler()`: The `AuthenticationSuccessHandler` (_post-processor_) used for handling an "`authenticated`" `OAuth2TokenIntrospectionAuthenticationToken` and returning the https://datatracker.ietf.org/doc/html/rfc7662#section-2.2[OAuth2TokenIntrospection].
+<4> `errorResponseHandler()`: The `AuthenticationFailureHandler` (_post-processor_) used for handling an `OAuth2AuthenticationException` and returning the https://datatracker.ietf.org/doc/html/rfc6749#section-5.2[OAuth2Error response].
+
+`OAuth2TokenIntrospectionEndpointConfigurer` configures the `OAuth2TokenIntrospectionEndpointFilter` and registers it with the OAuth2 authorization server `SecurityFilterChain` `@Bean`.
+`OAuth2TokenIntrospectionEndpointFilter` is the `Filter` that processes OAuth2 introspection requests.
+
+`OAuth2TokenIntrospectionEndpointFilter` is configured with the following defaults:
+
+* `*AuthenticationConverter*` -- An internal implementation that returns the `OAuth2TokenIntrospectionAuthenticationToken`.
+* `*AuthenticationManager*` -- An `AuthenticationManager` composed of `OAuth2TokenIntrospectionAuthenticationProvider`.
+* `*AuthenticationSuccessHandler*` -- An internal implementation that handles an "`authenticated`" `OAuth2TokenIntrospectionAuthenticationToken` and returns the `OAuth2TokenIntrospection`.
+* `*AuthenticationFailureHandler*` -- An internal implementation that uses the `OAuth2Error` associated with the `OAuth2AuthenticationException` and returns the `OAuth2Error` response.
 
 [[oauth2-token-revocation-endpoint]]
 == OAuth2 Token Revocation Endpoint

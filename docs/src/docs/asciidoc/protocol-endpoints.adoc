@@ -266,4 +266,33 @@ You can customize the ID Token by providing an xref:core-model-components.adoc#o
 [[oidc-client-registration-endpoint]]
 == OpenID Connect 1.0 Client Registration Endpoint
 
-This section is under construction.
+The following example shows how to enable the https://openid.net/specs/openid-connect-registration-1_0.html#ClientRegistration[OpenID Connect 1.0 Client Registration Endpoint]:
+
+[source,java]
+----
+@Bean
+public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
+	OAuth2AuthorizationServerConfigurer<HttpSecurity> authorizationServerConfigurer =
+		new OAuth2AuthorizationServerConfigurer<>();
+	http.apply(authorizationServerConfigurer);
+	http.oauth2ResourceServer(OAuth2ResourceServerConfigurer::jwt);
+
+	authorizationServerConfigurer
+		.oidc(oidc -> oidc
+			.clientRegistrationEndpoint(Customizer.withDefaults())
+		);
+
+	return http.build();
+}
+
+@Bean
+public JwtDecoder jwtDecoder(JWKSource<SecurityContext> jwkSource) {
+    return OAuth2AuthorizationServerConfiguration.jwtDecoder(jwkSource);
+}
+----
+
+[NOTE]
+A `JwtDecoder` is *REQUIRED* for the OpenID Connect 1.0 Client Registration Endpoint. See xref:configuration-model.adoc#default-configuration[Default configuration] for more information.
+
+`OidcClientRegistrationEndpointConfigurer` configures the `OidcClientRegistrationEndpointFilter` and registers it with the OAuth2 authorization server `SecurityFilterChain` `@Bean`.
+`OidcClientRegistrationEndpointFilter` is the `Filter` that processes https://openid.net/specs/openid-connect-registration-1_0.html#RegistrationRequest[Client Registration requests] and returns the https://openid.net/specs/openid-connect-registration-1_0.html#RegistrationResponse[`OidcClientRegistration`].

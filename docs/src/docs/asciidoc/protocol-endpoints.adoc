@@ -200,7 +200,10 @@ The JWK Set endpoint is configured *only* if a `JWKSource<SecurityContext>` `@Be
 [[oidc-provider-configuration-endpoint]]
 == OpenID Connect 1.0 Provider Configuration Endpoint
 
-This section is under construction.
+`OidcConfigurer` provides support for the https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderConfig[OpenID Connect 1.0 Provider Configuration endpoint].
+
+`OidcConfigurer` configures the `OidcProviderConfigurationEndpointFilter` and registers it with the OAuth2 authorization server `SecurityFilterChain` `@Bean`.
+`OidcProviderConfigurationEndpointFilter` is the `Filter` that returns the https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderConfigurationResponse[provider configuration response].
 
 [[oidc-user-info-endpoint]]
 == OpenID Connect 1.0 UserInfo Endpoint

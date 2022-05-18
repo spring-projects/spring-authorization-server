@@ -208,7 +208,60 @@ The JWK Set endpoint is configured *only* if a `JWKSource<SecurityContext>` `@Be
 [[oidc-user-info-endpoint]]
 == OpenID Connect 1.0 UserInfo Endpoint
 
-This section is under construction.
+The following example shows how to enable the https://openid.net/specs/openid-connect-core-1_0.html#UserInfo[OpenID Connect 1.0 UserInfo endpoint]:
+
+[source,java]
+----
+@Bean
+public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
+    OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http);
+    http.oauth2ResourceServer(OAuth2ResourceServerConfigurer::jwt);
+    return http.build();
+}
+
+@Bean
+public JwtDecoder jwtDecoder(JWKSource<SecurityContext> jwkSource) {
+    return OAuth2AuthorizationServerConfiguration.jwtDecoder(jwkSource);
+}
+----
+
+[NOTE]
+A `JwtDecoder` is *REQUIRED* for the OpenID Connect 1.0 UserInfo endpoint. See xref:configuration-model.adoc#default-configuration[Default configuration] for more information.
+
+`OidcUserInfoEndpointConfigurer` provides the ability to customize the UserInfo endpoint.
+It defines extension points that let you customize the https://openid.net/specs/openid-connect-core-1_0.html#UserInfoResponse[UserInfo response].
+
+`OidcUserInfoEndpointConfigurer` provides the following configuration option:
+
+[source,java]
+----
+@Bean
+public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
+	OAuth2AuthorizationServerConfigurer<HttpSecurity> authorizationServerConfigurer =
+		new OAuth2AuthorizationServerConfigurer<>();
+	http.apply(authorizationServerConfigurer);
+
+	authorizationServerConfigurer
+		.oidc(oidc -> oidc
+			.userInfoEndpoint(userInfoEndpoint ->
+				userInfoEndpoint.userInfoMapper(userInfoMapper) // <1>
+			)
+		);
+
+	return http.build();
+}
+----
+<1> `userInfoMapper()`: The `Function` used to extract claims from `OidcUserInfoAuthenticationContext` to an instance of `OidcUserInfo`.
+
+`OidcUserInfoEndpointConfigurer` configures the `OidcUserInfoEndpointFilter` and registers it with the OAuth2 authorization server `SecurityFilterChain` `@Bean`.
+`OidcUserInfoEndpointFilter` is the `Filter` that processes https://openid.net/specs/openid-connect-core-1_0.html#UserInfoRequest[UserInfo requests] and returns the `OidcUserInfo`.
+
+`OidcUserInfoEndpointFilter` is configured with the following defaults:
+
+* `*userInfoMapper()*` -- An internal implementation that extracts https://openid.net/specs/openid-connect-core-1_0.html#StandardClaims[standard claims] from the https://openid.net/specs/openid-connect-core-1_0.html#IDToken[ID Token] based on the https://openid.net/specs/openid-connect-core-1_0.html#ScopeClaims[scopes requested] during authorization.
+
+[TIP]
+You can customize the ID Token by providing an xref:core-model-components.adoc#oauth2-token-customizer[`OAuth2TokenCustomizer`] declared with a generic type of `JwtEncodingContext`.
 
 [[oidc-client-registration-endpoint]]
 == OpenID Connect 1.0 Client Registration Endpoint

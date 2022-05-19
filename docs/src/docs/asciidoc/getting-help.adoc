@@ -1,14 +1,14 @@
 [[getting-help]]
 = Getting Help
 
-[[getting-help-community]]
+[[community]]
 == Community
 
 Welcome to the https://docs.spring.io/spring-security/reference/community.html[Spring Security Community].
 Spring Authorization Server is an open source project led by the Spring Security team.
 If you need help with Spring Authorization Server, we are here to help.
 
-[[getting-help-resources]]
+[[resources]]
 == Resources
 
 The following are some of the best ways to get help:

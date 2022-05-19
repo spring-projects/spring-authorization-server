@@ -5,13 +5,13 @@
 
 This site contains reference documentation and how-to guides for Spring Authorization Server.
 
-[[overview-introducing-spring-authorization-server]]
+[[introducing-spring-authorization-server]]
 == Introducing Spring Authorization Server
 
 Spring Authorization Server is a framework that provides implementations of the https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-05[OAuth 2.1] and https://openid.net/specs/openid-connect-core-1_0.html[OpenID Connect 1.0] specifications and other related specifications.
 It is built on top of https://spring.io/projects/spring-security[Spring Security] to provide a secure, light-weight, and customizable foundation for building OpenID Connect 1.0 Identity Providers and OAuth2 Authorization Server products.
 
-[[overview-feature-list]]
+[[feature-list]]
 == Feature List
 
 Spring Authorization Server supports the following features:

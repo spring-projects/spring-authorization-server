@@ -53,12 +53,16 @@ public class SecurityConfig {
 
 	@Bean // <1>
 	@Order(1)
-	public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
+	public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http)
+			throws Exception {
 		OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http);
 		// @formatter:off
 		http
+			// Redirect to the login page when not authenticated from the
+			// authorization endpoint
 			.exceptionHandling((exceptions) -> exceptions
-				.authenticationEntryPoint(new LoginUrlAuthenticationEntryPoint("/login"))
+				.authenticationEntryPoint(
+					new LoginUrlAuthenticationEntryPoint("/login"))
 			);
 		// @formatter:on
 
@@ -67,12 +71,15 @@ public class SecurityConfig {
 
 	@Bean // <2>
 	@Order(2)
-	public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
+	public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http)
+			throws Exception {
 		// @formatter:off
 		http
 			.authorizeHttpRequests((authorize) -> authorize
 				.anyRequest().authenticated()
 			)
+			// Form login handles the redirect to the login page from the
+			// authorization server filter chain
 			.formLogin(Customizer.withDefaults());
 		// @formatter:on
 

@@ -4,11 +4,13 @@
 :docs-dir: ..
 :examples-dir: ../examples
 
-[[getting-started]]
-== Getting Started
-
 This guide shows how to implement the xref:{docs-dir}/core-model-components.adoc#core-model-components[core services] of xref:{docs-dir}/index.adoc#top[Spring Authorization Server] with JPA.
 The purpose of this guide is to provide a starting point for implementing these services yourself, with the intention that you can make modifications to suit your needs.
+
+* <<define-data-model>>
+* <<create-jpa-entities>>
+* <<create-spring-data-repositories>>
+* <<implement-core-services>>
 
 [[define-data-model]]
 == Define the data model
@@ -19,6 +21,10 @@ To come up with the initial schema, we begin by reviewing the xref:{docs-dir}/co
 NOTE: Except for token, state, metadata, settings, and claims values, we use the JPA default column length of 255 for all columns.
 In reality, the length and even type of columns you use may need to be customized.
 You are encouraged to experiment and test before deploying to production.
+
+* <<client-schema>>
+* <<authorization-schema>>
+* <<authorization-consent-schema>>
 
 [[client-schema]]
 === Client Schema
@@ -69,6 +75,10 @@ The preceding schema examples provide a reference for the structure of the entit
 NOTE: The following entities are minimally annotated and are just examples.
 They allow the schema to be created dynamically and therefore do not require the above sql scripts to be executed manually.
 
+* <<client-entity>>
+* <<authorization-entity>>
+* <<authorization-consent-entity>>
+
 [[client-entity]]
 === Client Entity
 
@@ -106,6 +116,10 @@ include::{examples-dir}/src/main/java/sample/jpa/AuthorizationConsent.java[tag=c
 == Create Spring Data repositories
 
 By closely examining the interfaces of each core service and reviewing the `Jdbc` implementations, we can derive a minimal set of queries needed for supporting a JPA version of each interface.
+
+* <<client-repository>>
+* <<authorization-repository>>
+* <<authorization-consent-repository>>
 
 [[client-repository]]
 === Client Repository
@@ -149,6 +163,10 @@ By reviewing the `Jdbc` implementations, we can derive a minimal set of internal
 
 CAUTION: Keep in mind that writing JSON data to text columns with a fixed length has proven problematic with the `Jdbc` implementations.
 While these examples continue to do so, you may need to split these fields out into a separate table or data store that supports arbitrarily long data values.
+
+* <<registered-client-repository>>
+* <<authorization-service>>
+* <<authorization-consent-service>>
 
 [[registered-client-repository]]
 === Registered Client Repository

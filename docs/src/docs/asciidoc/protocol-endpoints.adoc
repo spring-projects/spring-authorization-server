@@ -1,7 +1,5 @@
 [[protocol-endpoints]]
 = Protocol Endpoints
-:toc: left
-:toclevels: 1
 
 [[oauth2-authorization-endpoint]]
 == OAuth2 Authorization Endpoint
@@ -271,6 +269,9 @@ public JwtDecoder jwtDecoder(JWKSource<SecurityContext> jwkSource) {
 [NOTE]
 A `JwtDecoder` `@Bean` is *REQUIRED* for the OpenID Connect 1.0 UserInfo endpoint.
 
+[TIP]
+The guide xref:guides/how-to-userinfo.adoc#how-to-userinfo[How-to: Customize the OpenID Connect 1.0 UserInfo response] contains examples of customizing the UserInfo endpoint.
+
 [[oidc-client-registration-endpoint]]
 == OpenID Connect 1.0 Client Registration Endpoint
 
@@ -294,6 +295,9 @@ public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity h
 	return http.build();
 }
 ----
+
+[NOTE]
+The OpenID Connect 1.0 Client Registration endpoint is disabled by default because many deployments do not require dynamic client registration.
 
 `OidcClientRegistrationEndpointConfigurer` configures the `OidcClientRegistrationEndpointFilter` and registers it with the OAuth2 authorization server `SecurityFilterChain` `@Bean`.
 `OidcClientRegistrationEndpointFilter` is the `Filter` that processes https://openid.net/specs/openid-connect-registration-1_0.html#RegistrationRequest[Client Registration requests] and returns the https://openid.net/specs/openid-connect-registration-1_0.html#RegistrationResponse[OidcClientRegistration response].

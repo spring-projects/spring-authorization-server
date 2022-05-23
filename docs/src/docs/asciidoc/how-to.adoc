@@ -2,18 +2,7 @@
 = "How-to" Guides
 
 [[how-to-overview]]
-== Overview
+== List of Guides
 
 * xref:guides/how-to-userinfo.adoc[Customize the OpenID Connect 1.0 UserInfo response]
 * xref:guides/how-to-jpa.adoc[Implement core services with JPA]
-
-[[how-to-coming-soon]]
-== Coming Soon
-
-* Authenticate using social login, e.g. Google (https://github.com/spring-projects/spring-authorization-server/issues/538[#538])
-* Authenticate a user in a Single Page Application with PKCE (https://github.com/spring-projects/spring-authorization-server/issues/539[#539])
-* Deny access for a revoked JWT access token (https://github.com/spring-projects/spring-authorization-server/issues/543[#543])
-* Provide a JWK source backed by a key rotation strategy (https://github.com/spring-projects/spring-authorization-server/issues/544[#544])
-* Customize form based login (https://github.com/spring-projects/spring-authorization-server/issues/533[#533])
-* Add a custom grant type (https://github.com/spring-projects/spring-authorization-server/issues/686[#686])
-* Authenticate a user with two-factor authentication (https://github.com/spring-projects/spring-authorization-server/issues/534[#534])

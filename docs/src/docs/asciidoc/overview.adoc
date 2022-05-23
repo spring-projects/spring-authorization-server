@@ -1,7 +1,5 @@
 [[overview]]
 = Overview
-:toc: left
-:toclevels: 1
 
 This site contains reference documentation and how-to guides for Spring Authorization Server.
 

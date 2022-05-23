@@ -1,7 +1,5 @@
 [[configuration-model]]
 = Configuration Model
-:toc: left
-:toclevels: 1
 
 [[default-configuration]]
 == Default configuration
@@ -28,7 +26,7 @@ The OAuth2 authorization server `SecurityFilterChain` `@Bean` is configured with
 The JWK Set endpoint is configured *only* if a `JWKSource<SecurityContext>` `@Bean` is registered.
 
 [NOTE]
-The xref:protocol-endpoints.adoc#oidc-client-registration-endpoint[OpenID Connect 1.0 Client Registration endpoint] is disabled by default.
+The xref:protocol-endpoints.adoc#oidc-client-registration-endpoint[OpenID Connect 1.0 Client Registration endpoint] is disabled by default because many deployments do not require dynamic client registration.
 
 The following example shows how to use `OAuth2AuthorizationServerConfiguration` to apply the minimal default configuration:
 
@@ -108,11 +106,11 @@ public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity h
 	return http.build();
 }
 ----
-<1> `registeredClientRepository()`: The xref:core-model-components.adoc#registered-client-repository[`RegisteredClientRepository`] to use.
-<2> `authorizationService()`: The xref:core-model-components.adoc#oauth2-authorization-service[`OAuth2AuthorizationService`] to use.
-<3> `authorizationConsentService()`: The xref:core-model-components.adoc#oauth2-authorization-consent-service[`OAuth2AuthorizationConsentService`] to use.
-<4> `providerSettings()`: The <<configuring-provider-settings, `ProviderSettings`>> to use.
-<5> `tokenGenerator()`: The xref:core-model-components.adoc#oauth2-token-generator[`OAuth2TokenGenerator`] to use.
+<1> `registeredClientRepository()`: The xref:core-model-components.adoc#registered-client-repository[`RegisteredClientRepository`] (*REQUIRED*) for managing new and existing clients.
+<2> `authorizationService()`: The xref:core-model-components.adoc#oauth2-authorization-service[`OAuth2AuthorizationService`] for managing new and existing authorizations.
+<3> `authorizationConsentService()`: The xref:core-model-components.adoc#oauth2-authorization-consent-service[`OAuth2AuthorizationConsentService`] for managing new and existing authorization consents.
+<4> `providerSettings()`: The <<configuring-provider-settings, `ProviderSettings`>> (*REQUIRED*) for customizing configuration settings for the OAuth2 authorization server.
+<5> `tokenGenerator()`: The xref:core-model-components.adoc#oauth2-token-generator[`OAuth2TokenGenerator`] for generating tokens supported by the OAuth2 authorization server.
 <6> `clientAuthentication()`: The configurer for <<configuring-client-authentication, OAuth2 Client Authentication>>.
 <7> `authorizationEndpoint()`: The configurer for the xref:protocol-endpoints.adoc#oauth2-authorization-endpoint[OAuth2 Authorization endpoint].
 <8> `tokenEndpoint()`: The configurer for the xref:protocol-endpoints.adoc#oauth2-token-endpoint[OAuth2 Token endpoint].
@@ -181,6 +179,7 @@ It provides access to the `ProviderSettings` and the "`current`" issuer identifi
 [NOTE]
 If the issuer identifier is not configured in `ProviderSettings.builder().issuer(String)`, it is resolved from the current request.
 
+[NOTE]
 The `ProviderContext` is accessible through the `ProviderContextHolder`, which associates it with the current request thread by using a `ThreadLocal`.
 
 [NOTE]

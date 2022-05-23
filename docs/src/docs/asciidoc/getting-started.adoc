@@ -51,7 +51,7 @@ This is a minimal configuration for getting started quickly. To understand what 
 
 <1> A Spring Security filter chain for the xref:protocol-endpoints.adoc[Protocol Endpoints].
 <2> A Spring Security filter chain for https://docs.spring.io/spring-security/reference/servlet/authentication/index.html[authentication].
-<3> An instance of `UserDetailsService` for retrieving users to authenticate.
+<3> An instance of {spring-security-api-base-url}/org/springframework/security/core/userdetails/UserDetailsService.html[`UserDetailsService`] for retrieving users to authenticate.
 <4> An instance of xref:core-components.adoc#registered-client-repository[`RegisteredClientRepository`] for managing clients.
 <5> An instance of `com.nimbusds.jose.jwk.source.JWKSource` for signing access tokens.
 <6> An instance of `java.security.KeyPair` with keys generated on startup used to create the `JWKSource` above.

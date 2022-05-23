@@ -1,8 +1,5 @@
 [[core-model-components]]
 = Core Model / Components
-:toc: left
-:toclevels: 1
-:spring-security-reference-base-url: https://docs.spring.io/spring-security/reference
 
 [[registered-client]]
 == RegisteredClient
@@ -136,6 +133,9 @@ public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity h
 }
 ----
 
+[NOTE]
+The `OAuth2AuthorizationServerConfigurer` is useful when applying multiple configuration options simultaneously.
+
 [[oauth2-authorization]]
 == OAuth2Authorization
 
@@ -144,13 +144,13 @@ An `OAuth2Authorization` is a representation of an OAuth2 authorization, which h
 [TIP]
 The corresponding authorization model in Spring Security's OAuth2 Client support is {spring-security-reference-base-url}/servlet/oauth2/client/core.html#oauth2Client-authorized-client[OAuth2AuthorizedClient].
 
-After the successful completion of an authorization grant flow, an `OAuth2Authorization` is created and associates an `OAuth2AccessToken`, an (optional) `OAuth2RefreshToken`, and additional state specific to the executed authorization grant type.
+After the successful completion of an authorization grant flow, an `OAuth2Authorization` is created and associates an {spring-security-api-base-url}/org/springframework/security/oauth2/core/OAuth2AccessToken.html[`OAuth2AccessToken`], an (optional) {spring-security-api-base-url}/org/springframework/security/oauth2/core/OAuth2RefreshToken.html[`OAuth2RefreshToken`], and additional state specific to the executed authorization grant type.
 
-The `OAuth2Token` instances associated with an `OAuth2Authorization` vary, depending on the authorization grant type.
+The {spring-security-api-base-url}/org/springframework/security/oauth2/core/OAuth2Token.html[`OAuth2Token`] instances associated with an `OAuth2Authorization` vary, depending on the authorization grant type.
 
 For the OAuth2 https://datatracker.ietf.org/doc/html/rfc6749#section-4.1[authorization_code grant], an `OAuth2AuthorizationCode`, an `OAuth2AccessToken`, and an (optional) `OAuth2RefreshToken` are associated.
 
-For the OpenID Connect 1.0 https://openid.net/specs/openid-connect-core-1_0.html#CodeFlowAuth[authorization_code grant], an `OAuth2AuthorizationCode`, an `OidcIdToken`, an `OAuth2AccessToken`, and an (optional) `OAuth2RefreshToken` are associated.
+For the OpenID Connect 1.0 https://openid.net/specs/openid-connect-core-1_0.html#CodeFlowAuth[authorization_code grant], an `OAuth2AuthorizationCode`, an {spring-security-api-base-url}/org/springframework/security/oauth2/core/oidc/OidcIdToken.html[`OidcIdToken`], an `OAuth2AccessToken`, and an (optional) `OAuth2RefreshToken` are associated.
 
 For the OAuth2 https://datatracker.ietf.org/doc/html/rfc6749#section-4.4[client_credentials grant], only an `OAuth2AccessToken` is associated.
 
@@ -226,6 +226,9 @@ public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity h
 }
 ----
 
+[NOTE]
+The `OAuth2AuthorizationServerConfigurer` is useful when applying multiple configuration options simultaneously.
+
 [[oauth2-authorization-consent]]
 == OAuth2AuthorizationConsent
 
@@ -295,6 +298,9 @@ public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity h
 }
 ----
 
+[NOTE]
+The `OAuth2AuthorizationServerConfigurer` is useful when applying multiple configuration options simultaneously.
+
 [[oauth2-token-context]]
 == OAuth2TokenContext
 
@@ -333,7 +339,7 @@ public interface OAuth2TokenContext extends Context {
 <4> `getAuthorization()`: The <<oauth2-authorization, OAuth2Authorization>> associated with the authorization grant.
 <5> `getAuthorizedScopes()`: The scope(s) authorized for the client.
 <6> `getTokenType()`: The `OAuth2TokenType` to generate. The supported values are `code`, `access_token`, `refresh_token`, and `id_token`.
-<7> `getAuthorizationGrantType()`: The `AuthorizationGrantType`.
+<7> `getAuthorizationGrantType()`: The `AuthorizationGrantType` associated with the authorization grant.
 <8> `getAuthorizationGrant()`: The `Authentication` instance used by the `AuthenticationProvider` that processes the authorization grant.
 
 [[oauth2-token-generator]]
@@ -363,7 +369,9 @@ The `OAuth2AccessTokenGenerator` generates an "opaque" (`OAuth2TokenFormat.REFER
 
 [NOTE]
 The `OAuth2TokenGenerator` is an *OPTIONAL* component and defaults to a `DelegatingOAuth2TokenGenerator` composed of an `OAuth2AccessTokenGenerator` and `OAuth2RefreshTokenGenerator`.
-As well, if a `JwtEncoder` `@Bean` or `JWKSource<SecurityContext>` `@Bean` is registered, then a `JwtGenerator` is additionally composed in the `DelegatingOAuth2TokenGenerator`.
+
+[NOTE]
+If a `JwtEncoder` `@Bean` or `JWKSource<SecurityContext>` `@Bean` is registered, then a `JwtGenerator` is additionally composed in the `DelegatingOAuth2TokenGenerator`.
 
 The `OAuth2TokenGenerator` provides great flexibility, as it can support any custom token format for `access_token` and `refresh_token`.
 
@@ -401,6 +409,9 @@ public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity h
 }
 ----
 
+[NOTE]
+The `OAuth2AuthorizationServerConfigurer` is useful when applying multiple configuration options simultaneously.
+
 [[oauth2-token-customizer]]
 == OAuth2TokenCustomizer
 
@@ -435,7 +446,7 @@ public OAuth2TokenCustomizer<OAuth2TokenClaimsContext> accessTokenCustomizer() {
 }
 ----
 
-[TIP]
+[NOTE]
 If the `OAuth2TokenGenerator` is not provided as a `@Bean` or is not configured through the `OAuth2AuthorizationServerConfigurer`, an `OAuth2TokenCustomizer<OAuth2TokenClaimsContext>` `@Bean` will automatically be configured with an `OAuth2AccessTokenGenerator`.
 
 An `OAuth2TokenCustomizer<JwtEncodingContext>` declared with a generic type of `JwtEncodingContext` (`implements OAuth2TokenContext`) provides the ability to customize the headers and claims of a `Jwt`.
@@ -473,5 +484,8 @@ public OAuth2TokenCustomizer<JwtEncodingContext> jwtCustomizer() {
 }
 ----
 
-[TIP]
+[NOTE]
 If the `OAuth2TokenGenerator` is not provided as a `@Bean` or is not configured through the `OAuth2AuthorizationServerConfigurer`, an `OAuth2TokenCustomizer<JwtEncodingContext>` `@Bean` will automatically be configured with a `JwtGenerator`.
+
+[TIP]
+For an example showing how you can xref:guides/how-to-userinfo.adoc#customize-id-token[customize the ID token], see the guide xref:guides/how-to-userinfo.adoc#how-to-userinfo[How-to: Customize the OpenID Connect 1.0 UserInfo response].

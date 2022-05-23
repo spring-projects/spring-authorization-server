@@ -95,7 +95,7 @@ The supported https://datatracker.ietf.org/doc/html/rfc6749#section-1.3[authoriz
 [[oauth2-token-introspection-endpoint]]
 == OAuth2 Token Introspection Endpoint
 
-`OAuth2TokenIntrospectionEndpointConfigurer` provides the ability to customize the https://tools.ietf.org/html/rfc7662[OAuth2 Token Introspection endpoint].
+`OAuth2TokenIntrospectionEndpointConfigurer` provides the ability to customize the https://datatracker.ietf.org/doc/html/rfc7662#section-2[OAuth2 Token Introspection endpoint].
 It defines extension points that let you customize the pre-processing, main processing, and post-processing logic for https://datatracker.ietf.org/doc/html/rfc7662#section-2.1[OAuth2 introspection requests].
 
 `OAuth2TokenIntrospectionEndpointConfigurer` provides the following configuration options:
@@ -122,8 +122,8 @@ public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity h
 ----
 <1> `introspectionRequestConverter()`: The `AuthenticationConverter` (_pre-processor_) used when attempting to extract an https://datatracker.ietf.org/doc/html/rfc7662#section-2.1[OAuth2 introspection request] from `HttpServletRequest` to an instance of `OAuth2TokenIntrospectionAuthenticationToken`.
 <2> `authenticationProvider()`: The `AuthenticationProvider` (_main processor_) used for authenticating the `OAuth2TokenIntrospectionAuthenticationToken`. (One or more may be added to replace the defaults.)
-<3> `introspectionResponseHandler()`: The `AuthenticationSuccessHandler` (_post-processor_) used for handling an "`authenticated`" `OAuth2TokenIntrospectionAuthenticationToken` and returning the https://datatracker.ietf.org/doc/html/rfc7662#section-2.2[OAuth2TokenIntrospection].
-<4> `errorResponseHandler()`: The `AuthenticationFailureHandler` (_post-processor_) used for handling an `OAuth2AuthenticationException` and returning the https://datatracker.ietf.org/doc/html/rfc6749#section-5.2[OAuth2Error response].
+<3> `introspectionResponseHandler()`: The `AuthenticationSuccessHandler` (_post-processor_) used for handling an "`authenticated`" `OAuth2TokenIntrospectionAuthenticationToken` and returning the https://datatracker.ietf.org/doc/html/rfc7662#section-2.2[OAuth2TokenIntrospection response].
+<4> `errorResponseHandler()`: The `AuthenticationFailureHandler` (_post-processor_) used for handling an `OAuth2AuthenticationException` and returning the https://datatracker.ietf.org/doc/html/rfc7662#section-2.3[OAuth2Error response].
 
 `OAuth2TokenIntrospectionEndpointConfigurer` configures the `OAuth2TokenIntrospectionEndpointFilter` and registers it with the OAuth2 authorization server `SecurityFilterChain` `@Bean`.
 `OAuth2TokenIntrospectionEndpointFilter` is the `Filter` that processes OAuth2 introspection requests.
@@ -132,13 +132,13 @@ public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity h
 
 * `*AuthenticationConverter*` -- An internal implementation that returns the `OAuth2TokenIntrospectionAuthenticationToken`.
 * `*AuthenticationManager*` -- An `AuthenticationManager` composed of `OAuth2TokenIntrospectionAuthenticationProvider`.
-* `*AuthenticationSuccessHandler*` -- An internal implementation that handles an "`authenticated`" `OAuth2TokenIntrospectionAuthenticationToken` and returns the `OAuth2TokenIntrospection`.
+* `*AuthenticationSuccessHandler*` -- An internal implementation that handles an "`authenticated`" `OAuth2TokenIntrospectionAuthenticationToken` and returns the `OAuth2TokenIntrospection` response.
 * `*AuthenticationFailureHandler*` -- An internal implementation that uses the `OAuth2Error` associated with the `OAuth2AuthenticationException` and returns the `OAuth2Error` response.
 
 [[oauth2-token-revocation-endpoint]]
 == OAuth2 Token Revocation Endpoint
 
-`OAuth2TokenRevocationEndpointConfigurer` provides the ability to customize the https://tools.ietf.org/html/rfc7009[OAuth2 Token Revocation endpoint].
+`OAuth2TokenRevocationEndpointConfigurer` provides the ability to customize the https://datatracker.ietf.org/doc/html/rfc7009#section-2[OAuth2 Token Revocation endpoint].
 It defines extension points that let you customize the pre-processing, main processing, and post-processing logic for https://datatracker.ietf.org/doc/html/rfc7009#section-2.1[OAuth2 revocation requests].
 
 `OAuth2TokenRevocationEndpointConfigurer` provides the following configuration options:
@@ -166,7 +166,7 @@ public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity h
 <1> `revocationRequestConverter()`: The `AuthenticationConverter` (_pre-processor_) used when attempting to extract an https://datatracker.ietf.org/doc/html/rfc7009#section-2.1[OAuth2 revocation request] from `HttpServletRequest` to an instance of `OAuth2TokenRevocationAuthenticationToken`.
 <2> `authenticationProvider()`: The `AuthenticationProvider` (_main processor_) used for authenticating the `OAuth2TokenRevocationAuthenticationToken`. (One or more may be added to replace the defaults.)
 <3> `revocationResponseHandler()`: The `AuthenticationSuccessHandler` (_post-processor_) used for handling an "`authenticated`" `OAuth2TokenRevocationAuthenticationToken` and returning the https://datatracker.ietf.org/doc/html/rfc7009#section-2.2[OAuth2 revocation response].
-<4> `errorResponseHandler()`: The `AuthenticationFailureHandler` (_post-processor_) used for handling an `OAuth2AuthenticationException` and returning the https://datatracker.ietf.org/doc/html/rfc6749#section-5.2[OAuth2Error response].
+<4> `errorResponseHandler()`: The `AuthenticationFailureHandler` (_post-processor_) used for handling an `OAuth2AuthenticationException` and returning the https://datatracker.ietf.org/doc/html/rfc7009#section-2.2.1[OAuth2Error response].
 
 `OAuth2TokenRevocationEndpointConfigurer` configures the `OAuth2TokenRevocationEndpointFilter` and registers it with the OAuth2 authorization server `SecurityFilterChain` `@Bean`.
 `OAuth2TokenRevocationEndpointFilter` is the `Filter` that processes OAuth2 revocation requests.
@@ -181,10 +181,10 @@ public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity h
 [[oauth2-authorization-server-metadata-endpoint]]
 == OAuth2 Authorization Server Metadata Endpoint
 
-`OAuth2AuthorizationServerConfigurer` provides support for the https://tools.ietf.org/html/rfc8414[OAuth2 Authorization Server Metadata endpoint].
+`OAuth2AuthorizationServerConfigurer` provides support for the https://datatracker.ietf.org/doc/html/rfc8414#section-3[OAuth2 Authorization Server Metadata endpoint].
 
 `OAuth2AuthorizationServerConfigurer` configures the `OAuth2AuthorizationServerMetadataEndpointFilter` and registers it with the OAuth2 authorization server `SecurityFilterChain` `@Bean`.
-`OAuth2AuthorizationServerMetadataEndpointFilter` is the `Filter` that processes https://tools.ietf.org/html/rfc8414[OAuth2 authorization server metadata requests] and returns the https://datatracker.ietf.org/doc/html/rfc8414#section-3.2[OAuth2 authorization server metadata response].
+`OAuth2AuthorizationServerMetadataEndpointFilter` is the `Filter` that processes https://datatracker.ietf.org/doc/html/rfc8414#section-3.1[OAuth2 authorization server metadata requests] and returns the https://datatracker.ietf.org/doc/html/rfc8414#section-3.2[OAuth2AuthorizationServerMetadata response].
 
 [[jwk-set-endpoint]]
 == JWK Set Endpoint
@@ -203,32 +203,12 @@ The JWK Set endpoint is configured *only* if a `JWKSource<SecurityContext>` `@Be
 `OidcConfigurer` provides support for the https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderConfig[OpenID Connect 1.0 Provider Configuration endpoint].
 
 `OidcConfigurer` configures the `OidcProviderConfigurationEndpointFilter` and registers it with the OAuth2 authorization server `SecurityFilterChain` `@Bean`.
-`OidcProviderConfigurationEndpointFilter` is the `Filter` that returns the https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderConfigurationResponse[provider configuration response].
+`OidcProviderConfigurationEndpointFilter` is the `Filter` that returns the https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderConfigurationResponse[OidcProviderConfiguration response].
 
 [[oidc-user-info-endpoint]]
 == OpenID Connect 1.0 UserInfo Endpoint
 
-The following example shows how to enable the https://openid.net/specs/openid-connect-core-1_0.html#UserInfo[OpenID Connect 1.0 UserInfo endpoint]:
-
-[source,java]
-----
-@Bean
-public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
-    OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http);
-    http.oauth2ResourceServer(OAuth2ResourceServerConfigurer::jwt);
-    return http.build();
-}
-
-@Bean
-public JwtDecoder jwtDecoder(JWKSource<SecurityContext> jwkSource) {
-    return OAuth2AuthorizationServerConfiguration.jwtDecoder(jwkSource);
-}
-----
-
-[NOTE]
-A `JwtDecoder` is *REQUIRED* for the OpenID Connect 1.0 UserInfo endpoint. See xref:configuration-model.adoc#default-configuration[Default configuration] for more information.
-
-`OidcUserInfoEndpointConfigurer` provides the ability to customize the UserInfo endpoint.
+`OidcUserInfoEndpointConfigurer` provides the ability to customize the https://openid.net/specs/openid-connect-core-1_0.html#UserInfo[OpenID Connect 1.0 UserInfo endpoint].
 It defines extension points that let you customize the https://openid.net/specs/openid-connect-core-1_0.html#UserInfoResponse[UserInfo response].
 
 `OidcUserInfoEndpointConfigurer` provides the following configuration option:
@@ -242,10 +222,11 @@ public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity h
 	http.apply(authorizationServerConfigurer);
 
 	authorizationServerConfigurer
-		.oidc(oidc -> oidc
-			.userInfoEndpoint(userInfoEndpoint ->
-				userInfoEndpoint.userInfoMapper(userInfoMapper) // <1>
-			)
+		.oidc(oidc ->
+			oidc
+				.userInfoEndpoint(userInfoEndpoint ->
+					userInfoEndpoint.userInfoMapper(userInfoMapper)   <1>
+				)
 		);
 
 	return http.build();
@@ -254,19 +235,17 @@ public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity h
 <1> `userInfoMapper()`: The `Function` used to extract claims from `OidcUserInfoAuthenticationContext` to an instance of `OidcUserInfo`.
 
 `OidcUserInfoEndpointConfigurer` configures the `OidcUserInfoEndpointFilter` and registers it with the OAuth2 authorization server `SecurityFilterChain` `@Bean`.
-`OidcUserInfoEndpointFilter` is the `Filter` that processes https://openid.net/specs/openid-connect-core-1_0.html#UserInfoRequest[UserInfo requests] and returns the `OidcUserInfo`.
+`OidcUserInfoEndpointFilter` is the `Filter` that processes https://openid.net/specs/openid-connect-core-1_0.html#UserInfoRequest[UserInfo requests] and returns the https://openid.net/specs/openid-connect-core-1_0.html#UserInfoResponse[OidcUserInfo response].
 
 `OidcUserInfoEndpointFilter` is configured with the following defaults:
 
-* `*userInfoMapper()*` -- An internal implementation that extracts https://openid.net/specs/openid-connect-core-1_0.html#StandardClaims[standard claims] from the https://openid.net/specs/openid-connect-core-1_0.html#IDToken[ID Token] based on the https://openid.net/specs/openid-connect-core-1_0.html#ScopeClaims[scopes requested] during authorization.
+* `*AuthenticationManager*` -- An `AuthenticationManager` composed of `OidcUserInfoAuthenticationProvider`, which is associated with an internal implementation of `userInfoMapper` that extracts https://openid.net/specs/openid-connect-core-1_0.html#StandardClaims[standard claims] from the https://openid.net/specs/openid-connect-core-1_0.html#IDToken[ID Token] based on the https://openid.net/specs/openid-connect-core-1_0.html#ScopeClaims[scopes requested] during authorization.
 
 [TIP]
-You can customize the ID Token by providing an xref:core-model-components.adoc#oauth2-token-customizer[`OAuth2TokenCustomizer`] declared with a generic type of `JwtEncodingContext`.
+You can customize the ID Token by providing an xref:core-model-components.adoc#oauth2-token-customizer[`OAuth2TokenCustomizer<JwtEncodingContext>`] `@Bean`.
 
-[[oidc-client-registration-endpoint]]
-== OpenID Connect 1.0 Client Registration Endpoint
-
-The following example shows how to enable the https://openid.net/specs/openid-connect-registration-1_0.html#ClientRegistration[OpenID Connect 1.0 Client Registration Endpoint]:
+The OpenID Connect 1.0 UserInfo endpoint is an OAuth2 protected resource, which *REQUIRES* an access token to be sent as a bearer token in the https://openid.net/specs/openid-connect-core-1_0.html#UserInfoRequest[UserInfo request].
+The following example shows how to enable the OAuth2 resource server configuration:
 
 [source,java]
 ----
@@ -275,24 +254,87 @@ public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity h
 	OAuth2AuthorizationServerConfigurer<HttpSecurity> authorizationServerConfigurer =
 		new OAuth2AuthorizationServerConfigurer<>();
 	http.apply(authorizationServerConfigurer);
-	http.oauth2ResourceServer(OAuth2ResourceServerConfigurer::jwt);
 
-	authorizationServerConfigurer
-		.oidc(oidc -> oidc
-			.clientRegistrationEndpoint(Customizer.withDefaults())
-		);
+	...
+
+	http.oauth2ResourceServer(OAuth2ResourceServerConfigurer::jwt);
 
 	return http.build();
 }
 
 @Bean
 public JwtDecoder jwtDecoder(JWKSource<SecurityContext> jwkSource) {
-    return OAuth2AuthorizationServerConfiguration.jwtDecoder(jwkSource);
+	return OAuth2AuthorizationServerConfiguration.jwtDecoder(jwkSource);
 }
 ----
 
 [NOTE]
-A `JwtDecoder` is *REQUIRED* for the OpenID Connect 1.0 Client Registration Endpoint. See xref:configuration-model.adoc#default-configuration[Default configuration] for more information.
+A `JwtDecoder` `@Bean` is *REQUIRED* for the OpenID Connect 1.0 UserInfo endpoint.
+
+[[oidc-client-registration-endpoint]]
+== OpenID Connect 1.0 Client Registration Endpoint
+
+`OidcClientRegistrationEndpointConfigurer` configures the https://openid.net/specs/openid-connect-registration-1_0.html#ClientRegistration[OpenID Connect 1.0 Client Registration endpoint].
+The following example shows how to enable (disabled by default) the OpenID Connect 1.0 Client Registration endpoint:
+
+[source,java]
+----
+@Bean
+public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
+	OAuth2AuthorizationServerConfigurer<HttpSecurity> authorizationServerConfigurer =
+		new OAuth2AuthorizationServerConfigurer<>();
+	http.apply(authorizationServerConfigurer);
+
+	authorizationServerConfigurer
+		.oidc(oidc ->
+			oidc
+				.clientRegistrationEndpoint(Customizer.withDefaults())
+		);
+
+	return http.build();
+}
+----
 
 `OidcClientRegistrationEndpointConfigurer` configures the `OidcClientRegistrationEndpointFilter` and registers it with the OAuth2 authorization server `SecurityFilterChain` `@Bean`.
-`OidcClientRegistrationEndpointFilter` is the `Filter` that processes https://openid.net/specs/openid-connect-registration-1_0.html#RegistrationRequest[Client Registration requests] and returns the https://openid.net/specs/openid-connect-registration-1_0.html#RegistrationResponse[`OidcClientRegistration`].
+`OidcClientRegistrationEndpointFilter` is the `Filter` that processes https://openid.net/specs/openid-connect-registration-1_0.html#RegistrationRequest[Client Registration requests] and returns the https://openid.net/specs/openid-connect-registration-1_0.html#RegistrationResponse[OidcClientRegistration response].
+
+[TIP]
+`OidcClientRegistrationEndpointFilter` also processes https://openid.net/specs/openid-connect-registration-1_0.html#ReadRequest[Client Read requests] and returns the https://openid.net/specs/openid-connect-registration-1_0.html#ReadResponse[OidcClientRegistration response].
+
+`OidcClientRegistrationEndpointFilter` is configured with the following defaults:
+
+* `*AuthenticationManager*` -- An `AuthenticationManager` composed of `OidcClientRegistrationAuthenticationProvider`.
+
+The OpenID Connect 1.0 Client Registration endpoint is an https://openid.net/specs/openid-connect-registration-1_0.html#ClientRegistration[OAuth2 protected resource], which *REQUIRES* an access token to be sent as a bearer token in the Client Registration (or Client Read) request.
+
+[IMPORTANT]
+The access token in a Client Registration request *REQUIRES* the OAuth2 scope `client.create`.
+
+[IMPORTANT]
+The access token in a Client Read request *REQUIRES* the OAuth2 scope `client.read`.
+
+The following example shows how to enable the OAuth2 resource server configuration:
+
+[source,java]
+----
+@Bean
+public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
+	OAuth2AuthorizationServerConfigurer<HttpSecurity> authorizationServerConfigurer =
+		new OAuth2AuthorizationServerConfigurer<>();
+	http.apply(authorizationServerConfigurer);
+
+	...
+
+	http.oauth2ResourceServer(OAuth2ResourceServerConfigurer::jwt);
+
+	return http.build();
+}
+
+@Bean
+public JwtDecoder jwtDecoder(JWKSource<SecurityContext> jwkSource) {
+	return OAuth2AuthorizationServerConfiguration.jwtDecoder(jwkSource);
+}
+----
+
+[NOTE]
+A `JwtDecoder` `@Bean` is *REQUIRED* for the OpenID Connect 1.0 Client Registration endpoint.

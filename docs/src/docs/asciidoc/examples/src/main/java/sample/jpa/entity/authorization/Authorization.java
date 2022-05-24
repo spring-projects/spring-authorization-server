@@ -20,10 +20,13 @@ import java.time.Instant;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import javax.persistence.Table;
 
 @Entity
+@Table(name = "`authorization`")
 public class Authorization {
 	@Id
+	@Column
 	private String id;
 	private String registeredClientId;
 	private String principalName;

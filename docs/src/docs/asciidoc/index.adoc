@@ -6,7 +6,7 @@ v{spring-authorization-server-version}
 :nofooter:
 
 [horizontal]
-xref:overview.adoc[Overview] :: Introduction and list of supported features
+xref:overview.adoc[Overview] :: Introduction and feature list
 xref:getting-help.adoc[Getting Help] :: Links to samples, questions and issues
 xref:getting-started.adoc[Getting Started] :: System requirements, dependencies and developing your first application
 xref:configuration-model.adoc[Configuration Model] :: Default configuration and customizing the configuration

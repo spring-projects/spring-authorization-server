@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package sample.jpa;
+package sample.jpa.service.client;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,6 +23,8 @@ import java.util.Set;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import sample.jpa.entity.client.Client;
+import sample.jpa.repository.client.ClientRepository;
 
 import org.springframework.security.jackson2.SecurityJackson2Modules;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
@@ -36,10 +38,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
-/**
- * @author Steve Riesenberg
- */
-// tag::class[]
 @Component
 public class JpaRegisteredClientRepository implements RegisteredClientRepository {
 	private final ClientRepository clientRepository;
@@ -172,4 +170,3 @@ public class JpaRegisteredClientRepository implements RegisteredClientRepository
 		return new ClientAuthenticationMethod(clientAuthenticationMethod);      // Custom client authentication method
 	}
 }
-// end::class[]

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package sample.jpa;
+package sample.jpa.service.authorization;
 
 import java.time.Instant;
 import java.util.List;
@@ -24,6 +24,8 @@ import java.util.function.Consumer;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import sample.jpa.entity.authorization.Authorization;
+import sample.jpa.repository.authorization.AuthorizationRepository;
 
 import org.springframework.dao.DataRetrievalFailureException;
 import org.springframework.security.jackson2.SecurityJackson2Modules;
@@ -44,10 +46,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
-/**
- * @author Steve Riesenberg
- */
-// tag::class[]
 @Component
 public class JpaOAuth2AuthorizationService implements OAuth2AuthorizationService {
 	private final AuthorizationRepository authorizationRepository;
@@ -261,4 +259,3 @@ public class JpaOAuth2AuthorizationService implements OAuth2AuthorizationService
 		return new AuthorizationGrantType(authorizationGrantType);              // Custom authorization grant type
 	}
 }
-// end::class[]

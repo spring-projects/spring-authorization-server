@@ -26,6 +26,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import sample.AuthorizationCodeGrantFlow;
 import sample.jose.TestJwks;
+import sample.jpa.service.authorization.JpaOAuth2AuthorizationService;
+import sample.jpa.service.authorizationConsent.JpaOAuth2AuthorizationConsentService;
+import sample.jpa.service.client.JpaRegisteredClientRepository;
 import sample.test.SpringTestContext;
 import sample.test.SpringTestContextExtension;
 

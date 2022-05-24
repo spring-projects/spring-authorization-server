@@ -13,20 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package sample.jpa;
+package sample.jpa.repository.authorizationConsent;
 
 import java.util.Optional;
+
+import sample.jpa.entity.authorizationConsent.AuthorizationConsent;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-/**
- * @author Steve Riesenberg
- */
-// tag::class[]
 @Repository
 public interface AuthorizationConsentRepository extends JpaRepository<AuthorizationConsent, AuthorizationConsent.AuthorizationConsentId> {
 	Optional<AuthorizationConsent> findByRegisteredClientIdAndPrincipalName(String registeredClientId, String principalName);
 	void deleteByRegisteredClientIdAndPrincipalName(String registeredClientId, String principalName);
 }
-// end::class[]

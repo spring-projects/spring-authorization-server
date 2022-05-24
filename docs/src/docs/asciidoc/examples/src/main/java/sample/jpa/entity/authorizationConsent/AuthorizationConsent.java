@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package sample.jpa;
+package sample.jpa.entity.authorizationConsent;
 
 import java.io.Serializable;
 import java.util.Objects;
@@ -23,10 +23,6 @@ import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.IdClass;
 
-/**
- * @author Steve Riesenberg
- */
-// tag::class[]
 @Entity
 @IdClass(AuthorizationConsent.AuthorizationConsentId.class)
 public class AuthorizationConsent {
@@ -37,8 +33,7 @@ public class AuthorizationConsent {
 	@Column(length = 1000)
 	private String authorities;
 
-	// getters and setters
-// end::class[]
+	// @fold:on
 	public String getRegisteredClientId() {
 		return registeredClientId;
 	}
@@ -62,14 +57,13 @@ public class AuthorizationConsent {
 	public void setAuthorities(String authorities) {
 		this.authorities = authorities;
 	}
-// tag::class[]
+	// @fold:off
 
 	public static class AuthorizationConsentId implements Serializable {
 		private String registeredClientId;
 		private String principalName;
 
-		// getters and setters
-// end::class[]
+		// @fold:on
 		public String getRegisteredClientId() {
 			return registeredClientId;
 		}
@@ -85,10 +79,8 @@ public class AuthorizationConsent {
 		public void setPrincipalName(String principalName) {
 			this.principalName = principalName;
 		}
-// tag::class[]
+		// @fold:off
 
-		// equals and hashCode
-// end::class[]
 		@Override
 		public boolean equals(Object o) {
 			if (this == o) return true;
@@ -101,7 +93,5 @@ public class AuthorizationConsent {
 		public int hashCode() {
 			return Objects.hash(registeredClientId, principalName);
 		}
-// tag::class[]
 	}
 }
-// end::class[]

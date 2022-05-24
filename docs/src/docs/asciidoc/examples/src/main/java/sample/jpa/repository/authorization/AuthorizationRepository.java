@@ -13,19 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package sample.jpa;
+package sample.jpa.repository.authorization;
 
 import java.util.Optional;
+
+import sample.jpa.entity.authorization.Authorization;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-/**
- * @author Steve Riesenberg
- */
-// tag::class[]
 @Repository
 public interface AuthorizationRepository extends JpaRepository<Authorization, String> {
 	Optional<Authorization> findByState(String state);
@@ -39,4 +37,3 @@ public interface AuthorizationRepository extends JpaRepository<Authorization, St
 	)
 	Optional<Authorization> findByStateOrAuthorizationCodeValueOrAccessTokenValueOrRefreshTokenValue(@Param("token") String token);
 }
-// end::class[]

@@ -13,10 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package sample.jpa;
+package sample.jpa.service.authorizationConsent;
 
 import java.util.HashSet;
 import java.util.Set;
+
+import sample.jpa.entity.authorizationConsent.AuthorizationConsent;
+import sample.jpa.repository.authorizationConsent.AuthorizationConsentRepository;
 
 import org.springframework.dao.DataRetrievalFailureException;
 import org.springframework.security.core.GrantedAuthority;
@@ -29,10 +32,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
-/**
- * @author Steve Riesenberg
- */
-// tag::class[]
 @Component
 public class JpaOAuth2AuthorizationConsentService implements OAuth2AuthorizationConsentService {
 	private final AuthorizationConsentRepository authorizationConsentRepository;
@@ -99,4 +98,3 @@ public class JpaOAuth2AuthorizationConsentService implements OAuth2Authorization
 		return entity;
 	}
 }
-// end::class[]

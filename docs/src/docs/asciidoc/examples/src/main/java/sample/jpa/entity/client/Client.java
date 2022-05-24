@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package sample.jpa;
+package sample.jpa.entity.client;
 
 import java.time.Instant;
 
@@ -21,10 +21,6 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 
-/**
- * @author Steve Riesenberg
- */
-// tag::class[]
 @Entity
 public class Client {
 	@Id
@@ -47,8 +43,7 @@ public class Client {
 	@Column(length = 2000)
 	private String tokenSettings;
 
-	// getters and setters
-// end::class[]
+	// @fold:on
 	public String getId() {
 		return id;
 	}
@@ -144,6 +139,5 @@ public class Client {
 	public void setTokenSettings(String tokenSettings) {
 		this.tokenSettings = tokenSettings;
 	}
-// tag::class[]
+	// @fold:off
 }
-// end::class[]

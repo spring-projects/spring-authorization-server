@@ -13,19 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package sample.jpa;
+package sample.jpa.repository.client;
 
 import java.util.Optional;
+
+import sample.jpa.entity.client.Client;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-/**
- * @author Steve Riesenberg
- */
-// tag::class[]
 @Repository
 public interface ClientRepository extends JpaRepository<Client, String> {
 	Optional<Client> findByClientId(String clientId);
 }
-// end::class[]

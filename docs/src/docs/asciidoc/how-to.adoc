@@ -1,5 +1,5 @@
 [[how-to]]
-= "How-to" Guides
+= How-to Guides
 
 [[how-to-overview]]
 == List of Guides

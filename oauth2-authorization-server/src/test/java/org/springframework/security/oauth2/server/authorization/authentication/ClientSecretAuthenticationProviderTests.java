@@ -54,9 +54,6 @@ import static org.mockito.Mockito.when;
  * @author Daniel Garnier-Moiroux
  */
 public class ClientSecretAuthenticationProviderTests {
-	private static final String PLAIN_CODE_VERIFIER = "pkce-key";
-	private static final String PLAIN_CODE_CHALLENGE = PLAIN_CODE_VERIFIER;
-
 	// See RFC 7636: Appendix B.  Example for the S256 code_challenge_method
 	// https://tools.ietf.org/html/rfc7636#appendix-B
 	private static final String S256_CODE_VERIFIER = "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk";
@@ -231,12 +228,12 @@ public class ClientSecretAuthenticationProviderTests {
 				.thenReturn(registeredClient);
 
 		OAuth2Authorization authorization = TestOAuth2Authorizations
-				.authorization(registeredClient, createPkceAuthorizationParametersPlain())
+				.authorization(registeredClient, createPkceAuthorizationParametersS256())
 				.build();
 		when(this.authorizationService.findByToken(eq(AUTHORIZATION_CODE), eq(AUTHORIZATION_CODE_TOKEN_TYPE)))
 				.thenReturn(authorization);
 
-		Map<String, Object> parameters = createPkceTokenParameters(PLAIN_CODE_VERIFIER);
+		Map<String, Object> parameters = createPkceTokenParameters(S256_CODE_VERIFIER);
 		parameters.put(OAuth2ParameterNames.CODE, "invalid-code");
 
 		OAuth2ClientAuthenticationToken authentication = new OAuth2ClientAuthenticationToken(
@@ -258,7 +255,7 @@ public class ClientSecretAuthenticationProviderTests {
 				.thenReturn(registeredClient);
 
 		OAuth2Authorization authorization = TestOAuth2Authorizations
-				.authorization(registeredClient, createPkceAuthorizationParametersPlain())
+				.authorization(registeredClient, createPkceAuthorizationParametersS256())
 				.build();
 		when(this.authorizationService.findByToken(eq(AUTHORIZATION_CODE), eq(AUTHORIZATION_CODE_TOKEN_TYPE)))
 				.thenReturn(authorization);
@@ -314,13 +311,6 @@ public class ClientSecretAuthenticationProviderTests {
 	private static Map<String, Object> createPkceTokenParameters(String codeVerifier) {
 		Map<String, Object> parameters = createAuthorizationCodeTokenParameters();
 		parameters.put(PkceParameterNames.CODE_VERIFIER, codeVerifier);
-		return parameters;
-	}
-
-	private static Map<String, Object> createPkceAuthorizationParametersPlain() {
-		Map<String, Object> parameters = new HashMap<>();
-		parameters.put(PkceParameterNames.CODE_CHALLENGE_METHOD, "plain");
-		parameters.put(PkceParameterNames.CODE_CHALLENGE, PLAIN_CODE_CHALLENGE);
 		return parameters;
 	}
 

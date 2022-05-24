@@ -48,9 +48,6 @@ import static org.mockito.Mockito.when;
  * @author Daniel Garnier-Moiroux
  */
 public class PublicClientAuthenticationProviderTests {
-	private static final String PLAIN_CODE_VERIFIER = "pkce-key";
-	private static final String PLAIN_CODE_CHALLENGE = PLAIN_CODE_VERIFIER;
-
 	// See RFC 7636: Appendix B.  Example for the S256 code_challenge_method
 	// https://tools.ietf.org/html/rfc7636#appendix-B
 	private static final String S256_CODE_VERIFIER = "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk";
@@ -131,12 +128,12 @@ public class PublicClientAuthenticationProviderTests {
 				.thenReturn(registeredClient);
 
 		OAuth2Authorization authorization = TestOAuth2Authorizations
-				.authorization(registeredClient, createPkceAuthorizationParametersPlain())
+				.authorization(registeredClient, createPkceAuthorizationParametersS256())
 				.build();
 		when(this.authorizationService.findByToken(eq(AUTHORIZATION_CODE), eq(AUTHORIZATION_CODE_TOKEN_TYPE)))
 				.thenReturn(authorization);
 
-		Map<String, Object> parameters = createPkceTokenParameters(PLAIN_CODE_VERIFIER);
+		Map<String, Object> parameters = createPkceTokenParameters(S256_CODE_VERIFIER);
 		parameters.put(OAuth2ParameterNames.CODE, "invalid-code");
 
 		OAuth2ClientAuthenticationToken authentication =
@@ -163,7 +160,7 @@ public class PublicClientAuthenticationProviderTests {
 		when(this.authorizationService.findByToken(eq(AUTHORIZATION_CODE), eq(AUTHORIZATION_CODE_TOKEN_TYPE)))
 				.thenReturn(authorization);
 
-		Map<String, Object> parameters = createPkceTokenParameters(PLAIN_CODE_VERIFIER);
+		Map<String, Object> parameters = createPkceTokenParameters(S256_CODE_VERIFIER);
 
 		OAuth2ClientAuthenticationToken authentication =
 				new OAuth2ClientAuthenticationToken(registeredClient.getClientId(), ClientAuthenticationMethod.NONE, null, parameters);
@@ -184,38 +181,12 @@ public class PublicClientAuthenticationProviderTests {
 				.thenReturn(registeredClient);
 
 		OAuth2Authorization authorization = TestOAuth2Authorizations
-				.authorization(registeredClient, createPkceAuthorizationParametersPlain())
+				.authorization(registeredClient, createPkceAuthorizationParametersS256())
 				.build();
 		when(this.authorizationService.findByToken(eq(AUTHORIZATION_CODE), eq(AUTHORIZATION_CODE_TOKEN_TYPE)))
 				.thenReturn(authorization);
 
 		Map<String, Object> parameters = createAuthorizationCodeTokenParameters();
-
-		OAuth2ClientAuthenticationToken authentication =
-				new OAuth2ClientAuthenticationToken(registeredClient.getClientId(), ClientAuthenticationMethod.NONE, null, parameters);
-
-		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
-				.isInstanceOf(OAuth2AuthenticationException.class)
-				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
-				.satisfies(error -> {
-					assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_GRANT);
-					assertThat(error.getDescription()).contains(PkceParameterNames.CODE_VERIFIER);
-				});
-	}
-
-	@Test
-	public void authenticateWhenPlainMethodAndInvalidCodeVerifierThenThrowOAuth2AuthenticationException() {
-		RegisteredClient registeredClient = TestRegisteredClients.registeredPublicClient().build();
-		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
-				.thenReturn(registeredClient);
-
-		OAuth2Authorization authorization = TestOAuth2Authorizations
-				.authorization(registeredClient, createPkceAuthorizationParametersPlain())
-				.build();
-		when(this.authorizationService.findByToken(eq(AUTHORIZATION_CODE), eq(AUTHORIZATION_CODE_TOKEN_TYPE)))
-				.thenReturn(authorization);
-
-		Map<String, Object> parameters = createPkceTokenParameters("invalid-code-verifier");
 
 		OAuth2ClientAuthenticationToken authentication =
 				new OAuth2ClientAuthenticationToken(registeredClient.getClientId(), ClientAuthenticationMethod.NONE, null, parameters);
@@ -256,58 +227,6 @@ public class PublicClientAuthenticationProviderTests {
 	}
 
 	@Test
-	public void authenticateWhenPlainMethodAndValidCodeVerifierThenAuthenticated() {
-		RegisteredClient registeredClient = TestRegisteredClients.registeredPublicClient().build();
-		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
-				.thenReturn(registeredClient);
-
-		OAuth2Authorization authorization = TestOAuth2Authorizations
-				.authorization(registeredClient, createPkceAuthorizationParametersPlain())
-				.build();
-		when(this.authorizationService.findByToken(eq(AUTHORIZATION_CODE), eq(AUTHORIZATION_CODE_TOKEN_TYPE)))
-				.thenReturn(authorization);
-
-		Map<String, Object> parameters = createPkceTokenParameters(PLAIN_CODE_VERIFIER);
-
-		OAuth2ClientAuthenticationToken authentication =
-				new OAuth2ClientAuthenticationToken(registeredClient.getClientId(), ClientAuthenticationMethod.NONE, null, parameters);
-
-		OAuth2ClientAuthenticationToken authenticationResult =
-				(OAuth2ClientAuthenticationToken) this.authenticationProvider.authenticate(authentication);
-		assertThat(authenticationResult.isAuthenticated()).isTrue();
-		assertThat(authenticationResult.getPrincipal().toString()).isEqualTo(registeredClient.getClientId());
-		assertThat(authenticationResult.getCredentials()).isNull();
-		assertThat(authenticationResult.getRegisteredClient()).isEqualTo(registeredClient);
-	}
-
-	@Test
-	public void authenticateWhenMissingMethodThenDefaultPlainMethodAndAuthenticated() {
-		RegisteredClient registeredClient = TestRegisteredClients.registeredPublicClient().build();
-		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
-				.thenReturn(registeredClient);
-
-		Map<String, Object> authorizationRequestAdditionalParameters = createPkceAuthorizationParametersPlain();
-		authorizationRequestAdditionalParameters.remove(PkceParameterNames.CODE_CHALLENGE_METHOD);
-		OAuth2Authorization authorization = TestOAuth2Authorizations
-				.authorization(registeredClient, authorizationRequestAdditionalParameters)
-				.build();
-		when(this.authorizationService.findByToken(eq(AUTHORIZATION_CODE), eq(AUTHORIZATION_CODE_TOKEN_TYPE)))
-				.thenReturn(authorization);
-
-		Map<String, Object> parameters = createPkceTokenParameters(PLAIN_CODE_VERIFIER);
-
-		OAuth2ClientAuthenticationToken authentication =
-				new OAuth2ClientAuthenticationToken(registeredClient.getClientId(), ClientAuthenticationMethod.NONE, null, parameters);
-
-		OAuth2ClientAuthenticationToken authenticationResult =
-				(OAuth2ClientAuthenticationToken) this.authenticationProvider.authenticate(authentication);
-		assertThat(authenticationResult.isAuthenticated()).isTrue();
-		assertThat(authenticationResult.getPrincipal().toString()).isEqualTo(registeredClient.getClientId());
-		assertThat(authenticationResult.getCredentials()).isNull();
-		assertThat(authenticationResult.getRegisteredClient()).isEqualTo(registeredClient);
-	}
-
-	@Test
 	public void authenticateWhenS256MethodAndValidCodeVerifierThenAuthenticated() {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredPublicClient().build();
 		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
@@ -338,7 +257,7 @@ public class PublicClientAuthenticationProviderTests {
 		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
 				.thenReturn(registeredClient);
 
-		Map<String, Object> authorizationRequestAdditionalParameters = createPkceAuthorizationParametersPlain();
+		Map<String, Object> authorizationRequestAdditionalParameters = createPkceAuthorizationParametersS256();
 		// This should never happen: the Authorization endpoint should not allow it
 		authorizationRequestAdditionalParameters.put(PkceParameterNames.CODE_CHALLENGE_METHOD, "unsupported-challenge-method");
 		OAuth2Authorization authorization = TestOAuth2Authorizations
@@ -347,7 +266,7 @@ public class PublicClientAuthenticationProviderTests {
 		when(this.authorizationService.findByToken(eq(AUTHORIZATION_CODE), eq(AUTHORIZATION_CODE_TOKEN_TYPE)))
 				.thenReturn(authorization);
 
-		Map<String, Object> parameters = createPkceTokenParameters(PLAIN_CODE_VERIFIER);
+		Map<String, Object> parameters = createPkceTokenParameters(S256_CODE_VERIFIER);
 
 		OAuth2ClientAuthenticationToken authentication =
 				new OAuth2ClientAuthenticationToken(registeredClient.getClientId(), ClientAuthenticationMethod.NONE, null, parameters);
@@ -369,13 +288,6 @@ public class PublicClientAuthenticationProviderTests {
 	private static Map<String, Object> createPkceTokenParameters(String codeVerifier) {
 		Map<String, Object> parameters = createAuthorizationCodeTokenParameters();
 		parameters.put(PkceParameterNames.CODE_VERIFIER, codeVerifier);
-		return parameters;
-	}
-
-	private static Map<String, Object> createPkceAuthorizationParametersPlain() {
-		Map<String, Object> parameters = new HashMap<>();
-		parameters.put(PkceParameterNames.CODE_CHALLENGE_METHOD, "plain");
-		parameters.put(PkceParameterNames.CODE_CHALLENGE, PLAIN_CODE_CHALLENGE);
 		return parameters;
 	}
 

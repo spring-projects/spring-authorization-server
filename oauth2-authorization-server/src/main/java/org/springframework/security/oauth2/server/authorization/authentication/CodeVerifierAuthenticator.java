@@ -113,8 +113,6 @@ final class CodeVerifierAuthenticator {
 	private static boolean codeVerifierValid(String codeVerifier, String codeChallenge, String codeChallengeMethod) {
 		if (!StringUtils.hasText(codeVerifier)) {
 			return false;
-		} else if (!StringUtils.hasText(codeChallengeMethod) || "plain".equals(codeChallengeMethod)) {
-			return codeVerifier.equals(codeChallenge);
 		} else if ("S256".equals(codeChallengeMethod)) {
 			try {
 				MessageDigest md = MessageDigest.getInstance("SHA-256");

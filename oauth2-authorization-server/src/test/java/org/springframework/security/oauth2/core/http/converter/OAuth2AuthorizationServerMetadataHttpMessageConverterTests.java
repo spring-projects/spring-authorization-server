@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 the original author or authors.
+ * Copyright 2020-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -103,7 +103,7 @@ public class OAuth2AuthorizationServerMetadataHttpMessageConverterTests {
 				+ "		\"revocation_endpoint_auth_methods_supported\": [\"client_secret_basic\"],\n"
 				+ "		\"introspection_endpoint\": \"https://example.com/issuer1/oauth2/introspect\",\n"
 				+ "		\"introspection_endpoint_auth_methods_supported\": [\"client_secret_basic\"],\n"
-				+ "		\"code_challenge_methods_supported\": [\"plain\",\"S256\"],\n"
+				+ "		\"code_challenge_methods_supported\": [\"S256\"],\n"
 				+ "		\"custom_claim\": \"value\",\n"
 				+ "		\"custom_collection_claim\": [\"value1\", \"value2\"]\n"
 				+ "}\n";
@@ -125,7 +125,7 @@ public class OAuth2AuthorizationServerMetadataHttpMessageConverterTests {
 		assertThat(authorizationServerMetadata.getTokenRevocationEndpointAuthenticationMethods()).containsExactly(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue());
 		assertThat(authorizationServerMetadata.getTokenIntrospectionEndpoint()).isEqualTo(new URL("https://example.com/issuer1/oauth2/introspect"));
 		assertThat(authorizationServerMetadata.getTokenIntrospectionEndpointAuthenticationMethods()).containsExactly(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue());
-		assertThat(authorizationServerMetadata.getCodeChallengeMethods()).containsExactlyInAnyOrder("plain", "S256");
+		assertThat(authorizationServerMetadata.getCodeChallengeMethods()).containsExactly("S256");
 		assertThat(authorizationServerMetadata.getClaimAsString("custom_claim")).isEqualTo("value");
 		assertThat(authorizationServerMetadata.getClaimAsStringList("custom_collection_claim")).containsExactlyInAnyOrder("value1", "value2");
 	}
@@ -172,7 +172,6 @@ public class OAuth2AuthorizationServerMetadataHttpMessageConverterTests {
 						.tokenRevocationEndpointAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue())
 						.tokenIntrospectionEndpoint("https://example.com/issuer1/oauth2/introspect")
 						.tokenIntrospectionEndpointAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue())
-						.codeChallengeMethod("plain")
 						.codeChallengeMethod("S256")
 						.claim("custom_claim", "value")
 						.claim("custom_collection_claim", Arrays.asList("value1", "value2"))
@@ -194,7 +193,7 @@ public class OAuth2AuthorizationServerMetadataHttpMessageConverterTests {
 		assertThat(authorizationServerMetadataResponse).contains("\"revocation_endpoint_auth_methods_supported\":[\"client_secret_basic\"]");
 		assertThat(authorizationServerMetadataResponse).contains("\"introspection_endpoint\":\"https://example.com/issuer1/oauth2/introspect\"");
 		assertThat(authorizationServerMetadataResponse).contains("\"introspection_endpoint_auth_methods_supported\":[\"client_secret_basic\"]");
-		assertThat(authorizationServerMetadataResponse).contains("\"code_challenge_methods_supported\":[\"plain\",\"S256\"]");
+		assertThat(authorizationServerMetadataResponse).contains("\"code_challenge_methods_supported\":[\"S256\"]");
 		assertThat(authorizationServerMetadataResponse).contains("\"custom_claim\":\"value\"");
 		assertThat(authorizationServerMetadataResponse).contains("\"custom_collection_claim\":[\"value1\",\"value2\"]");
 	}

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 the original author or authors.
+ * Copyright 2020-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,7 +59,6 @@ public class OAuth2AuthorizationServerMetadataTests {
 				.tokenRevocationEndpointAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue())
 				.tokenIntrospectionEndpoint("https://example.com/issuer1/oauth2/introspect")
 				.tokenIntrospectionEndpointAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue())
-				.codeChallengeMethod("plain")
 				.codeChallengeMethod("S256")
 				.claim("a-claim", "a-value")
 				.build();
@@ -76,7 +75,7 @@ public class OAuth2AuthorizationServerMetadataTests {
 		assertThat(authorizationServerMetadata.getTokenRevocationEndpointAuthenticationMethods()).containsExactly(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue());
 		assertThat(authorizationServerMetadata.getTokenIntrospectionEndpoint()).isEqualTo(url("https://example.com/issuer1/oauth2/introspect"));
 		assertThat(authorizationServerMetadata.getTokenIntrospectionEndpointAuthenticationMethods()).containsExactly(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue());
-		assertThat(authorizationServerMetadata.getCodeChallengeMethods()).containsExactlyInAnyOrder("plain", "S256");
+		assertThat(authorizationServerMetadata.getCodeChallengeMethods()).containsExactly("S256");
 		assertThat(authorizationServerMetadata.getClaimAsString("a-claim")).isEqualTo("a-value");
 	}
 

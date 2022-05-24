@@ -69,13 +69,12 @@ import org.springframework.security.web.context.HttpSessionSecurityContextReposi
 import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultMatcher;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.ResultMatcher.matchAll;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -171,13 +170,16 @@ public class OidcUserInfoTests {
 
 		OAuth2AccessToken accessToken = authorization.getAccessToken().getToken();
 		// @formatter:off
-		this.mvc.perform(get(DEFAULT_OIDC_USER_INFO_ENDPOINT_URI)
+		MvcResult mvcResult = this.mvc.perform(get(DEFAULT_OIDC_USER_INFO_ENDPOINT_URI)
 				.header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken.getTokenValue()))
 				.andExpect(status().is2xxSuccessful())
-				.andExpect(userInfoResponse());
+				.andExpect(userInfoResponse())
+				.andReturn();
 		// @formatter:on
 
-		verify(securityContextRepository, never()).saveContext(any(), any(), any());
+		org.springframework.security.core.context.SecurityContext securityContext =
+				securityContextRepository.loadContext(mvcResult.getRequest()).get();
+		assertThat(securityContext.getAuthentication()).isNull();
 	}
 
 	private static ResultMatcher userInfoResponse() {

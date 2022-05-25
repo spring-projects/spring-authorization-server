@@ -113,7 +113,7 @@ public class JwtUserInfoMapperSecurityConfig {
 		return http.build();
 	}
 
-	@Bean // <4>
+	@Bean
 	public JwtDecoder jwtDecoder(JWKSource<SecurityContext> jwkSource) {
 		return OAuth2AuthorizationServerConfiguration.jwtDecoder(jwkSource);
 	}

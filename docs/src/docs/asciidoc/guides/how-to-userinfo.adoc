@@ -3,7 +3,7 @@
 :index-link: ../how-to.html
 :docs-dir: ..
 
-This guide shows how to customize the xref:{docs-dir}/protocol-endpoints.adoc#oidc-user-info-endpoint[User Info endpoint] of the xref:{docs-dir}/index.adoc#top[Spring Authorization Server].
+This guide shows how to customize the xref:{docs-dir}/protocol-endpoints.adoc#oidc-user-info-endpoint[UserInfo endpoint] of the xref:{docs-dir}/index.adoc#top[Spring Authorization Server].
 The purpose of this guide is to demonstrate how to enable the endpoint and use the available customization options to produce a custom response.
 
 * <<enable-user-info>>
@@ -16,7 +16,7 @@ The xref:{docs-dir}/protocol-endpoints.adoc#oidc-user-info-endpoint[OpenID Conne
 
 > The Access Token obtained from an OpenID Connect Authentication Request MUST be sent as a Bearer Token, per Section 2 of https://openid.net/specs/openid-connect-core-1_0.html#RFC6750[OAuth 2.0 Bearer Token Usage] [RFC6750].
 
-Before customizing the response, you need to enable the User Info endpoint.
+Before customizing the response, you need to enable the UserInfo endpoint.
 The following listing shows how to enable the {spring-security-reference-base-url}/servlet/oauth2/resource-server/jwt.html[OAuth2 resource server configuration].
 
 [[sample.userinfo]]
@@ -52,7 +52,7 @@ include::code:IdTokenCustomizerConfig[]
 
 This configuration provides the following:
 
-<1> An instance of `OAuth2TokenCustomizer` for customizing the `id_token`.
+<1> An instance of xref:{docs-dir}/core-model-components.adoc#oauth2-token-customizer[`OAuth2TokenCustomizer`] for customizing the `id_token`.
 <2> A custom service used to obtain user info in a domain-specific way.
 
 The following listing shows a custom service for looking up user info in a domain-specific way:
@@ -63,7 +63,7 @@ include::code:OidcUserInfoService[]
 === Customize the User Info Mapper
 
 To fully customize the user info response, you can provide a custom user info mapper capable of generating the object used to render the response, which is an instance of the `OidcUserInfo` class from Spring Security.
-The mapper implementation receives an instance of `OidcUserInfoAuthenticationContext` with information about the current request, including the xref:{docs-dir}/core-model-components.adoc#oauth2-authorization-service[`OAuth2Authorization`].
+The mapper implementation receives an instance of `OidcUserInfoAuthenticationContext` with information about the current request, including the xref:{docs-dir}/core-model-components.adoc#oauth2-authorization[`OAuth2Authorization`].
 
 The following listing shows how to use the customization option that is available while working directly with the `OAuth2AuthorizationServerConfigurer`.
 

@@ -113,7 +113,7 @@ public class JwtUserInfoMapperSecurityConfig {
 		return http.build();
 	}
 
-	@Bean // <3>
+	@Bean // <4>
 	public JwtDecoder jwtDecoder(JWKSource<SecurityContext> jwkSource) {
 		return OAuth2AuthorizationServerConfiguration.jwtDecoder(jwkSource);
 	}
@@ -168,7 +168,7 @@ public class JwtUserInfoMapperSecurityConfig {
 		return new ImmutableJWKSet<>(jwkSet);
 	}
 
-	private static KeyPair generateRsaKey() { // <6>
+	private static KeyPair generateRsaKey() {
 		KeyPair keyPair;
 		try {
 			KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");

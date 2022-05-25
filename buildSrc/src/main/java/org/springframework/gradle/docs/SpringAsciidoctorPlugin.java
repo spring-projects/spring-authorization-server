@@ -119,7 +119,7 @@ public class SpringAsciidoctorPlugin implements Plugin<Project> {
 			resourcesSpec.from(asciidoctorTask.getSourceDir(), (resourcesSrcDirSpec) -> {
 				// Not using intermediateWorkDir.
 				// See https://github.com/asciidoctor/asciidoctor-gradle-plugin/issues/523
-				resourcesSrcDirSpec.include("images/*.png", "css/**", "js/**");
+				resourcesSrcDirSpec.include("images/*.png", "css/**", "js/**", "**/*.java");
 			});
 		});
 		if (asciidoctorTask instanceof AsciidoctorTask) {

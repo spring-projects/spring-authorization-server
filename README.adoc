@@ -13,7 +13,7 @@ This project uses https://www.zenhub.com/[ZenHub] to prioritize the feature road
 The project board can be accessed https://app.zenhub.com/workspaces/authorization-server-5e8f3182b5e8f5841bfc4902/board?repos=248032165[here].
 It is recommended to install the ZenHub https://www.zenhub.com/extension[browser extension] as it integrates natively within GitHub's user interface.
 
-The completed and upcoming feature list can be viewed in the https://github.com/spring-projects/spring-authorization-server/wiki/Feature-List[wiki].
+The feature list can be viewed in the https://docs.spring.io/spring-authorization-server/docs/current/reference/html/overview.html#feature-list[reference documentation].
 
 == Support Policy
 The Spring Authorization Server project provides software support and is documented in its link:SUPPORT_POLICY.adoc[support policy].

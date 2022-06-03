@@ -91,6 +91,11 @@ public class OAuth2AuthorizationServerMetadataClaimNames {
 	 */
 	public static final String CODE_CHALLENGE_METHODS_SUPPORTED = "code_challenge_methods_supported";
 
+	/**
+	 * {@code registration_endpoint} -  the {@code URL} of the authorization server's OAuth 2.0 Dynamic Client Registration endpoint
+	 */
+	public static final String REGISTRATION_ENDPOINT = "registration_endpoint";
+
 	protected OAuth2AuthorizationServerMetadataClaimNames() {
 	}
 

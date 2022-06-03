@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 import org.springframework.util.Assert;
+import org.springframework.util.StringUtils;
 
 /**
  * A base representation of OAuth 2.0 Authorization Server metadata,
@@ -93,6 +94,20 @@ public abstract class AbstractOAuth2AuthorizationServerMetadata implements OAuth
 		 */
 		public B authorizationEndpoint(String authorizationEndpoint) {
 			return claim(OAuth2AuthorizationServerMetadataClaimNames.AUTHORIZATION_ENDPOINT, authorizationEndpoint);
+		}
+
+		/**
+		 * Use this {@code registration_endpoint} in the resulting {@link AbstractOAuth2AuthorizationServerMetadata}, Optional.
+		 *
+		 * @param clientRegistrationEndpoint the {@code URL} of the OAuth 2.0 Dynamic Client Registration Endpoint
+		 * @return the {@link AbstractBuilder} for further configuration
+		 */
+		public B clientRegistrationEndpoint(String clientRegistrationEndpoint) {
+			if (!StringUtils.hasText(clientRegistrationEndpoint)) {
+				return getThis();
+			}
+
+			return claim(OAuth2AuthorizationServerMetadataClaimNames.REGISTRATION_ENDPOINT, clientRegistrationEndpoint);
 		}
 
 		/**

@@ -36,11 +36,15 @@ import org.springframework.security.oauth2.core.oidc.http.converter.OidcProvider
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 import org.springframework.security.oauth2.server.authorization.config.ProviderSettings;
 import org.springframework.security.oauth2.server.authorization.context.ProviderContextHolder;
+import org.springframework.security.web.DefaultSecurityFilterChain;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
+import org.springframework.web.context.support.WebApplicationContextUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.util.UriComponentsBuilder;
+
+import javax.servlet.Filter;
 
 /**
  * A {@code Filter} that processes OpenID Provider Configuration Requests.
@@ -82,9 +86,13 @@ public final class OidcProviderConfigurationEndpointFilter extends OncePerReques
 
 		String issuer = ProviderContextHolder.getProviderContext().getIssuer();
 
+		String clientRegistrationEndpoint = isDynamicClientRegistrationEnabled()
+				? asUrl(issuer, this.providerSettings.getOidcClientRegistrationEndpoint()) : null;
+
 		OidcProviderConfiguration providerConfiguration = OidcProviderConfiguration.builder()
 				.issuer(issuer)
 				.authorizationEndpoint(asUrl(issuer, this.providerSettings.getAuthorizationEndpoint()))
+				.clientRegistrationEndpoint(clientRegistrationEndpoint)
 				.tokenEndpoint(asUrl(issuer, this.providerSettings.getTokenEndpoint()))
 				.tokenEndpointAuthenticationMethods(clientAuthenticationMethods())
 				.jwkSetUrl(asUrl(issuer, this.providerSettings.getJwkSetEndpoint()))
@@ -118,5 +126,18 @@ public final class OidcProviderConfigurationEndpointFilter extends OncePerReques
 
 	private static String asUrl(String issuer, String endpoint) {
 		return UriComponentsBuilder.fromUriString(issuer).path(endpoint).build().toUriString();
+	}
+
+	private boolean isDynamicClientRegistrationEnabled() {
+		DefaultSecurityFilterChain defaultSecurityFilterChain = WebApplicationContextUtils
+				.getRequiredWebApplicationContext(getServletContext()).getBean(DefaultSecurityFilterChain.class);
+
+		for (Filter filter : defaultSecurityFilterChain.getFilters()) {
+			if (filter instanceof OidcClientRegistrationEndpointFilter) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 }

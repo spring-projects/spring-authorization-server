@@ -11,6 +11,7 @@ repositories {
 	mavenCentral()
 	maven { url "https://repo.spring.io/plugins-release/" }
 }
+jar {duplicatesStrategy(DuplicatesStrategy.EXCLUDE)}
 
 dependencies {
 	implementation "com.github.ben-manes:gradle-versions-plugin:0.38.0"

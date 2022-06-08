@@ -80,6 +80,9 @@ public class SpringJavaPlugin implements Plugin<Project> {
 			CompileOptions options = javaCompile.getOptions();
 			options.setEncoding("UTF-8");
 			options.getCompilerArgs().add("-parameters");
+			if (JavaVersion.current().isJava11Compatible()) {
+				options.getRelease().set(8);
+			}
 		});
 		project.getTasks().withType(Jar.class, (jar) -> jar.manifest((manifest) -> {
 			Map<String, String> attributes = new HashMap<>();

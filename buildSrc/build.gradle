@@ -4,7 +4,7 @@ plugins {
 	id "groovy"
 }
 
-sourceCompatibility = JavaVersion.VERSION_11
+sourceCompatibility = JavaVersion.VERSION_1_8
 
 repositories {
 	gradlePluginPortal()

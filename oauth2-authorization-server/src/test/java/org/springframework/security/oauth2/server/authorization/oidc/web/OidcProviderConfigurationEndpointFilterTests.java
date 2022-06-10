@@ -96,6 +96,7 @@ public class OidcProviderConfigurationEndpointFilterTests {
 		String jwkSetEndpoint = "/oauth2/v1/jwks";
 		String userInfoEndpoint = "/userinfo";
 		String tokenRevocationEndpoint = "/oauth2/v1/revoke";
+		String tokenIntrospectionEndpoint = "/oauth2/v1/introspect";
 
 		ProviderSettings providerSettings = ProviderSettings.builder()
 				.issuer(issuer)
@@ -104,6 +105,7 @@ public class OidcProviderConfigurationEndpointFilterTests {
 				.jwkSetEndpoint(jwkSetEndpoint)
 				.oidcUserInfoEndpoint(userInfoEndpoint)
 				.tokenRevocationEndpoint(tokenRevocationEndpoint)
+				.tokenIntrospectionEndpoint(tokenIntrospectionEndpoint)
 				.build();
 		ProviderContextHolder.setProviderContext(new ProviderContext(providerSettings, null));
 		OidcProviderConfigurationEndpointFilter filter =
@@ -130,6 +132,8 @@ public class OidcProviderConfigurationEndpointFilterTests {
 		assertThat(providerConfigurationResponse).contains("\"grant_types_supported\":[\"authorization_code\",\"client_credentials\",\"refresh_token\"]");
 		assertThat(providerConfigurationResponse).contains("\"revocation_endpoint\":\"https://example.com/issuer1/oauth2/v1/revoke\"");
 		assertThat(providerConfigurationResponse).contains("\"revocation_endpoint_auth_methods_supported\":[\"client_secret_basic\",\"client_secret_post\",\"client_secret_jwt\",\"private_key_jwt\"]");
+		assertThat(providerConfigurationResponse).contains("\"introspection_endpoint\":\"https://example.com/issuer1/oauth2/v1/introspect\"");
+		assertThat(providerConfigurationResponse).contains("\"introspection_endpoint_auth_methods_supported\":[\"client_secret_basic\",\"client_secret_post\",\"client_secret_jwt\",\"private_key_jwt\"]");
 		assertThat(providerConfigurationResponse).contains("\"subject_types_supported\":[\"public\"]");
 		assertThat(providerConfigurationResponse).contains("\"id_token_signing_alg_values_supported\":[\"RS256\"]");
 		assertThat(providerConfigurationResponse).contains("\"userinfo_endpoint\":\"https://example.com/issuer1/userinfo\"");

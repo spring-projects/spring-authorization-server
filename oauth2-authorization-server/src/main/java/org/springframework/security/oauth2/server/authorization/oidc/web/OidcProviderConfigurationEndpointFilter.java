@@ -95,6 +95,8 @@ public final class OidcProviderConfigurationEndpointFilter extends OncePerReques
 				.grantType(AuthorizationGrantType.REFRESH_TOKEN.getValue())
 				.tokenRevocationEndpoint(asUrl(issuer, this.providerSettings.getTokenRevocationEndpoint()))
 				.tokenRevocationEndpointAuthenticationMethods(clientAuthenticationMethods())
+				.tokenIntrospectionEndpoint(asUrl(issuer, this.providerSettings.getTokenIntrospectionEndpoint()))
+				.tokenIntrospectionEndpointAuthenticationMethods(clientAuthenticationMethods())
 				.subjectType("public")
 				.idTokenSigningAlgorithm(SignatureAlgorithm.RS256.getName())
 				.scope(OidcScopes.OPENID)

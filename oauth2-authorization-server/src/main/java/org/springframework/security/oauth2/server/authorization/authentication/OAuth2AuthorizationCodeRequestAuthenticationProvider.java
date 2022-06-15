@@ -475,69 +475,6 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 		return true;
 	}
 
-	private static boolean isValidRedirectUri(String requestedRedirectUri, RegisteredClient registeredClient) {
-		UriComponents requestedRedirect;
-		try {
-			requestedRedirect = UriComponentsBuilder.fromUriString(requestedRedirectUri).build();
-			if (requestedRedirect.getFragment() != null) {
-				return false;
-			}
-		} catch (Exception ex) {
-			return false;
-		}
-
-		String requestedRedirectHost = requestedRedirect.getHost();
-		if (requestedRedirectHost == null || requestedRedirectHost.equals("localhost")) {
-			// As per https://tools.ietf.org/html/draft-ietf-oauth-v2-1-01#section-9.7.1
-			// While redirect URIs using localhost (i.e.,
-			// "http://localhost:{port}/{path}") function similarly to loopback IP
-			// redirects described in Section 10.3.3, the use of "localhost" is NOT RECOMMENDED.
-			return false;
-		}
-		if (!isLoopbackAddress(requestedRedirectHost)) {
-			// As per https://tools.ietf.org/html/draft-ietf-oauth-v2-1-01#section-9.7
-			// When comparing client redirect URIs against pre-registered URIs,
-			// authorization servers MUST utilize exact string matching.
-			return registeredClient.getRedirectUris().contains(requestedRedirectUri);
-		}
-
-		// As per https://tools.ietf.org/html/draft-ietf-oauth-v2-1-01#section-10.3.3
-		// The authorization server MUST allow any port to be specified at the
-		// time of the request for loopback IP redirect URIs, to accommodate
-		// clients that obtain an available ephemeral port from the operating
-		// system at the time of the request.
-		for (String registeredRedirectUri : registeredClient.getRedirectUris()) {
-			UriComponentsBuilder registeredRedirect = UriComponentsBuilder.fromUriString(registeredRedirectUri);
-			registeredRedirect.port(requestedRedirect.getPort());
-			if (registeredRedirect.build().toString().equals(requestedRedirect.toString())) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	private static boolean isLoopbackAddress(String host) {
-		// IPv6 loopback address should either be "0:0:0:0:0:0:0:1" or "::1"
-		if ("[0:0:0:0:0:0:0:1]".equals(host) || "[::1]".equals(host)) {
-			return true;
-		}
-		// IPv4 loopback address ranges from 127.0.0.1 to 127.255.255.255
-		String[] ipv4Octets = host.split("\\.");
-		if (ipv4Octets.length != 4) {
-			return false;
-		}
-		try {
-			int[] address = new int[ipv4Octets.length];
-			for (int i=0; i < ipv4Octets.length; i++) {
-				address[i] = Integer.parseInt(ipv4Octets[i]);
-			}
-			return address[0] == 127 && address[1] >= 0 && address[1] <= 255 && address[2] >= 0 &&
-					address[2] <= 255 && address[3] >= 1 && address[3] <= 255;
-		} catch (NumberFormatException ex) {
-			return false;
-		}
-	}
-
 	private static boolean isPrincipalAuthenticated(Authentication principal) {
 		return principal != null &&
 				!AnonymousAuthenticationToken.class.isAssignableFrom(principal.getClass()) &&
@@ -560,9 +497,16 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 	private static void throwError(String errorCode, String parameterName, String errorUri,
 			OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthentication,
 			RegisteredClient registeredClient, OAuth2AuthorizationRequest authorizationRequest) {
+		OAuth2Error error = new OAuth2Error(errorCode, "OAuth 2.0 Parameter: " + parameterName, errorUri);
+		throwError(error, parameterName, authorizationCodeRequestAuthentication, registeredClient, authorizationRequest);
+	}
+
+	private static void throwError(OAuth2Error error, String parameterName,
+			OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthentication,
+			RegisteredClient registeredClient, OAuth2AuthorizationRequest authorizationRequest) {
 
 		boolean redirectOnError = true;
-		if (errorCode.equals(OAuth2ErrorCodes.INVALID_REQUEST) &&
+		if (error.getErrorCode().equals(OAuth2ErrorCodes.INVALID_REQUEST) &&
 				(parameterName.equals(OAuth2ParameterNames.CLIENT_ID) ||
 						parameterName.equals(OAuth2ParameterNames.REDIRECT_URI) ||
 						parameterName.equals(OAuth2ParameterNames.STATE))) {
@@ -587,7 +531,6 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 			authorizationCodeRequestAuthenticationResult.setAuthenticated(authorizationCodeRequestAuthentication.isAuthenticated());
 		}
 
-		OAuth2Error error = new OAuth2Error(errorCode, "OAuth 2.0 Parameter: " + parameterName, errorUri);
 		throw new OAuth2AuthorizationCodeRequestAuthenticationException(error, authorizationCodeRequestAuthenticationResult);
 	}
 
@@ -637,16 +580,95 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 					authenticationContext.getAuthentication();
 			RegisteredClient registeredClient = authenticationContext.get(RegisteredClient.class);
 
-			if (StringUtils.hasText(authorizationCodeRequestAuthentication.getRedirectUri())) {
-				if (!isValidRedirectUri(authorizationCodeRequestAuthentication.getRedirectUri(), registeredClient)) {
+			String requestedRedirectUri = authorizationCodeRequestAuthentication.getRedirectUri();
+
+			if (StringUtils.hasText(requestedRedirectUri)) {
+				// ***** redirect_uri is available in authorization request
+
+				UriComponents requestedRedirect = null;
+				try {
+					requestedRedirect = UriComponentsBuilder.fromUriString(requestedRedirectUri).build();
+				} catch (Exception ex) { }
+				if (requestedRedirect == null || requestedRedirect.getFragment() != null) {
 					throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.REDIRECT_URI,
 							authorizationCodeRequestAuthentication, registeredClient);
 				}
-			} else if (authorizationCodeRequestAuthentication.getScopes().contains(OidcScopes.OPENID) ||
-					registeredClient.getRedirectUris().size() != 1) {
-				// redirect_uri is REQUIRED for OpenID Connect
-				throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.REDIRECT_URI,
-						authorizationCodeRequestAuthentication, registeredClient);
+
+				String requestedRedirectHost = requestedRedirect.getHost();
+				if (requestedRedirectHost == null || requestedRedirectHost.equals("localhost")) {
+					// As per https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-01#section-9.7.1
+					// While redirect URIs using localhost (i.e., "http://localhost:{port}/{path}")
+					// function similarly to loopback IP redirects described in Section 10.3.3,
+					// the use of "localhost" is NOT RECOMMENDED.
+					OAuth2Error error = new OAuth2Error(
+							OAuth2ErrorCodes.INVALID_REQUEST,
+							"localhost is not allowed for the redirect_uri (" + requestedRedirectUri + "). " +
+									"Use the IP literal (127.0.0.1) instead.",
+							"https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-01#section-9.7.1");
+					throwError(error, OAuth2ParameterNames.REDIRECT_URI,
+							authorizationCodeRequestAuthentication, registeredClient, null);
+				}
+
+				if (!isLoopbackAddress(requestedRedirectHost)) {
+					// As per https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-01#section-9.7
+					// When comparing client redirect URIs against pre-registered URIs,
+					// authorization servers MUST utilize exact string matching.
+					if (!registeredClient.getRedirectUris().contains(requestedRedirectUri)) {
+						throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.REDIRECT_URI,
+								authorizationCodeRequestAuthentication, registeredClient);
+					}
+				} else {
+					// As per https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-01#section-10.3.3
+					// The authorization server MUST allow any port to be specified at the
+					// time of the request for loopback IP redirect URIs, to accommodate
+					// clients that obtain an available ephemeral port from the operating
+					// system at the time of the request.
+					boolean validRedirectUri = false;
+					for (String registeredRedirectUri : registeredClient.getRedirectUris()) {
+						UriComponentsBuilder registeredRedirect = UriComponentsBuilder.fromUriString(registeredRedirectUri);
+						registeredRedirect.port(requestedRedirect.getPort());
+						if (registeredRedirect.build().toString().equals(requestedRedirect.toString())) {
+							validRedirectUri = true;
+							break;
+						}
+					}
+					if (!validRedirectUri) {
+						throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.REDIRECT_URI,
+								authorizationCodeRequestAuthentication, registeredClient);
+					}
+				}
+
+			} else {
+				// ***** redirect_uri is NOT available in authorization request
+
+				if (authorizationCodeRequestAuthentication.getScopes().contains(OidcScopes.OPENID) ||
+						registeredClient.getRedirectUris().size() != 1) {
+					// redirect_uri is REQUIRED for OpenID Connect
+					throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.REDIRECT_URI,
+							authorizationCodeRequestAuthentication, registeredClient);
+				}
+			}
+		}
+
+		private static boolean isLoopbackAddress(String host) {
+			// IPv6 loopback address should either be "0:0:0:0:0:0:0:1" or "::1"
+			if ("[0:0:0:0:0:0:0:1]".equals(host) || "[::1]".equals(host)) {
+				return true;
+			}
+			// IPv4 loopback address ranges from 127.0.0.1 to 127.255.255.255
+			String[] ipv4Octets = host.split("\\.");
+			if (ipv4Octets.length != 4) {
+				return false;
+			}
+			try {
+				int[] address = new int[ipv4Octets.length];
+				for (int i=0; i < ipv4Octets.length; i++) {
+					address[i] = Integer.parseInt(ipv4Octets[i]);
+				}
+				return address[0] == 127 && address[1] >= 0 && address[1] <= 255 && address[2] >= 0 &&
+						address[2] <= 255 && address[3] >= 1 && address[3] <= 255;
+			} catch (NumberFormatException ex) {
+				return false;
 			}
 		}
 

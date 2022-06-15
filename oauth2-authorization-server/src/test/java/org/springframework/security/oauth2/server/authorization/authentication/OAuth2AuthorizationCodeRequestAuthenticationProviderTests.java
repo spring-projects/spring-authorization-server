@@ -207,7 +207,10 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 				.satisfies(ex ->
 						assertAuthenticationException((OAuth2AuthorizationCodeRequestAuthenticationException) ex,
 								OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.REDIRECT_URI, null)
-				);
+				)
+				.extracting(ex -> ((OAuth2AuthorizationCodeRequestAuthenticationException) ex).getError())
+				.satisfies(error ->
+						assertThat(error.getDescription()).isEqualTo("localhost is not allowed for the redirect_uri (https://localhost:5000). Use the IP literal (127.0.0.1) instead."));
 	}
 
 	@Test

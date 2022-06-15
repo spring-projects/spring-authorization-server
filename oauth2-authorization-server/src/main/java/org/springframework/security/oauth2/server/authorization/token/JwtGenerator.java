@@ -81,6 +81,10 @@ public final class JwtGenerator implements OAuth2TokenGenerator<Jwt> {
 			return null;
 		}
 
+		return buildJwt(context);
+	}
+
+	public Jwt buildJwt(OAuth2TokenContext context) {
 		String issuer = null;
 		if (context.getProviderContext() != null) {
 			issuer = context.getProviderContext().getIssuer();

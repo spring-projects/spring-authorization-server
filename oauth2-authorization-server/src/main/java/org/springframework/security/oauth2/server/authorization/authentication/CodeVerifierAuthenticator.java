@@ -122,9 +122,10 @@ final class CodeVerifierAuthenticator {
 			} catch (NoSuchAlgorithmException ex) {
 				// It is unlikely that SHA-256 is not available on the server. If it is not available,
 				// there will likely be bigger issues as well. We default to SERVER_ERROR.
+				throw new OAuth2AuthenticationException(OAuth2ErrorCodes.SERVER_ERROR);
 			}
 		}
-		throw new OAuth2AuthenticationException(OAuth2ErrorCodes.SERVER_ERROR);
+		return false;
 	}
 
 	private static void throwInvalidGrant(String parameterName) {

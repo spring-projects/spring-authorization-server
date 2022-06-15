@@ -377,6 +377,26 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 				);
 	}
 
+	// gh-770
+	@Test
+	public void authenticateWhenPkceMissingCodeChallengeMethodThenThrowOAuth2AuthorizationCodeRequestAuthenticationException() {
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
+				.thenReturn(registeredClient);
+		Map<String, Object> additionalParameters = new HashMap<>();
+		additionalParameters.put(PkceParameterNames.CODE_CHALLENGE, "code-challenge");
+		OAuth2AuthorizationCodeRequestAuthenticationToken authentication =
+				authorizationCodeRequestAuthentication(registeredClient, this.principal)
+						.additionalParameters(additionalParameters)
+						.build();
+		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
+				.isInstanceOf(OAuth2AuthorizationCodeRequestAuthenticationException.class)
+				.satisfies(ex ->
+						assertAuthenticationException((OAuth2AuthorizationCodeRequestAuthenticationException) ex,
+								OAuth2ErrorCodes.INVALID_REQUEST, PkceParameterNames.CODE_CHALLENGE_METHOD, authentication.getRedirectUri())
+				);
+	}
+
 	@Test
 	public void authenticateWhenPrincipalNotAuthenticatedThenReturnAuthorizationCodeRequest() {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();

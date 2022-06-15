@@ -209,11 +209,9 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 		String codeChallenge = (String) authorizationCodeRequestAuthentication.getAdditionalParameters().get(PkceParameterNames.CODE_CHALLENGE);
 		if (StringUtils.hasText(codeChallenge)) {
 			String codeChallengeMethod = (String) authorizationCodeRequestAuthentication.getAdditionalParameters().get(PkceParameterNames.CODE_CHALLENGE_METHOD);
-			if (StringUtils.hasText(codeChallengeMethod)) {
-				if (!"S256".equals(codeChallengeMethod)) {
-					throwError(OAuth2ErrorCodes.INVALID_REQUEST, PkceParameterNames.CODE_CHALLENGE_METHOD, PKCE_ERROR_URI,
-							authorizationCodeRequestAuthentication, registeredClient, null);
-				}
+			if (!StringUtils.hasText(codeChallengeMethod) || !"S256".equals(codeChallengeMethod)) {
+				throwError(OAuth2ErrorCodes.INVALID_REQUEST, PkceParameterNames.CODE_CHALLENGE_METHOD, PKCE_ERROR_URI,
+						authorizationCodeRequestAuthentication, registeredClient, null);
 			}
 		} else if (registeredClient.getClientSettings().isRequireProofKey()) {
 			throwError(OAuth2ErrorCodes.INVALID_REQUEST, PkceParameterNames.CODE_CHALLENGE, PKCE_ERROR_URI,

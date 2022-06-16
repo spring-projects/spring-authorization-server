@@ -443,7 +443,9 @@ public class OAuth2AuthorizationCodeAuthenticationProviderTests {
 	@Test
 	public void authenticateWhenValidCodeAndAuthenticationRequestThenReturnIdToken() {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().scope(OidcScopes.OPENID).build();
-		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();
+		OAuth2AuthorizationCode authorizationCode = new OAuth2AuthorizationCode(
+				"code", Instant.now(), Instant.now().plusSeconds(120));
+		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient, authorizationCode).build();
 		when(this.authorizationService.findByToken(eq(AUTHORIZATION_CODE), eq(AUTHORIZATION_CODE_TOKEN_TYPE)))
 				.thenReturn(authorization);
 
@@ -466,6 +468,7 @@ public class OAuth2AuthorizationCodeAuthenticationProviderTests {
 		assertThat(accessTokenContext.getRegisteredClient()).isEqualTo(registeredClient);
 		assertThat(accessTokenContext.<Authentication>getPrincipal()).isEqualTo(authorization.getAttribute(Principal.class.getName()));
 		assertThat(accessTokenContext.getAuthorization()).isEqualTo(authorization);
+		assertThat(accessTokenContext.getAuthorization().getAccessToken()).isNull();
 		assertThat(accessTokenContext.getAuthorizedScopes())
 				.isEqualTo(authorization.getAttribute(OAuth2Authorization.AUTHORIZED_SCOPE_ATTRIBUTE_NAME));
 		assertThat(accessTokenContext.getTokenType()).isEqualTo(OAuth2TokenType.ACCESS_TOKEN);
@@ -481,7 +484,8 @@ public class OAuth2AuthorizationCodeAuthenticationProviderTests {
 		JwtEncodingContext idTokenContext = jwtEncodingContextCaptor.getAllValues().get(1);
 		assertThat(idTokenContext.getRegisteredClient()).isEqualTo(registeredClient);
 		assertThat(idTokenContext.<Authentication>getPrincipal()).isEqualTo(authorization.getAttribute(Principal.class.getName()));
-		assertThat(idTokenContext.getAuthorization()).isEqualTo(authorization);
+		assertThat(idTokenContext.getAuthorization()).isNotEqualTo(authorization);
+		assertThat(idTokenContext.getAuthorization().getAccessToken()).isNotNull();
 		assertThat(idTokenContext.getAuthorizedScopes())
 				.isEqualTo(authorization.getAttribute(OAuth2Authorization.AUTHORIZED_SCOPE_ATTRIBUTE_NAME));
 		assertThat(idTokenContext.getTokenType().getValue()).isEqualTo(OidcParameterNames.ID_TOKEN);
@@ -503,8 +507,8 @@ public class OAuth2AuthorizationCodeAuthenticationProviderTests {
 		assertThat(accessTokenAuthentication.getAccessToken().getScopes()).isEqualTo(accessTokenScopes);
 		assertThat(accessTokenAuthentication.getRefreshToken()).isNotNull();
 		assertThat(accessTokenAuthentication.getRefreshToken()).isEqualTo(updatedAuthorization.getRefreshToken().getToken());
-		OAuth2Authorization.Token<OAuth2AuthorizationCode> authorizationCode = updatedAuthorization.getToken(OAuth2AuthorizationCode.class);
-		assertThat(authorizationCode.isInvalidated()).isTrue();
+		OAuth2Authorization.Token<OAuth2AuthorizationCode> authorizationCodeToken = updatedAuthorization.getToken(OAuth2AuthorizationCode.class);
+		assertThat(authorizationCodeToken.isInvalidated()).isTrue();
 		OAuth2Authorization.Token<OidcIdToken> idToken = updatedAuthorization.getToken(OidcIdToken.class);
 		assertThat(idToken).isNotNull();
 		assertThat(accessTokenAuthentication.getAdditionalParameters())

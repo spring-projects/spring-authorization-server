@@ -233,7 +233,8 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 		JwtEncodingContext idTokenContext = jwtEncodingContextCaptor.getAllValues().get(1);
 		assertThat(idTokenContext.getRegisteredClient()).isEqualTo(registeredClient);
 		assertThat(idTokenContext.<Authentication>getPrincipal()).isEqualTo(authorization.getAttribute(Principal.class.getName()));
-		assertThat(idTokenContext.getAuthorization()).isEqualTo(authorization);
+		assertThat(idTokenContext.getAuthorization()).isNotEqualTo(authorization);
+		assertThat(idTokenContext.getAuthorization().getAccessToken()).isNotEqualTo(authorization.getAccessToken());
 		assertThat(idTokenContext.getAuthorizedScopes())
 				.isEqualTo(authorization.getAttribute(OAuth2Authorization.AUTHORIZED_SCOPE_ATTRIBUTE_NAME));
 		assertThat(idTokenContext.getTokenType().getValue()).isEqualTo(OidcParameterNames.ID_TOKEN);

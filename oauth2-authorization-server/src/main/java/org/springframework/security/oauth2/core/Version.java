@@ -23,8 +23,8 @@ package org.springframework.security.oauth2.core;
  */
 public final class Version {
 	private static final int MAJOR = 0;
-	private static final int MINOR = 3;
-	private static final int PATCH = 1;
+	private static final int MINOR = 4;
+	private static final int PATCH = 0;
 
 	/**
 	 * Global Serialization value for Spring Security Authorization Server classes.

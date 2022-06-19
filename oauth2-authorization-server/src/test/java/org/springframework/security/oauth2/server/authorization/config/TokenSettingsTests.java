@@ -35,12 +35,40 @@ public class TokenSettingsTests {
 	@Test
 	public void buildWhenDefaultThenDefaultsAreSet() {
 		TokenSettings tokenSettings = TokenSettings.builder().build();
-		assertThat(tokenSettings.getSettings()).hasSize(5);
+		assertThat(tokenSettings.getSettings()).hasSize(6);
+		assertThat(tokenSettings.getAuthorizationCodeTimeToLive()).isEqualTo(Duration.ofMinutes(5));
 		assertThat(tokenSettings.getAccessTokenTimeToLive()).isEqualTo(Duration.ofMinutes(5));
 		assertThat(tokenSettings.getAccessTokenFormat()).isEqualTo(OAuth2TokenFormat.SELF_CONTAINED);
 		assertThat(tokenSettings.isReuseRefreshTokens()).isTrue();
 		assertThat(tokenSettings.getRefreshTokenTimeToLive()).isEqualTo(Duration.ofMinutes(60));
 		assertThat(tokenSettings.getIdTokenSignatureAlgorithm()).isEqualTo(SignatureAlgorithm.RS256);
+	}
+
+	@Test
+	public void authorizationCodeTimeToLiveWhenProvidedThenSet() {
+		Duration authorizationCodeTimeToLive = Duration.ofMinutes(10);
+		TokenSettings tokenSettings = TokenSettings.builder()
+				.authorizationCodeTimeToLive(authorizationCodeTimeToLive)
+				.build();
+		assertThat(tokenSettings.getAuthorizationCodeTimeToLive()).isEqualTo(authorizationCodeTimeToLive);
+	}
+
+	@Test
+	public void authorizationCodeTimeToLiveWhenNullOrZeroOrNegativeThenThrowIllegalArgumentException() {
+		assertThatThrownBy(() -> TokenSettings.builder().authorizationCodeTimeToLive(null))
+				.isInstanceOf(IllegalArgumentException.class)
+				.extracting(Throwable::getMessage)
+				.isEqualTo("authorizationCodeTimeToLive cannot be null");
+
+		assertThatThrownBy(() -> TokenSettings.builder().authorizationCodeTimeToLive(Duration.ZERO))
+				.isInstanceOf(IllegalArgumentException.class)
+				.extracting(Throwable::getMessage)
+				.isEqualTo("authorizationCodeTimeToLive must be greater than Duration.ZERO");
+
+		assertThatThrownBy(() -> TokenSettings.builder().authorizationCodeTimeToLive(Duration.ofSeconds(-10)))
+				.isInstanceOf(IllegalArgumentException.class)
+				.extracting(Throwable::getMessage)
+				.isEqualTo("authorizationCodeTimeToLive must be greater than Duration.ZERO");
 	}
 
 	@Test
@@ -136,7 +164,7 @@ public class TokenSettingsTests {
 				.setting("name1", "value1")
 				.settings(settings -> settings.put("name2", "value2"))
 				.build();
-		assertThat(tokenSettings.getSettings()).hasSize(7);
+		assertThat(tokenSettings.getSettings()).hasSize(8);
 		assertThat(tokenSettings.<String>getSetting("name1")).isEqualTo("value1");
 		assertThat(tokenSettings.<String>getSetting("name2")).isEqualTo("value2");
 	}

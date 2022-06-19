@@ -17,7 +17,6 @@ package org.springframework.security.oauth2.server.authorization.authentication;
 
 import java.security.Principal;
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
@@ -565,8 +564,10 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 					!OAuth2ParameterNames.CODE.equals(context.getTokenType().getValue())) {
 				return null;
 			}
+			RegisteredClient registeredClient = context.getRegisteredClient();
+
 			Instant issuedAt = Instant.now();
-			Instant expiresAt = issuedAt.plus(5, ChronoUnit.MINUTES);		// TODO Allow configuration for authorization code time-to-live
+			Instant expiresAt = issuedAt.plus(registeredClient.getTokenSettings().getAuthorizationCodeTimeToLive());
 			return new OAuth2AuthorizationCode(this.authorizationCodeGenerator.generateKey(), issuedAt, expiresAt);
 		}
 

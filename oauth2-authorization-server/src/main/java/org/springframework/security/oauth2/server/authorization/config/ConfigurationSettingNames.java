@@ -129,6 +129,11 @@ public final class ConfigurationSettingNames {
 		private static final String TOKEN_SETTINGS_NAMESPACE = SETTINGS_NAMESPACE.concat("token.");
 
 		/**
+		 * Set the time-to-live for an authorization code.
+		 */
+		public static final String AUTHORIZATION_CODE_TIME_TO_LIVE = TOKEN_SETTINGS_NAMESPACE.concat("authorization-code-time-to-live");
+
+		/**
 		 * Set the time-to-live for an access token.
 		 */
 		public static final String ACCESS_TOKEN_TIME_TO_LIVE = TOKEN_SETTINGS_NAMESPACE.concat("access-token-time-to-live");

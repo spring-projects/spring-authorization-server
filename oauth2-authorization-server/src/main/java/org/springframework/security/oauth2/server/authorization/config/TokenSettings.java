@@ -38,6 +38,15 @@ public final class TokenSettings extends AbstractSettings {
 	}
 
 	/**
+	 * Returns the time-to-live for an authorization code. The default is 5 minutes.
+	 *
+	 * @return the time-to-live for an authorization code
+	 */
+	public Duration getAuthorizationCodeTimeToLive() {
+		return getSetting(ConfigurationSettingNames.Token.AUTHORIZATION_CODE_TIME_TO_LIVE);
+	}
+
+	/**
 	 * Returns the time-to-live for an access token. The default is 5 minutes.
 	 *
 	 * @return the time-to-live for an access token
@@ -91,6 +100,7 @@ public final class TokenSettings extends AbstractSettings {
 	 */
 	public static Builder builder() {
 		return new Builder()
+				.authorizationCodeTimeToLive(Duration.ofMinutes(5))
 				.accessTokenTimeToLive(Duration.ofMinutes(5))
 				.accessTokenFormat(OAuth2TokenFormat.SELF_CONTAINED)
 				.reuseRefreshTokens(true)
@@ -116,6 +126,19 @@ public final class TokenSettings extends AbstractSettings {
 	public static class Builder extends AbstractBuilder<TokenSettings, Builder> {
 
 		private Builder() {
+		}
+
+		/**
+		 * Set the time-to-live for an access token. Must be greater than {@code Duration.ZERO}.
+		 * A maximum  authorization code lifetime of 10 minutes is RECOMMENDED
+		 *
+		 * @param authorizationCodeTimeToLive the time-to-live for an authorization code
+		 * @return the {@link Builder} for further configuration
+		 */
+		public Builder authorizationCodeTimeToLive(Duration authorizationCodeTimeToLive) {
+			Assert.notNull(authorizationCodeTimeToLive, "authorizationCodeTimeToLive cannot be null");
+			Assert.isTrue(authorizationCodeTimeToLive.getSeconds() > 0, "authorizationCodeTimeToLive must be greater than Duration.ZERO");
+			return setting(ConfigurationSettingNames.Token.AUTHORIZATION_CODE_TIME_TO_LIVE, authorizationCodeTimeToLive);
 		}
 
 		/**

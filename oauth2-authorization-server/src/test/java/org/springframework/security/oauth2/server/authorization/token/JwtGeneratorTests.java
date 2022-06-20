@@ -201,9 +201,6 @@ public class JwtGeneratorTests {
 		ArgumentCaptor<JwtEncoderParameters> jwtEncoderParametersCaptor = ArgumentCaptor.forClass(JwtEncoderParameters.class);
 		verify(this.jwtEncoder).encode(jwtEncoderParametersCaptor.capture());
 
-		JwsHeader jwsHeader = jwtEncoderParametersCaptor.getValue().getJwsHeader();
-		assertThat(jwsHeader.getAlgorithm()).isEqualTo(SignatureAlgorithm.RS256);
-
 		JwtClaimsSet jwtClaimsSet = jwtEncoderParametersCaptor.getValue().getClaims();
 		assertThat(jwtClaimsSet.getIssuer().toExternalForm()).isEqualTo(tokenContext.getAuthorizationServerContext().getIssuer());
 		assertThat(jwtClaimsSet.getSubject()).isEqualTo(tokenContext.getAuthorization().getPrincipalName());
@@ -211,13 +208,19 @@ public class JwtGeneratorTests {
 
 		Instant issuedAt = Instant.now();
 		Instant expiresAt;
+		JwsHeader.Builder headersBuilder;
 		if (tokenContext.getTokenType().equals(OAuth2TokenType.ACCESS_TOKEN)) {
 			expiresAt = issuedAt.plus(tokenContext.getRegisteredClient().getTokenSettings().getAccessTokenTimeToLive());
+			headersBuilder = JwsHeader.with(SignatureAlgorithm.RS256);
 		} else {
 			expiresAt = issuedAt.plus(30, ChronoUnit.MINUTES);
+			headersBuilder = JwsHeader.with(tokenContext.getRegisteredClient().getTokenSettings().getIdTokenSignatureAlgorithm());
 		}
 		assertThat(jwtClaimsSet.getIssuedAt()).isBetween(issuedAt.minusSeconds(1), issuedAt.plusSeconds(1));
 		assertThat(jwtClaimsSet.getExpiresAt()).isBetween(expiresAt.minusSeconds(1), expiresAt.plusSeconds(1));
+
+		JwsHeader jwsHeader = jwtEncoderParametersCaptor.getValue().getJwsHeader();
+		assertThat(jwsHeader.getAlgorithm()).isEqualTo(headersBuilder.build().getAlgorithm());
 
 		if (tokenContext.getTokenType().equals(OAuth2TokenType.ACCESS_TOKEN)) {
 			assertThat(jwtClaimsSet.getNotBefore()).isBetween(issuedAt.minusSeconds(1), issuedAt.plusSeconds(1));

@@ -89,11 +89,14 @@ public final class JwtGenerator implements OAuth2TokenGenerator<Jwt> {
 
 		Instant issuedAt = Instant.now();
 		Instant expiresAt;
+		JwsHeader.Builder headersBuilder;
 		if (OidcParameterNames.ID_TOKEN.equals(context.getTokenType().getValue())) {
 			// TODO Allow configuration for ID Token time-to-live
 			expiresAt = issuedAt.plus(30, ChronoUnit.MINUTES);
+			headersBuilder = JwsHeader.with(registeredClient.getTokenSettings().getIdTokenSignatureAlgorithm());
 		} else {
 			expiresAt = issuedAt.plus(registeredClient.getTokenSettings().getAccessTokenTimeToLive());
+			headersBuilder = JwsHeader.with(SignatureAlgorithm.RS256);
 		}
 
 		// @formatter:off
@@ -125,11 +128,9 @@ public final class JwtGenerator implements OAuth2TokenGenerator<Jwt> {
 		}
 		// @formatter:on
 
-		JwsHeader.Builder jwsHeaderBuilder = JwsHeader.with(SignatureAlgorithm.RS256);
-
 		if (this.jwtCustomizer != null) {
 			// @formatter:off
-			JwtEncodingContext.Builder jwtContextBuilder = JwtEncodingContext.with(jwsHeaderBuilder, claimsBuilder)
+			JwtEncodingContext.Builder jwtContextBuilder = JwtEncodingContext.with(headersBuilder, claimsBuilder)
 					.registeredClient(context.getRegisteredClient())
 					.principal(context.getPrincipal())
 					.authorizationServerContext(context.getAuthorizationServerContext())
@@ -148,7 +149,7 @@ public final class JwtGenerator implements OAuth2TokenGenerator<Jwt> {
 			this.jwtCustomizer.customize(jwtContext);
 		}
 
-		JwsHeader jwsHeader = jwsHeaderBuilder.build();
+		JwsHeader jwsHeader = headersBuilder.build();
 		JwtClaimsSet claims = claimsBuilder.build();
 
 		Jwt jwt = this.jwtEncoder.encode(JwtEncoderParameters.from(jwsHeader, claims));

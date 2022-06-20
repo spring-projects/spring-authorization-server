@@ -125,7 +125,7 @@ public final class JwtGenerator implements OAuth2TokenGenerator<Jwt> {
 		}
 		// @formatter:on
 
-		JwsHeader.Builder headersBuilder = JwsHeader.with(SignatureAlgorithm.RS256);
+		JwsHeader.Builder headersBuilder = JwsHeader.with(registeredClient.getTokenSettings().getIdTokenSignatureAlgorithm());
 
 		if (this.jwtCustomizer != null) {
 			// @formatter:off

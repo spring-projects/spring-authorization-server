@@ -34,7 +34,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest]
-        jdk: [11]
+        jdk: [8,11,17]
       fail-fast: false
     runs-on: ${{ matrix.os }}
     if: needs.prerequisites.outputs.runjobs
@@ -70,7 +70,7 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v1
         with:
-          java-version: 11
+          java-version: 8
       - name: Setup Gradle
         uses: gradle/gradle-build-action@v2
       - name: Snapshot Tests
@@ -90,7 +90,7 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v1
         with:
-          java-version: 11
+          java-version: 8
       - name: Setup Gradle
         uses: gradle/gradle-build-action@v2
       - name: Deploy Artifacts
@@ -114,7 +114,7 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v1
         with:
-          java-version: 11
+          java-version: 8
       - name: Setup Gradle
         uses: gradle/gradle-build-action@v2
       - name: Deploy Docs

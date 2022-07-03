@@ -275,7 +275,7 @@ public class PublicClientAuthenticationProviderTests {
 				.isInstanceOf(OAuth2AuthenticationException.class)
 				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
 				.extracting("errorCode")
-				.isEqualTo(OAuth2ErrorCodes.SERVER_ERROR);
+				.isEqualTo(OAuth2ErrorCodes.INVALID_GRANT);
 	}
 
 	private static Map<String, Object> createAuthorizationCodeTokenParameters() {

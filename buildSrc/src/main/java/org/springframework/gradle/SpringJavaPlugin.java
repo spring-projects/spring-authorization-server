@@ -73,14 +73,16 @@ public class SpringJavaPlugin implements Plugin<Project> {
 
 		// Apply Java source compatibility version
 		JavaPluginExtension java = project.getExtensions().getByType(JavaPluginExtension.class);
-		java.setTargetCompatibility(JavaVersion.VERSION_11);
+		java.setTargetCompatibility(JavaVersion.VERSION_1_8);
 
 		// Configure Java tasks
 		project.getTasks().withType(JavaCompile.class, (javaCompile) -> {
 			CompileOptions options = javaCompile.getOptions();
 			options.setEncoding("UTF-8");
 			options.getCompilerArgs().add("-parameters");
-			options.getRelease().set(11);
+			if (JavaVersion.current().isJava11Compatible()) {
+				options.getRelease().set(8);
+			}
 		});
 		project.getTasks().withType(Jar.class, (jar) -> jar.manifest((manifest) -> {
 			Map<String, String> attributes = new HashMap<>();

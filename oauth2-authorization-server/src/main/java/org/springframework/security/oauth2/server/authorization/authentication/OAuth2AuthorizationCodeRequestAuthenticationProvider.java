@@ -564,10 +564,8 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 					!OAuth2ParameterNames.CODE.equals(context.getTokenType().getValue())) {
 				return null;
 			}
-			RegisteredClient registeredClient = context.getRegisteredClient();
-
 			Instant issuedAt = Instant.now();
-			Instant expiresAt = issuedAt.plus(registeredClient.getTokenSettings().getAuthorizationCodeTimeToLive());
+			Instant expiresAt = issuedAt.plus(context.getRegisteredClient().getTokenSettings().getAuthorizationCodeTimeToLive());
 			return new OAuth2AuthorizationCode(this.authorizationCodeGenerator.generateKey(), issuedAt, expiresAt);
 		}
 

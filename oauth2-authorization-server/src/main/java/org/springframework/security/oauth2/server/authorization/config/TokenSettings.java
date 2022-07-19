@@ -129,8 +129,8 @@ public final class TokenSettings extends AbstractSettings {
 		}
 
 		/**
-		 * Set the time-to-live for an access token. Must be greater than {@code Duration.ZERO}.
-		 * A maximum  authorization code lifetime of 10 minutes is RECOMMENDED
+		 * Set the time-to-live for an authorization code. Must be greater than {@code Duration.ZERO}.
+		 * A maximum authorization code lifetime of 10 minutes is RECOMMENDED.
 		 *
 		 * @param authorizationCodeTimeToLive the time-to-live for an authorization code
 		 * @return the {@link Builder} for further configuration

@@ -1,0 +1,10 @@
+server:
+  port: 9002
+spring:
+  application:
+    name: authorization-server
+logging:
+  level:
+    org:
+      springframework:
+        security: debug

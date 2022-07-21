@@ -1,0 +1,47 @@
+plugins {
+	id "org.springframework.boot" version "2.7.0"
+	id "io.spring.dependency-management" version "1.0.11.RELEASE"
+	id "java"
+}
+
+//buildscript {
+//	repositories {
+//		mavenCentral()
+//	}
+//	dependencies {
+//		classpath("org.springframework.boot:spring-boot-gradle-plugin:2.7.0")
+//	}
+//}
+
+group = project.rootProject.group
+version = project.rootProject.version
+
+sourceCompatibility = "1.8"
+
+repositories {
+	mavenCentral()
+}
+
+
+//extra["springCloudVersion"] = "2021.0.3"
+
+dependencyManagement {
+	imports {
+		mavenBom("org.springframework.cloud:spring-cloud-dependencies:2021.0.3")
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	implementation("org.springframework.cloud:spring-cloud-starter-gateway")
+	implementation("org.springframework.boot:spring-boot-starter-webflux")
+	implementation("org.springframework.security:spring-security-config")
+	implementation ("org.springframework.boot:spring-boot-starter-webflux")
+	implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
+	implementation("junit:junit:4.13.1")
+	testImplementation("org.springframework.boot:spring-boot-starter-test")
+	testImplementation("io.projectreactor:reactor-test")
+}

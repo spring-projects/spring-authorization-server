@@ -1,0 +1,27 @@
+server:
+  port: 9003
+spring:
+  security:
+    oauth2:
+      client:
+        provider:
+          gateway-provider:
+            issuer-uri: http://192.168.1.6:9002
+        registration:
+          gateway:
+            provider: gateway-provider
+            client-id: gateway
+            client-secret: secret
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/gateway"
+            client-name: gateway-client
+            scope: openid
+  application:
+    name: gateway
+logging:
+  level:
+    org:
+      springframework:
+        security: trace
+        cloud:
+          gateway: trace

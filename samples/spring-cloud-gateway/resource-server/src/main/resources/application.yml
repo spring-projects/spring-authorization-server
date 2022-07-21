@@ -1,0 +1,13 @@
+server:
+  port: 9004
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://192.168.1.6:9002
+logging:
+  level:
+    org:
+      springframework:
+        security: trace

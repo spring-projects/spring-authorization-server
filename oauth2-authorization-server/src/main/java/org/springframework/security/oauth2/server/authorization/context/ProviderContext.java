@@ -18,7 +18,7 @@ package org.springframework.security.oauth2.server.authorization.context;
 import java.util.function.Supplier;
 
 import org.springframework.lang.Nullable;
-import org.springframework.security.oauth2.server.authorization.config.ProviderSettings;
+import org.springframework.security.oauth2.server.authorization.settings.ProviderSettings;
 import org.springframework.util.Assert;
 
 /**

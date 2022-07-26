@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright 2020-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.security.config.annotation.web.configuration;
+package org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration;
+
+import java.lang.reflect.Method;
 
 import org.junit.Test;
+
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.OrderUtils;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.util.ClassUtils;
-
-import java.lang.reflect.Method;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

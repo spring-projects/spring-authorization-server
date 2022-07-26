@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.security.oauth2.core;
+package org.springframework.security.oauth2.server.authorization;
 
 import java.io.Serializable;
 import java.net.URI;
@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
+import org.springframework.security.oauth2.core.Version;
 import org.springframework.util.Assert;
 
 /**

@@ -15,8 +15,8 @@
  */
 package org.springframework.security.oauth2.core.oidc;
 
-import org.springframework.security.oauth2.core.OAuth2AuthorizationServerMetadataClaimNames;
 import org.springframework.security.oauth2.jose.jws.JwsAlgorithm;
+import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationServerMetadataClaimNames;
 
 /**
  * The names of the "claims" defined by OpenID Connect Discovery 1.0 that can be returned

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.security.oauth2.core;
+package org.springframework.security.oauth2.server.authorization;
 
 /**
  * The names of the "claims" an Authorization Server describes about its configuration,

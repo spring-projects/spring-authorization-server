@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.security.oauth2.core;
+package org.springframework.security.oauth2.server.authorization;
 
 import java.net.URL;
 import java.util.ArrayList;
@@ -23,7 +23,8 @@ import java.util.List;
 
 import org.junit.Test;
 
-import org.springframework.security.oauth2.core.OAuth2AuthorizationServerMetadata.Builder;
+import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
+import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationServerMetadata.Builder;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;

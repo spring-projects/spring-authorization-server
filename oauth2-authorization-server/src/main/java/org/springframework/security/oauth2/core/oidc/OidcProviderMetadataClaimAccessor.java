@@ -20,9 +20,9 @@ import java.net.URL;
 import java.util.List;
 
 import org.springframework.security.oauth2.core.ClaimAccessor;
-import org.springframework.security.oauth2.core.OAuth2AuthorizationServerMetadataClaimAccessor;
 import org.springframework.security.oauth2.jose.jws.JwsAlgorithm;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationServerMetadataClaimAccessor;
 
 /**
  * A {@link ClaimAccessor} for the "claims" that can be returned

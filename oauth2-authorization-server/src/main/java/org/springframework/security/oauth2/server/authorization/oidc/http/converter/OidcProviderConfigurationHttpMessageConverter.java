@@ -13,7 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.security.oauth2.core.oidc.http.converter;
+package org.springframework.security.oauth2.server.authorization.oidc.http.converter;
+
+import java.net.URL;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.convert.TypeDescriptor;
@@ -28,14 +33,9 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.http.converter.HttpMessageNotWritableException;
 import org.springframework.security.oauth2.core.converter.ClaimConversionService;
 import org.springframework.security.oauth2.core.converter.ClaimTypeConverter;
-import org.springframework.security.oauth2.core.oidc.OidcProviderConfiguration;
-import org.springframework.security.oauth2.core.oidc.OidcProviderMetadataClaimNames;
+import org.springframework.security.oauth2.server.authorization.oidc.OidcProviderConfiguration;
+import org.springframework.security.oauth2.server.authorization.oidc.OidcProviderMetadataClaimNames;
 import org.springframework.util.Assert;
-
-import java.net.URL;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * A {@link HttpMessageConverter} for an {@link OidcProviderConfiguration OpenID Provider Configuration Response}.

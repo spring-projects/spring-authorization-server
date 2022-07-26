@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.security.oauth2.core.oidc.http.converter;
+package org.springframework.security.oauth2.server.authorization.oidc.http.converter;
 
 import java.net.URL;
 import java.util.Arrays;
@@ -28,7 +28,7 @@ import org.springframework.http.converter.HttpMessageNotWritableException;
 import org.springframework.mock.http.MockHttpOutputMessage;
 import org.springframework.mock.http.client.MockClientHttpResponse;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
-import org.springframework.security.oauth2.core.oidc.OidcProviderConfiguration;
+import org.springframework.security.oauth2.server.authorization.oidc.OidcProviderConfiguration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;

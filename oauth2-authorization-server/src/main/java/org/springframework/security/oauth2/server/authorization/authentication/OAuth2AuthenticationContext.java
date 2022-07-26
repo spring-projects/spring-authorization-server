@@ -22,7 +22,7 @@ import java.util.function.Consumer;
 
 import org.springframework.lang.Nullable;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.oauth2.core.context.Context;
+import org.springframework.security.oauth2.server.authorization.context.Context;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 

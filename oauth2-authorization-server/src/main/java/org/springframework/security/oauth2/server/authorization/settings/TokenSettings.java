@@ -18,7 +18,6 @@ package org.springframework.security.oauth2.server.authorization.settings;
 import java.time.Duration;
 import java.util.Map;
 
-import org.springframework.security.oauth2.core.OAuth2TokenFormat;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 import org.springframework.util.Assert;

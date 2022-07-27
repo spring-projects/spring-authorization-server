@@ -19,7 +19,6 @@ import java.time.Duration;
 
 import org.junit.Test;
 
-import org.springframework.security.oauth2.core.OAuth2TokenFormat;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 
 import static org.assertj.core.api.Assertions.assertThat;

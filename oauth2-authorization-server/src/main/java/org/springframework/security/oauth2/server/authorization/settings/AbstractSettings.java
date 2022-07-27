@@ -22,7 +22,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
 
-import org.springframework.security.oauth2.core.Version;
+import org.springframework.security.oauth2.server.authorization.util.Version;
 import org.springframework.util.Assert;
 
 /**

@@ -17,7 +17,7 @@ package org.springframework.security.oauth2.server.authorization.settings;
 
 import java.io.Serializable;
 
-import org.springframework.security.oauth2.server.authorization.util.Version;
+import org.springframework.security.oauth2.server.authorization.util.SpringAuthorizationServerVersion;
 import org.springframework.util.Assert;
 
 /**
@@ -27,7 +27,7 @@ import org.springframework.util.Assert;
  * @since 0.2.3
  */
 public final class OAuth2TokenFormat implements Serializable {
-	private static final long serialVersionUID = Version.SERIAL_VERSION_UID;
+	private static final long serialVersionUID = SpringAuthorizationServerVersion.SERIAL_VERSION_UID;
 
 	/**
 	 * Self-contained tokens use a protected, time-limited data structure that contains token metadata

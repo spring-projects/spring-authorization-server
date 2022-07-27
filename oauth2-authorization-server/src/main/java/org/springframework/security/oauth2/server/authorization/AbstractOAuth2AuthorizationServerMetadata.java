@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
-import org.springframework.security.oauth2.server.authorization.util.Version;
+import org.springframework.security.oauth2.server.authorization.util.SpringAuthorizationServerVersion;
 import org.springframework.util.Assert;
 
 /**
@@ -40,7 +40,7 @@ import org.springframework.util.Assert;
  * @see <a target="_blank" href="https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderConfigurationResponse">4.2. OpenID Provider Configuration Response</a>
  */
 public abstract class AbstractOAuth2AuthorizationServerMetadata implements OAuth2AuthorizationServerMetadataClaimAccessor, Serializable {
-	private static final long serialVersionUID = Version.SERIAL_VERSION_UID;
+	private static final long serialVersionUID = SpringAuthorizationServerVersion.SERIAL_VERSION_UID;
 	private final Map<String, Object> claims;
 
 	protected AbstractOAuth2AuthorizationServerMetadata(Map<String, Object> claims) {

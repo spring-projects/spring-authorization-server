@@ -17,7 +17,7 @@ package org.springframework.security.oauth2.server.authorization;
 
 import java.io.Serializable;
 
-import org.springframework.security.oauth2.server.authorization.util.Version;
+import org.springframework.security.oauth2.server.authorization.util.SpringAuthorizationServerVersion;
 import org.springframework.util.Assert;
 
 /**
@@ -28,7 +28,7 @@ import org.springframework.util.Assert;
  * @see <a target="_blank" href="https://tools.ietf.org/html/rfc7009#section-4.1.2">4.1.2 OAuth Token Type Hints Registry</a>
  */
 public final class OAuth2TokenType implements Serializable {
-	private static final long serialVersionUID = Version.SERIAL_VERSION_UID;
+	private static final long serialVersionUID = SpringAuthorizationServerVersion.SERIAL_VERSION_UID;
 	public static final OAuth2TokenType ACCESS_TOKEN = new OAuth2TokenType("access_token");
 	public static final OAuth2TokenType REFRESH_TOKEN = new OAuth2TokenType("refresh_token");
 	private final String value;

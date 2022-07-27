@@ -22,7 +22,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
 
-import org.springframework.security.oauth2.server.authorization.util.Version;
+import org.springframework.security.oauth2.server.authorization.util.SpringAuthorizationServerVersion;
 import org.springframework.util.Assert;
 
 /**
@@ -32,7 +32,7 @@ import org.springframework.util.Assert;
  * @since 0.0.2
  */
 public abstract class AbstractSettings implements Serializable {
-	private static final long serialVersionUID = Version.SERIAL_VERSION_UID;
+	private static final long serialVersionUID = SpringAuthorizationServerVersion.SERIAL_VERSION_UID;
 	private final Map<String, Object> settings;
 
 	protected AbstractSettings(Map<String, Object> settings) {

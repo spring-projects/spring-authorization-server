@@ -29,7 +29,7 @@ import java.util.function.Consumer;
 
 import org.springframework.security.oauth2.core.OAuth2TokenIntrospectionClaimAccessor;
 import org.springframework.security.oauth2.core.OAuth2TokenIntrospectionClaimNames;
-import org.springframework.security.oauth2.server.authorization.util.Version;
+import org.springframework.security.oauth2.server.authorization.util.SpringAuthorizationServerVersion;
 import org.springframework.util.Assert;
 
 /**
@@ -42,7 +42,7 @@ import org.springframework.util.Assert;
  * @see <a target="_blank" href="https://tools.ietf.org/html/rfc7662#section-2.2">Section 2.2 Introspection Response</a>
  */
 public final class OAuth2TokenIntrospection implements OAuth2TokenIntrospectionClaimAccessor, Serializable {
-	private static final long serialVersionUID = Version.SERIAL_VERSION_UID;
+	private static final long serialVersionUID = SpringAuthorizationServerVersion.SERIAL_VERSION_UID;
 	private final Map<String, Object> claims;
 
 	private OAuth2TokenIntrospection(Map<String, Object> claims) {

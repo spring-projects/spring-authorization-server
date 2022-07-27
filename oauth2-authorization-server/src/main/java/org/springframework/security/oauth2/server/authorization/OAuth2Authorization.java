@@ -30,7 +30,7 @@ import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2RefreshToken;
 import org.springframework.security.oauth2.core.OAuth2Token;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
-import org.springframework.security.oauth2.server.authorization.util.Version;
+import org.springframework.security.oauth2.server.authorization.util.SpringAuthorizationServerVersion;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
@@ -50,7 +50,7 @@ import org.springframework.util.StringUtils;
  * @see OAuth2RefreshToken
  */
 public class OAuth2Authorization implements Serializable {
-	private static final long serialVersionUID = Version.SERIAL_VERSION_UID;
+	private static final long serialVersionUID = SpringAuthorizationServerVersion.SERIAL_VERSION_UID;
 
 	/**
 	 * The name of the {@link #getAttribute(String) attribute} used for the authorized scope(s).
@@ -238,7 +238,7 @@ public class OAuth2Authorization implements Serializable {
 	 * @since 0.1.0
 	 */
 	public static class Token<T extends OAuth2Token> implements Serializable {
-		private static final long serialVersionUID = Version.SERIAL_VERSION_UID;
+		private static final long serialVersionUID = SpringAuthorizationServerVersion.SERIAL_VERSION_UID;
 		protected static final String TOKEN_METADATA_NAMESPACE = "metadata.token.";
 
 		/**
@@ -375,7 +375,7 @@ public class OAuth2Authorization implements Serializable {
 	 * A builder for {@link OAuth2Authorization}.
 	 */
 	public static class Builder implements Serializable {
-		private static final long serialVersionUID = Version.SERIAL_VERSION_UID;
+		private static final long serialVersionUID = SpringAuthorizationServerVersion.SERIAL_VERSION_UID;
 		private String id;
 		private final String registeredClientId;
 		private String principalName;

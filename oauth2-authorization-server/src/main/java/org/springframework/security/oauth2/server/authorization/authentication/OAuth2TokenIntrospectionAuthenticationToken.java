@@ -23,7 +23,7 @@ import org.springframework.lang.Nullable;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenIntrospection;
-import org.springframework.security.oauth2.server.authorization.util.Version;
+import org.springframework.security.oauth2.server.authorization.util.SpringAuthorizationServerVersion;
 import org.springframework.util.Assert;
 
 /**
@@ -37,7 +37,7 @@ import org.springframework.util.Assert;
  * @see OAuth2TokenIntrospectionAuthenticationProvider
  */
 public class OAuth2TokenIntrospectionAuthenticationToken extends AbstractAuthenticationToken {
-	private static final long serialVersionUID = Version.SERIAL_VERSION_UID;
+	private static final long serialVersionUID = SpringAuthorizationServerVersion.SERIAL_VERSION_UID;
 	private final String token;
 	private final Authentication clientPrincipal;
 	private final String tokenTypeHint;

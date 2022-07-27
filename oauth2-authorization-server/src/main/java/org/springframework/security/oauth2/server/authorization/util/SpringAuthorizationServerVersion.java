@@ -16,18 +16,18 @@
 package org.springframework.security.oauth2.server.authorization.util;
 
 /**
- * Internal class used for serialization across Spring Security Authorization Server classes.
+ * Internal class used for serialization across Spring Authorization Server classes.
  *
  * @author Anoop Garlapati
  * @since 0.0.1
  */
-public final class Version {
+public final class SpringAuthorizationServerVersion {
 	private static final int MAJOR = 0;
 	private static final int MINOR = 4;
 	private static final int PATCH = 0;
 
 	/**
-	 * Global Serialization value for Spring Security Authorization Server classes.
+	 * Global Serialization value for Spring Authorization Server classes.
 	 */
 	public static final long SERIAL_VERSION_UID = getVersion().hashCode();
 

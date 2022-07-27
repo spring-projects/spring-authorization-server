@@ -21,7 +21,7 @@ import org.springframework.lang.Nullable;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.server.authorization.oidc.OidcClientRegistration;
-import org.springframework.security.oauth2.server.authorization.util.Version;
+import org.springframework.security.oauth2.server.authorization.util.SpringAuthorizationServerVersion;
 import org.springframework.util.Assert;
 
 /**
@@ -35,7 +35,7 @@ import org.springframework.util.Assert;
  * @see OidcClientRegistrationAuthenticationProvider
  */
 public class OidcClientRegistrationAuthenticationToken extends AbstractAuthenticationToken {
-	private static final long serialVersionUID = Version.SERIAL_VERSION_UID;
+	private static final long serialVersionUID = SpringAuthorizationServerVersion.SERIAL_VERSION_UID;
 	private final Authentication principal;
 	private final OidcClientRegistration clientRegistration;
 	private final String clientId;

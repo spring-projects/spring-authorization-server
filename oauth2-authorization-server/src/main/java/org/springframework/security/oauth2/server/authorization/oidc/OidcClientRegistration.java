@@ -31,7 +31,7 @@ import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.security.oauth2.jose.jws.JwsAlgorithm;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.security.oauth2.server.authorization.util.Version;
+import org.springframework.security.oauth2.server.authorization.util.SpringAuthorizationServerVersion;
 import org.springframework.util.Assert;
 
 /**
@@ -48,7 +48,7 @@ import org.springframework.util.Assert;
  * @see <a href="https://openid.net/specs/openid-connect-registration-1_0.html#RegistrationResponse">3.2. Client Registration Response</a>
  */
 public final class OidcClientRegistration implements OidcClientMetadataClaimAccessor, Serializable {
-	private static final long serialVersionUID = Version.SERIAL_VERSION_UID;
+	private static final long serialVersionUID = SpringAuthorizationServerVersion.SERIAL_VERSION_UID;
 	private final Map<String, Object> claims;
 
 	private OidcClientRegistration(Map<String, Object> claims) {

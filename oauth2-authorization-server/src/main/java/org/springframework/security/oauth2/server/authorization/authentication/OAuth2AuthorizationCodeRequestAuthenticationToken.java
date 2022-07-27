@@ -27,7 +27,7 @@ import org.springframework.lang.Nullable;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationCode;
-import org.springframework.security.oauth2.server.authorization.util.Version;
+import org.springframework.security.oauth2.server.authorization.util.SpringAuthorizationServerVersion;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 
@@ -40,7 +40,7 @@ import org.springframework.util.CollectionUtils;
  * @see OAuth2AuthorizationCodeRequestAuthenticationProvider
  */
 public final class OAuth2AuthorizationCodeRequestAuthenticationToken extends AbstractAuthenticationToken {
-	private static final long serialVersionUID = Version.SERIAL_VERSION_UID;
+	private static final long serialVersionUID = SpringAuthorizationServerVersion.SERIAL_VERSION_UID;
 	private String authorizationUri;
 	private String clientId;
 	private Authentication principal;
@@ -169,7 +169,7 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationToken extends Abs
 	 * A builder for {@link OAuth2AuthorizationCodeRequestAuthenticationToken}.
 	 */
 	public static final class Builder implements Serializable {
-		private static final long serialVersionUID = Version.SERIAL_VERSION_UID;
+		private static final long serialVersionUID = SpringAuthorizationServerVersion.SERIAL_VERSION_UID;
 		private String authorizationUri;
 		private String clientId;
 		private Authentication principal;

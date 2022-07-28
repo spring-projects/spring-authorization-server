@@ -40,6 +40,7 @@ public final class TokenSettings extends AbstractSettings {
 	 * Returns the time-to-live for an authorization code. The default is 5 minutes.
 	 *
 	 * @return the time-to-live for an authorization code
+	 * @since 0.4.0
 	 */
 	public Duration getAuthorizationCodeTimeToLive() {
 		return getSetting(ConfigurationSettingNames.Token.AUTHORIZATION_CODE_TIME_TO_LIVE);
@@ -133,6 +134,7 @@ public final class TokenSettings extends AbstractSettings {
 		 *
 		 * @param authorizationCodeTimeToLive the time-to-live for an authorization code
 		 * @return the {@link Builder} for further configuration
+		 * @since 0.4.0
 		 */
 		public Builder authorizationCodeTimeToLive(Duration authorizationCodeTimeToLive) {
 			Assert.notNull(authorizationCodeTimeToLive, "authorizationCodeTimeToLive cannot be null");

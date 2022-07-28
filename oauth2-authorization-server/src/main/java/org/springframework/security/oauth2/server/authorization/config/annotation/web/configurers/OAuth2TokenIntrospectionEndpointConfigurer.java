@@ -145,7 +145,7 @@ public final class OAuth2TokenIntrospectionEndpointConfigurer extends AbstractOA
 	}
 
 	@Override
-	public RequestMatcher getRequestMatcher() {
+	RequestMatcher getRequestMatcher() {
 		return this.requestMatcher;
 	}
 

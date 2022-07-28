@@ -46,10 +46,10 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 public class JwtEncodingContextTests {
 
 	@Test
-	public void withWhenHeadersNullThenThrowIllegalArgumentException() {
+	public void withWhenJwsHeaderNullThenThrowIllegalArgumentException() {
 		assertThatThrownBy(() -> JwtEncodingContext.with(null, TestJwtClaimsSets.jwtClaimsSet()))
 				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("headersBuilder cannot be null");
+				.hasMessage("jwsHeaderBuilder cannot be null");
 	}
 
 	@Test
@@ -105,7 +105,7 @@ public class JwtEncodingContextTests {
 				.context(ctx -> ctx.put("custom-key-2", "custom-value-2"))
 				.build();
 
-		assertThat(context.getHeaders()).isEqualTo(headers);
+		assertThat(context.getJwsHeader()).isEqualTo(headers);
 		assertThat(context.getClaims()).isEqualTo(claims);
 		assertThat(context.getRegisteredClient()).isEqualTo(registeredClient);
 		assertThat(context.<Authentication>getPrincipal()).isEqualTo(principal);

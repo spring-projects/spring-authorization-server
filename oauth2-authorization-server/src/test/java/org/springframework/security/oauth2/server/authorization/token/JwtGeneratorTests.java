@@ -187,7 +187,7 @@ public class JwtGeneratorTests {
 		verify(this.jwtCustomizer).customize(jwtEncodingContextCaptor.capture());
 
 		JwtEncodingContext jwtEncodingContext = jwtEncodingContextCaptor.getValue();
-		assertThat(jwtEncodingContext.getHeaders()).isNotNull();
+		assertThat(jwtEncodingContext.getJwsHeader()).isNotNull();
 		assertThat(jwtEncodingContext.getClaims()).isNotNull();
 		assertThat(jwtEncodingContext.getRegisteredClient()).isEqualTo(tokenContext.getRegisteredClient());
 		assertThat(jwtEncodingContext.<Authentication>getPrincipal()).isEqualTo(tokenContext.getPrincipal());

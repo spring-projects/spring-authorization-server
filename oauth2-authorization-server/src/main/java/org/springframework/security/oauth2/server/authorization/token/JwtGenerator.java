@@ -125,11 +125,11 @@ public final class JwtGenerator implements OAuth2TokenGenerator<Jwt> {
 		}
 		// @formatter:on
 
-		JwsHeader.Builder headersBuilder = JwsHeader.with(SignatureAlgorithm.RS256);
+		JwsHeader.Builder jwsHeaderBuilder = JwsHeader.with(SignatureAlgorithm.RS256);
 
 		if (this.jwtCustomizer != null) {
 			// @formatter:off
-			JwtEncodingContext.Builder jwtContextBuilder = JwtEncodingContext.with(headersBuilder, claimsBuilder)
+			JwtEncodingContext.Builder jwtContextBuilder = JwtEncodingContext.with(jwsHeaderBuilder, claimsBuilder)
 					.registeredClient(context.getRegisteredClient())
 					.principal(context.getPrincipal())
 					.providerContext(context.getProviderContext())
@@ -148,17 +148,17 @@ public final class JwtGenerator implements OAuth2TokenGenerator<Jwt> {
 			this.jwtCustomizer.customize(jwtContext);
 		}
 
-		JwsHeader headers = headersBuilder.build();
+		JwsHeader jwsHeader = jwsHeaderBuilder.build();
 		JwtClaimsSet claims = claimsBuilder.build();
 
-		Jwt jwt = this.jwtEncoder.encode(JwtEncoderParameters.from(headers, claims));
+		Jwt jwt = this.jwtEncoder.encode(JwtEncoderParameters.from(jwsHeader, claims));
 
 		return jwt;
 	}
 
 	/**
 	 * Sets the {@link OAuth2TokenCustomizer} that customizes the
-	 * {@link JwtEncodingContext#getHeaders() headers} and/or
+	 * {@link JwtEncodingContext#getJwsHeader() JWS headers} and/or
 	 * {@link JwtEncodingContext#getClaims() claims} for the generated {@link Jwt}.
 	 *
 	 * @param jwtCustomizer the {@link OAuth2TokenCustomizer} that customizes the headers and/or claims for the generated {@code Jwt}

@@ -58,12 +58,12 @@ public final class JwtEncodingContext implements OAuth2TokenContext {
 	}
 
 	/**
-	 * Returns the {@link JwsHeader.Builder headers}
+	 * Returns the {@link JwsHeader.Builder JWS headers}
 	 * allowing the ability to add, replace, or remove.
 	 *
 	 * @return the {@link JwsHeader.Builder}
 	 */
-	public JwsHeader.Builder getHeaders() {
+	public JwsHeader.Builder getJwsHeader() {
 		return get(JwsHeader.Builder.class);
 	}
 
@@ -78,14 +78,14 @@ public final class JwtEncodingContext implements OAuth2TokenContext {
 	}
 
 	/**
-	 * Constructs a new {@link Builder} with the provided headers and claims.
+	 * Constructs a new {@link Builder} with the provided JWS headers and claims.
 	 *
-	 * @param headersBuilder the headers to initialize the builder
+	 * @param jwsHeaderBuilder the JWS headers to initialize the builder
 	 * @param claimsBuilder the claims to initialize the builder
 	 * @return the {@link Builder}
 	 */
-	public static Builder with(JwsHeader.Builder headersBuilder, JwtClaimsSet.Builder claimsBuilder) {
-		return new Builder(headersBuilder, claimsBuilder);
+	public static Builder with(JwsHeader.Builder jwsHeaderBuilder, JwtClaimsSet.Builder claimsBuilder) {
+		return new Builder(jwsHeaderBuilder, claimsBuilder);
 	}
 
 	/**
@@ -93,10 +93,10 @@ public final class JwtEncodingContext implements OAuth2TokenContext {
 	 */
 	public static final class Builder extends AbstractBuilder<JwtEncodingContext, Builder> {
 
-		private Builder(JwsHeader.Builder headersBuilder, JwtClaimsSet.Builder claimsBuilder) {
-			Assert.notNull(headersBuilder, "headersBuilder cannot be null");
+		private Builder(JwsHeader.Builder jwsHeaderBuilder, JwtClaimsSet.Builder claimsBuilder) {
+			Assert.notNull(jwsHeaderBuilder, "jwsHeaderBuilder cannot be null");
 			Assert.notNull(claimsBuilder, "claimsBuilder cannot be null");
-			put(JwsHeader.Builder.class, headersBuilder);
+			put(JwsHeader.Builder.class, jwsHeaderBuilder);
 			put(JwtClaimsSet.Builder.class, claimsBuilder);
 		}
 

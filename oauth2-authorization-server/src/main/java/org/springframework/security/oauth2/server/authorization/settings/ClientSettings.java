@@ -104,7 +104,7 @@ public final class ClientSettings extends AbstractSettings {
 	/**
 	 * A builder for {@link ClientSettings}.
 	 */
-	public static class Builder extends AbstractBuilder<ClientSettings, Builder> {
+	public final static class Builder extends AbstractBuilder<ClientSettings, Builder> {
 
 		private Builder() {
 		}

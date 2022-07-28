@@ -123,7 +123,7 @@ public final class TokenSettings extends AbstractSettings {
 	/**
 	 * A builder for {@link TokenSettings}.
 	 */
-	public static class Builder extends AbstractBuilder<TokenSettings, Builder> {
+	public final static class Builder extends AbstractBuilder<TokenSettings, Builder> {
 
 		private Builder() {
 		}

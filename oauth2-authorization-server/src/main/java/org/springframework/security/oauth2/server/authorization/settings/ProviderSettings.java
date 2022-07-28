@@ -137,7 +137,7 @@ public final class ProviderSettings extends AbstractSettings {
 	/**
 	 * A builder for {@link ProviderSettings}.
 	 */
-	public static class Builder extends AbstractBuilder<ProviderSettings, Builder> {
+	public final static class Builder extends AbstractBuilder<ProviderSettings, Builder> {
 
 		private Builder() {
 		}

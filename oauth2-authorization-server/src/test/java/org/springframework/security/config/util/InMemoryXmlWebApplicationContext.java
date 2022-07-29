@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2016 the original author or authors.
+ * Copyright 2020-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,10 +28,6 @@ import static org.springframework.security.config.util.InMemoryXmlApplicationCon
 import static org.springframework.security.config.util.InMemoryXmlApplicationContext.SPRING_SECURITY_VERSION;
 
 /**
- * TODO
- * This class is a straight copy from Spring Security.
- * It should be removed when merging this codebase into Spring Security.
- *
  * @author Joe Grandja
  */
 public class InMemoryXmlWebApplicationContext extends AbstractRefreshableWebApplicationContext {

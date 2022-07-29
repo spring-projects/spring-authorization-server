@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2021 the original author or authors.
+ * Copyright 2020-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package sample.jose;
 
 import java.math.BigInteger;
@@ -36,12 +35,7 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
 /**
- * TODO
- * This class is a straight copy from Spring Security.
- * It should be removed when merging this codebase into Spring Security.
- *
  * @author Joe Grandja
- * @since 5.2
  */
 public final class TestKeys {
 

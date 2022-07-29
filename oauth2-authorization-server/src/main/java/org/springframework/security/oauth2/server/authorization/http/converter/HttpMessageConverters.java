@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2020-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,14 +23,10 @@ import org.springframework.http.converter.json.MappingJackson2HttpMessageConvert
 import org.springframework.util.ClassUtils;
 
 /**
- * TODO
- * This class is a straight copy from Spring Security.
- * It should be consolidated when merging this codebase into Spring Security.
- *
  * Utility methods for {@link HttpMessageConverter}'s.
  *
  * @author Joe Grandja
- * @since 5.1
+ * @since 0.1.1
  */
 final class HttpMessageConverters {
 

@@ -177,7 +177,6 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 		}
 
 		if (!isValidTokenEndpointAuthenticationMethod(clientRegistrationAuthentication.getClientRegistration())) {
-			// TODO Add OAuth2ErrorCodes.INVALID_CLIENT_METADATA
 			throwInvalidClientRegistration("invalid_client_metadata", OidcClientMetadataClaimNames.TOKEN_ENDPOINT_AUTH_METHOD);
 		}
 

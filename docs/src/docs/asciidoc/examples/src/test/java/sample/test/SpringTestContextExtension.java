@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2017 the original author or authors.
+ * Copyright 2020-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package sample.test;
 
 import java.lang.reflect.Field;
@@ -27,8 +26,7 @@ import org.junit.jupiter.api.extension.ExtensionContext;
 import org.springframework.security.test.context.TestSecurityContextHolder;
 
 /**
- * TODO
- * This class is a straight copy from Spring Security.
+ * @author Rob Winch
  */
 public class SpringTestContextExtension implements BeforeEachCallback, AfterEachCallback {
 

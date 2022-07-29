@@ -291,7 +291,6 @@ public final class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilte
 
 		if (authorizationCodeRequestAuthentication == null ||
 				!StringUtils.hasText(authorizationCodeRequestAuthentication.getRedirectUri())) {
-			// TODO Send default html error response
 			response.sendError(HttpStatus.BAD_REQUEST.value(), error.toString());
 			return;
 		}

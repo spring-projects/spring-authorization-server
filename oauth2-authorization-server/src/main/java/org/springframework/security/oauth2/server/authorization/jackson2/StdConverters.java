@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 the original author or authors.
+ * Copyright 2020-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.springframework.security.oauth2.server.authorization.jackson2;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -25,14 +24,10 @@ import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 
 /**
- * TODO
- * This class is a straight copy from Spring Security.
- * It should be consolidated when merging this codebase into Spring Security.
- *
  * {@code StdConverter} implementations.
  *
  * @author Joe Grandja
- * @since 5.3
+ * @since 0.1.2
  */
 abstract class StdConverters {
 

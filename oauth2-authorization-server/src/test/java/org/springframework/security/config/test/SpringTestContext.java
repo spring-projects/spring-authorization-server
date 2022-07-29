@@ -27,7 +27,6 @@ import javax.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor;
 import org.springframework.mock.web.MockServletConfig;
 import org.springframework.mock.web.MockServletContext;
-import org.springframework.security.config.util.InMemoryXmlWebApplicationContext;
 import org.springframework.test.context.web.GenericXmlWebContextLoader;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
@@ -86,12 +85,6 @@ public class SpringTestContext implements Closeable {
 	public SpringTestContext configLocations(String... configLocations) {
 		XmlWebApplicationContext context = new XmlWebApplicationContext();
 		context.setConfigLocations(configLocations);
-		this.context = context;
-		return this;
-	}
-
-	public SpringTestContext context(String configuration) {
-		InMemoryXmlWebApplicationContext context = new InMemoryXmlWebApplicationContext(configuration);
 		this.context = context;
 		return this;
 	}

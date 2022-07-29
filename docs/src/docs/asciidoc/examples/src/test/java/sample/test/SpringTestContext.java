@@ -95,12 +95,6 @@ public class SpringTestContext implements Closeable {
 		return this;
 	}
 
-//	public SpringTestContext context(String configuration) {
-//		InMemoryXmlWebApplicationContext context = new InMemoryXmlWebApplicationContext(configuration);
-//		this.context = context;
-//		return this;
-//	}
-
 	public SpringTestContext mockMvcAfterSpringSecurityOk() {
 		return addFilter(new OncePerRequestFilter() {
 			@Override

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.security.config.test;
+package org.springframework.security.oauth2.server.authorization.test;
 
 import org.junit.rules.MethodRule;
 import org.junit.runners.model.FrameworkMethod;

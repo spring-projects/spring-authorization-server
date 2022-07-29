@@ -19,8 +19,10 @@ import java.io.Serializable;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
 
@@ -51,18 +53,11 @@ import org.springframework.util.StringUtils;
  */
 public class OAuth2Authorization implements Serializable {
 	private static final long serialVersionUID = SpringAuthorizationServerVersion.SERIAL_VERSION_UID;
-
-	/**
-	 * The name of the {@link #getAttribute(String) attribute} used for the authorized scope(s).
-	 * The value of the attribute is of type {@code Set<String>}.
-	 */
-	public static final String AUTHORIZED_SCOPE_ATTRIBUTE_NAME =
-			OAuth2Authorization.class.getName().concat(".AUTHORIZED_SCOPE");
-
 	private String id;
 	private String registeredClientId;
 	private String principalName;
 	private AuthorizationGrantType authorizationGrantType;
+	private Set<String> authorizedScopes;
 	private Map<Class<? extends OAuth2Token>, Token<?>> tokens;
 	private Map<String, Object> attributes;
 
@@ -103,6 +98,16 @@ public class OAuth2Authorization implements Serializable {
 	 */
 	public AuthorizationGrantType getAuthorizationGrantType() {
 		return this.authorizationGrantType;
+	}
+
+	/**
+	 * Returns the authorized scope(s).
+	 *
+	 * @return the {@code Set} of authorized scope(s)
+	 * @since 0.4.0
+	 */
+	public Set<String> getAuthorizedScopes() {
+		return this.authorizedScopes;
 	}
 
 	/**
@@ -194,6 +199,7 @@ public class OAuth2Authorization implements Serializable {
 				Objects.equals(this.registeredClientId, that.registeredClientId) &&
 				Objects.equals(this.principalName, that.principalName) &&
 				Objects.equals(this.authorizationGrantType, that.authorizationGrantType) &&
+				Objects.equals(this.authorizedScopes, that.authorizedScopes) &&
 				Objects.equals(this.tokens, that.tokens) &&
 				Objects.equals(this.attributes, that.attributes);
 	}
@@ -201,7 +207,7 @@ public class OAuth2Authorization implements Serializable {
 	@Override
 	public int hashCode() {
 		return Objects.hash(this.id, this.registeredClientId, this.principalName,
-				this.authorizationGrantType, this.tokens, this.attributes);
+				this.authorizationGrantType, this.authorizedScopes, this.tokens, this.attributes);
 	}
 
 	/**
@@ -227,6 +233,7 @@ public class OAuth2Authorization implements Serializable {
 				.id(authorization.getId())
 				.principalName(authorization.getPrincipalName())
 				.authorizationGrantType(authorization.getAuthorizationGrantType())
+				.authorizedScopes(authorization.getAuthorizedScopes())
 				.tokens(authorization.tokens)
 				.attributes(attrs -> attrs.putAll(authorization.getAttributes()));
 	}
@@ -380,6 +387,7 @@ public class OAuth2Authorization implements Serializable {
 		private final String registeredClientId;
 		private String principalName;
 		private AuthorizationGrantType authorizationGrantType;
+		private Set<String> authorizedScopes;
 		private Map<Class<? extends OAuth2Token>, Token<?>> tokens = new HashMap<>();
 		private final Map<String, Object> attributes = new HashMap<>();
 
@@ -417,6 +425,18 @@ public class OAuth2Authorization implements Serializable {
 		 */
 		public Builder authorizationGrantType(AuthorizationGrantType authorizationGrantType) {
 			this.authorizationGrantType = authorizationGrantType;
+			return this;
+		}
+
+		/**
+		 * Sets the authorized scope(s).
+		 *
+		 * @param authorizedScopes the {@code Set} of authorized scope(s)
+		 * @return the {@link Builder}
+		 * @since 0.4.0
+		 */
+		public Builder authorizedScopes(Set<String> authorizedScopes) {
+			this.authorizedScopes = authorizedScopes;
 			return this;
 		}
 
@@ -522,6 +542,12 @@ public class OAuth2Authorization implements Serializable {
 			authorization.registeredClientId = this.registeredClientId;
 			authorization.principalName = this.principalName;
 			authorization.authorizationGrantType = this.authorizationGrantType;
+			authorization.authorizedScopes =
+					Collections.unmodifiableSet(
+							!CollectionUtils.isEmpty(this.authorizedScopes) ?
+									new HashSet<>(this.authorizedScopes) :
+									new HashSet<>()
+					);
 			authorization.tokens = Collections.unmodifiableMap(this.tokens);
 			authorization.attributes = Collections.unmodifiableMap(this.attributes);
 			return authorization;

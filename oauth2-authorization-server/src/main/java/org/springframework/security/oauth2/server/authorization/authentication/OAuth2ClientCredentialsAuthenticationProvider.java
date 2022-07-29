@@ -123,7 +123,7 @@ public final class OAuth2ClientCredentialsAuthenticationProvider implements Auth
 		OAuth2Authorization.Builder authorizationBuilder = OAuth2Authorization.withRegisteredClient(registeredClient)
 				.principalName(clientPrincipal.getName())
 				.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
-				.attribute(OAuth2Authorization.AUTHORIZED_SCOPE_ATTRIBUTE_NAME, authorizedScopes);
+				.authorizedScopes(authorizedScopes);
 		// @formatter:on
 		if (generatedAccessToken instanceof ClaimAccessor) {
 			authorizationBuilder.token(accessToken, (metadata) ->

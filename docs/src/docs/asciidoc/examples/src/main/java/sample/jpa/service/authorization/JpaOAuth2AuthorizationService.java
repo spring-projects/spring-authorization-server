@@ -115,6 +115,7 @@ public class JpaOAuth2AuthorizationService implements OAuth2AuthorizationService
 				.id(entity.getId())
 				.principalName(entity.getPrincipalName())
 				.authorizationGrantType(resolveAuthorizationGrantType(entity.getAuthorizationGrantType()))
+				.authorizedScopes(StringUtils.commaDelimitedListToSet(entity.getAuthorizedScopes()))
 				.attributes(attributes -> attributes.putAll(parseMap(entity.getAttributes())));
 		if (entity.getState() != null) {
 			builder.attribute(OAuth2ParameterNames.STATE, entity.getState());
@@ -164,6 +165,7 @@ public class JpaOAuth2AuthorizationService implements OAuth2AuthorizationService
 		entity.setRegisteredClientId(authorization.getRegisteredClientId());
 		entity.setPrincipalName(authorization.getPrincipalName());
 		entity.setAuthorizationGrantType(authorization.getAuthorizationGrantType().getValue());
+		entity.setAuthorizedScopes(StringUtils.collectionToDelimitedString(authorization.getAuthorizedScopes(), ","));
 		entity.setAttributes(writeMap(authorization.getAttributes()));
 		entity.setState(authorization.getAttribute(OAuth2ParameterNames.STATE));
 

@@ -136,7 +136,7 @@ public class OAuth2AccessTokenGeneratorTests {
 				.principal(principal)
 				.providerContext(this.providerContext)
 				.authorization(authorization)
-				.authorizedScopes(authorization.getAttribute(OAuth2Authorization.AUTHORIZED_SCOPE_ATTRIBUTE_NAME))
+				.authorizedScopes(authorization.getAuthorizedScopes())
 				.tokenType(OAuth2TokenType.ACCESS_TOKEN)
 				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
 				.authorizationGrant(authentication)

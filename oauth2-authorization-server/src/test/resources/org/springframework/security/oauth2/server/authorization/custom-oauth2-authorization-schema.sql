@@ -3,6 +3,7 @@ CREATE TABLE oauth2Authorization (
     registeredClientId varchar(100) NOT NULL,
     principalName varchar(200) NOT NULL,
     authorizationGrantType varchar(100) NOT NULL,
+    authorizedScopes varchar(1000) DEFAULT NULL,
     attributes varchar(4000) DEFAULT NULL,
     state varchar(500) DEFAULT NULL,
     authorizationCodeValue varchar(1000) DEFAULT NULL,

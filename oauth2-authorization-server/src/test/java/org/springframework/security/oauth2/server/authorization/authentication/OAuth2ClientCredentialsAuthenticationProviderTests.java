@@ -258,17 +258,13 @@ public class OAuth2ClientCredentialsAuthenticationProviderTests {
 		ArgumentCaptor<OAuth2Authorization> authorizationCaptor = ArgumentCaptor.forClass(OAuth2Authorization.class);
 		verify(this.authorizationService).save(authorizationCaptor.capture());
 		OAuth2Authorization authorization = authorizationCaptor.getValue();
-
-		assertThat(jwtEncodingContext.getAuthorizedScopes())
-				.isEqualTo(authorization.getAttribute(OAuth2Authorization.AUTHORIZED_SCOPE_ATTRIBUTE_NAME));
-
+		assertThat(jwtEncodingContext.getAuthorizedScopes()).isEqualTo(authorization.getAuthorizedScopes());
 		assertThat(authorization.getRegisteredClientId()).isEqualTo(clientPrincipal.getRegisteredClient().getId());
 		assertThat(authorization.getPrincipalName()).isEqualTo(clientPrincipal.getName());
 		assertThat(authorization.getAuthorizationGrantType()).isEqualTo(AuthorizationGrantType.CLIENT_CREDENTIALS);
 		assertThat(authorization.getAccessToken()).isNotNull();
-		assertThat(authorization.<Set<String>>getAttribute(OAuth2Authorization.AUTHORIZED_SCOPE_ATTRIBUTE_NAME)).isNotNull();
-		assertThat(authorization.getAccessToken().getToken().getScopes())
-				.isEqualTo(authorization.getAttribute(OAuth2Authorization.AUTHORIZED_SCOPE_ATTRIBUTE_NAME));
+		assertThat(authorization.getAuthorizedScopes()).isNotNull();
+		assertThat(authorization.getAccessToken().getToken().getScopes()).isEqualTo(authorization.getAuthorizedScopes());
 		assertThat(accessTokenAuthentication.getPrincipal()).isEqualTo(clientPrincipal);
 		assertThat(accessTokenAuthentication.getAccessToken()).isEqualTo(authorization.getAccessToken().getToken());
 	}

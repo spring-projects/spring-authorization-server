@@ -134,7 +134,7 @@ public final class OAuth2AuthorizationCodeAuthenticationProvider implements Auth
 				.principal(authorization.getAttribute(Principal.class.getName()))
 				.providerContext(ProviderContextHolder.getProviderContext())
 				.authorization(authorization)
-				.authorizedScopes(authorization.getAttribute(OAuth2Authorization.AUTHORIZED_SCOPE_ATTRIBUTE_NAME))
+				.authorizedScopes(authorization.getAuthorizedScopes())
 				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
 				.authorizationGrant(authorizationCodeAuthentication);
 		// @formatter:on

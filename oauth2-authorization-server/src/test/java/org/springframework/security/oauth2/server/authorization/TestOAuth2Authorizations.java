@@ -82,12 +82,12 @@ public class TestOAuth2Authorizations {
 				.id("id")
 				.principalName("principal")
 				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+				.authorizedScopes(authorizationRequest.getScopes())
 				.token(authorizationCode)
 				.attribute(OAuth2ParameterNames.STATE, "state")
 				.attribute(OAuth2AuthorizationRequest.class.getName(), authorizationRequest)
 				.attribute(Principal.class.getName(),
-						new TestingAuthenticationToken("principal", null, "ROLE_A", "ROLE_B"))
-				.attribute(OAuth2Authorization.AUTHORIZED_SCOPE_ATTRIBUTE_NAME, authorizationRequest.getScopes());
+						new TestingAuthenticationToken("principal", null, "ROLE_A", "ROLE_B"));
 		if (accessToken != null) {
 			OAuth2RefreshToken refreshToken = new OAuth2RefreshToken(
 					"refresh-token", Instant.now(), Instant.now().plus(1, ChronoUnit.HOURS));

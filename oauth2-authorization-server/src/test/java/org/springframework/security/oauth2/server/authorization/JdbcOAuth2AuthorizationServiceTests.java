@@ -467,6 +467,7 @@ public class JdbcOAuth2AuthorizationServiceTests {
 				+ "registeredClientId, "
 				+ "principalName, "
 				+ "authorizationGrantType, "
+				+ "authorizedScopes, "
 				+ "attributes, "
 				+ "state, "
 				+ "authorizationCodeValue, "
@@ -503,7 +504,7 @@ public class JdbcOAuth2AuthorizationServiceTests {
 
 		// @formatter:off
 		private static final String SAVE_AUTHORIZATION_SQL = "INSERT INTO " + TABLE_NAME
-				+ " (" + COLUMN_NAMES + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+				+ " (" + COLUMN_NAMES + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 		// @formatter:on
 
 		private static final String REMOVE_AUTHORIZATION_SQL = "DELETE FROM " + TABLE_NAME + " WHERE " + PK_FILTER;
@@ -567,11 +568,17 @@ public class JdbcOAuth2AuthorizationServiceTests {
 				String id = rs.getString("id");
 				String principalName = rs.getString("principalName");
 				String authorizationGrantType = rs.getString("authorizationGrantType");
+				Set<String> authorizedScopes = Collections.emptySet();
+				String authorizedScopesString = rs.getString("authorizedScopes");
+				if (authorizedScopesString != null) {
+					authorizedScopes = StringUtils.commaDelimitedListToSet(authorizedScopesString);
+				}
 				Map<String, Object> attributes = parseMap(rs.getString("attributes"));
 
 				builder.id(id)
 						.principalName(principalName)
 						.authorizationGrantType(new AuthorizationGrantType(authorizationGrantType))
+						.authorizedScopes(authorizedScopes)
 						.attributes((attrs) -> attrs.putAll(attributes));
 
 				String state = rs.getString("state");
@@ -659,6 +666,12 @@ public class JdbcOAuth2AuthorizationServiceTests {
 				parameters.add(new SqlParameterValue(Types.VARCHAR, authorization.getRegisteredClientId()));
 				parameters.add(new SqlParameterValue(Types.VARCHAR, authorization.getPrincipalName()));
 				parameters.add(new SqlParameterValue(Types.VARCHAR, authorization.getAuthorizationGrantType().getValue()));
+
+				String authorizedScopes = null;
+				if (!CollectionUtils.isEmpty(authorization.getAuthorizedScopes())) {
+					authorizedScopes = StringUtils.collectionToDelimitedString(authorization.getAuthorizedScopes(), ",");
+				}
+				parameters.add(new SqlParameterValue(Types.VARCHAR, authorizedScopes));
 
 				String attributes = writeMap(authorization.getAttributes());
 				parameters.add(new SqlParameterValue(Types.VARCHAR, attributes));

@@ -233,7 +233,7 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 		OAuth2Authorization.Builder authorizationBuilder = OAuth2Authorization.withRegisteredClient(registeredClient)
 				.principalName(registeredClient.getClientId())
 				.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
-				.attribute(OAuth2Authorization.AUTHORIZED_SCOPE_ATTRIBUTE_NAME, authorizedScopes);
+				.authorizedScopes(authorizedScopes);
 		// @formatter:on
 		if (registrationAccessToken instanceof ClaimAccessor) {
 			authorizationBuilder.token(accessToken, (metadata) ->

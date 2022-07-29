@@ -265,8 +265,8 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 		}
 
 		OAuth2Authorization authorization = authorizationBuilder(registeredClient, principal, authorizationRequest)
+				.authorizedScopes(authorizationRequest.getScopes())
 				.token(authorizationCode)
-				.attribute(OAuth2Authorization.AUTHORIZED_SCOPE_ATTRIBUTE_NAME, authorizationRequest.getScopes())
 				.build();
 		this.authorizationService.save(authorization);
 
@@ -392,10 +392,10 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 		}
 
 		OAuth2Authorization updatedAuthorization = OAuth2Authorization.from(authorization)
+				.authorizedScopes(authorizedScopes)
 				.token(authorizationCode)
 				.attributes(attrs -> {
 					attrs.remove(OAuth2ParameterNames.STATE);
-					attrs.put(OAuth2Authorization.AUTHORIZED_SCOPE_ATTRIBUTE_NAME, authorizedScopes);
 				})
 				.build();
 		this.authorizationService.save(updatedAuthorization);

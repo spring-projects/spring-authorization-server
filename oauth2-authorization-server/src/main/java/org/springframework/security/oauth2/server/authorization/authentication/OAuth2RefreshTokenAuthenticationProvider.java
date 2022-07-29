@@ -118,7 +118,7 @@ public final class OAuth2RefreshTokenAuthenticationProvider implements Authentic
 		// The requested scope MUST NOT include any scope not originally granted by the resource owner,
 		// and if omitted is treated as equal to the scope originally granted by the resource owner.
 		Set<String> scopes = refreshTokenAuthentication.getScopes();
-		Set<String> authorizedScopes = authorization.getAttribute(OAuth2Authorization.AUTHORIZED_SCOPE_ATTRIBUTE_NAME);
+		Set<String> authorizedScopes = authorization.getAuthorizedScopes();
 		if (!authorizedScopes.containsAll(scopes)) {
 			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_SCOPE);
 		}

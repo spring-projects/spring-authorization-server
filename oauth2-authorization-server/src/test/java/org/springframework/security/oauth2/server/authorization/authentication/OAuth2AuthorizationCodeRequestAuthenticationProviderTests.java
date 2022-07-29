@@ -604,7 +604,7 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 		assertThat(authorization.<Authentication>getAttribute(Principal.class.getName())).isEqualTo(this.principal);
 
 		OAuth2Authorization.Token<OAuth2AuthorizationCode> authorizationCode = authorization.getToken(OAuth2AuthorizationCode.class);
-		Set<String> authorizedScopes = authorization.getAttribute(OAuth2Authorization.AUTHORIZED_SCOPE_ATTRIBUTE_NAME);
+		Set<String> authorizedScopes = authorization.getAuthorizedScopes();
 
 		assertThat(authenticationResult.getClientId()).isEqualTo(registeredClient.getClientId());
 		assertThat(authenticationResult.getPrincipal()).isEqualTo(this.principal);
@@ -875,8 +875,7 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 		OAuth2Authorization.Token<OAuth2AuthorizationCode> authorizationCode = updatedAuthorization.getToken(OAuth2AuthorizationCode.class);
 		assertThat(authorizationCode).isNotNull();
 		assertThat(updatedAuthorization.<String>getAttribute(OAuth2ParameterNames.STATE)).isNull();
-		assertThat(updatedAuthorization.<Set<String>>getAttribute(OAuth2Authorization.AUTHORIZED_SCOPE_ATTRIBUTE_NAME))
-				.isEqualTo(authorizedScopes);
+		assertThat(updatedAuthorization.getAuthorizedScopes()).isEqualTo(authorizedScopes);
 
 		assertThat(authenticationResult.getClientId()).isEqualTo(registeredClient.getClientId());
 		assertThat(authenticationResult.getPrincipal()).isEqualTo(this.principal);
@@ -981,10 +980,7 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 		ArgumentCaptor<OAuth2Authorization> authorizationCaptor = ArgumentCaptor.forClass(OAuth2Authorization.class);
 		verify(this.authorizationService).save(authorizationCaptor.capture());
 		OAuth2Authorization updatedAuthorization = authorizationCaptor.getValue();
-
-		assertThat(updatedAuthorization.<Set<String>>getAttribute(OAuth2Authorization.AUTHORIZED_SCOPE_ATTRIBUTE_NAME))
-				.isEqualTo(requestedScopes);
-
+		assertThat(updatedAuthorization.getAuthorizedScopes()).isEqualTo(requestedScopes);
 		assertThat(authenticationResult.getScopes()).isEqualTo(requestedScopes);
 	}
 

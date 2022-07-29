@@ -85,6 +85,7 @@ public class JdbcOAuth2AuthorizationService implements OAuth2AuthorizationServic
 			+ "registered_client_id, "
 			+ "principal_name, "
 			+ "authorization_grant_type, "
+			+ "authorized_scopes, "
 			+ "attributes, "
 			+ "state, "
 			+ "authorization_code_value, "
@@ -126,12 +127,12 @@ public class JdbcOAuth2AuthorizationService implements OAuth2AuthorizationServic
 
 	// @formatter:off
 	private static final String SAVE_AUTHORIZATION_SQL = "INSERT INTO " + TABLE_NAME
-			+ " (" + COLUMN_NAMES + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+			+ " (" + COLUMN_NAMES + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 	// @formatter:on
 
 	// @formatter:off
 	private static final String UPDATE_AUTHORIZATION_SQL = "UPDATE " + TABLE_NAME
-			+ " SET registered_client_id = ?, principal_name = ?, authorization_grant_type = ?, attributes = ?, state = ?,"
+			+ " SET registered_client_id = ?, principal_name = ?, authorization_grant_type = ?, authorized_scopes = ?, attributes = ?, state = ?,"
 			+ " authorization_code_value = ?, authorization_code_issued_at = ?, authorization_code_expires_at = ?, authorization_code_metadata = ?,"
 			+ " access_token_value = ?, access_token_issued_at = ?, access_token_expires_at = ?, access_token_metadata = ?, access_token_type = ?, access_token_scopes = ?,"
 			+ " oidc_id_token_value = ?, oidc_id_token_issued_at = ?, oidc_id_token_expires_at = ?, oidc_id_token_metadata = ?,"
@@ -342,11 +343,17 @@ public class JdbcOAuth2AuthorizationService implements OAuth2AuthorizationServic
 			String id = rs.getString("id");
 			String principalName = rs.getString("principal_name");
 			String authorizationGrantType = rs.getString("authorization_grant_type");
+			Set<String> authorizedScopes = Collections.emptySet();
+			String authorizedScopesString = rs.getString("authorized_scopes");
+			if (authorizedScopesString != null) {
+				authorizedScopes = StringUtils.commaDelimitedListToSet(authorizedScopesString);
+			}
 			Map<String, Object> attributes = parseMap(getLobValue(rs, "attributes"));
 
 			builder.id(id)
 					.principalName(principalName)
 					.authorizationGrantType(new AuthorizationGrantType(authorizationGrantType))
+					.authorizedScopes(authorizedScopes)
 					.attributes((attrs) -> attrs.putAll(attributes));
 
 			String state = rs.getString("state");
@@ -484,6 +491,12 @@ public class JdbcOAuth2AuthorizationService implements OAuth2AuthorizationServic
 			parameters.add(new SqlParameterValue(Types.VARCHAR, authorization.getRegisteredClientId()));
 			parameters.add(new SqlParameterValue(Types.VARCHAR, authorization.getPrincipalName()));
 			parameters.add(new SqlParameterValue(Types.VARCHAR, authorization.getAuthorizationGrantType().getValue()));
+
+			String authorizedScopes = null;
+			if (!CollectionUtils.isEmpty(authorization.getAuthorizedScopes())) {
+				authorizedScopes = StringUtils.collectionToDelimitedString(authorization.getAuthorizedScopes(), ",");
+			}
+			parameters.add(new SqlParameterValue(Types.VARCHAR, authorizedScopes));
 
 			String attributes = writeMap(authorization.getAttributes());
 			parameters.add(mapToSqlParameter("attributes", attributes));

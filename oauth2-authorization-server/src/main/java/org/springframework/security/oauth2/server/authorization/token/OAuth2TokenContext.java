@@ -88,8 +88,8 @@ public interface OAuth2TokenContext extends Context {
 	 * @return the authorized scope(s)
 	 */
 	default Set<String> getAuthorizedScopes() {
-		return hasKey(OAuth2Authorization.AUTHORIZED_SCOPE_ATTRIBUTE_NAME) ?
-				get(OAuth2Authorization.AUTHORIZED_SCOPE_ATTRIBUTE_NAME) :
+		return hasKey(AbstractBuilder.AUTHORIZED_SCOPE_KEY) ?
+				get(AbstractBuilder.AUTHORIZED_SCOPE_KEY) :
 				Collections.emptySet();
 	}
 
@@ -130,6 +130,8 @@ public interface OAuth2TokenContext extends Context {
 	abstract class AbstractBuilder<T extends OAuth2TokenContext, B extends AbstractBuilder<T, B>> {
 		private static final String PRINCIPAL_AUTHENTICATION_KEY =
 				Authentication.class.getName().concat(".PRINCIPAL");
+		private static final String AUTHORIZED_SCOPE_KEY =
+				OAuth2Authorization.class.getName().concat(".AUTHORIZED_SCOPE");
 		private static final String AUTHORIZATION_GRANT_AUTHENTICATION_KEY =
 				Authentication.class.getName().concat(".AUTHORIZATION_GRANT");
 		private final Map<Object, Object> context = new HashMap<>();
@@ -182,7 +184,7 @@ public interface OAuth2TokenContext extends Context {
 		 * @return the {@link AbstractBuilder} for further configuration
 		 */
 		public B authorizedScopes(Set<String> authorizedScopes) {
-			return put(OAuth2Authorization.AUTHORIZED_SCOPE_ATTRIBUTE_NAME, authorizedScopes);
+			return put(AUTHORIZED_SCOPE_KEY, authorizedScopes);
 		}
 
 		/**

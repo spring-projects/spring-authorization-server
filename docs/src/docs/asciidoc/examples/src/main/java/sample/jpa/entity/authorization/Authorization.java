@@ -31,6 +31,8 @@ public class Authorization {
 	private String registeredClientId;
 	private String principalName;
 	private String authorizationGrantType;
+	@Column(length = 1000)
+	private String authorizedScopes;
 	@Column(length = 4000)
 	private String attributes;
 	@Column(length = 500)
@@ -99,6 +101,14 @@ public class Authorization {
 
 	public void setAuthorizationGrantType(String authorizationGrantType) {
 		this.authorizationGrantType = authorizationGrantType;
+	}
+
+	public String getAuthorizedScopes() {
+		return this.authorizedScopes;
+	}
+
+	public void setAuthorizedScopes(String authorizedScopes) {
+		this.authorizedScopes = authorizedScopes;
 	}
 
 	public String getAttributes() {

@@ -22,8 +22,8 @@ package org.springframework.security.oauth2.server.authorization.util;
  * @since 0.0.1
  */
 public final class SpringAuthorizationServerVersion {
-	private static final int MAJOR = 0;
-	private static final int MINOR = 4;
+	private static final int MAJOR = 1;
+	private static final int MINOR = 0;
 	private static final int PATCH = 0;
 
 	/**

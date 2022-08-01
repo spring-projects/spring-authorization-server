@@ -514,7 +514,7 @@ public class OidcProviderConfigurationTests {
 				this.minimalConfigurationBuilder
 						.claim("claim-name", "claim-value")
 						.build();
-		assertThat(configuration.containsClaim("claim-name")).isTrue();
+		assertThat(configuration.hasClaim("claim-name")).isTrue();
 	}
 
 	private static URL url(String urlString) {

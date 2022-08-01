@@ -75,7 +75,6 @@ import org.springframework.test.web.servlet.ResultMatcher;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.spy;
-import static org.springframework.test.web.servlet.ResultMatcher.matchAll;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -124,7 +123,7 @@ public class OidcUserInfoTests {
 		this.mvc.perform(get(DEFAULT_OIDC_USER_INFO_ENDPOINT_URI)
 				.header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken.getTokenValue()))
 				.andExpect(status().is2xxSuccessful())
-				.andExpect(userInfoResponse());
+				.andExpectAll(userInfoResponse());
 		// @formatter:on
 	}
 
@@ -140,7 +139,7 @@ public class OidcUserInfoTests {
 		this.mvc.perform(post(DEFAULT_OIDC_USER_INFO_ENDPOINT_URI)
 				.header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken.getTokenValue()))
 				.andExpect(status().is2xxSuccessful())
-				.andExpect(userInfoResponse());
+				.andExpectAll(userInfoResponse());
 		// @formatter:on
 	}
 
@@ -156,7 +155,7 @@ public class OidcUserInfoTests {
 		this.mvc.perform(get(DEFAULT_OIDC_USER_INFO_ENDPOINT_URI)
 				.header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken.getTokenValue()))
 				.andExpect(status().is2xxSuccessful())
-				.andExpect(userInfoResponse());
+				.andExpectAll(userInfoResponse());
 		// @formatter:on
 	}
 
@@ -173,7 +172,7 @@ public class OidcUserInfoTests {
 		MvcResult mvcResult = this.mvc.perform(get(DEFAULT_OIDC_USER_INFO_ENDPOINT_URI)
 				.header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken.getTokenValue()))
 				.andExpect(status().is2xxSuccessful())
-				.andExpect(userInfoResponse())
+				.andExpectAll(userInfoResponse())
 				.andReturn();
 		// @formatter:on
 
@@ -182,9 +181,9 @@ public class OidcUserInfoTests {
 		assertThat(securityContext.getAuthentication()).isNull();
 	}
 
-	private static ResultMatcher userInfoResponse() {
+	private static ResultMatcher[] userInfoResponse() {
 		// @formatter:off
-		return matchAll(
+		return new ResultMatcher[] {
 				jsonPath("sub").value("user1"),
 				jsonPath("name").value("First Last"),
 				jsonPath("given_name").value("First"),
@@ -205,7 +204,7 @@ public class OidcUserInfoTests {
 				jsonPath("phone_number_verified").value("false"),
 				jsonPath("address.formatted").value("Champ de Mars\n5 Av. Anatole France\n75007 Paris\nFrance"),
 				jsonPath("updated_at").value("1970-01-01T00:00:00Z")
-		);
+		};
 		// @formatter:on
 	}
 

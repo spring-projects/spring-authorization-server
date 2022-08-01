@@ -38,7 +38,7 @@ import org.springframework.security.oauth2.server.authorization.web.OAuth2Author
 import org.springframework.security.oauth2.server.authorization.web.ProviderContextFilter;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.preauth.AbstractPreAuthenticatedProcessingFilter;
-import org.springframework.security.web.context.SecurityContextPersistenceFilter;
+import org.springframework.security.web.context.SecurityContextHolderFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.OrRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
@@ -246,7 +246,7 @@ public final class OAuth2AuthorizationServerConfigurer
 		ProviderSettings providerSettings = OAuth2ConfigurerUtils.getProviderSettings(httpSecurity);
 
 		ProviderContextFilter providerContextFilter = new ProviderContextFilter(providerSettings);
-		httpSecurity.addFilterAfter(postProcess(providerContextFilter), SecurityContextPersistenceFilter.class);
+		httpSecurity.addFilterAfter(postProcess(providerContextFilter), SecurityContextHolderFilter.class);
 
 		JWKSource<com.nimbusds.jose.proc.SecurityContext> jwkSource = OAuth2ConfigurerUtils.getJwkSource(httpSecurity);
 		if (jwkSource != null) {

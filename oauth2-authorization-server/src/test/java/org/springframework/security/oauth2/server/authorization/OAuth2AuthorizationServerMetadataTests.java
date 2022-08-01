@@ -562,7 +562,7 @@ public class OAuth2AuthorizationServerMetadataTests {
 						.claim("claim-name", "claim-value")
 						.claims((claims) -> claims.remove("claim-name"))
 						.build();
-		assertThat(authorizationServerMetadata.containsClaim("claim-name")).isFalse();
+		assertThat(authorizationServerMetadata.hasClaim("claim-name")).isFalse();
 	}
 
 	@Test
@@ -571,7 +571,7 @@ public class OAuth2AuthorizationServerMetadataTests {
 				this.minimalBuilder
 						.claim("claim-name", "claim-value")
 						.build();
-		assertThat(authorizationServerMetadata.containsClaim("claim-name")).isTrue();
+		assertThat(authorizationServerMetadata.hasClaim("claim-name")).isTrue();
 	}
 
 	private static URL url(String urlString) {

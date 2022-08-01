@@ -399,7 +399,7 @@ public class OidcClientRegistrationTests {
 				.build();
 		// @formatter:on
 
-		assertThat(clientRegistration.containsClaim("claim-name")).isFalse();
+		assertThat(clientRegistration.hasClaim("claim-name")).isFalse();
 	}
 
 	@Test
@@ -410,7 +410,7 @@ public class OidcClientRegistrationTests {
 				.build();
 		// @formatter:on
 
-		assertThat(clientRegistration.containsClaim("claim-name")).isTrue();
+		assertThat(clientRegistration.hasClaim("claim-name")).isTrue();
 	}
 
 }

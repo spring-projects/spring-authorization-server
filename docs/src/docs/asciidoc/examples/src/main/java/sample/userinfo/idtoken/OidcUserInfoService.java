@@ -66,7 +66,7 @@ public class OidcUserInfoService {
 					.zoneinfo("Europe/Paris")
 					.locale("en-US")
 					.phoneNumber("+1 (604) 555-1234;ext=5678")
-					.phoneNumberVerified("false")
+					.phoneNumberVerified(false)
 					.claim("address", Collections.singletonMap("formatted", "Champ de Mars\n5 Av. Anatole France\n75007 Paris\nFrance"))
 					.updatedAt("1970-01-01T00:00:00Z")
 					.build()

@@ -204,7 +204,7 @@ public class OidcUserInfoEndpointFilterTests {
 				.zoneinfo("Europe/Paris")
 				.locale("en-US")
 				.phoneNumber("+1 (604) 555-1234;ext=5678")
-				.phoneNumberVerified("false")
+				.phoneNumberVerified(false)
 				.address("Champ de Mars\n5 Av. Anatole France\n75007 Paris\nFrance")
 				.updatedAt("1970-01-01T00:00:00Z")
 				.build();
@@ -228,7 +228,7 @@ public class OidcUserInfoEndpointFilterTests {
 		assertThat(userInfoResponse).contains("\"zoneinfo\":\"Europe/Paris\"");
 		assertThat(userInfoResponse).contains("\"locale\":\"en-US\"");
 		assertThat(userInfoResponse).contains("\"phone_number\":\"+1 (604) 555-1234;ext=5678\"");
-		assertThat(userInfoResponse).contains("\"phone_number_verified\":\"false\"");
+		assertThat(userInfoResponse).contains("\"phone_number_verified\":false");
 		assertThat(userInfoResponse).contains("\"address\":\"Champ de Mars\\n5 Av. Anatole France\\n75007 Paris\\nFrance\"");
 		assertThat(userInfoResponse).contains("\"updated_at\":\"1970-01-01T00:00:00Z\"");
 	}

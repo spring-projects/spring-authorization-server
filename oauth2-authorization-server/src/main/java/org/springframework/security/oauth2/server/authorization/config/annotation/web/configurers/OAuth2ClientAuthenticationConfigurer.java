@@ -18,7 +18,7 @@ package org.springframework.security.oauth2.server.authorization.config.annotati
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;

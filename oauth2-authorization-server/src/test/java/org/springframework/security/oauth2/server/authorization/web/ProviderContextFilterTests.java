@@ -15,7 +15,7 @@
  */
 package org.springframework.security.oauth2.server.authorization.web;
 
-import javax.servlet.FilterChain;
+import jakarta.servlet.FilterChain;
 
 import org.junit.After;
 import org.junit.Test;

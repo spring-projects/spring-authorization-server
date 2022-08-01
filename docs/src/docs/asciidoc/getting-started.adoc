@@ -6,7 +6,7 @@ If you are just getting started with Spring Authorization Server, the following 
 [[system-requirements]]
 == System Requirements
 
-Spring Authorization Server requires a Java 8 or higher Runtime Environment.
+Spring Authorization Server requires a Java 17 or higher Runtime Environment.
 
 [[installing-spring-authorization-server]]
 == Installing Spring Authorization Server

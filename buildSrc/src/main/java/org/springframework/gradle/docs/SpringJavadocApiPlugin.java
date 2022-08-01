@@ -54,7 +54,7 @@ public class SpringJavadocApiPlugin implements Plugin<Project> {
 		api.doLast(new Action<Task>() {
 			@Override
 			public void execute(Task task) {
-				if (JavaVersion.current().isJava8Compatible()) {
+				if (JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_17)) {
 					project.copy((copy) -> copy.from(api.getDestinationDir())
 							.into(api.getDestinationDir())
 							.include("element-list")

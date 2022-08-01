@@ -6,7 +6,7 @@ plugins {
 
 group = project.rootProject.group
 version = project.rootProject.version
-sourceCompatibility = "1.8"
+sourceCompatibility = "17"
 
 repositories {
 	mavenCentral()

@@ -660,9 +660,8 @@ public class OAuth2AuthorizationCodeGrantTests {
 
 		ArgumentCaptor<org.springframework.security.core.context.SecurityContext> securityContextCaptor =
 				ArgumentCaptor.forClass(org.springframework.security.core.context.SecurityContext.class);
-		verify(securityContextRepository, times(2)).saveContext(securityContextCaptor.capture(), any(), any());
-		securityContextCaptor.getAllValues().forEach(securityContext ->
-				assertThat(securityContext.getAuthentication()).isInstanceOf(UsernamePasswordAuthenticationToken.class));
+		verify(securityContextRepository, times(1)).saveContext(securityContextCaptor.capture(), any(), any());
+		assertThat(securityContextCaptor.getValue().getAuthentication()).isInstanceOf(UsernamePasswordAuthenticationToken.class);
 		reset(securityContextRepository);
 
 		String authorizationCode = extractParameterFromRedirectUri(mvcResult.getResponse().getRedirectedUrl(), "code");

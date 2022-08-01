@@ -57,8 +57,8 @@ public class OAuth2AuthorizationServerConfiguration {
 
 	// @formatter:off
 	public static void applyDefaultSecurity(HttpSecurity http) throws Exception {
-		OAuth2AuthorizationServerConfigurer<HttpSecurity> authorizationServerConfigurer =
-				new OAuth2AuthorizationServerConfigurer<>();
+		OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
+				new OAuth2AuthorizationServerConfigurer();
 		RequestMatcher endpointsMatcher = authorizationServerConfigurer
 				.getEndpointsMatcher();
 

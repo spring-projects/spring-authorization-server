@@ -335,8 +335,8 @@ public class OAuth2ClientCredentialsGrantTests {
 		// @formatter:off
 		@Bean
 		public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
-			OAuth2AuthorizationServerConfigurer<HttpSecurity> authorizationServerConfigurer =
-					new OAuth2AuthorizationServerConfigurer<>();
+			OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
+					new OAuth2AuthorizationServerConfigurer();
 			authorizationServerConfigurer
 					.tokenEndpoint(tokenEndpoint ->
 							tokenEndpoint
@@ -365,8 +365,8 @@ public class OAuth2ClientCredentialsGrantTests {
 		public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
 			authenticationSuccessHandler = spy(authenticationSuccessHandler());
 
-			OAuth2AuthorizationServerConfigurer<HttpSecurity> authorizationServerConfigurer =
-					new OAuth2AuthorizationServerConfigurer<>();
+			OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
+					new OAuth2AuthorizationServerConfigurer();
 			authorizationServerConfigurer
 					.clientAuthentication(clientAuthentication ->
 							clientAuthentication

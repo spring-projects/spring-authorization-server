@@ -24,7 +24,7 @@ import com.nimbusds.jose.jwk.source.JWKSource;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.config.Customizer;
-import org.springframework.security.config.annotation.web.HttpSecurityBuilder;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.ExceptionHandlingConfigurer;
 import org.springframework.security.oauth2.core.OAuth2Token;
@@ -66,8 +66,8 @@ import org.springframework.util.Assert;
  * @see NimbusJwkSetEndpointFilter
  * @see OAuth2AuthorizationServerMetadataEndpointFilter
  */
-public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBuilder<B>>
-		extends AbstractHttpConfigurer<OAuth2AuthorizationServerConfigurer<B>, B> {
+public final class OAuth2AuthorizationServerConfigurer
+		extends AbstractHttpConfigurer<OAuth2AuthorizationServerConfigurer, HttpSecurity> {
 
 	private final Map<Class<? extends AbstractOAuth2Configurer>, AbstractOAuth2Configurer> configurers = createConfigurers();
 	private RequestMatcher jwkSetEndpointMatcher;
@@ -87,7 +87,7 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 	 * @param registeredClientRepository the repository of registered clients
 	 * @return the {@link OAuth2AuthorizationServerConfigurer} for further configuration
 	 */
-	public OAuth2AuthorizationServerConfigurer<B> registeredClientRepository(RegisteredClientRepository registeredClientRepository) {
+	public OAuth2AuthorizationServerConfigurer registeredClientRepository(RegisteredClientRepository registeredClientRepository) {
 		Assert.notNull(registeredClientRepository, "registeredClientRepository cannot be null");
 		getBuilder().setSharedObject(RegisteredClientRepository.class, registeredClientRepository);
 		return this;
@@ -99,7 +99,7 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 	 * @param authorizationService the authorization service
 	 * @return the {@link OAuth2AuthorizationServerConfigurer} for further configuration
 	 */
-	public OAuth2AuthorizationServerConfigurer<B> authorizationService(OAuth2AuthorizationService authorizationService) {
+	public OAuth2AuthorizationServerConfigurer authorizationService(OAuth2AuthorizationService authorizationService) {
 		Assert.notNull(authorizationService, "authorizationService cannot be null");
 		getBuilder().setSharedObject(OAuth2AuthorizationService.class, authorizationService);
 		return this;
@@ -111,7 +111,7 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 	 * @param authorizationConsentService the authorization consent service
 	 * @return the {@link OAuth2AuthorizationServerConfigurer} for further configuration
 	 */
-	public OAuth2AuthorizationServerConfigurer<B> authorizationConsentService(OAuth2AuthorizationConsentService authorizationConsentService) {
+	public OAuth2AuthorizationServerConfigurer authorizationConsentService(OAuth2AuthorizationConsentService authorizationConsentService) {
 		Assert.notNull(authorizationConsentService, "authorizationConsentService cannot be null");
 		getBuilder().setSharedObject(OAuth2AuthorizationConsentService.class, authorizationConsentService);
 		return this;
@@ -123,7 +123,7 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 	 * @param providerSettings the provider settings
 	 * @return the {@link OAuth2AuthorizationServerConfigurer} for further configuration
 	 */
-	public OAuth2AuthorizationServerConfigurer<B> providerSettings(ProviderSettings providerSettings) {
+	public OAuth2AuthorizationServerConfigurer providerSettings(ProviderSettings providerSettings) {
 		Assert.notNull(providerSettings, "providerSettings cannot be null");
 		getBuilder().setSharedObject(ProviderSettings.class, providerSettings);
 		return this;
@@ -136,7 +136,7 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 	 * @return the {@link OAuth2AuthorizationServerConfigurer} for further configuration
 	 * @since 0.2.3
 	 */
-	public OAuth2AuthorizationServerConfigurer<B> tokenGenerator(OAuth2TokenGenerator<? extends OAuth2Token> tokenGenerator) {
+	public OAuth2AuthorizationServerConfigurer tokenGenerator(OAuth2TokenGenerator<? extends OAuth2Token> tokenGenerator) {
 		Assert.notNull(tokenGenerator, "tokenGenerator cannot be null");
 		getBuilder().setSharedObject(OAuth2TokenGenerator.class, tokenGenerator);
 		return this;
@@ -148,7 +148,7 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 	 * @param clientAuthenticationCustomizer the {@link Customizer} providing access to the {@link OAuth2ClientAuthenticationConfigurer}
 	 * @return the {@link OAuth2AuthorizationServerConfigurer} for further configuration
 	 */
-	public OAuth2AuthorizationServerConfigurer<B> clientAuthentication(Customizer<OAuth2ClientAuthenticationConfigurer> clientAuthenticationCustomizer) {
+	public OAuth2AuthorizationServerConfigurer clientAuthentication(Customizer<OAuth2ClientAuthenticationConfigurer> clientAuthenticationCustomizer) {
 		clientAuthenticationCustomizer.customize(getConfigurer(OAuth2ClientAuthenticationConfigurer.class));
 		return this;
 	}
@@ -159,7 +159,7 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 	 * @param authorizationEndpointCustomizer the {@link Customizer} providing access to the {@link OAuth2AuthorizationEndpointConfigurer}
 	 * @return the {@link OAuth2AuthorizationServerConfigurer} for further configuration
 	 */
-	public OAuth2AuthorizationServerConfigurer<B> authorizationEndpoint(Customizer<OAuth2AuthorizationEndpointConfigurer> authorizationEndpointCustomizer) {
+	public OAuth2AuthorizationServerConfigurer authorizationEndpoint(Customizer<OAuth2AuthorizationEndpointConfigurer> authorizationEndpointCustomizer) {
 		authorizationEndpointCustomizer.customize(getConfigurer(OAuth2AuthorizationEndpointConfigurer.class));
 		return this;
 	}
@@ -170,7 +170,7 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 	 * @param tokenEndpointCustomizer the {@link Customizer} providing access to the {@link OAuth2TokenEndpointConfigurer}
 	 * @return the {@link OAuth2AuthorizationServerConfigurer} for further configuration
 	 */
-	public OAuth2AuthorizationServerConfigurer<B> tokenEndpoint(Customizer<OAuth2TokenEndpointConfigurer> tokenEndpointCustomizer) {
+	public OAuth2AuthorizationServerConfigurer tokenEndpoint(Customizer<OAuth2TokenEndpointConfigurer> tokenEndpointCustomizer) {
 		tokenEndpointCustomizer.customize(getConfigurer(OAuth2TokenEndpointConfigurer.class));
 		return this;
 	}
@@ -182,7 +182,7 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 	 * @return the {@link OAuth2AuthorizationServerConfigurer} for further configuration
 	 * @since 0.2.3
 	 */
-	public OAuth2AuthorizationServerConfigurer<B> tokenIntrospectionEndpoint(Customizer<OAuth2TokenIntrospectionEndpointConfigurer> tokenIntrospectionEndpointCustomizer) {
+	public OAuth2AuthorizationServerConfigurer tokenIntrospectionEndpoint(Customizer<OAuth2TokenIntrospectionEndpointConfigurer> tokenIntrospectionEndpointCustomizer) {
 		tokenIntrospectionEndpointCustomizer.customize(getConfigurer(OAuth2TokenIntrospectionEndpointConfigurer.class));
 		return this;
 	}
@@ -194,7 +194,7 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 	 * @return the {@link OAuth2AuthorizationServerConfigurer} for further configuration
 	 * @since 0.2.2
 	 */
-	public OAuth2AuthorizationServerConfigurer<B> tokenRevocationEndpoint(Customizer<OAuth2TokenRevocationEndpointConfigurer> tokenRevocationEndpointCustomizer) {
+	public OAuth2AuthorizationServerConfigurer tokenRevocationEndpoint(Customizer<OAuth2TokenRevocationEndpointConfigurer> tokenRevocationEndpointCustomizer) {
 		tokenRevocationEndpointCustomizer.customize(getConfigurer(OAuth2TokenRevocationEndpointConfigurer.class));
 		return this;
 	}
@@ -205,7 +205,7 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 	 * @param oidcCustomizer the {@link Customizer} providing access to the {@link OidcConfigurer}
 	 * @return the {@link OAuth2AuthorizationServerConfigurer} for further configuration
 	 */
-	public OAuth2AuthorizationServerConfigurer<B> oidc(Customizer<OidcConfigurer> oidcCustomizer) {
+	public OAuth2AuthorizationServerConfigurer oidc(Customizer<OidcConfigurer> oidcCustomizer) {
 		oidcCustomizer.customize(getConfigurer(OidcConfigurer.class));
 		return this;
 	}
@@ -220,14 +220,14 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 	}
 
 	@Override
-	public void init(B builder) {
-		ProviderSettings providerSettings = OAuth2ConfigurerUtils.getProviderSettings(builder);
+	public void init(HttpSecurity httpSecurity) {
+		ProviderSettings providerSettings = OAuth2ConfigurerUtils.getProviderSettings(httpSecurity);
 		validateProviderSettings(providerSettings);
 		initEndpointMatchers(providerSettings);
 
-		this.configurers.values().forEach(configurer -> configurer.init(builder));
+		this.configurers.values().forEach(configurer -> configurer.init(httpSecurity));
 
-		ExceptionHandlingConfigurer<B> exceptionHandling = builder.getConfigurer(ExceptionHandlingConfigurer.class);
+		ExceptionHandlingConfigurer<HttpSecurity> exceptionHandling = httpSecurity.getConfigurer(ExceptionHandlingConfigurer.class);
 		if (exceptionHandling != null) {
 			exceptionHandling.defaultAuthenticationEntryPointFor(
 					new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED),
@@ -240,24 +240,24 @@ public final class OAuth2AuthorizationServerConfigurer<B extends HttpSecurityBui
 	}
 
 	@Override
-	public void configure(B builder) {
-		this.configurers.values().forEach(configurer -> configurer.configure(builder));
+	public void configure(HttpSecurity httpSecurity) {
+		this.configurers.values().forEach(configurer -> configurer.configure(httpSecurity));
 
-		ProviderSettings providerSettings = OAuth2ConfigurerUtils.getProviderSettings(builder);
+		ProviderSettings providerSettings = OAuth2ConfigurerUtils.getProviderSettings(httpSecurity);
 
 		ProviderContextFilter providerContextFilter = new ProviderContextFilter(providerSettings);
-		builder.addFilterAfter(postProcess(providerContextFilter), SecurityContextPersistenceFilter.class);
+		httpSecurity.addFilterAfter(postProcess(providerContextFilter), SecurityContextPersistenceFilter.class);
 
-		JWKSource<com.nimbusds.jose.proc.SecurityContext> jwkSource = OAuth2ConfigurerUtils.getJwkSource(builder);
+		JWKSource<com.nimbusds.jose.proc.SecurityContext> jwkSource = OAuth2ConfigurerUtils.getJwkSource(httpSecurity);
 		if (jwkSource != null) {
 			NimbusJwkSetEndpointFilter jwkSetEndpointFilter = new NimbusJwkSetEndpointFilter(
 					jwkSource, providerSettings.getJwkSetEndpoint());
-			builder.addFilterBefore(postProcess(jwkSetEndpointFilter), AbstractPreAuthenticatedProcessingFilter.class);
+			httpSecurity.addFilterBefore(postProcess(jwkSetEndpointFilter), AbstractPreAuthenticatedProcessingFilter.class);
 		}
 
 		OAuth2AuthorizationServerMetadataEndpointFilter authorizationServerMetadataEndpointFilter =
 				new OAuth2AuthorizationServerMetadataEndpointFilter(providerSettings);
-		builder.addFilterBefore(postProcess(authorizationServerMetadataEndpointFilter), AbstractPreAuthenticatedProcessingFilter.class);
+		httpSecurity.addFilterBefore(postProcess(authorizationServerMetadataEndpointFilter), AbstractPreAuthenticatedProcessingFilter.class);
 	}
 
 	private Map<Class<? extends AbstractOAuth2Configurer>, AbstractOAuth2Configurer> createConfigurers() {

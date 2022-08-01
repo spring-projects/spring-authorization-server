@@ -16,7 +16,7 @@
 package org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers;
 
 import org.springframework.security.config.annotation.ObjectPostProcessor;
-import org.springframework.security.config.annotation.web.HttpSecurityBuilder;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 
 /**
@@ -32,9 +32,9 @@ abstract class AbstractOAuth2Configurer {
 		this.objectPostProcessor = objectPostProcessor;
 	}
 
-	abstract <B extends HttpSecurityBuilder<B>> void init(B builder);
+	abstract void init(HttpSecurity httpSecurity);
 
-	abstract <B extends HttpSecurityBuilder<B>> void configure(B builder);
+	abstract void configure(HttpSecurity httpSecurity);
 
 	abstract RequestMatcher getRequestMatcher();
 

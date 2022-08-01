@@ -24,7 +24,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.ObjectPostProcessor;
-import org.springframework.security.config.annotation.web.HttpSecurityBuilder;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.OAuth2Error;
@@ -116,8 +116,8 @@ public final class OAuth2ClientAuthenticationConfigurer extends AbstractOAuth2Co
 	}
 
 	@Override
-	<B extends HttpSecurityBuilder<B>> void init(B builder) {
-		ProviderSettings providerSettings = OAuth2ConfigurerUtils.getProviderSettings(builder);
+	void init(HttpSecurity httpSecurity) {
+		ProviderSettings providerSettings = OAuth2ConfigurerUtils.getProviderSettings(httpSecurity);
 		this.requestMatcher = new OrRequestMatcher(
 				new AntPathRequestMatcher(
 						providerSettings.getTokenEndpoint(),
@@ -132,14 +132,14 @@ public final class OAuth2ClientAuthenticationConfigurer extends AbstractOAuth2Co
 		List<AuthenticationProvider> authenticationProviders =
 				!this.authenticationProviders.isEmpty() ?
 						this.authenticationProviders :
-						createDefaultAuthenticationProviders(builder);
+						createDefaultAuthenticationProviders(httpSecurity);
 		authenticationProviders.forEach(authenticationProvider ->
-				builder.authenticationProvider(postProcess(authenticationProvider)));
+				httpSecurity.authenticationProvider(postProcess(authenticationProvider)));
 	}
 
 	@Override
-	<B extends HttpSecurityBuilder<B>> void configure(B builder) {
-		AuthenticationManager authenticationManager = builder.getSharedObject(AuthenticationManager.class);
+	void configure(HttpSecurity httpSecurity) {
+		AuthenticationManager authenticationManager = httpSecurity.getSharedObject(AuthenticationManager.class);
 		OAuth2ClientAuthenticationFilter clientAuthenticationFilter = new OAuth2ClientAuthenticationFilter(
 				authenticationManager, this.requestMatcher);
 		if (this.authenticationConverter != null) {
@@ -151,7 +151,7 @@ public final class OAuth2ClientAuthenticationConfigurer extends AbstractOAuth2Co
 		if (this.errorResponseHandler != null) {
 			clientAuthenticationFilter.setAuthenticationFailureHandler(this.errorResponseHandler);
 		}
-		builder.addFilterAfter(postProcess(clientAuthenticationFilter), AbstractPreAuthenticatedProcessingFilter.class);
+		httpSecurity.addFilterAfter(postProcess(clientAuthenticationFilter), AbstractPreAuthenticatedProcessingFilter.class);
 	}
 
 	@Override
@@ -159,11 +159,11 @@ public final class OAuth2ClientAuthenticationConfigurer extends AbstractOAuth2Co
 		return this.requestMatcher;
 	}
 
-	private <B extends HttpSecurityBuilder<B>> List<AuthenticationProvider> createDefaultAuthenticationProviders(B builder) {
+	private List<AuthenticationProvider> createDefaultAuthenticationProviders(HttpSecurity httpSecurity) {
 		List<AuthenticationProvider> authenticationProviders = new ArrayList<>();
 
-		RegisteredClientRepository registeredClientRepository = OAuth2ConfigurerUtils.getRegisteredClientRepository(builder);
-		OAuth2AuthorizationService authorizationService = OAuth2ConfigurerUtils.getAuthorizationService(builder);
+		RegisteredClientRepository registeredClientRepository = OAuth2ConfigurerUtils.getRegisteredClientRepository(httpSecurity);
+		OAuth2AuthorizationService authorizationService = OAuth2ConfigurerUtils.getAuthorizationService(httpSecurity);
 
 		JwtClientAssertionAuthenticationProvider jwtClientAssertionAuthenticationProvider =
 				new JwtClientAssertionAuthenticationProvider(registeredClientRepository, authorizationService);
@@ -171,7 +171,7 @@ public final class OAuth2ClientAuthenticationConfigurer extends AbstractOAuth2Co
 
 		ClientSecretAuthenticationProvider clientSecretAuthenticationProvider =
 				new ClientSecretAuthenticationProvider(registeredClientRepository, authorizationService);
-		PasswordEncoder passwordEncoder = OAuth2ConfigurerUtils.getOptionalBean(builder, PasswordEncoder.class);
+		PasswordEncoder passwordEncoder = OAuth2ConfigurerUtils.getOptionalBean(httpSecurity, PasswordEncoder.class);
 		if (passwordEncoder != null) {
 			clientSecretAuthenticationProvider.setPasswordEncoder(passwordEncoder);
 		}

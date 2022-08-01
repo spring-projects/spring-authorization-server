@@ -480,8 +480,8 @@ public class OAuth2TokenIntrospectionTests {
 		// @formatter:off
 		@Bean
 		public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
-			OAuth2AuthorizationServerConfigurer<HttpSecurity> authorizationServerConfigurer =
-					new OAuth2AuthorizationServerConfigurer<>();
+			OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
+					new OAuth2AuthorizationServerConfigurer();
 			authorizationServerConfigurer
 					.tokenIntrospectionEndpoint(tokenIntrospectionEndpoint ->
 							tokenIntrospectionEndpoint

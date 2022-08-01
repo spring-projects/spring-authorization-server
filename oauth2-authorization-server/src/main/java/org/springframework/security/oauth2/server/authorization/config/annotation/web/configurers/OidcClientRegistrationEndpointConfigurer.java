@@ -18,7 +18,7 @@ package org.springframework.security.oauth2.server.authorization.config.annotati
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.ObjectPostProcessor;
-import org.springframework.security.config.annotation.web.HttpSecurityBuilder;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.oauth2.server.authorization.oidc.authentication.OidcClientRegistrationAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.oidc.web.OidcClientRegistrationEndpointFilter;
 import org.springframework.security.oauth2.server.authorization.settings.ProviderSettings;
@@ -46,8 +46,8 @@ public final class OidcClientRegistrationEndpointConfigurer extends AbstractOAut
 	}
 
 	@Override
-	<B extends HttpSecurityBuilder<B>> void init(B builder) {
-		ProviderSettings providerSettings = OAuth2ConfigurerUtils.getProviderSettings(builder);
+	void init(HttpSecurity httpSecurity) {
+		ProviderSettings providerSettings = OAuth2ConfigurerUtils.getProviderSettings(httpSecurity);
 		this.requestMatcher = new OrRequestMatcher(
 				new AntPathRequestMatcher(providerSettings.getOidcClientRegistrationEndpoint(), HttpMethod.POST.name()),
 				new AntPathRequestMatcher(providerSettings.getOidcClientRegistrationEndpoint(), HttpMethod.GET.name())
@@ -55,22 +55,22 @@ public final class OidcClientRegistrationEndpointConfigurer extends AbstractOAut
 
 		OidcClientRegistrationAuthenticationProvider oidcClientRegistrationAuthenticationProvider =
 				new OidcClientRegistrationAuthenticationProvider(
-						OAuth2ConfigurerUtils.getRegisteredClientRepository(builder),
-						OAuth2ConfigurerUtils.getAuthorizationService(builder),
-						OAuth2ConfigurerUtils.getTokenGenerator(builder));
-		builder.authenticationProvider(postProcess(oidcClientRegistrationAuthenticationProvider));
+						OAuth2ConfigurerUtils.getRegisteredClientRepository(httpSecurity),
+						OAuth2ConfigurerUtils.getAuthorizationService(httpSecurity),
+						OAuth2ConfigurerUtils.getTokenGenerator(httpSecurity));
+		httpSecurity.authenticationProvider(postProcess(oidcClientRegistrationAuthenticationProvider));
 	}
 
 	@Override
-	<B extends HttpSecurityBuilder<B>> void configure(B builder) {
-		AuthenticationManager authenticationManager = builder.getSharedObject(AuthenticationManager.class);
-		ProviderSettings providerSettings = OAuth2ConfigurerUtils.getProviderSettings(builder);
+	void configure(HttpSecurity httpSecurity) {
+		AuthenticationManager authenticationManager = httpSecurity.getSharedObject(AuthenticationManager.class);
+		ProviderSettings providerSettings = OAuth2ConfigurerUtils.getProviderSettings(httpSecurity);
 
 		OidcClientRegistrationEndpointFilter oidcClientRegistrationEndpointFilter =
 				new OidcClientRegistrationEndpointFilter(
 						authenticationManager,
 						providerSettings.getOidcClientRegistrationEndpoint());
-		builder.addFilterAfter(postProcess(oidcClientRegistrationEndpointFilter), FilterSecurityInterceptor.class);
+		httpSecurity.addFilterAfter(postProcess(oidcClientRegistrationEndpointFilter), FilterSecurityInterceptor.class);
 	}
 
 	@Override

@@ -54,8 +54,8 @@ public class AuthorizationServerConfig {
 	@Bean
 	@Order(Ordered.HIGHEST_PRECEDENCE)
 	public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
-		OAuth2AuthorizationServerConfigurer<HttpSecurity> authorizationServerConfigurer =
-				new OAuth2AuthorizationServerConfigurer<>();
+		OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
+				new OAuth2AuthorizationServerConfigurer();
 		authorizationServerConfigurer
 				.authorizationEndpoint(authorizationEndpoint ->
 						authorizationEndpoint.consentPage(CUSTOM_CONSENT_PAGE_URI));

@@ -63,8 +63,8 @@ public class JwtUserInfoMapperSecurityConfig {
 	@Bean // <1>
 	@Order(1)
 	public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
-		OAuth2AuthorizationServerConfigurer<HttpSecurity> authorizationServerConfigurer =
-				new OAuth2AuthorizationServerConfigurer<>();
+		OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
+				new OAuth2AuthorizationServerConfigurer();
 		RequestMatcher endpointsMatcher = authorizationServerConfigurer
 				.getEndpointsMatcher();
 

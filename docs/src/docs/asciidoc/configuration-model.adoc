@@ -83,8 +83,8 @@ Furthermore, it lets you customize the request processing logic for the protocol
 ----
 @Bean
 public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
-	OAuth2AuthorizationServerConfigurer<HttpSecurity> authorizationServerConfigurer =
-		new OAuth2AuthorizationServerConfigurer<>();
+	OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
+		new OAuth2AuthorizationServerConfigurer();
 	http.apply(authorizationServerConfigurer);
 
 	authorizationServerConfigurer
@@ -197,8 +197,8 @@ It defines extension points that let you customize the pre-processing, main proc
 ----
 @Bean
 public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
-	OAuth2AuthorizationServerConfigurer<HttpSecurity> authorizationServerConfigurer =
-		new OAuth2AuthorizationServerConfigurer<>();
+	OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
+		new OAuth2AuthorizationServerConfigurer();
 	http.apply(authorizationServerConfigurer);
 
 	authorizationServerConfigurer

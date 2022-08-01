@@ -23,7 +23,7 @@ import java.util.Map;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.ObjectPostProcessor;
-import org.springframework.security.config.annotation.web.HttpSecurityBuilder;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.oauth2.server.authorization.oidc.web.OidcProviderConfigurationEndpointFilter;
 import org.springframework.security.oauth2.server.authorization.settings.ProviderSettings;
 import org.springframework.security.web.authentication.preauth.AbstractPreAuthenticatedProcessingFilter;
@@ -83,14 +83,14 @@ public final class OidcConfigurer extends AbstractOAuth2Configurer {
 	}
 
 	@Override
-	<B extends HttpSecurityBuilder<B>> void init(B builder) {
+	void init(HttpSecurity httpSecurity) {
 		OidcUserInfoEndpointConfigurer userInfoEndpointConfigurer =
 				getConfigurer(OidcUserInfoEndpointConfigurer.class);
-		userInfoEndpointConfigurer.init(builder);
+		userInfoEndpointConfigurer.init(httpSecurity);
 		OidcClientRegistrationEndpointConfigurer clientRegistrationEndpointConfigurer =
 				getConfigurer(OidcClientRegistrationEndpointConfigurer.class);
 		if (clientRegistrationEndpointConfigurer != null) {
-			clientRegistrationEndpointConfigurer.init(builder);
+			clientRegistrationEndpointConfigurer.init(httpSecurity);
 		}
 
 		List<RequestMatcher> requestMatchers = new ArrayList<>();
@@ -104,20 +104,20 @@ public final class OidcConfigurer extends AbstractOAuth2Configurer {
 	}
 
 	@Override
-	<B extends HttpSecurityBuilder<B>> void configure(B builder) {
+	void configure(HttpSecurity httpSecurity) {
 		OidcUserInfoEndpointConfigurer userInfoEndpointConfigurer =
 				getConfigurer(OidcUserInfoEndpointConfigurer.class);
-		userInfoEndpointConfigurer.configure(builder);
+		userInfoEndpointConfigurer.configure(httpSecurity);
 		OidcClientRegistrationEndpointConfigurer clientRegistrationEndpointConfigurer =
 				getConfigurer(OidcClientRegistrationEndpointConfigurer.class);
 		if (clientRegistrationEndpointConfigurer != null) {
-			clientRegistrationEndpointConfigurer.configure(builder);
+			clientRegistrationEndpointConfigurer.configure(httpSecurity);
 		}
 
-		ProviderSettings providerSettings = OAuth2ConfigurerUtils.getProviderSettings(builder);
+		ProviderSettings providerSettings = OAuth2ConfigurerUtils.getProviderSettings(httpSecurity);
 		OidcProviderConfigurationEndpointFilter oidcProviderConfigurationEndpointFilter =
 				new OidcProviderConfigurationEndpointFilter(providerSettings);
-		builder.addFilterBefore(postProcess(oidcProviderConfigurationEndpointFilter), AbstractPreAuthenticatedProcessingFilter.class);
+		httpSecurity.addFilterBefore(postProcess(oidcProviderConfigurationEndpointFilter), AbstractPreAuthenticatedProcessingFilter.class);
 	}
 
 	@Override

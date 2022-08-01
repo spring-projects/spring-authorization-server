@@ -120,8 +120,8 @@ Alternatively, you can configure the `RegisteredClientRepository` through the xr
 ----
 @Bean
 public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
-	OAuth2AuthorizationServerConfigurer<HttpSecurity> authorizationServerConfigurer =
-		new OAuth2AuthorizationServerConfigurer<>();
+	OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
+		new OAuth2AuthorizationServerConfigurer();
 	http.apply(authorizationServerConfigurer);
 
 	authorizationServerConfigurer
@@ -213,8 +213,8 @@ Alternatively, you can configure the `OAuth2AuthorizationService` through the xr
 ----
 @Bean
 public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
-	OAuth2AuthorizationServerConfigurer<HttpSecurity> authorizationServerConfigurer =
-		new OAuth2AuthorizationServerConfigurer<>();
+	OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
+		new OAuth2AuthorizationServerConfigurer();
 	http.apply(authorizationServerConfigurer);
 
 	authorizationServerConfigurer
@@ -285,8 +285,8 @@ Alternatively, you can configure the `OAuth2AuthorizationConsentService` through
 ----
 @Bean
 public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
-	OAuth2AuthorizationServerConfigurer<HttpSecurity> authorizationServerConfigurer =
-		new OAuth2AuthorizationServerConfigurer<>();
+	OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
+		new OAuth2AuthorizationServerConfigurer();
 	http.apply(authorizationServerConfigurer);
 
 	authorizationServerConfigurer
@@ -396,8 +396,8 @@ Alternatively, you can configure the `OAuth2TokenGenerator` through the xref:con
 ----
 @Bean
 public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
-	OAuth2AuthorizationServerConfigurer<HttpSecurity> authorizationServerConfigurer =
-		new OAuth2AuthorizationServerConfigurer<>();
+	OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
+		new OAuth2AuthorizationServerConfigurer();
 	http.apply(authorizationServerConfigurer);
 
 	authorizationServerConfigurer

@@ -24,7 +24,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.ObjectPostProcessor;
-import org.springframework.security.config.annotation.web.HttpSecurityBuilder;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationResponse;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeRequestAuthenticationException;
@@ -148,8 +148,8 @@ public final class OAuth2AuthorizationEndpointConfigurer extends AbstractOAuth2C
 	}
 
 	@Override
-	<B extends HttpSecurityBuilder<B>> void init(B builder) {
-		ProviderSettings providerSettings = OAuth2ConfigurerUtils.getProviderSettings(builder);
+	void init(HttpSecurity httpSecurity) {
+		ProviderSettings providerSettings = OAuth2ConfigurerUtils.getProviderSettings(httpSecurity);
 		this.requestMatcher = new OrRequestMatcher(
 				new AntPathRequestMatcher(
 						providerSettings.getAuthorizationEndpoint(),
@@ -161,15 +161,15 @@ public final class OAuth2AuthorizationEndpointConfigurer extends AbstractOAuth2C
 		List<AuthenticationProvider> authenticationProviders =
 				!this.authenticationProviders.isEmpty() ?
 						this.authenticationProviders :
-						createDefaultAuthenticationProviders(builder);
+						createDefaultAuthenticationProviders(httpSecurity);
 		authenticationProviders.forEach(authenticationProvider ->
-				builder.authenticationProvider(postProcess(authenticationProvider)));
+				httpSecurity.authenticationProvider(postProcess(authenticationProvider)));
 	}
 
 	@Override
-	<B extends HttpSecurityBuilder<B>> void configure(B builder) {
-		AuthenticationManager authenticationManager = builder.getSharedObject(AuthenticationManager.class);
-		ProviderSettings providerSettings = OAuth2ConfigurerUtils.getProviderSettings(builder);
+	void configure(HttpSecurity httpSecurity) {
+		AuthenticationManager authenticationManager = httpSecurity.getSharedObject(AuthenticationManager.class);
+		ProviderSettings providerSettings = OAuth2ConfigurerUtils.getProviderSettings(httpSecurity);
 
 		OAuth2AuthorizationEndpointFilter authorizationEndpointFilter =
 				new OAuth2AuthorizationEndpointFilter(
@@ -187,7 +187,7 @@ public final class OAuth2AuthorizationEndpointConfigurer extends AbstractOAuth2C
 		if (StringUtils.hasText(this.consentPage)) {
 			authorizationEndpointFilter.setConsentPage(this.consentPage);
 		}
-		builder.addFilterBefore(postProcess(authorizationEndpointFilter), AbstractPreAuthenticatedProcessingFilter.class);
+		httpSecurity.addFilterBefore(postProcess(authorizationEndpointFilter), AbstractPreAuthenticatedProcessingFilter.class);
 	}
 
 	@Override
@@ -195,14 +195,14 @@ public final class OAuth2AuthorizationEndpointConfigurer extends AbstractOAuth2C
 		return this.requestMatcher;
 	}
 
-	private <B extends HttpSecurityBuilder<B>> List<AuthenticationProvider> createDefaultAuthenticationProviders(B builder) {
+	private List<AuthenticationProvider> createDefaultAuthenticationProviders(HttpSecurity httpSecurity) {
 		List<AuthenticationProvider> authenticationProviders = new ArrayList<>();
 
 		OAuth2AuthorizationCodeRequestAuthenticationProvider authorizationCodeRequestAuthenticationProvider =
 				new OAuth2AuthorizationCodeRequestAuthenticationProvider(
-						OAuth2ConfigurerUtils.getRegisteredClientRepository(builder),
-						OAuth2ConfigurerUtils.getAuthorizationService(builder),
-						OAuth2ConfigurerUtils.getAuthorizationConsentService(builder));
+						OAuth2ConfigurerUtils.getRegisteredClientRepository(httpSecurity),
+						OAuth2ConfigurerUtils.getAuthorizationService(httpSecurity),
+						OAuth2ConfigurerUtils.getAuthorizationConsentService(httpSecurity));
 		authenticationProviders.add(authorizationCodeRequestAuthenticationProvider);
 
 		return authenticationProviders;

@@ -20,7 +20,7 @@ import java.util.function.Function;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.ObjectPostProcessor;
-import org.springframework.security.config.annotation.web.HttpSecurityBuilder;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.security.oauth2.core.oidc.OidcUserInfo;
@@ -75,8 +75,8 @@ public final class OidcUserInfoEndpointConfigurer extends AbstractOAuth2Configur
 	}
 
 	@Override
-	<B extends HttpSecurityBuilder<B>> void init(B builder) {
-		ProviderSettings providerSettings = OAuth2ConfigurerUtils.getProviderSettings(builder);
+	void init(HttpSecurity httpSecurity) {
+		ProviderSettings providerSettings = OAuth2ConfigurerUtils.getProviderSettings(httpSecurity);
 		String userInfoEndpointUri = providerSettings.getOidcUserInfoEndpoint();
 		this.requestMatcher = new OrRequestMatcher(
 				new AntPathRequestMatcher(userInfoEndpointUri, HttpMethod.GET.name()),
@@ -84,23 +84,23 @@ public final class OidcUserInfoEndpointConfigurer extends AbstractOAuth2Configur
 
 		OidcUserInfoAuthenticationProvider oidcUserInfoAuthenticationProvider =
 				new OidcUserInfoAuthenticationProvider(
-						OAuth2ConfigurerUtils.getAuthorizationService(builder));
+						OAuth2ConfigurerUtils.getAuthorizationService(httpSecurity));
 		if (this.userInfoMapper != null) {
 			oidcUserInfoAuthenticationProvider.setUserInfoMapper(this.userInfoMapper);
 		}
-		builder.authenticationProvider(postProcess(oidcUserInfoAuthenticationProvider));
+		httpSecurity.authenticationProvider(postProcess(oidcUserInfoAuthenticationProvider));
 	}
 
 	@Override
-	<B extends HttpSecurityBuilder<B>> void configure(B builder) {
-		AuthenticationManager authenticationManager = builder.getSharedObject(AuthenticationManager.class);
-		ProviderSettings providerSettings = OAuth2ConfigurerUtils.getProviderSettings(builder);
+	void configure(HttpSecurity httpSecurity) {
+		AuthenticationManager authenticationManager = httpSecurity.getSharedObject(AuthenticationManager.class);
+		ProviderSettings providerSettings = OAuth2ConfigurerUtils.getProviderSettings(httpSecurity);
 
 		OidcUserInfoEndpointFilter oidcUserInfoEndpointFilter =
 				new OidcUserInfoEndpointFilter(
 						authenticationManager,
 						providerSettings.getOidcUserInfoEndpoint());
-		builder.addFilterAfter(postProcess(oidcUserInfoEndpointFilter), FilterSecurityInterceptor.class);
+		httpSecurity.addFilterAfter(postProcess(oidcUserInfoEndpointFilter), FilterSecurityInterceptor.class);
 	}
 
 	@Override

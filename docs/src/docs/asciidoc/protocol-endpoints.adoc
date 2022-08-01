@@ -13,8 +13,8 @@ It defines extension points that let you customize the pre-processing, main proc
 ----
 @Bean
 public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
-	OAuth2AuthorizationServerConfigurer<HttpSecurity> authorizationServerConfigurer =
-		new OAuth2AuthorizationServerConfigurer<>();
+	OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
+		new OAuth2AuthorizationServerConfigurer();
 	http.apply(authorizationServerConfigurer);
 
 	authorizationServerConfigurer
@@ -57,8 +57,8 @@ It defines extension points that let you customize the pre-processing, main proc
 ----
 @Bean
 public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
-	OAuth2AuthorizationServerConfigurer<HttpSecurity> authorizationServerConfigurer =
-		new OAuth2AuthorizationServerConfigurer<>();
+	OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
+		new OAuth2AuthorizationServerConfigurer();
 	http.apply(authorizationServerConfigurer);
 
 	authorizationServerConfigurer
@@ -102,8 +102,8 @@ It defines extension points that let you customize the pre-processing, main proc
 ----
 @Bean
 public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
-	OAuth2AuthorizationServerConfigurer<HttpSecurity> authorizationServerConfigurer =
-		new OAuth2AuthorizationServerConfigurer<>();
+	OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
+		new OAuth2AuthorizationServerConfigurer();
 	http.apply(authorizationServerConfigurer);
 
 	authorizationServerConfigurer
@@ -145,8 +145,8 @@ It defines extension points that let you customize the pre-processing, main proc
 ----
 @Bean
 public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
-	OAuth2AuthorizationServerConfigurer<HttpSecurity> authorizationServerConfigurer =
-		new OAuth2AuthorizationServerConfigurer<>();
+	OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
+		new OAuth2AuthorizationServerConfigurer();
 	http.apply(authorizationServerConfigurer);
 
 	authorizationServerConfigurer
@@ -215,8 +215,8 @@ It defines extension points that let you customize the https://openid.net/specs/
 ----
 @Bean
 public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
-	OAuth2AuthorizationServerConfigurer<HttpSecurity> authorizationServerConfigurer =
-		new OAuth2AuthorizationServerConfigurer<>();
+	OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
+		new OAuth2AuthorizationServerConfigurer();
 	http.apply(authorizationServerConfigurer);
 
 	authorizationServerConfigurer
@@ -249,8 +249,8 @@ The following example shows how to enable the OAuth2 resource server configurati
 ----
 @Bean
 public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
-	OAuth2AuthorizationServerConfigurer<HttpSecurity> authorizationServerConfigurer =
-		new OAuth2AuthorizationServerConfigurer<>();
+	OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
+		new OAuth2AuthorizationServerConfigurer();
 	http.apply(authorizationServerConfigurer);
 
 	...
@@ -282,8 +282,8 @@ The following example shows how to enable (disabled by default) the OpenID Conne
 ----
 @Bean
 public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
-	OAuth2AuthorizationServerConfigurer<HttpSecurity> authorizationServerConfigurer =
-		new OAuth2AuthorizationServerConfigurer<>();
+	OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
+		new OAuth2AuthorizationServerConfigurer();
 	http.apply(authorizationServerConfigurer);
 
 	authorizationServerConfigurer
@@ -323,8 +323,8 @@ The following example shows how to enable the OAuth2 resource server configurati
 ----
 @Bean
 public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
-	OAuth2AuthorizationServerConfigurer<HttpSecurity> authorizationServerConfigurer =
-		new OAuth2AuthorizationServerConfigurer<>();
+	OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
+		new OAuth2AuthorizationServerConfigurer();
 	http.apply(authorizationServerConfigurer);
 
 	...

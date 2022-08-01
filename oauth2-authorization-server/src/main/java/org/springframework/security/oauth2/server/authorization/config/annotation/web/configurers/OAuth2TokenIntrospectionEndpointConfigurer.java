@@ -26,7 +26,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.ObjectPostProcessor;
-import org.springframework.security.config.annotation.web.HttpSecurityBuilder;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2TokenIntrospectionAuthenticationProvider;
@@ -111,23 +111,23 @@ public final class OAuth2TokenIntrospectionEndpointConfigurer extends AbstractOA
 	}
 
 	@Override
-	<B extends HttpSecurityBuilder<B>> void init(B builder) {
-		ProviderSettings providerSettings = OAuth2ConfigurerUtils.getProviderSettings(builder);
+	void init(HttpSecurity httpSecurity) {
+		ProviderSettings providerSettings = OAuth2ConfigurerUtils.getProviderSettings(httpSecurity);
 		this.requestMatcher = new AntPathRequestMatcher(
 				providerSettings.getTokenIntrospectionEndpoint(), HttpMethod.POST.name());
 
 		List<AuthenticationProvider> authenticationProviders =
 				!this.authenticationProviders.isEmpty() ?
 						this.authenticationProviders :
-						createDefaultAuthenticationProviders(builder);
+						createDefaultAuthenticationProviders(httpSecurity);
 		authenticationProviders.forEach(authenticationProvider ->
-				builder.authenticationProvider(postProcess(authenticationProvider)));
+				httpSecurity.authenticationProvider(postProcess(authenticationProvider)));
 	}
 
 	@Override
-	<B extends HttpSecurityBuilder<B>> void configure(B builder) {
-		AuthenticationManager authenticationManager = builder.getSharedObject(AuthenticationManager.class);
-		ProviderSettings providerSettings = OAuth2ConfigurerUtils.getProviderSettings(builder);
+	void configure(HttpSecurity httpSecurity) {
+		AuthenticationManager authenticationManager = httpSecurity.getSharedObject(AuthenticationManager.class);
+		ProviderSettings providerSettings = OAuth2ConfigurerUtils.getProviderSettings(httpSecurity);
 
 		OAuth2TokenIntrospectionEndpointFilter introspectionEndpointFilter =
 				new OAuth2TokenIntrospectionEndpointFilter(
@@ -141,7 +141,7 @@ public final class OAuth2TokenIntrospectionEndpointConfigurer extends AbstractOA
 		if (this.errorResponseHandler != null) {
 			introspectionEndpointFilter.setAuthenticationFailureHandler(this.errorResponseHandler);
 		}
-		builder.addFilterAfter(postProcess(introspectionEndpointFilter), FilterSecurityInterceptor.class);
+		httpSecurity.addFilterAfter(postProcess(introspectionEndpointFilter), FilterSecurityInterceptor.class);
 	}
 
 	@Override
@@ -149,13 +149,13 @@ public final class OAuth2TokenIntrospectionEndpointConfigurer extends AbstractOA
 		return this.requestMatcher;
 	}
 
-	private <B extends HttpSecurityBuilder<B>> List<AuthenticationProvider> createDefaultAuthenticationProviders(B builder) {
+	private List<AuthenticationProvider> createDefaultAuthenticationProviders(HttpSecurity httpSecurity) {
 		List<AuthenticationProvider> authenticationProviders = new ArrayList<>();
 
 		OAuth2TokenIntrospectionAuthenticationProvider tokenIntrospectionAuthenticationProvider =
 				new OAuth2TokenIntrospectionAuthenticationProvider(
-						OAuth2ConfigurerUtils.getRegisteredClientRepository(builder),
-						OAuth2ConfigurerUtils.getAuthorizationService(builder));
+						OAuth2ConfigurerUtils.getRegisteredClientRepository(httpSecurity),
+						OAuth2ConfigurerUtils.getAuthorizationService(httpSecurity));
 		authenticationProviders.add(tokenIntrospectionAuthenticationProvider);
 
 		return authenticationProviders;

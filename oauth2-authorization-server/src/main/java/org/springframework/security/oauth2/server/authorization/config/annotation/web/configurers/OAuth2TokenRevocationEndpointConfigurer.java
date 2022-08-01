@@ -25,7 +25,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.ObjectPostProcessor;
-import org.springframework.security.config.annotation.web.HttpSecurityBuilder;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2TokenRevocationAuthenticationProvider;
@@ -110,23 +110,23 @@ public final class OAuth2TokenRevocationEndpointConfigurer extends AbstractOAuth
 	}
 
 	@Override
-	<B extends HttpSecurityBuilder<B>> void init(B builder) {
-		ProviderSettings providerSettings = OAuth2ConfigurerUtils.getProviderSettings(builder);
+	void init(HttpSecurity httpSecurity) {
+		ProviderSettings providerSettings = OAuth2ConfigurerUtils.getProviderSettings(httpSecurity);
 		this.requestMatcher = new AntPathRequestMatcher(
 				providerSettings.getTokenRevocationEndpoint(), HttpMethod.POST.name());
 
 		List<AuthenticationProvider> authenticationProviders =
 				!this.authenticationProviders.isEmpty() ?
 						this.authenticationProviders :
-						createDefaultAuthenticationProviders(builder);
+						createDefaultAuthenticationProviders(httpSecurity);
 		authenticationProviders.forEach(authenticationProvider ->
-				builder.authenticationProvider(postProcess(authenticationProvider)));
+				httpSecurity.authenticationProvider(postProcess(authenticationProvider)));
 	}
 
 	@Override
-	<B extends HttpSecurityBuilder<B>> void configure(B builder) {
-		AuthenticationManager authenticationManager = builder.getSharedObject(AuthenticationManager.class);
-		ProviderSettings providerSettings = OAuth2ConfigurerUtils.getProviderSettings(builder);
+	void configure(HttpSecurity httpSecurity) {
+		AuthenticationManager authenticationManager = httpSecurity.getSharedObject(AuthenticationManager.class);
+		ProviderSettings providerSettings = OAuth2ConfigurerUtils.getProviderSettings(httpSecurity);
 
 		OAuth2TokenRevocationEndpointFilter revocationEndpointFilter =
 				new OAuth2TokenRevocationEndpointFilter(
@@ -140,7 +140,7 @@ public final class OAuth2TokenRevocationEndpointConfigurer extends AbstractOAuth
 		if (this.errorResponseHandler != null) {
 			revocationEndpointFilter.setAuthenticationFailureHandler(this.errorResponseHandler);
 		}
-		builder.addFilterAfter(postProcess(revocationEndpointFilter), FilterSecurityInterceptor.class);
+		httpSecurity.addFilterAfter(postProcess(revocationEndpointFilter), FilterSecurityInterceptor.class);
 	}
 
 	@Override
@@ -148,11 +148,11 @@ public final class OAuth2TokenRevocationEndpointConfigurer extends AbstractOAuth
 		return this.requestMatcher;
 	}
 
-	private <B extends HttpSecurityBuilder<B>> List<AuthenticationProvider> createDefaultAuthenticationProviders(B builder) {
+	private List<AuthenticationProvider> createDefaultAuthenticationProviders(HttpSecurity httpSecurity) {
 		List<AuthenticationProvider> authenticationProviders = new ArrayList<>();
 
 		OAuth2TokenRevocationAuthenticationProvider tokenRevocationAuthenticationProvider =
-				new OAuth2TokenRevocationAuthenticationProvider(OAuth2ConfigurerUtils.getAuthorizationService(builder));
+				new OAuth2TokenRevocationAuthenticationProvider(OAuth2ConfigurerUtils.getAuthorizationService(httpSecurity));
 		authenticationProviders.add(tokenRevocationAuthenticationProvider);
 
 		return authenticationProviders;

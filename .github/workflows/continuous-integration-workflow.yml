@@ -34,7 +34,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest]
-        jdk: [8,11,17]
+        jdk: [17]
       fail-fast: false
     runs-on: ${{ matrix.os }}
     if: needs.prerequisites.outputs.runjobs
@@ -70,7 +70,7 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v1
         with:
-          java-version: 8
+          java-version: 17
       - name: Setup Gradle
         uses: gradle/gradle-build-action@v2
       - name: Snapshot Tests
@@ -80,7 +80,7 @@ jobs:
           GRADLE_ENTERPRISE_ACCESS_KEY: ${{ secrets.GRADLE_ENTERPRISE_SECRET_ACCESS_KEY }}
           ARTIFACTORY_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
           ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
-        run: ./gradlew test --refresh-dependencies -Duser.name=spring-builds+github -PartifactoryUsername="$ARTIFACTORY_USERNAME" -PartifactoryPassword="$ARTIFACTORY_PASSWORD" -PforceMavenRepositories=snapshot -PspringFrameworkVersion='5.3.+' -PspringSecurityVersion='5.8.+' -PlocksDisabled --stacktrace
+        run: ./gradlew test --refresh-dependencies -Duser.name=spring-builds+github -PartifactoryUsername="$ARTIFACTORY_USERNAME" -PartifactoryPassword="$ARTIFACTORY_PASSWORD" -PforceMavenRepositories=snapshot -PspringFrameworkVersion='6.0.+' -PspringSecurityVersion='6.0.+' -PlocksDisabled --stacktrace
   deploy_artifacts:
     name: Deploy Artifacts
     needs: [build, snapshot_tests]
@@ -90,7 +90,7 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v1
         with:
-          java-version: 8
+          java-version: 17
       - name: Setup Gradle
         uses: gradle/gradle-build-action@v2
       - name: Deploy Artifacts
@@ -114,7 +114,7 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v1
         with:
-          java-version: 8
+          java-version: 17
       - name: Setup Gradle
         uses: gradle/gradle-build-action@v2
       - name: Deploy Docs

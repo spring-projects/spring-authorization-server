@@ -592,7 +592,20 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 				}
 
 				String requestedRedirectHost = requestedRedirect.getHost();
-				if (requestedRedirectHost == null || requestedRedirectHost.equals("localhost")) {
+				Boolean requestedRedirectPrivateUseUriScheme = requestedRedirect.getScheme() != null
+						&& requestedRedirect.getScheme().contains(".");
+				Boolean requestedRedirectHasNamingAuthority = requestedRedirectHost != null
+						|| requestedRedirect.getUserInfo() != null || requestedRedirect.getPort() != -1;
+				// As per https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-01#section-10.3
+				// To fully support native apps, authorization servers MUST allow private-use URI scheme
+				// redirects. Private-use URI scheme redirects should contain a "." character with no naming
+				// authority (https://datatracker.ietf.org/doc/html/rfc3986#section-3.2).
+				if (requestedRedirectPrivateUseUriScheme) {
+					if (requestedRedirectHasNamingAuthority) {
+						throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.REDIRECT_URI,
+								authorizationCodeRequestAuthentication, registeredClient);
+					}
+				} else if (requestedRedirectHost == null || requestedRedirectHost.equals("localhost")) {
 					// As per https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-01#section-9.7.1
 					// While redirect URIs using localhost (i.e., "http://localhost:{port}/{path}")
 					// function similarly to loopback IP redirects described in Section 10.3.3,
@@ -606,7 +619,7 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 							authorizationCodeRequestAuthentication, registeredClient, null);
 				}
 
-				if (!isLoopbackAddress(requestedRedirectHost)) {
+				if (requestedRedirectHost == null || !isLoopbackAddress(requestedRedirectHost)) {
 					// As per https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-01#section-9.7
 					// When comparing client redirect URIs against pre-registered URIs,
 					// authorization servers MUST utilize exact string matching.

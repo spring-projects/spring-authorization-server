@@ -304,6 +304,47 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 				);
 	}
 
+
+
+	// gh-844
+	@Test
+	public void authenticateWhenInvalidRedirectUriPrivateUseSchemeThenThrowOAuth2AuthorizationCodeRequestAuthenticationException() {
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
+				.redirectUri("com.example.app://localhost:5000")
+				.build();
+		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
+				.thenReturn(registeredClient);
+		OAuth2AuthorizationCodeRequestAuthenticationToken authentication =
+				authorizationCodeRequestAuthentication(registeredClient, this.principal)
+						.redirectUri("com.example.app://localhost:5000")
+						.build();
+		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
+				.isInstanceOf(OAuth2AuthorizationCodeRequestAuthenticationException.class)
+				.satisfies(ex ->
+						assertAuthenticationException((OAuth2AuthorizationCodeRequestAuthenticationException) ex,
+								OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.REDIRECT_URI, null)
+				);
+	}
+
+	// gh-844
+	@Test
+	public void authenticateWhenInvalidRedirectUriPrivateUseSchemeThenReturnAuthorizationCodeRequest() {
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
+				.redirectUri("com.example.app:/oauth2redirect/example-provider")
+				.build();
+		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
+				.thenReturn(registeredClient);
+		OAuth2AuthorizationCodeRequestAuthenticationToken authentication =
+				authorizationCodeRequestAuthentication(registeredClient, this.principal)
+						.redirectUri("com.example.app:/oauth2redirect/example-provider")
+						.build();
+
+		OAuth2AuthorizationCodeRequestAuthenticationToken authenticationResult =
+				(OAuth2AuthorizationCodeRequestAuthenticationToken) this.authenticationProvider.authenticate(authentication);
+
+		assertAuthorizationCodeRequestWithAuthorizationCodeResult(registeredClient, authentication, authenticationResult);
+	}
+
 	@Test
 	public void authenticateWhenClientNotAuthorizedToRequestCodeThenThrowOAuth2AuthorizationCodeRequestAuthenticationException() {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()

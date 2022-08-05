@@ -15,10 +15,6 @@
  */
 package org.springframework.security.oauth2.server.authorization.token;
 
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.Collections;
-
 import org.springframework.lang.Nullable;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
@@ -30,22 +26,21 @@ import org.springframework.security.oauth2.core.oidc.IdTokenClaimNames;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.security.oauth2.core.oidc.endpoint.OidcParameterNames;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
-import org.springframework.security.oauth2.jwt.JwsHeader;
-import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.security.oauth2.jwt.JwtClaimsSet;
-import org.springframework.security.oauth2.jwt.JwtEncoder;
-import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
+import org.springframework.security.oauth2.jwt.*;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
+
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Collections;
 
 /**
  * An {@link OAuth2TokenGenerator} that generates a {@link Jwt}
  * used for an {@link OAuth2AccessToken} or {@link OidcIdToken}.
  *
  * @author Joe Grandja
- * @since 0.2.3
  * @see OAuth2TokenGenerator
  * @see Jwt
  * @see JwtEncoder
@@ -53,6 +48,7 @@ import org.springframework.util.StringUtils;
  * @see JwtEncodingContext
  * @see OAuth2AccessToken
  * @see OidcIdToken
+ * @since 0.2.3
  */
 public final class JwtGenerator implements OAuth2TokenGenerator<Jwt> {
 	private final JwtEncoder jwtEncoder;
@@ -89,11 +85,14 @@ public final class JwtGenerator implements OAuth2TokenGenerator<Jwt> {
 
 		Instant issuedAt = Instant.now();
 		Instant expiresAt;
+		JwsHeader.Builder headersBuilder;
 		if (OidcParameterNames.ID_TOKEN.equals(context.getTokenType().getValue())) {
 			// TODO Allow configuration for ID Token time-to-live
 			expiresAt = issuedAt.plus(30, ChronoUnit.MINUTES);
+			headersBuilder = JwsHeader.with(SignatureAlgorithm.RS256);
 		} else {
 			expiresAt = issuedAt.plus(registeredClient.getTokenSettings().getAccessTokenTimeToLive());
+			headersBuilder = JwsHeader.with(registeredClient.getTokenSettings().getIdTokenSignatureAlgorithm());
 		}
 
 		// @formatter:off
@@ -124,8 +123,6 @@ public final class JwtGenerator implements OAuth2TokenGenerator<Jwt> {
 			// TODO Add 'auth_time' claim
 		}
 		// @formatter:on
-
-		JwsHeader.Builder headersBuilder = JwsHeader.with(registeredClient.getTokenSettings().getIdTokenSignatureAlgorithm());
 
 		if (this.jwtCustomizer != null) {
 			// @formatter:off

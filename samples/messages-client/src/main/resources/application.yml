@@ -22,7 +22,7 @@ spring:
             client-secret: secret
             authorization-grant-type: authorization_code
             redirect-uri: "http://127.0.0.1:8080/login/oauth2/code/{registrationId}"
-            scope: openid
+            scope: openid, profile
             client-name: messaging-client-oidc
           messaging-client-authorization-code:
             provider: spring

@@ -34,9 +34,11 @@ import org.springframework.jdbc.datasource.embedded.EmbeddedDatabase;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseBuilder;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.oauth2.server.resource.OAuth2ResourceServerConfigurer;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.server.authorization.JdbcOAuth2AuthorizationConsentService;
 import org.springframework.security.oauth2.server.authorization.JdbcOAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsentService;
@@ -62,6 +64,7 @@ public class AuthorizationServerConfig {
 	@Order(Ordered.HIGHEST_PRECEDENCE)
 	public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
 		OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http);
+		http.oauth2ResourceServer(OAuth2ResourceServerConfigurer::jwt);
 		http.apply(new FederatedIdentityConfigurer());
 		return http.build();
 	}
@@ -84,6 +87,7 @@ public class AuthorizationServerConfig {
 				.redirectUri("http://127.0.0.1:8080/login/oauth2/code/messaging-client-oidc")
 				.redirectUri("http://127.0.0.1:8080/authorized")
 				.scope(OidcScopes.OPENID)
+				.scope(OidcScopes.PROFILE)
 				.scope("message.read")
 				.scope("message.write")
 				.clientSettings(ClientSettings.builder().requireAuthorizationConsent(true).build())
@@ -112,6 +116,11 @@ public class AuthorizationServerConfig {
 		RSAKey rsaKey = Jwks.generateRsa();
 		JWKSet jwkSet = new JWKSet(rsaKey);
 		return (jwkSelector, securityContext) -> jwkSelector.select(jwkSet);
+	}
+
+	@Bean
+	public JwtDecoder jwtDecoder(JWKSource<SecurityContext> jwkSource) {
+		return OAuth2AuthorizationServerConfiguration.jwtDecoder(jwkSource);
 	}
 
 	@Bean

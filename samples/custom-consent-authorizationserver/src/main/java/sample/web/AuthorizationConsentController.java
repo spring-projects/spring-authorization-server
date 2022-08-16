@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 the original author or authors.
+ * Copyright 2020-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
+import org.springframework.security.oauth2.core.oidc.OidcScopes;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsent;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsentService;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
@@ -66,6 +67,9 @@ public class AuthorizationConsentController {
 			authorizedScopes = Collections.emptySet();
 		}
 		for (String requestedScope : StringUtils.delimitedListToStringArray(scope, " ")) {
+			if (OidcScopes.OPENID.equals(requestedScope)) {
+				continue;
+			}
 			if (authorizedScopes.contains(requestedScope)) {
 				previouslyApprovedScopes.add(requestedScope);
 			} else {
@@ -95,6 +99,10 @@ public class AuthorizationConsentController {
 		private static final String DEFAULT_DESCRIPTION = "UNKNOWN SCOPE - We cannot provide information about this permission, use caution when granting this.";
 		private static final Map<String, String> scopeDescriptions = new HashMap<>();
 		static {
+			scopeDescriptions.put(
+					OidcScopes.PROFILE,
+					"This application will be able to read your profile information."
+			);
 			scopeDescriptions.put(
 					"message.read",
 					"This application will be able to read your message."

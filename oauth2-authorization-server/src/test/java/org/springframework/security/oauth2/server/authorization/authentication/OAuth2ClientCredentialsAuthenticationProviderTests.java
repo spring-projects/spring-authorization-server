@@ -212,6 +212,22 @@ public class OAuth2ClientCredentialsAuthenticationProviderTests {
 	}
 
 	@Test
+	public void authenticateWhenNoScopeRequestedThenAccessTokenDoesNotContainScope() {
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient2().build();
+		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(
+				registeredClient, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
+		OAuth2ClientCredentialsAuthenticationToken authentication =
+				new OAuth2ClientCredentialsAuthenticationToken(clientPrincipal, null, null);
+
+		when(this.jwtEncoder.encode(any()))
+				.thenReturn(createJwt(Collections.singleton("mapped-scoped")));
+
+		OAuth2AccessTokenAuthenticationToken accessTokenAuthentication =
+				(OAuth2AccessTokenAuthenticationToken) this.authenticationProvider.authenticate(authentication);
+		assertThat(accessTokenAuthentication.getAccessToken().getScopes()).isEmpty();
+	}
+
+	@Test
 	public void authenticateWhenAccessTokenNotGeneratedThenThrowOAuth2AuthenticationException() {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient2().build();
 		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(

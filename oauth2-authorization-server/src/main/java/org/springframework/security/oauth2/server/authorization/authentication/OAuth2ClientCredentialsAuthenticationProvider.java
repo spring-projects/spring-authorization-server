@@ -88,7 +88,7 @@ public final class OAuth2ClientCredentialsAuthenticationProvider implements Auth
 			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.UNAUTHORIZED_CLIENT);
 		}
 
-		Set<String> authorizedScopes = Collections.EMPTY_SET; // Empty by default
+		Set<String> authorizedScopes = Collections.emptySet();
 		if (!CollectionUtils.isEmpty(clientCredentialsAuthentication.getScopes())) {
 			for (String requestedScope : clientCredentialsAuthentication.getScopes()) {
 				if (!registeredClient.getScopes().contains(requestedScope)) {

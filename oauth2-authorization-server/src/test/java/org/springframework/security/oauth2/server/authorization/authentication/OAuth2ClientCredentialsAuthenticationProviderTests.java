@@ -212,7 +212,7 @@ public class OAuth2ClientCredentialsAuthenticationProviderTests {
 	}
 
 	@Test
-	public void authenticateWhenNoScopeRequestedThenAccessTokenNotContainsAnyScope() {
+	public void authenticateWhenNoScopeRequestedThenAccessTokenDoesNotContainScope() {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient2().build();
 		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(
 				registeredClient, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());

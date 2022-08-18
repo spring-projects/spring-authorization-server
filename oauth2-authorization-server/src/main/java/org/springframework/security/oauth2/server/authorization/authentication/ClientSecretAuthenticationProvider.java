@@ -15,6 +15,8 @@
  */
 package org.springframework.security.oauth2.server.authorization.authentication;
 
+import java.time.Instant;
+
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -91,6 +93,11 @@ public final class ClientSecretAuthenticationProvider implements AuthenticationP
 		RegisteredClient registeredClient = this.registeredClientRepository.findByClientId(clientId);
 		if (registeredClient == null) {
 			throwInvalidClient(OAuth2ParameterNames.CLIENT_ID);
+		}
+
+		Instant expiredAt = registeredClient.getClientSecretExpiresAt();
+		if (expiredAt!=null && Instant.now().isAfter(expiredAt)) {
+			throwInvalidClient("client_secret_expires_at");
 		}
 
 		if (!registeredClient.getClientAuthenticationMethods().contains(

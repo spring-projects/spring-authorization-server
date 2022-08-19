@@ -64,4 +64,20 @@ public class TestRegisteredClients {
 				.scope("scope1")
 				.clientSettings(ClientSettings.builder().requireProofKey(true).build());
 	}
+	
+	public static RegisteredClient.Builder registeredClient4() {
+		return RegisteredClient.withId("registration-4")
+				.clientId("client-4")
+				.clientIdIssuedAt(Instant.now().minus(1, ChronoUnit.DAYS).truncatedTo(ChronoUnit.SECONDS))
+				.clientSecret("secret")
+				.clientSecretExpiresAt(Instant.now().truncatedTo(ChronoUnit.SECONDS))
+				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+				.authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
+				.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
+				.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
+				.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_POST)
+				.redirectUri("https://example.com")
+				.scope("scope1")
+				.scope("scope2");
+	}
 }

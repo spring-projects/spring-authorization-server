@@ -95,11 +95,6 @@ public final class ClientSecretAuthenticationProvider implements AuthenticationP
 			throwInvalidClient(OAuth2ParameterNames.CLIENT_ID);
 		}
 
-		Instant expiredAt = registeredClient.getClientSecretExpiresAt();
-		if (expiredAt!=null && Instant.now().isAfter(expiredAt)) {
-			throwInvalidClient("client_secret_expires_at");
-		}
-
 		if (!registeredClient.getClientAuthenticationMethods().contains(
 				clientAuthentication.getClientAuthenticationMethod())) {
 			throwInvalidClient("authentication_method");
@@ -112,6 +107,11 @@ public final class ClientSecretAuthenticationProvider implements AuthenticationP
 		String clientSecret = clientAuthentication.getCredentials().toString();
 		if (!this.passwordEncoder.matches(clientSecret, registeredClient.getClientSecret())) {
 			throwInvalidClient(OAuth2ParameterNames.CLIENT_SECRET);
+		}
+
+		if (registeredClient.getClientSecretExpiresAt() != null &&
+				Instant.now().isAfter(registeredClient.getClientSecretExpiresAt())) {
+			throwInvalidClient("client_secret_expires_at");
 		}
 
 		// Validate the "code_verifier" parameter for the confidential client, if available

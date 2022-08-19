@@ -335,7 +335,7 @@ public interface OAuth2TokenContext extends Context {
 ----
 <1> `getRegisteredClient()`: The <<registered-client, RegisteredClient>> associated with the authorization grant.
 <2> `getPrincipal()`: The `Authentication` instance of the resource owner (or client).
-<3> `getProviderContext()`: The xref:configuration-model.adoc#configuring-provider-settings[`ProviderContext`] object that holds information related to the provider.
+<3> `getProviderContext()`: The xref:configuration-model.adoc#configuring-authorization-server-settings[`ProviderContext`] object that holds information related to the provider.
 <4> `getAuthorization()`: The <<oauth2-authorization, OAuth2Authorization>> associated with the authorization grant.
 <5> `getAuthorizedScopes()`: The scope(s) authorized for the client.
 <6> `getTokenType()`: The `OAuth2TokenType` to generate. The supported values are `code`, `access_token`, `refresh_token`, and `id_token`.

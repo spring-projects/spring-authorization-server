@@ -53,7 +53,7 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.context.ProviderContext;
 import org.springframework.security.oauth2.server.authorization.context.ProviderContextHolder;
-import org.springframework.security.oauth2.server.authorization.settings.ProviderSettings;
+import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
@@ -248,12 +248,12 @@ public final class JwtClientAssertionAuthenticationProvider implements Authentic
 				return Collections.emptyList();
 			}
 
-			ProviderSettings providerSettings = providerContext.getProviderSettings();
+			AuthorizationServerSettings authorizationServerSettings = providerContext.getAuthorizationServerSettings();
 			List<String> providerAudience = new ArrayList<>();
 			providerAudience.add(providerContext.getIssuer());
-			providerAudience.add(asUrl(providerContext.getIssuer(), providerSettings.getTokenEndpoint()));
-			providerAudience.add(asUrl(providerContext.getIssuer(), providerSettings.getTokenIntrospectionEndpoint()));
-			providerAudience.add(asUrl(providerContext.getIssuer(), providerSettings.getTokenRevocationEndpoint()));
+			providerAudience.add(asUrl(providerContext.getIssuer(), authorizationServerSettings.getTokenEndpoint()));
+			providerAudience.add(asUrl(providerContext.getIssuer(), authorizationServerSettings.getTokenIntrospectionEndpoint()));
+			providerAudience.add(asUrl(providerContext.getIssuer(), authorizationServerSettings.getTokenRevocationEndpoint()));
 			return providerAudience;
 		}
 

@@ -28,7 +28,7 @@ import org.springframework.security.oauth2.server.authorization.oidc.authenticat
 import org.springframework.security.oauth2.server.authorization.oidc.authentication.OidcUserInfoAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.oidc.authentication.OidcUserInfoAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.oidc.web.OidcUserInfoEndpointFilter;
-import org.springframework.security.oauth2.server.authorization.settings.ProviderSettings;
+import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.web.access.intercept.FilterSecurityInterceptor;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.OrRequestMatcher;
@@ -76,8 +76,8 @@ public final class OidcUserInfoEndpointConfigurer extends AbstractOAuth2Configur
 
 	@Override
 	void init(HttpSecurity httpSecurity) {
-		ProviderSettings providerSettings = OAuth2ConfigurerUtils.getProviderSettings(httpSecurity);
-		String userInfoEndpointUri = providerSettings.getOidcUserInfoEndpoint();
+		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils.getAuthorizationServerSettings(httpSecurity);
+		String userInfoEndpointUri = authorizationServerSettings.getOidcUserInfoEndpoint();
 		this.requestMatcher = new OrRequestMatcher(
 				new AntPathRequestMatcher(userInfoEndpointUri, HttpMethod.GET.name()),
 				new AntPathRequestMatcher(userInfoEndpointUri, HttpMethod.POST.name()));
@@ -94,12 +94,12 @@ public final class OidcUserInfoEndpointConfigurer extends AbstractOAuth2Configur
 	@Override
 	void configure(HttpSecurity httpSecurity) {
 		AuthenticationManager authenticationManager = httpSecurity.getSharedObject(AuthenticationManager.class);
-		ProviderSettings providerSettings = OAuth2ConfigurerUtils.getProviderSettings(httpSecurity);
+		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils.getAuthorizationServerSettings(httpSecurity);
 
 		OidcUserInfoEndpointFilter oidcUserInfoEndpointFilter =
 				new OidcUserInfoEndpointFilter(
 						authenticationManager,
-						providerSettings.getOidcUserInfoEndpoint());
+						authorizationServerSettings.getOidcUserInfoEndpoint());
 		httpSecurity.addFilterAfter(postProcess(oidcUserInfoEndpointFilter), FilterSecurityInterceptor.class);
 	}
 

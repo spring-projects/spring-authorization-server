@@ -35,7 +35,7 @@ import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 import org.springframework.security.oauth2.server.authorization.context.ProviderContextHolder;
 import org.springframework.security.oauth2.server.authorization.oidc.OidcProviderConfiguration;
 import org.springframework.security.oauth2.server.authorization.oidc.http.converter.OidcProviderConfigurationHttpMessageConverter;
-import org.springframework.security.oauth2.server.authorization.settings.ProviderSettings;
+import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
@@ -48,7 +48,7 @@ import org.springframework.web.util.UriComponentsBuilder;
  * @author Daniel Garnier-Moiroux
  * @since 0.1.0
  * @see OidcProviderConfiguration
- * @see ProviderSettings
+ * @see AuthorizationServerSettings
  * @see <a target="_blank" href="https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderConfigurationRequest">4.1. OpenID Provider Configuration Request</a>
  */
 public final class OidcProviderConfigurationEndpointFilter extends OncePerRequestFilter {
@@ -57,14 +57,14 @@ public final class OidcProviderConfigurationEndpointFilter extends OncePerReques
 	 */
 	private static final String DEFAULT_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI = "/.well-known/openid-configuration";
 
-	private final ProviderSettings providerSettings;
+	private final AuthorizationServerSettings authorizationServerSettings;
 	private final RequestMatcher requestMatcher;
 	private final OidcProviderConfigurationHttpMessageConverter providerConfigurationHttpMessageConverter =
 			new OidcProviderConfigurationHttpMessageConverter();
 
-	public OidcProviderConfigurationEndpointFilter(ProviderSettings providerSettings) {
-		Assert.notNull(providerSettings, "providerSettings cannot be null");
-		this.providerSettings = providerSettings;
+	public OidcProviderConfigurationEndpointFilter(AuthorizationServerSettings authorizationServerSettings) {
+		Assert.notNull(authorizationServerSettings, "authorizationServerSettings cannot be null");
+		this.authorizationServerSettings = authorizationServerSettings;
 		this.requestMatcher = new AntPathRequestMatcher(
 				DEFAULT_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI,
 				HttpMethod.GET.name()
@@ -84,18 +84,18 @@ public final class OidcProviderConfigurationEndpointFilter extends OncePerReques
 
 		OidcProviderConfiguration providerConfiguration = OidcProviderConfiguration.builder()
 				.issuer(issuer)
-				.authorizationEndpoint(asUrl(issuer, this.providerSettings.getAuthorizationEndpoint()))
-				.tokenEndpoint(asUrl(issuer, this.providerSettings.getTokenEndpoint()))
+				.authorizationEndpoint(asUrl(issuer, this.authorizationServerSettings.getAuthorizationEndpoint()))
+				.tokenEndpoint(asUrl(issuer, this.authorizationServerSettings.getTokenEndpoint()))
 				.tokenEndpointAuthenticationMethods(clientAuthenticationMethods())
-				.jwkSetUrl(asUrl(issuer, this.providerSettings.getJwkSetEndpoint()))
-				.userInfoEndpoint(asUrl(issuer, this.providerSettings.getOidcUserInfoEndpoint()))
+				.jwkSetUrl(asUrl(issuer, this.authorizationServerSettings.getJwkSetEndpoint()))
+				.userInfoEndpoint(asUrl(issuer, this.authorizationServerSettings.getOidcUserInfoEndpoint()))
 				.responseType(OAuth2AuthorizationResponseType.CODE.getValue())
 				.grantType(AuthorizationGrantType.AUTHORIZATION_CODE.getValue())
 				.grantType(AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
 				.grantType(AuthorizationGrantType.REFRESH_TOKEN.getValue())
-				.tokenRevocationEndpoint(asUrl(issuer, this.providerSettings.getTokenRevocationEndpoint()))
+				.tokenRevocationEndpoint(asUrl(issuer, this.authorizationServerSettings.getTokenRevocationEndpoint()))
 				.tokenRevocationEndpointAuthenticationMethods(clientAuthenticationMethods())
-				.tokenIntrospectionEndpoint(asUrl(issuer, this.providerSettings.getTokenIntrospectionEndpoint()))
+				.tokenIntrospectionEndpoint(asUrl(issuer, this.authorizationServerSettings.getTokenIntrospectionEndpoint()))
 				.tokenIntrospectionEndpointAuthenticationMethods(clientAuthenticationMethods())
 				.subjectType("public")
 				.idTokenSigningAlgorithm(SignatureAlgorithm.RS256.getName())

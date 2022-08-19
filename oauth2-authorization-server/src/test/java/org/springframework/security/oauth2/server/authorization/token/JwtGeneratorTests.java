@@ -47,8 +47,8 @@ import org.springframework.security.oauth2.server.authorization.authentication.O
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
 import org.springframework.security.oauth2.server.authorization.context.ProviderContext;
+import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.settings.OAuth2TokenFormat;
-import org.springframework.security.oauth2.server.authorization.settings.ProviderSettings;
 import org.springframework.security.oauth2.server.authorization.settings.TokenSettings;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -74,8 +74,8 @@ public class JwtGeneratorTests {
 		this.jwtCustomizer = mock(OAuth2TokenCustomizer.class);
 		this.jwtGenerator = new JwtGenerator(this.jwtEncoder);
 		this.jwtGenerator.setJwtCustomizer(this.jwtCustomizer);
-		ProviderSettings providerSettings = ProviderSettings.builder().issuer("https://provider.com").build();
-		this.providerContext = new ProviderContext(providerSettings, null);
+		AuthorizationServerSettings authorizationServerSettings = AuthorizationServerSettings.builder().issuer("https://provider.com").build();
+		this.providerContext = new ProviderContext(authorizationServerSettings, null);
 	}
 
 	@Test

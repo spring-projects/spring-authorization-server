@@ -278,7 +278,7 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 
 		ProviderContext providerContext = ProviderContextHolder.getProviderContext();
 		String registrationClientUri = UriComponentsBuilder.fromUriString(providerContext.getIssuer())
-				.path(providerContext.getProviderSettings().getOidcClientRegistrationEndpoint())
+				.path(providerContext.getAuthorizationServerSettings().getOidcClientRegistrationEndpoint())
 				.queryParam(OAuth2ParameterNames.CLIENT_ID, registeredClient.getClientId())
 				.toUriString();
 

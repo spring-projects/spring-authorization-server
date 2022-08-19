@@ -35,7 +35,7 @@ import org.springframework.security.oauth2.server.authorization.authentication.O
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
 import org.springframework.security.oauth2.server.authorization.context.ProviderContext;
-import org.springframework.security.oauth2.server.authorization.settings.ProviderSettings;
+import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -74,8 +74,8 @@ public class OAuth2TokenClaimsContextTests {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();
 		Authentication principal = authorization.getAttribute(Principal.class.getName());
-		ProviderSettings providerSettings = ProviderSettings.builder().issuer(issuer).build();
-		ProviderContext providerContext = new ProviderContext(providerSettings, null);
+		AuthorizationServerSettings authorizationServerSettings = AuthorizationServerSettings.builder().issuer(issuer).build();
+		ProviderContext providerContext = new ProviderContext(authorizationServerSettings, null);
 		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(
 				registeredClient, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
 		OAuth2AuthorizationRequest authorizationRequest = authorization.getAttribute(

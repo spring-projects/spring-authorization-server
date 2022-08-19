@@ -18,7 +18,7 @@ package org.springframework.security.oauth2.server.authorization.context;
 import java.util.function.Supplier;
 
 import org.springframework.lang.Nullable;
-import org.springframework.security.oauth2.server.authorization.settings.ProviderSettings;
+import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.util.Assert;
 
 /**
@@ -26,45 +26,45 @@ import org.springframework.util.Assert;
  *
  * @author Joe Grandja
  * @since 0.2.2
- * @see ProviderSettings
+ * @see AuthorizationServerSettings
  * @see ProviderContextHolder
  */
 public final class ProviderContext {
-	private final ProviderSettings providerSettings;
+	private final AuthorizationServerSettings authorizationServerSettings;
 	private final Supplier<String> issuerSupplier;
 
 	/**
 	 * Constructs a {@code ProviderContext} using the provided parameters.
 	 *
-	 * @param providerSettings the provider settings
+	 * @param authorizationServerSettings the authorization server settings
 	 * @param issuerSupplier a {@code Supplier} for the {@code URL} of the Provider's issuer identifier
 	 */
-	public ProviderContext(ProviderSettings providerSettings, @Nullable Supplier<String> issuerSupplier) {
-		Assert.notNull(providerSettings, "providerSettings cannot be null");
-		this.providerSettings = providerSettings;
+	public ProviderContext(AuthorizationServerSettings authorizationServerSettings, @Nullable Supplier<String> issuerSupplier) {
+		Assert.notNull(authorizationServerSettings, "authorizationServerSettings cannot be null");
+		this.authorizationServerSettings = authorizationServerSettings;
 		this.issuerSupplier = issuerSupplier;
 	}
 
 	/**
-	 * Returns the {@link ProviderSettings}.
+	 * Returns the {@link AuthorizationServerSettings}.
 	 *
-	 * @return the {@link ProviderSettings}
+	 * @return the {@link AuthorizationServerSettings}
 	 */
-	public ProviderSettings getProviderSettings() {
-		return this.providerSettings;
+	public AuthorizationServerSettings getAuthorizationServerSettings() {
+		return this.authorizationServerSettings;
 	}
 
 	/**
 	 * Returns the {@code URL} of the Provider's issuer identifier.
 	 * The issuer identifier is resolved from the constructor parameter {@code Supplier<String>}
-	 * or if not provided then defaults to {@link ProviderSettings#getIssuer()}.
+	 * or if not provided then defaults to {@link AuthorizationServerSettings#getIssuer()}.
 	 *
 	 * @return the {@code URL} of the Provider's issuer identifier
 	 */
 	public String getIssuer() {
 		return this.issuerSupplier != null ?
 				this.issuerSupplier.get() :
-				getProviderSettings().getIssuer();
+				getAuthorizationServerSettings().getIssuer();
 	}
 
 }

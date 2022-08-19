@@ -31,7 +31,7 @@ import org.springframework.security.oauth2.core.OAuth2Token;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsentService;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
-import org.springframework.security.oauth2.server.authorization.settings.ProviderSettings;
+import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenGenerator;
 import org.springframework.security.oauth2.server.authorization.web.NimbusJwkSetEndpointFilter;
 import org.springframework.security.oauth2.server.authorization.web.OAuth2AuthorizationServerMetadataEndpointFilter;
@@ -118,14 +118,14 @@ public final class OAuth2AuthorizationServerConfigurer
 	}
 
 	/**
-	 * Sets the provider settings.
+	 * Sets the authorization server settings.
 	 *
-	 * @param providerSettings the provider settings
+	 * @param authorizationServerSettings the authorization server settings
 	 * @return the {@link OAuth2AuthorizationServerConfigurer} for further configuration
 	 */
-	public OAuth2AuthorizationServerConfigurer providerSettings(ProviderSettings providerSettings) {
-		Assert.notNull(providerSettings, "providerSettings cannot be null");
-		getBuilder().setSharedObject(ProviderSettings.class, providerSettings);
+	public OAuth2AuthorizationServerConfigurer authorizationServerSettings(AuthorizationServerSettings authorizationServerSettings) {
+		Assert.notNull(authorizationServerSettings, "authorizationServerSettings cannot be null");
+		getBuilder().setSharedObject(AuthorizationServerSettings.class, authorizationServerSettings);
 		return this;
 	}
 
@@ -221,9 +221,9 @@ public final class OAuth2AuthorizationServerConfigurer
 
 	@Override
 	public void init(HttpSecurity httpSecurity) {
-		ProviderSettings providerSettings = OAuth2ConfigurerUtils.getProviderSettings(httpSecurity);
-		validateProviderSettings(providerSettings);
-		initEndpointMatchers(providerSettings);
+		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils.getAuthorizationServerSettings(httpSecurity);
+		validateAuthorizationServerSettings(authorizationServerSettings);
+		initEndpointMatchers(authorizationServerSettings);
 
 		this.configurers.values().forEach(configurer -> configurer.init(httpSecurity));
 
@@ -243,20 +243,20 @@ public final class OAuth2AuthorizationServerConfigurer
 	public void configure(HttpSecurity httpSecurity) {
 		this.configurers.values().forEach(configurer -> configurer.configure(httpSecurity));
 
-		ProviderSettings providerSettings = OAuth2ConfigurerUtils.getProviderSettings(httpSecurity);
+		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils.getAuthorizationServerSettings(httpSecurity);
 
-		ProviderContextFilter providerContextFilter = new ProviderContextFilter(providerSettings);
+		ProviderContextFilter providerContextFilter = new ProviderContextFilter(authorizationServerSettings);
 		httpSecurity.addFilterAfter(postProcess(providerContextFilter), SecurityContextHolderFilter.class);
 
 		JWKSource<com.nimbusds.jose.proc.SecurityContext> jwkSource = OAuth2ConfigurerUtils.getJwkSource(httpSecurity);
 		if (jwkSource != null) {
 			NimbusJwkSetEndpointFilter jwkSetEndpointFilter = new NimbusJwkSetEndpointFilter(
-					jwkSource, providerSettings.getJwkSetEndpoint());
+					jwkSource, authorizationServerSettings.getJwkSetEndpoint());
 			httpSecurity.addFilterBefore(postProcess(jwkSetEndpointFilter), AbstractPreAuthenticatedProcessingFilter.class);
 		}
 
 		OAuth2AuthorizationServerMetadataEndpointFilter authorizationServerMetadataEndpointFilter =
-				new OAuth2AuthorizationServerMetadataEndpointFilter(providerSettings);
+				new OAuth2AuthorizationServerMetadataEndpointFilter(authorizationServerSettings);
 		httpSecurity.addFilterBefore(postProcess(authorizationServerMetadataEndpointFilter), AbstractPreAuthenticatedProcessingFilter.class);
 	}
 
@@ -280,18 +280,18 @@ public final class OAuth2AuthorizationServerConfigurer
 		return getConfigurer(configurerType).getRequestMatcher();
 	}
 
-	private void initEndpointMatchers(ProviderSettings providerSettings) {
+	private void initEndpointMatchers(AuthorizationServerSettings authorizationServerSettings) {
 		this.jwkSetEndpointMatcher = new AntPathRequestMatcher(
-				providerSettings.getJwkSetEndpoint(), HttpMethod.GET.name());
+				authorizationServerSettings.getJwkSetEndpoint(), HttpMethod.GET.name());
 		this.authorizationServerMetadataEndpointMatcher = new AntPathRequestMatcher(
 				"/.well-known/oauth-authorization-server", HttpMethod.GET.name());
 	}
 
-	private static void validateProviderSettings(ProviderSettings providerSettings) {
-		if (providerSettings.getIssuer() != null) {
+	private static void validateAuthorizationServerSettings(AuthorizationServerSettings authorizationServerSettings) {
+		if (authorizationServerSettings.getIssuer() != null) {
 			URI issuerUri;
 			try {
-				issuerUri = new URI(providerSettings.getIssuer());
+				issuerUri = new URI(authorizationServerSettings.getIssuer());
 				issuerUri.toURL();
 			} catch (Exception ex) {
 				throw new IllegalArgumentException("issuer must be a valid URL", ex);

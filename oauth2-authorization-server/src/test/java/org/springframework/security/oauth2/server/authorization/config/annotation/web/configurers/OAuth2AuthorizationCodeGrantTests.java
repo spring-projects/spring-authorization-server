@@ -97,8 +97,8 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
 import org.springframework.security.oauth2.server.authorization.jackson2.TestingAuthenticationTokenMixin;
+import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
-import org.springframework.security.oauth2.server.authorization.settings.ProviderSettings;
 import org.springframework.security.oauth2.server.authorization.test.SpringTestRule;
 import org.springframework.security.oauth2.server.authorization.token.DelegatingOAuth2TokenGenerator;
 import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext;
@@ -161,7 +161,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 	private static EmbeddedDatabase db;
 	private static JWKSource<SecurityContext> jwkSource;
 	private static NimbusJwtEncoder jwtEncoder;
-	private static ProviderSettings providerSettings;
+	private static AuthorizationServerSettings authorizationServerSettings;
 	private static HttpMessageConverter<OAuth2AccessTokenResponse> accessTokenHttpResponseConverter =
 			new OAuth2AccessTokenResponseHttpMessageConverter();
 	private static AuthenticationConverter authorizationRequestConverter;
@@ -197,7 +197,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 		JWKSet jwkSet = new JWKSet(TestJwks.DEFAULT_RSA_JWK);
 		jwkSource = (jwkSelector, securityContext) -> jwkSelector.select(jwkSet);
 		jwtEncoder = new NimbusJwtEncoder(jwkSource);
-		providerSettings = ProviderSettings.builder()
+		authorizationServerSettings = AuthorizationServerSettings.builder()
 				.authorizationEndpoint("/test/authorize")
 				.tokenEndpoint("/test/token")
 				.build();
@@ -269,7 +269,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 	public void requestWhenAuthorizationRequestCustomEndpointThenRedirectToClient() throws Exception {
 		this.spring.register(AuthorizationServerConfigurationCustomEndpoints.class).autowire();
 
-		assertAuthorizationRequestRedirectsToClient(providerSettings.getAuthorizationEndpoint());
+		assertAuthorizationRequestRedirectsToClient(authorizationServerSettings.getAuthorizationEndpoint());
 	}
 
 	private void assertAuthorizationRequestRedirectsToClient(String authorizationEndpointUri) throws Exception {
@@ -326,7 +326,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 		this.authorizationService.save(authorization);
 
 		assertTokenRequestReturnsAccessTokenResponse(
-				registeredClient, authorization, providerSettings.getTokenEndpoint());
+				registeredClient, authorization, authorizationServerSettings.getTokenEndpoint());
 	}
 
 	private OAuth2AccessTokenResponse assertTokenRequestReturnsAccessTokenResponse(RegisteredClient registeredClient,
@@ -864,8 +864,8 @@ public class OAuth2AuthorizationCodeGrantTests {
 	static class AuthorizationServerConfigurationCustomEndpoints extends AuthorizationServerConfiguration {
 
 		@Bean
-		ProviderSettings providerSettings() {
-			return providerSettings;
+		AuthorizationServerSettings authorizationServerSettings() {
+			return authorizationServerSettings;
 		}
 	}
 

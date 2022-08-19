@@ -27,7 +27,7 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.oauth2.server.authorization.context.ProviderContext;
 import org.springframework.security.oauth2.server.authorization.context.ProviderContextHolder;
-import org.springframework.security.oauth2.server.authorization.settings.ProviderSettings;
+import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
@@ -50,16 +50,16 @@ public class OidcProviderConfigurationEndpointFilterTests {
 	}
 
 	@Test
-	public void constructorWhenProviderSettingsNullThenThrowIllegalArgumentException() {
+	public void constructorWhenAuthorizationServerSettingsNullThenThrowIllegalArgumentException() {
 		assertThatIllegalArgumentException()
 				.isThrownBy(() -> new OidcProviderConfigurationEndpointFilter(null))
-				.withMessage("providerSettings cannot be null");
+				.withMessage("authorizationServerSettings cannot be null");
 	}
 
 	@Test
 	public void doFilterWhenNotConfigurationRequestThenNotProcessed() throws Exception {
 		OidcProviderConfigurationEndpointFilter filter =
-				new OidcProviderConfigurationEndpointFilter(ProviderSettings.builder().build());
+				new OidcProviderConfigurationEndpointFilter(AuthorizationServerSettings.builder().build());
 
 		String requestUri = "/path";
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestUri);
@@ -75,7 +75,7 @@ public class OidcProviderConfigurationEndpointFilterTests {
 	@Test
 	public void doFilterWhenConfigurationRequestPostThenNotProcessed() throws Exception {
 		OidcProviderConfigurationEndpointFilter filter =
-				new OidcProviderConfigurationEndpointFilter(ProviderSettings.builder().build());
+				new OidcProviderConfigurationEndpointFilter(AuthorizationServerSettings.builder().build());
 
 		String requestUri = DEFAULT_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI;
 		MockHttpServletRequest request = new MockHttpServletRequest("POST", requestUri);
@@ -98,7 +98,7 @@ public class OidcProviderConfigurationEndpointFilterTests {
 		String tokenRevocationEndpoint = "/oauth2/v1/revoke";
 		String tokenIntrospectionEndpoint = "/oauth2/v1/introspect";
 
-		ProviderSettings providerSettings = ProviderSettings.builder()
+		AuthorizationServerSettings authorizationServerSettings = AuthorizationServerSettings.builder()
 				.issuer(issuer)
 				.authorizationEndpoint(authorizationEndpoint)
 				.tokenEndpoint(tokenEndpoint)
@@ -107,9 +107,9 @@ public class OidcProviderConfigurationEndpointFilterTests {
 				.tokenRevocationEndpoint(tokenRevocationEndpoint)
 				.tokenIntrospectionEndpoint(tokenIntrospectionEndpoint)
 				.build();
-		ProviderContextHolder.setProviderContext(new ProviderContext(providerSettings, null));
+		ProviderContextHolder.setProviderContext(new ProviderContext(authorizationServerSettings, null));
 		OidcProviderConfigurationEndpointFilter filter =
-				new OidcProviderConfigurationEndpointFilter(providerSettings);
+				new OidcProviderConfigurationEndpointFilter(authorizationServerSettings);
 
 		String requestUri = DEFAULT_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI;
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestUri);
@@ -141,13 +141,13 @@ public class OidcProviderConfigurationEndpointFilterTests {
 	}
 
 	@Test
-	public void doFilterWhenProviderSettingsWithInvalidIssuerThenThrowIllegalArgumentException() {
-		ProviderSettings providerSettings = ProviderSettings.builder()
+	public void doFilterWhenAuthorizationServerSettingsWithInvalidIssuerThenThrowIllegalArgumentException() {
+		AuthorizationServerSettings authorizationServerSettings = AuthorizationServerSettings.builder()
 				.issuer("https://this is an invalid URL")
 				.build();
-		ProviderContextHolder.setProviderContext(new ProviderContext(providerSettings, null));
+		ProviderContextHolder.setProviderContext(new ProviderContext(authorizationServerSettings, null));
 		OidcProviderConfigurationEndpointFilter filter =
-				new OidcProviderConfigurationEndpointFilter(providerSettings);
+				new OidcProviderConfigurationEndpointFilter(authorizationServerSettings);
 
 		String requestUri = DEFAULT_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI;
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestUri);

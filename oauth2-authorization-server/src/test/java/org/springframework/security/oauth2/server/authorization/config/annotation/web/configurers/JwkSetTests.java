@@ -42,7 +42,7 @@ import org.springframework.security.oauth2.server.authorization.client.JdbcRegis
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
 import org.springframework.security.oauth2.server.authorization.jackson2.TestingAuthenticationTokenMixin;
-import org.springframework.security.oauth2.server.authorization.settings.ProviderSettings;
+import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.test.SpringTestRule;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -61,7 +61,7 @@ public class JwkSetTests {
 	private static final String DEFAULT_JWK_SET_ENDPOINT_URI = "/oauth2/jwks";
 	private static EmbeddedDatabase db;
 	private static JWKSource<SecurityContext> jwkSource;
-	private static ProviderSettings providerSettings;
+	private static AuthorizationServerSettings authorizationServerSettings;
 
 	@Rule
 	public final SpringTestRule spring = new SpringTestRule();
@@ -76,7 +76,7 @@ public class JwkSetTests {
 	public static void init() {
 		JWKSet jwkSet = new JWKSet(TestJwks.DEFAULT_RSA_JWK);
 		jwkSource = (jwkSelector, securityContext) -> jwkSelector.select(jwkSet);
-		providerSettings = ProviderSettings.builder().jwkSetEndpoint("/test/jwks").build();
+		authorizationServerSettings = AuthorizationServerSettings.builder().jwkSetEndpoint("/test/jwks").build();
 		db = new EmbeddedDatabaseBuilder()
 				.generateUniqueName(true)
 				.setType(EmbeddedDatabaseType.HSQL)
@@ -108,7 +108,7 @@ public class JwkSetTests {
 	public void requestWhenJwkSetCustomEndpointThenReturnKeys() throws Exception {
 		this.spring.register(AuthorizationServerConfigurationCustomEndpoints.class).autowire();
 
-		assertJwkSetRequestThenReturnKeys(providerSettings.getJwkSetEndpoint());
+		assertJwkSetRequestThenReturnKeys(authorizationServerSettings.getJwkSetEndpoint());
 	}
 
 	private void assertJwkSetRequestThenReturnKeys(String jwkSetEndpointUri) throws Exception {
@@ -171,8 +171,8 @@ public class JwkSetTests {
 	static class AuthorizationServerConfigurationCustomEndpoints extends AuthorizationServerConfiguration {
 
 		@Bean
-		ProviderSettings providerSettings() {
-			return providerSettings;
+		AuthorizationServerSettings authorizationServerSettings() {
+			return authorizationServerSettings;
 		}
 	}
 

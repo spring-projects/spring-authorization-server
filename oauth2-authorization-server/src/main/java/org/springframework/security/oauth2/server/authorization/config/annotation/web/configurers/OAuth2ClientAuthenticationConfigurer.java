@@ -34,7 +34,7 @@ import org.springframework.security.oauth2.server.authorization.authentication.J
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.authentication.PublicClientAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
-import org.springframework.security.oauth2.server.authorization.settings.ProviderSettings;
+import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.web.OAuth2ClientAuthenticationFilter;
 import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
@@ -117,16 +117,16 @@ public final class OAuth2ClientAuthenticationConfigurer extends AbstractOAuth2Co
 
 	@Override
 	void init(HttpSecurity httpSecurity) {
-		ProviderSettings providerSettings = OAuth2ConfigurerUtils.getProviderSettings(httpSecurity);
+		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils.getAuthorizationServerSettings(httpSecurity);
 		this.requestMatcher = new OrRequestMatcher(
 				new AntPathRequestMatcher(
-						providerSettings.getTokenEndpoint(),
+						authorizationServerSettings.getTokenEndpoint(),
 						HttpMethod.POST.name()),
 				new AntPathRequestMatcher(
-						providerSettings.getTokenIntrospectionEndpoint(),
+						authorizationServerSettings.getTokenIntrospectionEndpoint(),
 						HttpMethod.POST.name()),
 				new AntPathRequestMatcher(
-						providerSettings.getTokenRevocationEndpoint(),
+						authorizationServerSettings.getTokenRevocationEndpoint(),
 						HttpMethod.POST.name()));
 
 		List<AuthenticationProvider> authenticationProviders =

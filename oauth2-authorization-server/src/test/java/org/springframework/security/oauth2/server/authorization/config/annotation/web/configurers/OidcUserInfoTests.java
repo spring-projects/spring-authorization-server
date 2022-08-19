@@ -61,7 +61,7 @@ import org.springframework.security.oauth2.server.authorization.client.TestRegis
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
 import org.springframework.security.oauth2.server.authorization.oidc.authentication.OidcUserInfoAuthenticationContext;
 import org.springframework.security.oauth2.server.authorization.oidc.authentication.OidcUserInfoAuthenticationToken;
-import org.springframework.security.oauth2.server.authorization.settings.ProviderSettings;
+import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.test.SpringTestRule;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.security.web.SecurityFilterChain;
@@ -377,8 +377,8 @@ public class OidcUserInfoTests {
 		}
 
 		@Bean
-		ProviderSettings providerSettings() {
-			return ProviderSettings.builder()
+		AuthorizationServerSettings authorizationServerSettings() {
+			return AuthorizationServerSettings.builder()
 					.issuer("https://auth-server:9000")
 					.build();
 		}

@@ -71,52 +71,52 @@ public final class ConfigurationSettingNames {
 	}
 
 	/**
-	 * The names for provider configuration settings.
+	 * The names for authorization server configuration settings.
 	 */
-	public static final class Provider {
-		private static final String PROVIDER_SETTINGS_NAMESPACE = SETTINGS_NAMESPACE.concat("provider.");
+	public static final class AuthorizationServer {
+		private static final String AUTHORIZATION_SERVER_SETTINGS_NAMESPACE = SETTINGS_NAMESPACE.concat("authorization-server.");
 
 		/**
-		 * Set the URL the Provider uses as its Issuer Identifier.
+		 * Set the URL the Authorization Server uses as its Issuer Identifier.
 		 */
-		public static final String ISSUER = PROVIDER_SETTINGS_NAMESPACE.concat("issuer");
+		public static final String ISSUER = AUTHORIZATION_SERVER_SETTINGS_NAMESPACE.concat("issuer");
 
 		/**
-		 * Set the Provider's OAuth 2.0 Authorization endpoint.
+		 * Set the OAuth 2.0 Authorization endpoint.
 		 */
-		public static final String AUTHORIZATION_ENDPOINT = PROVIDER_SETTINGS_NAMESPACE.concat("authorization-endpoint");
+		public static final String AUTHORIZATION_ENDPOINT = AUTHORIZATION_SERVER_SETTINGS_NAMESPACE.concat("authorization-endpoint");
 
 		/**
-		 * Set the Provider's OAuth 2.0 Token endpoint.
+		 * Set the OAuth 2.0 Token endpoint.
 		 */
-		public static final String TOKEN_ENDPOINT = PROVIDER_SETTINGS_NAMESPACE.concat("token-endpoint");
+		public static final String TOKEN_ENDPOINT = AUTHORIZATION_SERVER_SETTINGS_NAMESPACE.concat("token-endpoint");
 
 		/**
-		 * Set the Provider's JWK Set endpoint.
+		 * Set the JWK Set endpoint.
 		 */
-		public static final String JWK_SET_ENDPOINT = PROVIDER_SETTINGS_NAMESPACE.concat("jwk-set-endpoint");
+		public static final String JWK_SET_ENDPOINT = AUTHORIZATION_SERVER_SETTINGS_NAMESPACE.concat("jwk-set-endpoint");
 
 		/**
-		 * Set the Provider's OAuth 2.0 Token Revocation endpoint.
+		 * Set the OAuth 2.0 Token Revocation endpoint.
 		 */
-		public static final String TOKEN_REVOCATION_ENDPOINT = PROVIDER_SETTINGS_NAMESPACE.concat("token-revocation-endpoint");
+		public static final String TOKEN_REVOCATION_ENDPOINT = AUTHORIZATION_SERVER_SETTINGS_NAMESPACE.concat("token-revocation-endpoint");
 
 		/**
-		 * Set the Provider's OAuth 2.0 Token Introspection endpoint.
+		 * Set the OAuth 2.0 Token Introspection endpoint.
 		 */
-		public static final String TOKEN_INTROSPECTION_ENDPOINT = PROVIDER_SETTINGS_NAMESPACE.concat("token-introspection-endpoint");
+		public static final String TOKEN_INTROSPECTION_ENDPOINT = AUTHORIZATION_SERVER_SETTINGS_NAMESPACE.concat("token-introspection-endpoint");
 
 		/**
-		 * Set the Provider's OpenID Connect 1.0 Client Registration endpoint.
+		 * Set the OpenID Connect 1.0 Client Registration endpoint.
 		 */
-		public static final String OIDC_CLIENT_REGISTRATION_ENDPOINT = PROVIDER_SETTINGS_NAMESPACE.concat("oidc-client-registration-endpoint");
+		public static final String OIDC_CLIENT_REGISTRATION_ENDPOINT = AUTHORIZATION_SERVER_SETTINGS_NAMESPACE.concat("oidc-client-registration-endpoint");
 
 		/**
-		 * Set the Provider's OpenID Connect 1.0 UserInfo endpoint.
+		 * Set the OpenID Connect 1.0 UserInfo endpoint.
 		 */
-		public static final String OIDC_USER_INFO_ENDPOINT = PROVIDER_SETTINGS_NAMESPACE.concat("oidc-user-info-endpoint");
+		public static final String OIDC_USER_INFO_ENDPOINT = AUTHORIZATION_SERVER_SETTINGS_NAMESPACE.concat("oidc-user-info-endpoint");
 
-		private Provider() {
+		private AuthorizationServer() {
 		}
 
 	}

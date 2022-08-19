@@ -77,8 +77,8 @@ import org.springframework.security.oauth2.server.authorization.client.TestRegis
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
 import org.springframework.security.oauth2.server.authorization.oidc.OidcClientRegistration;
 import org.springframework.security.oauth2.server.authorization.oidc.http.converter.OidcClientRegistrationHttpMessageConverter;
+import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
-import org.springframework.security.oauth2.server.authorization.settings.ProviderSettings;
 import org.springframework.security.oauth2.server.authorization.test.SpringTestRule;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.util.matcher.RequestMatcher;
@@ -125,7 +125,7 @@ public class OidcClientRegistrationTests {
 	private RegisteredClientRepository registeredClientRepository;
 
 	@Autowired
-	private ProviderSettings providerSettings;
+	private AuthorizationServerSettings authorizationServerSettings;
 
 	private MockWebServer server;
 	private String clientJwkSetUrl;
@@ -325,7 +325,7 @@ public class OidcClientRegistrationTests {
 		return JwtClaimsSet.builder()
 				.issuer(registeredClient.getClientId())
 				.subject(registeredClient.getClientId())
-				.audience(Collections.singletonList(asUrl(this.providerSettings.getIssuer(), this.providerSettings.getTokenEndpoint())))
+				.audience(Collections.singletonList(asUrl(this.authorizationServerSettings.getIssuer(), this.authorizationServerSettings.getTokenEndpoint())))
 				.issuedAt(issuedAt)
 				.expiresAt(expiresAt);
 	}
@@ -408,8 +408,8 @@ public class OidcClientRegistrationTests {
 		}
 
 		@Bean
-		ProviderSettings providerSettings() {
-			return ProviderSettings.builder()
+		AuthorizationServerSettings authorizationServerSettings() {
+			return AuthorizationServerSettings.builder()
 					.issuer("https://auth-server:9000")
 					.build();
 		}

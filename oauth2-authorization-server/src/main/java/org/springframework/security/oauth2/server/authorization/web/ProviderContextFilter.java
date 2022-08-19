@@ -24,7 +24,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.security.oauth2.server.authorization.context.ProviderContext;
 import org.springframework.security.oauth2.server.authorization.context.ProviderContextHolder;
-import org.springframework.security.oauth2.server.authorization.settings.ProviderSettings;
+import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.web.util.UrlUtils;
 import org.springframework.util.Assert;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -37,19 +37,19 @@ import org.springframework.web.util.UriComponentsBuilder;
  * @since 0.2.2
  * @see ProviderContext
  * @see ProviderContextHolder
- * @see ProviderSettings
+ * @see AuthorizationServerSettings
  */
 public final class ProviderContextFilter extends OncePerRequestFilter {
-	private final ProviderSettings providerSettings;
+	private final AuthorizationServerSettings authorizationServerSettings;
 
 	/**
 	 * Constructs a {@code ProviderContextFilter} using the provided parameters.
 	 *
-	 * @param providerSettings the provider settings
+	 * @param authorizationServerSettings the authorization server settings
 	 */
-	public ProviderContextFilter(ProviderSettings providerSettings) {
-		Assert.notNull(providerSettings, "providerSettings cannot be null");
-		this.providerSettings = providerSettings;
+	public ProviderContextFilter(AuthorizationServerSettings authorizationServerSettings) {
+		Assert.notNull(authorizationServerSettings, "authorizationServerSettings cannot be null");
+		this.authorizationServerSettings = authorizationServerSettings;
 	}
 
 	@Override
@@ -58,7 +58,7 @@ public final class ProviderContextFilter extends OncePerRequestFilter {
 
 		try {
 			ProviderContext providerContext = new ProviderContext(
-					this.providerSettings, () -> resolveIssuer(this.providerSettings, request));
+					this.authorizationServerSettings, () -> resolveIssuer(this.authorizationServerSettings, request));
 			ProviderContextHolder.setProviderContext(providerContext);
 			filterChain.doFilter(request, response);
 		} finally {
@@ -66,9 +66,9 @@ public final class ProviderContextFilter extends OncePerRequestFilter {
 		}
 	}
 
-	private static String resolveIssuer(ProviderSettings providerSettings, HttpServletRequest request) {
-		return providerSettings.getIssuer() != null ?
-				providerSettings.getIssuer() :
+	private static String resolveIssuer(AuthorizationServerSettings authorizationServerSettings, HttpServletRequest request) {
+		return authorizationServerSettings.getIssuer() != null ?
+				authorizationServerSettings.getIssuer() :
 				getContextPath(request);
 	}
 

@@ -39,7 +39,7 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
-import org.springframework.security.oauth2.server.authorization.settings.ProviderSettings;
+import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.test.SpringTestRule;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -124,8 +124,8 @@ public class OAuth2AuthorizationServerMetadataTests {
 		}
 
 		@Bean
-		ProviderSettings providerSettings() {
-			return ProviderSettings.builder().issuer(issuerUrl).build();
+		AuthorizationServerSettings authorizationServerSettings() {
+			return AuthorizationServerSettings.builder().issuer(issuerUrl).build();
 		}
 	}
 

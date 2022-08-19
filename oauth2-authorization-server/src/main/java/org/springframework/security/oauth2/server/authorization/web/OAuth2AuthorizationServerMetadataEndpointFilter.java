@@ -33,7 +33,7 @@ import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationResp
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationServerMetadata;
 import org.springframework.security.oauth2.server.authorization.context.ProviderContextHolder;
 import org.springframework.security.oauth2.server.authorization.http.converter.OAuth2AuthorizationServerMetadataHttpMessageConverter;
-import org.springframework.security.oauth2.server.authorization.settings.ProviderSettings;
+import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
@@ -46,7 +46,7 @@ import org.springframework.web.util.UriComponentsBuilder;
  * @author Daniel Garnier-Moiroux
  * @since 0.1.1
  * @see OAuth2AuthorizationServerMetadata
- * @see ProviderSettings
+ * @see AuthorizationServerSettings
  * @see <a target="_blank" href="https://tools.ietf.org/html/rfc8414#section-3">3. Obtaining Authorization Server Metadata</a>
  */
 public final class OAuth2AuthorizationServerMetadataEndpointFilter extends OncePerRequestFilter {
@@ -55,14 +55,14 @@ public final class OAuth2AuthorizationServerMetadataEndpointFilter extends OnceP
 	 */
 	private static final String DEFAULT_OAUTH2_AUTHORIZATION_SERVER_METADATA_ENDPOINT_URI = "/.well-known/oauth-authorization-server";
 
-	private final ProviderSettings providerSettings;
+	private final AuthorizationServerSettings authorizationServerSettings;
 	private final RequestMatcher requestMatcher;
 	private final OAuth2AuthorizationServerMetadataHttpMessageConverter authorizationServerMetadataHttpMessageConverter =
 			new OAuth2AuthorizationServerMetadataHttpMessageConverter();
 
-	public OAuth2AuthorizationServerMetadataEndpointFilter(ProviderSettings providerSettings) {
-		Assert.notNull(providerSettings, "providerSettings cannot be null");
-		this.providerSettings = providerSettings;
+	public OAuth2AuthorizationServerMetadataEndpointFilter(AuthorizationServerSettings authorizationServerSettings) {
+		Assert.notNull(authorizationServerSettings, "authorizationServerSettings cannot be null");
+		this.authorizationServerSettings = authorizationServerSettings;
 		this.requestMatcher = new AntPathRequestMatcher(
 				DEFAULT_OAUTH2_AUTHORIZATION_SERVER_METADATA_ENDPOINT_URI,
 				HttpMethod.GET.name()
@@ -82,17 +82,17 @@ public final class OAuth2AuthorizationServerMetadataEndpointFilter extends OnceP
 
 		OAuth2AuthorizationServerMetadata authorizationServerMetadata = OAuth2AuthorizationServerMetadata.builder()
 				.issuer(issuer)
-				.authorizationEndpoint(asUrl(issuer, this.providerSettings.getAuthorizationEndpoint()))
-				.tokenEndpoint(asUrl(issuer, this.providerSettings.getTokenEndpoint()))
+				.authorizationEndpoint(asUrl(issuer, this.authorizationServerSettings.getAuthorizationEndpoint()))
+				.tokenEndpoint(asUrl(issuer, this.authorizationServerSettings.getTokenEndpoint()))
 				.tokenEndpointAuthenticationMethods(clientAuthenticationMethods())
-				.jwkSetUrl(asUrl(issuer, this.providerSettings.getJwkSetEndpoint()))
+				.jwkSetUrl(asUrl(issuer, this.authorizationServerSettings.getJwkSetEndpoint()))
 				.responseType(OAuth2AuthorizationResponseType.CODE.getValue())
 				.grantType(AuthorizationGrantType.AUTHORIZATION_CODE.getValue())
 				.grantType(AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
 				.grantType(AuthorizationGrantType.REFRESH_TOKEN.getValue())
-				.tokenRevocationEndpoint(asUrl(issuer, this.providerSettings.getTokenRevocationEndpoint()))
+				.tokenRevocationEndpoint(asUrl(issuer, this.authorizationServerSettings.getTokenRevocationEndpoint()))
 				.tokenRevocationEndpointAuthenticationMethods(clientAuthenticationMethods())
-				.tokenIntrospectionEndpoint(asUrl(issuer, this.providerSettings.getTokenIntrospectionEndpoint()))
+				.tokenIntrospectionEndpoint(asUrl(issuer, this.authorizationServerSettings.getTokenIntrospectionEndpoint()))
 				.tokenIntrospectionEndpointAuthenticationMethods(clientAuthenticationMethods())
 				.codeChallengeMethod("S256")
 				.build();

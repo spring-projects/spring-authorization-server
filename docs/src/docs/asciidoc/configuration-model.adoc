@@ -91,7 +91,7 @@ public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity h
 		.registeredClientRepository(registeredClientRepository) <1>
 		.authorizationService(authorizationService) <2>
 		.authorizationConsentService(authorizationConsentService)   <3>
-		.providerSettings(providerSettings) <4>
+		.authorizationServerSettings(authorizationServerSettings) <4>
 		.tokenGenerator(tokenGenerator) <5>
 		.clientAuthentication(clientAuthentication -> { })  <6>
 		.authorizationEndpoint(authorizationEndpoint -> { })    <7>
@@ -109,7 +109,7 @@ public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity h
 <1> `registeredClientRepository()`: The xref:core-model-components.adoc#registered-client-repository[`RegisteredClientRepository`] (*REQUIRED*) for managing new and existing clients.
 <2> `authorizationService()`: The xref:core-model-components.adoc#oauth2-authorization-service[`OAuth2AuthorizationService`] for managing new and existing authorizations.
 <3> `authorizationConsentService()`: The xref:core-model-components.adoc#oauth2-authorization-consent-service[`OAuth2AuthorizationConsentService`] for managing new and existing authorization consents.
-<4> `providerSettings()`: The <<configuring-provider-settings, `ProviderSettings`>> (*REQUIRED*) for customizing configuration settings for the OAuth2 authorization server.
+<4> `authorizationServerSettings()`: The <<configuring-authorization-server-settings, `AuthorizationServerSettings`>> (*REQUIRED*) for customizing configuration settings for the OAuth2 authorization server.
 <5> `tokenGenerator()`: The xref:core-model-components.adoc#oauth2-token-generator[`OAuth2TokenGenerator`] for generating tokens supported by the OAuth2 authorization server.
 <6> `clientAuthentication()`: The configurer for <<configuring-client-authentication, OAuth2 Client Authentication>>.
 <7> `authorizationEndpoint()`: The configurer for the xref:protocol-endpoints.adoc#oauth2-authorization-endpoint[OAuth2 Authorization endpoint].
@@ -119,16 +119,16 @@ public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity h
 <11> `userInfoEndpoint()`: The configurer for the xref:protocol-endpoints.adoc#oidc-user-info-endpoint[OpenID Connect 1.0 UserInfo endpoint].
 <12> `clientRegistrationEndpoint()`: The configurer for the xref:protocol-endpoints.adoc#oidc-client-registration-endpoint[OpenID Connect 1.0 Client Registration endpoint].
 
-[[configuring-provider-settings]]
-== Configuring Provider Settings
+[[configuring-authorization-server-settings]]
+== Configuring Authorization Server Settings
 
-`ProviderSettings` contains the configuration settings for the OAuth2 authorization server (provider).
+`AuthorizationServerSettings` contains the configuration settings for the OAuth2 authorization server.
 It specifies the `URI` for the protocol endpoints as well as the https://datatracker.ietf.org/doc/html/rfc8414#section-2[issuer identifier].
 The default `URI` for the protocol endpoints are as follows:
 
 [source,java]
 ----
-public final class ProviderSettings extends AbstractSettings {
+public final class AuthorizationServerSettings extends AbstractSettings {
 
 	...
 
@@ -149,18 +149,18 @@ public final class ProviderSettings extends AbstractSettings {
 ----
 
 [NOTE]
-`ProviderSettings` is a *REQUIRED* component.
+`AuthorizationServerSettings` is a *REQUIRED* component.
 
 [TIP]
-<<default-configuration, `@Import(OAuth2AuthorizationServerConfiguration.class)`>> automatically registers a `ProviderSettings` `@Bean`, if not already provided.
+<<default-configuration, `@Import(OAuth2AuthorizationServerConfiguration.class)`>> automatically registers an `AuthorizationServerSettings` `@Bean`, if not already provided.
 
-The following example shows how to customize the configuration settings and register a `ProviderSettings` `@Bean`:
+The following example shows how to customize the configuration settings and register an `AuthorizationServerSettings` `@Bean`:
 
 [source,java]
 ----
 @Bean
-public ProviderSettings providerSettings() {
-	return ProviderSettings.builder()
+public AuthorizationServerSettings authorizationServerSettings() {
+	return AuthorizationServerSettings.builder()
 		.issuer("https://example.com")
 		.authorizationEndpoint("/oauth2/v1/authorize")
 		.tokenEndpoint("/oauth2/v1/token")
@@ -174,10 +174,10 @@ public ProviderSettings providerSettings() {
 ----
 
 The `ProviderContext` is a context object that holds information about the provider.
-It provides access to the `ProviderSettings` and the "`current`" issuer identifier.
+It provides access to the `AuthorizationServerSettings` and the "`current`" issuer identifier.
 
 [NOTE]
-If the issuer identifier is not configured in `ProviderSettings.builder().issuer(String)`, it is resolved from the current request.
+If the issuer identifier is not configured in `AuthorizationServerSettings.builder().issuer(String)`, it is resolved from the current request.
 
 [NOTE]
 The `ProviderContext` is accessible through the `ProviderContextHolder`, which associates it with the current request thread by using a `ThreadLocal`.

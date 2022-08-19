@@ -70,7 +70,7 @@ public class TestRegisteredClients {
 				.clientId("client-4")
 				.clientIdIssuedAt(Instant.now().minus(1, ChronoUnit.DAYS).truncatedTo(ChronoUnit.SECONDS))
 				.clientSecret("secret")
-				.clientSecretExpiresAt(Instant.now().truncatedTo(ChronoUnit.SECONDS))
+				.clientSecretExpiresAt(Instant.now().minus(1, ChronoUnit.HOURS).truncatedTo(ChronoUnit.SECONDS))
 				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
 				.authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
 				.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)

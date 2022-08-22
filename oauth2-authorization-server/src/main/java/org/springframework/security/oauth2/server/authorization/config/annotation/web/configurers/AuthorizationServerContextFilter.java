@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.security.oauth2.server.authorization.web;
+package org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers;
 
 import java.io.IOException;
 
@@ -39,15 +39,10 @@ import org.springframework.web.util.UriComponentsBuilder;
  * @see AuthorizationServerContextHolder
  * @see AuthorizationServerSettings
  */
-public final class AuthorizationServerContextFilter extends OncePerRequestFilter {
+final class AuthorizationServerContextFilter extends OncePerRequestFilter {
 	private final AuthorizationServerSettings authorizationServerSettings;
 
-	/**
-	 * Constructs an {@code AuthorizationServerContextFilter} using the provided parameters.
-	 *
-	 * @param authorizationServerSettings the authorization server settings
-	 */
-	public AuthorizationServerContextFilter(AuthorizationServerSettings authorizationServerSettings) {
+	AuthorizationServerContextFilter(AuthorizationServerSettings authorizationServerSettings) {
 		Assert.notNull(authorizationServerSettings, "authorizationServerSettings cannot be null");
 		this.authorizationServerSettings = authorizationServerSettings;
 	}

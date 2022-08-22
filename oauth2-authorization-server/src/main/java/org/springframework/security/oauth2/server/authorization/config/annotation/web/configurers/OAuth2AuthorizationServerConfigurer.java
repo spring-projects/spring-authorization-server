@@ -33,7 +33,6 @@ import org.springframework.security.oauth2.server.authorization.OAuth2Authorizat
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenGenerator;
-import org.springframework.security.oauth2.server.authorization.web.AuthorizationServerContextFilter;
 import org.springframework.security.oauth2.server.authorization.web.NimbusJwkSetEndpointFilter;
 import org.springframework.security.oauth2.server.authorization.web.OAuth2AuthorizationServerMetadataEndpointFilter;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;

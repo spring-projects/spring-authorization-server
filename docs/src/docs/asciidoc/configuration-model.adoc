@@ -182,9 +182,6 @@ If the issuer identifier is not configured in `AuthorizationServerSettings.build
 [NOTE]
 The `AuthorizationServerContext` is accessible through the `AuthorizationServerContextHolder`, which associates it with the current request thread by using a `ThreadLocal`.
 
-[NOTE]
-The `AuthorizationServerContextFilter` associates the `AuthorizationServerContext` with the `AuthorizationServerContextHolder`.
-
 [[configuring-client-authentication]]
 == Configuring Client Authentication
 

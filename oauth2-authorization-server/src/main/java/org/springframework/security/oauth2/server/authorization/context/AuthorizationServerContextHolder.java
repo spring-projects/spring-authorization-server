@@ -15,15 +15,12 @@
  */
 package org.springframework.security.oauth2.server.authorization.context;
 
-import org.springframework.security.oauth2.server.authorization.web.AuthorizationServerContextFilter;
-
 /**
  * A holder of the {@link AuthorizationServerContext} that associates it with the current thread using a {@code ThreadLocal}.
  *
  * @author Joe Grandja
  * @since 0.2.2
  * @see AuthorizationServerContext
- * @see AuthorizationServerContextFilter
  */
 public final class AuthorizationServerContextHolder {
 	private static final ThreadLocal<AuthorizationServerContext> holder = new ThreadLocal<>();

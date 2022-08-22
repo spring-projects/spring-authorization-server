@@ -22,8 +22,8 @@ import org.junit.Test;
 
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
-import org.springframework.security.oauth2.server.authorization.context.ProviderContext;
-import org.springframework.security.oauth2.server.authorization.context.ProviderContextHolder;
+import org.springframework.security.oauth2.server.authorization.context.AuthorizationServerContext;
+import org.springframework.security.oauth2.server.authorization.context.AuthorizationServerContextHolder;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -33,20 +33,20 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 
 /**
- * Tests for {@link ProviderContextFilter}.
+ * Tests for {@link AuthorizationServerContextFilter}.
  *
  * @author Joe Grandja
  */
-public class ProviderContextFilterTests {
+public class AuthorizationServerContextFilterTests {
 
 	@After
 	public void cleanup() {
-		ProviderContextHolder.resetProviderContext();
+		AuthorizationServerContextHolder.resetContext();
 	}
 
 	@Test
 	public void constructorWhenAuthorizationServerSettingsNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> new ProviderContextFilter(null))
+		assertThatThrownBy(() -> new AuthorizationServerContextFilter(null))
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessage("authorizationServerSettings cannot be null");
 	}
@@ -55,7 +55,7 @@ public class ProviderContextFilterTests {
 	public void doFilterWhenIssuerConfiguredThenUsed() throws Exception {
 		String issuer = "https://provider.com";
 		AuthorizationServerSettings authorizationServerSettings = AuthorizationServerSettings.builder().issuer(issuer).build();
-		ProviderContextFilter filter = new ProviderContextFilter(authorizationServerSettings);
+		AuthorizationServerContextFilter filter = new AuthorizationServerContextFilter(authorizationServerSettings);
 
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/");
 		request.setServletPath("/");
@@ -63,22 +63,22 @@ public class ProviderContextFilterTests {
 		FilterChain filterChain = mock(FilterChain.class);
 
 		doAnswer(invocation -> {
-			ProviderContext providerContext = ProviderContextHolder.getProviderContext();
-			assertThat(providerContext).isNotNull();
-			assertThat(providerContext.getAuthorizationServerSettings()).isSameAs(authorizationServerSettings);
-			assertThat(providerContext.getIssuer()).isEqualTo(issuer);
+			AuthorizationServerContext authorizationServerContext = AuthorizationServerContextHolder.getContext();
+			assertThat(authorizationServerContext).isNotNull();
+			assertThat(authorizationServerContext.getAuthorizationServerSettings()).isSameAs(authorizationServerSettings);
+			assertThat(authorizationServerContext.getIssuer()).isEqualTo(issuer);
 			return null;
 		}).when(filterChain).doFilter(any(), any());
 
 		filter.doFilter(request, response, filterChain);
 
-		assertThat(ProviderContextHolder.getProviderContext()).isNull();
+		assertThat(AuthorizationServerContextHolder.getContext()).isNull();
 	}
 
 	@Test
 	public void doFilterWhenIssuerNotConfiguredThenResolveFromRequest() throws Exception {
 		AuthorizationServerSettings authorizationServerSettings = AuthorizationServerSettings.builder().build();
-		ProviderContextFilter filter = new ProviderContextFilter(authorizationServerSettings);
+		AuthorizationServerContextFilter filter = new AuthorizationServerContextFilter(authorizationServerSettings);
 
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/");
 		request.setServletPath("/");
@@ -86,16 +86,16 @@ public class ProviderContextFilterTests {
 		FilterChain filterChain = mock(FilterChain.class);
 
 		doAnswer(invocation -> {
-			ProviderContext providerContext = ProviderContextHolder.getProviderContext();
-			assertThat(providerContext).isNotNull();
-			assertThat(providerContext.getAuthorizationServerSettings()).isSameAs(authorizationServerSettings);
-			assertThat(providerContext.getIssuer()).isEqualTo("http://localhost");
+			AuthorizationServerContext authorizationServerContext = AuthorizationServerContextHolder.getContext();
+			assertThat(authorizationServerContext).isNotNull();
+			assertThat(authorizationServerContext.getAuthorizationServerSettings()).isSameAs(authorizationServerSettings);
+			assertThat(authorizationServerContext.getIssuer()).isEqualTo("http://localhost");
 			return null;
 		}).when(filterChain).doFilter(any(), any());
 
 		filter.doFilter(request, response, filterChain);
 
-		assertThat(ProviderContextHolder.getProviderContext()).isNull();
+		assertThat(AuthorizationServerContextHolder.getContext()).isNull();
 	}
 
 }

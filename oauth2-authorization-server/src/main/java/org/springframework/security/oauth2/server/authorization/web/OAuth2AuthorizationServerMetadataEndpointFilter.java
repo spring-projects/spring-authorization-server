@@ -31,7 +31,7 @@ import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationResponseType;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationServerMetadata;
-import org.springframework.security.oauth2.server.authorization.context.ProviderContextHolder;
+import org.springframework.security.oauth2.server.authorization.context.AuthorizationServerContextHolder;
 import org.springframework.security.oauth2.server.authorization.http.converter.OAuth2AuthorizationServerMetadataHttpMessageConverter;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
@@ -78,7 +78,7 @@ public final class OAuth2AuthorizationServerMetadataEndpointFilter extends OnceP
 			return;
 		}
 
-		String issuer = ProviderContextHolder.getProviderContext().getIssuer();
+		String issuer = AuthorizationServerContextHolder.getContext().getIssuer();
 
 		OAuth2AuthorizationServerMetadata authorizationServerMetadata = OAuth2AuthorizationServerMetadata.builder()
 				.issuer(issuer)

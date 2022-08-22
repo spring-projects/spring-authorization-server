@@ -52,8 +52,8 @@ import org.springframework.security.oauth2.server.authorization.TestOAuth2Author
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
-import org.springframework.security.oauth2.server.authorization.context.ProviderContext;
-import org.springframework.security.oauth2.server.authorization.context.ProviderContextHolder;
+import org.springframework.security.oauth2.server.authorization.context.AuthorizationServerContext;
+import org.springframework.security.oauth2.server.authorization.context.AuthorizationServerContextHolder;
 import org.springframework.security.oauth2.server.authorization.oidc.OidcClientMetadataClaimNames;
 import org.springframework.security.oauth2.server.authorization.oidc.OidcClientRegistration;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
@@ -104,14 +104,14 @@ public class OidcClientRegistrationAuthenticationProviderTests {
 			}
 		});
 		this.authorizationServerSettings = AuthorizationServerSettings.builder().issuer("https://provider.com").build();
-		ProviderContextHolder.setProviderContext(new ProviderContext(this.authorizationServerSettings, null));
+		AuthorizationServerContextHolder.setContext(new AuthorizationServerContext(this.authorizationServerSettings, null));
 		this.authenticationProvider = new OidcClientRegistrationAuthenticationProvider(
 				this.registeredClientRepository, this.authorizationService, this.tokenGenerator);
 	}
 
 	@After
 	public void cleanup() {
-		ProviderContextHolder.resetProviderContext();
+		AuthorizationServerContextHolder.resetContext();
 	}
 
 	@Test
@@ -612,9 +612,9 @@ public class OidcClientRegistrationAuthenticationProviderTests {
 		assertThat(clientRegistrationResult.getIdTokenSignedResponseAlgorithm())
 				.isEqualTo(registeredClientResult.getTokenSettings().getIdTokenSignatureAlgorithm().getName());
 
-		ProviderContext providerContext = ProviderContextHolder.getProviderContext();
-		String expectedRegistrationClientUrl = UriComponentsBuilder.fromUriString(providerContext.getIssuer())
-				.path(providerContext.getAuthorizationServerSettings().getOidcClientRegistrationEndpoint())
+		AuthorizationServerContext authorizationServerContext = AuthorizationServerContextHolder.getContext();
+		String expectedRegistrationClientUrl = UriComponentsBuilder.fromUriString(authorizationServerContext.getIssuer())
+				.path(authorizationServerContext.getAuthorizationServerSettings().getOidcClientRegistrationEndpoint())
 				.queryParam(OAuth2ParameterNames.CLIENT_ID, registeredClientResult.getClientId()).toUriString();
 
 		assertThat(clientRegistrationResult.getRegistrationClientUrl().toString()).isEqualTo(expectedRegistrationClientUrl);
@@ -808,9 +808,9 @@ public class OidcClientRegistrationAuthenticationProviderTests {
 		assertThat(clientRegistrationResult.getIdTokenSignedResponseAlgorithm())
 				.isEqualTo(registeredClient.getTokenSettings().getIdTokenSignatureAlgorithm().getName());
 
-		ProviderContext providerContext = ProviderContextHolder.getProviderContext();
-		String expectedRegistrationClientUrl = UriComponentsBuilder.fromUriString(providerContext.getIssuer())
-				.path(providerContext.getAuthorizationServerSettings().getOidcClientRegistrationEndpoint())
+		AuthorizationServerContext authorizationServerContext = AuthorizationServerContextHolder.getContext();
+		String expectedRegistrationClientUrl = UriComponentsBuilder.fromUriString(authorizationServerContext.getIssuer())
+				.path(authorizationServerContext.getAuthorizationServerSettings().getOidcClientRegistrationEndpoint())
 				.queryParam(OAuth2ParameterNames.CLIENT_ID, registeredClient.getClientId()).toUriString();
 
 		assertThat(clientRegistrationResult.getRegistrationClientUrl().toString()).isEqualTo(expectedRegistrationClientUrl);

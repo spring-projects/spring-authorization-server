@@ -22,8 +22,8 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.springframework.security.oauth2.server.authorization.context.ProviderContext;
-import org.springframework.security.oauth2.server.authorization.context.ProviderContextHolder;
+import org.springframework.security.oauth2.server.authorization.context.AuthorizationServerContext;
+import org.springframework.security.oauth2.server.authorization.context.AuthorizationServerContextHolder;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.web.util.UrlUtils;
 import org.springframework.util.Assert;
@@ -31,23 +31,23 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.util.UriComponentsBuilder;
 
 /**
- * A {@code Filter} that associates the {@link ProviderContext} to the {@link ProviderContextHolder}.
+ * A {@code Filter} that associates the {@link AuthorizationServerContext} to the {@link AuthorizationServerContextHolder}.
  *
  * @author Joe Grandja
  * @since 0.2.2
- * @see ProviderContext
- * @see ProviderContextHolder
+ * @see AuthorizationServerContext
+ * @see AuthorizationServerContextHolder
  * @see AuthorizationServerSettings
  */
-public final class ProviderContextFilter extends OncePerRequestFilter {
+public final class AuthorizationServerContextFilter extends OncePerRequestFilter {
 	private final AuthorizationServerSettings authorizationServerSettings;
 
 	/**
-	 * Constructs a {@code ProviderContextFilter} using the provided parameters.
+	 * Constructs an {@code AuthorizationServerContextFilter} using the provided parameters.
 	 *
 	 * @param authorizationServerSettings the authorization server settings
 	 */
-	public ProviderContextFilter(AuthorizationServerSettings authorizationServerSettings) {
+	public AuthorizationServerContextFilter(AuthorizationServerSettings authorizationServerSettings) {
 		Assert.notNull(authorizationServerSettings, "authorizationServerSettings cannot be null");
 		this.authorizationServerSettings = authorizationServerSettings;
 	}
@@ -57,12 +57,12 @@ public final class ProviderContextFilter extends OncePerRequestFilter {
 			throws ServletException, IOException {
 
 		try {
-			ProviderContext providerContext = new ProviderContext(
+			AuthorizationServerContext authorizationServerContext = new AuthorizationServerContext(
 					this.authorizationServerSettings, () -> resolveIssuer(this.authorizationServerSettings, request));
-			ProviderContextHolder.setProviderContext(providerContext);
+			AuthorizationServerContextHolder.setContext(authorizationServerContext);
 			filterChain.doFilter(request, response);
 		} finally {
-			ProviderContextHolder.resetProviderContext();
+			AuthorizationServerContextHolder.resetContext();
 		}
 	}
 

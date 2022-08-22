@@ -32,7 +32,7 @@ import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationResponseType;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
-import org.springframework.security.oauth2.server.authorization.context.ProviderContextHolder;
+import org.springframework.security.oauth2.server.authorization.context.AuthorizationServerContextHolder;
 import org.springframework.security.oauth2.server.authorization.oidc.OidcProviderConfiguration;
 import org.springframework.security.oauth2.server.authorization.oidc.http.converter.OidcProviderConfigurationHttpMessageConverter;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
@@ -80,7 +80,7 @@ public final class OidcProviderConfigurationEndpointFilter extends OncePerReques
 			return;
 		}
 
-		String issuer = ProviderContextHolder.getProviderContext().getIssuer();
+		String issuer = AuthorizationServerContextHolder.getContext().getIssuer();
 
 		OidcProviderConfiguration providerConfiguration = OidcProviderConfiguration.builder()
 				.issuer(issuer)

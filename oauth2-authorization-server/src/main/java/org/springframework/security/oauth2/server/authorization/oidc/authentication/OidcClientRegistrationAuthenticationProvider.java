@@ -49,8 +49,8 @@ import org.springframework.security.oauth2.server.authorization.OAuth2TokenType;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
-import org.springframework.security.oauth2.server.authorization.context.ProviderContext;
-import org.springframework.security.oauth2.server.authorization.context.ProviderContextHolder;
+import org.springframework.security.oauth2.server.authorization.context.AuthorizationServerContext;
+import org.springframework.security.oauth2.server.authorization.context.AuthorizationServerContextHolder;
 import org.springframework.security.oauth2.server.authorization.oidc.OidcClientMetadataClaimNames;
 import org.springframework.security.oauth2.server.authorization.oidc.OidcClientRegistration;
 import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
@@ -212,7 +212,7 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 		OAuth2TokenContext tokenContext = DefaultOAuth2TokenContext.builder()
 				.registeredClient(registeredClient)
 				.principal(clientPrincipal)
-				.providerContext(ProviderContextHolder.getProviderContext())
+				.authorizationServerContext(AuthorizationServerContextHolder.getContext())
 				.authorizedScopes(authorizedScopes)
 				.tokenType(OAuth2TokenType.ACCESS_TOKEN)
 				.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
@@ -276,9 +276,9 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 					scopes.addAll(registeredClient.getScopes()));
 		}
 
-		ProviderContext providerContext = ProviderContextHolder.getProviderContext();
-		String registrationClientUri = UriComponentsBuilder.fromUriString(providerContext.getIssuer())
-				.path(providerContext.getAuthorizationServerSettings().getOidcClientRegistrationEndpoint())
+		AuthorizationServerContext authorizationServerContext = AuthorizationServerContextHolder.getContext();
+		String registrationClientUri = UriComponentsBuilder.fromUriString(authorizationServerContext.getIssuer())
+				.path(authorizationServerContext.getAuthorizationServerSettings().getOidcClientRegistrationEndpoint())
 				.queryParam(OAuth2ParameterNames.CLIENT_ID, registeredClient.getClientId())
 				.toUriString();
 

@@ -82,8 +82,8 @@ public final class JwtGenerator implements OAuth2TokenGenerator<Jwt> {
 		}
 
 		String issuer = null;
-		if (context.getProviderContext() != null) {
-			issuer = context.getProviderContext().getIssuer();
+		if (context.getAuthorizationServerContext() != null) {
+			issuer = context.getAuthorizationServerContext().getIssuer();
 		}
 		RegisteredClient registeredClient = context.getRegisteredClient();
 
@@ -132,7 +132,7 @@ public final class JwtGenerator implements OAuth2TokenGenerator<Jwt> {
 			JwtEncodingContext.Builder jwtContextBuilder = JwtEncodingContext.with(jwsHeaderBuilder, claimsBuilder)
 					.registeredClient(context.getRegisteredClient())
 					.principal(context.getPrincipal())
-					.providerContext(context.getProviderContext())
+					.authorizationServerContext(context.getAuthorizationServerContext())
 					.authorizedScopes(context.getAuthorizedScopes())
 					.tokenType(context.getTokenType())
 					.authorizationGrantType(context.getAuthorizationGrantType());

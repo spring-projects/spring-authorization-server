@@ -22,24 +22,24 @@ import org.springframework.security.oauth2.server.authorization.settings.Authori
 import org.springframework.util.Assert;
 
 /**
- * A context that holds information of the Provider.
+ * A context that holds information of the Authorization Server runtime environment.
  *
  * @author Joe Grandja
  * @since 0.2.2
  * @see AuthorizationServerSettings
- * @see ProviderContextHolder
+ * @see AuthorizationServerContextHolder
  */
-public final class ProviderContext {
+public final class AuthorizationServerContext {
 	private final AuthorizationServerSettings authorizationServerSettings;
 	private final Supplier<String> issuerSupplier;
 
 	/**
-	 * Constructs a {@code ProviderContext} using the provided parameters.
+	 * Constructs an {@code AuthorizationServerContext} using the provided parameters.
 	 *
 	 * @param authorizationServerSettings the authorization server settings
-	 * @param issuerSupplier a {@code Supplier} for the {@code URL} of the Provider's issuer identifier
+	 * @param issuerSupplier a {@code Supplier} for the {@code URL} of the Authorization Server's issuer identifier
 	 */
-	public ProviderContext(AuthorizationServerSettings authorizationServerSettings, @Nullable Supplier<String> issuerSupplier) {
+	public AuthorizationServerContext(AuthorizationServerSettings authorizationServerSettings, @Nullable Supplier<String> issuerSupplier) {
 		Assert.notNull(authorizationServerSettings, "authorizationServerSettings cannot be null");
 		this.authorizationServerSettings = authorizationServerSettings;
 		this.issuerSupplier = issuerSupplier;
@@ -55,11 +55,11 @@ public final class ProviderContext {
 	}
 
 	/**
-	 * Returns the {@code URL} of the Provider's issuer identifier.
+	 * Returns the {@code URL} of the Authorization Server's issuer identifier.
 	 * The issuer identifier is resolved from the constructor parameter {@code Supplier<String>}
 	 * or if not provided then defaults to {@link AuthorizationServerSettings#getIssuer()}.
 	 *
-	 * @return the {@code URL} of the Provider's issuer identifier
+	 * @return the {@code URL} of the Authorization Server's issuer identifier
 	 */
 	public String getIssuer() {
 		return this.issuerSupplier != null ?

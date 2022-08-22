@@ -25,8 +25,8 @@ import org.junit.Test;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
-import org.springframework.security.oauth2.server.authorization.context.ProviderContext;
-import org.springframework.security.oauth2.server.authorization.context.ProviderContextHolder;
+import org.springframework.security.oauth2.server.authorization.context.AuthorizationServerContext;
+import org.springframework.security.oauth2.server.authorization.context.AuthorizationServerContextHolder;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -46,7 +46,7 @@ public class OAuth2AuthorizationServerMetadataEndpointFilterTests {
 
 	@After
 	public void cleanup() {
-		ProviderContextHolder.resetProviderContext();
+		AuthorizationServerContextHolder.resetContext();
 	}
 
 	@Test
@@ -105,7 +105,7 @@ public class OAuth2AuthorizationServerMetadataEndpointFilterTests {
 				.tokenRevocationEndpoint(tokenRevocationEndpoint)
 				.tokenIntrospectionEndpoint(tokenIntrospectionEndpoint)
 				.build();
-		ProviderContextHolder.setProviderContext(new ProviderContext(authorizationServerSettings, null));
+		AuthorizationServerContextHolder.setContext(new AuthorizationServerContext(authorizationServerSettings, null));
 		OAuth2AuthorizationServerMetadataEndpointFilter filter =
 				new OAuth2AuthorizationServerMetadataEndpointFilter(authorizationServerSettings);
 
@@ -140,7 +140,7 @@ public class OAuth2AuthorizationServerMetadataEndpointFilterTests {
 		AuthorizationServerSettings authorizationServerSettings = AuthorizationServerSettings.builder()
 				.issuer("https://this is an invalid URL")
 				.build();
-		ProviderContextHolder.setProviderContext(new ProviderContext(authorizationServerSettings, null));
+		AuthorizationServerContextHolder.setContext(new AuthorizationServerContext(authorizationServerSettings, null));
 		OAuth2AuthorizationServerMetadataEndpointFilter filter =
 				new OAuth2AuthorizationServerMetadataEndpointFilter(authorizationServerSettings);
 

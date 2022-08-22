@@ -25,8 +25,8 @@ import org.junit.Test;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
-import org.springframework.security.oauth2.server.authorization.context.ProviderContext;
-import org.springframework.security.oauth2.server.authorization.context.ProviderContextHolder;
+import org.springframework.security.oauth2.server.authorization.context.AuthorizationServerContext;
+import org.springframework.security.oauth2.server.authorization.context.AuthorizationServerContextHolder;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -46,7 +46,7 @@ public class OidcProviderConfigurationEndpointFilterTests {
 
 	@After
 	public void cleanup() {
-		ProviderContextHolder.resetProviderContext();
+		AuthorizationServerContextHolder.resetContext();
 	}
 
 	@Test
@@ -107,7 +107,7 @@ public class OidcProviderConfigurationEndpointFilterTests {
 				.tokenRevocationEndpoint(tokenRevocationEndpoint)
 				.tokenIntrospectionEndpoint(tokenIntrospectionEndpoint)
 				.build();
-		ProviderContextHolder.setProviderContext(new ProviderContext(authorizationServerSettings, null));
+		AuthorizationServerContextHolder.setContext(new AuthorizationServerContext(authorizationServerSettings, null));
 		OidcProviderConfigurationEndpointFilter filter =
 				new OidcProviderConfigurationEndpointFilter(authorizationServerSettings);
 
@@ -145,7 +145,7 @@ public class OidcProviderConfigurationEndpointFilterTests {
 		AuthorizationServerSettings authorizationServerSettings = AuthorizationServerSettings.builder()
 				.issuer("https://this is an invalid URL")
 				.build();
-		ProviderContextHolder.setProviderContext(new ProviderContext(authorizationServerSettings, null));
+		AuthorizationServerContextHolder.setContext(new AuthorizationServerContext(authorizationServerSettings, null));
 		OidcProviderConfigurationEndpointFilter filter =
 				new OidcProviderConfigurationEndpointFilter(authorizationServerSettings);
 

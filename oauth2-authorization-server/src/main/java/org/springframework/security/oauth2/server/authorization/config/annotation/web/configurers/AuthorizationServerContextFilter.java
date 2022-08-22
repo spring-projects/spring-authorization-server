@@ -16,6 +16,7 @@
 package org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers;
 
 import java.io.IOException;
+import java.util.function.Supplier;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
@@ -52,8 +53,10 @@ final class AuthorizationServerContextFilter extends OncePerRequestFilter {
 			throws ServletException, IOException {
 
 		try {
-			AuthorizationServerContext authorizationServerContext = new AuthorizationServerContext(
-					this.authorizationServerSettings, () -> resolveIssuer(this.authorizationServerSettings, request));
+			AuthorizationServerContext authorizationServerContext =
+					new DefaultAuthorizationServerContext(
+							() -> resolveIssuer(this.authorizationServerSettings, request),
+							this.authorizationServerSettings);
 			AuthorizationServerContextHolder.setContext(authorizationServerContext);
 			filterChain.doFilter(request, response);
 		} finally {
@@ -76,6 +79,27 @@ final class AuthorizationServerContextFilter extends OncePerRequestFilter {
 				.build()
 				.toUriString();
 		// @formatter:on
+	}
+
+	private static final class DefaultAuthorizationServerContext implements AuthorizationServerContext {
+		private final Supplier<String> issuerSupplier;
+		private final AuthorizationServerSettings authorizationServerSettings;
+
+		private DefaultAuthorizationServerContext(Supplier<String> issuerSupplier, AuthorizationServerSettings authorizationServerSettings) {
+			this.issuerSupplier = issuerSupplier;
+			this.authorizationServerSettings = authorizationServerSettings;
+		}
+
+		@Override
+		public String getIssuer() {
+			return this.issuerSupplier.get();
+		}
+
+		@Override
+		public AuthorizationServerSettings getAuthorizationServerSettings() {
+			return this.authorizationServerSettings;
+		}
+
 	}
 
 }

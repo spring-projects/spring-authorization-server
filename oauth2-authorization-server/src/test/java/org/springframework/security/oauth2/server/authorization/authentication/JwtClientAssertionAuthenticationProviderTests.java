@@ -57,8 +57,8 @@ import org.springframework.security.oauth2.server.authorization.TestOAuth2Author
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
-import org.springframework.security.oauth2.server.authorization.context.AuthorizationServerContext;
 import org.springframework.security.oauth2.server.authorization.context.AuthorizationServerContextHolder;
+import org.springframework.security.oauth2.server.authorization.context.TestAuthorizationServerContext;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -100,7 +100,7 @@ public class JwtClientAssertionAuthenticationProviderTests {
 		this.authenticationProvider = new JwtClientAssertionAuthenticationProvider(
 				this.registeredClientRepository, this.authorizationService);
 		this.authorizationServerSettings = AuthorizationServerSettings.builder().issuer("https://auth-server.com").build();
-		AuthorizationServerContextHolder.setContext(new AuthorizationServerContext(this.authorizationServerSettings, null));
+		AuthorizationServerContextHolder.setContext(new TestAuthorizationServerContext(this.authorizationServerSettings, null));
 	}
 
 	@Test

@@ -15,30 +15,33 @@
  */
 package org.springframework.security.oauth2.server.authorization.context;
 
+import java.util.function.Supplier;
+
+import org.springframework.lang.Nullable;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 
 /**
- * A context that holds information of the Authorization Server runtime environment.
- *
  * @author Joe Grandja
- * @since 0.2.2
- * @see AuthorizationServerSettings
- * @see AuthorizationServerContextHolder
  */
-public interface AuthorizationServerContext {
+public class TestAuthorizationServerContext implements AuthorizationServerContext {
+	private final AuthorizationServerSettings authorizationServerSettings;
+	private final Supplier<String> issuerSupplier;
 
-	/**
-	 * Returns the {@code URL} of the Authorization Server's issuer identifier.
-	 *
-	 * @return the {@code URL} of the Authorization Server's issuer identifier
-	 */
-	String getIssuer();
+	public TestAuthorizationServerContext(AuthorizationServerSettings authorizationServerSettings, @Nullable Supplier<String> issuerSupplier) {
+		this.authorizationServerSettings = authorizationServerSettings;
+		this.issuerSupplier = issuerSupplier;
+	}
 
-	/**
-	 * Returns the {@link AuthorizationServerSettings}.
-	 *
-	 * @return the {@link AuthorizationServerSettings}
-	 */
-	AuthorizationServerSettings getAuthorizationServerSettings();
+	@Override
+	public String getIssuer() {
+		return this.issuerSupplier != null ?
+				this.issuerSupplier.get() :
+				getAuthorizationServerSettings().getIssuer();
+	}
+
+	@Override
+	public AuthorizationServerSettings getAuthorizationServerSettings() {
+		return this.authorizationServerSettings;
+	}
 
 }

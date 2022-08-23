@@ -50,16 +50,12 @@ public class OAuth2AuthorizationServerMetadataEndpointFilterTests {
 	}
 
 	@Test
-	public void constructorWhenAuthorizationServerSettingsNullThenThrowIllegalArgumentException() {
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> new OAuth2AuthorizationServerMetadataEndpointFilter(null))
-				.withMessage("authorizationServerSettings cannot be null");
-	}
-
-	@Test
 	public void doFilterWhenNotAuthorizationServerMetadataRequestThenNotProcessed() throws Exception {
-		OAuth2AuthorizationServerMetadataEndpointFilter filter =
-				new OAuth2AuthorizationServerMetadataEndpointFilter(AuthorizationServerSettings.builder().issuer("https://example.com").build());
+		AuthorizationServerSettings authorizationServerSettings = AuthorizationServerSettings.builder()
+				.issuer("https://example.com")
+				.build();
+		AuthorizationServerContextHolder.setContext(new TestAuthorizationServerContext(authorizationServerSettings, null));
+		OAuth2AuthorizationServerMetadataEndpointFilter filter = new OAuth2AuthorizationServerMetadataEndpointFilter();
 
 		String requestUri = "/path";
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestUri);
@@ -74,8 +70,11 @@ public class OAuth2AuthorizationServerMetadataEndpointFilterTests {
 
 	@Test
 	public void doFilterWhenAuthorizationServerMetadataRequestPostThenNotProcessed() throws Exception {
-		OAuth2AuthorizationServerMetadataEndpointFilter filter =
-				new OAuth2AuthorizationServerMetadataEndpointFilter(AuthorizationServerSettings.builder().issuer("https://example.com").build());
+		AuthorizationServerSettings authorizationServerSettings = AuthorizationServerSettings.builder()
+				.issuer("https://example.com")
+				.build();
+		AuthorizationServerContextHolder.setContext(new TestAuthorizationServerContext(authorizationServerSettings, null));
+		OAuth2AuthorizationServerMetadataEndpointFilter filter = new OAuth2AuthorizationServerMetadataEndpointFilter();
 
 		String requestUri = DEFAULT_OAUTH2_AUTHORIZATION_SERVER_METADATA_ENDPOINT_URI;
 		MockHttpServletRequest request = new MockHttpServletRequest("POST", requestUri);
@@ -106,8 +105,7 @@ public class OAuth2AuthorizationServerMetadataEndpointFilterTests {
 				.tokenIntrospectionEndpoint(tokenIntrospectionEndpoint)
 				.build();
 		AuthorizationServerContextHolder.setContext(new TestAuthorizationServerContext(authorizationServerSettings, null));
-		OAuth2AuthorizationServerMetadataEndpointFilter filter =
-				new OAuth2AuthorizationServerMetadataEndpointFilter(authorizationServerSettings);
+		OAuth2AuthorizationServerMetadataEndpointFilter filter = new OAuth2AuthorizationServerMetadataEndpointFilter();
 
 		String requestUri = DEFAULT_OAUTH2_AUTHORIZATION_SERVER_METADATA_ENDPOINT_URI;
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestUri);
@@ -141,8 +139,7 @@ public class OAuth2AuthorizationServerMetadataEndpointFilterTests {
 				.issuer("https://this is an invalid URL")
 				.build();
 		AuthorizationServerContextHolder.setContext(new TestAuthorizationServerContext(authorizationServerSettings, null));
-		OAuth2AuthorizationServerMetadataEndpointFilter filter =
-				new OAuth2AuthorizationServerMetadataEndpointFilter(authorizationServerSettings);
+		OAuth2AuthorizationServerMetadataEndpointFilter filter = new OAuth2AuthorizationServerMetadataEndpointFilter();
 
 		String requestUri = DEFAULT_OAUTH2_AUTHORIZATION_SERVER_METADATA_ENDPOINT_URI;
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestUri);

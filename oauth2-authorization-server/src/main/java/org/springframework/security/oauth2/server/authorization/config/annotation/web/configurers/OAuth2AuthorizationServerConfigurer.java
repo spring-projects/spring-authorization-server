@@ -255,7 +255,7 @@ public final class OAuth2AuthorizationServerConfigurer
 		}
 
 		OAuth2AuthorizationServerMetadataEndpointFilter authorizationServerMetadataEndpointFilter =
-				new OAuth2AuthorizationServerMetadataEndpointFilter(authorizationServerSettings);
+				new OAuth2AuthorizationServerMetadataEndpointFilter();
 		httpSecurity.addFilterBefore(postProcess(authorizationServerMetadataEndpointFilter), AbstractPreAuthenticatedProcessingFilter.class);
 	}
 

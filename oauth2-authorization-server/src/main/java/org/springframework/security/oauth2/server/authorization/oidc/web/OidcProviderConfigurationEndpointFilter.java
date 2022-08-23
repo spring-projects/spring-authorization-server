@@ -32,13 +32,13 @@ import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationResponseType;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
+import org.springframework.security.oauth2.server.authorization.context.AuthorizationServerContext;
 import org.springframework.security.oauth2.server.authorization.context.AuthorizationServerContextHolder;
 import org.springframework.security.oauth2.server.authorization.oidc.OidcProviderConfiguration;
 import org.springframework.security.oauth2.server.authorization.oidc.http.converter.OidcProviderConfigurationHttpMessageConverter;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
-import org.springframework.util.Assert;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -57,19 +57,11 @@ public final class OidcProviderConfigurationEndpointFilter extends OncePerReques
 	 */
 	private static final String DEFAULT_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI = "/.well-known/openid-configuration";
 
-	private final AuthorizationServerSettings authorizationServerSettings;
-	private final RequestMatcher requestMatcher;
+	private final RequestMatcher requestMatcher = new AntPathRequestMatcher(
+			DEFAULT_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI,
+			HttpMethod.GET.name());
 	private final OidcProviderConfigurationHttpMessageConverter providerConfigurationHttpMessageConverter =
 			new OidcProviderConfigurationHttpMessageConverter();
-
-	public OidcProviderConfigurationEndpointFilter(AuthorizationServerSettings authorizationServerSettings) {
-		Assert.notNull(authorizationServerSettings, "authorizationServerSettings cannot be null");
-		this.authorizationServerSettings = authorizationServerSettings;
-		this.requestMatcher = new AntPathRequestMatcher(
-				DEFAULT_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI,
-				HttpMethod.GET.name()
-		);
-	}
 
 	@Override
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -80,22 +72,24 @@ public final class OidcProviderConfigurationEndpointFilter extends OncePerReques
 			return;
 		}
 
-		String issuer = AuthorizationServerContextHolder.getContext().getIssuer();
+		AuthorizationServerContext authorizationServerContext = AuthorizationServerContextHolder.getContext();
+		String issuer = authorizationServerContext.getIssuer();
+		AuthorizationServerSettings authorizationServerSettings = authorizationServerContext.getAuthorizationServerSettings();
 
 		OidcProviderConfiguration providerConfiguration = OidcProviderConfiguration.builder()
 				.issuer(issuer)
-				.authorizationEndpoint(asUrl(issuer, this.authorizationServerSettings.getAuthorizationEndpoint()))
-				.tokenEndpoint(asUrl(issuer, this.authorizationServerSettings.getTokenEndpoint()))
+				.authorizationEndpoint(asUrl(issuer, authorizationServerSettings.getAuthorizationEndpoint()))
+				.tokenEndpoint(asUrl(issuer, authorizationServerSettings.getTokenEndpoint()))
 				.tokenEndpointAuthenticationMethods(clientAuthenticationMethods())
-				.jwkSetUrl(asUrl(issuer, this.authorizationServerSettings.getJwkSetEndpoint()))
-				.userInfoEndpoint(asUrl(issuer, this.authorizationServerSettings.getOidcUserInfoEndpoint()))
+				.jwkSetUrl(asUrl(issuer, authorizationServerSettings.getJwkSetEndpoint()))
+				.userInfoEndpoint(asUrl(issuer, authorizationServerSettings.getOidcUserInfoEndpoint()))
 				.responseType(OAuth2AuthorizationResponseType.CODE.getValue())
 				.grantType(AuthorizationGrantType.AUTHORIZATION_CODE.getValue())
 				.grantType(AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
 				.grantType(AuthorizationGrantType.REFRESH_TOKEN.getValue())
-				.tokenRevocationEndpoint(asUrl(issuer, this.authorizationServerSettings.getTokenRevocationEndpoint()))
+				.tokenRevocationEndpoint(asUrl(issuer, authorizationServerSettings.getTokenRevocationEndpoint()))
 				.tokenRevocationEndpointAuthenticationMethods(clientAuthenticationMethods())
-				.tokenIntrospectionEndpoint(asUrl(issuer, this.authorizationServerSettings.getTokenIntrospectionEndpoint()))
+				.tokenIntrospectionEndpoint(asUrl(issuer, authorizationServerSettings.getTokenIntrospectionEndpoint()))
 				.tokenIntrospectionEndpointAuthenticationMethods(clientAuthenticationMethods())
 				.subjectType("public")
 				.idTokenSigningAlgorithm(SignatureAlgorithm.RS256.getName())
@@ -119,4 +113,5 @@ public final class OidcProviderConfigurationEndpointFilter extends OncePerReques
 	private static String asUrl(String issuer, String endpoint) {
 		return UriComponentsBuilder.fromUriString(issuer).path(endpoint).build().toUriString();
 	}
+
 }

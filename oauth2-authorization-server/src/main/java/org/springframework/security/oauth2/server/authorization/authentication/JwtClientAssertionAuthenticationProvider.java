@@ -51,9 +51,9 @@ import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
-import org.springframework.security.oauth2.server.authorization.context.ProviderContext;
-import org.springframework.security.oauth2.server.authorization.context.ProviderContextHolder;
-import org.springframework.security.oauth2.server.authorization.settings.ProviderSettings;
+import org.springframework.security.oauth2.server.authorization.context.AuthorizationServerContext;
+import org.springframework.security.oauth2.server.authorization.context.AuthorizationServerContextHolder;
+import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
@@ -221,20 +221,20 @@ public final class JwtClientAssertionAuthenticationProvider implements Authentic
 			return new DelegatingOAuth2TokenValidator<>(
 					new JwtClaimValidator<>(JwtClaimNames.ISS, clientId::equals),
 					new JwtClaimValidator<>(JwtClaimNames.SUB, clientId::equals),
-					new JwtClaimValidator<>(JwtClaimNames.AUD, containsProviderAudience()),
+					new JwtClaimValidator<>(JwtClaimNames.AUD, containsAudience()),
 					new JwtClaimValidator<>(JwtClaimNames.EXP, Objects::nonNull),
 					new JwtTimestampValidator()
 			);
 		}
 
-		private static Predicate<List<String>> containsProviderAudience() {
+		private static Predicate<List<String>> containsAudience() {
 			return (audienceClaim) -> {
 				if (CollectionUtils.isEmpty(audienceClaim)) {
 					return false;
 				}
-				List<String> providerAudience = getProviderAudience();
+				List<String> audienceList = getAudience();
 				for (String audience : audienceClaim) {
-					if (providerAudience.contains(audience)) {
+					if (audienceList.contains(audience)) {
 						return true;
 					}
 				}
@@ -242,19 +242,19 @@ public final class JwtClientAssertionAuthenticationProvider implements Authentic
 			};
 		}
 
-		private static List<String> getProviderAudience() {
-			ProviderContext providerContext = ProviderContextHolder.getProviderContext();
-			if (!StringUtils.hasText(providerContext.getIssuer())) {
+		private static List<String> getAudience() {
+			AuthorizationServerContext authorizationServerContext = AuthorizationServerContextHolder.getContext();
+			if (!StringUtils.hasText(authorizationServerContext.getIssuer())) {
 				return Collections.emptyList();
 			}
 
-			ProviderSettings providerSettings = providerContext.getProviderSettings();
-			List<String> providerAudience = new ArrayList<>();
-			providerAudience.add(providerContext.getIssuer());
-			providerAudience.add(asUrl(providerContext.getIssuer(), providerSettings.getTokenEndpoint()));
-			providerAudience.add(asUrl(providerContext.getIssuer(), providerSettings.getTokenIntrospectionEndpoint()));
-			providerAudience.add(asUrl(providerContext.getIssuer(), providerSettings.getTokenRevocationEndpoint()));
-			return providerAudience;
+			AuthorizationServerSettings authorizationServerSettings = authorizationServerContext.getAuthorizationServerSettings();
+			List<String> audience = new ArrayList<>();
+			audience.add(authorizationServerContext.getIssuer());
+			audience.add(asUrl(authorizationServerContext.getIssuer(), authorizationServerSettings.getTokenEndpoint()));
+			audience.add(asUrl(authorizationServerContext.getIssuer(), authorizationServerSettings.getTokenIntrospectionEndpoint()));
+			audience.add(asUrl(authorizationServerContext.getIssuer(), authorizationServerSettings.getTokenRevocationEndpoint()));
+			return audience;
 		}
 
 		private static String asUrl(String issuer, String endpoint) {

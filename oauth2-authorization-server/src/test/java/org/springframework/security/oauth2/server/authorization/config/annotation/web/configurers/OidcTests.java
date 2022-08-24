@@ -80,7 +80,7 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
 import org.springframework.security.oauth2.server.authorization.jackson2.TestingAuthenticationTokenMixin;
-import org.springframework.security.oauth2.server.authorization.settings.ProviderSettings;
+import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.test.SpringTestRule;
 import org.springframework.security.oauth2.server.authorization.token.DelegatingOAuth2TokenGenerator;
 import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext;
@@ -471,8 +471,8 @@ public class OidcTests {
 	static class AuthorizationServerConfigurationWithIssuer extends AuthorizationServerConfiguration {
 
 		@Bean
-		ProviderSettings providerSettings() {
-			return ProviderSettings.builder().issuer(ISSUER_URL).build();
+		AuthorizationServerSettings authorizationServerSettings() {
+			return AuthorizationServerSettings.builder().issuer(ISSUER_URL).build();
 		}
 	}
 
@@ -481,8 +481,8 @@ public class OidcTests {
 	static class AuthorizationServerConfigurationWithInvalidIssuerUrl extends AuthorizationServerConfiguration {
 
 		@Bean
-		ProviderSettings providerSettings() {
-			return ProviderSettings.builder().issuer("urn:example").build();
+		AuthorizationServerSettings authorizationServerSettings() {
+			return AuthorizationServerSettings.builder().issuer("urn:example").build();
 		}
 	}
 
@@ -491,8 +491,8 @@ public class OidcTests {
 	static class AuthorizationServerConfigurationWithInvalidIssuerUri extends AuthorizationServerConfiguration {
 
 		@Bean
-		ProviderSettings providerSettings() {
-			return ProviderSettings.builder().issuer("https://not a valid uri").build();
+		AuthorizationServerSettings authorizationServerSettings() {
+			return AuthorizationServerSettings.builder().issuer("https://not a valid uri").build();
 		}
 	}
 
@@ -501,8 +501,8 @@ public class OidcTests {
 	static class AuthorizationServerConfigurationWithIssuerQuery extends AuthorizationServerConfiguration {
 
 		@Bean
-		ProviderSettings providerSettings() {
-			return ProviderSettings.builder().issuer(ISSUER_URL + "?param=value").build();
+		AuthorizationServerSettings authorizationServerSettings() {
+			return AuthorizationServerSettings.builder().issuer(ISSUER_URL + "?param=value").build();
 		}
 	}
 
@@ -511,8 +511,8 @@ public class OidcTests {
 	static class AuthorizationServerConfigurationWithIssuerFragment extends AuthorizationServerConfiguration {
 
 		@Bean
-		ProviderSettings providerSettings() {
-			return ProviderSettings.builder().issuer(ISSUER_URL + "#fragment").build();
+		AuthorizationServerSettings authorizationServerSettings() {
+			return AuthorizationServerSettings.builder().issuer(ISSUER_URL + "#fragment").build();
 		}
 	}
 
@@ -521,8 +521,8 @@ public class OidcTests {
 	static class AuthorizationServerConfigurationWithIssuerQueryAndFragment extends AuthorizationServerConfiguration {
 
 		@Bean
-		ProviderSettings providerSettings() {
-			return ProviderSettings.builder().issuer(ISSUER_URL + "?param=value#fragment").build();
+		AuthorizationServerSettings authorizationServerSettings() {
+			return AuthorizationServerSettings.builder().issuer(ISSUER_URL + "?param=value#fragment").build();
 		}
 	}
 
@@ -531,8 +531,8 @@ public class OidcTests {
 	static class AuthorizationServerConfigurationWithIssuerEmptyQuery extends AuthorizationServerConfiguration {
 
 		@Bean
-		ProviderSettings providerSettings() {
-			return ProviderSettings.builder().issuer(ISSUER_URL + "?").build();
+		AuthorizationServerSettings authorizationServerSettings() {
+			return AuthorizationServerSettings.builder().issuer(ISSUER_URL + "?").build();
 		}
 	}
 
@@ -541,8 +541,8 @@ public class OidcTests {
 	static class AuthorizationServerConfigurationWithIssuerEmptyFragment extends AuthorizationServerConfiguration {
 
 		@Bean
-		ProviderSettings providerSettings() {
-			return ProviderSettings.builder().issuer(ISSUER_URL + "#").build();
+		AuthorizationServerSettings authorizationServerSettings() {
+			return AuthorizationServerSettings.builder().issuer(ISSUER_URL + "#").build();
 		}
 	}
 

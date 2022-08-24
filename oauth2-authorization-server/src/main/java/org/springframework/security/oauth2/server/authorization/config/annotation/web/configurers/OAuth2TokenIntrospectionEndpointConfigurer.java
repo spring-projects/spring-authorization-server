@@ -31,7 +31,7 @@ import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2TokenIntrospectionAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2TokenIntrospectionAuthenticationToken;
-import org.springframework.security.oauth2.server.authorization.settings.ProviderSettings;
+import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.web.OAuth2TokenIntrospectionEndpointFilter;
 import org.springframework.security.web.access.intercept.FilterSecurityInterceptor;
 import org.springframework.security.web.authentication.AuthenticationConverter;
@@ -112,9 +112,9 @@ public final class OAuth2TokenIntrospectionEndpointConfigurer extends AbstractOA
 
 	@Override
 	void init(HttpSecurity httpSecurity) {
-		ProviderSettings providerSettings = OAuth2ConfigurerUtils.getProviderSettings(httpSecurity);
+		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils.getAuthorizationServerSettings(httpSecurity);
 		this.requestMatcher = new AntPathRequestMatcher(
-				providerSettings.getTokenIntrospectionEndpoint(), HttpMethod.POST.name());
+				authorizationServerSettings.getTokenIntrospectionEndpoint(), HttpMethod.POST.name());
 
 		List<AuthenticationProvider> authenticationProviders =
 				!this.authenticationProviders.isEmpty() ?
@@ -127,11 +127,11 @@ public final class OAuth2TokenIntrospectionEndpointConfigurer extends AbstractOA
 	@Override
 	void configure(HttpSecurity httpSecurity) {
 		AuthenticationManager authenticationManager = httpSecurity.getSharedObject(AuthenticationManager.class);
-		ProviderSettings providerSettings = OAuth2ConfigurerUtils.getProviderSettings(httpSecurity);
+		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils.getAuthorizationServerSettings(httpSecurity);
 
 		OAuth2TokenIntrospectionEndpointFilter introspectionEndpointFilter =
 				new OAuth2TokenIntrospectionEndpointFilter(
-						authenticationManager, providerSettings.getTokenIntrospectionEndpoint());
+						authenticationManager, authorizationServerSettings.getTokenIntrospectionEndpoint());
 		if (this.introspectionRequestConverter != null) {
 			introspectionEndpointFilter.setAuthenticationConverter(this.introspectionRequestConverter);
 		}

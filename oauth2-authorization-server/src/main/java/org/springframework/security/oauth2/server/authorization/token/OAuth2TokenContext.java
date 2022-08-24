@@ -27,8 +27,8 @@ import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenType;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
+import org.springframework.security.oauth2.server.authorization.context.AuthorizationServerContext;
 import org.springframework.security.oauth2.server.authorization.context.Context;
-import org.springframework.security.oauth2.server.authorization.context.ProviderContext;
 import org.springframework.util.Assert;
 
 /**
@@ -63,13 +63,13 @@ public interface OAuth2TokenContext extends Context {
 	}
 
 	/**
-	 * Returns the {@link ProviderContext provider context}.
+	 * Returns the {@link AuthorizationServerContext authorization server context}.
 	 *
-	 * @return the {@link ProviderContext}
+	 * @return the {@link AuthorizationServerContext}
 	 * @since 0.2.3
 	 */
-	default ProviderContext getProviderContext() {
-		return get(ProviderContext.class);
+	default AuthorizationServerContext getAuthorizationServerContext() {
+		return get(AuthorizationServerContext.class);
 	}
 
 	/**
@@ -157,14 +157,14 @@ public interface OAuth2TokenContext extends Context {
 		}
 
 		/**
-		 * Sets the {@link ProviderContext provider context}.
+		 * Sets the {@link AuthorizationServerContext authorization server context}.
 		 *
-		 * @param providerContext the {@link ProviderContext}
+		 * @param authorizationServerContext the {@link AuthorizationServerContext}
 		 * @return the {@link AbstractBuilder} for further configuration
 		 * @since 0.2.3
 		 */
-		public B providerContext(ProviderContext providerContext) {
-			return put(ProviderContext.class, providerContext);
+		public B authorizationServerContext(AuthorizationServerContext authorizationServerContext) {
+			return put(AuthorizationServerContext.class, authorizationServerContext);
 		}
 
 		/**

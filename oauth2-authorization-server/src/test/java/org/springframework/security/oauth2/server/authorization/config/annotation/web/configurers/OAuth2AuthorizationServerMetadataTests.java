@@ -39,7 +39,7 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
-import org.springframework.security.oauth2.server.authorization.settings.ProviderSettings;
+import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.test.SpringTestRule;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -92,12 +92,22 @@ public class OAuth2AuthorizationServerMetadataTests {
 	}
 
 	@Test
-	public void requestWhenAuthorizationServerMetadataRequestAndIssuerSetThenReturnMetadataResponse() throws Exception {
+	public void requestWhenAuthorizationServerMetadataRequestAndIssuerSetThenUsed() throws Exception {
 		this.spring.register(AuthorizationServerConfiguration.class).autowire();
 
 		this.mvc.perform(get(DEFAULT_OAUTH2_AUTHORIZATION_SERVER_METADATA_ENDPOINT_URI))
 				.andExpect(status().is2xxSuccessful())
 				.andExpect(jsonPath("issuer").value(issuerUrl))
+				.andReturn();
+	}
+
+	@Test
+	public void requestWhenAuthorizationServerMetadataRequestAndIssuerNotSetThenResolveFromRequest() throws Exception {
+		this.spring.register(AuthorizationServerConfigurationWithIssuerNotSet.class).autowire();
+
+		this.mvc.perform(get(DEFAULT_OAUTH2_AUTHORIZATION_SERVER_METADATA_ENDPOINT_URI))
+				.andExpect(status().is2xxSuccessful())
+				.andExpect(jsonPath("issuer").value("http://localhost"))
 				.andReturn();
 	}
 
@@ -124,8 +134,18 @@ public class OAuth2AuthorizationServerMetadataTests {
 		}
 
 		@Bean
-		ProviderSettings providerSettings() {
-			return ProviderSettings.builder().issuer(issuerUrl).build();
+		AuthorizationServerSettings authorizationServerSettings() {
+			return AuthorizationServerSettings.builder().issuer(issuerUrl).build();
+		}
+	}
+
+	@EnableWebSecurity
+	@Import(OAuth2AuthorizationServerConfiguration.class)
+	static class AuthorizationServerConfigurationWithIssuerNotSet extends AuthorizationServerConfiguration {
+
+		@Bean
+		AuthorizationServerSettings authorizationServerSettings() {
+			return AuthorizationServerSettings.builder().build();
 		}
 	}
 

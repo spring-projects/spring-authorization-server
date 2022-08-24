@@ -30,7 +30,7 @@ import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2TokenRevocationAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2TokenRevocationAuthenticationToken;
-import org.springframework.security.oauth2.server.authorization.settings.ProviderSettings;
+import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.web.OAuth2TokenRevocationEndpointFilter;
 import org.springframework.security.web.access.intercept.FilterSecurityInterceptor;
 import org.springframework.security.web.authentication.AuthenticationConverter;
@@ -111,9 +111,9 @@ public final class OAuth2TokenRevocationEndpointConfigurer extends AbstractOAuth
 
 	@Override
 	void init(HttpSecurity httpSecurity) {
-		ProviderSettings providerSettings = OAuth2ConfigurerUtils.getProviderSettings(httpSecurity);
+		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils.getAuthorizationServerSettings(httpSecurity);
 		this.requestMatcher = new AntPathRequestMatcher(
-				providerSettings.getTokenRevocationEndpoint(), HttpMethod.POST.name());
+				authorizationServerSettings.getTokenRevocationEndpoint(), HttpMethod.POST.name());
 
 		List<AuthenticationProvider> authenticationProviders =
 				!this.authenticationProviders.isEmpty() ?
@@ -126,11 +126,11 @@ public final class OAuth2TokenRevocationEndpointConfigurer extends AbstractOAuth
 	@Override
 	void configure(HttpSecurity httpSecurity) {
 		AuthenticationManager authenticationManager = httpSecurity.getSharedObject(AuthenticationManager.class);
-		ProviderSettings providerSettings = OAuth2ConfigurerUtils.getProviderSettings(httpSecurity);
+		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils.getAuthorizationServerSettings(httpSecurity);
 
 		OAuth2TokenRevocationEndpointFilter revocationEndpointFilter =
 				new OAuth2TokenRevocationEndpointFilter(
-						authenticationManager, providerSettings.getTokenRevocationEndpoint());
+						authenticationManager, authorizationServerSettings.getTokenRevocationEndpoint());
 		if (this.revocationRequestConverter != null) {
 			revocationEndpointFilter.setAuthenticationConverter(this.revocationRequestConverter);
 		}

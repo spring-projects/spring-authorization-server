@@ -38,9 +38,10 @@ import org.springframework.security.oauth2.server.authorization.authentication.O
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
-import org.springframework.security.oauth2.server.authorization.context.ProviderContext;
+import org.springframework.security.oauth2.server.authorization.context.AuthorizationServerContext;
+import org.springframework.security.oauth2.server.authorization.context.TestAuthorizationServerContext;
+import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.settings.OAuth2TokenFormat;
-import org.springframework.security.oauth2.server.authorization.settings.ProviderSettings;
 import org.springframework.security.oauth2.server.authorization.settings.TokenSettings;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -56,15 +57,15 @@ import static org.mockito.Mockito.verify;
 public class OAuth2AccessTokenGeneratorTests {
 	private OAuth2TokenCustomizer<OAuth2TokenClaimsContext> accessTokenCustomizer;
 	private OAuth2AccessTokenGenerator accessTokenGenerator;
-	private ProviderContext providerContext;
+	private AuthorizationServerContext authorizationServerContext;
 
 	@Before
 	public void setUp() {
 		this.accessTokenCustomizer = mock(OAuth2TokenCustomizer.class);
 		this.accessTokenGenerator = new OAuth2AccessTokenGenerator();
 		this.accessTokenGenerator.setAccessTokenCustomizer(this.accessTokenCustomizer);
-		ProviderSettings providerSettings = ProviderSettings.builder().issuer("https://provider.com").build();
-		this.providerContext = new ProviderContext(providerSettings, null);
+		AuthorizationServerSettings authorizationServerSettings = AuthorizationServerSettings.builder().issuer("https://provider.com").build();
+		this.authorizationServerContext = new TestAuthorizationServerContext(authorizationServerSettings, null);
 	}
 
 	@Test
@@ -134,7 +135,7 @@ public class OAuth2AccessTokenGeneratorTests {
 		OAuth2TokenContext tokenContext = DefaultOAuth2TokenContext.builder()
 				.registeredClient(registeredClient)
 				.principal(principal)
-				.providerContext(this.providerContext)
+				.authorizationServerContext(this.authorizationServerContext)
 				.authorization(authorization)
 				.authorizedScopes(authorization.getAuthorizedScopes())
 				.tokenType(OAuth2TokenType.ACCESS_TOKEN)
@@ -156,7 +157,7 @@ public class OAuth2AccessTokenGeneratorTests {
 		OAuth2TokenClaimAccessor accessTokenClaims = ((ClaimAccessor) accessToken)::getClaims;
 		assertThat(accessTokenClaims.getClaims()).isNotEmpty();
 
-		assertThat(accessTokenClaims.getIssuer().toExternalForm()).isEqualTo(tokenContext.getProviderContext().getIssuer());
+		assertThat(accessTokenClaims.getIssuer().toExternalForm()).isEqualTo(tokenContext.getAuthorizationServerContext().getIssuer());
 		assertThat(accessTokenClaims.getSubject()).isEqualTo(tokenContext.getPrincipal().getName());
 		assertThat(accessTokenClaims.getAudience()).isEqualTo(
 				Collections.singletonList(tokenContext.getRegisteredClient().getClientId()));
@@ -175,7 +176,7 @@ public class OAuth2AccessTokenGeneratorTests {
 		assertThat(tokenClaimsContext.getClaims()).isNotNull();
 		assertThat(tokenClaimsContext.getRegisteredClient()).isEqualTo(tokenContext.getRegisteredClient());
 		assertThat(tokenClaimsContext.<Authentication>getPrincipal()).isEqualTo(tokenContext.getPrincipal());
-		assertThat(tokenClaimsContext.getProviderContext()).isEqualTo(tokenContext.getProviderContext());
+		assertThat(tokenClaimsContext.getAuthorizationServerContext()).isEqualTo(tokenContext.getAuthorizationServerContext());
 		assertThat(tokenClaimsContext.getAuthorization()).isEqualTo(tokenContext.getAuthorization());
 		assertThat(tokenClaimsContext.getAuthorizedScopes()).isEqualTo(tokenContext.getAuthorizedScopes());
 		assertThat(tokenClaimsContext.getTokenType()).isEqualTo(tokenContext.getTokenType());

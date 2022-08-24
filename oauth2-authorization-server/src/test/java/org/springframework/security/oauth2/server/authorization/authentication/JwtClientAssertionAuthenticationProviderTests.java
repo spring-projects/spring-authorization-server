@@ -57,10 +57,10 @@ import org.springframework.security.oauth2.server.authorization.TestOAuth2Author
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
-import org.springframework.security.oauth2.server.authorization.context.ProviderContext;
-import org.springframework.security.oauth2.server.authorization.context.ProviderContextHolder;
+import org.springframework.security.oauth2.server.authorization.context.AuthorizationServerContextHolder;
+import org.springframework.security.oauth2.server.authorization.context.TestAuthorizationServerContext;
+import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
-import org.springframework.security.oauth2.server.authorization.settings.ProviderSettings;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -91,7 +91,7 @@ public class JwtClientAssertionAuthenticationProviderTests {
 	private RegisteredClientRepository registeredClientRepository;
 	private OAuth2AuthorizationService authorizationService;
 	private JwtClientAssertionAuthenticationProvider authenticationProvider;
-	private ProviderSettings providerSettings;
+	private AuthorizationServerSettings authorizationServerSettings;
 
 	@Before
 	public void setUp() {
@@ -99,8 +99,8 @@ public class JwtClientAssertionAuthenticationProviderTests {
 		this.authorizationService = mock(OAuth2AuthorizationService.class);
 		this.authenticationProvider = new JwtClientAssertionAuthenticationProvider(
 				this.registeredClientRepository, this.authorizationService);
-		this.providerSettings = ProviderSettings.builder().issuer("https://auth-server.com").build();
-		ProviderContextHolder.setProviderContext(new ProviderContext(this.providerSettings, null));
+		this.authorizationServerSettings = AuthorizationServerSettings.builder().issuer("https://auth-server.com").build();
+		AuthorizationServerContextHolder.setContext(new TestAuthorizationServerContext(this.authorizationServerSettings, null));
 	}
 
 	@Test
@@ -421,7 +421,7 @@ public class JwtClientAssertionAuthenticationProviderTests {
 		return JwtClaimsSet.builder()
 				.issuer(registeredClient.getClientId())
 				.subject(registeredClient.getClientId())
-				.audience(Collections.singletonList(asUrl(this.providerSettings.getIssuer(), this.providerSettings.getTokenEndpoint())))
+				.audience(Collections.singletonList(asUrl(this.authorizationServerSettings.getIssuer(), this.authorizationServerSettings.getTokenEndpoint())))
 				.issuedAt(issuedAt)
 				.expiresAt(expiresAt);
 	}

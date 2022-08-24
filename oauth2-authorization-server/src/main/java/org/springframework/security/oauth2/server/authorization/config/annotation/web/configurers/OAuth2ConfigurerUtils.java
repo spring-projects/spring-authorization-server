@@ -34,7 +34,7 @@ import org.springframework.security.oauth2.server.authorization.InMemoryOAuth2Au
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsentService;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
-import org.springframework.security.oauth2.server.authorization.settings.ProviderSettings;
+import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.token.DelegatingOAuth2TokenGenerator;
 import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext;
 import org.springframework.security.oauth2.server.authorization.token.JwtGenerator;
@@ -171,13 +171,13 @@ final class OAuth2ConfigurerUtils {
 		return getOptionalBean(httpSecurity, type);
 	}
 
-	static ProviderSettings getProviderSettings(HttpSecurity httpSecurity) {
-		ProviderSettings providerSettings = httpSecurity.getSharedObject(ProviderSettings.class);
-		if (providerSettings == null) {
-			providerSettings = getBean(httpSecurity, ProviderSettings.class);
-			httpSecurity.setSharedObject(ProviderSettings.class, providerSettings);
+	static AuthorizationServerSettings getAuthorizationServerSettings(HttpSecurity httpSecurity) {
+		AuthorizationServerSettings authorizationServerSettings = httpSecurity.getSharedObject(AuthorizationServerSettings.class);
+		if (authorizationServerSettings == null) {
+			authorizationServerSettings = getBean(httpSecurity, AuthorizationServerSettings.class);
+			httpSecurity.setSharedObject(AuthorizationServerSettings.class, authorizationServerSettings);
 		}
-		return providerSettings;
+		return authorizationServerSettings;
 	}
 
 	static <T> T getBean(HttpSecurity httpSecurity, Class<T> type) {

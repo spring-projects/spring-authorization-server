@@ -15,6 +15,8 @@
  */
 package org.springframework.security.oauth2.server.authorization.authentication;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -184,7 +186,9 @@ public class ClientSecretAuthenticationProviderTests {
 
 	@Test
 	public void authenticateWhenExpiredClientSecretThenThrowOAuth2AuthenticationException() {
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient4().build();
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
+				.clientSecretExpiresAt(Instant.now().minus(1, ChronoUnit.HOURS).truncatedTo(ChronoUnit.SECONDS))
+				.build();
 		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
 				.thenReturn(registeredClient);
 

@@ -24,6 +24,7 @@ import java.util.Base64;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
@@ -36,6 +37,7 @@ import org.junit.Test;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -69,6 +71,7 @@ import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.security.oauth2.server.authorization.JdbcOAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationCode;
+import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationServerMetadataClaimNames;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenType;
 import org.springframework.security.oauth2.server.authorization.TestOAuth2Authorizations;
@@ -79,6 +82,7 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
 import org.springframework.security.oauth2.server.authorization.jackson2.TestingAuthenticationTokenMixin;
+import org.springframework.security.oauth2.server.authorization.oidc.OidcProviderConfiguration;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.test.SpringTestRule;
 import org.springframework.security.oauth2.server.authorization.token.DelegatingOAuth2TokenGenerator;
@@ -101,6 +105,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.CoreMatchers.hasItems;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
@@ -194,6 +199,17 @@ public class OidcTests {
 		this.mvc.perform(get(DEFAULT_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI)
 				.with(user("user")))
 				.andExpect(status().is2xxSuccessful());
+	}
+
+	// gh-616
+	@Test
+	public void requestWhenConfigurationRequestAndConfigurationCustomizerSetThenReturnCustomConfigurationResponse() throws Exception {
+		this.spring.register(AuthorizationServerConfigurationWithProviderConfigurationCustomizer.class).autowire();
+
+		this.mvc.perform(get(DEFAULT_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI))
+				.andExpect(status().is2xxSuccessful())
+				.andExpect(jsonPath(OAuth2AuthorizationServerMetadataClaimNames.SCOPES_SUPPORTED,
+						hasItems(OidcScopes.OPENID, OidcScopes.PROFILE, OidcScopes.EMAIL)));
 	}
 
 	@Test
@@ -460,6 +476,43 @@ public class OidcTests {
 					return delegatingTokenGenerator.generate(context);
 				}
 			});
+		}
+
+	}
+
+	@Configuration
+	@EnableWebSecurity
+	static class AuthorizationServerConfigurationWithProviderConfigurationCustomizer extends AuthorizationServerConfiguration {
+
+		// @formatter:off
+		@Bean
+		public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
+			OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
+					new OAuth2AuthorizationServerConfigurer();
+			http.apply(authorizationServerConfigurer);
+
+			authorizationServerConfigurer
+					.oidc(oidc ->
+							oidc.providerConfigurationEndpoint(providerConfigurationEndpoint ->
+									providerConfigurationEndpoint
+											.providerConfigurationCustomizer(providerConfigurationCustomizer())));
+
+			RequestMatcher endpointsMatcher = authorizationServerConfigurer.getEndpointsMatcher();
+
+			http
+					.requestMatcher(endpointsMatcher)
+					.authorizeRequests(authorizeRequests ->
+							authorizeRequests.anyRequest().authenticated()
+					)
+					.csrf(csrf -> csrf.ignoringRequestMatchers(endpointsMatcher));
+
+			return http.build();
+		}
+		// @formatter:on
+
+		private Consumer<OidcProviderConfiguration.Builder> providerConfigurationCustomizer() {
+			return (providerConfiguration) ->
+					providerConfiguration.scope(OidcScopes.PROFILE).scope(OidcScopes.EMAIL);
 		}
 
 	}

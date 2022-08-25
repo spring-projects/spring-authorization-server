@@ -39,6 +39,7 @@ import org.springframework.security.oauth2.server.authorization.oidc.http.conver
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
+import org.springframework.util.Assert;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -46,6 +47,7 @@ import org.springframework.web.util.UriComponentsBuilder;
  * A {@code Filter} that processes OpenID Provider Configuration Requests.
  *
  * @author Daniel Garnier-Moiroux
+ * @author Joe Grandja
  * @since 0.1.0
  * @see OidcProviderConfiguration
  * @see AuthorizationServerSettings
@@ -62,6 +64,19 @@ public final class OidcProviderConfigurationEndpointFilter extends OncePerReques
 			HttpMethod.GET.name());
 	private final OidcProviderConfigurationHttpMessageConverter providerConfigurationHttpMessageConverter =
 			new OidcProviderConfigurationHttpMessageConverter();
+	private Consumer<OidcProviderConfiguration.Builder> providerConfigurationCustomizer = (providerConfiguration) -> {};
+
+	/**
+	 * Sets the {@code Consumer} providing access to the {@link OidcProviderConfiguration.Builder}
+	 * allowing the ability to customize the claims of the OpenID Provider's configuration.
+	 *
+	 * @param providerConfigurationCustomizer the {@code Consumer} providing access to the {@link OidcProviderConfiguration.Builder}
+	 * @since 0.4.0
+	 */
+	public void setProviderConfigurationCustomizer(Consumer<OidcProviderConfiguration.Builder> providerConfigurationCustomizer) {
+		Assert.notNull(providerConfigurationCustomizer, "providerConfigurationCustomizer cannot be null");
+		this.providerConfigurationCustomizer = providerConfigurationCustomizer;
+	}
 
 	@Override
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -76,7 +91,7 @@ public final class OidcProviderConfigurationEndpointFilter extends OncePerReques
 		String issuer = authorizationServerContext.getIssuer();
 		AuthorizationServerSettings authorizationServerSettings = authorizationServerContext.getAuthorizationServerSettings();
 
-		OidcProviderConfiguration providerConfiguration = OidcProviderConfiguration.builder()
+		OidcProviderConfiguration.Builder providerConfiguration = OidcProviderConfiguration.builder()
 				.issuer(issuer)
 				.authorizationEndpoint(asUrl(issuer, authorizationServerSettings.getAuthorizationEndpoint()))
 				.tokenEndpoint(asUrl(issuer, authorizationServerSettings.getTokenEndpoint()))
@@ -93,12 +108,13 @@ public final class OidcProviderConfigurationEndpointFilter extends OncePerReques
 				.tokenIntrospectionEndpointAuthenticationMethods(clientAuthenticationMethods())
 				.subjectType("public")
 				.idTokenSigningAlgorithm(SignatureAlgorithm.RS256.getName())
-				.scope(OidcScopes.OPENID)
-				.build();
+				.scope(OidcScopes.OPENID);
+
+		this.providerConfigurationCustomizer.accept(providerConfiguration);
 
 		ServletServerHttpResponse httpResponse = new ServletServerHttpResponse(response);
 		this.providerConfigurationHttpMessageConverter.write(
-				providerConfiguration, MediaType.APPLICATION_JSON, httpResponse);
+				providerConfiguration.build(), MediaType.APPLICATION_JSON, httpResponse);
 	}
 
 	private static Consumer<List<String>> clientAuthenticationMethods() {

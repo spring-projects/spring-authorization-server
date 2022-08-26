@@ -17,6 +17,7 @@ package org.springframework.security.oauth2.server.authorization.web;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -273,11 +274,15 @@ public final class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilte
 				(OAuth2AuthorizationCodeRequestAuthenticationToken) authentication;
 		UriComponentsBuilder uriBuilder = UriComponentsBuilder
 				.fromUriString(authorizationCodeRequestAuthentication.getRedirectUri())
-				.queryParam(OAuth2ParameterNames.CODE, authorizationCodeRequestAuthentication.getAuthorizationCode().getTokenValue());
+				.queryParam(OAuth2ParameterNames.CODE, "{code}");
 		if (StringUtils.hasText(authorizationCodeRequestAuthentication.getState())) {
-			uriBuilder.queryParam(OAuth2ParameterNames.STATE, authorizationCodeRequestAuthentication.getState());
+			uriBuilder.queryParam(OAuth2ParameterNames.STATE, "{state}");
 		}
-		this.redirectStrategy.sendRedirect(request, response, uriBuilder.toUriString());
+		HashMap<String, String> queryParams = new HashMap<>();
+		queryParams.put(OAuth2ParameterNames.CODE, authorizationCodeRequestAuthentication.getAuthorizationCode().getTokenValue());
+		queryParams.put(OAuth2ParameterNames.STATE, authorizationCodeRequestAuthentication.getState());
+		String redirectUri = uriBuilder.build(queryParams).toString();
+		this.redirectStrategy.sendRedirect(request, response, redirectUri);
 	}
 
 	private void sendErrorResponse(HttpServletRequest request, HttpServletResponse response,

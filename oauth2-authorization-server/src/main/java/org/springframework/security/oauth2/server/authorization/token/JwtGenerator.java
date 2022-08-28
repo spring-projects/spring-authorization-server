@@ -89,13 +89,14 @@ public final class JwtGenerator implements OAuth2TokenGenerator<Jwt> {
 
 		Instant issuedAt = Instant.now();
 		Instant expiresAt;
-		JwsHeader.Builder headersBuilder = JwsHeader.with(SignatureAlgorithm.RS256);
+		JwsHeader.Builder headersBuilder;
 		if (OidcParameterNames.ID_TOKEN.equals(context.getTokenType().getValue())) {
 			// TODO Allow configuration for ID Token time-to-live
 			expiresAt = issuedAt.plus(30, ChronoUnit.MINUTES);
 			headersBuilder = JwsHeader.with(registeredClient.getTokenSettings().getIdTokenSignatureAlgorithm());
 		} else {
 			expiresAt = issuedAt.plus(registeredClient.getTokenSettings().getAccessTokenTimeToLive());
+			headersBuilder = JwsHeader.with(SignatureAlgorithm.RS256);
 		}
 
 		// @formatter:off

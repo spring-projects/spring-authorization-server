@@ -27,6 +27,7 @@ import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.oidc.IdTokenClaimNames;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.security.oauth2.core.oidc.endpoint.OidcParameterNames;
+import org.springframework.security.oauth2.jose.jws.JwsAlgorithm;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 import org.springframework.security.oauth2.jwt.JwsHeader;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -89,14 +90,15 @@ public final class JwtGenerator implements OAuth2TokenGenerator<Jwt> {
 
 		Instant issuedAt = Instant.now();
 		Instant expiresAt;
-		JwsHeader.Builder headersBuilder;
+		JwsAlgorithm jwsAlgorithm = SignatureAlgorithm.RS256;
 		if (OidcParameterNames.ID_TOKEN.equals(context.getTokenType().getValue())) {
 			// TODO Allow configuration for ID Token time-to-live
 			expiresAt = issuedAt.plus(30, ChronoUnit.MINUTES);
-			headersBuilder = JwsHeader.with(registeredClient.getTokenSettings().getIdTokenSignatureAlgorithm());
+			if (registeredClient.getTokenSettings().getIdTokenSignatureAlgorithm() != null) {
+				jwsAlgorithm = registeredClient.getTokenSettings().getIdTokenSignatureAlgorithm();
+			}
 		} else {
 			expiresAt = issuedAt.plus(registeredClient.getTokenSettings().getAccessTokenTimeToLive());
-			headersBuilder = JwsHeader.with(SignatureAlgorithm.RS256);
 		}
 
 		// @formatter:off
@@ -128,9 +130,11 @@ public final class JwtGenerator implements OAuth2TokenGenerator<Jwt> {
 		}
 		// @formatter:on
 
+		JwsHeader.Builder jwsHeaderBuilder = JwsHeader.with(jwsAlgorithm);
+
 		if (this.jwtCustomizer != null) {
 			// @formatter:off
-			JwtEncodingContext.Builder jwtContextBuilder = JwtEncodingContext.with(headersBuilder, claimsBuilder)
+			JwtEncodingContext.Builder jwtContextBuilder = JwtEncodingContext.with(jwsHeaderBuilder, claimsBuilder)
 					.registeredClient(context.getRegisteredClient())
 					.principal(context.getPrincipal())
 					.authorizationServerContext(context.getAuthorizationServerContext())
@@ -149,7 +153,7 @@ public final class JwtGenerator implements OAuth2TokenGenerator<Jwt> {
 			this.jwtCustomizer.customize(jwtContext);
 		}
 
-		JwsHeader jwsHeader = headersBuilder.build();
+		JwsHeader jwsHeader = jwsHeaderBuilder.build();
 		JwtClaimsSet claims = claimsBuilder.build();
 
 		Jwt jwt = this.jwtEncoder.encode(JwtEncoderParameters.from(jwsHeader, claims));

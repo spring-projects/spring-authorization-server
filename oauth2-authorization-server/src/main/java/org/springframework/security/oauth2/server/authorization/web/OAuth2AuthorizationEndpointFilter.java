@@ -239,11 +239,13 @@ public final class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilte
 		String state = authorizationCodeRequestAuthenticationResult.getState();
 
 		if (hasConsentUri()) {
-			String redirectUri = UriComponentsBuilder.fromUriString(resolveConsentUri(request))
+			UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUriString(resolveConsentUri(request))
 					.queryParam(OAuth2ParameterNames.SCOPE, String.join(" ", requestedScopes))
 					.queryParam(OAuth2ParameterNames.CLIENT_ID, clientId)
-					.queryParam(OAuth2ParameterNames.STATE, state)
-					.toUriString();
+					.queryParam(OAuth2ParameterNames.STATE, "{state}");
+			HashMap<String, String> queryParams = new HashMap<>();
+			queryParams.put(OAuth2ParameterNames.STATE, state);
+			String redirectUri = uriBuilder.build(queryParams).toString();
 			this.redirectStrategy.sendRedirect(request, response, redirectUri);
 		} else {
 			DefaultConsentPage.displayConsent(request, response, clientId, principal, requestedScopes, authorizedScopes, state);
@@ -310,9 +312,12 @@ public final class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilte
 			uriBuilder.queryParam(OAuth2ParameterNames.ERROR_URI, error.getUri());
 		}
 		if (StringUtils.hasText(authorizationCodeRequestAuthentication.getState())) {
-			uriBuilder.queryParam(OAuth2ParameterNames.STATE, authorizationCodeRequestAuthentication.getState());
+			uriBuilder.queryParam(OAuth2ParameterNames.STATE, "{state}");
 		}
-		this.redirectStrategy.sendRedirect(request, response, uriBuilder.toUriString());
+		HashMap<String, String> queryParams = new HashMap<>();
+		queryParams.put(OAuth2ParameterNames.STATE, authorizationCodeRequestAuthentication.getState());
+		String redirectUri = uriBuilder.build(queryParams).toString();
+		this.redirectStrategy.sendRedirect(request, response, redirectUri);
 	}
 
 	/**

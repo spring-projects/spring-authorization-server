@@ -83,6 +83,10 @@ import static org.mockito.Mockito.when;
 public class OAuth2AuthorizationEndpointFilterTests {
 	private static final String DEFAULT_AUTHORIZATION_ENDPOINT_URI = "/oauth2/authorize";
 	private static final String REMOTE_ADDRESS = "remote-address";
+
+	private static final String STATE_THAT_NEEDS_ENCODING = "awrD0fCnEcTUPFgmyy2SU89HZNcnAJ60ZW6l39YI0KyVjmIZ+004pwm9j55li7BoydXYysH4enZMF21Q";
+
+	private static final String STATE_URL_ENCODED = "awrD0fCnEcTUPFgmyy2SU89HZNcnAJ60ZW6l39YI0KyVjmIZ%2B004pwm9j55li7BoydXYysH4enZMF21Q";
 	private AuthenticationManager authenticationManager;
 	private OAuth2AuthorizationEndpointFilter filter;
 	private TestingAuthenticationToken principal;
@@ -296,7 +300,7 @@ public class OAuth2AuthorizationEndpointFilterTests {
 		verifyNoInteractions(filterChain);
 
 		assertThat(response.getStatus()).isEqualTo(HttpStatus.FOUND.value());
-		assertThat(response.getRedirectedUrl()).isEqualTo("https://example.com?error=errorCode&error_description=errorDescription&error_uri=errorUri&state=awrD0fCnEcTUPFgmyy2SU89HZNcnAJ60ZW6l39YI0KyVjmIZ%2B004pwm9j55li7BoydXYysH4enZMF21Q");
+		assertThat(response.getRedirectedUrl()).isEqualTo("https://example.com?error=errorCode&error_description=errorDescription&error_uri=errorUri&state=" + STATE_URL_ENCODED);
 		assertThat(SecurityContextHolder.getContext().getAuthentication()).isSameAs(this.principal);
 	}
 
@@ -435,6 +439,7 @@ public class OAuth2AuthorizationEndpointFilterTests {
 		OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthenticationResult =
 				authorizationCodeRequestAuthentication(registeredClient, this.principal)
 						.scopes(new HashSet<>())	// No scopes previously approved
+						.state(STATE_THAT_NEEDS_ENCODING)
 						.consentRequired(true)
 						.build();
 		authorizationCodeRequestAuthenticationResult.setAuthenticated(true);
@@ -452,7 +457,7 @@ public class OAuth2AuthorizationEndpointFilterTests {
 		verifyNoInteractions(filterChain);
 
 		assertThat(response.getStatus()).isEqualTo(HttpStatus.FOUND.value());
-		assertThat(response.getRedirectedUrl()).isEqualTo("http://localhost/oauth2/custom-consent?scope=scope1%20scope2&client_id=client-1&state=awrD0fCnEcTUPFgmyy2SU89HZNcnAJ60ZW6l39YI0KyVjmIZ%2B004pwm9j55li7BoydXYysH4enZMF21Q");
+		assertThat(response.getRedirectedUrl()).isEqualTo("http://localhost/oauth2/custom-consent?scope=scope1%20scope2&client_id=client-1&state=" + STATE_URL_ENCODED);
 	}
 
 	@Test
@@ -555,7 +560,7 @@ public class OAuth2AuthorizationEndpointFilterTests {
 				.extracting(WebAuthenticationDetails::getRemoteAddress)
 				.isEqualTo(REMOTE_ADDRESS);
 		assertThat(response.getStatus()).isEqualTo(HttpStatus.FOUND.value());
-		assertThat(response.getRedirectedUrl()).isEqualTo("https://example.com?code=code&state=awrD0fCnEcTUPFgmyy2SU89HZNcnAJ60ZW6l39YI0KyVjmIZ%2B004pwm9j55li7BoydXYysH4enZMF21Q");
+		assertThat(response.getRedirectedUrl()).isEqualTo("https://example.com?code=code&state=" + STATE_URL_ENCODED);
 	}
 
 	@Test
@@ -586,7 +591,7 @@ public class OAuth2AuthorizationEndpointFilterTests {
 		verifyNoInteractions(filterChain);
 
 		assertThat(response.getStatus()).isEqualTo(HttpStatus.FOUND.value());
-		assertThat(response.getRedirectedUrl()).isEqualTo("https://example.com?code=code&state=awrD0fCnEcTUPFgmyy2SU89HZNcnAJ60ZW6l39YI0KyVjmIZ%2B004pwm9j55li7BoydXYysH4enZMF21Q");
+		assertThat(response.getRedirectedUrl()).isEqualTo("https://example.com?code=code&state=" + STATE_URL_ENCODED);
 	}
 
 	private void doFilterWhenAuthorizationRequestInvalidParameterThenError(RegisteredClient registeredClient,
@@ -629,7 +634,7 @@ public class OAuth2AuthorizationEndpointFilterTests {
 		request.addParameter(OAuth2ParameterNames.REDIRECT_URI, registeredClient.getRedirectUris().iterator().next());
 		request.addParameter(OAuth2ParameterNames.SCOPE,
 				StringUtils.collectionToDelimitedString(registeredClient.getScopes(), " "));
-		request.addParameter(OAuth2ParameterNames.STATE, "state");
+		request.addParameter(OAuth2ParameterNames.STATE, STATE_THAT_NEEDS_ENCODING);
 
 		return request;
 	}
@@ -653,7 +658,7 @@ public class OAuth2AuthorizationEndpointFilterTests {
 				.authorizationUri("https://provider.com/oauth2/authorize")
 				.redirectUri(registeredClient.getRedirectUris().iterator().next())
 				.scopes(registeredClient.getScopes())
-				.state("awrD0fCnEcTUPFgmyy2SU89HZNcnAJ60ZW6l39YI0KyVjmIZ+004pwm9j55li7BoydXYysH4enZMF21Q");
+				.state(STATE_THAT_NEEDS_ENCODING);
 	}
 
 	private static String scopeCheckbox(String scope) {

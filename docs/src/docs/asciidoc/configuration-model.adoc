@@ -202,18 +202,22 @@ public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity h
 		.clientAuthentication(clientAuthentication ->
 			clientAuthentication
 				.authenticationConverter(authenticationConverter)   <1>
-				.authenticationProvider(authenticationProvider) <2>
-				.authenticationSuccessHandler(authenticationSuccessHandler) <3>
-				.errorResponseHandler(errorResponseHandler) <4>
+				.authenticationConverters(authenticationConvertersConsumer) <2>
+				.authenticationProvider(authenticationProvider) <3>
+				.authenticationProviders(authenticationProvidersConsumer)   <4>
+				.authenticationSuccessHandler(authenticationSuccessHandler) <5>
+				.errorResponseHandler(errorResponseHandler) <6>
 		);
 
 	return http.build();
 }
 ----
-<1> `authenticationConverter()`: The `AuthenticationConverter` (_pre-processor_) used when attempting to extract client credentials from `HttpServletRequest` to an instance of `OAuth2ClientAuthenticationToken`.
-<2> `authenticationProvider()`: The `AuthenticationProvider` (_main processor_) used for authenticating the `OAuth2ClientAuthenticationToken`. (One or more may be added to replace the defaults.)
-<3> `authenticationSuccessHandler()`: The `AuthenticationSuccessHandler` (_post-processor_) used for handling a successful client authentication and associating the `OAuth2ClientAuthenticationToken` to the `SecurityContext`.
-<4> `errorResponseHandler()`: The `AuthenticationFailureHandler` (_post-processor_) used for handling a failed client authentication and returning the https://datatracker.ietf.org/doc/html/rfc6749#section-5.2[`OAuth2Error` response].
+<1> `authenticationConverter()`: Adds an `AuthenticationConverter` (_pre-processor_) used when attempting to extract client credentials from `HttpServletRequest` to an instance of `OAuth2ClientAuthenticationToken`.
+<2> `authenticationConverters()`: Sets the `Consumer` providing access to the `List` of default and (optionally) added ``AuthenticationConverter``'s allowing the ability to add, remove, or customize a specific `AuthenticationConverter`.
+<3> `authenticationProvider()`: Adds an `AuthenticationProvider` (_main processor_) used for authenticating the `OAuth2ClientAuthenticationToken`.
+<4> `authenticationProviders()`: Sets the `Consumer` providing access to the `List` of default and (optionally) added ``AuthenticationProvider``'s allowing the ability to add, remove, or customize a specific `AuthenticationProvider`.
+<5> `authenticationSuccessHandler()`: The `AuthenticationSuccessHandler` (_post-processor_) used for handling a successful client authentication and associating the `OAuth2ClientAuthenticationToken` to the `SecurityContext`.
+<6> `errorResponseHandler()`: The `AuthenticationFailureHandler` (_post-processor_) used for handling a failed client authentication and returning the https://datatracker.ietf.org/doc/html/rfc6749#section-5.2[`OAuth2Error` response].
 
 `OAuth2ClientAuthenticationConfigurer` configures the `OAuth2ClientAuthenticationFilter` and registers it with the OAuth2 authorization server `SecurityFilterChain` `@Bean`.
 `OAuth2ClientAuthenticationFilter` is the `Filter` that processes client authentication requests.

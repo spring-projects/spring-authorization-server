@@ -21,20 +21,24 @@ public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity h
 		.authorizationEndpoint(authorizationEndpoint ->
 			authorizationEndpoint
 				.authorizationRequestConverter(authorizationRequestConverter)   <1>
-				.authenticationProvider(authenticationProvider) <2>
-				.authorizationResponseHandler(authorizationResponseHandler) <3>
-				.errorResponseHandler(errorResponseHandler) <4>
-				.consentPage("/oauth2/v1/authorize")    <5>
+				.authorizationRequestConverters(authorizationRequestConvertersConsumer) <2>
+				.authenticationProvider(authenticationProvider) <3>
+				.authenticationProviders(authenticationProvidersConsumer)   <4>
+				.authorizationResponseHandler(authorizationResponseHandler) <5>
+				.errorResponseHandler(errorResponseHandler) <6>
+				.consentPage("/oauth2/v1/authorize")    <7>
 		);
 
 	return http.build();
 }
 ----
-<1> `authorizationRequestConverter()`: The `AuthenticationConverter` (_pre-processor_) used when attempting to extract an https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.1[OAuth2 authorization request] (or consent) from `HttpServletRequest` to an instance of `OAuth2AuthorizationCodeRequestAuthenticationToken`.
-<2> `authenticationProvider()`: The `AuthenticationProvider` (_main processor_) used for authenticating the `OAuth2AuthorizationCodeRequestAuthenticationToken`. (One or more may be added to replace the defaults.)
-<3> `authorizationResponseHandler()`: The `AuthenticationSuccessHandler` (_post-processor_) used for handling an "`authenticated`" `OAuth2AuthorizationCodeRequestAuthenticationToken` and returning the https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.2[OAuth2AuthorizationResponse].
-<4> `errorResponseHandler()`: The `AuthenticationFailureHandler` (_post-processor_) used for handling an `OAuth2AuthorizationCodeRequestAuthenticationException` and returning the https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.2.1[OAuth2Error response].
-<5> `consentPage()`: The `URI` of the custom consent page to redirect resource owners to if consent is required during the authorization request flow.
+<1> `authorizationRequestConverter()`: Adds an `AuthenticationConverter` (_pre-processor_) used when attempting to extract an https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.1[OAuth2 authorization request] (or consent) from `HttpServletRequest` to an instance of `OAuth2AuthorizationCodeRequestAuthenticationToken`.
+<2> `authorizationRequestConverters()`: Sets the `Consumer` providing access to the `List` of default and (optionally) added ``AuthenticationConverter``'s allowing the ability to add, remove, or customize a specific `AuthenticationConverter`.
+<3> `authenticationProvider()`: Adds an `AuthenticationProvider` (_main processor_) used for authenticating the `OAuth2AuthorizationCodeRequestAuthenticationToken`.
+<4> `authenticationProviders()`: Sets the `Consumer` providing access to the `List` of default and (optionally) added ``AuthenticationProvider``'s allowing the ability to add, remove, or customize a specific `AuthenticationProvider`.
+<5> `authorizationResponseHandler()`: The `AuthenticationSuccessHandler` (_post-processor_) used for handling an "`authenticated`" `OAuth2AuthorizationCodeRequestAuthenticationToken` and returning the https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.2[OAuth2AuthorizationResponse].
+<6> `errorResponseHandler()`: The `AuthenticationFailureHandler` (_post-processor_) used for handling an `OAuth2AuthorizationCodeRequestAuthenticationException` and returning the https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.2.1[OAuth2Error response].
+<7> `consentPage()`: The `URI` of the custom consent page to redirect resource owners to if consent is required during the authorization request flow.
 
 `OAuth2AuthorizationEndpointConfigurer` configures the `OAuth2AuthorizationEndpointFilter` and registers it with the OAuth2 authorization server `SecurityFilterChain` `@Bean`.
 `OAuth2AuthorizationEndpointFilter` is the `Filter` that processes OAuth2 authorization requests (and consents).
@@ -65,18 +69,22 @@ public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity h
 		.tokenEndpoint(tokenEndpoint ->
 			tokenEndpoint
 				.accessTokenRequestConverter(accessTokenRequestConverter)   <1>
-				.authenticationProvider(authenticationProvider) <2>
-				.accessTokenResponseHandler(accessTokenResponseHandler) <3>
-				.errorResponseHandler(errorResponseHandler) <4>
+				.accessTokenRequestConverters(accessTokenRequestConvertersConsumer) <2>
+				.authenticationProvider(authenticationProvider) <3>
+				.authenticationProviders(authenticationProvidersConsumer)   <4>
+				.accessTokenResponseHandler(accessTokenResponseHandler) <5>
+				.errorResponseHandler(errorResponseHandler) <6>
 		);
 
 	return http.build();
 }
 ----
-<1> `accessTokenRequestConverter()`: The `AuthenticationConverter` (_pre-processor_) used when attempting to extract an https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.3[OAuth2 access token request] from `HttpServletRequest` to an instance of `OAuth2AuthorizationGrantAuthenticationToken`.
-<2> `authenticationProvider()`: The `AuthenticationProvider` (_main processor_) used for authenticating the `OAuth2AuthorizationGrantAuthenticationToken`. (One or more may be added to replace the defaults.)
-<3> `accessTokenResponseHandler()`: The `AuthenticationSuccessHandler` (_post-processor_) used for handling an `OAuth2AccessTokenAuthenticationToken` and returning the https://datatracker.ietf.org/doc/html/rfc6749#section-5.1[`OAuth2AccessTokenResponse`].
-<4> `errorResponseHandler()`: The `AuthenticationFailureHandler` (_post-processor_) used for handling an `OAuth2AuthenticationException` and returning the https://datatracker.ietf.org/doc/html/rfc6749#section-5.2[OAuth2Error response].
+<1> `accessTokenRequestConverter()`: Adds an `AuthenticationConverter` (_pre-processor_) used when attempting to extract an https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.3[OAuth2 access token request] from `HttpServletRequest` to an instance of `OAuth2AuthorizationGrantAuthenticationToken`.
+<2> `accessTokenRequestConverters()`: Sets the `Consumer` providing access to the `List` of default and (optionally) added ``AuthenticationConverter``'s allowing the ability to add, remove, or customize a specific `AuthenticationConverter`.
+<3> `authenticationProvider()`: Adds an `AuthenticationProvider` (_main processor_) used for authenticating the `OAuth2AuthorizationGrantAuthenticationToken`.
+<4> `authenticationProviders()`: Sets the `Consumer` providing access to the `List` of default and (optionally) added ``AuthenticationProvider``'s allowing the ability to add, remove, or customize a specific `AuthenticationProvider`.
+<5> `accessTokenResponseHandler()`: The `AuthenticationSuccessHandler` (_post-processor_) used for handling an `OAuth2AccessTokenAuthenticationToken` and returning the https://datatracker.ietf.org/doc/html/rfc6749#section-5.1[`OAuth2AccessTokenResponse`].
+<6> `errorResponseHandler()`: The `AuthenticationFailureHandler` (_post-processor_) used for handling an `OAuth2AuthenticationException` and returning the https://datatracker.ietf.org/doc/html/rfc6749#section-5.2[OAuth2Error response].
 
 `OAuth2TokenEndpointConfigurer` configures the `OAuth2TokenEndpointFilter` and registers it with the OAuth2 authorization server `SecurityFilterChain` `@Bean`.
 `OAuth2TokenEndpointFilter` is the `Filter` that processes OAuth2 access token requests.
@@ -110,25 +118,29 @@ public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity h
 		.tokenIntrospectionEndpoint(tokenIntrospectionEndpoint ->
 			tokenIntrospectionEndpoint
 				.introspectionRequestConverter(introspectionRequestConverter)   <1>
-				.authenticationProvider(authenticationProvider) <2>
-				.introspectionResponseHandler(introspectionResponseHandler) <3>
-				.errorResponseHandler(errorResponseHandler) <4>
+				.introspectionRequestConverters(introspectionRequestConvertersConsumer) <2>
+				.authenticationProvider(authenticationProvider) <3>
+				.authenticationProviders(authenticationProvidersConsumer)   <4>
+				.introspectionResponseHandler(introspectionResponseHandler) <5>
+				.errorResponseHandler(errorResponseHandler) <6>
 		);
 
 	return http.build();
 }
 ----
-<1> `introspectionRequestConverter()`: The `AuthenticationConverter` (_pre-processor_) used when attempting to extract an https://datatracker.ietf.org/doc/html/rfc7662#section-2.1[OAuth2 introspection request] from `HttpServletRequest` to an instance of `OAuth2TokenIntrospectionAuthenticationToken`.
-<2> `authenticationProvider()`: The `AuthenticationProvider` (_main processor_) used for authenticating the `OAuth2TokenIntrospectionAuthenticationToken`. (One or more may be added to replace the defaults.)
-<3> `introspectionResponseHandler()`: The `AuthenticationSuccessHandler` (_post-processor_) used for handling an "`authenticated`" `OAuth2TokenIntrospectionAuthenticationToken` and returning the https://datatracker.ietf.org/doc/html/rfc7662#section-2.2[OAuth2TokenIntrospection response].
-<4> `errorResponseHandler()`: The `AuthenticationFailureHandler` (_post-processor_) used for handling an `OAuth2AuthenticationException` and returning the https://datatracker.ietf.org/doc/html/rfc7662#section-2.3[OAuth2Error response].
+<1> `introspectionRequestConverter()`: Adds an `AuthenticationConverter` (_pre-processor_) used when attempting to extract an https://datatracker.ietf.org/doc/html/rfc7662#section-2.1[OAuth2 introspection request] from `HttpServletRequest` to an instance of `OAuth2TokenIntrospectionAuthenticationToken`.
+<2> `introspectionRequestConverters()`: Sets the `Consumer` providing access to the `List` of default and (optionally) added ``AuthenticationConverter``'s allowing the ability to add, remove, or customize a specific `AuthenticationConverter`.
+<3> `authenticationProvider()`: Adds an `AuthenticationProvider` (_main processor_) used for authenticating the `OAuth2TokenIntrospectionAuthenticationToken`.
+<4> `authenticationProviders()`: Sets the `Consumer` providing access to the `List` of default and (optionally) added ``AuthenticationProvider``'s allowing the ability to add, remove, or customize a specific `AuthenticationProvider`.
+<5> `introspectionResponseHandler()`: The `AuthenticationSuccessHandler` (_post-processor_) used for handling an "`authenticated`" `OAuth2TokenIntrospectionAuthenticationToken` and returning the https://datatracker.ietf.org/doc/html/rfc7662#section-2.2[OAuth2TokenIntrospection response].
+<6> `errorResponseHandler()`: The `AuthenticationFailureHandler` (_post-processor_) used for handling an `OAuth2AuthenticationException` and returning the https://datatracker.ietf.org/doc/html/rfc7662#section-2.3[OAuth2Error response].
 
 `OAuth2TokenIntrospectionEndpointConfigurer` configures the `OAuth2TokenIntrospectionEndpointFilter` and registers it with the OAuth2 authorization server `SecurityFilterChain` `@Bean`.
 `OAuth2TokenIntrospectionEndpointFilter` is the `Filter` that processes OAuth2 introspection requests.
 
 `OAuth2TokenIntrospectionEndpointFilter` is configured with the following defaults:
 
-* `*AuthenticationConverter*` -- An internal implementation that returns the `OAuth2TokenIntrospectionAuthenticationToken`.
+* `*AuthenticationConverter*` -- An `OAuth2TokenIntrospectionAuthenticationConverter`.
 * `*AuthenticationManager*` -- An `AuthenticationManager` composed of `OAuth2TokenIntrospectionAuthenticationProvider`.
 * `*AuthenticationSuccessHandler*` -- An internal implementation that handles an "`authenticated`" `OAuth2TokenIntrospectionAuthenticationToken` and returns the `OAuth2TokenIntrospection` response.
 * `*AuthenticationFailureHandler*` -- An internal implementation that uses the `OAuth2Error` associated with the `OAuth2AuthenticationException` and returns the `OAuth2Error` response.
@@ -152,26 +164,30 @@ public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity h
 	authorizationServerConfigurer
 		.tokenRevocationEndpoint(tokenRevocationEndpoint ->
 			tokenRevocationEndpoint
-				.revocationRequestConverter(revocationRequestConverter)   <1>
-				.authenticationProvider(authenticationProvider) <2>
-				.revocationResponseHandler(revocationResponseHandler) <3>
-				.errorResponseHandler(errorResponseHandler) <4>
+				.revocationRequestConverter(revocationRequestConverter) <1>
+				.revocationRequestConverters(revocationRequestConvertersConsumer)   <2>
+				.authenticationProvider(authenticationProvider) <3>
+				.authenticationProviders(authenticationProvidersConsumer)   <4>
+				.revocationResponseHandler(revocationResponseHandler)   <5>
+				.errorResponseHandler(errorResponseHandler) <6>
 		);
 
 	return http.build();
 }
 ----
-<1> `revocationRequestConverter()`: The `AuthenticationConverter` (_pre-processor_) used when attempting to extract an https://datatracker.ietf.org/doc/html/rfc7009#section-2.1[OAuth2 revocation request] from `HttpServletRequest` to an instance of `OAuth2TokenRevocationAuthenticationToken`.
-<2> `authenticationProvider()`: The `AuthenticationProvider` (_main processor_) used for authenticating the `OAuth2TokenRevocationAuthenticationToken`. (One or more may be added to replace the defaults.)
-<3> `revocationResponseHandler()`: The `AuthenticationSuccessHandler` (_post-processor_) used for handling an "`authenticated`" `OAuth2TokenRevocationAuthenticationToken` and returning the https://datatracker.ietf.org/doc/html/rfc7009#section-2.2[OAuth2 revocation response].
-<4> `errorResponseHandler()`: The `AuthenticationFailureHandler` (_post-processor_) used for handling an `OAuth2AuthenticationException` and returning the https://datatracker.ietf.org/doc/html/rfc7009#section-2.2.1[OAuth2Error response].
+<1> `revocationRequestConverter()`: Adds an `AuthenticationConverter` (_pre-processor_) used when attempting to extract an https://datatracker.ietf.org/doc/html/rfc7009#section-2.1[OAuth2 revocation request] from `HttpServletRequest` to an instance of `OAuth2TokenRevocationAuthenticationToken`.
+<2> `revocationRequestConverters()`: Sets the `Consumer` providing access to the `List` of default and (optionally) added ``AuthenticationConverter``'s allowing the ability to add, remove, or customize a specific `AuthenticationConverter`.
+<3> `authenticationProvider()`: Adds an `AuthenticationProvider` (_main processor_) used for authenticating the `OAuth2TokenRevocationAuthenticationToken`.
+<4> `authenticationProviders()`: Sets the `Consumer` providing access to the `List` of default and (optionally) added ``AuthenticationProvider``'s allowing the ability to add, remove, or customize a specific `AuthenticationProvider`.
+<5> `revocationResponseHandler()`: The `AuthenticationSuccessHandler` (_post-processor_) used for handling an "`authenticated`" `OAuth2TokenRevocationAuthenticationToken` and returning the https://datatracker.ietf.org/doc/html/rfc7009#section-2.2[OAuth2 revocation response].
+<6> `errorResponseHandler()`: The `AuthenticationFailureHandler` (_post-processor_) used for handling an `OAuth2AuthenticationException` and returning the https://datatracker.ietf.org/doc/html/rfc7009#section-2.2.1[OAuth2Error response].
 
 `OAuth2TokenRevocationEndpointConfigurer` configures the `OAuth2TokenRevocationEndpointFilter` and registers it with the OAuth2 authorization server `SecurityFilterChain` `@Bean`.
 `OAuth2TokenRevocationEndpointFilter` is the `Filter` that processes OAuth2 revocation requests.
 
 `OAuth2TokenRevocationEndpointFilter` is configured with the following defaults:
 
-* `*AuthenticationConverter*` -- An internal implementation that returns the `OAuth2TokenRevocationAuthenticationToken`.
+* `*AuthenticationConverter*` -- An `OAuth2TokenRevocationAuthenticationConverter`.
 * `*AuthenticationManager*` -- An `AuthenticationManager` composed of `OAuth2TokenRevocationAuthenticationProvider`.
 * `*AuthenticationSuccessHandler*` -- An internal implementation that handles an "`authenticated`" `OAuth2TokenRevocationAuthenticationToken` and returns the OAuth2 revocation response.
 * `*AuthenticationFailureHandler*` -- An internal implementation that uses the `OAuth2Error` associated with the `OAuth2AuthenticationException` and returns the `OAuth2Error` response.

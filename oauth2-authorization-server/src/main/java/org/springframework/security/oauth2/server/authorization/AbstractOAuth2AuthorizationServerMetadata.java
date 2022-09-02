@@ -275,6 +275,17 @@ public abstract class AbstractOAuth2AuthorizationServerMetadata implements OAuth
 		}
 
 		/**
+		 * Use this {@code registration_endpoint} in the resulting {@link AbstractOAuth2AuthorizationServerMetadata}, Optional.
+		 *
+		 * @param clientRegistrationEndpoint the {@code URL} of the OAuth 2.0 Dynamic Client Registration Endpoint
+		 * @return the {@link AbstractBuilder} for further configuration
+		 * @since 0.4.0
+		 */
+		public B clientRegistrationEndpoint(String clientRegistrationEndpoint) {
+			return claim(OAuth2AuthorizationServerMetadataClaimNames.REGISTRATION_ENDPOINT, clientRegistrationEndpoint);
+		}
+
+		/**
 		 * Add this Proof Key for Code Exchange (PKCE) {@code code_challenge_method} to the collection of {@code code_challenge_methods_supported}
 		 * in the resulting {@link AbstractOAuth2AuthorizationServerMetadata}, OPTIONAL.
 		 *

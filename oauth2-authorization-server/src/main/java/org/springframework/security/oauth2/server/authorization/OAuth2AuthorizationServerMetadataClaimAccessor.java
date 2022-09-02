@@ -142,6 +142,16 @@ public interface OAuth2AuthorizationServerMetadataClaimAccessor extends ClaimAcc
 	}
 
 	/**
+	 * Returns the {@code URL} of the authorization server's OAuth 2.0 Dynamic Client Registration endpoint {@code (registration_endpoint)}.
+	 *
+	 * @return the {@code URL} of the authorization server's OAuth 2.0 Dynamic Client Registration endpoint
+	 * @since 0.4.0
+	 */
+	default URL getClientRegistrationEndpoint() {
+		return getClaimAsURL(OAuth2AuthorizationServerMetadataClaimNames.REGISTRATION_ENDPOINT);
+	}
+
+	/**
 	 * Returns the Proof Key for Code Exchange (PKCE) {@code code_challenge_method} values supported {@code (code_challenge_methods_supported)}.
 	 *
 	 * @return the {@code code_challenge_method} values supported

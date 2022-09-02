@@ -23,8 +23,12 @@ import java.util.Map;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.ObjectPostProcessor;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.oauth2.server.authorization.context.AuthorizationServerContext;
+import org.springframework.security.oauth2.server.authorization.context.AuthorizationServerContextHolder;
+import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.web.util.matcher.OrRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
+import org.springframework.web.util.UriComponentsBuilder;
 
 /**
  * Configurer for OpenID Connect 1.0 support.
@@ -102,6 +106,25 @@ public final class OidcConfigurer extends AbstractOAuth2Configurer {
 
 	@Override
 	void configure(HttpSecurity httpSecurity) {
+		OidcClientRegistrationEndpointConfigurer clientRegistrationEndpointConfigurer =
+				getConfigurer(OidcClientRegistrationEndpointConfigurer.class);
+		if (clientRegistrationEndpointConfigurer != null) {
+			OidcProviderConfigurationEndpointConfigurer providerConfigurationEndpointConfigurer =
+					getConfigurer(OidcProviderConfigurationEndpointConfigurer.class);
+
+			providerConfigurationEndpointConfigurer
+					.addDefaultProviderConfigurationCustomizer(builder -> {
+						AuthorizationServerContext authorizationServerContext = AuthorizationServerContextHolder.getContext();
+						String issuer = authorizationServerContext.getIssuer();
+						AuthorizationServerSettings authorizationServerSettings = authorizationServerContext.getAuthorizationServerSettings();
+
+						String clientRegistrationEndpoint = UriComponentsBuilder.fromUriString(issuer)
+								.path(authorizationServerSettings.getOidcClientRegistrationEndpoint()).build().toUriString();
+
+						builder.clientRegistrationEndpoint(clientRegistrationEndpoint);
+					});
+		}
+
 		this.configurers.values().forEach(configurer -> configurer.configure(httpSecurity));
 	}
 

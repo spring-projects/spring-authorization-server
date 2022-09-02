@@ -87,6 +87,12 @@ public class OAuth2AuthorizationServerMetadataClaimNames {
 	public static final String INTROSPECTION_ENDPOINT_AUTH_METHODS_SUPPORTED = "introspection_endpoint_auth_methods_supported";
 
 	/**
+	 * {@code registration_endpoint} -  the {@code URL} of the authorization server's OAuth 2.0 Dynamic Client Registration endpoint
+	 * @since 0.4.0
+	 */
+	public static final String REGISTRATION_ENDPOINT = "registration_endpoint";
+
+	/**
 	 * {@code code_challenge_methods_supported} - the Proof Key for Code Exchange (PKCE) {@code code_challenge_method} values supported
 	 */
 	public static final String CODE_CHALLENGE_METHODS_SUPPORTED = "code_challenge_methods_supported";

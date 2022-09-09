@@ -15,54 +15,24 @@
  */
 package org.springframework.security.oauth2.server.authorization.authentication;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 
-import org.springframework.lang.Nullable;
+import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.server.authorization.context.Context;
 import org.springframework.util.Assert;
-import org.springframework.util.CollectionUtils;
 
 /**
- * A context that holds an {@link Authentication} and (optionally) additional information.
+ * A context that holds an {@link Authentication} and (optionally) additional information
+ * and is used in an {@link AuthenticationProvider}.
  *
  * @author Joe Grandja
  * @since 0.2.0
  * @see Context
  */
-public class OAuth2AuthenticationContext implements Context {
-	private final Map<Object, Object> context;
-
-	/**
-	 * Constructs an {@code OAuth2AuthenticationContext} using the provided parameters.
-	 *
-	 * @param authentication the {@code Authentication}
-	 * @param context a {@code Map} of additional context information
-	 */
-	public OAuth2AuthenticationContext(Authentication authentication, @Nullable Map<Object, Object> context) {
-		Assert.notNull(authentication, "authentication cannot be null");
-		Map<Object, Object> ctx = new HashMap<>();
-		if (!CollectionUtils.isEmpty(context)) {
-			ctx.putAll(context);
-		}
-		ctx.put(Authentication.class, authentication);
-		this.context = Collections.unmodifiableMap(ctx);
-	}
-
-	/**
-	 * Constructs an {@code OAuth2AuthenticationContext} using the provided parameters.
-	 *
-	 * @param context a {@code Map} of context information, must contain the {@code Authentication}
-	 * @since 0.2.1
-	 */
-	public OAuth2AuthenticationContext(Map<Object, Object> context) {
-		Assert.notEmpty(context, "context cannot be empty");
-		Assert.notNull(context.get(Authentication.class), "authentication cannot be null");
-		this.context = Collections.unmodifiableMap(new HashMap<>(context));
-	}
+public interface OAuth2AuthenticationContext extends Context {
 
 	/**
 	 * Returns the {@link Authentication} associated to the context.
@@ -71,21 +41,8 @@ public class OAuth2AuthenticationContext implements Context {
 	 * @return the {@link Authentication}
 	 */
 	@SuppressWarnings("unchecked")
-	public <T extends Authentication> T getAuthentication() {
+	default <T extends Authentication> T getAuthentication() {
 		return (T) get(Authentication.class);
-	}
-
-	@SuppressWarnings("unchecked")
-	@Nullable
-	@Override
-	public <V> V get(Object key) {
-		return hasKey(key) ? (V) this.context.get(key) : null;
-	}
-
-	@Override
-	public boolean hasKey(Object key) {
-		Assert.notNull(key, "key cannot be null");
-		return this.context.containsKey(key);
 	}
 
 	/**
@@ -95,7 +52,7 @@ public class OAuth2AuthenticationContext implements Context {
 	 * @param <B> the type of the builder
 	 * @since 0.2.1
 	 */
-	protected static abstract class AbstractBuilder<T extends OAuth2AuthenticationContext, B extends AbstractBuilder<T, B>> {
+	abstract class AbstractBuilder<T extends OAuth2AuthenticationContext, B extends AbstractBuilder<T, B>> {
 		private final Map<Object, Object> context = new HashMap<>();
 
 		protected AbstractBuilder(Authentication authentication) {

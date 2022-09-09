@@ -186,10 +186,10 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 					authorizationCodeRequestAuthentication, null);
 		}
 
-		Map<Object, Object> context = new HashMap<>();
-		context.put(RegisteredClient.class, registeredClient);
-		OAuth2AuthenticationContext authenticationContext = new OAuth2AuthenticationContext(
-				authorizationCodeRequestAuthentication, context);
+		OAuth2AuthenticationContext authenticationContext =
+				OAuth2AuthorizationCodeRequestAuthenticationContext.with(authorizationCodeRequestAuthentication)
+						.registeredClient(registeredClient)
+						.build();
 
 		OAuth2AuthenticationValidator redirectUriValidator = resolveAuthenticationValidator(OAuth2ParameterNames.REDIRECT_URI);
 		redirectUriValidator.validate(authenticationContext);

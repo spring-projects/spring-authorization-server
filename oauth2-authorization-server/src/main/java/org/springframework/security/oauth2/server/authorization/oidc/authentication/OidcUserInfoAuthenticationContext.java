@@ -15,9 +15,12 @@
  */
 package org.springframework.security.oauth2.server.authorization.oidc.authentication;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
+import org.springframework.lang.Nullable;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.oidc.OidcUserInfo;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
@@ -31,12 +34,27 @@ import org.springframework.util.Assert;
  * @author Joe Grandja
  * @since 0.2.1
  * @see OAuth2AuthenticationContext
+ * @see OidcUserInfo
  * @see OidcUserInfoAuthenticationProvider#setUserInfoMapper(Function)
  */
-public final class OidcUserInfoAuthenticationContext extends OAuth2AuthenticationContext {
+public final class OidcUserInfoAuthenticationContext implements OAuth2AuthenticationContext {
+	private final Map<Object, Object> context;
 
 	private OidcUserInfoAuthenticationContext(Map<Object, Object> context) {
-		super(context);
+		this.context = Collections.unmodifiableMap(new HashMap<>(context));
+	}
+
+	@SuppressWarnings("unchecked")
+	@Nullable
+	@Override
+	public <V> V get(Object key) {
+		return hasKey(key) ? (V) this.context.get(key) : null;
+	}
+
+	@Override
+	public boolean hasKey(Object key) {
+		Assert.notNull(key, "key cannot be null");
+		return this.context.containsKey(key);
 	}
 
 	/**

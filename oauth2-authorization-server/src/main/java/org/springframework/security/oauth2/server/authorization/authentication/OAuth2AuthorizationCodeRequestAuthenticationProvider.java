@@ -19,12 +19,9 @@ import java.security.Principal;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 import org.springframework.lang.Nullable;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
@@ -55,8 +52,6 @@ import org.springframework.security.oauth2.server.authorization.token.OAuth2Toke
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenGenerator;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
-import org.springframework.web.util.UriComponents;
-import org.springframework.web.util.UriComponentsBuilder;
 
 /**
  * An {@link AuthenticationProvider} implementation for the OAuth 2.0 Authorization Request (and Consent)
@@ -66,6 +61,7 @@ import org.springframework.web.util.UriComponentsBuilder;
  * @author Steve Riesenberg
  * @since 0.1.2
  * @see OAuth2AuthorizationCodeRequestAuthenticationToken
+ * @see OAuth2AuthorizationCodeRequestAuthenticationValidator
  * @see OAuth2AuthorizationCodeAuthenticationProvider
  * @see RegisteredClientRepository
  * @see OAuth2AuthorizationService
@@ -78,13 +74,12 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 	private static final OAuth2TokenType STATE_TOKEN_TYPE = new OAuth2TokenType(OAuth2ParameterNames.STATE);
 	private static final StringKeyGenerator DEFAULT_STATE_GENERATOR =
 			new Base64StringKeyGenerator(Base64.getUrlEncoder());
-	private static final Function<String, OAuth2AuthenticationValidator> DEFAULT_AUTHENTICATION_VALIDATOR_RESOLVER =
-			createDefaultAuthenticationValidatorResolver();
 	private final RegisteredClientRepository registeredClientRepository;
 	private final OAuth2AuthorizationService authorizationService;
 	private final OAuth2AuthorizationConsentService authorizationConsentService;
 	private OAuth2TokenGenerator<OAuth2AuthorizationCode> authorizationCodeGenerator = new OAuth2AuthorizationCodeGenerator();
-	private Function<String, OAuth2AuthenticationValidator> authenticationValidatorResolver = DEFAULT_AUTHENTICATION_VALIDATOR_RESOLVER;
+	private Consumer<OAuth2AuthorizationCodeRequestAuthenticationContext> authenticationValidator =
+			new OAuth2AuthorizationCodeRequestAuthenticationValidator();
 	private Consumer<OAuth2AuthorizationConsentAuthenticationContext> authorizationConsentCustomizer;
 
 	/**
@@ -131,23 +126,20 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 	}
 
 	/**
-	 * Sets the resolver that resolves an {@link OAuth2AuthenticationValidator} from the provided OAuth 2.0 Authorization Request parameter.
+	 * Sets the {@code Consumer} providing access to the {@link OAuth2AuthorizationCodeRequestAuthenticationContext}
+	 * and is responsible for validating specific OAuth 2.0 Authorization Request parameters
+	 * associated in the {@link OAuth2AuthorizationCodeRequestAuthenticationToken}.
+	 * The default authentication validator is {@link OAuth2AuthorizationCodeRequestAuthenticationValidator}.
 	 *
 	 * <p>
-	 * The following OAuth 2.0 Authorization Request parameters are supported:
-	 * <ol>
-	 * <li>{@link OAuth2ParameterNames#REDIRECT_URI}</li>
-	 * <li>{@link OAuth2ParameterNames#SCOPE}</li>
-	 * </ol>
+	 * <b>NOTE:</b> The authentication validator MUST throw {@link OAuth2AuthorizationCodeRequestAuthenticationException} if validation fails.
 	 *
-	 * <p>
-	 * <b>NOTE:</b> The resolved {@link OAuth2AuthenticationValidator} MUST throw {@link OAuth2AuthorizationCodeRequestAuthenticationException} if validation fails.
-	 *
-	 * @param authenticationValidatorResolver the resolver that resolves an {@link OAuth2AuthenticationValidator} from the provided OAuth 2.0 Authorization Request parameter
+	 * @param authenticationValidator the {@code Consumer} providing access to the {@link OAuth2AuthorizationCodeRequestAuthenticationContext} and is responsible for validating specific OAuth 2.0 Authorization Request parameters
+	 * @since 0.4.0
 	 */
-	public void setAuthenticationValidatorResolver(Function<String, OAuth2AuthenticationValidator> authenticationValidatorResolver) {
-		Assert.notNull(authenticationValidatorResolver, "authenticationValidatorResolver cannot be null");
-		this.authenticationValidatorResolver = authenticationValidatorResolver;
+	public void setAuthenticationValidator(Consumer<OAuth2AuthorizationCodeRequestAuthenticationContext> authenticationValidator) {
+		Assert.notNull(authenticationValidator, "authenticationValidator cannot be null");
+		this.authenticationValidator = authenticationValidator;
 	}
 
 	/**
@@ -186,21 +178,16 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 					authorizationCodeRequestAuthentication, null);
 		}
 
-		OAuth2AuthenticationContext authenticationContext =
+		OAuth2AuthorizationCodeRequestAuthenticationContext authenticationContext =
 				OAuth2AuthorizationCodeRequestAuthenticationContext.with(authorizationCodeRequestAuthentication)
 						.registeredClient(registeredClient)
 						.build();
-
-		OAuth2AuthenticationValidator redirectUriValidator = resolveAuthenticationValidator(OAuth2ParameterNames.REDIRECT_URI);
-		redirectUriValidator.validate(authenticationContext);
+		this.authenticationValidator.accept(authenticationContext);
 
 		if (!registeredClient.getAuthorizationGrantTypes().contains(AuthorizationGrantType.AUTHORIZATION_CODE)) {
 			throwError(OAuth2ErrorCodes.UNAUTHORIZED_CLIENT, OAuth2ParameterNames.CLIENT_ID,
 					authorizationCodeRequestAuthentication, registeredClient);
 		}
-
-		OAuth2AuthenticationValidator scopeValidator = resolveAuthenticationValidator(OAuth2ParameterNames.SCOPE);
-		scopeValidator.validate(authenticationContext);
 
 		// code_challenge (REQUIRED for public clients) - RFC 7636 (PKCE)
 		String codeChallenge = (String) authorizationCodeRequestAuthentication.getAdditionalParameters().get(PkceParameterNames.CODE_CHALLENGE);
@@ -282,13 +269,6 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 				.state(authorizationRequest.getState())
 				.authorizationCode(authorizationCode)
 				.build();
-	}
-
-	private OAuth2AuthenticationValidator resolveAuthenticationValidator(String parameterName) {
-		OAuth2AuthenticationValidator authenticationValidator = this.authenticationValidatorResolver.apply(parameterName);
-		return authenticationValidator != null ?
-				authenticationValidator :
-				DEFAULT_AUTHENTICATION_VALIDATOR_RESOLVER.apply(parameterName);
 	}
 
 	private Authentication authenticateAuthorizationConsent(Authentication authentication) throws AuthenticationException {
@@ -414,13 +394,6 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 				.build();
 	}
 
-	private static Function<String, OAuth2AuthenticationValidator> createDefaultAuthenticationValidatorResolver() {
-		Map<String, OAuth2AuthenticationValidator> authenticationValidators = new HashMap<>();
-		authenticationValidators.put(OAuth2ParameterNames.REDIRECT_URI, new DefaultRedirectUriOAuth2AuthenticationValidator());
-		authenticationValidators.put(OAuth2ParameterNames.SCOPE, new DefaultScopeOAuth2AuthenticationValidator());
-		return authenticationValidators::get;
-	}
-
 	private static OAuth2Authorization.Builder authorizationBuilder(RegisteredClient registeredClient, Authentication principal,
 			OAuth2AuthorizationRequest authorizationRequest) {
 		return OAuth2Authorization.withRegisteredClient(registeredClient)
@@ -505,7 +478,6 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 		boolean redirectOnError = true;
 		if (error.getErrorCode().equals(OAuth2ErrorCodes.INVALID_REQUEST) &&
 				(parameterName.equals(OAuth2ParameterNames.CLIENT_ID) ||
-						parameterName.equals(OAuth2ParameterNames.REDIRECT_URI) ||
 						parameterName.equals(OAuth2ParameterNames.STATE))) {
 			redirectOnError = false;
 		}
@@ -520,13 +492,13 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 					.redirectUri(redirectUri)
 					.state(state)
 					.build();
-			authorizationCodeRequestAuthenticationResult.setAuthenticated(authorizationCodeRequestAuthentication.isAuthenticated());
 		} else if (!redirectOnError && StringUtils.hasText(authorizationCodeRequestAuthentication.getRedirectUri())) {
 			authorizationCodeRequestAuthenticationResult = from(authorizationCodeRequestAuthentication)
 					.redirectUri(null)		// Prevent redirects
 					.build();
-			authorizationCodeRequestAuthenticationResult.setAuthenticated(authorizationCodeRequestAuthentication.isAuthenticated());
 		}
+
+		authorizationCodeRequestAuthenticationResult.setAuthenticated(authorizationCodeRequestAuthentication.isAuthenticated());
 
 		throw new OAuth2AuthorizationCodeRequestAuthenticationException(error, authorizationCodeRequestAuthenticationResult);
 	}
@@ -565,126 +537,6 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 			Instant issuedAt = Instant.now();
 			Instant expiresAt = issuedAt.plus(context.getRegisteredClient().getTokenSettings().getAuthorizationCodeTimeToLive());
 			return new OAuth2AuthorizationCode(this.authorizationCodeGenerator.generateKey(), issuedAt, expiresAt);
-		}
-
-	}
-
-	private static class DefaultRedirectUriOAuth2AuthenticationValidator implements OAuth2AuthenticationValidator {
-
-		@Override
-		public void validate(OAuth2AuthenticationContext authenticationContext) {
-			OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthentication =
-					authenticationContext.getAuthentication();
-			RegisteredClient registeredClient = authenticationContext.get(RegisteredClient.class);
-
-			String requestedRedirectUri = authorizationCodeRequestAuthentication.getRedirectUri();
-
-			if (StringUtils.hasText(requestedRedirectUri)) {
-				// ***** redirect_uri is available in authorization request
-
-				UriComponents requestedRedirect = null;
-				try {
-					requestedRedirect = UriComponentsBuilder.fromUriString(requestedRedirectUri).build();
-				} catch (Exception ex) { }
-				if (requestedRedirect == null || requestedRedirect.getFragment() != null) {
-					throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.REDIRECT_URI,
-							authorizationCodeRequestAuthentication, registeredClient);
-				}
-
-				String requestedRedirectHost = requestedRedirect.getHost();
-				if (requestedRedirectHost == null || requestedRedirectHost.equals("localhost")) {
-					// As per https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-01#section-9.7.1
-					// While redirect URIs using localhost (i.e., "http://localhost:{port}/{path}")
-					// function similarly to loopback IP redirects described in Section 10.3.3,
-					// the use of "localhost" is NOT RECOMMENDED.
-					OAuth2Error error = new OAuth2Error(
-							OAuth2ErrorCodes.INVALID_REQUEST,
-							"localhost is not allowed for the redirect_uri (" + requestedRedirectUri + "). " +
-									"Use the IP literal (127.0.0.1) instead.",
-							"https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-01#section-9.7.1");
-					throwError(error, OAuth2ParameterNames.REDIRECT_URI,
-							authorizationCodeRequestAuthentication, registeredClient, null);
-				}
-
-				if (!isLoopbackAddress(requestedRedirectHost)) {
-					// As per https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-01#section-9.7
-					// When comparing client redirect URIs against pre-registered URIs,
-					// authorization servers MUST utilize exact string matching.
-					if (!registeredClient.getRedirectUris().contains(requestedRedirectUri)) {
-						throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.REDIRECT_URI,
-								authorizationCodeRequestAuthentication, registeredClient);
-					}
-				} else {
-					// As per https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-01#section-10.3.3
-					// The authorization server MUST allow any port to be specified at the
-					// time of the request for loopback IP redirect URIs, to accommodate
-					// clients that obtain an available ephemeral port from the operating
-					// system at the time of the request.
-					boolean validRedirectUri = false;
-					for (String registeredRedirectUri : registeredClient.getRedirectUris()) {
-						UriComponentsBuilder registeredRedirect = UriComponentsBuilder.fromUriString(registeredRedirectUri);
-						registeredRedirect.port(requestedRedirect.getPort());
-						if (registeredRedirect.build().toString().equals(requestedRedirect.toString())) {
-							validRedirectUri = true;
-							break;
-						}
-					}
-					if (!validRedirectUri) {
-						throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.REDIRECT_URI,
-								authorizationCodeRequestAuthentication, registeredClient);
-					}
-				}
-
-			} else {
-				// ***** redirect_uri is NOT available in authorization request
-
-				if (authorizationCodeRequestAuthentication.getScopes().contains(OidcScopes.OPENID) ||
-						registeredClient.getRedirectUris().size() != 1) {
-					// redirect_uri is REQUIRED for OpenID Connect
-					throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.REDIRECT_URI,
-							authorizationCodeRequestAuthentication, registeredClient);
-				}
-			}
-		}
-
-		private static boolean isLoopbackAddress(String host) {
-			// IPv6 loopback address should either be "0:0:0:0:0:0:0:1" or "::1"
-			if ("[0:0:0:0:0:0:0:1]".equals(host) || "[::1]".equals(host)) {
-				return true;
-			}
-			// IPv4 loopback address ranges from 127.0.0.1 to 127.255.255.255
-			String[] ipv4Octets = host.split("\\.");
-			if (ipv4Octets.length != 4) {
-				return false;
-			}
-			try {
-				int[] address = new int[ipv4Octets.length];
-				for (int i=0; i < ipv4Octets.length; i++) {
-					address[i] = Integer.parseInt(ipv4Octets[i]);
-				}
-				return address[0] == 127 && address[1] >= 0 && address[1] <= 255 && address[2] >= 0 &&
-						address[2] <= 255 && address[3] >= 1 && address[3] <= 255;
-			} catch (NumberFormatException ex) {
-				return false;
-			}
-		}
-
-	}
-
-	private static class DefaultScopeOAuth2AuthenticationValidator implements OAuth2AuthenticationValidator {
-
-		@Override
-		public void validate(OAuth2AuthenticationContext authenticationContext) {
-			OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthentication =
-					authenticationContext.getAuthentication();
-			RegisteredClient registeredClient = authenticationContext.get(RegisteredClient.class);
-
-			Set<String> requestedScopes = authorizationCodeRequestAuthentication.getScopes();
-			Set<String> allowedScopes = registeredClient.getScopes();
-			if (!requestedScopes.isEmpty() && !allowedScopes.containsAll(requestedScopes)) {
-				throwError(OAuth2ErrorCodes.INVALID_SCOPE, OAuth2ParameterNames.SCOPE,
-						authorizationCodeRequestAuthentication, registeredClient);
-			}
 		}
 
 	}

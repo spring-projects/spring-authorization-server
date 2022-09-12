@@ -22,7 +22,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -60,7 +59,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -128,10 +126,10 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 	}
 
 	@Test
-	public void setAuthenticationValidatorResolverWhenNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> this.authenticationProvider.setAuthenticationValidatorResolver(null))
+	public void setAuthenticationValidatorWhenNullThenThrowIllegalArgumentException() {
+		assertThatThrownBy(() -> this.authenticationProvider.setAuthenticationValidator(null))
 				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("authenticationValidatorResolver cannot be null");
+				.hasMessage("authenticationValidator cannot be null");
 	}
 
 	@Test
@@ -555,14 +553,14 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 	}
 
 	@Test
-	public void authenticateWhenCustomAuthenticationValidatorResolverThenUsed() {
+	public void authenticateWhenCustomAuthenticationValidatorThenUsed() {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
 				.thenReturn(registeredClient);
 
 		@SuppressWarnings("unchecked")
-		Function<String, OAuth2AuthenticationValidator> authenticationValidatorResolver = mock(Function.class);
-		this.authenticationProvider.setAuthenticationValidatorResolver(authenticationValidatorResolver);
+		Consumer<OAuth2AuthorizationCodeRequestAuthenticationContext> authenticationValidator = mock(Consumer.class);
+		this.authenticationProvider.setAuthenticationValidator(authenticationValidator);
 
 		OAuth2AuthorizationCodeRequestAuthenticationToken authentication =
 				authorizationCodeRequestAuthentication(registeredClient, this.principal)
@@ -573,10 +571,7 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 
 		assertAuthorizationCodeRequestWithAuthorizationCodeResult(registeredClient, authentication, authenticationResult);
 
-		ArgumentCaptor<String> parameterNameCaptor = ArgumentCaptor.forClass(String.class);
-		verify(authenticationValidatorResolver, times(2)).apply(parameterNameCaptor.capture());
-		assertThat(parameterNameCaptor.getAllValues()).containsExactly(
-				OAuth2ParameterNames.REDIRECT_URI, OAuth2ParameterNames.SCOPE);
+		verify(authenticationValidator).accept(any());
 	}
 
 	private void assertAuthorizationCodeRequestWithAuthorizationCodeResult(

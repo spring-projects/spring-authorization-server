@@ -18,6 +18,7 @@ package org.springframework.security.oauth2.server.authorization.authentication;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Consumer;
 
 import org.springframework.lang.Nullable;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
@@ -30,7 +31,8 @@ import org.springframework.util.Assert;
  * @author Joe Grandja
  * @since 0.4.0
  * @see OAuth2AuthenticationContext
- * @see OAuth2AuthorizationCodeRequestAuthenticationProvider
+ * @see OAuth2AuthorizationCodeRequestAuthenticationToken
+ * @see OAuth2AuthorizationCodeRequestAuthenticationProvider#setAuthenticationValidator(Consumer)
  */
 public final class OAuth2AuthorizationCodeRequestAuthenticationContext implements OAuth2AuthenticationContext {
 	private final Map<Object, Object> context;

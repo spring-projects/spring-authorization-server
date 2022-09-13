@@ -15,7 +15,7 @@
  */
 package org.springframework.security.oauth2.server.authorization.web.authentication;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;

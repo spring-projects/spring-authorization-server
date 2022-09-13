@@ -16,8 +16,8 @@
 package org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
+import java.util.function.Consumer;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -32,6 +32,8 @@ import org.springframework.security.oauth2.server.authorization.authentication.O
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2TokenRevocationAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.web.OAuth2TokenRevocationEndpointFilter;
+import org.springframework.security.oauth2.server.authorization.web.authentication.DelegatingAuthenticationConverter;
+import org.springframework.security.oauth2.server.authorization.web.authentication.OAuth2TokenRevocationAuthenticationConverter;
 import org.springframework.security.web.access.intercept.FilterSecurityInterceptor;
 import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
@@ -44,14 +46,17 @@ import org.springframework.util.Assert;
  * Configurer for the OAuth 2.0 Token Revocation Endpoint.
  *
  * @author Arfat Chaus
+ * @author Joe Grandja
  * @since 0.2.2
  * @see OAuth2AuthorizationServerConfigurer#tokenRevocationEndpoint
  * @see OAuth2TokenRevocationEndpointFilter
  */
 public final class OAuth2TokenRevocationEndpointConfigurer extends AbstractOAuth2Configurer {
 	private RequestMatcher requestMatcher;
-	private AuthenticationConverter revocationRequestConverter;
-	private final List<AuthenticationProvider> authenticationProviders = new LinkedList<>();
+	private final List<AuthenticationConverter> revocationRequestConverters = new ArrayList<>();
+	private Consumer<List<AuthenticationConverter>> revocationRequestConvertersConsumer = (revocationRequestConverters) -> {};
+	private final List<AuthenticationProvider> authenticationProviders = new ArrayList<>();
+	private Consumer<List<AuthenticationProvider>> authenticationProvidersConsumer = (authenticationProviders) -> {};
 	private AuthenticationSuccessHandler revocationResponseHandler;
 	private AuthenticationFailureHandler errorResponseHandler;
 
@@ -63,14 +68,31 @@ public final class OAuth2TokenRevocationEndpointConfigurer extends AbstractOAuth
 	}
 
 	/**
-	 * Sets the {@link AuthenticationConverter} used when attempting to extract a Revoke Token Request from {@link HttpServletRequest}
-	 * to an instance of {@link OAuth2TokenRevocationAuthenticationToken} used for authenticating the client.
+	 * Adds an {@link AuthenticationConverter} used when attempting to extract a Revoke Token Request from {@link HttpServletRequest}
+	 * to an instance of {@link OAuth2TokenRevocationAuthenticationToken} used for authenticating the request.
 	 *
-	 * @param revocationRequestConverter the {@link AuthenticationConverter} used when attempting to extract client credentials from {@link HttpServletRequest}
+	 * @param revocationRequestConverter an {@link AuthenticationConverter} used when attempting to extract a Revoke Token Request from {@link HttpServletRequest}
 	 * @return the {@link OAuth2TokenRevocationEndpointConfigurer} for further configuration
 	 */
 	public OAuth2TokenRevocationEndpointConfigurer revocationRequestConverter(AuthenticationConverter revocationRequestConverter) {
-		this.revocationRequestConverter = revocationRequestConverter;
+		Assert.notNull(revocationRequestConverter, "revocationRequestConverter cannot be null");
+		this.revocationRequestConverters.add(revocationRequestConverter);
+		return this;
+	}
+
+	/**
+	 * Sets the {@code Consumer} providing access to the {@code List} of default
+	 * and (optionally) added {@link #revocationRequestConverter(AuthenticationConverter) AuthenticationConverter}'s
+	 * allowing the ability to add, remove, or customize a specific {@link AuthenticationConverter}.
+	 *
+	 * @param revocationRequestConvertersConsumer the {@code Consumer} providing access to the {@code List} of default and (optionally) added {@link AuthenticationConverter}'s
+	 * @return the {@link OAuth2TokenRevocationEndpointConfigurer} for further configuration
+	 * @since 0.4.0
+	 */
+	public OAuth2TokenRevocationEndpointConfigurer revocationRequestConverters(
+			Consumer<List<AuthenticationConverter>> revocationRequestConvertersConsumer) {
+		Assert.notNull(revocationRequestConvertersConsumer, "revocationRequestConvertersConsumer cannot be null");
+		this.revocationRequestConvertersConsumer = revocationRequestConvertersConsumer;
 		return this;
 	}
 
@@ -83,6 +105,22 @@ public final class OAuth2TokenRevocationEndpointConfigurer extends AbstractOAuth
 	public OAuth2TokenRevocationEndpointConfigurer authenticationProvider(AuthenticationProvider authenticationProvider) {
 		Assert.notNull(authenticationProvider, "authenticationProvider cannot be null");
 		this.authenticationProviders.add(authenticationProvider);
+		return this;
+	}
+
+	/**
+	 * Sets the {@code Consumer} providing access to the {@code List} of default
+	 * and (optionally) added {@link #authenticationProvider(AuthenticationProvider) AuthenticationProvider}'s
+	 * allowing the ability to add, remove, or customize a specific {@link AuthenticationProvider}.
+	 *
+	 * @param authenticationProvidersConsumer the {@code Consumer} providing access to the {@code List} of default and (optionally) added {@link AuthenticationProvider}'s
+	 * @return the {@link OAuth2TokenRevocationEndpointConfigurer} for further configuration
+	 * @since 0.4.0
+	 */
+	public OAuth2TokenRevocationEndpointConfigurer authenticationProviders(
+			Consumer<List<AuthenticationProvider>> authenticationProvidersConsumer) {
+		Assert.notNull(authenticationProvidersConsumer, "authenticationProvidersConsumer cannot be null");
+		this.authenticationProvidersConsumer = authenticationProvidersConsumer;
 		return this;
 	}
 
@@ -115,10 +153,11 @@ public final class OAuth2TokenRevocationEndpointConfigurer extends AbstractOAuth
 		this.requestMatcher = new AntPathRequestMatcher(
 				authorizationServerSettings.getTokenRevocationEndpoint(), HttpMethod.POST.name());
 
-		List<AuthenticationProvider> authenticationProviders =
-				!this.authenticationProviders.isEmpty() ?
-						this.authenticationProviders :
-						createDefaultAuthenticationProviders(httpSecurity);
+		List<AuthenticationProvider> authenticationProviders = createDefaultAuthenticationProviders(httpSecurity);
+		if (!this.authenticationProviders.isEmpty()) {
+			authenticationProviders.addAll(0, this.authenticationProviders);
+		}
+		this.authenticationProvidersConsumer.accept(authenticationProviders);
 		authenticationProviders.forEach(authenticationProvider ->
 				httpSecurity.authenticationProvider(postProcess(authenticationProvider)));
 	}
@@ -131,9 +170,13 @@ public final class OAuth2TokenRevocationEndpointConfigurer extends AbstractOAuth
 		OAuth2TokenRevocationEndpointFilter revocationEndpointFilter =
 				new OAuth2TokenRevocationEndpointFilter(
 						authenticationManager, authorizationServerSettings.getTokenRevocationEndpoint());
-		if (this.revocationRequestConverter != null) {
-			revocationEndpointFilter.setAuthenticationConverter(this.revocationRequestConverter);
+		List<AuthenticationConverter> authenticationConverters = createDefaultAuthenticationConverters();
+		if (!this.revocationRequestConverters.isEmpty()) {
+			authenticationConverters.addAll(0, this.revocationRequestConverters);
 		}
+		this.revocationRequestConvertersConsumer.accept(authenticationConverters);
+		revocationEndpointFilter.setAuthenticationConverter(
+				new DelegatingAuthenticationConverter(authenticationConverters));
 		if (this.revocationResponseHandler != null) {
 			revocationEndpointFilter.setAuthenticationSuccessHandler(this.revocationResponseHandler);
 		}
@@ -148,7 +191,15 @@ public final class OAuth2TokenRevocationEndpointConfigurer extends AbstractOAuth
 		return this.requestMatcher;
 	}
 
-	private List<AuthenticationProvider> createDefaultAuthenticationProviders(HttpSecurity httpSecurity) {
+	private static List<AuthenticationConverter> createDefaultAuthenticationConverters() {
+		List<AuthenticationConverter> authenticationConverters = new ArrayList<>();
+
+		authenticationConverters.add(new OAuth2TokenRevocationAuthenticationConverter());
+
+		return authenticationConverters;
+	}
+
+	private static List<AuthenticationProvider> createDefaultAuthenticationProviders(HttpSecurity httpSecurity) {
 		List<AuthenticationProvider> authenticationProviders = new ArrayList<>();
 
 		OAuth2TokenRevocationAuthenticationProvider tokenRevocationAuthenticationProvider =

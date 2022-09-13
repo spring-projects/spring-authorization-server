@@ -163,8 +163,9 @@ public class OAuth2Authorization implements Serializable {
 	private String registeredClientId;  <2>
 	private String principalName;   <3>
 	private AuthorizationGrantType authorizationGrantType;  <4>
-	private Map<Class<? extends OAuth2Token>, Token<?>> tokens; <5>
-	private Map<String, Object> attributes; <6>
+	private Set<String> authorizedScopes;   <5>
+	private Map<Class<? extends OAuth2Token>, Token<?>> tokens; <6>
+	private Map<String, Object> attributes; <7>
 
 	...
 
@@ -174,8 +175,9 @@ public class OAuth2Authorization implements Serializable {
 <2> `registeredClientId`: The ID that uniquely identifies the <<registered-client, RegisteredClient>>.
 <3> `principalName`: The principal name of the resource owner (or client).
 <4> `authorizationGrantType`: The `AuthorizationGrantType` used.
-<5> `tokens`: The `OAuth2Token` instances (and associated metadata) specific to the executed authorization grant type.
-<6> `attributes`: The additional attributes specific to the executed authorization grant type – for example, the authenticated `Principal`, `OAuth2AuthorizationRequest`, authorized scope(s), and others.
+<5> `authorizedScopes`: The `Set` of scope(s) authorized for the client.
+<6> `tokens`: The `OAuth2Token` instances (and associated metadata) specific to the executed authorization grant type.
+<7> `attributes`: The additional attributes specific to the executed authorization grant type – for example, the authenticated `Principal`, `OAuth2AuthorizationRequest`, and others.
 
 `OAuth2Authorization` and its associated `OAuth2Token` instances have a set lifespan.
 A newly issued `OAuth2Token` is active and becomes inactive when it either expires or is invalidated (revoked).

@@ -18,6 +18,8 @@ package org.springframework.security.oauth2.server.authorization.config.annotati
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.List;
+import java.util.function.Consumer;
 
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
@@ -27,6 +29,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -56,6 +59,7 @@ import org.springframework.security.oauth2.server.authorization.OAuth2Authorizat
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenType;
 import org.springframework.security.oauth2.server.authorization.TestOAuth2Authorizations;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientAuthenticationToken;
+import org.springframework.security.oauth2.server.authorization.authentication.OAuth2TokenRevocationAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2TokenRevocationAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.client.JdbcRegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.JdbcRegisteredClientRepository.RegisteredClientParametersMapper;
@@ -65,6 +69,7 @@ import org.springframework.security.oauth2.server.authorization.client.TestRegis
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
 import org.springframework.security.oauth2.server.authorization.jackson2.TestingAuthenticationTokenMixin;
 import org.springframework.security.oauth2.server.authorization.test.SpringTestRule;
+import org.springframework.security.oauth2.server.authorization.web.authentication.OAuth2TokenRevocationAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
@@ -93,7 +98,9 @@ public class OAuth2TokenRevocationTests {
 	private static EmbeddedDatabase db;
 	private static JWKSource<SecurityContext> jwkSource;
 	private static AuthenticationConverter authenticationConverter;
+	private static Consumer<List<AuthenticationConverter>> authenticationConvertersConsumer;
 	private static AuthenticationProvider authenticationProvider;
+	private static Consumer<List<AuthenticationProvider>> authenticationProvidersConsumer;
 	private static AuthenticationSuccessHandler authenticationSuccessHandler;
 	private static AuthenticationFailureHandler authenticationFailureHandler;
 
@@ -117,7 +124,9 @@ public class OAuth2TokenRevocationTests {
 		JWKSet jwkSet = new JWKSet(TestJwks.DEFAULT_RSA_JWK);
 		jwkSource = (jwkSelector, securityContext) -> jwkSelector.select(jwkSet);
 		authenticationConverter = mock(AuthenticationConverter.class);
+		authenticationConvertersConsumer = mock(Consumer.class);
 		authenticationProvider = mock(AuthenticationProvider.class);
+		authenticationProvidersConsumer = mock(Consumer.class);
 		authenticationSuccessHandler = mock(AuthenticationSuccessHandler.class);
 		authenticationFailureHandler = mock(AuthenticationFailureHandler.class);
 		db = new EmbeddedDatabaseBuilder()
@@ -218,7 +227,25 @@ public class OAuth2TokenRevocationTests {
 				.andExpect(status().isOk());
 
 		verify(authenticationConverter).convert(any());
+
+		@SuppressWarnings("unchecked")
+		ArgumentCaptor<List<AuthenticationConverter>> authenticationConvertersCaptor = ArgumentCaptor.forClass(List.class);
+		verify(authenticationConvertersConsumer).accept(authenticationConvertersCaptor.capture());
+		List<AuthenticationConverter> authenticationConverters = authenticationConvertersCaptor.getValue();
+		assertThat(authenticationConverters).allMatch((converter) ->
+				converter == authenticationConverter ||
+						converter instanceof OAuth2TokenRevocationAuthenticationConverter);
+
 		verify(authenticationProvider).authenticate(eq(tokenRevocationAuthentication));
+
+		@SuppressWarnings("unchecked")
+		ArgumentCaptor<List<AuthenticationProvider>> authenticationProvidersCaptor = ArgumentCaptor.forClass(List.class);
+		verify(authenticationProvidersConsumer).accept(authenticationProvidersCaptor.capture());
+		List<AuthenticationProvider> authenticationProviders = authenticationProvidersCaptor.getValue();
+		assertThat(authenticationProviders).allMatch((provider) ->
+				provider == authenticationProvider ||
+						provider instanceof OAuth2TokenRevocationAuthenticationProvider);
+
 		verify(authenticationSuccessHandler).onAuthenticationSuccess(any(), any(), eq(tokenRevocationAuthentication));
 	}
 
@@ -304,7 +331,9 @@ public class OAuth2TokenRevocationTests {
 					.tokenRevocationEndpoint(tokenRevocationEndpoint ->
 							tokenRevocationEndpoint
 									.revocationRequestConverter(authenticationConverter)
+									.revocationRequestConverters(authenticationConvertersConsumer)
 									.authenticationProvider(authenticationProvider)
+									.authenticationProviders(authenticationProvidersConsumer)
 									.revocationResponseHandler(authenticationSuccessHandler)
 									.errorResponseHandler(authenticationFailureHandler));
 			RequestMatcher endpointsMatcher = authorizationServerConfigurer.getEndpointsMatcher();

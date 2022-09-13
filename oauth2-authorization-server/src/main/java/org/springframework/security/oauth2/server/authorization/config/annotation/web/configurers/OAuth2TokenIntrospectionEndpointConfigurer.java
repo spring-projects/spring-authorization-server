@@ -16,8 +16,8 @@
 package org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
+import java.util.function.Consumer;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -33,6 +33,8 @@ import org.springframework.security.oauth2.server.authorization.authentication.O
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2TokenIntrospectionAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.web.OAuth2TokenIntrospectionEndpointFilter;
+import org.springframework.security.oauth2.server.authorization.web.authentication.DelegatingAuthenticationConverter;
+import org.springframework.security.oauth2.server.authorization.web.authentication.OAuth2TokenIntrospectionAuthenticationConverter;
 import org.springframework.security.web.access.intercept.FilterSecurityInterceptor;
 import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
@@ -45,14 +47,17 @@ import org.springframework.util.Assert;
  * Configurer for the OAuth 2.0 Token Introspection Endpoint.
  *
  * @author Gaurav Tiwari
+ * @author Joe Grandja
  * @since 0.2.3
  * @see OAuth2AuthorizationServerConfigurer#tokenIntrospectionEndpoint(Customizer)
  * @see OAuth2TokenIntrospectionEndpointFilter
  */
 public final class OAuth2TokenIntrospectionEndpointConfigurer extends AbstractOAuth2Configurer {
 	private RequestMatcher requestMatcher;
-	private AuthenticationConverter introspectionRequestConverter;
-	private final List<AuthenticationProvider> authenticationProviders = new LinkedList<>();
+	private final List<AuthenticationConverter> introspectionRequestConverters = new ArrayList<>();
+	private Consumer<List<AuthenticationConverter>> introspectionRequestConvertersConsumer = (introspectionRequestConverters) -> {};
+	private final List<AuthenticationProvider> authenticationProviders = new ArrayList<>();
+	private Consumer<List<AuthenticationProvider>> authenticationProvidersConsumer = (authenticationProviders) -> {};
 	private AuthenticationSuccessHandler introspectionResponseHandler;
 	private AuthenticationFailureHandler errorResponseHandler;
 
@@ -64,14 +69,31 @@ public final class OAuth2TokenIntrospectionEndpointConfigurer extends AbstractOA
 	}
 
 	/**
-	 * Sets the {@link AuthenticationConverter} used when attempting to extract an Introspection Request from {@link HttpServletRequest}
+	 * Adds an {@link AuthenticationConverter} used when attempting to extract an Introspection Request from {@link HttpServletRequest}
 	 * to an instance of {@link OAuth2TokenIntrospectionAuthenticationToken} used for authenticating the request.
 	 *
-	 * @param introspectionRequestConverter the {@link AuthenticationConverter} used when attempting to extract an Introspection Request from {@link HttpServletRequest}
+	 * @param introspectionRequestConverter an {@link AuthenticationConverter} used when attempting to extract an Introspection Request from {@link HttpServletRequest}
 	 * @return the {@link OAuth2TokenIntrospectionEndpointConfigurer} for further configuration
 	 */
 	public OAuth2TokenIntrospectionEndpointConfigurer introspectionRequestConverter(AuthenticationConverter introspectionRequestConverter) {
-		this.introspectionRequestConverter = introspectionRequestConverter;
+		Assert.notNull(introspectionRequestConverter, "introspectionRequestConverter cannot be null");
+		this.introspectionRequestConverters.add(introspectionRequestConverter);
+		return this;
+	}
+
+	/**
+	 * Sets the {@code Consumer} providing access to the {@code List} of default
+	 * and (optionally) added {@link #introspectionRequestConverter(AuthenticationConverter) AuthenticationConverter}'s
+	 * allowing the ability to add, remove, or customize a specific {@link AuthenticationConverter}.
+	 *
+	 * @param introspectionRequestConvertersConsumer the {@code Consumer} providing access to the {@code List} of default and (optionally) added {@link AuthenticationConverter}'s
+	 * @return the {@link OAuth2TokenIntrospectionEndpointConfigurer} for further configuration
+	 * @since 0.4.0
+	 */
+	public OAuth2TokenIntrospectionEndpointConfigurer introspectionRequestConverters(
+			Consumer<List<AuthenticationConverter>> introspectionRequestConvertersConsumer) {
+		Assert.notNull(introspectionRequestConvertersConsumer, "introspectionRequestConvertersConsumer cannot be null");
+		this.introspectionRequestConvertersConsumer = introspectionRequestConvertersConsumer;
 		return this;
 	}
 
@@ -84,6 +106,22 @@ public final class OAuth2TokenIntrospectionEndpointConfigurer extends AbstractOA
 	public OAuth2TokenIntrospectionEndpointConfigurer authenticationProvider(AuthenticationProvider authenticationProvider) {
 		Assert.notNull(authenticationProvider, "authenticationProvider cannot be null");
 		this.authenticationProviders.add(authenticationProvider);
+		return this;
+	}
+
+	/**
+	 * Sets the {@code Consumer} providing access to the {@code List} of default
+	 * and (optionally) added {@link #authenticationProvider(AuthenticationProvider) AuthenticationProvider}'s
+	 * allowing the ability to add, remove, or customize a specific {@link AuthenticationProvider}.
+	 *
+	 * @param authenticationProvidersConsumer the {@code Consumer} providing access to the {@code List} of default and (optionally) added {@link AuthenticationProvider}'s
+	 * @return the {@link OAuth2TokenIntrospectionEndpointConfigurer} for further configuration
+	 * @since 0.4.0
+	 */
+	public OAuth2TokenIntrospectionEndpointConfigurer authenticationProviders(
+			Consumer<List<AuthenticationProvider>> authenticationProvidersConsumer) {
+		Assert.notNull(authenticationProvidersConsumer, "authenticationProvidersConsumer cannot be null");
+		this.authenticationProvidersConsumer = authenticationProvidersConsumer;
 		return this;
 	}
 
@@ -116,10 +154,11 @@ public final class OAuth2TokenIntrospectionEndpointConfigurer extends AbstractOA
 		this.requestMatcher = new AntPathRequestMatcher(
 				authorizationServerSettings.getTokenIntrospectionEndpoint(), HttpMethod.POST.name());
 
-		List<AuthenticationProvider> authenticationProviders =
-				!this.authenticationProviders.isEmpty() ?
-						this.authenticationProviders :
-						createDefaultAuthenticationProviders(httpSecurity);
+		List<AuthenticationProvider> authenticationProviders = createDefaultAuthenticationProviders(httpSecurity);
+		if (!this.authenticationProviders.isEmpty()) {
+			authenticationProviders.addAll(0, this.authenticationProviders);
+		}
+		this.authenticationProvidersConsumer.accept(authenticationProviders);
 		authenticationProviders.forEach(authenticationProvider ->
 				httpSecurity.authenticationProvider(postProcess(authenticationProvider)));
 	}
@@ -132,9 +171,13 @@ public final class OAuth2TokenIntrospectionEndpointConfigurer extends AbstractOA
 		OAuth2TokenIntrospectionEndpointFilter introspectionEndpointFilter =
 				new OAuth2TokenIntrospectionEndpointFilter(
 						authenticationManager, authorizationServerSettings.getTokenIntrospectionEndpoint());
-		if (this.introspectionRequestConverter != null) {
-			introspectionEndpointFilter.setAuthenticationConverter(this.introspectionRequestConverter);
+		List<AuthenticationConverter> authenticationConverters = createDefaultAuthenticationConverters();
+		if (!this.introspectionRequestConverters.isEmpty()) {
+			authenticationConverters.addAll(0, this.introspectionRequestConverters);
 		}
+		this.introspectionRequestConvertersConsumer.accept(authenticationConverters);
+		introspectionEndpointFilter.setAuthenticationConverter(
+				new DelegatingAuthenticationConverter(authenticationConverters));
 		if (this.introspectionResponseHandler != null) {
 			introspectionEndpointFilter.setAuthenticationSuccessHandler(this.introspectionResponseHandler);
 		}
@@ -149,7 +192,15 @@ public final class OAuth2TokenIntrospectionEndpointConfigurer extends AbstractOA
 		return this.requestMatcher;
 	}
 
-	private List<AuthenticationProvider> createDefaultAuthenticationProviders(HttpSecurity httpSecurity) {
+	private static List<AuthenticationConverter> createDefaultAuthenticationConverters() {
+		List<AuthenticationConverter> authenticationConverters = new ArrayList<>();
+
+		authenticationConverters.add(new OAuth2TokenIntrospectionAuthenticationConverter());
+
+		return authenticationConverters;
+	}
+
+	private static List<AuthenticationProvider> createDefaultAuthenticationProviders(HttpSecurity httpSecurity) {
 		List<AuthenticationProvider> authenticationProviders = new ArrayList<>();
 
 		OAuth2TokenIntrospectionAuthenticationProvider tokenIntrospectionAuthenticationProvider =

@@ -152,7 +152,10 @@ public class JwtGeneratorTests {
 
 	@Test
 	public void generateWhenIdTokenTypeThenReturnJwt() {
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().scope(OidcScopes.OPENID).build();
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
+				.scope(OidcScopes.OPENID)
+				.tokenSettings(TokenSettings.builder().idTokenSignatureAlgorithm(SignatureAlgorithm.ES256).build())
+				.build();
 		Map<String, Object> authenticationRequestAdditionalParameters = new HashMap<>();
 		authenticationRequestAdditionalParameters.put(OidcParameterNames.NONCE, "nonce");
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(
@@ -202,7 +205,11 @@ public class JwtGeneratorTests {
 		verify(this.jwtEncoder).encode(jwtEncoderParametersCaptor.capture());
 
 		JwsHeader jwsHeader = jwtEncoderParametersCaptor.getValue().getJwsHeader();
-		assertThat(jwsHeader.getAlgorithm()).isEqualTo(SignatureAlgorithm.RS256);
+		if (OidcParameterNames.ID_TOKEN.equals(tokenContext.getTokenType().getValue())) {
+			assertThat(jwsHeader.getAlgorithm()).isEqualTo(tokenContext.getRegisteredClient().getTokenSettings().getIdTokenSignatureAlgorithm());
+		} else {
+			assertThat(jwsHeader.getAlgorithm()).isEqualTo(SignatureAlgorithm.RS256);
+		}
 
 		JwtClaimsSet jwtClaimsSet = jwtEncoderParametersCaptor.getValue().getClaims();
 		assertThat(jwtClaimsSet.getIssuer().toExternalForm()).isEqualTo(tokenContext.getAuthorizationServerContext().getIssuer());

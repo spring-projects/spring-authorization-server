@@ -37,6 +37,7 @@ import org.springframework.security.oauth2.server.authorization.http.converter.O
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
+import org.springframework.util.Assert;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -44,6 +45,7 @@ import org.springframework.web.util.UriComponentsBuilder;
  * A {@code Filter} that processes OAuth 2.0 Authorization Server Metadata Requests.
  *
  * @author Daniel Garnier-Moiroux
+ * @author Joe Grandja
  * @since 0.1.1
  * @see OAuth2AuthorizationServerMetadata
  * @see AuthorizationServerSettings
@@ -60,6 +62,19 @@ public final class OAuth2AuthorizationServerMetadataEndpointFilter extends OnceP
 			HttpMethod.GET.name());
 	private final OAuth2AuthorizationServerMetadataHttpMessageConverter authorizationServerMetadataHttpMessageConverter =
 			new OAuth2AuthorizationServerMetadataHttpMessageConverter();
+	private Consumer<OAuth2AuthorizationServerMetadata.Builder> authorizationServerMetadataCustomizer = (authorizationServerMetadata) -> {};
+
+	/**
+	 * Sets the {@code Consumer} providing access to the {@link OAuth2AuthorizationServerMetadata.Builder}
+	 * allowing the ability to customize the claims of the Authorization Server's configuration.
+	 *
+	 * @param authorizationServerMetadataCustomizer the {@code Consumer} providing access to the {@link OAuth2AuthorizationServerMetadata.Builder}
+	 * @since 0.4.0
+	 */
+	public void setAuthorizationServerMetadataCustomizer(Consumer<OAuth2AuthorizationServerMetadata.Builder> authorizationServerMetadataCustomizer) {
+		Assert.notNull(authorizationServerMetadataCustomizer, "authorizationServerMetadataCustomizer cannot be null");
+		this.authorizationServerMetadataCustomizer = authorizationServerMetadataCustomizer;
+	}
 
 	@Override
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -74,7 +89,7 @@ public final class OAuth2AuthorizationServerMetadataEndpointFilter extends OnceP
 		String issuer = authorizationServerContext.getIssuer();
 		AuthorizationServerSettings authorizationServerSettings = authorizationServerContext.getAuthorizationServerSettings();
 
-		OAuth2AuthorizationServerMetadata authorizationServerMetadata = OAuth2AuthorizationServerMetadata.builder()
+		OAuth2AuthorizationServerMetadata.Builder authorizationServerMetadata = OAuth2AuthorizationServerMetadata.builder()
 				.issuer(issuer)
 				.authorizationEndpoint(asUrl(issuer, authorizationServerSettings.getAuthorizationEndpoint()))
 				.tokenEndpoint(asUrl(issuer, authorizationServerSettings.getTokenEndpoint()))
@@ -88,12 +103,13 @@ public final class OAuth2AuthorizationServerMetadataEndpointFilter extends OnceP
 				.tokenRevocationEndpointAuthenticationMethods(clientAuthenticationMethods())
 				.tokenIntrospectionEndpoint(asUrl(issuer, authorizationServerSettings.getTokenIntrospectionEndpoint()))
 				.tokenIntrospectionEndpointAuthenticationMethods(clientAuthenticationMethods())
-				.codeChallengeMethod("S256")
-				.build();
+				.codeChallengeMethod("S256");
+
+		this.authorizationServerMetadataCustomizer.accept(authorizationServerMetadata);
 
 		ServletServerHttpResponse httpResponse = new ServletServerHttpResponse(response);
 		this.authorizationServerMetadataHttpMessageConverter.write(
-				authorizationServerMetadata, MediaType.APPLICATION_JSON, httpResponse);
+				authorizationServerMetadata.build(), MediaType.APPLICATION_JSON, httpResponse);
 	}
 
 	private static Consumer<List<String>> clientAuthenticationMethods() {

@@ -27,6 +27,7 @@ import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.oidc.IdTokenClaimNames;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.security.oauth2.core.oidc.endpoint.OidcParameterNames;
+import org.springframework.security.oauth2.jose.jws.JwsAlgorithm;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 import org.springframework.security.oauth2.jwt.JwsHeader;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -89,9 +90,13 @@ public final class JwtGenerator implements OAuth2TokenGenerator<Jwt> {
 
 		Instant issuedAt = Instant.now();
 		Instant expiresAt;
+		JwsAlgorithm jwsAlgorithm = SignatureAlgorithm.RS256;
 		if (OidcParameterNames.ID_TOKEN.equals(context.getTokenType().getValue())) {
 			// TODO Allow configuration for ID Token time-to-live
 			expiresAt = issuedAt.plus(30, ChronoUnit.MINUTES);
+			if (registeredClient.getTokenSettings().getIdTokenSignatureAlgorithm() != null) {
+				jwsAlgorithm = registeredClient.getTokenSettings().getIdTokenSignatureAlgorithm();
+			}
 		} else {
 			expiresAt = issuedAt.plus(registeredClient.getTokenSettings().getAccessTokenTimeToLive());
 		}
@@ -125,7 +130,7 @@ public final class JwtGenerator implements OAuth2TokenGenerator<Jwt> {
 		}
 		// @formatter:on
 
-		JwsHeader.Builder jwsHeaderBuilder = JwsHeader.with(SignatureAlgorithm.RS256);
+		JwsHeader.Builder jwsHeaderBuilder = JwsHeader.with(jwsAlgorithm);
 
 		if (this.jwtCustomizer != null) {
 			// @formatter:off

@@ -25,6 +25,7 @@ import java.util.Base64;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.function.Consumer;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -72,6 +73,7 @@ import org.springframework.security.oauth2.server.authorization.OAuth2TokenIntro
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenType;
 import org.springframework.security.oauth2.server.authorization.TestOAuth2Authorizations;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientAuthenticationToken;
+import org.springframework.security.oauth2.server.authorization.authentication.OAuth2TokenIntrospectionAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2TokenIntrospectionAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.client.JdbcRegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.JdbcRegisteredClientRepository.RegisteredClientParametersMapper;
@@ -88,6 +90,7 @@ import org.springframework.security.oauth2.server.authorization.test.SpringTestR
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenClaimsContext;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenClaimsSet;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer;
+import org.springframework.security.oauth2.server.authorization.web.authentication.OAuth2TokenIntrospectionAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
@@ -118,7 +121,9 @@ public class OAuth2TokenIntrospectionTests {
 	private static AuthorizationServerSettings authorizationServerSettings;
 	private static OAuth2TokenCustomizer<OAuth2TokenClaimsContext> accessTokenCustomizer;
 	private static AuthenticationConverter authenticationConverter;
+	private static Consumer<List<AuthenticationConverter>> authenticationConvertersConsumer;
 	private static AuthenticationProvider authenticationProvider;
+	private static Consumer<List<AuthenticationProvider>> authenticationProvidersConsumer;
 	private static AuthenticationSuccessHandler authenticationSuccessHandler;
 	private static AuthenticationFailureHandler authenticationFailureHandler;
 	private static final HttpMessageConverter<OAuth2TokenIntrospection> tokenIntrospectionHttpResponseConverter =
@@ -145,7 +150,9 @@ public class OAuth2TokenIntrospectionTests {
 	public static void init() {
 		authorizationServerSettings = AuthorizationServerSettings.builder().tokenIntrospectionEndpoint("/test/introspect").build();
 		authenticationConverter = mock(AuthenticationConverter.class);
+		authenticationConvertersConsumer = mock(Consumer.class);
 		authenticationProvider = mock(AuthenticationProvider.class);
+		authenticationProvidersConsumer = mock(Consumer.class);
 		authenticationSuccessHandler = mock(AuthenticationSuccessHandler.class);
 		authenticationFailureHandler = mock(AuthenticationFailureHandler.class);
 		accessTokenCustomizer = mock(OAuth2TokenCustomizer.class);
@@ -364,7 +371,25 @@ public class OAuth2TokenIntrospectionTests {
 		// @formatter:on
 
 		verify(authenticationConverter).convert(any());
+
+		@SuppressWarnings("unchecked")
+		ArgumentCaptor<List<AuthenticationConverter>> authenticationConvertersCaptor = ArgumentCaptor.forClass(List.class);
+		verify(authenticationConvertersConsumer).accept(authenticationConvertersCaptor.capture());
+		List<AuthenticationConverter> authenticationConverters = authenticationConvertersCaptor.getValue();
+		assertThat(authenticationConverters).allMatch((converter) ->
+				converter == authenticationConverter ||
+						converter instanceof OAuth2TokenIntrospectionAuthenticationConverter);
+
 		verify(authenticationProvider).authenticate(eq(tokenIntrospectionAuthentication));
+
+		@SuppressWarnings("unchecked")
+		ArgumentCaptor<List<AuthenticationProvider>> authenticationProvidersCaptor = ArgumentCaptor.forClass(List.class);
+		verify(authenticationProvidersConsumer).accept(authenticationProvidersCaptor.capture());
+		List<AuthenticationProvider> authenticationProviders = authenticationProvidersCaptor.getValue();
+		assertThat(authenticationProviders).allMatch((provider) ->
+				provider == authenticationProvider ||
+						provider instanceof OAuth2TokenIntrospectionAuthenticationProvider);
+
 		verify(authenticationSuccessHandler).onAuthenticationSuccess(any(), any(), eq(tokenIntrospectionAuthentication));
 	}
 
@@ -486,7 +511,9 @@ public class OAuth2TokenIntrospectionTests {
 					.tokenIntrospectionEndpoint(tokenIntrospectionEndpoint ->
 							tokenIntrospectionEndpoint
 									.introspectionRequestConverter(authenticationConverter)
+									.introspectionRequestConverters(authenticationConvertersConsumer)
 									.authenticationProvider(authenticationProvider)
+									.authenticationProviders(authenticationProvidersConsumer)
 									.introspectionResponseHandler(authenticationSuccessHandler)
 									.errorResponseHandler(authenticationFailureHandler));
 			RequestMatcher endpointsMatcher = authorizationServerConfigurer.getEndpointsMatcher();

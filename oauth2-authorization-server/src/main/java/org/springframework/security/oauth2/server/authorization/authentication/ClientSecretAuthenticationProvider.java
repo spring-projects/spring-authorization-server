@@ -15,6 +15,8 @@
  */
 package org.springframework.security.oauth2.server.authorization.authentication;
 
+import java.time.Instant;
+
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -105,6 +107,11 @@ public final class ClientSecretAuthenticationProvider implements AuthenticationP
 		String clientSecret = clientAuthentication.getCredentials().toString();
 		if (!this.passwordEncoder.matches(clientSecret, registeredClient.getClientSecret())) {
 			throwInvalidClient(OAuth2ParameterNames.CLIENT_SECRET);
+		}
+
+		if (registeredClient.getClientSecretExpiresAt() != null &&
+				Instant.now().isAfter(registeredClient.getClientSecretExpiresAt())) {
+			throwInvalidClient("client_secret_expires_at");
 		}
 
 		// Validate the "code_verifier" parameter for the confidential client, if available

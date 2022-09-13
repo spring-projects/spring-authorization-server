@@ -16,8 +16,6 @@
 package org.springframework.security.oauth2.server.authorization.web;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -34,21 +32,18 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
-import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
-import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.http.converter.OAuth2ErrorHttpMessageConverter;
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenIntrospection;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2TokenIntrospectionAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2TokenIntrospectionAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.http.converter.OAuth2TokenIntrospectionHttpMessageConverter;
+import org.springframework.security.oauth2.server.authorization.web.authentication.OAuth2TokenIntrospectionAuthenticationConverter;
 import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
-import org.springframework.util.MultiValueMap;
-import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 /**
@@ -70,8 +65,7 @@ public final class OAuth2TokenIntrospectionEndpointFilter extends OncePerRequest
 
 	private final AuthenticationManager authenticationManager;
 	private final RequestMatcher tokenIntrospectionEndpointMatcher;
-	private AuthenticationConverter authenticationConverter =
-			new DefaultTokenIntrospectionAuthenticationConverter();
+	private AuthenticationConverter authenticationConverter;
 	private final HttpMessageConverter<OAuth2TokenIntrospection> tokenIntrospectionHttpResponseConverter =
 			new OAuth2TokenIntrospectionHttpMessageConverter();
 	private final HttpMessageConverter<OAuth2Error> errorHttpResponseConverter = new OAuth2ErrorHttpMessageConverter();
@@ -100,6 +94,7 @@ public final class OAuth2TokenIntrospectionEndpointFilter extends OncePerRequest
 		this.authenticationManager = authenticationManager;
 		this.tokenIntrospectionEndpointMatcher = new AntPathRequestMatcher(
 				tokenIntrospectionEndpointUri, HttpMethod.POST.name());
+		this.authenticationConverter = new OAuth2TokenIntrospectionAuthenticationConverter();
 	}
 
 	@Override
@@ -173,49 +168,6 @@ public final class OAuth2TokenIntrospectionEndpointFilter extends OncePerRequest
 		ServletServerHttpResponse httpResponse = new ServletServerHttpResponse(response);
 		httpResponse.setStatusCode(HttpStatus.BAD_REQUEST);
 		this.errorHttpResponseConverter.write(error, null, httpResponse);
-	}
-
-	private static void throwError(String errorCode, String parameterName) {
-		OAuth2Error error = new OAuth2Error(errorCode, "OAuth 2.0 Token Introspection Parameter: " + parameterName,
-				"https://datatracker.ietf.org/doc/html/rfc7662#section-2.1");
-		throw new OAuth2AuthenticationException(error);
-	}
-
-	private static class DefaultTokenIntrospectionAuthenticationConverter
-			implements AuthenticationConverter {
-
-		@Override
-		public Authentication convert(HttpServletRequest request) {
-			Authentication clientPrincipal = SecurityContextHolder.getContext().getAuthentication();
-
-			MultiValueMap<String, String> parameters = OAuth2EndpointUtils.getParameters(request);
-
-			// token (REQUIRED)
-			String token = parameters.getFirst(OAuth2ParameterNames.TOKEN);
-			if (!StringUtils.hasText(token) ||
-					parameters.get(OAuth2ParameterNames.TOKEN).size() != 1) {
-				throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.TOKEN);
-			}
-
-			// token_type_hint (OPTIONAL)
-			String tokenTypeHint = parameters.getFirst(OAuth2ParameterNames.TOKEN_TYPE_HINT);
-			if (StringUtils.hasText(tokenTypeHint) &&
-					parameters.get(OAuth2ParameterNames.TOKEN_TYPE_HINT).size() != 1) {
-				throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.TOKEN_TYPE_HINT);
-			}
-
-			Map<String, Object> additionalParameters = new HashMap<>();
-			parameters.forEach((key, value) -> {
-				if (!key.equals(OAuth2ParameterNames.TOKEN) &&
-						!key.equals(OAuth2ParameterNames.TOKEN_TYPE_HINT)) {
-					additionalParameters.put(key, value.get(0));
-				}
-			});
-
-			return new OAuth2TokenIntrospectionAuthenticationToken(
-					token, clientPrincipal, tokenTypeHint, additionalParameters);
-		}
-
 	}
 
 }

@@ -189,38 +189,23 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationValidator impleme
 			OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthentication,
 			RegisteredClient registeredClient) {
 
-		boolean redirectOnError = true;
+		String redirectUri = StringUtils.hasText(authorizationCodeRequestAuthentication.getRedirectUri()) ?
+				authorizationCodeRequestAuthentication.getRedirectUri() :
+				registeredClient.getRedirectUris().iterator().next();
 		if (error.getErrorCode().equals(OAuth2ErrorCodes.INVALID_REQUEST) &&
 				parameterName.equals(OAuth2ParameterNames.REDIRECT_URI)) {
-			redirectOnError = false;
+			redirectUri = null;		// Prevent redirects
 		}
 
-		OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthenticationResult = authorizationCodeRequestAuthentication;
-
-		if (redirectOnError && !StringUtils.hasText(authorizationCodeRequestAuthentication.getRedirectUri())) {
-			String redirectUri = registeredClient.getRedirectUris().iterator().next();
-			authorizationCodeRequestAuthenticationResult = from(authorizationCodeRequestAuthentication)
-					.redirectUri(redirectUri)
-					.build();
-		} else if (!redirectOnError && StringUtils.hasText(authorizationCodeRequestAuthentication.getRedirectUri())) {
-			authorizationCodeRequestAuthenticationResult = from(authorizationCodeRequestAuthentication)
-					.redirectUri(null)		// Prevent redirects
-					.build();
-		}
-
-		authorizationCodeRequestAuthenticationResult.setAuthenticated(authorizationCodeRequestAuthentication.isAuthenticated());
+		OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthenticationResult =
+				new OAuth2AuthorizationCodeRequestAuthenticationToken(
+						authorizationCodeRequestAuthentication.getAuthorizationUri(), authorizationCodeRequestAuthentication.getClientId(),
+						(Authentication) authorizationCodeRequestAuthentication.getPrincipal(), redirectUri,
+						authorizationCodeRequestAuthentication.getState(), authorizationCodeRequestAuthentication.getScopes(),
+						authorizationCodeRequestAuthentication.getAdditionalParameters());
+		authorizationCodeRequestAuthenticationResult.setAuthenticated(true);
 
 		throw new OAuth2AuthorizationCodeRequestAuthenticationException(error, authorizationCodeRequestAuthenticationResult);
-	}
-
-	private static OAuth2AuthorizationCodeRequestAuthenticationToken.Builder from(OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthentication) {
-		return OAuth2AuthorizationCodeRequestAuthenticationToken.with(authorizationCodeRequestAuthentication.getClientId(), (Authentication) authorizationCodeRequestAuthentication.getPrincipal())
-				.authorizationUri(authorizationCodeRequestAuthentication.getAuthorizationUri())
-				.redirectUri(authorizationCodeRequestAuthentication.getRedirectUri())
-				.scopes(authorizationCodeRequestAuthentication.getScopes())
-				.state(authorizationCodeRequestAuthentication.getState())
-				.additionalParameters(authorizationCodeRequestAuthentication.getAdditionalParameters())
-				.authorizationCode(authorizationCodeRequestAuthentication.getAuthorizationCode());
 	}
 
 }

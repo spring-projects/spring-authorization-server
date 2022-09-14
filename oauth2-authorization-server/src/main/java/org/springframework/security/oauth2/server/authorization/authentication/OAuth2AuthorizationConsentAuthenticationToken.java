@@ -24,52 +24,47 @@ import java.util.Set;
 import org.springframework.lang.Nullable;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationCode;
 import org.springframework.security.oauth2.server.authorization.util.SpringAuthorizationServerVersion;
 import org.springframework.util.Assert;
 
 /**
- * An {@link Authentication} implementation for the OAuth 2.0 Authorization Request
+ * An {@link Authentication} implementation for the OAuth 2.0 Authorization Consent
  * used in the Authorization Code Grant.
  *
  * @author Joe Grandja
- * @since 0.1.2
- * @see OAuth2AuthorizationCodeRequestAuthenticationProvider
+ * @since 0.4.0
  * @see OAuth2AuthorizationConsentAuthenticationProvider
+ * @see OAuth2AuthorizationCodeRequestAuthenticationProvider
  */
-public class OAuth2AuthorizationCodeRequestAuthenticationToken extends AbstractAuthenticationToken {
+public class OAuth2AuthorizationConsentAuthenticationToken extends AbstractAuthenticationToken {
 	private static final long serialVersionUID = SpringAuthorizationServerVersion.SERIAL_VERSION_UID;
 	private final String authorizationUri;
 	private final String clientId;
 	private final Authentication principal;
-	private final String redirectUri;
 	private final String state;
 	private final Set<String> scopes;
 	private final Map<String, Object> additionalParameters;
-	private final OAuth2AuthorizationCode authorizationCode;
 
 	/**
-	 * Constructs an {@code OAuth2AuthorizationCodeRequestAuthenticationToken} using the provided parameters.
+	 * Constructs an {@code OAuth2AuthorizationConsentAuthenticationToken} using the provided parameters.
 	 *
 	 * @param authorizationUri the authorization URI
 	 * @param clientId the client identifier
 	 * @param principal the {@code Principal} (Resource Owner)
-	 * @param redirectUri the redirect uri
 	 * @param state the state
-	 * @param scopes the requested scope(s)
+	 * @param scopes the requested (or authorized) scope(s)
 	 * @param additionalParameters the additional parameters
-	 * @since 0.4.0
 	 */
-	public OAuth2AuthorizationCodeRequestAuthenticationToken(String authorizationUri, String clientId, Authentication principal,
-			@Nullable String redirectUri, @Nullable String state, @Nullable Set<String> scopes, @Nullable Map<String, Object> additionalParameters) {
+	public OAuth2AuthorizationConsentAuthenticationToken(String authorizationUri, String clientId, Authentication principal,
+			String state, @Nullable Set<String> scopes, @Nullable Map<String, Object> additionalParameters) {
 		super(Collections.emptyList());
 		Assert.hasText(authorizationUri, "authorizationUri cannot be empty");
 		Assert.hasText(clientId, "clientId cannot be empty");
 		Assert.notNull(principal, "principal cannot be null");
+		Assert.hasText(state, "state cannot be empty");
 		this.authorizationUri = authorizationUri;
 		this.clientId = clientId;
 		this.principal = principal;
-		this.redirectUri = redirectUri;
 		this.state = state;
 		this.scopes = Collections.unmodifiableSet(
 				scopes != null ?
@@ -79,39 +74,6 @@ public class OAuth2AuthorizationCodeRequestAuthenticationToken extends AbstractA
 				additionalParameters != null ?
 						new HashMap<>(additionalParameters) :
 						Collections.emptyMap());
-		this.authorizationCode = null;
-	}
-
-	/**
-	 * Constructs an {@code OAuth2AuthorizationCodeRequestAuthenticationToken} using the provided parameters.
-	 *
-	 * @param authorizationUri the authorization URI
-	 * @param clientId the client identifier
-	 * @param principal the {@code Principal} (Resource Owner)
-	 * @param authorizationCode the {@link OAuth2AuthorizationCode}
-	 * @param redirectUri the redirect uri
-	 * @param state the state
-	 * @param scopes the authorized scope(s)
-	 * @since 0.4.0
-	 */
-	public OAuth2AuthorizationCodeRequestAuthenticationToken(String authorizationUri, String clientId, Authentication principal,
-			OAuth2AuthorizationCode authorizationCode, @Nullable String redirectUri, @Nullable String state, @Nullable Set<String> scopes) {
-		super(Collections.emptyList());
-		Assert.hasText(authorizationUri, "authorizationUri cannot be empty");
-		Assert.hasText(clientId, "clientId cannot be empty");
-		Assert.notNull(principal, "principal cannot be null");
-		Assert.notNull(authorizationCode, "authorizationCode cannot be null");
-		this.authorizationUri = authorizationUri;
-		this.clientId = clientId;
-		this.principal = principal;
-		this.authorizationCode = authorizationCode;
-		this.redirectUri = redirectUri;
-		this.state = state;
-		this.scopes = Collections.unmodifiableSet(
-				scopes != null ?
-						new HashSet<>(scopes) :
-						Collections.emptySet());
-		this.additionalParameters = Collections.emptyMap();
 		setAuthenticated(true);
 	}
 
@@ -144,21 +106,10 @@ public class OAuth2AuthorizationCodeRequestAuthenticationToken extends AbstractA
 	}
 
 	/**
-	 * Returns the redirect uri.
-	 *
-	 * @return the redirect uri
-	 */
-	@Nullable
-	public String getRedirectUri() {
-		return this.redirectUri;
-	}
-
-	/**
 	 * Returns the state.
 	 *
 	 * @return the state
 	 */
-	@Nullable
 	public String getState() {
 		return this.state;
 	}
@@ -179,16 +130,6 @@ public class OAuth2AuthorizationCodeRequestAuthenticationToken extends AbstractA
 	 */
 	public Map<String, Object> getAdditionalParameters() {
 		return this.additionalParameters;
-	}
-
-	/**
-	 * Returns the {@link OAuth2AuthorizationCode}.
-	 *
-	 * @return the {@link OAuth2AuthorizationCode}
-	 */
-	@Nullable
-	public OAuth2AuthorizationCode getAuthorizationCode() {
-		return this.authorizationCode;
 	}
 
 }

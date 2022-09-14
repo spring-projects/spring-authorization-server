@@ -40,7 +40,6 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.authentication.AuthenticationDetailsSource;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.TestingAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.OAuth2Error;
@@ -52,6 +51,7 @@ import org.springframework.security.oauth2.core.oidc.OidcScopes;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationCode;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeRequestAuthenticationException;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeRequestAuthenticationToken;
+import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationConsentAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
 import org.springframework.security.web.authentication.AuthenticationConverter;
@@ -82,6 +82,8 @@ import static org.mockito.Mockito.when;
  */
 public class OAuth2AuthorizationEndpointFilterTests {
 	private static final String DEFAULT_AUTHORIZATION_ENDPOINT_URI = "/oauth2/authorize";
+	private static final String AUTHORIZATION_URI = "https://provider.com/oauth2/authorize";
+	private static final String STATE = "state";
 	private static final String REMOTE_ADDRESS = "remote-address";
 	private AuthenticationManager authenticationManager;
 	private OAuth2AuthorizationEndpointFilter filter;
@@ -280,8 +282,9 @@ public class OAuth2AuthorizationEndpointFilterTests {
 	public void doFilterWhenAuthorizationRequestAuthenticationExceptionThenErrorResponse() throws Exception {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 		OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthentication =
-				authorizationCodeRequestAuthentication(registeredClient, this.principal)
-						.build();
+				new OAuth2AuthorizationCodeRequestAuthenticationToken(
+						AUTHORIZATION_URI, registeredClient.getClientId(), principal,
+						registeredClient.getRedirectUris().iterator().next(), STATE, registeredClient.getScopes(), null);
 		OAuth2Error error = new OAuth2Error("errorCode", "errorDescription", "errorUri");
 		when(this.authenticationManager.authenticate(any()))
 				.thenThrow(new OAuth2AuthorizationCodeRequestAuthenticationException(error, authorizationCodeRequestAuthentication));
@@ -304,8 +307,9 @@ public class OAuth2AuthorizationEndpointFilterTests {
 	public void doFilterWhenCustomAuthenticationConverterThenUsed() throws Exception {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 		OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthentication =
-				authorizationCodeRequestAuthentication(registeredClient, this.principal)
-						.build();
+				new OAuth2AuthorizationCodeRequestAuthenticationToken(
+						AUTHORIZATION_URI, registeredClient.getClientId(), principal,
+						registeredClient.getRedirectUris().iterator().next(), STATE, registeredClient.getScopes(), null);
 
 		AuthenticationConverter authenticationConverter = mock(AuthenticationConverter.class);
 		when(authenticationConverter.convert(any())).thenReturn(authorizationCodeRequestAuthentication);
@@ -329,9 +333,9 @@ public class OAuth2AuthorizationEndpointFilterTests {
 	public void doFilterWhenCustomAuthenticationSuccessHandlerThenUsed() throws Exception {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 		OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthenticationResult =
-				authorizationCodeRequestAuthentication(registeredClient, this.principal)
-						.authorizationCode(this.authorizationCode)
-						.build();
+				new OAuth2AuthorizationCodeRequestAuthenticationToken(
+						AUTHORIZATION_URI, registeredClient.getClientId(), principal, this.authorizationCode,
+						registeredClient.getRedirectUris().iterator().next(), STATE, registeredClient.getScopes());
 		authorizationCodeRequestAuthenticationResult.setAuthenticated(true);
 		when(this.authenticationManager.authenticate(any()))
 				.thenReturn(authorizationCodeRequestAuthenticationResult);
@@ -354,8 +358,9 @@ public class OAuth2AuthorizationEndpointFilterTests {
 	public void doFilterWhenCustomAuthenticationFailureHandlerThenUsed() throws Exception {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 		OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthentication =
-				authorizationCodeRequestAuthentication(registeredClient, this.principal)
-						.build();
+				new OAuth2AuthorizationCodeRequestAuthenticationToken(
+						AUTHORIZATION_URI, registeredClient.getClientId(), principal,
+						registeredClient.getRedirectUris().iterator().next(), STATE, registeredClient.getScopes(), null);
 		OAuth2Error error = new OAuth2Error("errorCode", "errorDescription", "errorUri");
 		OAuth2AuthorizationCodeRequestAuthenticationException authenticationException =
 				new OAuth2AuthorizationCodeRequestAuthenticationException(error, authorizationCodeRequestAuthentication);
@@ -380,7 +385,9 @@ public class OAuth2AuthorizationEndpointFilterTests {
 	public void doFilterWhenCustomAuthenticationDetailsSourceThenUsed() throws Exception {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 		OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthentication =
-				authorizationCodeRequestAuthentication(registeredClient, this.principal).build();
+				new OAuth2AuthorizationCodeRequestAuthenticationToken(
+						AUTHORIZATION_URI, registeredClient.getClientId(), principal,
+						registeredClient.getRedirectUris().iterator().next(), STATE, registeredClient.getScopes(), null);
 		MockHttpServletRequest request = createAuthorizationRequest(registeredClient);
 
 		AuthenticationDetailsSource<HttpServletRequest, WebAuthenticationDetails> authenticationDetailsSource =
@@ -407,8 +414,9 @@ public class OAuth2AuthorizationEndpointFilterTests {
 		this.principal.setAuthenticated(false);
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 		OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthenticationResult =
-				authorizationCodeRequestAuthentication(registeredClient, this.principal)
-						.build();
+				new OAuth2AuthorizationCodeRequestAuthenticationToken(
+						AUTHORIZATION_URI, registeredClient.getClientId(), principal,
+						registeredClient.getRedirectUris().iterator().next(), STATE, registeredClient.getScopes(), null);
 		authorizationCodeRequestAuthenticationResult.setAuthenticated(false);
 		when(this.authenticationManager.authenticate(any()))
 				.thenReturn(authorizationCodeRequestAuthenticationResult);
@@ -432,14 +440,13 @@ public class OAuth2AuthorizationEndpointFilterTests {
 					scopes.addAll(requestedScopes);
 				})
 				.build();
-		OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthenticationResult =
-				authorizationCodeRequestAuthentication(registeredClient, this.principal)
-						.scopes(new HashSet<>())	// No scopes previously approved
-						.consentRequired(true)
-						.build();
-		authorizationCodeRequestAuthenticationResult.setAuthenticated(true);
+		OAuth2AuthorizationConsentAuthenticationToken authorizationConsentAuthenticationResult =
+				new OAuth2AuthorizationConsentAuthenticationToken(
+						AUTHORIZATION_URI, registeredClient.getClientId(), principal,
+						STATE, new HashSet<>(), null);	// No scopes previously approved
+		authorizationConsentAuthenticationResult.setAuthenticated(true);
 		when(this.authenticationManager.authenticate(any()))
-				.thenReturn(authorizationCodeRequestAuthenticationResult);
+				.thenReturn(authorizationConsentAuthenticationResult);
 
 		MockHttpServletRequest request = createAuthorizationRequest(registeredClient);
 		MockHttpServletResponse response = new MockHttpServletResponse();
@@ -464,14 +471,13 @@ public class OAuth2AuthorizationEndpointFilterTests {
 					scopes.addAll(requestedScopes);
 				})
 				.build();
-		OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthenticationResult =
-				authorizationCodeRequestAuthentication(registeredClient, this.principal)
-						.scopes(new HashSet<>())	// No scopes previously approved
-						.consentRequired(true)
-						.build();
-		authorizationCodeRequestAuthenticationResult.setAuthenticated(true);
+		OAuth2AuthorizationConsentAuthenticationToken authorizationConsentAuthenticationResult =
+				new OAuth2AuthorizationConsentAuthenticationToken(
+						AUTHORIZATION_URI, registeredClient.getClientId(), principal,
+						STATE, new HashSet<>(), null);	// No scopes previously approved
+		authorizationConsentAuthenticationResult.setAuthenticated(true);
 		when(this.authenticationManager.authenticate(any()))
-				.thenReturn(authorizationCodeRequestAuthenticationResult);
+				.thenReturn(authorizationConsentAuthenticationResult);
 
 		MockHttpServletRequest request = createAuthorizationRequest(registeredClient);
 		MockHttpServletResponse response = new MockHttpServletResponse();
@@ -500,14 +506,13 @@ public class OAuth2AuthorizationEndpointFilterTests {
 					scopes.addAll(requestedScopes);
 				})
 				.build();
-		OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthenticationResult =
-				authorizationCodeRequestAuthentication(registeredClient, this.principal)
-						.scopes(approvedScopes)
-						.consentRequired(true)
-						.build();
-		authorizationCodeRequestAuthenticationResult.setAuthenticated(true);
+		OAuth2AuthorizationConsentAuthenticationToken authorizationConsentAuthenticationResult =
+				new OAuth2AuthorizationConsentAuthenticationToken(
+						AUTHORIZATION_URI, registeredClient.getClientId(), principal,
+						STATE, approvedScopes, null);
+		authorizationConsentAuthenticationResult.setAuthenticated(true);
 		when(this.authenticationManager.authenticate(any()))
-				.thenReturn(authorizationCodeRequestAuthenticationResult);
+				.thenReturn(authorizationConsentAuthenticationResult);
 
 		MockHttpServletRequest request = createAuthorizationRequest(registeredClient);
 		MockHttpServletResponse response = new MockHttpServletResponse();
@@ -532,9 +537,9 @@ public class OAuth2AuthorizationEndpointFilterTests {
 	public void doFilterWhenAuthorizationRequestAuthenticatedThenAuthorizationResponse() throws Exception {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 		OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthenticationResult =
-				authorizationCodeRequestAuthentication(registeredClient, this.principal)
-						.authorizationCode(this.authorizationCode)
-						.build();
+				new OAuth2AuthorizationCodeRequestAuthenticationToken(
+						AUTHORIZATION_URI, registeredClient.getClientId(), principal, this.authorizationCode,
+						registeredClient.getRedirectUris().iterator().next(), STATE, registeredClient.getScopes());
 		authorizationCodeRequestAuthenticationResult.setAuthenticated(true);
 		when(this.authenticationManager.authenticate(any()))
 				.thenReturn(authorizationCodeRequestAuthenticationResult);
@@ -568,9 +573,9 @@ public class OAuth2AuthorizationEndpointFilterTests {
 				})
 				.build();
 		OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthenticationResult =
-				authorizationCodeRequestAuthentication(registeredClient, this.principal)
-						.authorizationCode(this.authorizationCode)
-						.build();
+				new OAuth2AuthorizationCodeRequestAuthenticationToken(
+						AUTHORIZATION_URI, registeredClient.getClientId(), principal, this.authorizationCode,
+						registeredClient.getRedirectUris().iterator().next(), STATE, registeredClient.getScopes());
 		authorizationCodeRequestAuthenticationResult.setAuthenticated(true);
 		when(this.authenticationManager.authenticate(any()))
 				.thenReturn(authorizationCodeRequestAuthenticationResult);
@@ -645,15 +650,6 @@ public class OAuth2AuthorizationEndpointFilterTests {
 		request.addParameter(OAuth2ParameterNames.STATE, "state");
 
 		return request;
-	}
-
-	private static OAuth2AuthorizationCodeRequestAuthenticationToken.Builder authorizationCodeRequestAuthentication(
-			RegisteredClient registeredClient, Authentication principal) {
-		return OAuth2AuthorizationCodeRequestAuthenticationToken.with(registeredClient.getClientId(), principal)
-				.authorizationUri("https://provider.com/oauth2/authorize")
-				.redirectUri(registeredClient.getRedirectUris().iterator().next())
-				.scopes(registeredClient.getScopes())
-				.state("state");
 	}
 
 	private static String scopeCheckbox(String scope) {

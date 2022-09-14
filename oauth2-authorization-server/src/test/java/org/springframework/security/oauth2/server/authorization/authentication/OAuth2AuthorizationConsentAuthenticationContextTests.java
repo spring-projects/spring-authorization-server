@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 the original author or authors.
+ * Copyright 2020-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,10 +42,10 @@ public class OAuth2AuthorizationConsentAuthenticationContextTests {
 	private final Authentication principal = this.authorization.getAttribute(Principal.class.getName());
 	private final OAuth2AuthorizationRequest authorizationRequest = this.authorization.getAttribute(
 			OAuth2AuthorizationRequest.class.getName());
-	private final OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthentication =
-			OAuth2AuthorizationCodeRequestAuthenticationToken.with(this.registeredClient.getClientId(), this.principal)
-					.authorizationUri(this.authorizationRequest.getAuthorizationUri())
-					.build();
+	private final OAuth2AuthorizationConsentAuthenticationToken authorizationConsentAuthentication =
+			new OAuth2AuthorizationConsentAuthenticationToken(
+					this.authorizationRequest.getAuthorizationUri(), this.registeredClient.getClientId(),
+					this.principal, "state", null, null);
 	private final OAuth2AuthorizationConsent.Builder authorizationConsentBuilder =
 			OAuth2AuthorizationConsent.withId(this.authorization.getRegisteredClientId(), this.authorization.getPrincipalName());
 
@@ -59,7 +59,7 @@ public class OAuth2AuthorizationConsentAuthenticationContextTests {
 	@Test
 	public void setWhenValueNullThenThrowIllegalArgumentException() {
 		OAuth2AuthorizationConsentAuthenticationContext.Builder builder =
-				OAuth2AuthorizationConsentAuthenticationContext.with(this.authorizationCodeRequestAuthentication);
+				OAuth2AuthorizationConsentAuthenticationContext.with(this.authorizationConsentAuthentication);
 
 		assertThatThrownBy(() -> builder.authorizationConsent(null))
 				.isInstanceOf(IllegalArgumentException.class);
@@ -76,7 +76,7 @@ public class OAuth2AuthorizationConsentAuthenticationContextTests {
 	@Test
 	public void buildWhenRequiredValueNullThenThrowIllegalArgumentException() {
 		OAuth2AuthorizationConsentAuthenticationContext.Builder builder =
-				OAuth2AuthorizationConsentAuthenticationContext.with(this.authorizationCodeRequestAuthentication);
+				OAuth2AuthorizationConsentAuthenticationContext.with(this.authorizationConsentAuthentication);
 
 		assertThatThrownBy(builder::build)
 				.isInstanceOf(IllegalArgumentException.class)
@@ -104,7 +104,7 @@ public class OAuth2AuthorizationConsentAuthenticationContextTests {
 	@Test
 	public void buildWhenAllValuesProvidedThenAllValuesAreSet() {
 		OAuth2AuthorizationConsentAuthenticationContext context =
-				OAuth2AuthorizationConsentAuthenticationContext.with(this.authorizationCodeRequestAuthentication)
+				OAuth2AuthorizationConsentAuthenticationContext.with(this.authorizationConsentAuthentication)
 						.authorizationConsent(this.authorizationConsentBuilder)
 						.registeredClient(this.registeredClient)
 						.authorization(this.authorization)
@@ -113,7 +113,7 @@ public class OAuth2AuthorizationConsentAuthenticationContextTests {
 						.context(ctx -> ctx.put("custom-key-2", "custom-value-2"))
 						.build();
 
-		assertThat(context.<Authentication>getAuthentication()).isEqualTo(this.authorizationCodeRequestAuthentication);
+		assertThat(context.<Authentication>getAuthentication()).isEqualTo(this.authorizationConsentAuthentication);
 		assertThat(context.getAuthorizationConsent()).isEqualTo(this.authorizationConsentBuilder);
 		assertThat(context.getRegisteredClient()).isEqualTo(this.registeredClient);
 		assertThat(context.getAuthorization()).isEqualTo(this.authorization);

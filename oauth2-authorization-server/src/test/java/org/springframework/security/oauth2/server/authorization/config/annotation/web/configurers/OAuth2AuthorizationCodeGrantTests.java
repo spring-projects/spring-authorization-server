@@ -90,6 +90,8 @@ import org.springframework.security.oauth2.server.authorization.TestOAuth2Author
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeRequestAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeRequestAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationConsentAuthenticationContext;
+import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationConsentAuthenticationProvider;
+import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationConsentAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.client.JdbcRegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.JdbcRegisteredClientRepository.RegisteredClientParametersMapper;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
@@ -108,6 +110,7 @@ import org.springframework.security.oauth2.server.authorization.token.OAuth2Toke
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenGenerator;
 import org.springframework.security.oauth2.server.authorization.web.authentication.OAuth2AuthorizationCodeRequestAuthenticationConverter;
+import org.springframework.security.oauth2.server.authorization.web.authentication.OAuth2AuthorizationConsentAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
@@ -626,13 +629,9 @@ public class OAuth2AuthorizationCodeGrantTests {
 		OAuth2AuthorizationCode authorizationCode = new OAuth2AuthorizationCode(
 				"code", Instant.now(), Instant.now().plus(5, ChronoUnit.MINUTES));
 		OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthenticationResult =
-				OAuth2AuthorizationCodeRequestAuthenticationToken.with(registeredClient.getClientId(), principal)
-						.authorizationUri("https://provider.com/oauth2/authorize")
-						.redirectUri(registeredClient.getRedirectUris().iterator().next())
-						.scopes(registeredClient.getScopes())
-						.state("state")
-						.authorizationCode(authorizationCode)
-						.build();
+				new OAuth2AuthorizationCodeRequestAuthenticationToken(
+						"https://provider.com/oauth2/authorize", registeredClient.getClientId(), principal, authorizationCode,
+						registeredClient.getRedirectUris().iterator().next(), "state", registeredClient.getScopes());
 		when(authorizationRequestConverter.convert(any())).thenReturn(authorizationCodeRequestAuthenticationResult);
 		when(authorizationRequestAuthenticationProvider.supports(eq(OAuth2AuthorizationCodeRequestAuthenticationToken.class))).thenReturn(true);
 		when(authorizationRequestAuthenticationProvider.authenticate(any())).thenReturn(authorizationCodeRequestAuthenticationResult);
@@ -650,7 +649,8 @@ public class OAuth2AuthorizationCodeGrantTests {
 		List<AuthenticationConverter> authenticationConverters = authenticationConvertersCaptor.getValue();
 		assertThat(authenticationConverters).allMatch((converter) ->
 				converter == authorizationRequestConverter ||
-						converter instanceof OAuth2AuthorizationCodeRequestAuthenticationConverter);
+						converter instanceof OAuth2AuthorizationCodeRequestAuthenticationConverter ||
+						converter instanceof OAuth2AuthorizationConsentAuthenticationConverter);
 
 		verify(authorizationRequestAuthenticationProvider).authenticate(eq(authorizationCodeRequestAuthenticationResult));
 
@@ -660,7 +660,8 @@ public class OAuth2AuthorizationCodeGrantTests {
 		List<AuthenticationProvider> authenticationProviders = authenticationProvidersCaptor.getValue();
 		assertThat(authenticationProviders).allMatch((provider) ->
 				provider == authorizationRequestAuthenticationProvider ||
-						provider instanceof OAuth2AuthorizationCodeRequestAuthenticationProvider);
+						provider instanceof OAuth2AuthorizationCodeRequestAuthenticationProvider ||
+						provider instanceof OAuth2AuthorizationConsentAuthenticationProvider);
 
 		verify(authorizationResponseHandler).onAuthenticationSuccess(any(), any(), eq(authorizationCodeRequestAuthenticationResult));
 	}
@@ -933,7 +934,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 					new OAuth2AuthorizationServerConfigurer();
 			authorizationServerConfigurer
 					.authorizationEndpoint(authorizationEndpoint ->
-							authorizationEndpoint.authenticationProvider(createProvider()));
+							authorizationEndpoint.authenticationProviders(configureAuthenticationProviders()));
 			RequestMatcher endpointsMatcher = authorizationServerConfigurer.getEndpointsMatcher();
 
 			http
@@ -965,15 +966,14 @@ public class OAuth2AuthorizationCodeGrantTests {
 			};
 		}
 
-		private AuthenticationProvider createProvider() {
-			OAuth2AuthorizationCodeRequestAuthenticationProvider authorizationCodeRequestAuthenticationProvider =
-					new OAuth2AuthorizationCodeRequestAuthenticationProvider(
-							this.registeredClientRepository,
-							this.authorizationService,
-							this.authorizationConsentService);
-			authorizationCodeRequestAuthenticationProvider.setAuthorizationConsentCustomizer(new AuthorizationConsentCustomizer());
-
-			return authorizationCodeRequestAuthenticationProvider;
+		private Consumer<List<AuthenticationProvider>> configureAuthenticationProviders() {
+			return (authenticationProviders) ->
+				authenticationProviders.forEach((authenticationProvider) -> {
+					if (authenticationProvider instanceof OAuth2AuthorizationConsentAuthenticationProvider) {
+						((OAuth2AuthorizationConsentAuthenticationProvider) authenticationProvider)
+								.setAuthorizationConsentCustomizer(new AuthorizationConsentCustomizer());
+					}
+				});
 		}
 
 		static class AuthorizationConsentCustomizer implements Consumer<OAuth2AuthorizationConsentAuthenticationContext> {
@@ -982,10 +982,10 @@ public class OAuth2AuthorizationCodeGrantTests {
 			public void accept(OAuth2AuthorizationConsentAuthenticationContext authorizationConsentAuthenticationContext) {
 				OAuth2AuthorizationConsent.Builder authorizationConsentBuilder =
 						authorizationConsentAuthenticationContext.getAuthorizationConsent();
-				OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthentication =
+				OAuth2AuthorizationConsentAuthenticationToken authorizationConsentAuthentication =
 						authorizationConsentAuthenticationContext.getAuthentication();
 				Map<String, Object> additionalParameters =
-						authorizationCodeRequestAuthentication.getAdditionalParameters();
+						authorizationConsentAuthentication.getAdditionalParameters();
 				RegisteredClient registeredClient = authorizationConsentAuthenticationContext.getRegisteredClient();
 				ClientSettings clientSettings = registeredClient.getClientSettings();
 

@@ -36,7 +36,7 @@ import org.springframework.util.Assert;
  * @since 0.2.1
  * @see OAuth2AuthenticationContext
  * @see OAuth2AuthorizationConsent
- * @see OAuth2AuthorizationCodeRequestAuthenticationProvider#setAuthorizationConsentCustomizer(Consumer)
+ * @see OAuth2AuthorizationConsentAuthenticationProvider#setAuthorizationConsentCustomizer(Consumer)
  */
 public final class OAuth2AuthorizationConsentAuthenticationContext implements OAuth2AuthenticationContext {
 	private final Map<Object, Object> context;
@@ -95,12 +95,12 @@ public final class OAuth2AuthorizationConsentAuthenticationContext implements OA
 	}
 
 	/**
-	 * Constructs a new {@link Builder} with the provided {@link OAuth2AuthorizationCodeRequestAuthenticationToken}.
+	 * Constructs a new {@link Builder} with the provided {@link OAuth2AuthorizationConsentAuthenticationToken}.
 	 *
-	 * @param authentication the {@link OAuth2AuthorizationCodeRequestAuthenticationToken}
+	 * @param authentication the {@link OAuth2AuthorizationConsentAuthenticationToken}
 	 * @return the {@link Builder}
 	 */
-	public static Builder with(OAuth2AuthorizationCodeRequestAuthenticationToken authentication) {
+	public static Builder with(OAuth2AuthorizationConsentAuthenticationToken authentication) {
 		return new Builder(authentication);
 	}
 
@@ -109,7 +109,7 @@ public final class OAuth2AuthorizationConsentAuthenticationContext implements OA
 	 */
 	public static final class Builder extends AbstractBuilder<OAuth2AuthorizationConsentAuthenticationContext, Builder> {
 
-		private Builder(OAuth2AuthorizationCodeRequestAuthenticationToken authentication) {
+		private Builder(OAuth2AuthorizationConsentAuthenticationToken authentication) {
 			super(authentication);
 		}
 

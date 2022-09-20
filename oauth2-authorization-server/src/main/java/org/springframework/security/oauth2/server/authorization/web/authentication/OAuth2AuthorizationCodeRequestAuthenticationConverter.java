@@ -43,7 +43,7 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
 
 /**
- * Attempts to extract an Authorization Request (or Consent) from {@link HttpServletRequest}
+ * Attempts to extract an Authorization Request from {@link HttpServletRequest}
  * for the OAuth 2.0 Authorization Code Grant and then converts it to
  * an {@link OAuth2AuthorizationCodeRequestAuthenticationToken} used for authenticating the request.
  *
@@ -62,20 +62,19 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationConverter impleme
 
 	@Override
 	public Authentication convert(HttpServletRequest request) {
+		if (!"GET".equals(request.getMethod()) && !OIDC_REQUEST_MATCHER.matches(request)) {
+			return null;
+		}
+
 		MultiValueMap<String, String> parameters = OAuth2EndpointUtils.getParameters(request);
 
-		boolean authorizationRequest = false;
-		if ("GET".equals(request.getMethod()) || OIDC_REQUEST_MATCHER.matches(request)) {
-			authorizationRequest = true;
-
-			// response_type (REQUIRED)
-			String responseType = request.getParameter(OAuth2ParameterNames.RESPONSE_TYPE);
-			if (!StringUtils.hasText(responseType) ||
-					parameters.get(OAuth2ParameterNames.RESPONSE_TYPE).size() != 1) {
-				throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.RESPONSE_TYPE);
-			} else if (!responseType.equals(OAuth2AuthorizationResponseType.CODE.getValue())) {
-				throwError(OAuth2ErrorCodes.UNSUPPORTED_RESPONSE_TYPE, OAuth2ParameterNames.RESPONSE_TYPE);
-			}
+		// response_type (REQUIRED)
+		String responseType = request.getParameter(OAuth2ParameterNames.RESPONSE_TYPE);
+		if (!StringUtils.hasText(responseType) ||
+				parameters.get(OAuth2ParameterNames.RESPONSE_TYPE).size() != 1) {
+			throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.RESPONSE_TYPE);
+		} else if (!responseType.equals(OAuth2AuthorizationResponseType.CODE.getValue())) {
+			throwError(OAuth2ErrorCodes.UNSUPPORTED_RESPONSE_TYPE, OAuth2ParameterNames.RESPONSE_TYPE);
 		}
 
 		String authorizationUri = request.getRequestURL().toString();
@@ -101,37 +100,21 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationConverter impleme
 
 		// scope (OPTIONAL)
 		Set<String> scopes = null;
-		if (authorizationRequest) {
-			String scope = parameters.getFirst(OAuth2ParameterNames.SCOPE);
-			if (StringUtils.hasText(scope) &&
-					parameters.get(OAuth2ParameterNames.SCOPE).size() != 1) {
-				throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.SCOPE);
-			}
-			if (StringUtils.hasText(scope)) {
-				scopes = new HashSet<>(
-						Arrays.asList(StringUtils.delimitedListToStringArray(scope, " ")));
-			}
-		} else {
-			// Consent request
-			if (parameters.containsKey(OAuth2ParameterNames.SCOPE)) {
-				scopes = new HashSet<>(parameters.get(OAuth2ParameterNames.SCOPE));
-			}
+		String scope = parameters.getFirst(OAuth2ParameterNames.SCOPE);
+		if (StringUtils.hasText(scope) &&
+				parameters.get(OAuth2ParameterNames.SCOPE).size() != 1) {
+			throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.SCOPE);
+		}
+		if (StringUtils.hasText(scope)) {
+			scopes = new HashSet<>(
+					Arrays.asList(StringUtils.delimitedListToStringArray(scope, " ")));
 		}
 
-		// state
-		// RECOMMENDED for Authorization Request
+		// state (RECOMMENDED)
 		String state = parameters.getFirst(OAuth2ParameterNames.STATE);
-		if (authorizationRequest) {
-			if (StringUtils.hasText(state) &&
-					parameters.get(OAuth2ParameterNames.STATE).size() != 1) {
-				throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.STATE);
-			}
-		} else {
-			// REQUIRED for Authorization Consent Request
-			if (!StringUtils.hasText(state) ||
-					parameters.get(OAuth2ParameterNames.STATE).size() != 1) {
-				throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.STATE);
-			}
+		if (StringUtils.hasText(state) &&
+				parameters.get(OAuth2ParameterNames.STATE).size() != 1) {
+			throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.STATE);
 		}
 
 		// code_challenge (REQUIRED for public clients) - RFC 7636 (PKCE)
@@ -159,14 +142,8 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationConverter impleme
 			}
 		});
 
-		return OAuth2AuthorizationCodeRequestAuthenticationToken.with(clientId, principal)
-				.authorizationUri(authorizationUri)
-				.redirectUri(redirectUri)
-				.scopes(scopes)
-				.state(state)
-				.additionalParameters(additionalParameters)
-				.consent(!authorizationRequest)
-				.build();
+		return new OAuth2AuthorizationCodeRequestAuthenticationToken(authorizationUri, clientId, principal,
+				redirectUri, state, scopes, additionalParameters);
 	}
 
 	private static RequestMatcher createOidcRequestMatcher() {

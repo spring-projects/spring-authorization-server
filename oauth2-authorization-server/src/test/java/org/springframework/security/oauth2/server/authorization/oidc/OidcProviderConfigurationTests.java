@@ -61,6 +61,7 @@ public class OidcProviderConfigurationTests {
 				.idTokenSigningAlgorithm("RS256")
 				.userInfoEndpoint("https://example.com/issuer1/userinfo")
 				.tokenEndpointAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue())
+				.clientRegistrationEndpoint("https://example.com/issuer1/connect/register")
 				.claim("a-claim", "a-value")
 				.build();
 
@@ -75,6 +76,7 @@ public class OidcProviderConfigurationTests {
 		assertThat(providerConfiguration.getIdTokenSigningAlgorithms()).containsExactly("RS256");
 		assertThat(providerConfiguration.getUserInfoEndpoint()).isEqualTo(url("https://example.com/issuer1/userinfo"));
 		assertThat(providerConfiguration.getTokenEndpointAuthenticationMethods()).containsExactly(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue());
+		assertThat(providerConfiguration.getClientRegistrationEndpoint()).isEqualTo(url("https://example.com/issuer1/connect/register"));
 		assertThat(providerConfiguration.<String>getClaim("a-claim")).isEqualTo("a-value");
 	}
 
@@ -115,6 +117,7 @@ public class OidcProviderConfigurationTests {
 		claims.put(OidcProviderMetadataClaimNames.SUBJECT_TYPES_SUPPORTED, Collections.singletonList("public"));
 		claims.put(OidcProviderMetadataClaimNames.ID_TOKEN_SIGNING_ALG_VALUES_SUPPORTED, Collections.singletonList("RS256"));
 		claims.put(OidcProviderMetadataClaimNames.USER_INFO_ENDPOINT, "https://example.com/issuer1/userinfo");
+		claims.put(OidcProviderMetadataClaimNames.REGISTRATION_ENDPOINT, "https://example.com/issuer1/connect/register");
 		claims.put("some-claim", "some-value");
 
 		OidcProviderConfiguration providerConfiguration = OidcProviderConfiguration.withClaims(claims).build();
@@ -130,6 +133,7 @@ public class OidcProviderConfigurationTests {
 		assertThat(providerConfiguration.getIdTokenSigningAlgorithms()).containsExactly("RS256");
 		assertThat(providerConfiguration.getUserInfoEndpoint()).isEqualTo(url("https://example.com/issuer1/userinfo"));
 		assertThat(providerConfiguration.getTokenEndpointAuthenticationMethods()).isNull();
+		assertThat(providerConfiguration.getClientRegistrationEndpoint()).isEqualTo(url("https://example.com/issuer1/connect/register"));
 		assertThat(providerConfiguration.<String>getClaim("some-claim")).isEqualTo("some-value");
 	}
 
@@ -145,6 +149,7 @@ public class OidcProviderConfigurationTests {
 		claims.put(OidcProviderMetadataClaimNames.SUBJECT_TYPES_SUPPORTED, Collections.singletonList("public"));
 		claims.put(OidcProviderMetadataClaimNames.ID_TOKEN_SIGNING_ALG_VALUES_SUPPORTED, Collections.singletonList("RS256"));
 		claims.put(OidcProviderMetadataClaimNames.USER_INFO_ENDPOINT, url("https://example.com/issuer1/userinfo"));
+		claims.put(OidcProviderMetadataClaimNames.REGISTRATION_ENDPOINT, url("https://example.com/issuer1/connect/register"));
 		claims.put("some-claim", "some-value");
 
 		OidcProviderConfiguration providerConfiguration = OidcProviderConfiguration.withClaims(claims).build();
@@ -160,6 +165,7 @@ public class OidcProviderConfigurationTests {
 		assertThat(providerConfiguration.getIdTokenSigningAlgorithms()).containsExactly("RS256");
 		assertThat(providerConfiguration.getUserInfoEndpoint()).isEqualTo(url("https://example.com/issuer1/userinfo"));
 		assertThat(providerConfiguration.getTokenEndpointAuthenticationMethods()).isNull();
+		assertThat(providerConfiguration.getClientRegistrationEndpoint()).isEqualTo(url("https://example.com/issuer1/connect/register"));
 		assertThat(providerConfiguration.<String>getClaim("some-claim")).isEqualTo("some-value");
 	}
 
@@ -394,6 +400,16 @@ public class OidcProviderConfigurationTests {
 		assertThatIllegalArgumentException()
 				.isThrownBy(builder::build)
 				.withMessage("userInfoEndpoint must be a valid URL");
+	}
+
+	@Test
+	public void buildWhenClientRegistrationEndpointNotUrlThenThrowIllegalArgumentException() {
+		OidcProviderConfiguration.Builder builder = this.minimalConfigurationBuilder
+				.claims((claims) -> claims.put(OidcProviderMetadataClaimNames.REGISTRATION_ENDPOINT, "not an url"));
+
+		assertThatIllegalArgumentException()
+				.isThrownBy(builder::build)
+				.withMessage("clientRegistrationEndpoint must be a valid URL");
 	}
 
 	@Test

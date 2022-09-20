@@ -31,10 +31,13 @@ import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationResp
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeRequestAuthenticationException;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeRequestAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeRequestAuthenticationToken;
+import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationConsentAuthenticationProvider;
+import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationConsentAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.web.OAuth2AuthorizationEndpointFilter;
 import org.springframework.security.oauth2.server.authorization.web.authentication.DelegatingAuthenticationConverter;
 import org.springframework.security.oauth2.server.authorization.web.authentication.OAuth2AuthorizationCodeRequestAuthenticationConverter;
+import org.springframework.security.oauth2.server.authorization.web.authentication.OAuth2AuthorizationConsentAuthenticationConverter;
 import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
@@ -72,7 +75,8 @@ public final class OAuth2AuthorizationEndpointConfigurer extends AbstractOAuth2C
 
 	/**
 	 * Adds an {@link AuthenticationConverter} used when attempting to extract an Authorization Request (or Consent) from {@link HttpServletRequest}
-	 * to an instance of {@link OAuth2AuthorizationCodeRequestAuthenticationToken} used for authenticating the request.
+	 * to an instance of {@link OAuth2AuthorizationCodeRequestAuthenticationToken} or {@link OAuth2AuthorizationConsentAuthenticationToken}
+	 * used for authenticating the request.
 	 *
 	 * @param authorizationRequestConverter an {@link AuthenticationConverter} used when attempting to extract an Authorization Request (or Consent) from {@link HttpServletRequest}
 	 * @return the {@link OAuth2AuthorizationEndpointConfigurer} for further configuration
@@ -170,7 +174,7 @@ public final class OAuth2AuthorizationEndpointConfigurer extends AbstractOAuth2C
 	 *
 	 * <ul>
 	 * <li>It must be an HTTP POST</li>
-	 * <li>It must be submitted to {@link AuthorizationServerSettings#getAuthorizationEndpoint()} ()}</li>
+	 * <li>It must be submitted to {@link AuthorizationServerSettings#getAuthorizationEndpoint()}</li>
 	 * <li>It must include the received {@code client_id} as an HTTP parameter</li>
 	 * <li>It must include the received {@code state} as an HTTP parameter</li>
 	 * <li>It must include the list of {@code scope}s the {@code Resource Owner}
@@ -242,6 +246,7 @@ public final class OAuth2AuthorizationEndpointConfigurer extends AbstractOAuth2C
 		List<AuthenticationConverter> authenticationConverters = new ArrayList<>();
 
 		authenticationConverters.add(new OAuth2AuthorizationCodeRequestAuthenticationConverter());
+		authenticationConverters.add(new OAuth2AuthorizationConsentAuthenticationConverter());
 
 		return authenticationConverters;
 	}
@@ -255,6 +260,13 @@ public final class OAuth2AuthorizationEndpointConfigurer extends AbstractOAuth2C
 						OAuth2ConfigurerUtils.getAuthorizationService(httpSecurity),
 						OAuth2ConfigurerUtils.getAuthorizationConsentService(httpSecurity));
 		authenticationProviders.add(authorizationCodeRequestAuthenticationProvider);
+
+		OAuth2AuthorizationConsentAuthenticationProvider authorizationConsentAuthenticationProvider =
+				new OAuth2AuthorizationConsentAuthenticationProvider(
+						OAuth2ConfigurerUtils.getRegisteredClientRepository(httpSecurity),
+						OAuth2ConfigurerUtils.getAuthorizationService(httpSecurity),
+						OAuth2ConfigurerUtils.getAuthorizationConsentService(httpSecurity));
+		authenticationProviders.add(authorizationConsentAuthenticationProvider);
 
 		return authenticationProviders;
 	}

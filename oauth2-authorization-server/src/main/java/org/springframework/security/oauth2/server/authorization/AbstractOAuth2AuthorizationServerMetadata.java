@@ -275,6 +275,17 @@ public abstract class AbstractOAuth2AuthorizationServerMetadata implements OAuth
 		}
 
 		/**
+		 * Use this {@code registration_endpoint} in the resulting {@link AbstractOAuth2AuthorizationServerMetadata}, OPTIONAL.
+		 *
+		 * @param clientRegistrationEndpoint the {@code URL} of the OAuth 2.0 Dynamic Client Registration Endpoint
+		 * @return the {@link AbstractBuilder} for further configuration
+		 * @since 0.4.0
+		 */
+		public B clientRegistrationEndpoint(String clientRegistrationEndpoint) {
+			return claim(OAuth2AuthorizationServerMetadataClaimNames.REGISTRATION_ENDPOINT, clientRegistrationEndpoint);
+		}
+
+		/**
 		 * Add this Proof Key for Code Exchange (PKCE) {@code code_challenge_method} to the collection of {@code code_challenge_methods_supported}
 		 * in the resulting {@link AbstractOAuth2AuthorizationServerMetadata}, OPTIONAL.
 		 *
@@ -368,6 +379,9 @@ public abstract class AbstractOAuth2AuthorizationServerMetadata implements OAuth
 			if (getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.INTROSPECTION_ENDPOINT_AUTH_METHODS_SUPPORTED) != null) {
 				Assert.isInstanceOf(List.class, getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.INTROSPECTION_ENDPOINT_AUTH_METHODS_SUPPORTED), "tokenIntrospectionEndpointAuthenticationMethods must be of type List");
 				Assert.notEmpty((List<?>) getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.INTROSPECTION_ENDPOINT_AUTH_METHODS_SUPPORTED), "tokenIntrospectionEndpointAuthenticationMethods cannot be empty");
+			}
+			if (getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.REGISTRATION_ENDPOINT) != null) {
+				validateURL(getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.REGISTRATION_ENDPOINT), "clientRegistrationEndpoint must be a valid URL");
 			}
 			if (getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.CODE_CHALLENGE_METHODS_SUPPORTED) != null) {
 				Assert.isInstanceOf(List.class, getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.CODE_CHALLENGE_METHODS_SUPPORTED), "codeChallengeMethods must be of type List");

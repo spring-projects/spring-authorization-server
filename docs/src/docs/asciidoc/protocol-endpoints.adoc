@@ -32,9 +32,9 @@ public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity h
 	return http.build();
 }
 ----
-<1> `authorizationRequestConverter()`: Adds an `AuthenticationConverter` (_pre-processor_) used when attempting to extract an https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.1[OAuth2 authorization request] (or consent) from `HttpServletRequest` to an instance of `OAuth2AuthorizationCodeRequestAuthenticationToken`.
+<1> `authorizationRequestConverter()`: Adds an `AuthenticationConverter` (_pre-processor_) used when attempting to extract an https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.1[OAuth2 authorization request] (or consent) from `HttpServletRequest` to an instance of `OAuth2AuthorizationCodeRequestAuthenticationToken` or `OAuth2AuthorizationConsentAuthenticationToken`.
 <2> `authorizationRequestConverters()`: Sets the `Consumer` providing access to the `List` of default and (optionally) added ``AuthenticationConverter``'s allowing the ability to add, remove, or customize a specific `AuthenticationConverter`.
-<3> `authenticationProvider()`: Adds an `AuthenticationProvider` (_main processor_) used for authenticating the `OAuth2AuthorizationCodeRequestAuthenticationToken`.
+<3> `authenticationProvider()`: Adds an `AuthenticationProvider` (_main processor_) used for authenticating the `OAuth2AuthorizationCodeRequestAuthenticationToken` or `OAuth2AuthorizationConsentAuthenticationToken`.
 <4> `authenticationProviders()`: Sets the `Consumer` providing access to the `List` of default and (optionally) added ``AuthenticationProvider``'s allowing the ability to add, remove, or customize a specific `AuthenticationProvider`.
 <5> `authorizationResponseHandler()`: The `AuthenticationSuccessHandler` (_post-processor_) used for handling an "`authenticated`" `OAuth2AuthorizationCodeRequestAuthenticationToken` and returning the https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.2[OAuth2AuthorizationResponse].
 <6> `errorResponseHandler()`: The `AuthenticationFailureHandler` (_post-processor_) used for handling an `OAuth2AuthorizationCodeRequestAuthenticationException` and returning the https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.2.1[OAuth2Error response].
@@ -45,8 +45,8 @@ public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity h
 
 `OAuth2AuthorizationEndpointFilter` is configured with the following defaults:
 
-* `*AuthenticationConverter*` -- An `OAuth2AuthorizationCodeRequestAuthenticationConverter`.
-* `*AuthenticationManager*` -- An `AuthenticationManager` composed of `OAuth2AuthorizationCodeRequestAuthenticationProvider`.
+* `*AuthenticationConverter*` -- A `DelegatingAuthenticationConverter` composed of `OAuth2AuthorizationCodeRequestAuthenticationConverter` and `OAuth2AuthorizationConsentAuthenticationConverter`.
+* `*AuthenticationManager*` -- An `AuthenticationManager` composed of `OAuth2AuthorizationCodeRequestAuthenticationProvider` and `OAuth2AuthorizationConsentAuthenticationProvider`.
 * `*AuthenticationSuccessHandler*` -- An internal implementation that handles an "`authenticated`" `OAuth2AuthorizationCodeRequestAuthenticationToken` and returns the `OAuth2AuthorizationResponse`.
 * `*AuthenticationFailureHandler*` -- An internal implementation that uses the `OAuth2Error` associated with the `OAuth2AuthorizationCodeRequestAuthenticationException` and returns the `OAuth2Error` response.
 

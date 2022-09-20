@@ -142,9 +142,9 @@ public interface OAuth2AuthorizationServerMetadataClaimAccessor extends ClaimAcc
 	}
 
 	/**
-	 * Returns the {@code URL} of the authorization server's OAuth 2.0 Dynamic Client Registration endpoint {@code (registration_endpoint)}.
+	 * Returns the {@code URL} of the OAuth 2.0 Dynamic Client Registration Endpoint {@code (registration_endpoint)}.
 	 *
-	 * @return the {@code URL} of the authorization server's OAuth 2.0 Dynamic Client Registration endpoint
+	 * @return the {@code URL} of the OAuth 2.0 Dynamic Client Registration Endpoint
 	 * @since 0.4.0
 	 */
 	default URL getClientRegistrationEndpoint() {

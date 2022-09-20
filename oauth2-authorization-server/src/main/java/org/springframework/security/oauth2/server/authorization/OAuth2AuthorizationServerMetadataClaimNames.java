@@ -87,7 +87,7 @@ public class OAuth2AuthorizationServerMetadataClaimNames {
 	public static final String INTROSPECTION_ENDPOINT_AUTH_METHODS_SUPPORTED = "introspection_endpoint_auth_methods_supported";
 
 	/**
-	 * {@code registration_endpoint} -  the {@code URL} of the authorization server's OAuth 2.0 Dynamic Client Registration endpoint
+	 * {@code registration_endpoint} - the {@code URL} of the OAuth 2.0 Dynamic Client Registration Endpoint
 	 * @since 0.4.0
 	 */
 	public static final String REGISTRATION_ENDPOINT = "registration_endpoint";

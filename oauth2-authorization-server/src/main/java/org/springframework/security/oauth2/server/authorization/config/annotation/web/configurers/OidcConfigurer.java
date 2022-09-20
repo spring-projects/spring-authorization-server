@@ -113,7 +113,7 @@ public final class OidcConfigurer extends AbstractOAuth2Configurer {
 					getConfigurer(OidcProviderConfigurationEndpointConfigurer.class);
 
 			providerConfigurationEndpointConfigurer
-					.addDefaultProviderConfigurationCustomizer(builder -> {
+					.addDefaultProviderConfigurationCustomizer((builder) -> {
 						AuthorizationServerContext authorizationServerContext = AuthorizationServerContextHolder.getContext();
 						String issuer = authorizationServerContext.getIssuer();
 						AuthorizationServerSettings authorizationServerSettings = authorizationServerContext.getAuthorizationServerSettings();

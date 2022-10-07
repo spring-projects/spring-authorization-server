@@ -23,7 +23,6 @@ import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -197,8 +196,15 @@ public class OidcProviderConfigurationTests {
 	}
 
 	@EnableWebSecurity
-	@Import(OAuth2AuthorizationServerConfiguration.class)
 	static class AuthorizationServerConfiguration {
+
+		@Bean
+		SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
+			OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http);
+			http.getConfigurer(OAuth2AuthorizationServerConfigurer.class)
+					.oidc(Customizer.withDefaults());	// Enable OpenID Connect 1.0
+			return http.build();
+		}
 
 		@Bean
 		RegisteredClientRepository registeredClientRepository() {
@@ -275,7 +281,6 @@ public class OidcProviderConfigurationTests {
 	}
 
 	@EnableWebSecurity
-	@Import(OAuth2AuthorizationServerConfiguration.class)
 	static class AuthorizationServerConfigurationWithInvalidIssuerUrl extends AuthorizationServerConfiguration {
 
 		@Bean
@@ -285,7 +290,6 @@ public class OidcProviderConfigurationTests {
 	}
 
 	@EnableWebSecurity
-	@Import(OAuth2AuthorizationServerConfiguration.class)
 	static class AuthorizationServerConfigurationWithInvalidIssuerUri extends AuthorizationServerConfiguration {
 
 		@Bean
@@ -295,7 +299,6 @@ public class OidcProviderConfigurationTests {
 	}
 
 	@EnableWebSecurity
-	@Import(OAuth2AuthorizationServerConfiguration.class)
 	static class AuthorizationServerConfigurationWithIssuerQuery extends AuthorizationServerConfiguration {
 
 		@Bean
@@ -305,7 +308,6 @@ public class OidcProviderConfigurationTests {
 	}
 
 	@EnableWebSecurity
-	@Import(OAuth2AuthorizationServerConfiguration.class)
 	static class AuthorizationServerConfigurationWithIssuerFragment extends AuthorizationServerConfiguration {
 
 		@Bean
@@ -315,7 +317,6 @@ public class OidcProviderConfigurationTests {
 	}
 
 	@EnableWebSecurity
-	@Import(OAuth2AuthorizationServerConfiguration.class)
 	static class AuthorizationServerConfigurationWithIssuerQueryAndFragment extends AuthorizationServerConfiguration {
 
 		@Bean
@@ -325,7 +326,6 @@ public class OidcProviderConfigurationTests {
 	}
 
 	@EnableWebSecurity
-	@Import(OAuth2AuthorizationServerConfiguration.class)
 	static class AuthorizationServerConfigurationWithIssuerEmptyQuery extends AuthorizationServerConfiguration {
 
 		@Bean
@@ -335,7 +335,6 @@ public class OidcProviderConfigurationTests {
 	}
 
 	@EnableWebSecurity
-	@Import(OAuth2AuthorizationServerConfiguration.class)
 	static class AuthorizationServerConfigurationWithIssuerEmptyFragment extends AuthorizationServerConfiguration {
 
 		@Bean

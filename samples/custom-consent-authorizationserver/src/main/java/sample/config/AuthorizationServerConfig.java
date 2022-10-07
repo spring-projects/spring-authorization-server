@@ -27,6 +27,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.oauth2.server.resource.OAuth2ResourceServerConfigurer;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
@@ -61,7 +62,8 @@ public class AuthorizationServerConfig {
 				new OAuth2AuthorizationServerConfigurer();
 		authorizationServerConfigurer
 				.authorizationEndpoint(authorizationEndpoint ->
-						authorizationEndpoint.consentPage(CUSTOM_CONSENT_PAGE_URI));
+						authorizationEndpoint.consentPage(CUSTOM_CONSENT_PAGE_URI))
+				.oidc(Customizer.withDefaults());	// Enable OpenID Connect 1.0
 
 		RequestMatcher endpointsMatcher = authorizationServerConfigurer
 				.getEndpointsMatcher();

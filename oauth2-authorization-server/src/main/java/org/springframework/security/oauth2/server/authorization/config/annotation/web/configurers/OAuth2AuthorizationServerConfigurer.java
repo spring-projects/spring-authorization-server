@@ -16,7 +16,9 @@
 package org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.nimbusds.jose.jwk.source.JWKSource;
@@ -27,9 +29,14 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.ExceptionHandlingConfigurer;
+import org.springframework.security.oauth2.core.OAuth2Error;
+import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.OAuth2Token;
+import org.springframework.security.oauth2.core.oidc.OidcScopes;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsentService;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
+import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeRequestAuthenticationException;
+import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeRequestAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenGenerator;
@@ -68,15 +75,8 @@ public final class OAuth2AuthorizationServerConfigurer
 		extends AbstractHttpConfigurer<OAuth2AuthorizationServerConfigurer, HttpSecurity> {
 
 	private final Map<Class<? extends AbstractOAuth2Configurer>, AbstractOAuth2Configurer> configurers = createConfigurers();
-	private final RequestMatcher endpointsMatcher = (request) ->
-					getRequestMatcher(OAuth2AuthorizationServerMetadataEndpointConfigurer.class).matches(request) ||
-					getRequestMatcher(OAuth2AuthorizationEndpointConfigurer.class).matches(request) ||
-					getRequestMatcher(OAuth2TokenEndpointConfigurer.class).matches(request) ||
-					getRequestMatcher(OAuth2TokenIntrospectionEndpointConfigurer.class).matches(request) ||
-					getRequestMatcher(OAuth2TokenRevocationEndpointConfigurer.class).matches(request) ||
-					getRequestMatcher(OidcConfigurer.class).matches(request) ||
-					this.jwkSetEndpointMatcher.matches(request);
-	private RequestMatcher jwkSetEndpointMatcher;
+	private RequestMatcher endpointsMatcher;
+
 
 	/**
 	 * Sets the repository of registered clients.
@@ -209,13 +209,18 @@ public final class OAuth2AuthorizationServerConfigurer
 	}
 
 	/**
-	 * Configures OpenID Connect 1.0 support.
+	 * Configures OpenID Connect 1.0 support (disabled by default).
 	 *
 	 * @param oidcCustomizer the {@link Customizer} providing access to the {@link OidcConfigurer}
 	 * @return the {@link OAuth2AuthorizationServerConfigurer} for further configuration
 	 */
 	public OAuth2AuthorizationServerConfigurer oidc(Customizer<OidcConfigurer> oidcCustomizer) {
-		oidcCustomizer.customize(getConfigurer(OidcConfigurer.class));
+		OidcConfigurer oidcConfigurer = getConfigurer(OidcConfigurer.class);
+		if (oidcConfigurer == null) {
+			addConfigurer(OidcConfigurer.class, new OidcConfigurer(this::postProcess));
+			oidcConfigurer = getConfigurer(OidcConfigurer.class);
+		}
+		oidcCustomizer.customize(oidcConfigurer);
 		return this;
 	}
 
@@ -225,7 +230,9 @@ public final class OAuth2AuthorizationServerConfigurer
 	 * @return a {@link RequestMatcher} for the authorization server endpoints
 	 */
 	public RequestMatcher getEndpointsMatcher() {
-		return this.endpointsMatcher;
+		// Return a deferred RequestMatcher
+		// since endpointsMatcher is constructed in init(HttpSecurity).
+		return (request) -> this.endpointsMatcher.matches(request);
 	}
 
 	@Override
@@ -233,10 +240,33 @@ public final class OAuth2AuthorizationServerConfigurer
 		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils.getAuthorizationServerSettings(httpSecurity);
 		validateAuthorizationServerSettings(authorizationServerSettings);
 
-		this.jwkSetEndpointMatcher = new AntPathRequestMatcher(
-				authorizationServerSettings.getJwkSetEndpoint(), HttpMethod.GET.name());
+		OidcConfigurer oidcConfigurer = getConfigurer(OidcConfigurer.class);
+		if (oidcConfigurer == null) {
+			// OpenID Connect is disabled.
+			// Add an authentication validator that rejects authentication requests.
+			OAuth2AuthorizationEndpointConfigurer authorizationEndpointConfigurer =
+					getConfigurer(OAuth2AuthorizationEndpointConfigurer.class);
+			authorizationEndpointConfigurer.addAuthorizationCodeRequestAuthenticationValidator((authenticationContext) -> {
+				OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthentication =
+						authenticationContext.getAuthentication();
+				if (authorizationCodeRequestAuthentication.getScopes().contains(OidcScopes.OPENID)) {
+					OAuth2Error error = new OAuth2Error(OAuth2ErrorCodes.INVALID_SCOPE,
+							"OpenID Connect 1.0 authentication requests are restricted.",
+							"https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.2.1");
+					throw new OAuth2AuthorizationCodeRequestAuthenticationException(
+							error, authorizationCodeRequestAuthentication);
+				}
+			});
+		}
 
-		this.configurers.values().forEach(configurer -> configurer.init(httpSecurity));
+		List<RequestMatcher> requestMatchers = new ArrayList<>();
+		this.configurers.values().forEach(configurer -> {
+			configurer.init(httpSecurity);
+			requestMatchers.add(configurer.getRequestMatcher());
+		});
+		requestMatchers.add(new AntPathRequestMatcher(
+				authorizationServerSettings.getJwkSetEndpoint(), HttpMethod.GET.name()));
+		this.endpointsMatcher = new OrRequestMatcher(requestMatchers);
 
 		ExceptionHandlingConfigurer<HttpSecurity> exceptionHandling = httpSecurity.getConfigurer(ExceptionHandlingConfigurer.class);
 		if (exceptionHandling != null) {
@@ -275,7 +305,6 @@ public final class OAuth2AuthorizationServerConfigurer
 		configurers.put(OAuth2TokenEndpointConfigurer.class, new OAuth2TokenEndpointConfigurer(this::postProcess));
 		configurers.put(OAuth2TokenIntrospectionEndpointConfigurer.class, new OAuth2TokenIntrospectionEndpointConfigurer(this::postProcess));
 		configurers.put(OAuth2TokenRevocationEndpointConfigurer.class, new OAuth2TokenRevocationEndpointConfigurer(this::postProcess));
-		configurers.put(OidcConfigurer.class, new OidcConfigurer(this::postProcess));
 		return configurers;
 	}
 
@@ -284,8 +313,13 @@ public final class OAuth2AuthorizationServerConfigurer
 		return (T) this.configurers.get(type);
 	}
 
+	private <T extends AbstractOAuth2Configurer> void addConfigurer(Class<T> configurerType, T configurer) {
+		this.configurers.put(configurerType, configurer);
+	}
+
 	private <T extends AbstractOAuth2Configurer> RequestMatcher getRequestMatcher(Class<T> configurerType) {
-		return getConfigurer(configurerType).getRequestMatcher();
+		T configurer = getConfigurer(configurerType);
+		return configurer != null ? configurer.getRequestMatcher() : null;
 	}
 
 	private static void validateAuthorizationServerSettings(AuthorizationServerSettings authorizationServerSettings) {

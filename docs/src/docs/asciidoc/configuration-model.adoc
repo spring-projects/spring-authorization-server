@@ -19,14 +19,9 @@ The OAuth2 authorization server `SecurityFilterChain` `@Bean` is configured with
 * xref:protocol-endpoints.adoc#oauth2-token-revocation-endpoint[OAuth2 Token Revocation endpoint]
 * xref:protocol-endpoints.adoc#oauth2-authorization-server-metadata-endpoint[OAuth2 Authorization Server Metadata endpoint]
 * xref:protocol-endpoints.adoc#jwk-set-endpoint[JWK Set endpoint]
-* xref:protocol-endpoints.adoc#oidc-provider-configuration-endpoint[OpenID Connect 1.0 Provider Configuration endpoint]
-* xref:protocol-endpoints.adoc#oidc-user-info-endpoint[OpenID Connect 1.0 UserInfo endpoint]
 
 [NOTE]
 The JWK Set endpoint is configured *only* if a `JWKSource<SecurityContext>` `@Bean` is registered.
-
-[NOTE]
-The xref:protocol-endpoints.adoc#oidc-client-registration-endpoint[OpenID Connect 1.0 Client Registration endpoint] is disabled by default because many deployments do not require dynamic client registration.
 
 The following example shows how to use `OAuth2AuthorizationServerConfiguration` to apply the minimal default configuration:
 
@@ -54,6 +49,29 @@ public class AuthorizationServerConfig {
 
 [IMPORTANT]
 The https://datatracker.ietf.org/doc/html/rfc6749#section-4.1[authorization_code grant] requires the resource owner to be authenticated. Therefore, a user authentication mechanism *must* be configured in addition to the default OAuth2 security configuration.
+
+https://openid.net/specs/openid-connect-core-1_0.html[OpenID Connect 1.0] is disabled in the default configuration. The following example shows how to enable OpenID Connect 1.0 by initializing the `OidcConfigurer`:
+
+[source,java]
+----
+@Bean
+public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
+	OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http);
+
+	http.getConfigurer(OAuth2AuthorizationServerConfigurer.class)
+		.oidc(Customizer.withDefaults());	// Initialize `OidcConfigurer`
+
+	return http.build();
+}
+----
+
+In addition to the default protocol endpoints, the OAuth2 authorization server `SecurityFilterChain` `@Bean` is configured with the following OpenID Connect 1.0 protocol endpoints:
+
+* xref:protocol-endpoints.adoc#oidc-provider-configuration-endpoint[OpenID Connect 1.0 Provider Configuration endpoint]
+* xref:protocol-endpoints.adoc#oidc-user-info-endpoint[OpenID Connect 1.0 UserInfo endpoint]
+
+[NOTE]
+The xref:protocol-endpoints.adoc#oidc-client-registration-endpoint[OpenID Connect 1.0 Client Registration endpoint] is disabled by default because many deployments do not require dynamic client registration.
 
 [TIP]
 `OAuth2AuthorizationServerConfiguration.jwtDecoder(JWKSource<SecurityContext>)` is a convenience (`static`) utility method that can be used to register a `JwtDecoder` `@Bean`, which is *REQUIRED* for the xref:protocol-endpoints.adoc#oidc-user-info-endpoint[OpenID Connect 1.0 UserInfo endpoint] and the xref:protocol-endpoints.adoc#oidc-client-registration-endpoint[OpenID Connect 1.0 Client Registration endpoint].

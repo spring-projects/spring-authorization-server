@@ -36,7 +36,6 @@ import org.junit.Test;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageConverter;
@@ -48,6 +47,7 @@ import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType;
 import org.springframework.mock.http.client.MockClientHttpResponse;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.authentication.TestingAuthenticationToken;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.core.Authentication;
@@ -79,6 +79,7 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
 import org.springframework.security.oauth2.server.authorization.jackson2.TestingAuthenticationTokenMixin;
+import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.test.SpringTestRule;
 import org.springframework.security.oauth2.server.authorization.token.DelegatingOAuth2TokenGenerator;
 import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext;
@@ -276,8 +277,15 @@ public class OidcTests {
 	}
 
 	@EnableWebSecurity
-	@Import(OAuth2AuthorizationServerConfiguration.class)
 	static class AuthorizationServerConfiguration {
+
+		@Bean
+		SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
+			OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http);
+			http.getConfigurer(OAuth2AuthorizationServerConfigurer.class)
+					.oidc(Customizer.withDefaults());	// Enable OpenID Connect 1.0
+			return http.build();
+		}
 
 		@Bean
 		OAuth2AuthorizationService authorizationService(JdbcOperations jdbcOperations, RegisteredClientRepository registeredClientRepository) {
@@ -325,6 +333,11 @@ public class OidcTests {
 		}
 
 		@Bean
+		AuthorizationServerSettings authorizationServerSettings() {
+			return AuthorizationServerSettings.builder().build();
+		}
+
+		@Bean
 		PasswordEncoder passwordEncoder() {
 			return NoOpPasswordEncoder.getInstance();
 		}
@@ -360,7 +373,8 @@ public class OidcTests {
 			http.apply(authorizationServerConfigurer);
 
 			authorizationServerConfigurer
-					.tokenGenerator(tokenGenerator());
+					.tokenGenerator(tokenGenerator())
+					.oidc(Customizer.withDefaults());	// Enable OpenID Connect 1.0
 
 			RequestMatcher endpointsMatcher = authorizationServerConfigurer.getEndpointsMatcher();
 

@@ -116,9 +116,11 @@ public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity h
 		.tokenEndpoint(tokenEndpoint -> { })    <8>
 		.tokenIntrospectionEndpoint(tokenIntrospectionEndpoint -> { })  <9>
 		.tokenRevocationEndpoint(tokenRevocationEndpoint -> { })    <10>
+		.authorizationServerMetadataEndpoint(authorizationServerMetadataEndpoint -> { })    <11>
 		.oidc(oidc -> oidc
-			.userInfoEndpoint(userInfoEndpoint -> { })  <11>
-			.clientRegistrationEndpoint(clientRegistrationEndpoint -> { })  <12>
+			.providerConfigurationEndpoint(providerConfigurationEndpoint -> { })    <12>
+			.userInfoEndpoint(userInfoEndpoint -> { })  <13>
+			.clientRegistrationEndpoint(clientRegistrationEndpoint -> { })  <14>
 		);
 
 	return http.build();
@@ -134,8 +136,10 @@ public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity h
 <8> `tokenEndpoint()`: The configurer for the xref:protocol-endpoints.adoc#oauth2-token-endpoint[OAuth2 Token endpoint].
 <9> `tokenIntrospectionEndpoint()`: The configurer for the xref:protocol-endpoints.adoc#oauth2-token-introspection-endpoint[OAuth2 Token Introspection endpoint].
 <10> `tokenRevocationEndpoint()`: The configurer for the xref:protocol-endpoints.adoc#oauth2-token-revocation-endpoint[OAuth2 Token Revocation endpoint].
-<11> `userInfoEndpoint()`: The configurer for the xref:protocol-endpoints.adoc#oidc-user-info-endpoint[OpenID Connect 1.0 UserInfo endpoint].
-<12> `clientRegistrationEndpoint()`: The configurer for the xref:protocol-endpoints.adoc#oidc-client-registration-endpoint[OpenID Connect 1.0 Client Registration endpoint].
+<11> `authorizationServerMetadataEndpoint()`: The configurer for the xref:protocol-endpoints.adoc#oauth2-authorization-server-metadata-endpoint[OAuth2 Authorization Server Metadata endpoint].
+<12> `providerConfigurationEndpoint()`: The configurer for the xref:protocol-endpoints.adoc#oidc-provider-configuration-endpoint[OpenID Connect 1.0 Provider Configuration endpoint].
+<13> `userInfoEndpoint()`: The configurer for the xref:protocol-endpoints.adoc#oidc-user-info-endpoint[OpenID Connect 1.0 UserInfo endpoint].
+<14> `clientRegistrationEndpoint()`: The configurer for the xref:protocol-endpoints.adoc#oidc-client-registration-endpoint[OpenID Connect 1.0 Client Registration endpoint].
 
 [[configuring-authorization-server-settings]]
 == Configuring Authorization Server Settings

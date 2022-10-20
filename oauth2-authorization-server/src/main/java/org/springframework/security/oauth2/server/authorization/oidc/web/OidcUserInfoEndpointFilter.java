@@ -28,6 +28,7 @@ import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.server.ServletServerHttpResponse;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
@@ -36,6 +37,9 @@ import org.springframework.security.oauth2.core.http.converter.OAuth2ErrorHttpMe
 import org.springframework.security.oauth2.core.oidc.OidcUserInfo;
 import org.springframework.security.oauth2.server.authorization.oidc.authentication.OidcUserInfoAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.oidc.http.converter.OidcUserInfoHttpMessageConverter;
+import org.springframework.security.web.authentication.AuthenticationConverter;
+import org.springframework.security.web.authentication.AuthenticationFailureHandler;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.OrRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
@@ -61,10 +65,15 @@ public final class OidcUserInfoEndpointFilter extends OncePerRequestFilter {
 	private final AuthenticationManager authenticationManager;
 	private final RequestMatcher userInfoEndpointMatcher;
 
+	private AuthenticationConverter authenticationConverter = this::createAuthentication;
+
 	private final HttpMessageConverter<OidcUserInfo> userInfoHttpMessageConverter =
 			new OidcUserInfoHttpMessageConverter();
 	private final HttpMessageConverter<OAuth2Error> errorHttpResponseConverter =
 			new OAuth2ErrorHttpMessageConverter();
+
+	private AuthenticationSuccessHandler authenticationSuccessHandler = this::sendUserInfoResponse;
+	private AuthenticationFailureHandler authenticationFailureHandler = this::sendErrorResponse;
 
 	/**
 	 * Constructs an {@code OidcUserInfoEndpointFilter} using the provided parameters.
@@ -100,34 +109,77 @@ public final class OidcUserInfoEndpointFilter extends OncePerRequestFilter {
 		}
 
 		try {
-			Authentication principal = SecurityContextHolder.getContext().getAuthentication();
-
-			OidcUserInfoAuthenticationToken userInfoAuthentication = new OidcUserInfoAuthenticationToken(principal);
+			Authentication userInfoAuthentication = this.authenticationConverter.convert(request);
 
 			OidcUserInfoAuthenticationToken userInfoAuthenticationResult =
 					(OidcUserInfoAuthenticationToken) this.authenticationManager.authenticate(userInfoAuthentication);
 
-			sendUserInfoResponse(response, userInfoAuthenticationResult.getUserInfo());
-
+			this.authenticationSuccessHandler.onAuthenticationSuccess(request, response, userInfoAuthenticationResult);
 		} catch (OAuth2AuthenticationException ex) {
-			sendErrorResponse(response, ex.getError());
+			this.authenticationFailureHandler.onAuthenticationFailure(request, response, ex);
 		} catch (Exception ex) {
 			OAuth2Error error = new OAuth2Error(
 					OAuth2ErrorCodes.INVALID_REQUEST,
 					"OpenID Connect 1.0 UserInfo Error: " + ex.getMessage(),
 					"https://openid.net/specs/openid-connect-core-1_0.html#UserInfoError");
-			sendErrorResponse(response, error);
+			this.authenticationFailureHandler.onAuthenticationFailure(request, response,
+					new OAuth2AuthenticationException(error));
 		} finally {
 			SecurityContextHolder.clearContext();
 		}
 	}
 
-	private void sendUserInfoResponse(HttpServletResponse response, OidcUserInfo userInfo) throws IOException {
-		ServletServerHttpResponse httpResponse = new ServletServerHttpResponse(response);
-		this.userInfoHttpMessageConverter.write(userInfo, null, httpResponse);
+	/**
+	 * Sets the {@link AuthenticationConverter} used when attempting to extract the OAuth2 Access Token from {@link HttpServletRequest}
+	 * to an instance of {@link OidcUserInfoAuthenticationToken} used for authenticating the User Info request.
+	 *
+	 * @param authenticationConverter the {@link AuthenticationConverter} used when attempting to extract an OIDC User Info from {@link HttpServletRequest}
+	 * @since 0.4.0
+	 */
+	public void setAuthenticationConverter(AuthenticationConverter authenticationConverter) {
+		Assert.notNull(authenticationConverter, "authenticationConverter cannot be null");
+		this.authenticationConverter = authenticationConverter;
 	}
 
-	private void sendErrorResponse(HttpServletResponse response, OAuth2Error error) throws IOException {
+	/**
+	 * Sets the {@link AuthenticationSuccessHandler} used for handling an {@link OidcUserInfoAuthenticationToken} and
+	 * returning the {@link OidcUserInfo OIDC User Info}.
+	 *
+	 * @param authenticationSuccessHandler the {@link AuthenticationSuccessHandler} for handling an {@link OidcUserInfoAuthenticationToken}
+	 * @since 0.4.0
+	 */
+	public void setAuthenticationSuccessHandler(AuthenticationSuccessHandler authenticationSuccessHandler) {
+		Assert.notNull(authenticationSuccessHandler, "authenticationSuccessHandler cannot be null");
+		this.authenticationSuccessHandler = authenticationSuccessHandler;
+	}
+
+	/**
+	 * Sets the {@link AuthenticationFailureHandler} used for handling an {@link OAuth2AuthenticationException}
+	 * and returning the {@link OAuth2Error Error Response}.
+	 *
+	 * @param authenticationFailureHandler the {@link AuthenticationFailureHandler} used for handling an {@link OAuth2AuthenticationException}
+	 * @since 0.4.0
+	 */
+	public void setAuthenticationFailureHandler(AuthenticationFailureHandler authenticationFailureHandler) {
+		Assert.notNull(authenticationFailureHandler, "authenticationFailureHandler cannot be null");
+		this.authenticationFailureHandler = authenticationFailureHandler;
+	}
+
+	private Authentication createAuthentication(HttpServletRequest request) {
+		Authentication principal = SecurityContextHolder.getContext().getAuthentication();
+		return new OidcUserInfoAuthenticationToken(principal);
+	}
+
+	private void sendUserInfoResponse(HttpServletRequest request, HttpServletResponse response,
+			Authentication authentication) throws IOException {
+		OidcUserInfoAuthenticationToken userInfoAuthenticationToken = (OidcUserInfoAuthenticationToken) authentication;
+		ServletServerHttpResponse httpResponse = new ServletServerHttpResponse(response);
+		this.userInfoHttpMessageConverter.write(userInfoAuthenticationToken.getUserInfo(), null, httpResponse);
+	}
+
+	private void sendErrorResponse(HttpServletRequest request, HttpServletResponse response,
+			AuthenticationException authenticationException) throws IOException {
+		OAuth2Error error = ((OAuth2AuthenticationException) authenticationException).getError();
 		HttpStatus httpStatus = HttpStatus.BAD_REQUEST;
 		if (error.getErrorCode().equals(OAuth2ErrorCodes.INVALID_TOKEN)) {
 			httpStatus = HttpStatus.UNAUTHORIZED;
@@ -138,4 +190,5 @@ public final class OidcUserInfoEndpointFilter extends OncePerRequestFilter {
 		httpResponse.setStatusCode(httpStatus);
 		this.errorHttpResponseConverter.write(error, null, httpResponse);
 	}
+
 }

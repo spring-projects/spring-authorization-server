@@ -34,7 +34,7 @@ import org.springframework.security.oauth2.server.authorization.settings.Authori
 import org.springframework.security.oauth2.server.authorization.web.OAuth2TokenRevocationEndpointFilter;
 import org.springframework.security.oauth2.server.authorization.web.authentication.DelegatingAuthenticationConverter;
 import org.springframework.security.oauth2.server.authorization.web.authentication.OAuth2TokenRevocationAuthenticationConverter;
-import org.springframework.security.web.access.intercept.FilterSecurityInterceptor;
+import org.springframework.security.web.access.intercept.AuthorizationFilter;
 import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
@@ -183,7 +183,7 @@ public final class OAuth2TokenRevocationEndpointConfigurer extends AbstractOAuth
 		if (this.errorResponseHandler != null) {
 			revocationEndpointFilter.setAuthenticationFailureHandler(this.errorResponseHandler);
 		}
-		httpSecurity.addFilterAfter(postProcess(revocationEndpointFilter), FilterSecurityInterceptor.class);
+		httpSecurity.addFilterAfter(postProcess(revocationEndpointFilter), AuthorizationFilter.class);
 	}
 
 	@Override

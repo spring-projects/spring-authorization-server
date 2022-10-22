@@ -35,7 +35,7 @@ import org.springframework.security.oauth2.server.authorization.settings.Authori
 import org.springframework.security.oauth2.server.authorization.web.OAuth2TokenIntrospectionEndpointFilter;
 import org.springframework.security.oauth2.server.authorization.web.authentication.DelegatingAuthenticationConverter;
 import org.springframework.security.oauth2.server.authorization.web.authentication.OAuth2TokenIntrospectionAuthenticationConverter;
-import org.springframework.security.web.access.intercept.FilterSecurityInterceptor;
+import org.springframework.security.web.access.intercept.AuthorizationFilter;
 import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
@@ -184,7 +184,7 @@ public final class OAuth2TokenIntrospectionEndpointConfigurer extends AbstractOA
 		if (this.errorResponseHandler != null) {
 			introspectionEndpointFilter.setAuthenticationFailureHandler(this.errorResponseHandler);
 		}
-		httpSecurity.addFilterAfter(postProcess(introspectionEndpointFilter), FilterSecurityInterceptor.class);
+		httpSecurity.addFilterAfter(postProcess(introspectionEndpointFilter), AuthorizationFilter.class);
 	}
 
 	@Override

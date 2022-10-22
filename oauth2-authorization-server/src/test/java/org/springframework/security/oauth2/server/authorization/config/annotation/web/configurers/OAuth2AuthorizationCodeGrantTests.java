@@ -45,6 +45,7 @@ import org.mockito.ArgumentCaptor;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -834,6 +835,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 	}
 
 	@EnableWebSecurity
+	@Configuration(proxyBeanMethods = false)
 	static class AuthorizationServerConfigurationWithSecurityContextRepository extends AuthorizationServerConfiguration {
 		// @formatter:off
 		@Bean
@@ -893,6 +895,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 	}
 
 	@EnableWebSecurity
+	@Configuration(proxyBeanMethods = false)
 	static class AuthorizationServerConfigurationCustomConsentPage extends AuthorizationServerConfiguration {
 		// @formatter:off
 		@Bean
@@ -917,6 +920,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 	}
 
 	@EnableWebSecurity
+	@Configuration(proxyBeanMethods = false)
 	static class AuthorizationServerConfigurationCustomConsentRequest extends AuthorizationServerConfiguration {
 		@Autowired
 		private RegisteredClientRepository registeredClientRepository;
@@ -1011,6 +1015,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 	}
 
 	@EnableWebSecurity
+	@Configuration(proxyBeanMethods = false)
 	static class AuthorizationServerConfigurationCustomAuthorizationEndpoint extends AuthorizationServerConfiguration {
 		// @formatter:off
 		@Bean

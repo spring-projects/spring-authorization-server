@@ -50,7 +50,7 @@ import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 
-@Configuration
+@Configuration(proxyBeanMethods = false)
 public class EnableUserInfoSecurityConfig {
 
 	@Bean // <1>

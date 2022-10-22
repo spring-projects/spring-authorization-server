@@ -215,8 +215,8 @@ public class OidcProviderConfigurationTests {
 
 	}
 
-	@Configuration
 	@EnableWebSecurity
+	@Configuration(proxyBeanMethods = false)
 	static class AuthorizationServerConfigurationWithProviderConfigurationCustomizer extends AuthorizationServerConfiguration {
 
 		// @formatter:off
@@ -252,8 +252,8 @@ public class OidcProviderConfigurationTests {
 
 	}
 
-	@Configuration
 	@EnableWebSecurity
+	@Configuration(proxyBeanMethods = false)
 	static class AuthorizationServerConfigurationWithClientRegistrationEnabled extends AuthorizationServerConfiguration {
 
 		// @formatter:off

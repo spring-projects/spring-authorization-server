@@ -159,8 +159,8 @@ public class OAuth2AuthorizationServerMetadataTests {
 		}
 	}
 
-	@Configuration
 	@EnableWebSecurity
+	@Configuration(proxyBeanMethods = false)
 	static class AuthorizationServerConfigurationWithMetadataCustomizer extends AuthorizationServerConfiguration {
 
 		// @formatter:off

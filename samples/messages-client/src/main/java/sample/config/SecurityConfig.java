@@ -16,6 +16,7 @@
 package sample.config;
 
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
@@ -28,6 +29,7 @@ import static org.springframework.security.config.Customizer.withDefaults;
  * @since 0.0.1
  */
 @EnableWebSecurity
+@Configuration(proxyBeanMethods = false)
 public class SecurityConfig {
 
 	@Bean

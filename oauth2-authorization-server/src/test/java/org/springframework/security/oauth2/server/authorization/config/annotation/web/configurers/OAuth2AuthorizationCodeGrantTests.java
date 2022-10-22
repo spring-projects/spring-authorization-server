@@ -706,7 +706,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 				.andReturn();
 
 		org.springframework.security.core.context.SecurityContext securityContext =
-				securityContextRepository.loadContext(mvcResult.getRequest()).get();
+				securityContextRepository.loadDeferredContext(mvcResult.getRequest()).get();
 		assertThat(securityContext.getAuthentication()).isNull();
 	}
 

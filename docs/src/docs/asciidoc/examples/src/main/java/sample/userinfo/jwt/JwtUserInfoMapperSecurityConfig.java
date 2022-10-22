@@ -83,8 +83,8 @@ public class JwtUserInfoMapperSecurityConfig {
 				)
 			);
 		http
-			.requestMatcher(endpointsMatcher)
-			.authorizeRequests((authorize) -> authorize
+			.securityMatcher(endpointsMatcher)
+			.authorizeHttpRequests((authorize) -> authorize
 				.anyRequest().authenticated()
 			)
 			.csrf(csrf -> csrf.ignoringRequestMatchers(endpointsMatcher))

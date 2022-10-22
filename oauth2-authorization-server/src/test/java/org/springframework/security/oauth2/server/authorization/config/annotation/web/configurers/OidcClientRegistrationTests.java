@@ -366,9 +366,9 @@ public class OidcClientRegistrationTests {
 			RequestMatcher endpointsMatcher = authorizationServerConfigurer.getEndpointsMatcher();
 
 			http
-					.requestMatcher(endpointsMatcher)
-					.authorizeRequests(authorizeRequests ->
-							authorizeRequests.anyRequest().authenticated()
+					.securityMatcher(endpointsMatcher)
+					.authorizeHttpRequests(authorize ->
+							authorize.anyRequest().authenticated()
 					)
 					.csrf(csrf -> csrf.ignoringRequestMatchers(endpointsMatcher))
 					.oauth2ResourceServer(OAuth2ResourceServerConfigurer::jwt)

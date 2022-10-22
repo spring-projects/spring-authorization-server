@@ -843,9 +843,9 @@ public class OAuth2AuthorizationCodeGrantTests {
 			RequestMatcher endpointsMatcher = authorizationServerConfigurer.getEndpointsMatcher();
 
 			http
-					.requestMatcher(endpointsMatcher)
-					.authorizeRequests(authorizeRequests ->
-							authorizeRequests.anyRequest().authenticated()
+					.securityMatcher(endpointsMatcher)
+					.authorizeHttpRequests(authorize ->
+							authorize.anyRequest().authenticated()
 					)
 					.csrf(csrf -> csrf.ignoringRequestMatchers(endpointsMatcher))
 					.securityContext(securityContext ->
@@ -905,9 +905,9 @@ public class OAuth2AuthorizationCodeGrantTests {
 			RequestMatcher endpointsMatcher = authorizationServerConfigurer.getEndpointsMatcher();
 
 			http
-					.requestMatcher(endpointsMatcher)
-					.authorizeRequests(authorizeRequests ->
-							authorizeRequests.anyRequest().authenticated()
+					.securityMatcher(endpointsMatcher)
+					.authorizeHttpRequests(authorize ->
+							authorize.anyRequest().authenticated()
 					)
 					.csrf(csrf -> csrf.ignoringRequestMatchers(endpointsMatcher))
 					.apply(authorizationServerConfigurer);
@@ -938,9 +938,9 @@ public class OAuth2AuthorizationCodeGrantTests {
 			RequestMatcher endpointsMatcher = authorizationServerConfigurer.getEndpointsMatcher();
 
 			http
-					.requestMatcher(endpointsMatcher)
-					.authorizeRequests(authorizeRequests ->
-							authorizeRequests.anyRequest().authenticated()
+					.securityMatcher(endpointsMatcher)
+					.authorizeHttpRequests(authorize ->
+							authorize.anyRequest().authenticated()
 					)
 					.csrf(csrf -> csrf.ignoringRequestMatchers(endpointsMatcher))
 					.apply(authorizationServerConfigurer);
@@ -1029,9 +1029,9 @@ public class OAuth2AuthorizationCodeGrantTests {
 			RequestMatcher endpointsMatcher = authorizationServerConfigurer.getEndpointsMatcher();
 
 			http
-					.requestMatcher(endpointsMatcher)
-					.authorizeRequests(authorizeRequests ->
-							authorizeRequests.anyRequest().authenticated()
+					.securityMatcher(endpointsMatcher)
+					.authorizeHttpRequests(authorize ->
+							authorize.anyRequest().authenticated()
 					)
 					.csrf(csrf -> csrf.ignoringRequestMatchers(endpointsMatcher))
 					.apply(authorizationServerConfigurer);

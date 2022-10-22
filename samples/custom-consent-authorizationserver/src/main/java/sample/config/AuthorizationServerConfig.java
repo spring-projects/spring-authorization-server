@@ -67,9 +67,9 @@ public class AuthorizationServerConfig {
 				.getEndpointsMatcher();
 
 		http
-			.requestMatcher(endpointsMatcher)
-			.authorizeRequests(authorizeRequests ->
-				authorizeRequests.anyRequest().authenticated()
+			.securityMatcher(endpointsMatcher)
+			.authorizeHttpRequests(authorize ->
+				authorize.anyRequest().authenticated()
 			)
 			.csrf(csrf -> csrf.ignoringRequestMatchers(endpointsMatcher))
 			.exceptionHandling(exceptions ->

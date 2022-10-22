@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 the original author or authors.
+ * Copyright 2020-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,9 +31,9 @@ public class ResourceServerConfig {
 	@Bean
 	SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 		http
-			.mvcMatcher("/messages/**")
-				.authorizeRequests()
-					.mvcMatchers("/messages/**").access("hasAuthority('SCOPE_message.read')")
+			.securityMatcher("/messages/**")
+				.authorizeHttpRequests()
+					.requestMatchers("/messages/**").hasAuthority("SCOPE_message.read")
 					.and()
 			.oauth2ResourceServer()
 				.jwt();

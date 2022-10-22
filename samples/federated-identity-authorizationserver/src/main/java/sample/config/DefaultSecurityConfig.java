@@ -41,9 +41,9 @@ public class DefaultSecurityConfig {
 		FederatedIdentityConfigurer federatedIdentityConfigurer = new FederatedIdentityConfigurer()
 			.oauth2UserHandler(new UserRepositoryOAuth2UserHandler());
 		http
-			.authorizeRequests(authorizeRequests ->
-				authorizeRequests
-					.mvcMatchers("/assets/**", "/webjars/**", "/login").permitAll()
+			.authorizeHttpRequests(authorize ->
+				authorize
+					.requestMatchers("/assets/**", "/webjars/**", "/login").permitAll()
 					.anyRequest().authenticated()
 			)
 			.formLogin(Customizer.withDefaults())

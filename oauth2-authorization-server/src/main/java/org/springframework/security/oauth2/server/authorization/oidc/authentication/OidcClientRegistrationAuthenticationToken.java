@@ -33,6 +33,7 @@ import org.springframework.util.Assert;
  * @see AbstractAuthenticationToken
  * @see OidcClientRegistration
  * @see OidcClientRegistrationAuthenticationProvider
+ * @see OidcClientConfigurationAuthenticationProvider
  */
 public class OidcClientRegistrationAuthenticationToken extends AbstractAuthenticationToken {
 	private static final long serialVersionUID = SpringAuthorizationServerVersion.SERIAL_VERSION_UID;

@@ -23,9 +23,11 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import org.springframework.core.convert.converter.Converter;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -49,7 +51,6 @@ import org.springframework.security.oauth2.server.authorization.OAuth2TokenType;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
-import org.springframework.security.oauth2.server.authorization.context.AuthorizationServerContext;
 import org.springframework.security.oauth2.server.authorization.context.AuthorizationServerContextHolder;
 import org.springframework.security.oauth2.server.authorization.oidc.OidcClientMetadataClaimNames;
 import org.springframework.security.oauth2.server.authorization.oidc.OidcClientRegistration;
@@ -62,10 +63,9 @@ import org.springframework.security.oauth2.server.resource.authentication.Abstra
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
-import org.springframework.web.util.UriComponentsBuilder;
 
 /**
- * An {@link AuthenticationProvider} implementation for OpenID Connect 1.0 Dynamic Client Registration (and Configuration) Endpoint.
+ * An {@link AuthenticationProvider} implementation for OpenID Connect 1.0 Dynamic Client Registration Endpoint.
  *
  * @author Ovidiu Popa
  * @author Joe Grandja
@@ -74,20 +74,17 @@ import org.springframework.web.util.UriComponentsBuilder;
  * @see RegisteredClientRepository
  * @see OAuth2AuthorizationService
  * @see OAuth2TokenGenerator
+ * @see OidcClientConfigurationAuthenticationProvider
  * @see <a href="https://openid.net/specs/openid-connect-registration-1_0.html#ClientRegistration">3. Client Registration Endpoint</a>
- * @see <a href="https://openid.net/specs/openid-connect-registration-1_0.html#ClientConfigurationEndpoint">4. Client Configuration Endpoint</a>
  */
 public final class OidcClientRegistrationAuthenticationProvider implements AuthenticationProvider {
 	private static final String ERROR_URI = "https://openid.net/specs/openid-connect-registration-1_0.html#RegistrationError";
-	private static final StringKeyGenerator CLIENT_ID_GENERATOR = new Base64StringKeyGenerator(
-			Base64.getUrlEncoder().withoutPadding(), 32);
-	private static final StringKeyGenerator CLIENT_SECRET_GENERATOR = new Base64StringKeyGenerator(
-			Base64.getUrlEncoder().withoutPadding(), 48);
 	private static final String DEFAULT_CLIENT_REGISTRATION_AUTHORIZED_SCOPE = "client.create";
-	private static final String DEFAULT_CLIENT_CONFIGURATION_AUTHORIZED_SCOPE = "client.read";
 	private final RegisteredClientRepository registeredClientRepository;
 	private final OAuth2AuthorizationService authorizationService;
 	private final OAuth2TokenGenerator<? extends OAuth2Token> tokenGenerator;
+	private final Converter<RegisteredClient, OidcClientRegistration> clientRegistrationConverter;
+	private final Converter<OidcClientRegistration, RegisteredClient> registeredClientConverter;
 
 	/**
 	 * Constructs an {@code OidcClientRegistrationAuthenticationProvider} using the provided parameters.
@@ -105,6 +102,8 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 		this.registeredClientRepository = registeredClientRepository;
 		this.authorizationService = authorizationService;
 		this.tokenGenerator = tokenGenerator;
+		this.clientRegistrationConverter = new OidcClientRegistrationConverter();
+		this.registeredClientConverter = new RegisteredClientConverter();
 	}
 
 	@Override
@@ -112,7 +111,13 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 		OidcClientRegistrationAuthenticationToken clientRegistrationAuthentication =
 				(OidcClientRegistrationAuthenticationToken) authentication;
 
-		// Validate the "initial" or "registration" access token
+		if (clientRegistrationAuthentication.getClientRegistration() == null) {
+			// This is not a Client Registration Request.
+			// Return null to allow OidcClientConfigurationAuthenticationProvider to handle it.
+			return null;
+		}
+
+		// Validate the "initial" access token
 		AbstractOAuth2TokenAuthenticationToken<?> accessTokenAuthentication = null;
 		if (AbstractOAuth2TokenAuthenticationToken.class.isAssignableFrom(clientRegistrationAuthentication.getPrincipal().getClass())) {
 			accessTokenAuthentication = (AbstractOAuth2TokenAuthenticationToken<?>) clientRegistrationAuthentication.getPrincipal();
@@ -122,7 +127,6 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 		}
 
 		String accessTokenValue = accessTokenAuthentication.getToken().getTokenValue();
-
 		OAuth2Authorization authorization = this.authorizationService.findByToken(
 				accessTokenValue, OAuth2TokenType.ACCESS_TOKEN);
 		if (authorization == null) {
@@ -133,10 +137,9 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 		if (!authorizedAccessToken.isActive()) {
 			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_TOKEN);
 		}
+		checkScope(authorizedAccessToken, Collections.singleton(DEFAULT_CLIENT_REGISTRATION_AUTHORIZED_SCOPE));
 
-		return clientRegistrationAuthentication.getClientRegistration() != null ?
-				registerClient(clientRegistrationAuthentication, authorization) :
-				findRegistration(clientRegistrationAuthentication, authorization);
+		return registerClient(clientRegistrationAuthentication, authorization);
 	}
 
 	@Override
@@ -144,33 +147,8 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 		return OidcClientRegistrationAuthenticationToken.class.isAssignableFrom(authentication);
 	}
 
-	private OidcClientRegistrationAuthenticationToken findRegistration(OidcClientRegistrationAuthenticationToken clientRegistrationAuthentication,
-			OAuth2Authorization authorization) {
-
-		OAuth2Authorization.Token<OAuth2AccessToken> authorizedAccessToken = authorization.getAccessToken();
-		checkScopeForConfiguration(authorizedAccessToken);
-
-		RegisteredClient registeredClient = this.registeredClientRepository.findByClientId(
-				clientRegistrationAuthentication.getClientId());
-		if (registeredClient == null) {
-			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_CLIENT);
-		}
-
-		if (!registeredClient.getId().equals(authorization.getRegisteredClientId())) {
-			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_CLIENT);
-		}
-
-		OidcClientRegistration clientRegistration = buildRegistration(registeredClient).build();
-
-		return new OidcClientRegistrationAuthenticationToken(
-				(Authentication) clientRegistrationAuthentication.getPrincipal(), clientRegistration);
-	}
-
 	private OidcClientRegistrationAuthenticationToken registerClient(OidcClientRegistrationAuthenticationToken clientRegistrationAuthentication,
 			OAuth2Authorization authorization) {
-
-		OAuth2Authorization.Token<OAuth2AccessToken> authorizedAccessToken = authorization.getAccessToken();
-		checkScopeForRegistration(authorizedAccessToken);
 
 		if (!isValidRedirectUris(clientRegistrationAuthentication.getClientRegistration().getRedirectUris())) {
 			throwInvalidClientRegistration(OAuth2ErrorCodes.INVALID_REDIRECT_URI, OidcClientMetadataClaimNames.REDIRECT_URIS);
@@ -180,19 +158,20 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 			throwInvalidClientRegistration("invalid_client_metadata", OidcClientMetadataClaimNames.TOKEN_ENDPOINT_AUTH_METHOD);
 		}
 
-		RegisteredClient registeredClient = createClient(clientRegistrationAuthentication.getClientRegistration());
+		RegisteredClient registeredClient = this.registeredClientConverter.convert(clientRegistrationAuthentication.getClientRegistration());
 		this.registeredClientRepository.save(registeredClient);
 
 		OAuth2Authorization registeredClientAuthorization = registerAccessToken(registeredClient);
 
 		// Invalidate the "initial" access token as it can only be used once
-		authorization = OidcAuthenticationProviderUtils.invalidate(authorization, authorizedAccessToken.getToken());
+		authorization = OidcAuthenticationProviderUtils.invalidate(authorization, authorization.getAccessToken().getToken());
 		if (authorization.getRefreshToken() != null) {
 			authorization = OidcAuthenticationProviderUtils.invalidate(authorization, authorization.getRefreshToken().getToken());
 		}
 		this.authorizationService.save(authorization);
 
-		OidcClientRegistration clientRegistration = buildRegistration(registeredClient)
+		Map<String, Object> clientRegistrationClaims = this.clientRegistrationConverter.convert(registeredClient).getClaims();
+		OidcClientRegistration clientRegistration = OidcClientRegistration.withClaims(clientRegistrationClaims)
 				.registrationAccessToken(registeredClientAuthorization.getAccessToken().getToken().getTokenValue())
 				.build();
 
@@ -205,7 +184,7 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 				registeredClient.getClientAuthenticationMethods().iterator().next(), registeredClient.getClientSecret());
 
 		Set<String> authorizedScopes = new HashSet<>();
-		authorizedScopes.add(DEFAULT_CLIENT_CONFIGURATION_AUTHORIZED_SCOPE);
+		authorizedScopes.add(OidcClientConfigurationAuthenticationProvider.DEFAULT_CLIENT_CONFIGURATION_AUTHORIZED_SCOPE);
 		authorizedScopes = Collections.unmodifiableSet(authorizedScopes);
 
 		// @formatter:off
@@ -247,66 +226,6 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 		this.authorizationService.save(authorization);
 
 		return authorization;
-	}
-
-	private OidcClientRegistration.Builder buildRegistration(RegisteredClient registeredClient) {
-		// @formatter:off
-		OidcClientRegistration.Builder builder = OidcClientRegistration.builder()
-				.clientId(registeredClient.getClientId())
-				.clientIdIssuedAt(registeredClient.getClientIdIssuedAt())
-				.clientName(registeredClient.getClientName());
-
-		if (registeredClient.getClientSecret() != null) {
-			builder.clientSecret(registeredClient.getClientSecret());
-		}
-
-		builder.redirectUris(redirectUris ->
-				redirectUris.addAll(registeredClient.getRedirectUris()));
-
-		builder.grantTypes(grantTypes ->
-				registeredClient.getAuthorizationGrantTypes().forEach(authorizationGrantType ->
-						grantTypes.add(authorizationGrantType.getValue())));
-
-		if (registeredClient.getAuthorizationGrantTypes().contains(AuthorizationGrantType.AUTHORIZATION_CODE)) {
-			builder.responseType(OAuth2AuthorizationResponseType.CODE.getValue());
-		}
-
-		if (!CollectionUtils.isEmpty(registeredClient.getScopes())) {
-			builder.scopes(scopes ->
-					scopes.addAll(registeredClient.getScopes()));
-		}
-
-		AuthorizationServerContext authorizationServerContext = AuthorizationServerContextHolder.getContext();
-		String registrationClientUri = UriComponentsBuilder.fromUriString(authorizationServerContext.getIssuer())
-				.path(authorizationServerContext.getAuthorizationServerSettings().getOidcClientRegistrationEndpoint())
-				.queryParam(OAuth2ParameterNames.CLIENT_ID, registeredClient.getClientId())
-				.toUriString();
-
-		builder
-				.tokenEndpointAuthenticationMethod(registeredClient.getClientAuthenticationMethods().iterator().next().getValue())
-				.idTokenSignedResponseAlgorithm(registeredClient.getTokenSettings().getIdTokenSignatureAlgorithm().getName())
-				.registrationClientUrl(registrationClientUri);
-
-		ClientSettings clientSettings = registeredClient.getClientSettings();
-
-		if (clientSettings.getJwkSetUrl() != null) {
-			builder.jwkSetUrl(clientSettings.getJwkSetUrl());
-		}
-
-		if (clientSettings.getTokenEndpointAuthenticationSigningAlgorithm() != null) {
-			builder.tokenEndpointAuthenticationSigningAlgorithm(clientSettings.getTokenEndpointAuthenticationSigningAlgorithm().getName());
-		}
-
-		return builder;
-		// @formatter:on
-	}
-
-	private static void checkScopeForRegistration(OAuth2Authorization.Token<OAuth2AccessToken> authorizedAccessToken) {
-		checkScope(authorizedAccessToken, Collections.singleton(DEFAULT_CLIENT_REGISTRATION_AUTHORIZED_SCOPE));
-	}
-
-	private static void checkScopeForConfiguration(OAuth2Authorization.Token<OAuth2AccessToken> authorizedAccessToken) {
-		checkScope(authorizedAccessToken, Collections.singleton(DEFAULT_CLIENT_CONFIGURATION_AUTHORIZED_SCOPE));
 	}
 
 	@SuppressWarnings("unchecked")
@@ -366,78 +285,6 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 		}
 	}
 
-	private static RegisteredClient createClient(OidcClientRegistration clientRegistration) {
-		// @formatter:off
-		RegisteredClient.Builder builder = RegisteredClient.withId(UUID.randomUUID().toString())
-				.clientId(CLIENT_ID_GENERATOR.generateKey())
-				.clientIdIssuedAt(Instant.now())
-				.clientName(clientRegistration.getClientName());
-
-		if (ClientAuthenticationMethod.CLIENT_SECRET_POST.getValue().equals(clientRegistration.getTokenEndpointAuthenticationMethod())) {
-			builder
-					.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_POST)
-					.clientSecret(CLIENT_SECRET_GENERATOR.generateKey());
-		} else if (ClientAuthenticationMethod.CLIENT_SECRET_JWT.getValue().equals(clientRegistration.getTokenEndpointAuthenticationMethod())) {
-			builder
-					.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_JWT)
-					.clientSecret(CLIENT_SECRET_GENERATOR.generateKey());
-		} else if (ClientAuthenticationMethod.PRIVATE_KEY_JWT.getValue().equals(clientRegistration.getTokenEndpointAuthenticationMethod())) {
-			builder.clientAuthenticationMethod(ClientAuthenticationMethod.PRIVATE_KEY_JWT);
-		} else {
-			builder
-					.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
-					.clientSecret(CLIENT_SECRET_GENERATOR.generateKey());
-		}
-
-		builder.redirectUris(redirectUris ->
-				redirectUris.addAll(clientRegistration.getRedirectUris()));
-
-		if (!CollectionUtils.isEmpty(clientRegistration.getGrantTypes())) {
-			builder.authorizationGrantTypes(authorizationGrantTypes ->
-					clientRegistration.getGrantTypes().forEach(grantType ->
-							authorizationGrantTypes.add(new AuthorizationGrantType(grantType))));
-		} else {
-			builder.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE);
-		}
-		if (CollectionUtils.isEmpty(clientRegistration.getResponseTypes()) ||
-				clientRegistration.getResponseTypes().contains(OAuth2AuthorizationResponseType.CODE.getValue())) {
-			builder.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE);
-		}
-
-		if (!CollectionUtils.isEmpty(clientRegistration.getScopes())) {
-			builder.scopes(scopes ->
-					scopes.addAll(clientRegistration.getScopes()));
-		}
-
-		ClientSettings.Builder clientSettingsBuilder = ClientSettings.builder()
-				.requireProofKey(true)
-				.requireAuthorizationConsent(true);
-
-		if (ClientAuthenticationMethod.CLIENT_SECRET_JWT.getValue().equals(clientRegistration.getTokenEndpointAuthenticationMethod())) {
-			MacAlgorithm macAlgorithm = MacAlgorithm.from(clientRegistration.getTokenEndpointAuthenticationSigningAlgorithm());
-			if (macAlgorithm == null) {
-				macAlgorithm = MacAlgorithm.HS256;
-			}
-			clientSettingsBuilder.tokenEndpointAuthenticationSigningAlgorithm(macAlgorithm);
-		} else if (ClientAuthenticationMethod.PRIVATE_KEY_JWT.getValue().equals(clientRegistration.getTokenEndpointAuthenticationMethod())) {
-			SignatureAlgorithm signatureAlgorithm = SignatureAlgorithm.from(clientRegistration.getTokenEndpointAuthenticationSigningAlgorithm());
-			if (signatureAlgorithm == null) {
-				signatureAlgorithm = SignatureAlgorithm.RS256;
-			}
-			clientSettingsBuilder.tokenEndpointAuthenticationSigningAlgorithm(signatureAlgorithm);
-			clientSettingsBuilder.jwkSetUrl(clientRegistration.getJwkSetUrl().toString());
-		}
-
-		builder
-				.clientSettings(clientSettingsBuilder.build())
-				.tokenSettings(TokenSettings.builder()
-						.idTokenSignatureAlgorithm(SignatureAlgorithm.RS256)
-						.build());
-
-		return builder.build();
-		// @formatter:on
-	}
-
 	private static void throwInvalidClientRegistration(String errorCode, String fieldName) {
 		OAuth2Error error = new OAuth2Error(
 				errorCode,
@@ -446,4 +293,84 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 		throw new OAuth2AuthenticationException(error);
 	}
 
+	private static final class RegisteredClientConverter implements Converter<OidcClientRegistration, RegisteredClient> {
+		private static final StringKeyGenerator CLIENT_ID_GENERATOR = new Base64StringKeyGenerator(
+				Base64.getUrlEncoder().withoutPadding(), 32);
+		private static final StringKeyGenerator CLIENT_SECRET_GENERATOR = new Base64StringKeyGenerator(
+				Base64.getUrlEncoder().withoutPadding(), 48);
+
+		@Override
+		public RegisteredClient convert(OidcClientRegistration clientRegistration) {
+			// @formatter:off
+			RegisteredClient.Builder builder = RegisteredClient.withId(UUID.randomUUID().toString())
+					.clientId(CLIENT_ID_GENERATOR.generateKey())
+					.clientIdIssuedAt(Instant.now())
+					.clientName(clientRegistration.getClientName());
+
+			if (ClientAuthenticationMethod.CLIENT_SECRET_POST.getValue().equals(clientRegistration.getTokenEndpointAuthenticationMethod())) {
+				builder
+						.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_POST)
+						.clientSecret(CLIENT_SECRET_GENERATOR.generateKey());
+			} else if (ClientAuthenticationMethod.CLIENT_SECRET_JWT.getValue().equals(clientRegistration.getTokenEndpointAuthenticationMethod())) {
+				builder
+						.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_JWT)
+						.clientSecret(CLIENT_SECRET_GENERATOR.generateKey());
+			} else if (ClientAuthenticationMethod.PRIVATE_KEY_JWT.getValue().equals(clientRegistration.getTokenEndpointAuthenticationMethod())) {
+				builder.clientAuthenticationMethod(ClientAuthenticationMethod.PRIVATE_KEY_JWT);
+			} else {
+				builder
+						.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
+						.clientSecret(CLIENT_SECRET_GENERATOR.generateKey());
+			}
+
+			builder.redirectUris(redirectUris ->
+					redirectUris.addAll(clientRegistration.getRedirectUris()));
+
+			if (!CollectionUtils.isEmpty(clientRegistration.getGrantTypes())) {
+				builder.authorizationGrantTypes(authorizationGrantTypes ->
+						clientRegistration.getGrantTypes().forEach(grantType ->
+								authorizationGrantTypes.add(new AuthorizationGrantType(grantType))));
+			} else {
+				builder.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE);
+			}
+			if (CollectionUtils.isEmpty(clientRegistration.getResponseTypes()) ||
+					clientRegistration.getResponseTypes().contains(OAuth2AuthorizationResponseType.CODE.getValue())) {
+				builder.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE);
+			}
+
+			if (!CollectionUtils.isEmpty(clientRegistration.getScopes())) {
+				builder.scopes(scopes ->
+						scopes.addAll(clientRegistration.getScopes()));
+			}
+
+			ClientSettings.Builder clientSettingsBuilder = ClientSettings.builder()
+					.requireProofKey(true)
+					.requireAuthorizationConsent(true);
+
+			if (ClientAuthenticationMethod.CLIENT_SECRET_JWT.getValue().equals(clientRegistration.getTokenEndpointAuthenticationMethod())) {
+				MacAlgorithm macAlgorithm = MacAlgorithm.from(clientRegistration.getTokenEndpointAuthenticationSigningAlgorithm());
+				if (macAlgorithm == null) {
+					macAlgorithm = MacAlgorithm.HS256;
+				}
+				clientSettingsBuilder.tokenEndpointAuthenticationSigningAlgorithm(macAlgorithm);
+			} else if (ClientAuthenticationMethod.PRIVATE_KEY_JWT.getValue().equals(clientRegistration.getTokenEndpointAuthenticationMethod())) {
+				SignatureAlgorithm signatureAlgorithm = SignatureAlgorithm.from(clientRegistration.getTokenEndpointAuthenticationSigningAlgorithm());
+				if (signatureAlgorithm == null) {
+					signatureAlgorithm = SignatureAlgorithm.RS256;
+				}
+				clientSettingsBuilder.tokenEndpointAuthenticationSigningAlgorithm(signatureAlgorithm);
+				clientSettingsBuilder.jwkSetUrl(clientRegistration.getJwkSetUrl().toString());
+			}
+
+			builder
+					.clientSettings(clientSettingsBuilder.build())
+					.tokenSettings(TokenSettings.builder()
+							.idTokenSignatureAlgorithm(SignatureAlgorithm.RS256)
+							.build());
+
+			return builder.build();
+			// @formatter:on
+		}
+
+	}
 }

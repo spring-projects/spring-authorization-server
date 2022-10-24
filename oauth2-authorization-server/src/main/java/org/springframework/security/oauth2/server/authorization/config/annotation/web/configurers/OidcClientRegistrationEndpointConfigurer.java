@@ -19,6 +19,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.ObjectPostProcessor;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.oauth2.server.authorization.oidc.authentication.OidcClientConfigurationAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.oidc.authentication.OidcClientRegistrationAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.oidc.web.OidcClientRegistrationEndpointFilter;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
@@ -59,6 +60,12 @@ public final class OidcClientRegistrationEndpointConfigurer extends AbstractOAut
 						OAuth2ConfigurerUtils.getAuthorizationService(httpSecurity),
 						OAuth2ConfigurerUtils.getTokenGenerator(httpSecurity));
 		httpSecurity.authenticationProvider(postProcess(oidcClientRegistrationAuthenticationProvider));
+
+		OidcClientConfigurationAuthenticationProvider oidcClientConfigurationAuthenticationProvider =
+				new OidcClientConfigurationAuthenticationProvider(
+						OAuth2ConfigurerUtils.getRegisteredClientRepository(httpSecurity),
+						OAuth2ConfigurerUtils.getAuthorizationService(httpSecurity));
+		httpSecurity.authenticationProvider(postProcess(oidcClientConfigurationAuthenticationProvider));
 	}
 
 	@Override

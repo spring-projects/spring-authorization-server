@@ -369,7 +369,8 @@ The OpenID Connect 1.0 Client Registration endpoint is disabled by default becau
 
 `OidcClientRegistrationEndpointFilter` is configured with the following defaults:
 
-* `*AuthenticationManager*` -- An `AuthenticationManager` composed of `OidcClientRegistrationAuthenticationProvider`.
+* `*AuthenticationConverter*` -- An `OidcClientRegistrationAuthenticationConverter`.
+* `*AuthenticationManager*` -- An `AuthenticationManager` composed of `OidcClientRegistrationAuthenticationProvider` and `OidcClientConfigurationAuthenticationProvider`.
 
 The OpenID Connect 1.0 Client Registration endpoint is an https://openid.net/specs/openid-connect-registration-1_0.html#ClientRegistration[OAuth2 protected resource], which *REQUIRES* an access token to be sent as a bearer token in the Client Registration (or Client Read) request.
 

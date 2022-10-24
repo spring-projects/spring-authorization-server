@@ -35,6 +35,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.oauth2.server.resource.OAuth2ResourceServerConfigurer;
@@ -309,6 +310,8 @@ public class OidcUserInfoTests {
 		SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 			OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
 					new OAuth2AuthorizationServerConfigurer();
+			authorizationServerConfigurer
+					.oidc(Customizer.withDefaults());	// Enable OpenID Connect 1.0
 			RequestMatcher endpointsMatcher = authorizationServerConfigurer
 					.getEndpointsMatcher();
 
@@ -337,6 +340,8 @@ public class OidcUserInfoTests {
 		SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 			OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
 					new OAuth2AuthorizationServerConfigurer();
+			authorizationServerConfigurer
+					.oidc(Customizer.withDefaults());	// Enable OpenID Connect 1.0
 			RequestMatcher endpointsMatcher = authorizationServerConfigurer
 					.getEndpointsMatcher();
 

@@ -28,9 +28,11 @@ import org.springframework.security.config.annotation.ObjectPostProcessor;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationResponse;
+import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeRequestAuthenticationContext;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeRequestAuthenticationException;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeRequestAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeRequestAuthenticationToken;
+import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeRequestAuthenticationValidator;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationConsentAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationConsentAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
@@ -65,6 +67,7 @@ public final class OAuth2AuthorizationEndpointConfigurer extends AbstractOAuth2C
 	private AuthenticationSuccessHandler authorizationResponseHandler;
 	private AuthenticationFailureHandler errorResponseHandler;
 	private String consentPage;
+	private Consumer<OAuth2AuthorizationCodeRequestAuthenticationContext> authorizationCodeRequestAuthenticationValidator;
 
 	/**
 	 * Restrict for internal use only.
@@ -189,6 +192,14 @@ public final class OAuth2AuthorizationEndpointConfigurer extends AbstractOAuth2C
 		return this;
 	}
 
+	void addAuthorizationCodeRequestAuthenticationValidator(
+			Consumer<OAuth2AuthorizationCodeRequestAuthenticationContext> authenticationValidator) {
+		this.authorizationCodeRequestAuthenticationValidator =
+				this.authorizationCodeRequestAuthenticationValidator == null ?
+						authenticationValidator :
+						this.authorizationCodeRequestAuthenticationValidator.andThen(authenticationValidator);
+	}
+
 	@Override
 	void init(HttpSecurity httpSecurity) {
 		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils.getAuthorizationServerSettings(httpSecurity);
@@ -251,7 +262,7 @@ public final class OAuth2AuthorizationEndpointConfigurer extends AbstractOAuth2C
 		return authenticationConverters;
 	}
 
-	private static List<AuthenticationProvider> createDefaultAuthenticationProviders(HttpSecurity httpSecurity) {
+	private List<AuthenticationProvider> createDefaultAuthenticationProviders(HttpSecurity httpSecurity) {
 		List<AuthenticationProvider> authenticationProviders = new ArrayList<>();
 
 		OAuth2AuthorizationCodeRequestAuthenticationProvider authorizationCodeRequestAuthenticationProvider =
@@ -259,6 +270,11 @@ public final class OAuth2AuthorizationEndpointConfigurer extends AbstractOAuth2C
 						OAuth2ConfigurerUtils.getRegisteredClientRepository(httpSecurity),
 						OAuth2ConfigurerUtils.getAuthorizationService(httpSecurity),
 						OAuth2ConfigurerUtils.getAuthorizationConsentService(httpSecurity));
+		if (this.authorizationCodeRequestAuthenticationValidator != null) {
+			authorizationCodeRequestAuthenticationProvider.setAuthenticationValidator(
+					new OAuth2AuthorizationCodeRequestAuthenticationValidator()
+							.andThen(this.authorizationCodeRequestAuthenticationValidator));
+		}
 		authenticationProviders.add(authorizationCodeRequestAuthenticationProvider);
 
 		OAuth2AuthorizationConsentAuthenticationProvider authorizationConsentAuthenticationProvider =

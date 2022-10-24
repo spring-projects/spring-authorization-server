@@ -127,7 +127,6 @@ public class EnableUserInfoSecurityConfigTests {
 						jsonPath("zoneinfo").value("Europe/Paris"),
 						jsonPath("locale").value("en-US"),
 						jsonPath("phone_number").value("+1 (604) 555-1234;ext=5678"),
-						jsonPath("phone_number_verified").value("false"),
 						jsonPath("address.formatted").value("Champ de Mars\n5 Av. Anatole France\n75007 Paris\nFrance"),
 						jsonPath("updated_at").value("1970-01-01T00:00:00Z")
 				);

@@ -4,7 +4,7 @@ image:https://github.com/spring-projects/spring-authorization-server/workflows/C
 
 = Spring Authorization Server
 
-The Spring Authorization Server project, led by the https://spring.io/projects/spring-security/[Spring Security] team, is focused on delivering https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-01#section-1.1[OAuth 2.1 Authorization Server] support to the Spring community.
+The Spring Authorization Server project, led by the https://spring.io/projects/spring-security/[Spring Security] team, is focused on delivering https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-06#section-1.1[OAuth 2.1 Authorization Server] support to the Spring community.
 
 This project replaces the Authorization Server support provided by https://spring.io/projects/spring-security-oauth/[Spring Security OAuth].
 

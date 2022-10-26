@@ -41,7 +41,6 @@ import org.springframework.security.oauth2.core.endpoint.PkceParameterNames;
 import org.springframework.security.oauth2.jose.TestJwks;
 import org.springframework.security.oauth2.jose.TestKeys;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
-import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 import org.springframework.security.oauth2.jwt.BadJwtException;
 import org.springframework.security.oauth2.jwt.JwsHeader;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -118,6 +117,13 @@ public class JwtClientAssertionAuthenticationProviderTests {
 	}
 
 	@Test
+	public void setJwtDecoderFactoryWhenNullThenThrowIllegalArgumentException() {
+		assertThatThrownBy(() -> this.authenticationProvider.setJwtDecoderFactory(null))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("jwtDecoderFactory cannot be null");
+	}
+
+	@Test
 	public void supportsWhenTypeOAuth2ClientAuthenticationTokenThenReturnTrue() {
 		assertThat(this.authenticationProvider.supports(OAuth2ClientAuthenticationToken.class)).isTrue();
 	}
@@ -178,84 +184,6 @@ public class JwtClientAssertionAuthenticationProviderTests {
 				.satisfies(error -> {
 					assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_CLIENT);
 					assertThat(error.getDescription()).contains("credentials");
-				});
-	}
-
-	@Test
-	public void authenticateWhenMissingJwkSetUrlThenThrowOAuth2AuthenticationException() {
-		// @formatter:off
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
-				.clientAuthenticationMethod(ClientAuthenticationMethod.PRIVATE_KEY_JWT)
-				.clientSettings(
-						ClientSettings.builder()
-								.tokenEndpointAuthenticationSigningAlgorithm(SignatureAlgorithm.RS256)
-								.build()
-				)
-				.build();
-		// @formatter:on
-		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
-				.thenReturn(registeredClient);
-
-		OAuth2ClientAuthenticationToken authentication = new OAuth2ClientAuthenticationToken(
-				registeredClient.getClientId(), JWT_CLIENT_ASSERTION_AUTHENTICATION_METHOD, "jwt-assertion", null);
-		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
-				.isInstanceOf(OAuth2AuthenticationException.class)
-				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
-				.satisfies(error -> {
-					assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_CLIENT);
-					assertThat(error.getDescription()).isEqualTo("Failed to find a Signature Verifier for Client: '" +
-							registeredClient.getId() + "'. Check to ensure you have configured the JWK Set URL.");
-				});
-	}
-
-	@Test
-	public void authenticateWhenMissingClientSecretThenThrowOAuth2AuthenticationException() {
-		// @formatter:off
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
-				.clientSecret(null)
-				.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_JWT)
-				.clientSettings(
-						ClientSettings.builder()
-								.tokenEndpointAuthenticationSigningAlgorithm(MacAlgorithm.HS256)
-								.build()
-				)
-				.build();
-		// @formatter:on
-		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
-				.thenReturn(registeredClient);
-
-		OAuth2ClientAuthenticationToken authentication = new OAuth2ClientAuthenticationToken(
-				registeredClient.getClientId(), JWT_CLIENT_ASSERTION_AUTHENTICATION_METHOD, "jwt-assertion", null);
-		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
-				.isInstanceOf(OAuth2AuthenticationException.class)
-				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
-				.satisfies(error -> {
-					assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_CLIENT);
-					assertThat(error.getDescription()).isEqualTo("Failed to find a Signature Verifier for Client: '" +
-							registeredClient.getId() + "'. Check to ensure you have configured the client secret.");
-				});
-	}
-
-	@Test
-	public void authenticateWhenMissingSigningAlgorithmThenThrowOAuth2AuthenticationException() {
-		// @formatter:off
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
-				.clientSecret(TestKeys.DEFAULT_ENCODED_SECRET_KEY)
-				.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_JWT)
-				.build();
-		// @formatter:on
-		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
-				.thenReturn(registeredClient);
-
-		OAuth2ClientAuthenticationToken authentication = new OAuth2ClientAuthenticationToken(
-				registeredClient.getClientId(), JWT_CLIENT_ASSERTION_AUTHENTICATION_METHOD, "jwt-assertion", null);
-		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
-				.isInstanceOf(OAuth2AuthenticationException.class)
-				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
-				.satisfies(error -> {
-					assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_CLIENT);
-					assertThat(error.getDescription()).isEqualTo("Failed to find a Signature Verifier for Client: '" +
-							registeredClient.getId() + "'. Check to ensure you have configured a valid JWS Algorithm: 'null'.");
 				});
 	}
 

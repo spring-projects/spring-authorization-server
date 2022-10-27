@@ -271,7 +271,7 @@ public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity h
 `OidcUserInfoEndpointConfigurer` provides the ability to customize the https://openid.net/specs/openid-connect-core-1_0.html#UserInfo[OpenID Connect 1.0 UserInfo endpoint].
 It defines extension points that let you customize the https://openid.net/specs/openid-connect-core-1_0.html#UserInfoResponse[UserInfo response].
 
-`OidcUserInfoEndpointConfigurer` provides the following configuration option:
+`OidcUserInfoEndpointConfigurer` provides the following configuration options:
 
 [source,java]
 ----
@@ -303,8 +303,8 @@ public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity h
 <2> `userInfoRequestConverters()`: Sets the `Consumer` providing access to the `List` of default and (optionally) added ``AuthenticationConverter``'s allowing the ability to add, remove, or customize a specific `AuthenticationConverter`.
 <3> `authenticationProvider()`: Adds an `AuthenticationProvider` (_main processor_) used for authenticating the `OidcUserInfoAuthenticationToken`.
 <4> `authenticationProviders()`: Sets the `Consumer` providing access to the `List` of default and (optionally) added ``AuthenticationProvider``'s allowing the ability to add, remove, or customize a specific `AuthenticationProvider`.
-<5> `revocationResponseHandler()`: The `AuthenticationSuccessHandler` (_post-processor_) used for handling an "`authenticated`" `OidcUserInfoAuthenticationToken` and returning the https://openid.net/specs/openid-connect-core-1_0.html#UserInfoResponse[UserInfo response].
-<6> `userInfoResponseHandler()`: The `AuthenticationFailureHandler` (_post-processor_) used for handling an `OAuth2AuthenticationException` and returning the https://openid.net/specs/openid-connect-core-1_0.html#UserInfoError[UserInfo Error response].
+<5> `userInfoResponseHandler()`: The `AuthenticationSuccessHandler` (_post-processor_) used for handling an "`authenticated`" `OidcUserInfoAuthenticationToken` and returning the https://openid.net/specs/openid-connect-core-1_0.html#UserInfoResponse[UserInfo response].
+<6> `errorResponseHandler()`: The `AuthenticationFailureHandler` (_post-processor_) used for handling an `OAuth2AuthenticationException` and returning the https://openid.net/specs/openid-connect-core-1_0.html#UserInfoError[UserInfo Error response].
 <7> `userInfoMapper()`: The `Function` used to extract claims from `OidcUserInfoAuthenticationContext` to an instance of `OidcUserInfo`.
 
 `OidcUserInfoEndpointConfigurer` configures the `OidcUserInfoEndpointFilter` and registers it with the OAuth2 authorization server `SecurityFilterChain` `@Bean`.
@@ -312,9 +312,9 @@ public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity h
 
 `OidcUserInfoEndpointFilter` is configured with the following defaults:
 
-* `*AuthenticationConverter*` -- An internal implementation that obtains the `Authentication` from the `SecurityContext` and wraps the principal in an `OidcUserInfoAuthenticationToken`.
+* `*AuthenticationConverter*` -- An internal implementation that obtains the `Authentication` from the `SecurityContext` and creates an `OidcUserInfoAuthenticationToken` with the principal.
 * `*AuthenticationManager*` -- An `AuthenticationManager` composed of `OidcUserInfoAuthenticationProvider`, which is associated with an internal implementation of `userInfoMapper` that extracts https://openid.net/specs/openid-connect-core-1_0.html#StandardClaims[standard claims] from the https://openid.net/specs/openid-connect-core-1_0.html#IDToken[ID Token] based on the https://openid.net/specs/openid-connect-core-1_0.html#ScopeClaims[scopes requested] during authorization.
-* `*AuthenticationSuccessHandler*` -- An internal implementation that handles an "`authenticated`" `OidcUserInfoAuthenticationToken` and returns the UserInfo response.
+* `*AuthenticationSuccessHandler*` -- An internal implementation that handles an "`authenticated`" `OidcUserInfoAuthenticationToken` and returns the `OidcUserInfo` response.
 * `*AuthenticationFailureHandler*` -- An internal implementation that uses the `OAuth2Error` associated with the `OAuth2AuthenticationException` and returns the `OAuth2Error` response.
 
 [TIP]

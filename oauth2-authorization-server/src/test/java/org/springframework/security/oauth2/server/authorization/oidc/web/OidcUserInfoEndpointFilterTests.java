@@ -88,21 +88,21 @@ public class OidcUserInfoEndpointFilterTests {
 	}
 
 	@Test
-	public void setAuthenticationConverterNullThenThrowIllegalArgumentException() {
+	public void setAuthenticationConverterWhenNullThenThrowIllegalArgumentException() {
 		assertThatIllegalArgumentException()
 				.isThrownBy(() -> this.filter.setAuthenticationConverter(null))
 				.withMessage("authenticationConverter cannot be null");
 	}
 
 	@Test
-	public void setAuthenticationSuccessHandlerNullThenThrowIllegalArgumentException() {
+	public void setAuthenticationSuccessHandlerWhenNullThenThrowIllegalArgumentException() {
 		assertThatIllegalArgumentException()
 				.isThrownBy(() -> this.filter.setAuthenticationSuccessHandler(null))
 				.withMessage("authenticationSuccessHandler cannot be null");
 	}
 
 	@Test
-	public void setAuthenticationFailureHandlerNullThenThrowIllegalArgumentException() {
+	public void setAuthenticationFailureHandlerWhenNullThenThrowIllegalArgumentException() {
 		assertThatIllegalArgumentException()
 				.isThrownBy(() -> this.filter.setAuthenticationFailureHandler(null))
 				.withMessage("authenticationFailureHandler cannot be null");
@@ -201,7 +201,7 @@ public class OidcUserInfoEndpointFilterTests {
 	}
 
 	@Test
-	public void doFilterWhenCustomAuthenticationConverterThenUses() throws Exception {
+	public void doFilterWhenCustomAuthenticationConverterThenUsed() throws Exception {
 		Authentication principal = new TestingAuthenticationToken("principal", "credentials");
 		OidcUserInfoAuthenticationToken authentication = new OidcUserInfoAuthenticationToken(principal);
 		AuthenticationConverter authenticationConverter = mock(AuthenticationConverter.class);
@@ -220,13 +220,14 @@ public class OidcUserInfoEndpointFilterTests {
 
 		this.filter.doFilter(request, response, filterChain);
 
+		verifyNoInteractions(filterChain);
 		verify(authenticationConverter).convert(request);
 		verify(this.authenticationManager).authenticate(authentication);
 		assertUserInfoResponse(response.getContentAsString());
 	}
 
 	@Test
-	public void doFilterWhenCustomAuthenticationSuccessHandlerThenUses() throws Exception {
+	public void doFilterWhenCustomAuthenticationSuccessHandlerThenUsed() throws Exception {
 		AuthenticationSuccessHandler successHandler = mock(AuthenticationSuccessHandler.class);
 		this.filter.setAuthenticationSuccessHandler(successHandler);
 
@@ -249,7 +250,7 @@ public class OidcUserInfoEndpointFilterTests {
 	}
 
 	@Test
-	public void doFilterWhenCustomFailureHandlerThenUses() throws Exception {
+	public void doFilterWhenCustomAuthenticationFailureHandlerThenUsed() throws Exception {
 		AuthenticationFailureHandler failureHandler = mock(AuthenticationFailureHandler.class);
 		this.filter.setAuthenticationFailureHandler(failureHandler);
 
@@ -269,7 +270,6 @@ public class OidcUserInfoEndpointFilterTests {
 		this.filter.doFilter(request, response, filterChain);
 
 		verifyNoInteractions(filterChain);
-
 		verify(failureHandler).onAuthenticationFailure(request, response, authenticationException);
 	}
 

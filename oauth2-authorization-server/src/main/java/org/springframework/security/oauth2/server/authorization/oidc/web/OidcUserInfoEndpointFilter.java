@@ -35,6 +35,7 @@ import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.http.converter.OAuth2ErrorHttpMessageConverter;
 import org.springframework.security.oauth2.core.oidc.OidcUserInfo;
+import org.springframework.security.oauth2.server.authorization.oidc.authentication.OidcUserInfoAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.oidc.authentication.OidcUserInfoAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.oidc.http.converter.OidcUserInfoHttpMessageConverter;
 import org.springframework.security.web.authentication.AuthenticationConverter;
@@ -51,8 +52,10 @@ import org.springframework.web.filter.OncePerRequestFilter;
  *
  * @author Ido Salomon
  * @author Steve Riesenberg
+ * @author Daniel Garnier-Moiroux
  * @since 0.2.1
  * @see OidcUserInfo
+ * @see OidcUserInfoAuthenticationProvider
  * @see <a href="https://openid.net/specs/openid-connect-core-1_0.html#UserInfo">5.3. UserInfo Endpoint</a>
  */
 public final class OidcUserInfoEndpointFilter extends OncePerRequestFilter {
@@ -64,14 +67,11 @@ public final class OidcUserInfoEndpointFilter extends OncePerRequestFilter {
 
 	private final AuthenticationManager authenticationManager;
 	private final RequestMatcher userInfoEndpointMatcher;
-
-	private AuthenticationConverter authenticationConverter = this::createAuthentication;
-
 	private final HttpMessageConverter<OidcUserInfo> userInfoHttpMessageConverter =
 			new OidcUserInfoHttpMessageConverter();
 	private final HttpMessageConverter<OAuth2Error> errorHttpResponseConverter =
 			new OAuth2ErrorHttpMessageConverter();
-
+	private AuthenticationConverter authenticationConverter = this::createAuthentication;
 	private AuthenticationSuccessHandler authenticationSuccessHandler = this::sendUserInfoResponse;
 	private AuthenticationFailureHandler authenticationFailureHandler = this::sendErrorResponse;
 
@@ -111,8 +111,8 @@ public final class OidcUserInfoEndpointFilter extends OncePerRequestFilter {
 		try {
 			Authentication userInfoAuthentication = this.authenticationConverter.convert(request);
 
-			OidcUserInfoAuthenticationToken userInfoAuthenticationResult =
-					(OidcUserInfoAuthenticationToken) this.authenticationManager.authenticate(userInfoAuthentication);
+			Authentication userInfoAuthenticationResult =
+					this.authenticationManager.authenticate(userInfoAuthentication);
 
 			this.authenticationSuccessHandler.onAuthenticationSuccess(request, response, userInfoAuthenticationResult);
 		} catch (OAuth2AuthenticationException ex) {
@@ -130,10 +130,10 @@ public final class OidcUserInfoEndpointFilter extends OncePerRequestFilter {
 	}
 
 	/**
-	 * Sets the {@link AuthenticationConverter} used when attempting to extract the OAuth2 Access Token from {@link HttpServletRequest}
-	 * to an instance of {@link OidcUserInfoAuthenticationToken} used for authenticating the User Info request.
+	 * Sets the {@link AuthenticationConverter} used when attempting to extract an UserInfo Request from {@link HttpServletRequest}
+	 * to an instance of {@link OidcUserInfoAuthenticationToken} used for authenticating the request.
 	 *
-	 * @param authenticationConverter the {@link AuthenticationConverter} used when attempting to extract an OIDC User Info from {@link HttpServletRequest}
+	 * @param authenticationConverter the {@link AuthenticationConverter} used when attempting to extract an UserInfo Request from {@link HttpServletRequest}
 	 * @since 0.4.0
 	 */
 	public void setAuthenticationConverter(AuthenticationConverter authenticationConverter) {
@@ -142,10 +142,10 @@ public final class OidcUserInfoEndpointFilter extends OncePerRequestFilter {
 	}
 
 	/**
-	 * Sets the {@link AuthenticationSuccessHandler} used for handling an {@link OidcUserInfoAuthenticationToken} and
-	 * returning the {@link OidcUserInfo OIDC User Info}.
+	 * Sets the {@link AuthenticationSuccessHandler} used for handling an {@link OidcUserInfoAuthenticationToken}
+	 * and returning the {@link OidcUserInfo UserInfo Response}.
 	 *
-	 * @param authenticationSuccessHandler the {@link AuthenticationSuccessHandler} for handling an {@link OidcUserInfoAuthenticationToken}
+	 * @param authenticationSuccessHandler the {@link AuthenticationSuccessHandler} used for handling an {@link OidcUserInfoAuthenticationToken}
 	 * @since 0.4.0
 	 */
 	public void setAuthenticationSuccessHandler(AuthenticationSuccessHandler authenticationSuccessHandler) {

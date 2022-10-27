@@ -208,6 +208,7 @@ public class OidcUserInfoTests {
 				.header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken.getTokenValue()))
 				.andExpect(status().is2xxSuccessful());
 		// @formatter:on
+
 		verify(userInfoMapper).apply(any());
 		verify(authenticationConverter).convert(any());
 		verify(authenticationSuccessHandler).onAuthenticationSuccess(any(), any(), any());
@@ -228,7 +229,7 @@ public class OidcUserInfoTests {
 	}
 
 	@Test
-	public void requestWhenUserInfoEndpointCustomizedThenAuthenticationProviderUsed() throws Exception {
+	public void requestWhenUserInfoEndpointCustomizedWithAuthenticationProviderThenUsed() throws Exception {
 		this.spring.register(CustomUserInfoConfiguration.class).autowire();
 
 		OAuth2Authorization authorization = createAuthorization();
@@ -247,6 +248,7 @@ public class OidcUserInfoTests {
 						.header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken.getTokenValue()))
 				.andExpect(status().is2xxSuccessful());
 		// @formatter:on
+
 		verify(authenticationSuccessHandler).onAuthenticationSuccess(any(), any(), any());
 		verify(authenticationProvider).authenticate(any());
 		verifyNoInteractions(authenticationFailureHandler);
@@ -254,8 +256,9 @@ public class OidcUserInfoTests {
 	}
 
 	@Test
-	public void requestWhenUserInfoEndpointCustomizedAndErrorThenUsed() throws Exception {
+	public void requestWhenUserInfoEndpointCustomizedWithAuthenticationFailureHandlerThenUsed() throws Exception {
 		this.spring.register(CustomUserInfoConfiguration.class).autowire();
+
 		when(userInfoMapper.apply(any())).thenReturn(createUserInfo());
 		doAnswer(
 				invocation -> {
@@ -267,13 +270,12 @@ public class OidcUserInfoTests {
 		).when(authenticationFailureHandler).onAuthenticationFailure(any(), any(), any());
 
 		OAuth2AccessToken accessToken = createAuthorization().getAccessToken().getToken();
-
-
 		// @formatter:off
 		this.mvc.perform(get(DEFAULT_OIDC_USER_INFO_ENDPOINT_URI)
 				.header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken.getTokenValue()))
 				.andExpect(status().is4xxClientError());
 		// @formatter:on
+
 		verify(authenticationFailureHandler).onAuthenticationFailure(any(), any(), any());
 		verifyNoInteractions(authenticationSuccessHandler);
 		verifyNoInteractions(userInfoMapper);

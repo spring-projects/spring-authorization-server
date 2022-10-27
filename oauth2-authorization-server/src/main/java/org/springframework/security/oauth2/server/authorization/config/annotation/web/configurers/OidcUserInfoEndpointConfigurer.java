@@ -61,7 +61,7 @@ import org.springframework.util.Assert;
 public final class OidcUserInfoEndpointConfigurer extends AbstractOAuth2Configurer {
 	private RequestMatcher requestMatcher;
 	private final List<AuthenticationConverter> userInfoRequestConverters = new ArrayList<>();
-	private Consumer<List<AuthenticationConverter>> userInfoRequestConvertersConsumer = (authenticationConverters) -> {};
+	private Consumer<List<AuthenticationConverter>> userInfoRequestConvertersConsumer = (userInfoRequestConverters) -> {};
 	private final List<AuthenticationProvider> authenticationProviders = new ArrayList<>();
 	private Consumer<List<AuthenticationProvider>> authenticationProvidersConsumer = (authenticationProviders) -> {};
 	private AuthenticationSuccessHandler userInfoResponseHandler;
@@ -76,10 +76,10 @@ public final class OidcUserInfoEndpointConfigurer extends AbstractOAuth2Configur
 	}
 
 	/**
-	 * Sets the {@link AuthenticationConverter} used when attempting to extract the OAuth2 Access Token from {@link HttpServletRequest}
-	 * to an instance of {@link OidcUserInfoAuthenticationToken} used for authenticating the User Info request.
+	 * Adds an {@link AuthenticationConverter} used when attempting to extract an UserInfo Request from {@link HttpServletRequest}
+	 * to an instance of {@link OidcUserInfoAuthenticationToken} used for authenticating the request.
 	 *
-	 * @param userInfoRequestConverter the {@link AuthenticationConverter} used when attempting to extract an OIDC User Info from {@link HttpServletRequest}
+	 * @param userInfoRequestConverter an {@link AuthenticationConverter} used when attempting to extract an UserInfo Request from {@link HttpServletRequest}
 	 * @return the {@link OidcUserInfoEndpointConfigurer} for further configuration
 	 * @since 0.4.0
 	 */
@@ -106,9 +106,9 @@ public final class OidcUserInfoEndpointConfigurer extends AbstractOAuth2Configur
 	}
 
 	/**
-	 * Adds an {@link AuthenticationProvider} used for authenticating a type of {@link OidcUserInfoAuthenticationToken}.
+	 * Adds an {@link AuthenticationProvider} used for authenticating an {@link OidcUserInfoAuthenticationToken}.
 	 *
-	 * @param authenticationProvider a {@link AuthenticationProvider} used for authenticating a type of {@link OidcUserInfoAuthenticationToken}
+	 * @param authenticationProvider an {@link AuthenticationProvider} used for authenticating an {@link OidcUserInfoAuthenticationToken}
 	 * @return the {@link OidcUserInfoEndpointConfigurer} for further configuration
 	 * @since 0.4.0
 	 */
@@ -135,8 +135,8 @@ public final class OidcUserInfoEndpointConfigurer extends AbstractOAuth2Configur
 	}
 
 	/**
-	 * Sets the {@link AuthenticationSuccessHandler} used for handling an {@link OidcUserInfoAuthenticationToken} and
-	 * returning the {@link OidcUserInfo User Info Response}.
+	 * Sets the {@link AuthenticationSuccessHandler} used for handling an {@link OidcUserInfoAuthenticationToken}
+	 * and returning the {@link OidcUserInfo UserInfo Response}.
 	 *
 	 * @param userInfoResponseHandler the {@link AuthenticationSuccessHandler} used for handling an {@link OidcUserInfoAuthenticationToken}
 	 * @return the {@link OidcUserInfoEndpointConfigurer} for further configuration
@@ -148,8 +148,8 @@ public final class OidcUserInfoEndpointConfigurer extends AbstractOAuth2Configur
 	}
 
 	/**
-	 * Sets the {@link AuthenticationFailureHandler} used for handling an {@link OAuth2AuthenticationException} and
-	 * returning the {@link OAuth2Error Error Response}.
+	 * Sets the {@link AuthenticationFailureHandler} used for handling an {@link OAuth2AuthenticationException}
+	 * and returning the {@link OAuth2Error Error Response}.
 	 *
 	 * @param errorResponseHandler the {@link AuthenticationFailureHandler} used for handling an {@link OAuth2AuthenticationException}
 	 * @return the {@link OidcUserInfoEndpointConfigurer} for further configuration
@@ -190,12 +190,10 @@ public final class OidcUserInfoEndpointConfigurer extends AbstractOAuth2Configur
 				new AntPathRequestMatcher(userInfoEndpointUri, HttpMethod.POST.name()));
 
 		List<AuthenticationProvider> authenticationProviders = createDefaultAuthenticationProviders(httpSecurity);
-
 		if (!this.authenticationProviders.isEmpty()) {
 			authenticationProviders.addAll(0, this.authenticationProviders);
 		}
 		this.authenticationProvidersConsumer.accept(authenticationProviders);
-
 		authenticationProviders.forEach(authenticationProvider ->
 				httpSecurity.authenticationProvider(postProcess(authenticationProvider)));
 	}
@@ -232,20 +230,23 @@ public final class OidcUserInfoEndpointConfigurer extends AbstractOAuth2Configur
 
 	private static List<AuthenticationConverter> createDefaultAuthenticationConverters() {
 		List<AuthenticationConverter> authenticationConverters = new ArrayList<>();
+
 		authenticationConverters.add(
 				(request) -> {
 					Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 					return new OidcUserInfoAuthenticationToken(authentication);
 				}
 		);
+
 		return authenticationConverters;
 	}
 
 	private List<AuthenticationProvider> createDefaultAuthenticationProviders(HttpSecurity httpSecurity) {
 		List<AuthenticationProvider> authenticationProviders = new ArrayList<>();
 
-		OidcUserInfoAuthenticationProvider oidcUserInfoAuthenticationProvider = new OidcUserInfoAuthenticationProvider(
-				OAuth2ConfigurerUtils.getAuthorizationService(httpSecurity));
+		OidcUserInfoAuthenticationProvider oidcUserInfoAuthenticationProvider =
+				new OidcUserInfoAuthenticationProvider(
+						OAuth2ConfigurerUtils.getAuthorizationService(httpSecurity));
 		if (this.userInfoMapper != null) {
 			oidcUserInfoAuthenticationProvider.setUserInfoMapper(this.userInfoMapper);
 		}

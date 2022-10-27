@@ -15,7 +15,7 @@
  */
 package org.springframework.security.oauth2.server.authorization.oidc.web.authentication;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.server.ServletServerHttpRequest;

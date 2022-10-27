@@ -27,6 +27,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.server.ServletServerHttpResponse;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
@@ -40,6 +42,8 @@ import org.springframework.security.oauth2.server.authorization.oidc.authenticat
 import org.springframework.security.oauth2.server.authorization.oidc.http.converter.OidcClientRegistrationHttpMessageConverter;
 import org.springframework.security.oauth2.server.authorization.oidc.web.authentication.OidcClientRegistrationAuthenticationConverter;
 import org.springframework.security.web.authentication.AuthenticationConverter;
+import org.springframework.security.web.authentication.AuthenticationFailureHandler;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.util.matcher.AndRequestMatcher;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.OrRequestMatcher;
@@ -53,6 +57,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
  *
  * @author Ovidiu Popa
  * @author Joe Grandja
+ * @author Daniel Garnier-Moiroux
  * @since 0.1.1
  * @see OidcClientRegistration
  * @see OidcClientRegistrationAuthenticationConverter
@@ -69,11 +74,13 @@ public final class OidcClientRegistrationEndpointFilter extends OncePerRequestFi
 
 	private final AuthenticationManager authenticationManager;
 	private final RequestMatcher clientRegistrationEndpointMatcher;
+	private AuthenticationConverter authenticationConverter = new OidcClientRegistrationAuthenticationConverter();
 	private final HttpMessageConverter<OidcClientRegistration> clientRegistrationHttpMessageConverter =
 			new OidcClientRegistrationHttpMessageConverter();
 	private final HttpMessageConverter<OAuth2Error> errorHttpResponseConverter =
 			new OAuth2ErrorHttpMessageConverter();
-	private AuthenticationConverter authenticationConverter;
+	private AuthenticationSuccessHandler authenticationSuccessHandler = this::sendClientRegistrationResponse;
+	private AuthenticationFailureHandler authenticationFailureHandler = this::sendErrorResponse;
 
 	/**
 	 * Constructs an {@code OidcClientRegistrationEndpointFilter} using the provided parameters.
@@ -99,7 +106,6 @@ public final class OidcClientRegistrationEndpointFilter extends OncePerRequestFi
 				new AntPathRequestMatcher(
 						clientRegistrationEndpointUri, HttpMethod.POST.name()),
 				createClientConfigurationMatcher(clientRegistrationEndpointUri));
-		this.authenticationConverter = new OidcClientRegistrationAuthenticationConverter();
 	}
 
 	private static RequestMatcher createClientConfigurationMatcher(String clientRegistrationEndpointUri) {
@@ -130,33 +136,77 @@ public final class OidcClientRegistrationEndpointFilter extends OncePerRequestFi
 			OidcClientRegistrationAuthenticationToken clientRegistrationAuthenticationResult =
 					(OidcClientRegistrationAuthenticationToken) this.authenticationManager.authenticate(clientRegistrationAuthentication);
 
-			HttpStatus httpStatus = HttpStatus.OK;
-			if (clientRegistrationAuthentication.getClientRegistration() != null) {
-				httpStatus = HttpStatus.CREATED;
-			}
-
-			sendClientRegistrationResponse(response, httpStatus, clientRegistrationAuthenticationResult.getClientRegistration());
-
+			this.authenticationSuccessHandler.onAuthenticationSuccess(request, response, clientRegistrationAuthenticationResult);
 		} catch (OAuth2AuthenticationException ex) {
-			sendErrorResponse(response, ex.getError());
+			this.authenticationFailureHandler.onAuthenticationFailure(request, response, ex);
 		} catch (Exception ex) {
 			OAuth2Error error = new OAuth2Error(
 					OAuth2ErrorCodes.INVALID_REQUEST,
 					"OpenID Client Registration Error: " + ex.getMessage(),
 					"https://openid.net/specs/openid-connect-registration-1_0.html#RegistrationError");
-			sendErrorResponse(response, error);
+			this.authenticationFailureHandler.onAuthenticationFailure(request, response,
+					new OAuth2AuthenticationException(error));
 		} finally {
 			SecurityContextHolder.clearContext();
 		}
 	}
 
-	private void sendClientRegistrationResponse(HttpServletResponse response, HttpStatus httpStatus, OidcClientRegistration clientRegistration) throws IOException {
+	/**
+	 * Sets the {@link AuthenticationConverter} used when attempting to extract the OIDC Client Registration Request
+	 * from {@link HttpServletRequest} to an instance of {@link OidcClientRegistrationAuthenticationToken} used for
+	 * creating the Client Registration or returning the Client Read Response.
+	 *
+	 * @param authenticationConverter the {@link AuthenticationConverter} used when attempting to extract an
+	 * OIDC Client Registration Request from {@link HttpServletRequest}
+	 * @since 0.4.0
+	 */
+	public void setAuthenticationConverter(AuthenticationConverter authenticationConverter) {
+		Assert.notNull(authenticationConverter, "authenticationConverter cannot be null");
+		this.authenticationConverter = authenticationConverter;
+	}
+
+	/**
+	 * Sets the {@link AuthenticationSuccessHandler} used for handling an {@link OidcClientRegistrationAuthenticationToken}
+	 * and returning the {@link OidcClientRegistration Client Registration Response}.
+	 *
+	 * @param authenticationSuccessHandler the {@link AuthenticationSuccessHandler} used for handling an {@link OidcClientRegistrationAuthenticationToken}
+	 * @see 0.4.0
+	 */
+	public void setAuthenticationSuccessHandler(AuthenticationSuccessHandler authenticationSuccessHandler) {
+		Assert.notNull(authenticationSuccessHandler, "authenticationSuccessHandler cannot be null");
+		this.authenticationSuccessHandler = authenticationSuccessHandler;
+	}
+
+	/**
+	 * Sets the {@link AuthenticationFailureHandler} used for handling an
+	 * {@link OAuth2AuthenticationException} and returning the {@link OAuth2Error Error
+	 * Response}.
+	 * @param authenticationFailureHandler the {@link AuthenticationFailureHandler} used
+	 * for handling an {@link OAuth2AuthenticationException}
+	 * @since 0.4.0
+	 */
+	public void setAuthenticationFailureHandler(AuthenticationFailureHandler authenticationFailureHandler) {
+		Assert.notNull(authenticationFailureHandler, "authenticationFailureHandler cannot be null");
+		this.authenticationFailureHandler = authenticationFailureHandler;
+	}
+
+	private void sendClientRegistrationResponse(HttpServletRequest request, HttpServletResponse response,
+			Authentication authentication) throws IOException {
+		OidcClientRegistration clientRegistration = ((OidcClientRegistrationAuthenticationToken) authentication)
+				.getClientRegistration();
 		ServletServerHttpResponse httpResponse = new ServletServerHttpResponse(response);
-		httpResponse.setStatusCode(httpStatus);
+		if (HttpMethod.POST.name().equals(request.getMethod())) {
+			httpResponse.setStatusCode(HttpStatus.CREATED);
+		}
+		else {
+			httpResponse.setStatusCode(HttpStatus.OK);
+		}
 		this.clientRegistrationHttpMessageConverter.write(clientRegistration, null, httpResponse);
 	}
 
-	private void sendErrorResponse(HttpServletResponse response, OAuth2Error error) throws IOException {
+	private void sendErrorResponse(HttpServletRequest request, HttpServletResponse response,
+			AuthenticationException authenticationException) throws IOException {
+		OAuth2Error error = ((OAuth2AuthenticationException) authenticationException).getError();
 		HttpStatus httpStatus = HttpStatus.BAD_REQUEST;
 		if (OAuth2ErrorCodes.INVALID_TOKEN.equals(error.getErrorCode())) {
 			httpStatus = HttpStatus.UNAUTHORIZED;

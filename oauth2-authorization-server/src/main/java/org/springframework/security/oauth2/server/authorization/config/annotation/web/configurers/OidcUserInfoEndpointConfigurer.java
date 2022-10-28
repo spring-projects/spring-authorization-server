@@ -174,6 +174,7 @@ public final class OidcUserInfoEndpointConfigurer extends AbstractOAuth2Configur
 	 * </ul>
 	 *
 	 * @param userInfoMapper the {@link Function} used to extract claims from {@link OidcUserInfoAuthenticationContext} to an instance of {@link OidcUserInfo}
+	 * @return the {@link OidcUserInfoEndpointConfigurer} for further configuration
 	 */
 	public OidcUserInfoEndpointConfigurer userInfoMapper(
 			Function<OidcUserInfoAuthenticationContext, OidcUserInfo> userInfoMapper) {

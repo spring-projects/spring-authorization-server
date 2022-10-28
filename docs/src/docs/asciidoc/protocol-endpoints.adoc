@@ -269,7 +269,7 @@ public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity h
 == OpenID Connect 1.0 UserInfo Endpoint
 
 `OidcUserInfoEndpointConfigurer` provides the ability to customize the https://openid.net/specs/openid-connect-core-1_0.html#UserInfo[OpenID Connect 1.0 UserInfo endpoint].
-It defines extension points that let you customize the https://openid.net/specs/openid-connect-core-1_0.html#UserInfoResponse[UserInfo response].
+It defines extension points that let you customize the pre-processing, main processing, and post-processing logic for https://openid.net/specs/openid-connect-core-1_0.html#UserInfoRequest[UserInfo requests].
 
 `OidcUserInfoEndpointConfigurer` provides the following configuration options:
 

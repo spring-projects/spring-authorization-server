@@ -371,27 +371,6 @@ public class OidcClientRegistrationEndpointFilterTests {
 				OAuth2ErrorCodes.INVALID_CLIENT, HttpStatus.UNAUTHORIZED);
 	}
 
-	@Test
-	public void doFilterWhenCustomAuthenticationFailureHandlerThenUsed() throws Exception {
-		AuthenticationFailureHandler authenticationFailureHandler = mock(AuthenticationFailureHandler.class);
-		this.filter.setAuthenticationFailureHandler(authenticationFailureHandler);
-
-		when(this.authenticationManager.authenticate(any()))
-				.thenThrow(new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_TOKEN));
-
-		String requestUri = DEFAULT_OIDC_CLIENT_REGISTRATION_ENDPOINT_URI;
-		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestUri);
-		request.setServletPath(requestUri);
-		request.setParameter(OAuth2ParameterNames.CLIENT_ID, "client1");
-		MockHttpServletResponse response = new MockHttpServletResponse();
-		FilterChain filterChain = mock(FilterChain.class);
-
-		this.filter.doFilter(request, response, filterChain);
-
-		verify(authenticationFailureHandler).onAuthenticationFailure(eq(request), eq(response),
-				any(OAuth2AuthenticationException.class));
-	}
-
 	private void doFilterWhenClientConfigurationRequestInvalidThenError(
 			String errorCode, HttpStatus status) throws Exception {
 		Jwt jwt = createJwt("client.read");
@@ -476,6 +455,24 @@ public class OidcClientRegistrationEndpointFilterTests {
 	}
 
 	@Test
+	public void doFilterWhenCustomAuthenticationConverterThenUsed() throws ServletException, IOException {
+		AuthenticationConverter authenticationConverter = mock(AuthenticationConverter.class);
+		this.filter.setAuthenticationConverter(authenticationConverter);
+
+		String requestUri = DEFAULT_OIDC_CLIENT_REGISTRATION_ENDPOINT_URI;
+		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestUri);
+		request.setServletPath(requestUri);
+		request.setParameter(OAuth2ParameterNames.CLIENT_ID, "client-id");
+
+		MockHttpServletResponse response = new MockHttpServletResponse();
+		FilterChain filterChain = mock(FilterChain.class);
+
+		this.filter.doFilter(request, response, filterChain);
+
+		verify(authenticationConverter).convert(request);
+	}
+
+	@Test
 	public void doFilterWhenCustomAuthenticationSuccessHandlerThenUsed() throws Exception {
 		OidcClientRegistration expectedClientRegistrationResponse = createClientRegistration();
 		Authentication principal = new TestingAuthenticationToken("principal", "Credentials");
@@ -504,43 +501,25 @@ public class OidcClientRegistrationEndpointFilterTests {
 		verify(successHandler).onAuthenticationSuccess(request, response, clientRegistrationAuthenticationResult);
 	}
 
-	private static OidcClientRegistration createClientRegistration() {
-		// @formatter:off
-		OidcClientRegistration expectedClientRegistrationResponse = OidcClientRegistration.builder()
-				.clientId("client-id")
-				.clientIdIssuedAt(Instant.now())
-				.clientSecret("client-secret")
-				.clientName("client-name")
-				.redirectUri("https://client.example.com")
-				.grantType(AuthorizationGrantType.AUTHORIZATION_CODE.getValue())
-				.grantType(AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
-				.tokenEndpointAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue())
-				.responseType(OAuth2AuthorizationResponseType.CODE.getValue())
-				.idTokenSignedResponseAlgorithm(SignatureAlgorithm.RS256.getName())
-				.scope("scope1")
-				.scope("scope2")
-				.registrationClientUrl("https://auth-server:9000/connect/register?client_id=client-id")
-				.build();
-		return expectedClientRegistrationResponse;
-		// @formatter:on
-	}
-
 	@Test
-	public void doFilterWhenCustomAuthenticationConverterThenUsed() throws ServletException, IOException {
-		AuthenticationConverter authenticationConverter = mock(AuthenticationConverter.class);
-		this.filter.setAuthenticationConverter(authenticationConverter);
+	public void doFilterWhenCustomAuthenticationFailureHandlerThenUsed() throws Exception {
+		AuthenticationFailureHandler authenticationFailureHandler = mock(AuthenticationFailureHandler.class);
+		this.filter.setAuthenticationFailureHandler(authenticationFailureHandler);
+
+		when(this.authenticationManager.authenticate(any()))
+				.thenThrow(new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_TOKEN));
 
 		String requestUri = DEFAULT_OIDC_CLIENT_REGISTRATION_ENDPOINT_URI;
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestUri);
 		request.setServletPath(requestUri);
-		request.setParameter(OAuth2ParameterNames.CLIENT_ID, "client-id");
-
+		request.setParameter(OAuth2ParameterNames.CLIENT_ID, "client1");
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		FilterChain filterChain = mock(FilterChain.class);
 
 		this.filter.doFilter(request, response, filterChain);
 
-		verify(authenticationConverter).convert(request);
+		verify(authenticationFailureHandler).onAuthenticationFailure(eq(request), eq(response),
+				any(OAuth2AuthenticationException.class));
 	}
 
 	private OAuth2Error readError(MockHttpServletResponse response) throws Exception {
@@ -560,6 +539,27 @@ public class OidcClientRegistrationEndpointFilterTests {
 		MockClientHttpResponse httpResponse = new MockClientHttpResponse(
 				response.getContentAsByteArray(), HttpStatus.valueOf(response.getStatus()));
 		return this.clientRegistrationHttpMessageConverter.read(OidcClientRegistration.class, httpResponse);
+	}
+
+	private static OidcClientRegistration createClientRegistration() {
+		// @formatter:off
+		OidcClientRegistration clientRegistration = OidcClientRegistration.builder()
+				.clientId("client-id")
+				.clientIdIssuedAt(Instant.now())
+				.clientSecret("client-secret")
+				.clientName("client-name")
+				.redirectUri("https://client.example.com")
+				.grantType(AuthorizationGrantType.AUTHORIZATION_CODE.getValue())
+				.grantType(AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
+				.tokenEndpointAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue())
+				.responseType(OAuth2AuthorizationResponseType.CODE.getValue())
+				.idTokenSignedResponseAlgorithm(SignatureAlgorithm.RS256.getName())
+				.scope("scope1")
+				.scope("scope2")
+				.registrationClientUrl("https://auth-server:9000/connect/register?client_id=client-id")
+				.build();
+		return clientRegistration;
+		// @formatter:on
 	}
 
 	private static Jwt createJwt(String scope) {

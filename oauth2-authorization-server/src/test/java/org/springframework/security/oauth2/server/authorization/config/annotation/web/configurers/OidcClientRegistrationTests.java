@@ -88,6 +88,7 @@ import org.springframework.security.oauth2.server.authorization.oidc.authenticat
 import org.springframework.security.oauth2.server.authorization.oidc.authentication.OidcClientRegistrationAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.oidc.authentication.OidcClientRegistrationAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.oidc.http.converter.OidcClientRegistrationHttpMessageConverter;
+import org.springframework.security.oauth2.server.authorization.oidc.web.authentication.OidcClientRegistrationAuthenticationConverter;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
 import org.springframework.security.oauth2.server.authorization.test.SpringTestRule;
@@ -308,7 +309,7 @@ public class OidcClientRegistrationTests {
 	}
 
 	@Test
-	public void requestWhenUserInfoEndpointCustomizedThenUsed() throws Exception {
+	public void requestWhenClientRegistrationEndpointCustomizedThenUsed() throws Exception {
 		this.spring.register(CustomClientRegistrationConfiguration.class).autowire();
 
 		// @formatter:off
@@ -333,15 +334,17 @@ public class OidcClientRegistrationTests {
 		registerClient(clientRegistration);
 
 		verify(authenticationConverter).convert(any());
-		ArgumentCaptor<List<AuthenticationConverter>> authenticationConvertersCaptor = ArgumentCaptor
-				.forClass(List.class);
+		ArgumentCaptor<List<AuthenticationConverter>> authenticationConvertersCaptor =
+				ArgumentCaptor.forClass(List.class);
 		verify(authenticationConvertersConsumer).accept(authenticationConvertersCaptor.capture());
 		List<AuthenticationConverter> authenticationConverters = authenticationConvertersCaptor.getValue();
-		assertThat(authenticationConverters).hasSize(2).contains(authenticationConverter);
+		assertThat(authenticationConverters).hasSize(2)
+				.allMatch(converter -> converter == authenticationConverter
+						|| converter instanceof OidcClientRegistrationAuthenticationConverter);
 
 		verify(authenticationProvider).authenticate(any());
-		ArgumentCaptor<List<AuthenticationProvider>> authenticationProvidersCaptor = ArgumentCaptor
-				.forClass(List.class);
+		ArgumentCaptor<List<AuthenticationProvider>> authenticationProvidersCaptor =
+				ArgumentCaptor.forClass(List.class);
 		verify(authenticationProvidersConsumer).accept(authenticationProvidersCaptor.capture());
 		List<AuthenticationProvider> authenticationProviders = authenticationProvidersCaptor.getValue();
 		assertThat(authenticationProviders).hasSize(3)
@@ -354,7 +357,7 @@ public class OidcClientRegistrationTests {
 	}
 
 	@Test
-	public void requestWhenUserInfoEndpointCustomizedAndErrorThenUsed() throws Exception {
+	public void requestWhenClientRegistrationEndpointCustomizedWithAuthenticationFailureHandlerThenUsed() throws Exception {
 		this.spring.register(CustomClientRegistrationConfiguration.class).autowire();
 
 		when(authenticationProvider.authenticate(any())).thenThrow(new OAuth2AuthenticationException("error"));
@@ -461,27 +464,38 @@ public class OidcClientRegistrationTests {
 	@EnableWebSecurity
 	static class CustomClientRegistrationConfiguration extends AuthorizationServerConfiguration {
 
+		// @formatter:off
 		@Bean
 		@Override
 		public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
-			OAuth2AuthorizationServerConfigurer authorizationServerConfigurer = new OAuth2AuthorizationServerConfigurer();
-			authorizationServerConfigurer.oidc(oidc -> oidc.clientRegistrationEndpoint(
-					clientRegistration -> clientRegistration.clientRegistrationRequestConverter(authenticationConverter)
-							.clientRegistrationRequestConverters(authenticationConvertersConsumer)
-							.authenticationProvider(authenticationProvider)
-							.authenticationProviders(authenticationProvidersConsumer)
-							.clientRegistrationResponseHandler(authenticationSuccessHandler)
-							.errorResponseHandler(authenticationFailureHandler)));
+			OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
+					new OAuth2AuthorizationServerConfigurer();
+			authorizationServerConfigurer
+				.oidc(oidc ->
+					oidc
+						.clientRegistrationEndpoint(clientRegistration ->
+							clientRegistration
+								.clientRegistrationRequestConverter(authenticationConverter)
+								.clientRegistrationRequestConverters(authenticationConvertersConsumer)
+								.authenticationProvider(authenticationProvider)
+								.authenticationProviders(authenticationProvidersConsumer)
+								.clientRegistrationResponseHandler(authenticationSuccessHandler)
+								.errorResponseHandler(authenticationFailureHandler)
+						)
+				);
 			RequestMatcher endpointsMatcher = authorizationServerConfigurer.getEndpointsMatcher();
 
-			http.requestMatcher(endpointsMatcher)
-					.authorizeRequests(authorizeRequests -> authorizeRequests.anyRequest().authenticated())
+			http
+					.requestMatcher(endpointsMatcher)
+					.authorizeRequests(authorizeRequests ->
+							authorizeRequests.anyRequest().authenticated()
+					)
 					.csrf(csrf -> csrf.ignoringRequestMatchers(endpointsMatcher))
-					.oauth2ResourceServer(OAuth2ResourceServerConfigurer::jwt).apply(authorizationServerConfigurer);
+					.oauth2ResourceServer(OAuth2ResourceServerConfigurer::jwt)
+					.apply(authorizationServerConfigurer);
 			return http.build();
-
 		}
-
+		// @formatter:on
 	}
 
 	@EnableWebSecurity

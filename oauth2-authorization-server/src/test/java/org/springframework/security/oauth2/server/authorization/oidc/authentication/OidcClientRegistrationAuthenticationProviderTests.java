@@ -135,6 +135,13 @@ public class OidcClientRegistrationAuthenticationProviderTests {
 	}
 
 	@Test
+	public void setRegisteredClientConverterWhenNullThenThrowIllegalArgumentException() {
+		assertThatIllegalArgumentException()
+				.isThrownBy(() -> this.authenticationProvider.setRegisteredClientConverter(null))
+				.withMessage("registeredClientConverter cannot be null");
+	}
+
+	@Test
 	public void supportsWhenTypeOidcClientRegistrationAuthenticationTokenThenReturnTrue() {
 		assertThat(this.authenticationProvider.supports(OidcClientRegistrationAuthenticationToken.class)).isTrue();
 	}

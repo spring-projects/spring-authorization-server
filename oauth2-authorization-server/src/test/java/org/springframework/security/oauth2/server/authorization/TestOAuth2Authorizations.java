@@ -84,7 +84,7 @@ public class TestOAuth2Authorizations {
 				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
 				.authorizedScopes(authorizationRequest.getScopes())
 				.token(authorizationCode)
-				.attribute(OAuth2ParameterNames.STATE, "state")
+				.attribute(OAuth2ParameterNames.STATE, "consent-state")
 				.attribute(OAuth2AuthorizationRequest.class.getName(), authorizationRequest)
 				.attribute(Principal.class.getName(),
 						new TestingAuthenticationToken("principal", null, "ROLE_A", "ROLE_B"));

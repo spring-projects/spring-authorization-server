@@ -46,6 +46,7 @@ import org.springframework.util.StringUtils;
  * @since 0.4.0
  * @see RegisteredClientRepository
  * @see OAuth2AuthorizationService
+ * @see OidcClientRegistrationAuthenticationToken
  * @see OidcClientRegistrationAuthenticationProvider
  * @see <a href="https://openid.net/specs/openid-connect-registration-1_0.html#ClientConfigurationEndpoint">4. Client Configuration Endpoint</a>
  */
@@ -67,7 +68,7 @@ public final class OidcClientConfigurationAuthenticationProvider implements Auth
 		Assert.notNull(authorizationService, "authorizationService cannot be null");
 		this.registeredClientRepository = registeredClientRepository;
 		this.authorizationService = authorizationService;
-		this.clientRegistrationConverter = new OidcClientRegistrationConverter();
+		this.clientRegistrationConverter = new RegisteredClientOidcClientRegistrationConverter();
 	}
 
 	@Override

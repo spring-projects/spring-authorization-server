@@ -74,6 +74,7 @@ import org.springframework.util.StringUtils;
  * @see RegisteredClientRepository
  * @see OAuth2AuthorizationService
  * @see OAuth2TokenGenerator
+ * @see OidcClientRegistrationAuthenticationToken
  * @see OidcClientConfigurationAuthenticationProvider
  * @see <a href="https://openid.net/specs/openid-connect-registration-1_0.html#ClientRegistration">3. Client Registration Endpoint</a>
  */
@@ -84,7 +85,7 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 	private final OAuth2AuthorizationService authorizationService;
 	private final OAuth2TokenGenerator<? extends OAuth2Token> tokenGenerator;
 	private final Converter<RegisteredClient, OidcClientRegistration> clientRegistrationConverter;
-	private final Converter<OidcClientRegistration, RegisteredClient> registeredClientConverter;
+	private Converter<OidcClientRegistration, RegisteredClient> registeredClientConverter;
 
 	/**
 	 * Constructs an {@code OidcClientRegistrationAuthenticationProvider} using the provided parameters.
@@ -102,8 +103,8 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 		this.registeredClientRepository = registeredClientRepository;
 		this.authorizationService = authorizationService;
 		this.tokenGenerator = tokenGenerator;
-		this.clientRegistrationConverter = new OidcClientRegistrationConverter();
-		this.registeredClientConverter = new RegisteredClientConverter();
+		this.clientRegistrationConverter = new RegisteredClientOidcClientRegistrationConverter();
+		this.registeredClientConverter = new OidcClientRegistrationRegisteredClientConverter();
 	}
 
 	@Override
@@ -145,6 +146,17 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 	@Override
 	public boolean supports(Class<?> authentication) {
 		return OidcClientRegistrationAuthenticationToken.class.isAssignableFrom(authentication);
+	}
+
+	/**
+	 * Sets the {@link Converter} used for converting an {@link OidcClientRegistration} to a {@link RegisteredClient}.
+	 *
+	 * @param registeredClientConverter the {@link Converter} used for converting an {@link OidcClientRegistration} to a {@link RegisteredClient}
+	 * @since 0.4.0
+	 */
+	public void setRegisteredClientConverter(Converter<OidcClientRegistration, RegisteredClient> registeredClientConverter) {
+		Assert.notNull(registeredClientConverter, "registeredClientConverter cannot be null");
+		this.registeredClientConverter = registeredClientConverter;
 	}
 
 	private OidcClientRegistrationAuthenticationToken registerClient(OidcClientRegistrationAuthenticationToken clientRegistrationAuthentication,
@@ -293,7 +305,7 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 		throw new OAuth2AuthenticationException(error);
 	}
 
-	private static final class RegisteredClientConverter implements Converter<OidcClientRegistration, RegisteredClient> {
+	private static final class OidcClientRegistrationRegisteredClientConverter implements Converter<OidcClientRegistration, RegisteredClient> {
 		private static final StringKeyGenerator CLIENT_ID_GENERATOR = new Base64StringKeyGenerator(
 				Base64.getUrlEncoder().withoutPadding(), 32);
 		private static final StringKeyGenerator CLIENT_SECRET_GENERATOR = new Base64StringKeyGenerator(

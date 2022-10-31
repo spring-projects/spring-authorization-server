@@ -269,9 +269,9 @@ public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity h
 == OpenID Connect 1.0 UserInfo Endpoint
 
 `OidcUserInfoEndpointConfigurer` provides the ability to customize the https://openid.net/specs/openid-connect-core-1_0.html#UserInfo[OpenID Connect 1.0 UserInfo endpoint].
-It defines extension points that let you customize the https://openid.net/specs/openid-connect-core-1_0.html#UserInfoResponse[UserInfo response].
+It defines extension points that let you customize the pre-processing, main processing, and post-processing logic for https://openid.net/specs/openid-connect-core-1_0.html#UserInfoRequest[UserInfo requests].
 
-`OidcUserInfoEndpointConfigurer` provides the following configuration option:
+`OidcUserInfoEndpointConfigurer` provides the following configuration options:
 
 [source,java]
 ----
@@ -285,21 +285,37 @@ public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity h
 		.oidc(oidc ->
 			oidc
 				.userInfoEndpoint(userInfoEndpoint ->
-					userInfoEndpoint.userInfoMapper(userInfoMapper)   <1>
+					userInfoEndpoint
+						.userInfoRequestConverter(userInfoRequestConverter) <1>
+						.userInfoRequestConverters(userInfoRequestConvertersConsumer) <2>
+						.authenticationProvider(authenticationProvider) <3>
+						.authenticationProviders(authenticationProvidersConsumer) <4>
+						.userInfoResponseHandler(userInfoResponseHandler) <5>
+						.errorResponseHandler(errorResponseHandler) <6>
+						.userInfoMapper(userInfoMapper) <7>
 				)
 		);
 
 	return http.build();
 }
 ----
-<1> `userInfoMapper()`: The `Function` used to extract claims from `OidcUserInfoAuthenticationContext` to an instance of `OidcUserInfo`.
+<1> `userInfoRequestConverter()`: Adds an `AuthenticationConverter` (_pre-processor_) used when attempting to extract an https://openid.net/specs/openid-connect-core-1_0.html#UserInfoRequest[UserInfo request] from `HttpServletRequest` to an instance of `OidcUserInfoAuthenticationToken`.
+<2> `userInfoRequestConverters()`: Sets the `Consumer` providing access to the `List` of default and (optionally) added ``AuthenticationConverter``'s allowing the ability to add, remove, or customize a specific `AuthenticationConverter`.
+<3> `authenticationProvider()`: Adds an `AuthenticationProvider` (_main processor_) used for authenticating the `OidcUserInfoAuthenticationToken`.
+<4> `authenticationProviders()`: Sets the `Consumer` providing access to the `List` of default and (optionally) added ``AuthenticationProvider``'s allowing the ability to add, remove, or customize a specific `AuthenticationProvider`.
+<5> `userInfoResponseHandler()`: The `AuthenticationSuccessHandler` (_post-processor_) used for handling an "`authenticated`" `OidcUserInfoAuthenticationToken` and returning the https://openid.net/specs/openid-connect-core-1_0.html#UserInfoResponse[UserInfo response].
+<6> `errorResponseHandler()`: The `AuthenticationFailureHandler` (_post-processor_) used for handling an `OAuth2AuthenticationException` and returning the https://openid.net/specs/openid-connect-core-1_0.html#UserInfoError[UserInfo Error response].
+<7> `userInfoMapper()`: The `Function` used to extract claims from `OidcUserInfoAuthenticationContext` to an instance of `OidcUserInfo`.
 
 `OidcUserInfoEndpointConfigurer` configures the `OidcUserInfoEndpointFilter` and registers it with the OAuth2 authorization server `SecurityFilterChain` `@Bean`.
 `OidcUserInfoEndpointFilter` is the `Filter` that processes https://openid.net/specs/openid-connect-core-1_0.html#UserInfoRequest[UserInfo requests] and returns the https://openid.net/specs/openid-connect-core-1_0.html#UserInfoResponse[OidcUserInfo response].
 
 `OidcUserInfoEndpointFilter` is configured with the following defaults:
 
+* `*AuthenticationConverter*` -- An internal implementation that obtains the `Authentication` from the `SecurityContext` and creates an `OidcUserInfoAuthenticationToken` with the principal.
 * `*AuthenticationManager*` -- An `AuthenticationManager` composed of `OidcUserInfoAuthenticationProvider`, which is associated with an internal implementation of `userInfoMapper` that extracts https://openid.net/specs/openid-connect-core-1_0.html#StandardClaims[standard claims] from the https://openid.net/specs/openid-connect-core-1_0.html#IDToken[ID Token] based on the https://openid.net/specs/openid-connect-core-1_0.html#ScopeClaims[scopes requested] during authorization.
+* `*AuthenticationSuccessHandler*` -- An internal implementation that handles an "`authenticated`" `OidcUserInfoAuthenticationToken` and returns the `OidcUserInfo` response.
+* `*AuthenticationFailureHandler*` -- An internal implementation that uses the `OAuth2Error` associated with the `OAuth2AuthenticationException` and returns the `OAuth2Error` response.
 
 [TIP]
 You can customize the ID Token by providing an xref:core-model-components.adoc#oauth2-token-customizer[`OAuth2TokenCustomizer<JwtEncodingContext>`] `@Bean`.
@@ -337,8 +353,10 @@ The guide xref:guides/how-to-userinfo.adoc#how-to-userinfo[How-to: Customize the
 [[oidc-client-registration-endpoint]]
 == OpenID Connect 1.0 Client Registration Endpoint
 
-`OidcClientRegistrationEndpointConfigurer` configures the https://openid.net/specs/openid-connect-registration-1_0.html#ClientRegistration[OpenID Connect 1.0 Client Registration endpoint].
-The following example shows how to enable (disabled by default) the OpenID Connect 1.0 Client Registration endpoint:
+`OidcClientRegistrationEndpointConfigurer` provides the ability to customize the https://openid.net/specs/openid-connect-registration-1_0.html#ClientRegistration[OpenID Connect 1.0 Client Registration endpoint].
+It defines extension points that let you customize the pre-processing, main processing, and post-processing logic for https://openid.net/specs/openid-connect-registration-1_0.html#RegistrationRequest[Client Registration requests] or https://openid.net/specs/openid-connect-registration-1_0.html#ReadRequest[Client Read requests].
+
+`OidcClientRegistrationEndpointConfigurer` provides the following configuration options:
 
 [source,java]
 ----
@@ -351,12 +369,26 @@ public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity h
 	authorizationServerConfigurer
 		.oidc(oidc ->
 			oidc
-				.clientRegistrationEndpoint(Customizer.withDefaults())
+				.clientRegistrationEndpoint(clientRegistrationEndpoint ->
+					clientRegistrationEndpoint
+						.clientRegistrationRequestConverter(clientRegistrationRequestConverter) <1>
+						.clientRegistrationRequestConverters(clientRegistrationRequestConvertersConsumers) <2>
+						.authenticationProvider(authenticationProvider) <3>
+						.authenticationProviders(authenticationProvidersConsumer) <4>
+						.clientRegistrationResponseHandler(clientRegistrationResponseHandler) <5>
+						.errorResponseHandler(errorResponseHandler) <6>
+				)
 		);
 
 	return http.build();
 }
 ----
+<1> `clientRegistrationRequestConverter()`: Adds an `AuthenticationConverter` (_pre-processor_) used when attempting to extract a https://openid.net/specs/openid-connect-registration-1_0.html#RegistrationRequest[Client Registration request] or https://openid.net/specs/openid-connect-registration-1_0.html#ReadRequest[Client Read request] from `HttpServletRequest` to an instance of `OidcClientRegistrationAuthenticationToken`.
+<2> `clientRegistrationRequestConverters()`: Sets the `Consumer` providing access to the `List` of default and (optionally) added ``AuthenticationConverter``'s allowing the ability to add, remove, or customize a specific `AuthenticationConverter`.
+<3> `authenticationProvider()`: Adds an `AuthenticationProvider` (_main processor_) used for authenticating the `OidcClientRegistrationAuthenticationToken`.
+<4> `authenticationProviders()`: Sets the `Consumer` providing access to the `List` of default and (optionally) added ``AuthenticationProvider``'s allowing the ability to add, remove, or customize a specific `AuthenticationProvider`.
+<5> `clientRegistrationResponseHandler()`: The `AuthenticationSuccessHandler` (_post-processor_) used for handling an "`authenticated`" `OidcClientRegistrationAuthenticationToken` and returning the https://openid.net/specs/openid-connect-registration-1_0.html#RegistrationResponse[Client Registration response] or https://openid.net/specs/openid-connect-registration-1_0.html#ReadResponse[Client Read response].
+<6> `errorResponseHandler()`: The `AuthenticationFailureHandler` (_post-processor_) used for handling an `OAuth2AuthenticationException` and returning the https://openid.net/specs/openid-connect-registration-1_0.html#RegistrationError[Client Registration Error response] or https://openid.net/specs/openid-connect-registration-1_0.html#ReadError[Client Read Error response].
 
 [NOTE]
 The OpenID Connect 1.0 Client Registration endpoint is disabled by default because many deployments do not require dynamic client registration.
@@ -371,6 +403,8 @@ The OpenID Connect 1.0 Client Registration endpoint is disabled by default becau
 
 * `*AuthenticationConverter*` -- An `OidcClientRegistrationAuthenticationConverter`.
 * `*AuthenticationManager*` -- An `AuthenticationManager` composed of `OidcClientRegistrationAuthenticationProvider` and `OidcClientConfigurationAuthenticationProvider`.
+* `*AuthenticationSuccessHandler*` -- An internal implementation that handles an "`authenticated`" `OidcClientRegistrationAuthenticationToken` and returns the `OidcClientRegistration` response.
+* `*AuthenticationFailureHandler*` -- An internal implementation that uses the `OAuth2Error` associated with the `OAuth2AuthenticationException` and returns the `OAuth2Error` response.
 
 The OpenID Connect 1.0 Client Registration endpoint is an https://openid.net/specs/openid-connect-registration-1_0.html#ClientRegistration[OAuth2 protected resource], which *REQUIRES* an access token to be sent as a bearer token in the Client Registration (or Client Read) request.
 

@@ -44,6 +44,9 @@ import org.springframework.security.oauth2.jwt.JoseHeaderNames;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.authorization.oidc.authentication.OidcUserInfoAuthenticationToken;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
+import org.springframework.security.web.authentication.AuthenticationConverter;
+import org.springframework.security.web.authentication.AuthenticationFailureHandler;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
@@ -82,6 +85,27 @@ public class OidcUserInfoEndpointFilterTests {
 		assertThatIllegalArgumentException()
 				.isThrownBy(() -> new OidcUserInfoEndpointFilter(this.authenticationManager, ""))
 				.withMessage("userInfoEndpointUri cannot be empty");
+	}
+
+	@Test
+	public void setAuthenticationConverterWhenNullThenThrowIllegalArgumentException() {
+		assertThatIllegalArgumentException()
+				.isThrownBy(() -> this.filter.setAuthenticationConverter(null))
+				.withMessage("authenticationConverter cannot be null");
+	}
+
+	@Test
+	public void setAuthenticationSuccessHandlerWhenNullThenThrowIllegalArgumentException() {
+		assertThatIllegalArgumentException()
+				.isThrownBy(() -> this.filter.setAuthenticationSuccessHandler(null))
+				.withMessage("authenticationSuccessHandler cannot be null");
+	}
+
+	@Test
+	public void setAuthenticationFailureHandlerWhenNullThenThrowIllegalArgumentException() {
+		assertThatIllegalArgumentException()
+				.isThrownBy(() -> this.filter.setAuthenticationFailureHandler(null))
+				.withMessage("authenticationFailureHandler cannot be null");
 	}
 
 	@Test
@@ -145,11 +169,21 @@ public class OidcUserInfoEndpointFilterTests {
 
 	@Test
 	public void doFilterWhenUserInfoRequestInvalidTokenThenUnauthorizedError() throws Exception {
+		doFilterWhenAuthenticationExceptionThenError(OAuth2ErrorCodes.INVALID_TOKEN, HttpStatus.UNAUTHORIZED);
+	}
+
+	@Test
+	public void doFilterWhenUserInfoRequestInsufficientScopeThenForbiddenError() throws Exception {
+		doFilterWhenAuthenticationExceptionThenError(OAuth2ErrorCodes.INSUFFICIENT_SCOPE, HttpStatus.FORBIDDEN);
+	}
+
+	private void doFilterWhenAuthenticationExceptionThenError(String oauth2ErrorCode, HttpStatus httpStatus)
+			throws Exception {
 		Authentication principal = new TestingAuthenticationToken("principal", "credentials");
 		SecurityContextHolder.getContext().setAuthentication(principal);
 
 		when(this.authenticationManager.authenticate(any()))
-				.thenThrow(new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_TOKEN));
+				.thenThrow(new OAuth2AuthenticationException(oauth2ErrorCode));
 
 		String requestUri = DEFAULT_OIDC_USER_INFO_ENDPOINT_URI;
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestUri);
@@ -161,9 +195,82 @@ public class OidcUserInfoEndpointFilterTests {
 
 		verifyNoInteractions(filterChain);
 
-		assertThat(response.getStatus()).isEqualTo(HttpStatus.UNAUTHORIZED.value());
+		assertThat(response.getStatus()).isEqualTo(httpStatus.value());
 		OAuth2Error error = readError(response);
-		assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_TOKEN);
+		assertThat(error.getErrorCode()).isEqualTo(oauth2ErrorCode);
+	}
+
+	@Test
+	public void doFilterWhenCustomAuthenticationConverterThenUsed() throws Exception {
+		Authentication principal = new TestingAuthenticationToken("principal", "credentials");
+		OidcUserInfoAuthenticationToken authentication = new OidcUserInfoAuthenticationToken(principal);
+		AuthenticationConverter authenticationConverter = mock(AuthenticationConverter.class);
+		this.filter.setAuthenticationConverter(authenticationConverter);
+
+		when(authenticationConverter.convert(any())).thenReturn(authentication);
+		when(this.authenticationManager.authenticate(any())).thenReturn(
+				new OidcUserInfoAuthenticationToken(principal, createUserInfo())
+		);
+
+		String requestUri = DEFAULT_OIDC_USER_INFO_ENDPOINT_URI;
+		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestUri);
+		request.setServletPath(requestUri);
+		MockHttpServletResponse response = new MockHttpServletResponse();
+		FilterChain filterChain = mock(FilterChain.class);
+
+		this.filter.doFilter(request, response, filterChain);
+
+		verifyNoInteractions(filterChain);
+		verify(authenticationConverter).convert(request);
+		verify(this.authenticationManager).authenticate(authentication);
+		assertUserInfoResponse(response.getContentAsString());
+	}
+
+	@Test
+	public void doFilterWhenCustomAuthenticationSuccessHandlerThenUsed() throws Exception {
+		AuthenticationSuccessHandler successHandler = mock(AuthenticationSuccessHandler.class);
+		this.filter.setAuthenticationSuccessHandler(successHandler);
+
+		Authentication principal = new TestingAuthenticationToken("principal", "credentials");
+		SecurityContextHolder.getContext().setAuthentication(principal);
+
+		OidcUserInfoAuthenticationToken authentication = new OidcUserInfoAuthenticationToken(principal, createUserInfo());
+		when(this.authenticationManager.authenticate(any())).thenReturn(authentication);
+
+		String requestUri = DEFAULT_OIDC_USER_INFO_ENDPOINT_URI;
+		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestUri);
+		request.setServletPath(requestUri);
+		MockHttpServletResponse response = new MockHttpServletResponse();
+		FilterChain filterChain = mock(FilterChain.class);
+
+		this.filter.doFilter(request, response, filterChain);
+
+		verifyNoInteractions(filterChain);
+		verify(successHandler).onAuthenticationSuccess(request, response, authentication);
+	}
+
+	@Test
+	public void doFilterWhenCustomAuthenticationFailureHandlerThenUsed() throws Exception {
+		AuthenticationFailureHandler failureHandler = mock(AuthenticationFailureHandler.class);
+		this.filter.setAuthenticationFailureHandler(failureHandler);
+
+		Authentication principal = new TestingAuthenticationToken("principal", "credentials");
+		SecurityContextHolder.getContext().setAuthentication(principal);
+
+		OAuth2AuthenticationException authenticationException =
+				new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_TOKEN);
+		when(this.authenticationManager.authenticate(any())).thenThrow(authenticationException);
+
+		String requestUri = DEFAULT_OIDC_USER_INFO_ENDPOINT_URI;
+		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestUri);
+		request.setServletPath(requestUri);
+		MockHttpServletResponse response = new MockHttpServletResponse();
+		FilterChain filterChain = mock(FilterChain.class);
+
+		this.filter.doFilter(request, response, filterChain);
+
+		verifyNoInteractions(filterChain);
+		verify(failureHandler).onAuthenticationFailure(request, response, authenticationException);
 	}
 
 	private OAuth2Error readError(MockHttpServletResponse response) throws Exception {

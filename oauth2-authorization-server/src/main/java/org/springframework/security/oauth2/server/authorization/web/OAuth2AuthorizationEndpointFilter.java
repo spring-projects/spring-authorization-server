@@ -18,7 +18,9 @@ package org.springframework.security.oauth2.server.authorization.web;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import jakarta.servlet.FilterChain;
@@ -287,10 +289,16 @@ public final class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilte
 		UriComponentsBuilder uriBuilder = UriComponentsBuilder
 				.fromUriString(authorizationCodeRequestAuthentication.getRedirectUri())
 				.queryParam(OAuth2ParameterNames.CODE, authorizationCodeRequestAuthentication.getAuthorizationCode().getTokenValue());
+		String redirectUri;
 		if (StringUtils.hasText(authorizationCodeRequestAuthentication.getState())) {
-			uriBuilder.queryParam(OAuth2ParameterNames.STATE, authorizationCodeRequestAuthentication.getState());
+			uriBuilder.queryParam(OAuth2ParameterNames.STATE, "{state}");
+			Map<String, String> queryParams = new HashMap<>();
+			queryParams.put(OAuth2ParameterNames.STATE, authorizationCodeRequestAuthentication.getState());
+			redirectUri = uriBuilder.build(queryParams).toString();
+		} else {
+			redirectUri = uriBuilder.toUriString();
 		}
-		this.redirectStrategy.sendRedirect(request, response, uriBuilder.toUriString());
+		this.redirectStrategy.sendRedirect(request, response, redirectUri);
 	}
 
 	private void sendErrorResponse(HttpServletRequest request, HttpServletResponse response,
@@ -317,10 +325,16 @@ public final class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilte
 		if (StringUtils.hasText(error.getUri())) {
 			uriBuilder.queryParam(OAuth2ParameterNames.ERROR_URI, error.getUri());
 		}
+		String redirectUri;
 		if (StringUtils.hasText(authorizationCodeRequestAuthentication.getState())) {
-			uriBuilder.queryParam(OAuth2ParameterNames.STATE, authorizationCodeRequestAuthentication.getState());
+			uriBuilder.queryParam(OAuth2ParameterNames.STATE, "{state}");
+			Map<String, String> queryParams = new HashMap<>();
+			queryParams.put(OAuth2ParameterNames.STATE, authorizationCodeRequestAuthentication.getState());
+			redirectUri = uriBuilder.build(queryParams).toString();
+		} else {
+			redirectUri = uriBuilder.toUriString();
 		}
-		this.redirectStrategy.sendRedirect(request, response, uriBuilder.toUriString());
+		this.redirectStrategy.sendRedirect(request, response, redirectUri);
 	}
 
 	/**

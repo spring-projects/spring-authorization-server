@@ -69,6 +69,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.OAuth2Token;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AccessTokenResponse;
+import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationResponseType;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.endpoint.PkceParameterNames;
@@ -293,7 +294,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 				.andExpect(status().is3xxRedirection())
 				.andReturn();
 		String redirectedUrl = mvcResult.getResponse().getRedirectedUrl();
-		assertThat(redirectedUrl).matches("https://example.com\\?code=.{15,}&state="+STATE_URL_ENCODED);
+		assertThat(redirectedUrl).matches("https://example.com\\?code=.{15,}&state=" + STATE_URL_ENCODED);
 
 		String authorizationCode = extractParameterFromRedirectUri(redirectedUrl, "code");
 		OAuth2Authorization authorization = this.authorizationService.findByToken(authorizationCode, AUTHORIZATION_CODE_TOKEN_TYPE);
@@ -502,9 +503,16 @@ public class OAuth2AuthorizationCodeGrantTests {
 				.build();
 		this.registeredClientRepository.save(registeredClient);
 
-		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient, STATE_URL_UNENCODED)
+		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient)
 				.principalName("user")
-				.attribute(OAuth2ParameterNames.STATE, STATE_URL_UNENCODED)
+				.build();
+		OAuth2AuthorizationRequest authorizationRequest = authorization.getAttribute(OAuth2AuthorizationRequest.class.getName());
+		OAuth2AuthorizationRequest updatedAuthorizationRequest =
+				OAuth2AuthorizationRequest.from(authorizationRequest)
+						.state(STATE_URL_UNENCODED)
+						.build();
+		authorization = OAuth2Authorization.from(authorization)
+				.attribute(OAuth2AuthorizationRequest.class.getName(), updatedAuthorizationRequest)
 				.build();
 		this.authorizationService.save(authorization);
 
@@ -512,7 +520,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 				.param(OAuth2ParameterNames.CLIENT_ID, registeredClient.getClientId())
 				.param(OAuth2ParameterNames.SCOPE, "message.read")
 				.param(OAuth2ParameterNames.SCOPE, "message.write")
-				.param(OAuth2ParameterNames.STATE, STATE_URL_UNENCODED)
+				.param(OAuth2ParameterNames.STATE, authorization.<String>getAttribute(OAuth2ParameterNames.STATE))
 				.with(user("user")))
 				.andExpect(status().is3xxRedirection())
 				.andReturn();
@@ -584,14 +592,22 @@ public class OAuth2AuthorizationCodeGrantTests {
 				.build();
 		this.registeredClientRepository.save(registeredClient);
 
-		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient, STATE_URL_UNENCODED)
+		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient)
+				.build();
+		OAuth2AuthorizationRequest authorizationRequest = authorization.getAttribute(OAuth2AuthorizationRequest.class.getName());
+		OAuth2AuthorizationRequest updatedAuthorizationRequest =
+				OAuth2AuthorizationRequest.from(authorizationRequest)
+						.state(STATE_URL_UNENCODED)
+						.build();
+		authorization = OAuth2Authorization.from(authorization)
+				.attribute(OAuth2AuthorizationRequest.class.getName(), updatedAuthorizationRequest)
 				.build();
 		this.authorizationService.save(authorization);
 
 		MvcResult mvcResult = this.mvc.perform(post(DEFAULT_AUTHORIZATION_ENDPOINT_URI)
 				.param(OAuth2ParameterNames.CLIENT_ID, registeredClient.getClientId())
 				.param("authority", "authority-1 authority-2")
-				.param(OAuth2ParameterNames.STATE, STATE_URL_UNENCODED)
+				.param(OAuth2ParameterNames.STATE, authorization.<String>getAttribute(OAuth2ParameterNames.STATE))
 				.with(user("principal")))
 				.andExpect(status().is3xxRedirection())
 				.andReturn();

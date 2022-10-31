@@ -20,6 +20,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import javax.servlet.FilterChain;
@@ -252,13 +253,11 @@ public final class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilte
 		String state = authorizationConsentAuthentication.getState();
 
 		if (hasConsentUri()) {
-			UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUriString(resolveConsentUri(request))
+			String redirectUri = UriComponentsBuilder.fromUriString(resolveConsentUri(request))
 					.queryParam(OAuth2ParameterNames.SCOPE, String.join(" ", requestedScopes))
 					.queryParam(OAuth2ParameterNames.CLIENT_ID, clientId)
-					.queryParam(OAuth2ParameterNames.STATE, "{state}");
-			HashMap<String, String> queryParameters = new HashMap<>(1);
-			queryParameters.put(OAuth2ParameterNames.STATE, state);
-			String redirectUri = uriBuilder.build(queryParameters).toString();
+					.queryParam(OAuth2ParameterNames.STATE, state)
+					.toUriString();
 			this.redirectStrategy.sendRedirect(request, response, redirectUri);
 		} else {
 			DefaultConsentPage.displayConsent(request, response, clientId, principal, requestedScopes, authorizedScopes, state);
@@ -290,12 +289,15 @@ public final class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilte
 		UriComponentsBuilder uriBuilder = UriComponentsBuilder
 				.fromUriString(authorizationCodeRequestAuthentication.getRedirectUri())
 				.queryParam(OAuth2ParameterNames.CODE, authorizationCodeRequestAuthentication.getAuthorizationCode().getTokenValue());
+		String redirectUri;
 		if (StringUtils.hasText(authorizationCodeRequestAuthentication.getState())) {
 			uriBuilder.queryParam(OAuth2ParameterNames.STATE, "{state}");
+			Map<String, String> queryParams = new HashMap<>();
+			queryParams.put(OAuth2ParameterNames.STATE, authorizationCodeRequestAuthentication.getState());
+			redirectUri = uriBuilder.build(queryParams).toString();
+		} else {
+			redirectUri = uriBuilder.toUriString();
 		}
-		HashMap<String, String> queryParams = new HashMap<>();
-		queryParams.put(OAuth2ParameterNames.STATE, authorizationCodeRequestAuthentication.getState());
-		String redirectUri = uriBuilder.build(queryParams).toString();
 		this.redirectStrategy.sendRedirect(request, response, redirectUri);
 	}
 
@@ -323,12 +325,15 @@ public final class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilte
 		if (StringUtils.hasText(error.getUri())) {
 			uriBuilder.queryParam(OAuth2ParameterNames.ERROR_URI, error.getUri());
 		}
+		String redirectUri;
 		if (StringUtils.hasText(authorizationCodeRequestAuthentication.getState())) {
 			uriBuilder.queryParam(OAuth2ParameterNames.STATE, "{state}");
+			Map<String, String> queryParams = new HashMap<>();
+			queryParams.put(OAuth2ParameterNames.STATE, authorizationCodeRequestAuthentication.getState());
+			redirectUri = uriBuilder.build(queryParams).toString();
+		} else {
+			redirectUri = uriBuilder.toUriString();
 		}
-		HashMap<String, String> queryParams = new HashMap<>();
-		queryParams.put(OAuth2ParameterNames.STATE, authorizationCodeRequestAuthentication.getState());
-		String redirectUri = uriBuilder.build(queryParams).toString();
 		this.redirectStrategy.sendRedirect(request, response, redirectUri);
 	}
 

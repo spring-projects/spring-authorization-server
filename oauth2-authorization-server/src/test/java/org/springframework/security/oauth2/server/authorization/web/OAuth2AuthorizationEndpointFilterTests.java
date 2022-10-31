@@ -85,9 +85,6 @@ public class OAuth2AuthorizationEndpointFilterTests {
 	private static final String AUTHORIZATION_URI = "https://provider.com/oauth2/authorize";
 	private static final String STATE = "state";
 	private static final String REMOTE_ADDRESS = "remote-address";
-	private static final String STATE_URL_UNENCODED = "awrD0fCnEcTUPFgmyy2SU89HZNcnAJ60ZW6l39YI0KyVjmIZ+004pwm9j55li7BoydXYysH4enZMF21Q";
-	private static final String STATE_URL_ENCODED = "awrD0fCnEcTUPFgmyy2SU89HZNcnAJ60ZW6l39YI0KyVjmIZ%2B004pwm9j55li7BoydXYysH4enZMF21Q";
-
 	private AuthenticationManager authenticationManager;
 	private OAuth2AuthorizationEndpointFilter filter;
 	private TestingAuthenticationToken principal;
@@ -287,7 +284,7 @@ public class OAuth2AuthorizationEndpointFilterTests {
 		OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthentication =
 				new OAuth2AuthorizationCodeRequestAuthenticationToken(
 						AUTHORIZATION_URI, registeredClient.getClientId(), principal,
-						registeredClient.getRedirectUris().iterator().next(), STATE_URL_UNENCODED, registeredClient.getScopes(), null);
+						registeredClient.getRedirectUris().iterator().next(), STATE, registeredClient.getScopes(), null);
 		OAuth2Error error = new OAuth2Error("errorCode", "errorDescription", "errorUri");
 		when(this.authenticationManager.authenticate(any()))
 				.thenThrow(new OAuth2AuthorizationCodeRequestAuthenticationException(error, authorizationCodeRequestAuthentication));
@@ -302,7 +299,7 @@ public class OAuth2AuthorizationEndpointFilterTests {
 		verifyNoInteractions(filterChain);
 
 		assertThat(response.getStatus()).isEqualTo(HttpStatus.FOUND.value());
-		assertThat(response.getRedirectedUrl()).isEqualTo("https://example.com?error=errorCode&error_description=errorDescription&error_uri=errorUri&state=" + STATE_URL_ENCODED);
+		assertThat(response.getRedirectedUrl()).isEqualTo("https://example.com?error=errorCode&error_description=errorDescription&error_uri=errorUri&state=state");
 		assertThat(SecurityContextHolder.getContext().getAuthentication()).isSameAs(this.principal);
 	}
 
@@ -446,7 +443,7 @@ public class OAuth2AuthorizationEndpointFilterTests {
 		OAuth2AuthorizationConsentAuthenticationToken authorizationConsentAuthenticationResult =
 				new OAuth2AuthorizationConsentAuthenticationToken(
 						AUTHORIZATION_URI, registeredClient.getClientId(), principal,
-						STATE_URL_UNENCODED, new HashSet<>(), null);	// No scopes previously approved
+						STATE, new HashSet<>(), null);	// No scopes previously approved
 		authorizationConsentAuthenticationResult.setAuthenticated(true);
 		when(this.authenticationManager.authenticate(any()))
 				.thenReturn(authorizationConsentAuthenticationResult);
@@ -462,7 +459,7 @@ public class OAuth2AuthorizationEndpointFilterTests {
 		verifyNoInteractions(filterChain);
 
 		assertThat(response.getStatus()).isEqualTo(HttpStatus.FOUND.value());
-		assertThat(response.getRedirectedUrl()).isEqualTo("http://localhost/oauth2/custom-consent?scope=scope1%20scope2&client_id=client-1&state=" + STATE_URL_ENCODED);
+		assertThat(response.getRedirectedUrl()).isEqualTo("http://localhost/oauth2/custom-consent?scope=scope1%20scope2&client_id=client-1&state=state");
 	}
 
 	@Test
@@ -542,7 +539,7 @@ public class OAuth2AuthorizationEndpointFilterTests {
 		OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthenticationResult =
 				new OAuth2AuthorizationCodeRequestAuthenticationToken(
 						AUTHORIZATION_URI, registeredClient.getClientId(), principal, this.authorizationCode,
-						registeredClient.getRedirectUris().iterator().next(), STATE_URL_UNENCODED, registeredClient.getScopes());
+						registeredClient.getRedirectUris().iterator().next(), STATE, registeredClient.getScopes());
 		authorizationCodeRequestAuthenticationResult.setAuthenticated(true);
 		when(this.authenticationManager.authenticate(any()))
 				.thenReturn(authorizationCodeRequestAuthenticationResult);
@@ -563,7 +560,7 @@ public class OAuth2AuthorizationEndpointFilterTests {
 				.extracting(WebAuthenticationDetails::getRemoteAddress)
 				.isEqualTo(REMOTE_ADDRESS);
 		assertThat(response.getStatus()).isEqualTo(HttpStatus.FOUND.value());
-		assertThat(response.getRedirectedUrl()).isEqualTo("https://example.com?code=code&state=" + STATE_URL_ENCODED);
+		assertThat(response.getRedirectedUrl()).isEqualTo("https://example.com?code=code&state=state");
 	}
 
 	@Test
@@ -578,7 +575,7 @@ public class OAuth2AuthorizationEndpointFilterTests {
 		OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthenticationResult =
 				new OAuth2AuthorizationCodeRequestAuthenticationToken(
 						AUTHORIZATION_URI, registeredClient.getClientId(), principal, this.authorizationCode,
-						registeredClient.getRedirectUris().iterator().next(), STATE_URL_UNENCODED, registeredClient.getScopes());
+						registeredClient.getRedirectUris().iterator().next(), STATE, registeredClient.getScopes());
 		authorizationCodeRequestAuthenticationResult.setAuthenticated(true);
 		when(this.authenticationManager.authenticate(any()))
 				.thenReturn(authorizationCodeRequestAuthenticationResult);
@@ -594,7 +591,7 @@ public class OAuth2AuthorizationEndpointFilterTests {
 		verifyNoInteractions(filterChain);
 
 		assertThat(response.getStatus()).isEqualTo(HttpStatus.FOUND.value());
-		assertThat(response.getRedirectedUrl()).isEqualTo("https://example.com?code=code&state=" + STATE_URL_ENCODED);
+		assertThat(response.getRedirectedUrl()).isEqualTo("https://example.com?code=code&state=state");
 	}
 
 	private void doFilterWhenAuthorizationRequestInvalidParameterThenError(RegisteredClient registeredClient,
@@ -637,7 +634,7 @@ public class OAuth2AuthorizationEndpointFilterTests {
 		request.addParameter(OAuth2ParameterNames.REDIRECT_URI, registeredClient.getRedirectUris().iterator().next());
 		request.addParameter(OAuth2ParameterNames.SCOPE,
 				StringUtils.collectionToDelimitedString(registeredClient.getScopes(), " "));
-		request.addParameter(OAuth2ParameterNames.STATE, STATE_URL_UNENCODED);
+		request.addParameter(OAuth2ParameterNames.STATE, "state");
 
 		return request;
 	}

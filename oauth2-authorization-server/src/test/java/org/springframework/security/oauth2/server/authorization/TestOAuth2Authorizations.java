@@ -39,53 +39,44 @@ import org.springframework.util.CollectionUtils;
 public class TestOAuth2Authorizations {
 
 	public static OAuth2Authorization.Builder authorization() {
-		return authorization(TestRegisteredClients.registeredClient().build(), "state");
-	}
-
-	public static OAuth2Authorization.Builder authorization(RegisteredClient registeredClient, String state) {
-		return authorization(registeredClient, Collections.emptyMap(), state);
+		return authorization(TestRegisteredClients.registeredClient().build());
 	}
 
 	public static OAuth2Authorization.Builder authorization(RegisteredClient registeredClient) {
-		return authorization(registeredClient, Collections.emptyMap(), "state");
-	}
-
-	public static OAuth2Authorization.Builder authorization(RegisteredClient registeredClient,
-			Map<String, Object> authorizationRequestAdditionalParameters, String state) {
-		OAuth2AuthorizationCode authorizationCode = new OAuth2AuthorizationCode(
-				"code", Instant.now(), Instant.now().plusSeconds(120));
-		OAuth2AccessToken accessToken = new OAuth2AccessToken(
-				OAuth2AccessToken.TokenType.BEARER, "access-token", Instant.now(), Instant.now().plusSeconds(300));
-		return authorization(registeredClient, authorizationCode, accessToken, Collections.emptyMap(), authorizationRequestAdditionalParameters, state);
+		return authorization(registeredClient, Collections.emptyMap());
 	}
 
 	public static OAuth2Authorization.Builder authorization(RegisteredClient registeredClient,
 			Map<String, Object> authorizationRequestAdditionalParameters) {
-		return authorization(registeredClient, authorizationRequestAdditionalParameters, "state");
+		OAuth2AuthorizationCode authorizationCode = new OAuth2AuthorizationCode(
+				"code", Instant.now(), Instant.now().plusSeconds(120));
+		OAuth2AccessToken accessToken = new OAuth2AccessToken(
+				OAuth2AccessToken.TokenType.BEARER, "access-token", Instant.now(), Instant.now().plusSeconds(300));
+		return authorization(registeredClient, authorizationCode, accessToken, Collections.emptyMap(), authorizationRequestAdditionalParameters);
 	}
 
 	public static OAuth2Authorization.Builder authorization(RegisteredClient registeredClient,
 			OAuth2AuthorizationCode authorizationCode) {
-		return authorization(registeredClient, authorizationCode, null, Collections.emptyMap(), Collections.emptyMap(), "state");
+		return authorization(registeredClient, authorizationCode, null, Collections.emptyMap(), Collections.emptyMap());
 	}
 
 	public static OAuth2Authorization.Builder authorization(RegisteredClient registeredClient,
 			OAuth2AccessToken accessToken, Map<String, Object> accessTokenClaims) {
 		OAuth2AuthorizationCode authorizationCode = new OAuth2AuthorizationCode(
 				"code", Instant.now(), Instant.now().plusSeconds(120));
-		return authorization(registeredClient, authorizationCode, accessToken, accessTokenClaims, Collections.emptyMap(), "state");
+		return authorization(registeredClient, authorizationCode, accessToken, accessTokenClaims, Collections.emptyMap());
 	}
 
 	private static OAuth2Authorization.Builder authorization(RegisteredClient registeredClient,
 			OAuth2AuthorizationCode authorizationCode, OAuth2AccessToken accessToken,
-			Map<String, Object> accessTokenClaims, Map<String, Object> authorizationRequestAdditionalParameters, String state) {
+			Map<String, Object> accessTokenClaims, Map<String, Object> authorizationRequestAdditionalParameters) {
 		OAuth2AuthorizationRequest authorizationRequest = OAuth2AuthorizationRequest.authorizationCode()
 				.authorizationUri("https://provider.com/oauth2/authorize")
 				.clientId(registeredClient.getClientId())
 				.redirectUri(registeredClient.getRedirectUris().iterator().next())
 				.scopes(registeredClient.getScopes())
 				.additionalParameters(authorizationRequestAdditionalParameters)
-				.state(state)
+				.state("state")
 				.build();
 		OAuth2Authorization.Builder builder = OAuth2Authorization.withRegisteredClient(registeredClient)
 				.id("id")
@@ -93,7 +84,7 @@ public class TestOAuth2Authorizations {
 				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
 				.authorizedScopes(authorizationRequest.getScopes())
 				.token(authorizationCode)
-				.attribute(OAuth2ParameterNames.STATE, state)
+				.attribute(OAuth2ParameterNames.STATE, "consent-state")
 				.attribute(OAuth2AuthorizationRequest.class.getName(), authorizationRequest)
 				.attribute(Principal.class.getName(),
 						new TestingAuthenticationToken("principal", null, "ROLE_A", "ROLE_B"));

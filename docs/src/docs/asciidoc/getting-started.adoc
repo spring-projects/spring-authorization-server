@@ -55,4 +55,5 @@ This is a minimal configuration for getting started quickly. To understand what 
 <4> An instance of xref:core-model-components.adoc#registered-client-repository[`RegisteredClientRepository`] for managing clients.
 <5> An instance of `com.nimbusds.jose.jwk.source.JWKSource` for signing access tokens.
 <6> An instance of `java.security.KeyPair` with keys generated on startup used to create the `JWKSource` above.
-<7> An instance of xref:configuration-model#configuring-authorization-server-settings[`AuthorizationServerSettings`] to configure Spring Authorization Server.
+<7> An instance of {spring-security-api-base-url}/org/springframework/security/oauth2/jwt/JwtDecoder.html[`JwtDecoder`] for decoding signed access tokens.
+<8> An instance of xref:configuration-model#configuring-authorization-server-settings[`AuthorizationServerSettings`] to configure Spring Authorization Server.

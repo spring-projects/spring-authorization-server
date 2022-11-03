@@ -23,6 +23,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.springframework.core.log.LogMessage;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.server.ServletServerHttpResponse;
@@ -123,6 +124,9 @@ public final class OAuth2ClientAuthenticationFilter extends OncePerRequestFilter
 			filterChain.doFilter(request, response);
 
 		} catch (OAuth2AuthenticationException ex) {
+			if (this.logger.isTraceEnabled()) {
+				this.logger.trace(LogMessage.format("Client authentication failed: %s", ex.getError()), ex);
+			}
 			this.authenticationFailureHandler.onAuthenticationFailure(request, response, ex);
 		}
 	}
@@ -166,6 +170,10 @@ public final class OAuth2ClientAuthenticationFilter extends OncePerRequestFilter
 		SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
 		securityContext.setAuthentication(authentication);
 		SecurityContextHolder.setContext(securityContext);
+		if (this.logger.isDebugEnabled()) {
+			this.logger.debug(LogMessage.format("Set SecurityContextHolder authentication to %s",
+					authentication.getClass().getSimpleName()));
+		}
 	}
 
 	private void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response,

@@ -15,6 +15,9 @@
  */
 package org.springframework.security.oauth2.server.authorization.authentication;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -50,6 +53,7 @@ public final class JwtClientAssertionAuthenticationProvider implements Authentic
 	private static final String ERROR_URI = "https://datatracker.ietf.org/doc/html/rfc6749#section-3.2.1";
 	private static final ClientAuthenticationMethod JWT_CLIENT_ASSERTION_AUTHENTICATION_METHOD =
 			new ClientAuthenticationMethod("urn:ietf:params:oauth:client-assertion-type:jwt-bearer");
+	private final Log logger = LogFactory.getLog(getClass());
 	private final RegisteredClientRepository registeredClientRepository;
 	private final CodeVerifierAuthenticator codeVerifierAuthenticator;
 	private JwtDecoderFactory<RegisteredClient> jwtDecoderFactory;
@@ -84,6 +88,10 @@ public final class JwtClientAssertionAuthenticationProvider implements Authentic
 			throwInvalidClient(OAuth2ParameterNames.CLIENT_ID);
 		}
 
+		if (this.logger.isTraceEnabled()) {
+			this.logger.trace("Retrieved registered client");
+		}
+
 		if (!registeredClient.getClientAuthenticationMethods().contains(ClientAuthenticationMethod.PRIVATE_KEY_JWT) &&
 				!registeredClient.getClientAuthenticationMethods().contains(ClientAuthenticationMethod.CLIENT_SECRET_JWT)) {
 			throwInvalidClient("authentication_method");
@@ -101,6 +109,10 @@ public final class JwtClientAssertionAuthenticationProvider implements Authentic
 			throwInvalidClient(OAuth2ParameterNames.CLIENT_ASSERTION, ex);
 		}
 
+		if (this.logger.isTraceEnabled()) {
+			this.logger.trace("Validated client authentication parameters");
+		}
+
 		// Validate the "code_verifier" parameter for the confidential client, if available
 		this.codeVerifierAuthenticator.authenticateIfAvailable(clientAuthentication, registeredClient);
 
@@ -108,6 +120,10 @@ public final class JwtClientAssertionAuthenticationProvider implements Authentic
 				registeredClient.getClientSettings().getTokenEndpointAuthenticationSigningAlgorithm() instanceof SignatureAlgorithm ?
 						ClientAuthenticationMethod.PRIVATE_KEY_JWT :
 						ClientAuthenticationMethod.CLIENT_SECRET_JWT;
+
+		if (this.logger.isTraceEnabled()) {
+			this.logger.trace("Authenticated client assertion");
+		}
 
 		return new OAuth2ClientAuthenticationToken(registeredClient, clientAuthenticationMethod, jwtAssertion);
 	}

@@ -23,6 +23,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -48,6 +51,7 @@ import org.springframework.util.Assert;
  * @see <a href="https://openid.net/specs/openid-connect-core-1_0.html#UserInfo">5.3. UserInfo Endpoint</a>
  */
 public final class OidcUserInfoAuthenticationProvider implements AuthenticationProvider {
+	private final Log logger = LogFactory.getLog(getClass());
 	private final OAuth2AuthorizationService authorizationService;
 	private Function<OidcUserInfoAuthenticationContext, OidcUserInfo> userInfoMapper = new DefaultOidcUserInfoMapper();
 
@@ -82,6 +86,10 @@ public final class OidcUserInfoAuthenticationProvider implements AuthenticationP
 			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_TOKEN);
 		}
 
+		if (this.logger.isTraceEnabled()) {
+			this.logger.trace("Retrieved authorization with access token");
+		}
+
 		OAuth2Authorization.Token<OAuth2AccessToken> authorizedAccessToken = authorization.getAccessToken();
 		if (!authorizedAccessToken.isActive()) {
 			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_TOKEN);
@@ -96,12 +104,20 @@ public final class OidcUserInfoAuthenticationProvider implements AuthenticationP
 			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_TOKEN);
 		}
 
+		if (this.logger.isTraceEnabled()) {
+			this.logger.trace("Validated user info request");
+		}
+
 		OidcUserInfoAuthenticationContext authenticationContext =
 				OidcUserInfoAuthenticationContext.with(userInfoAuthentication)
 						.accessToken(authorizedAccessToken.getToken())
 						.authorization(authorization)
 						.build();
 		OidcUserInfo userInfo = this.userInfoMapper.apply(authenticationContext);
+
+		if (this.logger.isTraceEnabled()) {
+			this.logger.trace("Authenticated user info request");
+		}
 
 		return new OidcUserInfoAuthenticationToken(accessTokenAuthentication, userInfo);
 	}

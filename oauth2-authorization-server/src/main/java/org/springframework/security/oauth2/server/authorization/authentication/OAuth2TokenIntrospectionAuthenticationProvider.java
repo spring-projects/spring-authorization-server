@@ -20,6 +20,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.springframework.core.convert.TypeDescriptor;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
@@ -50,6 +53,7 @@ import static org.springframework.security.oauth2.server.authorization.authentic
  * @see <a target="_blank" href="https://tools.ietf.org/html/rfc7662#section-2.1">Section 2.1 Introspection Request</a>
  */
 public final class OAuth2TokenIntrospectionAuthenticationProvider implements AuthenticationProvider {
+	private final Log logger = LogFactory.getLog(getClass());
 	private static final TypeDescriptor OBJECT_TYPE_DESCRIPTOR = TypeDescriptor.valueOf(Object.class);
 	private static final TypeDescriptor LIST_STRING_TYPE_DESCRIPTOR =
 			TypeDescriptor.collection(List.class, TypeDescriptor.valueOf(String.class));
@@ -82,18 +86,32 @@ public final class OAuth2TokenIntrospectionAuthenticationProvider implements Aut
 				tokenIntrospectionAuthentication.getToken(), null);
 		if (authorization == null) {
 			// Return the authentication request when token not found
+			if (this.logger.isTraceEnabled()) {
+				this.logger.trace("Did not authenticate token introspection request since token was not found");
+			}
 			return tokenIntrospectionAuthentication;
+		}
+
+		if (this.logger.isTraceEnabled()) {
+			this.logger.trace("Retrieved authorization with token");
 		}
 
 		OAuth2Authorization.Token<OAuth2Token> authorizedToken =
 				authorization.getToken(tokenIntrospectionAuthentication.getToken());
 		if (!authorizedToken.isActive()) {
+			if (this.logger.isTraceEnabled()) {
+				this.logger.trace("Did not introspect token since not active");
+			}
 			return new OAuth2TokenIntrospectionAuthenticationToken(tokenIntrospectionAuthentication.getToken(),
 					clientPrincipal, OAuth2TokenIntrospection.builder().build());
 		}
 
 		RegisteredClient authorizedClient = this.registeredClientRepository.findById(authorization.getRegisteredClientId());
 		OAuth2TokenIntrospection tokenClaims = withActiveTokenClaims(authorizedToken, authorizedClient);
+
+		if (this.logger.isTraceEnabled()) {
+			this.logger.trace("Authenticated token introspection request");
+		}
 
 		return new OAuth2TokenIntrospectionAuthenticationToken(authorizedToken.getToken().getTokenValue(),
 				clientPrincipal, tokenClaims);

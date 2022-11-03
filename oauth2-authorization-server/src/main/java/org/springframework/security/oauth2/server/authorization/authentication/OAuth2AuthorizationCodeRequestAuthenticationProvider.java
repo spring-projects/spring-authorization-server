@@ -20,6 +20,9 @@ import java.util.Base64;
 import java.util.Set;
 import java.util.function.Consumer;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
@@ -67,6 +70,7 @@ import org.springframework.util.StringUtils;
 public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implements AuthenticationProvider {
 	private static final String ERROR_URI = "https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.2.1";
 	private static final String PKCE_ERROR_URI = "https://datatracker.ietf.org/doc/html/rfc7636#section-4.4.1";
+	private final Log logger = LogFactory.getLog(getClass());
 	private static final StringKeyGenerator DEFAULT_STATE_GENERATOR =
 			new Base64StringKeyGenerator(Base64.getUrlEncoder());
 	private final RegisteredClientRepository registeredClientRepository;
@@ -105,6 +109,10 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 					authorizationCodeRequestAuthentication, null);
 		}
 
+		if (this.logger.isTraceEnabled()) {
+			this.logger.trace("Retrieved registered client");
+		}
+
 		OAuth2AuthorizationCodeRequestAuthenticationContext authenticationContext =
 				OAuth2AuthorizationCodeRequestAuthenticationContext.with(authorizationCodeRequestAuthentication)
 						.registeredClient(registeredClient)
@@ -129,12 +137,19 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 					authorizationCodeRequestAuthentication, registeredClient, null);
 		}
 
+		if (this.logger.isTraceEnabled()) {
+			this.logger.trace("Validated authorization code request parameters");
+		}
+
 		// ---------------
 		// The request is valid - ensure the resource owner is authenticated
 		// ---------------
 
 		Authentication principal = (Authentication) authorizationCodeRequestAuthentication.getPrincipal();
 		if (!isPrincipalAuthenticated(principal)) {
+			if (this.logger.isTraceEnabled()) {
+				this.logger.trace("Did not authenticate authorization code request since principal not authenticated");
+			}
 			// Return the authorization request as-is where isAuthenticated() is false
 			return authorizationCodeRequestAuthentication;
 		}
@@ -156,10 +171,19 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 			OAuth2Authorization authorization = authorizationBuilder(registeredClient, principal, authorizationRequest)
 					.attribute(OAuth2ParameterNames.STATE, state)
 					.build();
+
+			if (this.logger.isTraceEnabled()) {
+				logger.trace("Generated authorization consent state");
+			}
+
 			this.authorizationService.save(authorization);
 
 			Set<String> currentAuthorizedScopes = currentAuthorizationConsent != null ?
 					currentAuthorizationConsent.getScopes() : null;
+
+			if (this.logger.isTraceEnabled()) {
+				this.logger.trace("Saved authorization");
+			}
 
 			return new OAuth2AuthorizationConsentAuthenticationToken(authorizationRequest.getAuthorizationUri(),
 					registeredClient.getClientId(), principal, state, currentAuthorizedScopes, null);
@@ -174,15 +198,27 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 			throw new OAuth2AuthorizationCodeRequestAuthenticationException(error, null);
 		}
 
+		if (this.logger.isTraceEnabled()) {
+			this.logger.trace("Generated authorization code");
+		}
+
 		OAuth2Authorization authorization = authorizationBuilder(registeredClient, principal, authorizationRequest)
 				.authorizedScopes(authorizationRequest.getScopes())
 				.token(authorizationCode)
 				.build();
 		this.authorizationService.save(authorization);
 
+		if (this.logger.isTraceEnabled()) {
+			this.logger.trace("Saved authorization");
+		}
+
 		String redirectUri = authorizationRequest.getRedirectUri();
 		if (!StringUtils.hasText(redirectUri)) {
 			redirectUri = registeredClient.getRedirectUris().iterator().next();
+		}
+
+		if (this.logger.isTraceEnabled()) {
+			this.logger.trace("Authenticated authorization code request");
 		}
 
 		return new OAuth2AuthorizationCodeRequestAuthenticationToken(authorizationRequest.getAuthorizationUri(),

@@ -163,6 +163,40 @@ public class JdbcRegisteredClientRepositoryTests {
 	}
 
 	@Test
+	public void saveWhenExistingClientIdThenThrowIllegalArgumentException() {
+		RegisteredClient registeredClient1 = TestRegisteredClients.registeredClient()
+				.id("registration-1")
+				.clientId("client-1")
+				.build();
+		this.registeredClientRepository.save(registeredClient1);
+		RegisteredClient registeredClient2 = TestRegisteredClients.registeredClient()
+				.id("registration-2")
+				.clientId("client-1")
+				.build();
+		assertThatIllegalArgumentException()
+				.isThrownBy(() -> this.registeredClientRepository.save(registeredClient2))
+				.withMessage("Registered client must be unique. Found duplicate client identifier: " + registeredClient2.getClientId());
+	}
+
+	@Test
+	public void saveWhenExistingClientSecretThenThrowIllegalArgumentException() {
+		RegisteredClient registeredClient1 = TestRegisteredClients.registeredClient()
+				.id("registration-1")
+				.clientId("client-1")
+				.clientSecret("secret")
+				.build();
+		this.registeredClientRepository.save(registeredClient1);
+		RegisteredClient registeredClient2 = TestRegisteredClients.registeredClient()
+				.id("registration-2")
+				.clientId("client-2")
+				.clientSecret("secret")
+				.build();
+		assertThatIllegalArgumentException()
+				.isThrownBy(() -> this.registeredClientRepository.save(registeredClient2))
+				.withMessage("Registered client must be unique. Found duplicate client secret for identifier: " + registeredClient2.getId());
+	}
+
+	@Test
 	public void saveLoadRegisteredClientWhenCustomStrategiesSetThenCalled() throws Exception {
 		RowMapper<RegisteredClient> registeredClientRowMapper = spy(new RegisteredClientRowMapper());
 		this.registeredClientRepository.setRegisteredClientRowMapper(registeredClientRowMapper);

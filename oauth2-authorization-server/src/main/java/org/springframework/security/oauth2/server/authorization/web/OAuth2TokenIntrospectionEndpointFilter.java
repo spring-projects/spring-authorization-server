@@ -22,6 +22,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.springframework.core.log.LogMessage;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageConverter;
@@ -113,6 +114,9 @@ public final class OAuth2TokenIntrospectionEndpointFilter extends OncePerRequest
 			this.authenticationSuccessHandler.onAuthenticationSuccess(request, response, tokenIntrospectionAuthenticationResult);
 		} catch (OAuth2AuthenticationException ex) {
 			SecurityContextHolder.clearContext();
+			if (this.logger.isTraceEnabled()) {
+				this.logger.trace(LogMessage.format("Token introspection request failed: %s", ex.getError()), ex);
+			}
 			this.authenticationFailureHandler.onAuthenticationFailure(request, response, ex);
 		}
 	}

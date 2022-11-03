@@ -102,7 +102,7 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationValidator impleme
 
 			String requestedRedirectHost = requestedRedirect.getHost();
 			if (requestedRedirectHost == null || requestedRedirectHost.equals("localhost")) {
-				// As per https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-01#section-9.7.1
+				// As per https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-07#section-9.7.1
 				// While redirect URIs using localhost (i.e., "http://localhost:{port}/{path}")
 				// function similarly to loopback IP redirects described in Section 10.3.3,
 				// the use of "localhost" is NOT RECOMMENDED.
@@ -110,13 +110,13 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationValidator impleme
 						OAuth2ErrorCodes.INVALID_REQUEST,
 						"localhost is not allowed for the redirect_uri (" + requestedRedirectUri + "). " +
 								"Use the IP literal (127.0.0.1) instead.",
-						"https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-01#section-9.7.1");
+						"https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-07#section-9.7.1");
 				throwError(error, OAuth2ParameterNames.REDIRECT_URI,
 						authorizationCodeRequestAuthentication, registeredClient);
 			}
 
 			if (!isLoopbackAddress(requestedRedirectHost)) {
-				// As per https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-01#section-9.7
+				// As per https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-07#section-9.7
 				// When comparing client redirect URIs against pre-registered URIs,
 				// authorization servers MUST utilize exact string matching.
 				if (!registeredClient.getRedirectUris().contains(requestedRedirectUri)) {
@@ -124,7 +124,7 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationValidator impleme
 							authorizationCodeRequestAuthentication, registeredClient);
 				}
 			} else {
-				// As per https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-01#section-10.3.3
+				// As per https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-07#section-10.3.3
 				// The authorization server MUST allow any port to be specified at the
 				// time of the request for loopback IP redirect URIs, to accommodate
 				// clients that obtain an available ephemeral port from the operating

@@ -6,7 +6,7 @@ This site contains reference documentation and how-to guides for Spring Authoriz
 [[introducing-spring-authorization-server]]
 == Introducing Spring Authorization Server
 
-Spring Authorization Server is a framework that provides implementations of the https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-05[OAuth 2.1] and https://openid.net/specs/openid-connect-core-1_0.html[OpenID Connect 1.0] specifications and other related specifications.
+Spring Authorization Server is a framework that provides implementations of the https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-07[OAuth 2.1] and https://openid.net/specs/openid-connect-core-1_0.html[OpenID Connect 1.0] specifications and other related specifications.
 It is built on top of https://spring.io/projects/spring-security[Spring Security] to provide a secure, light-weight, and customizable foundation for building OpenID Connect 1.0 Identity Providers and OAuth2 Authorization Server products.
 
 [[feature-list]]
@@ -25,10 +25,10 @@ Spring Authorization Server supports the following features:
 * Client Credentials
 * Refresh Token
 |
-* The OAuth 2.1 Authorization Framework (https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-05[draft])
-** https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-05#section-4.1[Authorization Code Grant]
-** https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-05#section-4.2[Client Credentials Grant]
-** https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-05#section-4.3[Refresh Token Grant]
+* The OAuth 2.1 Authorization Framework (https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-07[draft])
+** https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-07#section-4.1[Authorization Code Grant]
+** https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-07#section-4.2[Client Credentials Grant]
+** https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-07#section-4.3[Refresh Token Grant]
 * OpenID Connect Core 1.0 (https://openid.net/specs/openid-connect-core-1_0.html[spec])
 ** https://openid.net/specs/openid-connect-core-1_0.html#CodeFlowAuth[Authorization Code Flow]
 
@@ -48,7 +48,7 @@ Spring Authorization Server supports the following features:
 * `private_key_jwt`
 * `none` (public clients)
 |
-* The OAuth 2.1 Authorization Framework (https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-05#section-2.4[Client Authentication])
+* The OAuth 2.1 Authorization Framework (https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-07#section-2.4[Client Authentication])
 * JSON Web Token (JWT) Profile for OAuth 2.0 Client Authentication (https://tools.ietf.org/html/rfc7523[RFC 7523])
 * Proof Key for Code Exchange by OAuth Public Clients (PKCE) (https://tools.ietf.org/html/rfc7636[RFC 7636])
 
@@ -64,9 +64,9 @@ Spring Authorization Server supports the following features:
 * xref:protocol-endpoints.adoc#oidc-user-info-endpoint[OpenID Connect 1.0 UserInfo Endpoint]
 * xref:protocol-endpoints.adoc#oidc-client-registration-endpoint[OpenID Connect 1.0 Client Registration Endpoint]
 |
-* The OAuth 2.1 Authorization Framework (https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-05[draft])
-** https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-05#section-3.1[Authorization Endpoint]
-** https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-05#section-3.2[Token Endpoint]
+* The OAuth 2.1 Authorization Framework (https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-07[draft])
+** https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-07#section-3.1[Authorization Endpoint]
+** https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-07#section-3.2[Token Endpoint]
 * OAuth 2.0 Token Introspection (https://tools.ietf.org/html/rfc7662[RFC 7662])
 * OAuth 2.0 Token Revocation (https://tools.ietf.org/html/rfc7009[RFC 7009])
 * OAuth 2.0 Authorization Server Metadata (https://tools.ietf.org/html/rfc8414[RFC 8414])

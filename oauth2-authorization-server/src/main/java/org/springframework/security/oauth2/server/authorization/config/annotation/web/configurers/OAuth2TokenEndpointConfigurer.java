@@ -39,6 +39,7 @@ import org.springframework.security.oauth2.server.authorization.authentication.O
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenGenerator;
 import org.springframework.security.oauth2.server.authorization.web.OAuth2TokenEndpointFilter;
+import org.springframework.security.oauth2.server.authorization.web.OAuth2TokenResponseEnhancer;
 import org.springframework.security.oauth2.server.authorization.web.authentication.DelegatingAuthenticationConverter;
 import org.springframework.security.oauth2.server.authorization.web.authentication.OAuth2AuthorizationCodeAuthenticationConverter;
 import org.springframework.security.oauth2.server.authorization.web.authentication.OAuth2ClientCredentialsAuthenticationConverter;
@@ -67,6 +68,7 @@ public final class OAuth2TokenEndpointConfigurer extends AbstractOAuth2Configure
 	private Consumer<List<AuthenticationProvider>> authenticationProvidersConsumer = (authenticationProviders) -> {};
 	private AuthenticationSuccessHandler accessTokenResponseHandler;
 	private AuthenticationFailureHandler errorResponseHandler;
+	private OAuth2TokenResponseEnhancer oauth2TokenResponseEnhancer;
 
 	/**
 	 * Restrict for internal use only.
@@ -156,6 +158,18 @@ public final class OAuth2TokenEndpointConfigurer extends AbstractOAuth2Configure
 		return this;
 	}
 
+	/**
+	 * Sets the {@link OAuth2TokenResponseEnhancer} used for enhance {@link OAuth2AccessTokenResponse#additionalParameters}.
+	 *
+	 * @param oauth2TokenResponseEnhancer the {@link OAuth2TokenResponseEnhancer} used for
+	 * enhance additional parameters for OAuth2 Token Response.
+	 * @return the {@link OAuth2TokenEndpointConfigurer} for further configuration
+	 */
+	public OAuth2TokenEndpointConfigurer oauth2TokenResponseEnhancer(OAuth2TokenResponseEnhancer oauth2TokenResponseEnhancer) {
+		this.oauth2TokenResponseEnhancer = oauth2TokenResponseEnhancer;
+		return this;
+	}
+
 	@Override
 	void init(HttpSecurity httpSecurity) {
 		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils.getAuthorizationServerSettings(httpSecurity);
@@ -192,6 +206,9 @@ public final class OAuth2TokenEndpointConfigurer extends AbstractOAuth2Configure
 		}
 		if (this.errorResponseHandler != null) {
 			tokenEndpointFilter.setAuthenticationFailureHandler(this.errorResponseHandler);
+		}
+		if (this.oauth2TokenResponseEnhancer != null) {
+			tokenEndpointFilter.setOAuth2TokenResponseEnhancer(this.oauth2TokenResponseEnhancer);
 		}
 		httpSecurity.addFilterAfter(postProcess(tokenEndpointFilter), FilterSecurityInterceptor.class);
 	}

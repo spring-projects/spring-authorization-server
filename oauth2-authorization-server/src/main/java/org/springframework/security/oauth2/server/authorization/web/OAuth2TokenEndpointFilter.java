@@ -110,6 +110,7 @@ public final class OAuth2TokenEndpointFilter extends OncePerRequestFilter {
 	private AuthenticationConverter authenticationConverter;
 	private AuthenticationSuccessHandler authenticationSuccessHandler = this::sendAccessTokenResponse;
 	private AuthenticationFailureHandler authenticationFailureHandler = this::sendErrorResponse;
+	private OAuth2TokenResponseEnhancer oauth2TokenResponseEnhancer = this::getAdditionalParameters;
 
 	/**
 	 * Constructs an {@code OAuth2TokenEndpointFilter} using the provided parameters.
@@ -214,6 +215,18 @@ public final class OAuth2TokenEndpointFilter extends OncePerRequestFilter {
 		this.authenticationFailureHandler = authenticationFailureHandler;
 	}
 
+	/**
+	 * Sets the {@link OAuth2TokenResponseEnhancer} used for enhance {@link OAuth2AccessTokenResponse#additionalParameters}.
+	 *
+	 * @param oauth2TokenResponseEnhancer the {@link OAuth2TokenResponseEnhancer} used for
+	 * enhance additional parameters for OAuth2 Token Response.
+	 *
+	 */
+	public void setOAuth2TokenResponseEnhancer(OAuth2TokenResponseEnhancer oauth2TokenResponseEnhancer) {
+		Assert.notNull(oauth2TokenResponseEnhancer, "oauth2TokenResponseEnhancer cannot be null");
+		this.oauth2TokenResponseEnhancer = oauth2TokenResponseEnhancer;
+	}
+
 	private void sendAccessTokenResponse(HttpServletRequest request, HttpServletResponse response,
 			Authentication authentication) throws IOException {
 
@@ -222,7 +235,6 @@ public final class OAuth2TokenEndpointFilter extends OncePerRequestFilter {
 
 		OAuth2AccessToken accessToken = accessTokenAuthentication.getAccessToken();
 		OAuth2RefreshToken refreshToken = accessTokenAuthentication.getRefreshToken();
-		Map<String, Object> additionalParameters = accessTokenAuthentication.getAdditionalParameters();
 
 		OAuth2AccessTokenResponse.Builder builder =
 				OAuth2AccessTokenResponse.withToken(accessToken.getTokenValue())
@@ -234,6 +246,7 @@ public final class OAuth2TokenEndpointFilter extends OncePerRequestFilter {
 		if (refreshToken != null) {
 			builder.refreshToken(refreshToken.getTokenValue());
 		}
+		Map<String, Object> additionalParameters = oauth2TokenResponseEnhancer.enhance(accessTokenAuthentication);
 		if (!CollectionUtils.isEmpty(additionalParameters)) {
 			builder.additionalParameters(additionalParameters);
 		}
@@ -249,6 +262,10 @@ public final class OAuth2TokenEndpointFilter extends OncePerRequestFilter {
 		ServletServerHttpResponse httpResponse = new ServletServerHttpResponse(response);
 		httpResponse.setStatusCode(HttpStatus.BAD_REQUEST);
 		this.errorHttpResponseConverter.write(error, null, httpResponse);
+	}
+
+	private Map<String, Object> getAdditionalParameters(OAuth2AccessTokenAuthenticationToken accessTokenAuthentication) {
+		return accessTokenAuthentication.getAdditionalParameters();
 	}
 
 	private static void throwError(String errorCode, String parameterName) {

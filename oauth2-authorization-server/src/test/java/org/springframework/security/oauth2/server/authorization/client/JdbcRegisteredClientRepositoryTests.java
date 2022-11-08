@@ -27,9 +27,9 @@ import java.util.function.Function;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.jdbc.core.ArgumentPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcOperations;
@@ -73,14 +73,14 @@ public class JdbcRegisteredClientRepositoryTests {
 	private JdbcOperations jdbcOperations;
 	private JdbcRegisteredClientRepository registeredClientRepository;
 
-	@Before
+	@BeforeEach
 	public void setUp() {
 		this.db = createDb(OAUTH2_REGISTERED_CLIENT_SCHEMA_SQL_RESOURCE);
 		this.jdbcOperations = new JdbcTemplate(this.db);
 		this.registeredClientRepository = new JdbcRegisteredClientRepository(this.jdbcOperations);
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() {
 		this.db.shutdown();
 	}
@@ -160,6 +160,40 @@ public class JdbcRegisteredClientRepositoryTests {
 		this.registeredClientRepository.save(expectedRegisteredClient);
 		RegisteredClient registeredClient = this.registeredClientRepository.findById(expectedRegisteredClient.getId());
 		assertThat(registeredClient).isEqualTo(expectedRegisteredClient);
+	}
+
+	@Test
+	public void saveWhenExistingClientIdThenThrowIllegalArgumentException() {
+		RegisteredClient registeredClient1 = TestRegisteredClients.registeredClient()
+				.id("registration-1")
+				.clientId("client-1")
+				.build();
+		this.registeredClientRepository.save(registeredClient1);
+		RegisteredClient registeredClient2 = TestRegisteredClients.registeredClient()
+				.id("registration-2")
+				.clientId("client-1")
+				.build();
+		assertThatIllegalArgumentException()
+				.isThrownBy(() -> this.registeredClientRepository.save(registeredClient2))
+				.withMessage("Registered client must be unique. Found duplicate client identifier: " + registeredClient2.getClientId());
+	}
+
+	@Test
+	public void saveWhenExistingClientSecretThenThrowIllegalArgumentException() {
+		RegisteredClient registeredClient1 = TestRegisteredClients.registeredClient()
+				.id("registration-1")
+				.clientId("client-1")
+				.clientSecret("secret")
+				.build();
+		this.registeredClientRepository.save(registeredClient1);
+		RegisteredClient registeredClient2 = TestRegisteredClients.registeredClient()
+				.id("registration-2")
+				.clientId("client-2")
+				.clientSecret("secret")
+				.build();
+		assertThatIllegalArgumentException()
+				.isThrownBy(() -> this.registeredClientRepository.save(registeredClient2))
+				.withMessage("Registered client must be unique. Found duplicate client secret for identifier: " + registeredClient2.getId());
 	}
 
 	@Test

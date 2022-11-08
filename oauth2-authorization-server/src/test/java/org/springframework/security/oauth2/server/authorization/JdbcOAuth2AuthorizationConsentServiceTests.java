@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 the original author or authors.
+ * Copyright 2020-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,9 +20,9 @@ import java.sql.SQLException;
 import java.sql.Types;
 import java.util.List;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.dao.DataRetrievalFailureException;
 import org.springframework.jdbc.core.ArgumentPreparedStatementSetter;
@@ -75,7 +75,7 @@ public class JdbcOAuth2AuthorizationConsentServiceTests {
 	private RegisteredClientRepository registeredClientRepository;
 	private JdbcOAuth2AuthorizationConsentService authorizationConsentService;
 
-	@Before
+	@BeforeEach
 	public void setUp() {
 		this.db = createDb();
 		this.jdbcOperations = new JdbcTemplate(this.db);
@@ -83,7 +83,7 @@ public class JdbcOAuth2AuthorizationConsentServiceTests {
 		this.authorizationConsentService = new JdbcOAuth2AuthorizationConsentService(this.jdbcOperations, this.registeredClientRepository);
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() {
 		this.db.shutdown();
 	}

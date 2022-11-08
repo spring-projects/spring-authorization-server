@@ -15,7 +15,7 @@
  */
 package org.springframework.security.oauth2.server.authorization.settings;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 

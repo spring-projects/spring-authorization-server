@@ -13,7 +13,7 @@ dependencies {
 	constraints {
 		api "com.nimbusds:nimbus-jose-jwt:9.24.4"
 		api "jakarta.servlet:jakarta.servlet-api:5.0.0"
-		api "junit:junit:4.13.2"
+		api "org.junit.jupiter:junit-jupiter:5.9.1"
 		api "org.assertj:assertj-core:3.23.1"
 		api "org.mockito:mockito-core:4.8.1"
 		api "com.squareup.okhttp3:mockwebserver:4.10.0"

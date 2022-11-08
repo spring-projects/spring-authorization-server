@@ -17,7 +17,7 @@ package org.springframework.security.oauth2.server.authorization.settings;
 
 import java.time.Duration;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 

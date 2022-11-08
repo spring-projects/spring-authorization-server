@@ -18,11 +18,11 @@ package org.springframework.security.oauth2.server.authorization.config.annotati
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -43,7 +43,8 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
 import org.springframework.security.oauth2.server.authorization.jackson2.TestingAuthenticationTokenMixin;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
-import org.springframework.security.oauth2.server.authorization.test.SpringTestRule;
+import org.springframework.security.oauth2.server.authorization.test.SpringTestContext;
+import org.springframework.security.oauth2.server.authorization.test.SpringTestContextExtension;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.hamcrest.CoreMatchers.containsString;
@@ -57,14 +58,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  *
  * @author Florian Berthe
  */
+@ExtendWith(SpringTestContextExtension.class)
 public class JwkSetTests {
 	private static final String DEFAULT_JWK_SET_ENDPOINT_URI = "/oauth2/jwks";
 	private static EmbeddedDatabase db;
 	private static JWKSource<SecurityContext> jwkSource;
 	private static AuthorizationServerSettings authorizationServerSettings;
 
-	@Rule
-	public final SpringTestRule spring = new SpringTestRule();
+	public final SpringTestContext spring = new SpringTestContext();
 
 	@Autowired
 	private MockMvc mvc;
@@ -72,7 +73,7 @@ public class JwkSetTests {
 	@Autowired
 	private JdbcOperations jdbcOperations;
 
-	@BeforeClass
+	@BeforeAll
 	public static void init() {
 		JWKSet jwkSet = new JWKSet(TestJwks.DEFAULT_RSA_JWK);
 		jwkSource = (jwkSelector, securityContext) -> jwkSelector.select(jwkSet);
@@ -86,13 +87,13 @@ public class JwkSetTests {
 				.build();
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() {
 		jdbcOperations.update("truncate table oauth2_authorization");
 		jdbcOperations.update("truncate table oauth2_registered_client");
 	}
 
-	@AfterClass
+	@AfterAll
 	public static void destroy() {
 		db.shutdown();
 	}

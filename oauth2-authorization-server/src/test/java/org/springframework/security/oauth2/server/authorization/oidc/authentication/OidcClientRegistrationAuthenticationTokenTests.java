@@ -15,7 +15,7 @@
  */
 package org.springframework.security.oauth2.server.authorization.oidc.authentication;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.oidc.OidcClientRegistration;

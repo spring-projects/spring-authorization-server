@@ -28,9 +28,9 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
 import org.springframework.http.HttpStatus;
@@ -90,7 +90,7 @@ public class OAuth2AuthorizationEndpointFilterTests {
 	private TestingAuthenticationToken principal;
 	private OAuth2AuthorizationCode authorizationCode;
 
-	@Before
+	@BeforeEach
 	public void setUp() {
 		this.authenticationManager = mock(AuthenticationManager.class);
 		this.filter = new OAuth2AuthorizationEndpointFilter(this.authenticationManager);
@@ -104,7 +104,7 @@ public class OAuth2AuthorizationEndpointFilterTests {
 		this.authorizationCode = new OAuth2AuthorizationCode("code", issuedAt, expiresAt);
 	}
 
-	@After
+	@AfterEach
 	public void cleanup() {
 		SecurityContextHolder.clearContext();
 	}

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 the original author or authors.
+ * Copyright 2020-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@ package org.springframework.security.oauth2.server.authorization;
 
 import java.util.List;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
@@ -40,7 +40,7 @@ public class InMemoryOAuth2AuthorizationConsentServiceTests {
 
 	private InMemoryOAuth2AuthorizationConsentService authorizationConsentService;
 
-	@Before
+	@BeforeEach
 	public void setUp() {
 		this.authorizationConsentService = new InMemoryOAuth2AuthorizationConsentService();
 		this.authorizationConsentService.save(AUTHORIZATION_CONSENT);

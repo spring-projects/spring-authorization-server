@@ -30,10 +30,10 @@ import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -72,7 +72,8 @@ import org.springframework.security.oauth2.server.authorization.oidc.authenticat
 import org.springframework.security.oauth2.server.authorization.oidc.authentication.OidcUserInfoAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.oidc.authentication.OidcUserInfoAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
-import org.springframework.security.oauth2.server.authorization.test.SpringTestRule;
+import org.springframework.security.oauth2.server.authorization.test.SpringTestContext;
+import org.springframework.security.oauth2.server.authorization.test.SpringTestContextExtension;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationConverter;
@@ -105,12 +106,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  *
  * @author Steve Riesenberg
  */
+@ExtendWith(SpringTestContextExtension.class)
 public class OidcUserInfoTests {
 	private static final String DEFAULT_OIDC_USER_INFO_ENDPOINT_URI = "/userinfo";
 	private static SecurityContextRepository securityContextRepository;
 
-	@Rule
-	public final SpringTestRule spring = new SpringTestRule();
+	public final SpringTestContext spring = new SpringTestContext();
 
 	@Autowired
 	private MockMvc mvc;
@@ -138,7 +139,7 @@ public class OidcUserInfoTests {
 
 	private static Function<OidcUserInfoAuthenticationContext, OidcUserInfo> userInfoMapper;
 
-	@BeforeClass
+	@BeforeAll
 	public static void init() {
 		securityContextRepository = spy(new HttpSessionSecurityContextRepository());
 		authenticationConverter = mock(AuthenticationConverter.class);
@@ -150,7 +151,7 @@ public class OidcUserInfoTests {
 		userInfoMapper = mock(Function.class);
 	}
 
-	@Before
+	@BeforeEach
 	public void setup() {
 		reset(securityContextRepository);
 		reset(authenticationConverter);

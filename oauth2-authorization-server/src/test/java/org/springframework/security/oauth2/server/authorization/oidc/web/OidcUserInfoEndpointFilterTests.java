@@ -20,8 +20,8 @@ import java.util.Collections;
 
 import jakarta.servlet.FilterChain;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -67,7 +67,7 @@ public class OidcUserInfoEndpointFilterTests {
 	private OidcUserInfoEndpointFilter filter;
 	private final HttpMessageConverter<OAuth2Error> errorHttpResponseConverter = new OAuth2ErrorHttpMessageConverter();
 
-	@Before
+	@BeforeEach
 	public void setup() {
 		this.authenticationManager = mock(AuthenticationManager.class);
 		this.filter = new OidcUserInfoEndpointFilter(this.authenticationManager, DEFAULT_OIDC_USER_INFO_ENDPOINT_URI);

@@ -22,8 +22,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
 import org.springframework.security.core.Authentication;
@@ -69,7 +69,7 @@ public class JwtGeneratorTests {
 	private JwtGenerator jwtGenerator;
 	private AuthorizationServerContext authorizationServerContext;
 
-	@Before
+	@BeforeEach
 	public void setUp() {
 		this.jwtEncoder = mock(JwtEncoder.class);
 		this.jwtCustomizer = mock(OAuth2TokenCustomizer.class);

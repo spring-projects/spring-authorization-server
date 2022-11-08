@@ -29,9 +29,9 @@ import java.util.Set;
 import java.util.function.Function;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.dao.DataRetrievalFailureException;
 import org.springframework.jdbc.core.ArgumentPreparedStatementSetter;
@@ -88,7 +88,7 @@ public class JdbcOAuth2AuthorizationServiceTests {
 	private RegisteredClientRepository registeredClientRepository;
 	private JdbcOAuth2AuthorizationService authorizationService;
 
-	@Before
+	@BeforeEach
 	public void setUp() {
 		this.db = createDb();
 		this.jdbcOperations = new JdbcTemplate(this.db);
@@ -96,7 +96,7 @@ public class JdbcOAuth2AuthorizationServiceTests {
 		this.authorizationService = new JdbcOAuth2AuthorizationService(this.jdbcOperations, this.registeredClientRepository);
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() {
 		this.db.shutdown();
 	}

@@ -28,11 +28,11 @@ import java.util.Set;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -81,7 +81,8 @@ import org.springframework.security.oauth2.server.authorization.client.TestRegis
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
 import org.springframework.security.oauth2.server.authorization.jackson2.TestingAuthenticationTokenMixin;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
-import org.springframework.security.oauth2.server.authorization.test.SpringTestRule;
+import org.springframework.security.oauth2.server.authorization.test.SpringTestContext;
+import org.springframework.security.oauth2.server.authorization.test.SpringTestContextExtension;
 import org.springframework.security.oauth2.server.authorization.token.DelegatingOAuth2TokenGenerator;
 import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext;
 import org.springframework.security.oauth2.server.authorization.token.JwtGenerator;
@@ -118,6 +119,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * @author Daniel Garnier-Moiroux
  * @author Joe Grandja
  */
+@ExtendWith(SpringTestContextExtension.class)
 public class OidcTests {
 	private static final String DEFAULT_AUTHORIZATION_ENDPOINT_URI = "/oauth2/authorize";
 	private static final String DEFAULT_TOKEN_ENDPOINT_URI = "/oauth2/token";
@@ -128,8 +130,7 @@ public class OidcTests {
 	private static HttpMessageConverter<OAuth2AccessTokenResponse> accessTokenHttpResponseConverter =
 			new OAuth2AccessTokenResponseHttpMessageConverter();
 
-	@Rule
-	public final SpringTestRule spring = new SpringTestRule();
+	public final SpringTestContext spring = new SpringTestContext();
 
 	@Autowired
 	private MockMvc mvc;
@@ -149,7 +150,7 @@ public class OidcTests {
 	@Autowired(required = false)
 	private OAuth2TokenGenerator<?> tokenGenerator;
 
-	@BeforeClass
+	@BeforeAll
 	public static void init() {
 		JWKSet jwkSet = new JWKSet(TestJwks.DEFAULT_RSA_JWK);
 		jwkSource = (jwkSelector, securityContext) -> jwkSelector.select(jwkSet);
@@ -162,7 +163,7 @@ public class OidcTests {
 				.build();
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() {
 		if (jdbcOperations != null) {
 			jdbcOperations.update("truncate table oauth2_authorization");
@@ -170,7 +171,7 @@ public class OidcTests {
 		}
 	}
 
-	@AfterClass
+	@AfterAll
 	public static void destroy() {
 		db.shutdown();
 	}

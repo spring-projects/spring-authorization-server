@@ -12,7 +12,7 @@ dependencies {
 	api platform("com.fasterxml.jackson:jackson-bom:2.13.4.20221013")
 	constraints {
 		api "com.nimbusds:nimbus-jose-jwt:9.24.4"
-		api "jakarta.servlet:jakarta.servlet-api:5.0.0"
+		api "jakarta.servlet:jakarta.servlet-api:6.0.0"
 		api "org.junit.jupiter:junit-jupiter:5.9.1"
 		api "org.assertj:assertj-core:3.23.1"
 		api "org.mockito:mockito-core:4.8.1"

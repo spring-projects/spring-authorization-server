@@ -24,9 +24,9 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
 import org.springframework.security.authentication.TestingAuthenticationToken;
@@ -94,7 +94,7 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 	private OAuth2TokenGenerator<?> tokenGenerator;
 	private OAuth2RefreshTokenAuthenticationProvider authenticationProvider;
 
-	@Before
+	@BeforeEach
 	public void setUp() {
 		this.authorizationService = mock(OAuth2AuthorizationService.class);
 		this.jwtEncoder = mock(JwtEncoder.class);
@@ -120,7 +120,7 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 		AuthorizationServerContextHolder.setContext(new TestAuthorizationServerContext(authorizationServerSettings, null));
 	}
 
-	@After
+	@AfterEach
 	public void cleanup() {
 		AuthorizationServerContextHolder.resetContext();
 	}

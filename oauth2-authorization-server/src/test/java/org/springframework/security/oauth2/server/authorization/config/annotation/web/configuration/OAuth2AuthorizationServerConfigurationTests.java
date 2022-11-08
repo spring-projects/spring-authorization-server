@@ -17,7 +17,7 @@ package org.springframework.security.oauth2.server.authorization.config.annotati
 
 import java.lang.reflect.Method;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.OrderUtils;

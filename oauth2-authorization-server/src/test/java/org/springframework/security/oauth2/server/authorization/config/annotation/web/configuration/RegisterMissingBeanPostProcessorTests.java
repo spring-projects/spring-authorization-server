@@ -18,7 +18,7 @@ package org.springframework.security.oauth2.server.authorization.config.annotati
 
 import java.util.function.Supplier;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
 import org.springframework.beans.factory.config.BeanDefinition;

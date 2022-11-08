@@ -19,8 +19,8 @@ import javax.servlet.FilterChain;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.junit.After;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -47,7 +47,7 @@ public class OidcProviderConfigurationEndpointFilterTests {
 	private static final String DEFAULT_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI = "/.well-known/openid-configuration";
 	private final OidcProviderConfigurationEndpointFilter filter = new OidcProviderConfigurationEndpointFilter();
 
-	@After
+	@AfterEach
 	public void cleanup() {
 		AuthorizationServerContextHolder.resetContext();
 	}

@@ -29,6 +29,7 @@ import org.gradle.api.plugins.JavaPluginExtension;
 import org.gradle.api.plugins.PluginManager;
 import org.gradle.api.tasks.compile.CompileOptions;
 import org.gradle.api.tasks.compile.JavaCompile;
+import org.gradle.api.tasks.testing.Test;
 import org.gradle.jvm.tasks.Jar;
 import org.jetbrains.kotlin.gradle.plugin.KotlinPluginWrapper;
 
@@ -92,5 +93,8 @@ public class SpringJavaPlugin implements Plugin<Project> {
 			attributes.put("Automatic-Module-Name", project.getName().replace("-", "."));
 			manifest.attributes(attributes);
 		}));
+		project.getTasks().withType(Test.class, (test) -> {
+			test.useJUnitPlatform();
+		});
 	}
 }

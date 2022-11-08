@@ -20,8 +20,8 @@ import java.time.Instant;
 import java.util.Collections;
 import java.util.Set;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
 import org.springframework.security.core.Authentication;
@@ -59,7 +59,7 @@ public class OAuth2AccessTokenGeneratorTests {
 	private OAuth2AccessTokenGenerator accessTokenGenerator;
 	private AuthorizationServerContext authorizationServerContext;
 
-	@Before
+	@BeforeEach
 	public void setUp() {
 		this.accessTokenCustomizer = mock(OAuth2TokenCustomizer.class);
 		this.accessTokenGenerator = new OAuth2AccessTokenGenerator();

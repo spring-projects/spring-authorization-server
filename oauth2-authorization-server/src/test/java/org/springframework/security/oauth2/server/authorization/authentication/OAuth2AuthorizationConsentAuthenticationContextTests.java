@@ -17,7 +17,7 @@ package org.springframework.security.oauth2.server.authorization.authentication;
 
 import java.security.Principal;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;

@@ -20,7 +20,7 @@ import java.net.URL;
 import java.util.Arrays;
 import java.util.Map;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.http.HttpStatus;

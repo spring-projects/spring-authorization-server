@@ -27,11 +27,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.function.Consumer;
 
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -86,7 +86,8 @@ import org.springframework.security.oauth2.server.authorization.jackson2.Testing
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.settings.OAuth2TokenFormat;
 import org.springframework.security.oauth2.server.authorization.settings.TokenSettings;
-import org.springframework.security.oauth2.server.authorization.test.SpringTestRule;
+import org.springframework.security.oauth2.server.authorization.test.SpringTestContext;
+import org.springframework.security.oauth2.server.authorization.test.SpringTestContextExtension;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenClaimsContext;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenClaimsSet;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer;
@@ -116,6 +117,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * @author Gerardo Roza
  * @author Joe Grandja
  */
+@ExtendWith(SpringTestContextExtension.class)
 public class OAuth2TokenIntrospectionTests {
 	private static EmbeddedDatabase db;
 	private static AuthorizationServerSettings authorizationServerSettings;
@@ -131,8 +133,7 @@ public class OAuth2TokenIntrospectionTests {
 	private static final HttpMessageConverter<OAuth2AccessTokenResponse> accessTokenHttpResponseConverter =
 			new OAuth2AccessTokenResponseHttpMessageConverter();
 
-	@Rule
-	public final SpringTestRule spring = new SpringTestRule();
+	public final SpringTestContext spring = new SpringTestContext();
 
 	@Autowired
 	private MockMvc mvc;
@@ -146,7 +147,7 @@ public class OAuth2TokenIntrospectionTests {
 	@Autowired
 	private OAuth2AuthorizationService authorizationService;
 
-	@BeforeClass
+	@BeforeAll
 	public static void init() {
 		authorizationServerSettings = AuthorizationServerSettings.builder().tokenIntrospectionEndpoint("/test/introspect").build();
 		authenticationConverter = mock(AuthenticationConverter.class);
@@ -165,13 +166,13 @@ public class OAuth2TokenIntrospectionTests {
 				.build();
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() {
 		jdbcOperations.update("truncate table oauth2_authorization");
 		jdbcOperations.update("truncate table oauth2_registered_client");
 	}
 
-	@AfterClass
+	@AfterAll
 	public static void destroy() {
 		db.shutdown();
 	}

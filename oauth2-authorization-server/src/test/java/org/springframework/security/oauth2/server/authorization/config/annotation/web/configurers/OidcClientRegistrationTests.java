@@ -28,12 +28,12 @@ import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -91,7 +91,8 @@ import org.springframework.security.oauth2.server.authorization.oidc.http.conver
 import org.springframework.security.oauth2.server.authorization.oidc.web.authentication.OidcClientRegistrationAuthenticationConverter;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
-import org.springframework.security.oauth2.server.authorization.test.SpringTestRule;
+import org.springframework.security.oauth2.server.authorization.test.SpringTestContext;
+import org.springframework.security.oauth2.server.authorization.test.SpringTestContextExtension;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
@@ -123,6 +124,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * @author Ovidiu Popa
  * @author Joe Grandja
  */
+@ExtendWith(SpringTestContextExtension.class)
 public class OidcClientRegistrationTests {
 	private static final String DEFAULT_TOKEN_ENDPOINT_URI = "/oauth2/token";
 	private static final String DEFAULT_OIDC_CLIENT_REGISTRATION_ENDPOINT_URI = "/connect/register";
@@ -135,8 +137,7 @@ public class OidcClientRegistrationTests {
 	private static JWKSet clientJwkSet;
 	private static JwtEncoder jwtClientAssertionEncoder;
 
-	@Rule
-	public final SpringTestRule spring = new SpringTestRule();
+	public final SpringTestContext spring = new SpringTestContext();
 
 	@Autowired
 	private MockMvc mvc;
@@ -166,7 +167,7 @@ public class OidcClientRegistrationTests {
 	private String clientJwkSetUrl;
 
 
-	@BeforeClass
+	@BeforeAll
 	public static void init() {
 		JWKSet jwkSet = new JWKSet(TestJwks.DEFAULT_RSA_JWK);
 		jwkSource = (jwkSelector, securityContext) -> jwkSelector.select(jwkSet);
@@ -187,7 +188,7 @@ public class OidcClientRegistrationTests {
 		authenticationFailureHandler = mock(AuthenticationFailureHandler.class);
 	}
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		this.server = new MockWebServer();
 		this.server.start();
@@ -201,7 +202,7 @@ public class OidcClientRegistrationTests {
 		when(authenticationProvider.supports(OidcClientRegistrationAuthenticationToken.class)).thenReturn(true);
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		this.server.shutdown();
 		jdbcOperations.update("truncate table oauth2_authorization");
@@ -214,7 +215,7 @@ public class OidcClientRegistrationTests {
 		reset(authenticationFailureHandler);
 	}
 
-	@AfterClass
+	@AfterAll
 	public static void destroy() {
 		db.shutdown();
 	}

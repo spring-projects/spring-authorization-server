@@ -22,9 +22,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.authority.AuthorityUtils;
@@ -77,7 +77,7 @@ public class OidcClientConfigurationAuthenticationProviderTests {
 	private AuthorizationServerSettings authorizationServerSettings;
 	private OidcClientConfigurationAuthenticationProvider authenticationProvider;
 
-	@Before
+	@BeforeEach
 	public void setUp() {
 		this.registeredClientRepository = mock(RegisteredClientRepository.class);
 		this.authorizationService = mock(OAuth2AuthorizationService.class);
@@ -87,7 +87,7 @@ public class OidcClientConfigurationAuthenticationProviderTests {
 				this.registeredClientRepository, this.authorizationService);
 	}
 
-	@After
+	@AfterEach
 	public void cleanup() {
 		AuthorizationServerContextHolder.resetContext();
 	}

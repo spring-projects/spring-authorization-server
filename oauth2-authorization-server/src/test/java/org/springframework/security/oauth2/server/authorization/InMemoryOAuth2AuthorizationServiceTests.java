@@ -19,8 +19,8 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
@@ -49,7 +49,7 @@ public class InMemoryOAuth2AuthorizationServiceTests {
 	private static final OAuth2TokenType STATE_TOKEN_TYPE = new OAuth2TokenType(OAuth2ParameterNames.STATE);
 	private InMemoryOAuth2AuthorizationService authorizationService;
 
-	@Before
+	@BeforeEach
 	public void setup() {
 		this.authorizationService = new InMemoryOAuth2AuthorizationService();
 	}

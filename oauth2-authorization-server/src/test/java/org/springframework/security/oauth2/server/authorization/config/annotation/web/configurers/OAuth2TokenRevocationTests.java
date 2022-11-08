@@ -24,11 +24,11 @@ import java.util.function.Consumer;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -68,7 +68,8 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
 import org.springframework.security.oauth2.server.authorization.jackson2.TestingAuthenticationTokenMixin;
-import org.springframework.security.oauth2.server.authorization.test.SpringTestRule;
+import org.springframework.security.oauth2.server.authorization.test.SpringTestContext;
+import org.springframework.security.oauth2.server.authorization.test.SpringTestContextExtension;
 import org.springframework.security.oauth2.server.authorization.web.authentication.OAuth2TokenRevocationAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationConverter;
@@ -93,6 +94,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  *
  * @author Joe Grandja
  */
+@ExtendWith(SpringTestContextExtension.class)
 public class OAuth2TokenRevocationTests {
 	private static final String DEFAULT_TOKEN_REVOCATION_ENDPOINT_URI = "/oauth2/revoke";
 	private static EmbeddedDatabase db;
@@ -104,8 +106,7 @@ public class OAuth2TokenRevocationTests {
 	private static AuthenticationSuccessHandler authenticationSuccessHandler;
 	private static AuthenticationFailureHandler authenticationFailureHandler;
 
-	@Rule
-	public final SpringTestRule spring = new SpringTestRule();
+	public final SpringTestContext spring = new SpringTestContext();
 
 	@Autowired
 	private MockMvc mvc;
@@ -119,7 +120,7 @@ public class OAuth2TokenRevocationTests {
 	@Autowired
 	private OAuth2AuthorizationService authorizationService;
 
-	@BeforeClass
+	@BeforeAll
 	public static void init() {
 		JWKSet jwkSet = new JWKSet(TestJwks.DEFAULT_RSA_JWK);
 		jwkSource = (jwkSelector, securityContext) -> jwkSelector.select(jwkSet);
@@ -138,13 +139,13 @@ public class OAuth2TokenRevocationTests {
 				.build();
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() {
 		jdbcOperations.update("truncate table oauth2_authorization");
 		jdbcOperations.update("truncate table oauth2_registered_client");
 	}
 
-	@AfterClass
+	@AfterAll
 	public static void destroy() {
 		db.shutdown();
 	}

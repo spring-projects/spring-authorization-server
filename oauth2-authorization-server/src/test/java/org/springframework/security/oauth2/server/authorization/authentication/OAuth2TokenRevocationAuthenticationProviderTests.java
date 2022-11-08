@@ -15,8 +15,8 @@
  */
 package org.springframework.security.oauth2.server.authorization.authentication;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
 import org.springframework.security.authentication.TestingAuthenticationToken;
@@ -52,7 +52,7 @@ public class OAuth2TokenRevocationAuthenticationProviderTests {
 	private OAuth2AuthorizationService authorizationService;
 	private OAuth2TokenRevocationAuthenticationProvider authenticationProvider;
 
-	@Before
+	@BeforeEach
 	public void setUp() {
 		this.authorizationService = mock(OAuth2AuthorizationService.class);
 		this.authenticationProvider = new OAuth2TokenRevocationAuthenticationProvider(this.authorizationService);

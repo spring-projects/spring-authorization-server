@@ -20,9 +20,9 @@ import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.Set;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
 import org.springframework.security.authentication.TestingAuthenticationToken;
@@ -79,7 +79,7 @@ public class OAuth2ClientCredentialsAuthenticationProviderTests {
 	private OAuth2TokenGenerator<?> tokenGenerator;
 	private OAuth2ClientCredentialsAuthenticationProvider authenticationProvider;
 
-	@Before
+	@BeforeEach
 	public void setUp() {
 		this.authorizationService = mock(OAuth2AuthorizationService.class);
 		this.jwtEncoder = mock(JwtEncoder.class);
@@ -103,7 +103,7 @@ public class OAuth2ClientCredentialsAuthenticationProviderTests {
 		AuthorizationServerContextHolder.setContext(new TestAuthorizationServerContext(authorizationServerSettings, null));
 	}
 
-	@After
+	@AfterEach
 	public void cleanup() {
 		AuthorizationServerContextHolder.resetContext();
 	}

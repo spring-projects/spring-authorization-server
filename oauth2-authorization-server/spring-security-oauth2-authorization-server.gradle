@@ -21,7 +21,7 @@ dependencies {
 
 	testImplementation "org.springframework.security:spring-security-test"
 	testImplementation "org.springframework:spring-webmvc"
-	testImplementation "junit:junit"
+	testImplementation "org.junit.jupiter:junit-jupiter"
 	testImplementation "org.assertj:assertj-core"
 	testImplementation "org.mockito:mockito-core"
 	testImplementation "com.jayway.jsonpath:json-path"

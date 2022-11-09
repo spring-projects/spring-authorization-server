@@ -19,6 +19,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
@@ -52,6 +55,7 @@ import org.springframework.util.StringUtils;
  */
 public final class OidcClientConfigurationAuthenticationProvider implements AuthenticationProvider {
 	static final String DEFAULT_CLIENT_CONFIGURATION_AUTHORIZED_SCOPE = "client.read";
+	private final Log logger = LogFactory.getLog(getClass());
 	private final RegisteredClientRepository registeredClientRepository;
 	private final OAuth2AuthorizationService authorizationService;
 	private final Converter<RegisteredClient, OidcClientRegistration> clientRegistrationConverter;
@@ -98,6 +102,10 @@ public final class OidcClientConfigurationAuthenticationProvider implements Auth
 			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_TOKEN);
 		}
 
+		if (this.logger.isTraceEnabled()) {
+			this.logger.trace("Retrieved authorization with access token");
+		}
+
 		OAuth2Authorization.Token<OAuth2AccessToken> authorizedAccessToken = authorization.getAccessToken();
 		if (!authorizedAccessToken.isActive()) {
 			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_TOKEN);
@@ -125,7 +133,15 @@ public final class OidcClientConfigurationAuthenticationProvider implements Auth
 			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_CLIENT);
 		}
 
+		if (this.logger.isTraceEnabled()) {
+			this.logger.trace("Validated client configuration request parameters");
+		}
+
 		OidcClientRegistration clientRegistration = this.clientRegistrationConverter.convert(registeredClient);
+
+		if (this.logger.isTraceEnabled()) {
+			this.logger.trace("Authenticated client configuration request");
+		}
 
 		return new OidcClientRegistrationAuthenticationToken(
 				(Authentication) clientRegistrationAuthentication.getPrincipal(), clientRegistration);

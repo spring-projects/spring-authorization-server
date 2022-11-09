@@ -22,6 +22,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import org.springframework.core.log.LogMessage;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageConverter;
@@ -116,12 +117,18 @@ public final class OidcUserInfoEndpointFilter extends OncePerRequestFilter {
 
 			this.authenticationSuccessHandler.onAuthenticationSuccess(request, response, userInfoAuthenticationResult);
 		} catch (OAuth2AuthenticationException ex) {
+			if (this.logger.isTraceEnabled()) {
+				this.logger.trace(LogMessage.format("User info request failed: %s", ex.getError()), ex);
+			}
 			this.authenticationFailureHandler.onAuthenticationFailure(request, response, ex);
 		} catch (Exception ex) {
 			OAuth2Error error = new OAuth2Error(
 					OAuth2ErrorCodes.INVALID_REQUEST,
 					"OpenID Connect 1.0 UserInfo Error: " + ex.getMessage(),
 					"https://openid.net/specs/openid-connect-core-1_0.html#UserInfoError");
+			if (this.logger.isTraceEnabled()) {
+				this.logger.trace(error.getDescription(), ex);
+			}
 			this.authenticationFailureHandler.onAuthenticationFailure(request, response,
 					new OAuth2AuthenticationException(error));
 		} finally {

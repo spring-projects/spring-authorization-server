@@ -15,6 +15,9 @@
  */
 package org.springframework.security.oauth2.server.authorization.authentication;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -39,6 +42,7 @@ import static org.springframework.security.oauth2.server.authorization.authentic
  * @see <a target="_blank" href="https://tools.ietf.org/html/rfc7009#section-2.1">Section 2.1 Revocation Request</a>
  */
 public final class OAuth2TokenRevocationAuthenticationProvider implements AuthenticationProvider {
+	private final Log logger = LogFactory.getLog(getClass());
 	private final OAuth2AuthorizationService authorizationService;
 
 	/**
@@ -63,6 +67,9 @@ public final class OAuth2TokenRevocationAuthenticationProvider implements Authen
 		OAuth2Authorization authorization = this.authorizationService.findByToken(
 				tokenRevocationAuthentication.getToken(), null);
 		if (authorization == null) {
+			if (this.logger.isTraceEnabled()) {
+				this.logger.trace("Did not authenticate token revocation request since token was not found");
+			}
 			// Return the authentication request when token not found
 			return tokenRevocationAuthentication;
 		}
@@ -74,6 +81,12 @@ public final class OAuth2TokenRevocationAuthenticationProvider implements Authen
 		OAuth2Authorization.Token<OAuth2Token> token = authorization.getToken(tokenRevocationAuthentication.getToken());
 		authorization = OAuth2AuthenticationProviderUtils.invalidate(authorization, token.getToken());
 		this.authorizationService.save(authorization);
+
+		if (this.logger.isTraceEnabled()) {
+			this.logger.trace("Saved authorization with revoked token");
+			// This log is kept separate for consistency with other providers
+			this.logger.trace("Authenticated token revocation request");
+		}
 
 		return new OAuth2TokenRevocationAuthenticationToken(token.getToken(), clientPrincipal);
 	}

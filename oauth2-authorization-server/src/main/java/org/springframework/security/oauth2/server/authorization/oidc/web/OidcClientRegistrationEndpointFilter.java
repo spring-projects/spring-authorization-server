@@ -22,6 +22,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import org.springframework.core.log.LogMessage;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageConverter;
@@ -137,12 +138,18 @@ public final class OidcClientRegistrationEndpointFilter extends OncePerRequestFi
 
 			this.authenticationSuccessHandler.onAuthenticationSuccess(request, response, clientRegistrationAuthenticationResult);
 		} catch (OAuth2AuthenticationException ex) {
+			if (this.logger.isTraceEnabled()) {
+				this.logger.trace(LogMessage.format("Client registration request failed: %s", ex.getError()), ex);
+			}
 			this.authenticationFailureHandler.onAuthenticationFailure(request, response, ex);
 		} catch (Exception ex) {
 			OAuth2Error error = new OAuth2Error(
 					OAuth2ErrorCodes.INVALID_REQUEST,
 					"OpenID Connect 1.0 Client Registration Error: " + ex.getMessage(),
 					"https://openid.net/specs/openid-connect-registration-1_0.html#RegistrationError");
+			if (this.logger.isTraceEnabled()) {
+				this.logger.trace(error.getDescription(), ex);
+			}
 			this.authenticationFailureHandler.onAuthenticationFailure(request, response,
 					new OAuth2AuthenticationException(error));
 		} finally {

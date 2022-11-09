@@ -28,6 +28,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import org.springframework.core.log.LogMessage;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -173,6 +174,9 @@ public final class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilte
 			}
 
 			if (authenticationResult instanceof OAuth2AuthorizationConsentAuthenticationToken) {
+				if (this.logger.isTraceEnabled()) {
+					this.logger.trace("Authorization consent is required");
+				}
 				sendAuthorizationConsent(request, response,
 						(OAuth2AuthorizationCodeRequestAuthenticationToken) authentication,
 						(OAuth2AuthorizationConsentAuthenticationToken) authenticationResult);
@@ -183,6 +187,9 @@ public final class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilte
 					request, response, authenticationResult);
 
 		} catch (OAuth2AuthenticationException ex) {
+			if (this.logger.isTraceEnabled()) {
+				this.logger.trace(LogMessage.format("Authorization request failed: %s", ex.getError()), ex);
+			}
 			this.authenticationFailureHandler.onAuthenticationFailure(request, response, ex);
 		}
 	}
@@ -260,6 +267,9 @@ public final class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilte
 					.toUriString();
 			this.redirectStrategy.sendRedirect(request, response, redirectUri);
 		} else {
+			if (this.logger.isTraceEnabled()) {
+				this.logger.trace("Displaying generated consent screen");
+			}
 			DefaultConsentPage.displayConsent(request, response, clientId, principal, requestedScopes, authorizedScopes, state);
 		}
 	}
@@ -314,6 +324,10 @@ public final class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilte
 				!StringUtils.hasText(authorizationCodeRequestAuthentication.getRedirectUri())) {
 			response.sendError(HttpStatus.BAD_REQUEST.value(), error.toString());
 			return;
+		}
+
+		if (this.logger.isTraceEnabled()) {
+			this.logger.trace("Redirecting to client with error");
 		}
 
 		UriComponentsBuilder uriBuilder = UriComponentsBuilder

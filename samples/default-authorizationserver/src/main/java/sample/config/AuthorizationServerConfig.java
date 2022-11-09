@@ -127,7 +127,7 @@ public class AuthorizationServerConfig {
 
 	@Bean
 	public AuthorizationServerSettings authorizationServerSettings() {
-		return AuthorizationServerSettings.builder().issuer("http://localhost:9000").build();
+		return AuthorizationServerSettings.builder().build();
 	}
 
 	@Bean

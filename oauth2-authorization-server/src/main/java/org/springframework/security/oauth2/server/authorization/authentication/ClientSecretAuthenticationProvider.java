@@ -17,6 +17,9 @@ package org.springframework.security.oauth2.server.authorization.authentication;
 
 import java.time.Instant;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -47,6 +50,7 @@ import org.springframework.util.Assert;
  */
 public final class ClientSecretAuthenticationProvider implements AuthenticationProvider {
 	private static final String ERROR_URI = "https://datatracker.ietf.org/doc/html/rfc6749#section-3.2.1";
+	private final Log logger = LogFactory.getLog(getClass());
 	private final RegisteredClientRepository registeredClientRepository;
 	private final CodeVerifierAuthenticator codeVerifierAuthenticator;
 	private PasswordEncoder passwordEncoder;
@@ -95,6 +99,10 @@ public final class ClientSecretAuthenticationProvider implements AuthenticationP
 			throwInvalidClient(OAuth2ParameterNames.CLIENT_ID);
 		}
 
+		if (this.logger.isTraceEnabled()) {
+			this.logger.trace("Retrieved registered client");
+		}
+
 		if (!registeredClient.getClientAuthenticationMethods().contains(
 				clientAuthentication.getClientAuthenticationMethod())) {
 			throwInvalidClient("authentication_method");
@@ -114,8 +122,16 @@ public final class ClientSecretAuthenticationProvider implements AuthenticationP
 			throwInvalidClient("client_secret_expires_at");
 		}
 
+		if (this.logger.isTraceEnabled()) {
+			this.logger.trace("Validated client authentication parameters");
+		}
+
 		// Validate the "code_verifier" parameter for the confidential client, if available
 		this.codeVerifierAuthenticator.authenticateIfAvailable(clientAuthentication, registeredClient);
+
+		if (this.logger.isTraceEnabled()) {
+			this.logger.trace("Authenticated client secret");
+		}
 
 		return new OAuth2ClientAuthenticationToken(registeredClient,
 				clientAuthentication.getClientAuthenticationMethod(), clientAuthentication.getCredentials());

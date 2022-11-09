@@ -20,6 +20,9 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Consumer;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
@@ -62,6 +65,7 @@ import org.springframework.util.StringUtils;
 public final class OAuth2AuthorizationConsentAuthenticationProvider implements AuthenticationProvider {
 	private static final String ERROR_URI = "https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.2.1";
 	private static final OAuth2TokenType STATE_TOKEN_TYPE = new OAuth2TokenType(OAuth2ParameterNames.STATE);
+	private final Log logger = LogFactory.getLog(getClass());
 	private final RegisteredClientRepository registeredClientRepository;
 	private final OAuth2AuthorizationService authorizationService;
 	private final OAuth2AuthorizationConsentService authorizationConsentService;
@@ -97,6 +101,10 @@ public final class OAuth2AuthorizationConsentAuthenticationProvider implements A
 					authorizationConsentAuthentication, null, null);
 		}
 
+		if (this.logger.isTraceEnabled()) {
+			this.logger.trace("Retrieved authorization with authorization consent state");
+		}
+
 		// The 'in-flight' authorization must be associated to the current principal
 		Authentication principal = (Authentication) authorizationConsentAuthentication.getPrincipal();
 		if (!isPrincipalAuthenticated(principal) || !principal.getName().equals(authorization.getPrincipalName())) {
@@ -111,12 +119,20 @@ public final class OAuth2AuthorizationConsentAuthenticationProvider implements A
 					authorizationConsentAuthentication, registeredClient, null);
 		}
 
+		if (this.logger.isTraceEnabled()) {
+			this.logger.trace("Retrieved registered client");
+		}
+
 		OAuth2AuthorizationRequest authorizationRequest = authorization.getAttribute(OAuth2AuthorizationRequest.class.getName());
 		Set<String> requestedScopes = authorizationRequest.getScopes();
 		Set<String> authorizedScopes = new HashSet<>(authorizationConsentAuthentication.getScopes());
 		if (!requestedScopes.containsAll(authorizedScopes)) {
 			throwError(OAuth2ErrorCodes.INVALID_SCOPE, OAuth2ParameterNames.SCOPE,
 					authorizationConsentAuthentication, registeredClient, authorizationRequest);
+		}
+
+		if (this.logger.isTraceEnabled()) {
+			this.logger.trace("Validated authorization consent request parameters");
 		}
 
 		OAuth2AuthorizationConsent currentAuthorizationConsent = this.authorizationConsentService.findById(
@@ -139,6 +155,9 @@ public final class OAuth2AuthorizationConsentAuthenticationProvider implements A
 
 		OAuth2AuthorizationConsent.Builder authorizationConsentBuilder;
 		if (currentAuthorizationConsent != null) {
+			if (this.logger.isTraceEnabled()) {
+				this.logger.trace("Retrieved existing authorization consent");
+			}
 			authorizationConsentBuilder = OAuth2AuthorizationConsent.from(currentAuthorizationConsent);
 		} else {
 			authorizationConsentBuilder = OAuth2AuthorizationConsent.withId(
@@ -157,6 +176,9 @@ public final class OAuth2AuthorizationConsentAuthenticationProvider implements A
 							.build();
 			// @formatter:on
 			this.authorizationConsentCustomizer.accept(authorizationConsentAuthenticationContext);
+			if (this.logger.isTraceEnabled()) {
+				this.logger.trace("Customized authorization consent");
+			}
 		}
 
 		Set<GrantedAuthority> authorities = new HashSet<>();
@@ -166,8 +188,14 @@ public final class OAuth2AuthorizationConsentAuthenticationProvider implements A
 			// Authorization consent denied (or revoked)
 			if (currentAuthorizationConsent != null) {
 				this.authorizationConsentService.remove(currentAuthorizationConsent);
+				if (this.logger.isTraceEnabled()) {
+					this.logger.trace("Revoked authorization consent");
+				}
 			}
 			this.authorizationService.remove(authorization);
+			if (this.logger.isTraceEnabled()) {
+				this.logger.trace("Removed authorization");
+			}
 			throwError(OAuth2ErrorCodes.ACCESS_DENIED, OAuth2ParameterNames.CLIENT_ID,
 					authorizationConsentAuthentication, registeredClient, authorizationRequest);
 		}
@@ -175,6 +203,9 @@ public final class OAuth2AuthorizationConsentAuthenticationProvider implements A
 		OAuth2AuthorizationConsent authorizationConsent = authorizationConsentBuilder.build();
 		if (!authorizationConsent.equals(currentAuthorizationConsent)) {
 			this.authorizationConsentService.save(authorizationConsent);
+			if (this.logger.isTraceEnabled()) {
+				this.logger.trace("Saved authorization consent");
+			}
 		}
 
 		OAuth2TokenContext tokenContext = createAuthorizationCodeTokenContext(
@@ -186,6 +217,10 @@ public final class OAuth2AuthorizationConsentAuthenticationProvider implements A
 			throw new OAuth2AuthorizationCodeRequestAuthenticationException(error, null);
 		}
 
+		if (this.logger.isTraceEnabled()) {
+			this.logger.trace("Generated authorization code");
+		}
+
 		OAuth2Authorization updatedAuthorization = OAuth2Authorization.from(authorization)
 				.authorizedScopes(authorizedScopes)
 				.token(authorizationCode)
@@ -195,9 +230,17 @@ public final class OAuth2AuthorizationConsentAuthenticationProvider implements A
 				.build();
 		this.authorizationService.save(updatedAuthorization);
 
+		if (this.logger.isTraceEnabled()) {
+			this.logger.trace("Saved authorization");
+		}
+
 		String redirectUri = authorizationRequest.getRedirectUri();
 		if (!StringUtils.hasText(redirectUri)) {
 			redirectUri = registeredClient.getRedirectUris().iterator().next();
+		}
+
+		if (this.logger.isTraceEnabled()) {
+			this.logger.trace("Authenticated authorization consent request");
 		}
 
 		return new OAuth2AuthorizationCodeRequestAuthenticationToken(

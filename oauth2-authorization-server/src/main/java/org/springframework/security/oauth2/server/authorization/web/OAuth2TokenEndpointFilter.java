@@ -25,6 +25,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import org.springframework.core.log.LogMessage;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageConverter;
@@ -167,6 +168,9 @@ public final class OAuth2TokenEndpointFilter extends OncePerRequestFilter {
 			this.authenticationSuccessHandler.onAuthenticationSuccess(request, response, accessTokenAuthentication);
 		} catch (OAuth2AuthenticationException ex) {
 			SecurityContextHolder.clearContext();
+			if (this.logger.isTraceEnabled()) {
+				this.logger.trace(LogMessage.format("Token request failed: %s", ex.getError()), ex);
+			}
 			this.authenticationFailureHandler.onAuthenticationFailure(request, response, ex);
 		}
 	}

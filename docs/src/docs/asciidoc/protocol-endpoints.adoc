@@ -50,6 +50,76 @@ public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity h
 * `*AuthenticationSuccessHandler*` -- An internal implementation that handles an "`authenticated`" `OAuth2AuthorizationCodeRequestAuthenticationToken` and returns the `OAuth2AuthorizationResponse`.
 * `*AuthenticationFailureHandler*` -- An internal implementation that uses the `OAuth2Error` associated with the `OAuth2AuthorizationCodeRequestAuthenticationException` and returns the `OAuth2Error` response.
 
+[[oauth2-authorization-endpoint-customizing-authorization-request-validation]]
+=== Customizing Authorization Request Validation
+
+`OAuth2AuthorizationCodeRequestAuthenticationValidator` is the default validator used for validating specific OAuth2 authorization request parameters used in the Authorization Code Grant.
+The default implementation validates the `redirect_uri` and `scope` parameters.
+If validation fails, an `OAuth2AuthorizationCodeRequestAuthenticationException` is thrown.
+
+`OAuth2AuthorizationCodeRequestAuthenticationProvider` provides the ability to override the default authorization request validation by supplying a custom authentication validator of type `Consumer<OAuth2AuthorizationCodeRequestAuthenticationContext>` to `setAuthenticationValidator()`.
+
+[TIP]
+`OAuth2AuthorizationCodeRequestAuthenticationContext` holds the `OAuth2AuthorizationCodeRequestAuthenticationToken`, which contains the OAuth2 authorization request parameters.
+
+[IMPORTANT]
+If validation fails, the authentication validator *MUST* throw `OAuth2AuthorizationCodeRequestAuthenticationException`.
+
+A common use case during the development life cycle phase is to allow for `localhost` in the `redirect_uri` parameter.
+
+The following example shows how to configure `OAuth2AuthorizationCodeRequestAuthenticationProvider` with a custom authentication validator that allows for `localhost` in the `redirect_uri` parameter:
+
+[source,java]
+----
+@Bean
+public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
+	OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
+		new OAuth2AuthorizationServerConfigurer();
+	http.apply(authorizationServerConfigurer);
+
+	authorizationServerConfigurer
+		.authorizationEndpoint(authorizationEndpoint ->
+			authorizationEndpoint
+				.authenticationProviders(configureAuthenticationValidator())
+		);
+
+	return http.build();
+}
+
+private Consumer<List<AuthenticationProvider>> configureAuthenticationValidator() {
+	return (authenticationProviders) ->
+		authenticationProviders.forEach((authenticationProvider) -> {
+			if (authenticationProvider instanceof OAuth2AuthorizationCodeRequestAuthenticationProvider) {
+				Consumer<OAuth2AuthorizationCodeRequestAuthenticationContext> authenticationValidator =
+					// Override default redirect_uri validator
+					new CustomRedirectUriValidator()
+						// Reuse default scope validator
+						.andThen(OAuth2AuthorizationCodeRequestAuthenticationValidator.DEFAULT_SCOPE_VALIDATOR);
+
+				((OAuth2AuthorizationCodeRequestAuthenticationProvider) authenticationProvider)
+					.setAuthenticationValidator(authenticationValidator);
+			}
+		});
+}
+
+static class CustomRedirectUriValidator implements Consumer<OAuth2AuthorizationCodeRequestAuthenticationContext> {
+
+	@Override
+	public void accept(OAuth2AuthorizationCodeRequestAuthenticationContext authenticationContext) {
+		OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthentication =
+			authenticationContext.getAuthentication();
+		RegisteredClient registeredClient = authenticationContext.getRegisteredClient();
+		String requestedRedirectUri = authorizationCodeRequestAuthentication.getRedirectUri();
+
+		// Use exact string matching when comparing client redirect URIs against pre-registered URIs
+		if (!registeredClient.getRedirectUris().contains(requestedRedirectUri)) {
+			OAuth2Error error = new OAuth2Error(OAuth2ErrorCodes.INVALID_REQUEST);
+			throw new OAuth2AuthorizationCodeRequestAuthenticationException(error, null);
+		}
+	}
+}
+----
+
 [[oauth2-token-endpoint]]
 == OAuth2 Token Endpoint
 

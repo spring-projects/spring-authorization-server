@@ -253,3 +253,55 @@ The supported client authentication methods are `client_secret_basic`, `client_s
 * `*AuthenticationManager*` -- An `AuthenticationManager` composed of `JwtClientAssertionAuthenticationProvider`, `ClientSecretAuthenticationProvider`, and `PublicClientAuthenticationProvider`.
 * `*AuthenticationSuccessHandler*` -- An internal implementation that associates the "`authenticated`" `OAuth2ClientAuthenticationToken` (current `Authentication`) to the `SecurityContext`.
 * `*AuthenticationFailureHandler*` -- An internal implementation that uses the `OAuth2Error` associated with the `OAuth2AuthenticationException` to return the OAuth2 error response.
+
+[[configuring-client-authentication-customizing-jwt-client-assertion-validation]]
+=== Customizing Jwt Client Assertion Validation
+
+`JwtClientAssertionDecoderFactory.DEFAULT_JWT_VALIDATOR_FACTORY` is the default factory that provides an `OAuth2TokenValidator<Jwt>` for the specified `RegisteredClient` and is used for validating the `iss`, `sub`, `aud`, `exp` and `nbf` claims of the `Jwt` client assertion.
+
+`JwtClientAssertionDecoderFactory` provides the ability to override the default `Jwt` client assertion validation by supplying a custom factory of type `Function<RegisteredClient, OAuth2TokenValidator<Jwt>>` to `setJwtValidatorFactory()`.
+
+[NOTE]
+`JwtClientAssertionDecoderFactory` is the default `JwtDecoderFactory` used by `JwtClientAssertionAuthenticationProvider` that provides a `JwtDecoder` for the specified `RegisteredClient` and is used for authenticating a `Jwt` Bearer Token during OAuth2 client authentication.
+
+A common use case for customizing `JwtClientAssertionDecoderFactory` is to validate additional claims in the `Jwt` client assertion.
+
+The following example shows how to configure `JwtClientAssertionAuthenticationProvider` with a customized `JwtClientAssertionDecoderFactory` that validates an additional claim in the `Jwt` client assertion:
+
+[source,java]
+----
+@Bean
+public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
+	OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
+		new OAuth2AuthorizationServerConfigurer();
+	http.apply(authorizationServerConfigurer);
+
+	authorizationServerConfigurer
+		.clientAuthentication(clientAuthentication ->
+			clientAuthentication
+				.authenticationProviders(configureJwtClientAssertionValidator())
+		);
+
+	return http.build();
+}
+
+private Consumer<List<AuthenticationProvider>> configureJwtClientAssertionValidator() {
+	return (authenticationProviders) ->
+		authenticationProviders.forEach((authenticationProvider) -> {
+			if (authenticationProvider instanceof JwtClientAssertionAuthenticationProvider) {
+				// Customize JwtClientAssertionDecoderFactory
+				JwtClientAssertionDecoderFactory jwtDecoderFactory = new JwtClientAssertionDecoderFactory();
+				Function<RegisteredClient, OAuth2TokenValidator<Jwt>> jwtValidatorFactory = (registeredClient) ->
+					new DelegatingOAuth2TokenValidator<>(
+						// Use default validators
+						JwtClientAssertionDecoderFactory.DEFAULT_JWT_VALIDATOR_FACTORY.apply(registeredClient),
+						// Add custom validator
+						new JwtClaimValidator<>("claim", "value"::equals));
+				jwtDecoderFactory.setJwtValidatorFactory(jwtValidatorFactory);
+
+				((JwtClientAssertionAuthenticationProvider) authenticationProvider)
+					.setJwtDecoderFactory(jwtDecoderFactory);
+			}
+		});
+}
+----

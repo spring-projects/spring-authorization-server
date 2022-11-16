@@ -943,11 +943,6 @@ public class OAuth2AuthorizationCodeGrantTests {
 	@EnableWebSecurity
 	@Configuration(proxyBeanMethods = false)
 	static class AuthorizationServerConfigurationCustomConsentRequest extends AuthorizationServerConfiguration {
-		@Autowired
-		private RegisteredClientRepository registeredClientRepository;
-
-		@Autowired
-		private OAuth2AuthorizationService authorizationService;
 
 		@Autowired
 		private OAuth2AuthorizationConsentService authorizationConsentService;

@@ -940,11 +940,6 @@ public class OAuth2AuthorizationCodeGrantTests {
 
 	@EnableWebSecurity
 	static class AuthorizationServerConfigurationCustomConsentRequest extends AuthorizationServerConfiguration {
-		@Autowired
-		private RegisteredClientRepository registeredClientRepository;
-
-		@Autowired
-		private OAuth2AuthorizationService authorizationService;
 
 		@Autowired
 		private OAuth2AuthorizationConsentService authorizationConsentService;

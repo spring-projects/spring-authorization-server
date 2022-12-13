@@ -537,7 +537,12 @@ public class OAuth2AuthorizationEndpointFilterTests {
 
 	@Test
 	public void doFilterWhenAuthorizationRequestAuthenticatedThenAuthorizationResponse() throws Exception {
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
+				.redirectUris(redirectUris -> {
+					redirectUris.clear();
+					redirectUris.add("https://example.com?param=encoded%20parameter%20value");
+				})
+				.build();
 		OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthenticationResult =
 				new OAuth2AuthorizationCodeRequestAuthenticationToken(
 						AUTHORIZATION_URI, registeredClient.getClientId(), principal, this.authorizationCode,
@@ -563,7 +568,7 @@ public class OAuth2AuthorizationEndpointFilterTests {
 				.isEqualTo(REMOTE_ADDRESS);
 		assertThat(response.getStatus()).isEqualTo(HttpStatus.FOUND.value());
 		assertThat(response.getRedirectedUrl()).isEqualTo(
-				request.getParameter(OAuth2ParameterNames.REDIRECT_URI) + "?code=code&state=state");
+				"https://example.com?param=encoded%20parameter%20value&code=code&state=state");
 	}
 
 	@Test

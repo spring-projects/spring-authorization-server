@@ -8,6 +8,10 @@ group = project.rootProject.group
 version = project.rootProject.version
 sourceCompatibility = "17"
 
+test {
+	useJUnitPlatform()
+}
+
 repositories {
 	mavenCentral()
 	maven { url 'https://repo.spring.io/milestone' }

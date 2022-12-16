@@ -83,7 +83,7 @@ import static org.mockito.Mockito.when;
 public class OAuth2AuthorizationEndpointFilterTests {
 	private static final String DEFAULT_AUTHORIZATION_ENDPOINT_URI = "/oauth2/authorize";
 	private static final String AUTHORIZATION_URI = "https://provider.com/oauth2/authorize";
-	private static final String STATE = "state";
+	private static final String STATE = "previously encoded/state";
 	private static final String REMOTE_ADDRESS = "remote-address";
 	private AuthenticationManager authenticationManager;
 	private OAuth2AuthorizationEndpointFilter filter;
@@ -299,7 +299,7 @@ public class OAuth2AuthorizationEndpointFilterTests {
 		verifyNoInteractions(filterChain);
 
 		assertThat(response.getStatus()).isEqualTo(HttpStatus.FOUND.value());
-		assertThat(response.getRedirectedUrl()).isEqualTo("https://example.com?error=errorCode&error_description=errorDescription&error_uri=errorUri&state=state");
+		assertThat(response.getRedirectedUrl()).isEqualTo("https://example.com?error=errorCode&error_description=errorDescription&error_uri=errorUri&state=previously%20encoded%2Fstate");
 		assertThat(SecurityContextHolder.getContext().getAuthentication()).isSameAs(this.principal);
 	}
 
@@ -459,7 +459,7 @@ public class OAuth2AuthorizationEndpointFilterTests {
 		verifyNoInteractions(filterChain);
 
 		assertThat(response.getStatus()).isEqualTo(HttpStatus.FOUND.value());
-		assertThat(response.getRedirectedUrl()).isEqualTo("http://localhost/oauth2/custom-consent?scope=scope1%20scope2&client_id=client-1&state=state");
+		assertThat(response.getRedirectedUrl()).isEqualTo("http://localhost/oauth2/custom-consent?scope=scope1%20scope2&client_id=client-1&state=previously%20encoded/state");
 	}
 
 	@Test
@@ -535,7 +535,7 @@ public class OAuth2AuthorizationEndpointFilterTests {
 
 	@Test
 	public void doFilterWhenAuthorizationRequestAuthenticatedThenAuthorizationResponse() throws Exception {
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClientEncodedUri().build();
 		OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthenticationResult =
 				new OAuth2AuthorizationCodeRequestAuthenticationToken(
 						AUTHORIZATION_URI, registeredClient.getClientId(), principal, this.authorizationCode,
@@ -560,7 +560,7 @@ public class OAuth2AuthorizationEndpointFilterTests {
 				.extracting(WebAuthenticationDetails::getRemoteAddress)
 				.isEqualTo(REMOTE_ADDRESS);
 		assertThat(response.getStatus()).isEqualTo(HttpStatus.FOUND.value());
-		assertThat(response.getRedirectedUrl()).isEqualTo("https://example.com?code=code&state=state");
+		assertThat(response.getRedirectedUrl()).isEqualTo("https://example.com?param=is%2Fencoded&code=code&state=previously%20encoded%2Fstate");
 	}
 
 	@Test
@@ -591,7 +591,7 @@ public class OAuth2AuthorizationEndpointFilterTests {
 		verifyNoInteractions(filterChain);
 
 		assertThat(response.getStatus()).isEqualTo(HttpStatus.FOUND.value());
-		assertThat(response.getRedirectedUrl()).isEqualTo("https://example.com?code=code&state=state");
+		assertThat(response.getRedirectedUrl()).isEqualTo("https://example.com?code=code&state=previously%20encoded%2Fstate");
 	}
 
 	private void doFilterWhenAuthorizationRequestInvalidParameterThenError(RegisteredClient registeredClient,

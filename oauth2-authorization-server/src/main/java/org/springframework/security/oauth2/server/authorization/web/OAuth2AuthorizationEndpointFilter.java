@@ -66,6 +66,8 @@ import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.web.util.DefaultUriBuilderFactory;
+import org.springframework.web.util.UriBuilder;
 import org.springframework.web.util.UriComponentsBuilder;
 
 /**
@@ -296,8 +298,10 @@ public final class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilte
 
 		OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthentication =
 				(OAuth2AuthorizationCodeRequestAuthenticationToken) authentication;
-		UriComponentsBuilder uriBuilder = UriComponentsBuilder
-				.fromUriString(authorizationCodeRequestAuthentication.getRedirectUri())
+		DefaultUriBuilderFactory uriBuilderFactory = new DefaultUriBuilderFactory();
+		uriBuilderFactory.setEncodingMode(DefaultUriBuilderFactory.EncodingMode.VALUES_ONLY);
+		UriBuilder uriBuilder = uriBuilderFactory
+				.uriString(authorizationCodeRequestAuthentication.getRedirectUri())
 				.queryParam(OAuth2ParameterNames.CODE, authorizationCodeRequestAuthentication.getAuthorizationCode().getTokenValue());
 		String redirectUri;
 		if (StringUtils.hasText(authorizationCodeRequestAuthentication.getState())) {
@@ -306,7 +310,7 @@ public final class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilte
 			queryParams.put(OAuth2ParameterNames.STATE, authorizationCodeRequestAuthentication.getState());
 			redirectUri = uriBuilder.build(queryParams).toString();
 		} else {
-			redirectUri = uriBuilder.toUriString();
+			redirectUri = uriBuilder.build().toString();
 		}
 		this.redirectStrategy.sendRedirect(request, response, redirectUri);
 	}

@@ -39,6 +39,18 @@ public class TestRegisteredClients {
 				.scope("scope1");
 	}
 
+	public static RegisteredClient.Builder registeredClientEncodedUri() {
+		return RegisteredClient.withId("registration-1")
+				.clientId("client-1")
+				.clientIdIssuedAt(Instant.now().truncatedTo(ChronoUnit.SECONDS))
+				.clientSecret("secret-1")
+				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+				.authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
+				.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
+				.redirectUri("https://example.com?param=is%2Fencoded")
+				.scope("scope1");
+	}
+
 	public static RegisteredClient.Builder registeredClient2() {
 		return RegisteredClient.withId("registration-2")
 				.clientId("client-2")

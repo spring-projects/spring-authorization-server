@@ -285,7 +285,7 @@ public class OAuth2AuthorizationEndpointFilterTests {
 				new OAuth2AuthorizationCodeRequestAuthenticationToken(
 						AUTHORIZATION_URI, registeredClient.getClientId(), principal,
 						registeredClient.getRedirectUris().iterator().next(), STATE, registeredClient.getScopes(), null);
-		OAuth2Error error = new OAuth2Error("errorCode", "errorDescription", "errorUri");
+		OAuth2Error error = new OAuth2Error("errorCode", "errorDescription", "errorUri#section");
 		when(this.authenticationManager.authenticate(any()))
 				.thenThrow(new OAuth2AuthorizationCodeRequestAuthenticationException(error, authorizationCodeRequestAuthentication));
 
@@ -299,7 +299,7 @@ public class OAuth2AuthorizationEndpointFilterTests {
 		verifyNoInteractions(filterChain);
 
 		assertThat(response.getStatus()).isEqualTo(HttpStatus.FOUND.value());
-		assertThat(response.getRedirectedUrl()).isEqualTo("https://example.com?error=errorCode&error_description=errorDescription&error_uri=errorUri&state=previously%20encoded%2Fstate");
+		assertThat(response.getRedirectedUrl()).isEqualTo("https://example.com?error=errorCode&error_description=errorDescription&error_uri=errorUri%23section&state=previously%20encoded%2Fstate");
 		assertThat(SecurityContextHolder.getContext().getAuthentication()).isSameAs(this.principal);
 	}
 

@@ -16,6 +16,9 @@
 package sample;
 
 import java.io.IOException;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,6 +39,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsentService;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -58,15 +62,18 @@ public class DefaultAuthorizationServerConsentTests {
 	@MockBean
 	private OAuth2AuthorizationConsentService authorizationConsentService;
 
-	private final String redirectUri = "http://127.0.0.1/login/oauth2/code/messaging-client-oidc";
+	private final String redirectUri = "http://127.0.0.1:8080/login/oauth2/code/messaging-client-oidc?param=is%2Fencoded";
+	public final String state = "some+%20encoded%2Fstate";
+	public final String reencodedState = "some%20%20encoded%2Fstate";
 
 	private final String authorizationRequestUri = UriComponentsBuilder
 			.fromPath("/oauth2/authorize")
 			.queryParam("response_type", "code")
 			.queryParam("client_id", "messaging-client")
 			.queryParam("scope", "openid message.read message.write")
-			.queryParam("state", "state")
-			.queryParam("redirect_uri", this.redirectUri)
+			.queryParam("state", this.state)
+			.queryParam("redirect_uri", URLEncoder.encode(this.redirectUri, StandardCharsets.UTF_8))
+			.build()
 			.toUriString();
 
 	@BeforeEach
@@ -75,6 +82,15 @@ public class DefaultAuthorizationServerConsentTests {
 		this.webClient.getOptions().setRedirectEnabled(true);
 		this.webClient.getCookieManager().clearCookies();
 		when(this.authorizationConsentService.findById(any(), any())).thenReturn(null);
+	}
+
+	@Test
+	void authorizationRequestProperlyEncoded() {
+		UriComponents uriComponents = UriComponentsBuilder.fromUriString(authorizationRequestUri).build();
+
+		assertThat(uriComponents.getQueryParams().getFirst("state")).isEqualTo(state);
+		String redirectUri = uriComponents.getQueryParams().getFirst("redirect_uri");
+		assertThat(URLDecoder.decode(redirectUri, StandardCharsets.UTF_8)).isEqualTo(this.redirectUri);
 	}
 
 	@Test
@@ -121,6 +137,9 @@ public class DefaultAuthorizationServerConsentTests {
 		String location = cancelConsentResponse.getResponseHeaderValue("location");
 		assertThat(location).startsWith(this.redirectUri);
 		assertThat(location).contains("error=access_denied");
+
+		String state = UriComponentsBuilder.fromHttpUrl(location).build().getQueryParams().getFirst("state");
+		assertThat(state).isEqualTo(reencodedState);
 	}
 
 }

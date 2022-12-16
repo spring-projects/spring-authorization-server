@@ -72,6 +72,7 @@ CREATE TABLE authorization (
     registeredClientId varchar(255) NOT NULL,
     principalName varchar(255) NOT NULL,
     authorizationGrantType varchar(255) NOT NULL,
+    authorizedScopes varchar(1000) DEFAULT NULL,
     attributes varchar(4000) DEFAULT NULL,
     state varchar(500) DEFAULT NULL,
     authorizationCodeValue varchar(4000) DEFAULT NULL,

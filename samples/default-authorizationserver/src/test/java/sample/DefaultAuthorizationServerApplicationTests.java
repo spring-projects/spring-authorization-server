@@ -16,6 +16,9 @@
 package sample;
 
 import java.io.IOException;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 import com.gargoylesoftware.htmlunit.Page;
 import com.gargoylesoftware.htmlunit.WebClient;
@@ -33,6 +36,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -46,15 +50,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 public class DefaultAuthorizationServerApplicationTests {
-	private static final String REDIRECT_URI = "http://127.0.0.1:8080/login/oauth2/code/messaging-client-oidc";
+	private static final String REDIRECT_URI = "http://127.0.0.1:8080/login/oauth2/code/messaging-client-oidc?param=is%2Fencoded";
+	public static final String STATE = "some+%20encoded%2Fstate";
+	public static final String REENCODED_STATE = "some%20%20encoded%2Fstate";
 
 	private static final String AUTHORIZATION_REQUEST = UriComponentsBuilder
 			.fromPath("/oauth2/authorize")
 			.queryParam("response_type", "code")
 			.queryParam("client_id", "messaging-client")
 			.queryParam("scope", "openid")
-			.queryParam("state", "some-state")
-			.queryParam("redirect_uri", REDIRECT_URI)
+			.queryParam("state", STATE)
+			.queryParam("redirect_uri", URLEncoder.encode(REDIRECT_URI, StandardCharsets.UTF_8))
+			.build()
 			.toUriString();
 
 	@Autowired
@@ -65,6 +72,16 @@ public class DefaultAuthorizationServerApplicationTests {
 		this.webClient.getOptions().setThrowExceptionOnFailingStatusCode(true);
 		this.webClient.getOptions().setRedirectEnabled(true);
 		this.webClient.getCookieManager().clearCookies();	// log out
+	}
+
+	@Test
+	void authorizationRequestProperlyEncoded() {
+		UriComponents uriComponents = UriComponentsBuilder.fromUriString(AUTHORIZATION_REQUEST).build();
+
+		assertThat(uriComponents.getQueryParams().getFirst("state")).isEqualTo(STATE);
+
+		String redirectUri = uriComponents.getQueryParams().getFirst("redirect_uri");
+		assertThat(URLDecoder.decode(redirectUri, StandardCharsets.UTF_8)).isEqualTo(REDIRECT_URI);
 	}
 
 	@Test
@@ -108,6 +125,10 @@ public class DefaultAuthorizationServerApplicationTests {
 
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.MOVED_PERMANENTLY.value());
 		String location = response.getResponseHeaderValue("location");
+
+		String state = UriComponentsBuilder.fromHttpUrl(location).build().getQueryParams().getFirst("state");
+		assertThat(state).isEqualTo(REENCODED_STATE);
+
 		assertThat(location).startsWith(REDIRECT_URI);
 		assertThat(location).contains("code=");
 	}

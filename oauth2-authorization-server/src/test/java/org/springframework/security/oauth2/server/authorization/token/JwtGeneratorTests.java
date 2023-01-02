@@ -208,7 +208,7 @@ public class JwtGeneratorTests {
 		if (OidcParameterNames.ID_TOKEN.equals(tokenContext.getTokenType().getValue())) {
 			assertThat(jwsHeader.getAlgorithm()).isEqualTo(tokenContext.getRegisteredClient().getTokenSettings().getIdTokenSignatureAlgorithm());
 		} else {
-			assertThat(jwsHeader.getAlgorithm()).isEqualTo(SignatureAlgorithm.RS256);
+			assertThat(jwsHeader.getAlgorithm()).isEqualTo(tokenContext.getRegisteredClient().getTokenSettings().getAccessTokenSignatureAlgorithm());
 		}
 
 		JwtClaimsSet jwtClaimsSet = jwtEncoderParametersCaptor.getValue().getClaims();

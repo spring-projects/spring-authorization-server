@@ -145,6 +145,11 @@ public final class ConfigurationSettingNames {
 		public static final String ACCESS_TOKEN_FORMAT = TOKEN_SETTINGS_NAMESPACE.concat("access-token-format");
 
 		/**
+		 * Set the {@link JwsAlgorithm JWS} algorithm for signing the access token. Only applicable if access token is {@link OAuth2TokenFormat#SELF_CONTAINED } and a JWT.
+		 */
+		public static final String ACCESS_TOKEN_SIGNATURE_ALGORITHM = TOKEN_SETTINGS_NAMESPACE.concat("access-token-signature-algorithm");
+
+		/**
 		 * Set to {@code true} if refresh tokens are reused when returning the access token response,
 		 * or {@code false} if a new refresh token is issued.
 		 */

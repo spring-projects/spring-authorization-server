@@ -18,7 +18,7 @@ package org.springframework.security.oauth2.server.authorization.settings;
 import java.time.Duration;
 
 import org.junit.jupiter.api.Test;
-
+import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -34,10 +34,11 @@ public class TokenSettingsTests {
 	@Test
 	public void buildWhenDefaultThenDefaultsAreSet() {
 		TokenSettings tokenSettings = TokenSettings.builder().build();
-		assertThat(tokenSettings.getSettings()).hasSize(6);
+		assertThat(tokenSettings.getSettings()).hasSize(7);
 		assertThat(tokenSettings.getAuthorizationCodeTimeToLive()).isEqualTo(Duration.ofMinutes(5));
 		assertThat(tokenSettings.getAccessTokenTimeToLive()).isEqualTo(Duration.ofMinutes(5));
 		assertThat(tokenSettings.getAccessTokenFormat()).isEqualTo(OAuth2TokenFormat.SELF_CONTAINED);
+		assertThat(tokenSettings.getAccessTokenSignatureAlgorithm()).isEqualTo(SignatureAlgorithm.RS256);
 		assertThat(tokenSettings.isReuseRefreshTokens()).isTrue();
 		assertThat(tokenSettings.getRefreshTokenTimeToLive()).isEqualTo(Duration.ofMinutes(60));
 		assertThat(tokenSettings.getIdTokenSignatureAlgorithm()).isEqualTo(SignatureAlgorithm.RS256);
@@ -106,6 +107,14 @@ public class TokenSettingsTests {
 	}
 
 	@Test
+	public void accessTokenSignatureAlgorithmWhenProvidedThenSet() {
+		TokenSettings tokenSettings = TokenSettings.builder()
+				.accessTokenSignatureAlgorithm(MacAlgorithm.HS256)
+				.build();
+		assertThat(tokenSettings.getAccessTokenSignatureAlgorithm()).isEqualTo(MacAlgorithm.HS256);
+	}
+
+	@Test
 	public void accessTokenFormatWhenNullThenThrowIllegalArgumentException() {
 		assertThatThrownBy(() -> TokenSettings.builder().accessTokenFormat(null))
 				.isInstanceOf(IllegalArgumentException.class)
@@ -163,7 +172,7 @@ public class TokenSettingsTests {
 				.setting("name1", "value1")
 				.settings(settings -> settings.put("name2", "value2"))
 				.build();
-		assertThat(tokenSettings.getSettings()).hasSize(8);
+		assertThat(tokenSettings.getSettings()).hasSize(9);
 		assertThat(tokenSettings.<String>getSetting("name1")).isEqualTo("value1");
 		assertThat(tokenSettings.<String>getSetting("name2")).isEqualTo("value2");
 	}

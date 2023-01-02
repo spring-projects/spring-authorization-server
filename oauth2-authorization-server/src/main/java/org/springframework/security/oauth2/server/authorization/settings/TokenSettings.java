@@ -19,6 +19,7 @@ import java.time.Duration;
 import java.util.Map;
 
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
+import org.springframework.security.oauth2.jose.jws.JwsAlgorithm;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 import org.springframework.util.Assert;
 
@@ -67,6 +68,16 @@ public final class TokenSettings extends AbstractSettings {
 	}
 
 	/**
+	 * Returns the {@link JwsAlgorithm JWS} algorithm for signing the access token}.
+	 * The default is {@link SignatureAlgorithm#RS256 RS256}.
+	 *
+	 * @return the {@link JwsAlgorithm JWS} algorithm for signing the access token
+	 */
+	public JwsAlgorithm getAccessTokenSignatureAlgorithm() {
+		return getSetting(ConfigurationSettingNames.Token.ACCESS_TOKEN_SIGNATURE_ALGORITHM);
+	}
+
+	/**
 	 * Returns {@code true} if refresh tokens are reused when returning the access token response,
 	 * or {@code false} if a new refresh token is issued. The default is {@code true}.
 	 */
@@ -103,6 +114,7 @@ public final class TokenSettings extends AbstractSettings {
 				.authorizationCodeTimeToLive(Duration.ofMinutes(5))
 				.accessTokenTimeToLive(Duration.ofMinutes(5))
 				.accessTokenFormat(OAuth2TokenFormat.SELF_CONTAINED)
+				.accessTokenSignatureAlgorithm(SignatureAlgorithm.RS256)
 				.reuseRefreshTokens(true)
 				.refreshTokenTimeToLive(Duration.ofMinutes(60))
 				.idTokenSignatureAlgorithm(SignatureAlgorithm.RS256);
@@ -164,6 +176,17 @@ public final class TokenSettings extends AbstractSettings {
 		public Builder accessTokenFormat(OAuth2TokenFormat accessTokenFormat) {
 			Assert.notNull(accessTokenFormat, "accessTokenFormat cannot be null");
 			return setting(ConfigurationSettingNames.Token.ACCESS_TOKEN_FORMAT, accessTokenFormat);
+		}
+
+		/**
+		 * Sets the {@link JwsAlgorithm JWS} algorithm for signing the access token.
+		 *
+		 * @param accessTokenSignatureAlgorithm the {@link JwsAlgorithm JWS} algorithm for signing the access token
+		 * @return the {@link Builder} for further configuration
+		 */
+		public Builder accessTokenSignatureAlgorithm(JwsAlgorithm accessTokenSignatureAlgorithm) {
+			Assert.notNull(accessTokenSignatureAlgorithm, "accessTokenSignatureAlgorithm cannot be null");
+			return setting(ConfigurationSettingNames.Token.ACCESS_TOKEN_SIGNATURE_ALGORITHM, accessTokenSignatureAlgorithm);
 		}
 
 		/**

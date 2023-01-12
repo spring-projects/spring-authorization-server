@@ -124,26 +124,17 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 					authorizationCodeRequestAuthentication, registeredClient);
 		}
 
-		OAuth2AuthorizationRequest authorizationRequest = OAuth2AuthorizationRequest.authorizationCode()
-				.authorizationUri(authorizationCodeRequestAuthentication.getAuthorizationUri())
-				.clientId(registeredClient.getClientId())
-				.redirectUri(authorizationCodeRequestAuthentication.getRedirectUri())
-				.scopes(authorizationCodeRequestAuthentication.getScopes())
-				.state(authorizationCodeRequestAuthentication.getState())
-				.additionalParameters(authorizationCodeRequestAuthentication.getAdditionalParameters())
-				.build();
-
 		// code_challenge (REQUIRED for public clients) - RFC 7636 (PKCE)
 		String codeChallenge = (String) authorizationCodeRequestAuthentication.getAdditionalParameters().get(PkceParameterNames.CODE_CHALLENGE);
 		if (StringUtils.hasText(codeChallenge)) {
 			String codeChallengeMethod = (String) authorizationCodeRequestAuthentication.getAdditionalParameters().get(PkceParameterNames.CODE_CHALLENGE_METHOD);
 			if (!StringUtils.hasText(codeChallengeMethod) || !"S256".equals(codeChallengeMethod)) {
 				throwError(OAuth2ErrorCodes.INVALID_REQUEST, PkceParameterNames.CODE_CHALLENGE_METHOD, PKCE_ERROR_URI,
-						authorizationCodeRequestAuthentication, registeredClient, authorizationRequest);
+						authorizationCodeRequestAuthentication, registeredClient, null);
 			}
 		} else if (registeredClient.getClientSettings().isRequireProofKey()) {
 			throwError(OAuth2ErrorCodes.INVALID_REQUEST, PkceParameterNames.CODE_CHALLENGE, PKCE_ERROR_URI,
-					authorizationCodeRequestAuthentication, registeredClient, authorizationRequest);
+					authorizationCodeRequestAuthentication, registeredClient, null);
 		}
 
 		if (this.logger.isTraceEnabled()) {
@@ -162,6 +153,15 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 			// Return the authorization request as-is where isAuthenticated() is false
 			return authorizationCodeRequestAuthentication;
 		}
+
+		OAuth2AuthorizationRequest authorizationRequest = OAuth2AuthorizationRequest.authorizationCode()
+				.authorizationUri(authorizationCodeRequestAuthentication.getAuthorizationUri())
+				.clientId(registeredClient.getClientId())
+				.redirectUri(authorizationCodeRequestAuthentication.getRedirectUri())
+				.scopes(authorizationCodeRequestAuthentication.getScopes())
+				.state(authorizationCodeRequestAuthentication.getState())
+				.additionalParameters(authorizationCodeRequestAuthentication.getAdditionalParameters())
+				.build();
 
 		OAuth2AuthorizationConsent currentAuthorizationConsent = this.authorizationConsentService.findById(
 				registeredClient.getId(), principal.getName());
@@ -333,7 +333,7 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 			OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthentication,
 			RegisteredClient registeredClient, OAuth2AuthorizationRequest authorizationRequest) {
 
-		String redirectUri = resolveRedirectUri(authorizationRequest, registeredClient);
+		String redirectUri = resolveRedirectUri(authorizationCodeRequestAuthentication,authorizationRequest, registeredClient);
 		if (error.getErrorCode().equals(OAuth2ErrorCodes.INVALID_REQUEST) &&
 				(parameterName.equals(OAuth2ParameterNames.CLIENT_ID) ||
 						parameterName.equals(OAuth2ParameterNames.STATE))) {
@@ -350,7 +350,10 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 		throw new OAuth2AuthorizationCodeRequestAuthenticationException(error, authorizationCodeRequestAuthenticationResult);
 	}
 
-	private static String resolveRedirectUri(OAuth2AuthorizationRequest authorizationRequest, RegisteredClient registeredClient) {
+	private static String resolveRedirectUri(OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthentication,OAuth2AuthorizationRequest authorizationRequest, RegisteredClient registeredClient) {
+		if (authorizationCodeRequestAuthentication!=null && StringUtils.hasText(authorizationCodeRequestAuthentication.getRedirectUri())){
+			return authorizationCodeRequestAuthentication.getRedirectUri();
+		}
 		if (authorizationRequest != null && StringUtils.hasText(authorizationRequest.getRedirectUri())) {
 			return authorizationRequest.getRedirectUri();
 		}

@@ -333,7 +333,7 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 			OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthentication,
 			RegisteredClient registeredClient, OAuth2AuthorizationRequest authorizationRequest) {
 
-		String redirectUri = resolveRedirectUri(authorizationCodeRequestAuthentication,authorizationRequest, registeredClient);
+		String redirectUri = resolveRedirectUri(authorizationCodeRequestAuthentication, authorizationRequest, registeredClient);
 		if (error.getErrorCode().equals(OAuth2ErrorCodes.INVALID_REQUEST) &&
 				(parameterName.equals(OAuth2ParameterNames.CLIENT_ID) ||
 						parameterName.equals(OAuth2ParameterNames.STATE))) {
@@ -350,7 +350,8 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 		throw new OAuth2AuthorizationCodeRequestAuthenticationException(error, authorizationCodeRequestAuthenticationResult);
 	}
 
-	private static String resolveRedirectUri(OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthentication,OAuth2AuthorizationRequest authorizationRequest, RegisteredClient registeredClient) {
+	private static String resolveRedirectUri(OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthentication,
+			OAuth2AuthorizationRequest authorizationRequest, RegisteredClient registeredClient) {
 		if (authorizationCodeRequestAuthentication!=null && StringUtils.hasText(authorizationCodeRequestAuthentication.getRedirectUri())){
 			return authorizationCodeRequestAuthentication.getRedirectUri();
 		}

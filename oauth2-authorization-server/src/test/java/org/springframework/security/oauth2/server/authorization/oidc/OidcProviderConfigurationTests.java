@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,6 +62,7 @@ public class OidcProviderConfigurationTests {
 				.userInfoEndpoint("https://example.com/issuer1/userinfo")
 				.tokenEndpointAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue())
 				.clientRegistrationEndpoint("https://example.com/issuer1/connect/register")
+				.endSessionEndpoint("https://example.com/issuer1/connect/logout")
 				.claim("a-claim", "a-value")
 				.build();
 
@@ -77,6 +78,7 @@ public class OidcProviderConfigurationTests {
 		assertThat(providerConfiguration.getUserInfoEndpoint()).isEqualTo(url("https://example.com/issuer1/userinfo"));
 		assertThat(providerConfiguration.getTokenEndpointAuthenticationMethods()).containsExactly(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue());
 		assertThat(providerConfiguration.getClientRegistrationEndpoint()).isEqualTo(url("https://example.com/issuer1/connect/register"));
+		assertThat(providerConfiguration.getEndSessionEndpoint()).isEqualTo(url("https://example.com/issuer1/connect/logout"));
 		assertThat(providerConfiguration.<String>getClaim("a-claim")).isEqualTo("a-value");
 	}
 
@@ -118,6 +120,7 @@ public class OidcProviderConfigurationTests {
 		claims.put(OidcProviderMetadataClaimNames.ID_TOKEN_SIGNING_ALG_VALUES_SUPPORTED, Collections.singletonList("RS256"));
 		claims.put(OidcProviderMetadataClaimNames.USER_INFO_ENDPOINT, "https://example.com/issuer1/userinfo");
 		claims.put(OidcProviderMetadataClaimNames.REGISTRATION_ENDPOINT, "https://example.com/issuer1/connect/register");
+		claims.put(OidcProviderMetadataClaimNames.END_SESSION_ENDPOINT, "https://example.com/issuer1/connect/logout");
 		claims.put("some-claim", "some-value");
 
 		OidcProviderConfiguration providerConfiguration = OidcProviderConfiguration.withClaims(claims).build();
@@ -134,6 +137,7 @@ public class OidcProviderConfigurationTests {
 		assertThat(providerConfiguration.getUserInfoEndpoint()).isEqualTo(url("https://example.com/issuer1/userinfo"));
 		assertThat(providerConfiguration.getTokenEndpointAuthenticationMethods()).isNull();
 		assertThat(providerConfiguration.getClientRegistrationEndpoint()).isEqualTo(url("https://example.com/issuer1/connect/register"));
+		assertThat(providerConfiguration.getEndSessionEndpoint()).isEqualTo(url("https://example.com/issuer1/connect/logout"));
 		assertThat(providerConfiguration.<String>getClaim("some-claim")).isEqualTo("some-value");
 	}
 
@@ -150,6 +154,7 @@ public class OidcProviderConfigurationTests {
 		claims.put(OidcProviderMetadataClaimNames.ID_TOKEN_SIGNING_ALG_VALUES_SUPPORTED, Collections.singletonList("RS256"));
 		claims.put(OidcProviderMetadataClaimNames.USER_INFO_ENDPOINT, url("https://example.com/issuer1/userinfo"));
 		claims.put(OidcProviderMetadataClaimNames.REGISTRATION_ENDPOINT, url("https://example.com/issuer1/connect/register"));
+		claims.put(OidcProviderMetadataClaimNames.END_SESSION_ENDPOINT, url("https://example.com/issuer1/connect/logout"));
 		claims.put("some-claim", "some-value");
 
 		OidcProviderConfiguration providerConfiguration = OidcProviderConfiguration.withClaims(claims).build();
@@ -166,6 +171,7 @@ public class OidcProviderConfigurationTests {
 		assertThat(providerConfiguration.getUserInfoEndpoint()).isEqualTo(url("https://example.com/issuer1/userinfo"));
 		assertThat(providerConfiguration.getTokenEndpointAuthenticationMethods()).isNull();
 		assertThat(providerConfiguration.getClientRegistrationEndpoint()).isEqualTo(url("https://example.com/issuer1/connect/register"));
+		assertThat(providerConfiguration.getEndSessionEndpoint()).isEqualTo(url("https://example.com/issuer1/connect/logout"));
 		assertThat(providerConfiguration.<String>getClaim("some-claim")).isEqualTo("some-value");
 	}
 
@@ -410,6 +416,16 @@ public class OidcProviderConfigurationTests {
 		assertThatIllegalArgumentException()
 				.isThrownBy(builder::build)
 				.withMessage("clientRegistrationEndpoint must be a valid URL");
+	}
+
+	@Test
+	public void buildWhenEndSessionEndpointNotUrlThenThrowIllegalArgumentException() {
+		OidcProviderConfiguration.Builder builder = this.minimalConfigurationBuilder
+				.claims((claims) -> claims.put(OidcProviderMetadataClaimNames.END_SESSION_ENDPOINT, "not an url"));
+
+		assertThatIllegalArgumentException()
+				.isThrownBy(builder::build)
+				.withMessage("endSessionEndpoint must be a valid URL");
 	}
 
 	@Test

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 
 import org.springframework.lang.Nullable;
+import org.springframework.security.core.session.SessionInformation;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
@@ -126,7 +127,11 @@ public final class JwtGenerator implements OAuth2TokenGenerator<Jwt> {
 					claimsBuilder.claim(IdTokenClaimNames.NONCE, nonce);
 				}
 			}
-			// TODO Add 'auth_time' claim
+			SessionInformation sessionInformation = context.get(SessionInformation.class);
+			if (sessionInformation != null) {
+				claimsBuilder.claim("sid", sessionInformation.getSessionId());
+				claimsBuilder.claim(IdTokenClaimNames.AUTH_TIME, sessionInformation.getLastRequest());
+			}
 		}
 		// @formatter:on
 
@@ -146,6 +151,12 @@ public final class JwtGenerator implements OAuth2TokenGenerator<Jwt> {
 			}
 			if (context.getAuthorizationGrant() != null) {
 				jwtContextBuilder.authorizationGrant(context.getAuthorizationGrant());
+			}
+			if (OidcParameterNames.ID_TOKEN.equals(context.getTokenType().getValue())) {
+				SessionInformation sessionInformation = context.get(SessionInformation.class);
+				if (sessionInformation != null) {
+					jwtContextBuilder.put(SessionInformation.class, sessionInformation);
+				}
 			}
 			// @formatter:on
 

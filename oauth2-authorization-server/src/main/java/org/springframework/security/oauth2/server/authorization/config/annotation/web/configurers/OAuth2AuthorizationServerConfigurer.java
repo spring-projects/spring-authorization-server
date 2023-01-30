@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,8 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.ExceptionHandlingConfigurer;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.OAuth2Token;
@@ -240,8 +242,23 @@ public final class OAuth2AuthorizationServerConfigurer
 		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils.getAuthorizationServerSettings(httpSecurity);
 		validateAuthorizationServerSettings(authorizationServerSettings);
 
-		OidcConfigurer oidcConfigurer = getConfigurer(OidcConfigurer.class);
-		if (oidcConfigurer == null) {
+		if (isOidcEnabled()) {
+			// Add OpenID Connect session tracking capabilities.
+			SessionRegistry sessionRegistry = OAuth2ConfigurerUtils.getSessionRegistry(httpSecurity);
+			OAuth2AuthorizationEndpointConfigurer authorizationEndpointConfigurer =
+					getConfigurer(OAuth2AuthorizationEndpointConfigurer.class);
+			authorizationEndpointConfigurer.setSessionAuthenticationStrategy((authentication, request, response) -> {
+				if (authentication instanceof OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthentication) {
+					if (authorizationCodeRequestAuthentication.getScopes().contains(OidcScopes.OPENID)) {
+						if (sessionRegistry.getSessionInformation(request.getSession().getId()) == null) {
+							sessionRegistry.registerNewSession(
+									request.getSession().getId(),
+									((Authentication) authorizationCodeRequestAuthentication.getPrincipal()).getPrincipal());
+						}
+					}
+				}
+			});
+		} else {
 			// OpenID Connect is disabled.
 			// Add an authentication validator that rejects authentication requests.
 			OAuth2AuthorizationEndpointConfigurer authorizationEndpointConfigurer =
@@ -295,6 +312,10 @@ public final class OAuth2AuthorizationServerConfigurer
 					jwkSource, authorizationServerSettings.getJwkSetEndpoint());
 			httpSecurity.addFilterBefore(postProcess(jwkSetEndpointFilter), AbstractPreAuthenticatedProcessingFilter.class);
 		}
+	}
+
+	private boolean isOidcEnabled() {
+		return getConfigurer(OidcConfigurer.class) != null;
 	}
 
 	private Map<Class<? extends AbstractOAuth2Configurer>, AbstractOAuth2Configurer> createConfigurers() {

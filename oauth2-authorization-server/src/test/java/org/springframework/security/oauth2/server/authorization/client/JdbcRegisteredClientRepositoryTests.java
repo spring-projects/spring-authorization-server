@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -294,6 +294,7 @@ public class JdbcRegisteredClientRepositoryTests {
 				+ "clientAuthenticationMethods, "
 				+ "authorizationGrantTypes, "
 				+ "redirectUris, "
+				+ "postLogoutRedirectUris, "
 				+ "scopes, "
 				+ "clientSettings,"
 				+ "tokenSettings";
@@ -305,7 +306,7 @@ public class JdbcRegisteredClientRepositoryTests {
 
 		// @formatter:off
 		private static final String INSERT_REGISTERED_CLIENT_SQL = "INSERT INTO " + TABLE_NAME
-				+ " (" + COLUMN_NAMES + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+				+ " (" + COLUMN_NAMES + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 		// @formatter:on
 
 		private CustomJdbcRegisteredClientRepository(JdbcOperations jdbcOperations) {
@@ -353,6 +354,7 @@ public class JdbcRegisteredClientRepositoryTests {
 				Set<String> clientAuthenticationMethods = StringUtils.commaDelimitedListToSet(rs.getString("clientAuthenticationMethods"));
 				Set<String> authorizationGrantTypes = StringUtils.commaDelimitedListToSet(rs.getString("authorizationGrantTypes"));
 				Set<String> redirectUris = StringUtils.commaDelimitedListToSet(rs.getString("redirectUris"));
+				Set<String> postLogoutRedirectUris = StringUtils.commaDelimitedListToSet(rs.getString("postLogoutRedirectUris"));
 				Set<String> clientScopes = StringUtils.commaDelimitedListToSet(rs.getString("scopes"));
 
 				// @formatter:off
@@ -369,6 +371,7 @@ public class JdbcRegisteredClientRepositoryTests {
 								authorizationGrantTypes.forEach(grantType ->
 										grantTypes.add(resolveAuthorizationGrantType(grantType))))
 						.redirectUris((uris) -> uris.addAll(redirectUris))
+						.postLogoutRedirectUris((uris) -> uris.addAll(postLogoutRedirectUris))
 						.scopes((scopes) -> scopes.addAll(clientScopes));
 				// @formatter:on
 

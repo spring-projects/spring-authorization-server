@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,8 @@ public class Client {
 	private String authorizationGrantTypes;
 	@Column(length = 1000)
 	private String redirectUris;
+	@Column(length = 1000)
+	private String postLogoutRedirectUris;
 	@Column(length = 1000)
 	private String scopes;
 	@Column(length = 2000)
@@ -116,6 +118,14 @@ public class Client {
 
 	public void setRedirectUris(String redirectUris) {
 		this.redirectUris = redirectUris;
+	}
+
+	public String getPostLogoutRedirectUris() {
+		return this.postLogoutRedirectUris;
+	}
+
+	public void setPostLogoutRedirectUris(String postLogoutRedirectUris) {
+		this.postLogoutRedirectUris = postLogoutRedirectUris;
 	}
 
 	public String getScopes() {

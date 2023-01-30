@@ -38,6 +38,7 @@ public class TestRegisteredClients {
 				.redirectUri("https://example.com/callback-1")
 				.redirectUri("https://example.com/callback-2")
 				.redirectUri("https://example.com/callback-3")
+				.postLogoutRedirectUri("https://example.com/oidc-post-logout")
 				.scope("scope1");
 	}
 
@@ -52,6 +53,7 @@ public class TestRegisteredClients {
 				.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
 				.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_POST)
 				.redirectUri("https://example.com")
+				.postLogoutRedirectUri("https://example.com/oidc-post-logout")
 				.scope("scope1")
 				.scope("scope2");
 	}

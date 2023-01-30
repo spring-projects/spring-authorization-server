@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -360,6 +360,78 @@ public class OidcClientRegistrationAuthenticationProviderTests {
 	}
 
 	@Test
+	public void authenticateWhenInvalidPostLogoutRedirectUriThenThrowOAuth2AuthenticationException() {
+		Jwt jwt = createJwtClientRegistration();
+		OAuth2AccessToken jwtAccessToken = new OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER,
+				jwt.getTokenValue(), jwt.getIssuedAt(),
+				jwt.getExpiresAt(), jwt.getClaim(OAuth2ParameterNames.SCOPE));
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(
+				registeredClient, jwtAccessToken, jwt.getClaims()).build();
+		when(this.authorizationService.findByToken(
+				eq(jwtAccessToken.getTokenValue()), eq(OAuth2TokenType.ACCESS_TOKEN)))
+				.thenReturn(authorization);
+
+		JwtAuthenticationToken principal = new JwtAuthenticationToken(
+				jwt, AuthorityUtils.createAuthorityList("SCOPE_client.create"));
+		// @formatter:off
+		OidcClientRegistration clientRegistration = OidcClientRegistration.builder()
+				.redirectUri("https://client.example.com")
+				.postLogoutRedirectUri("invalid uri")
+				.build();
+		// @formatter:on
+
+		OidcClientRegistrationAuthenticationToken authentication = new OidcClientRegistrationAuthenticationToken(
+				principal, clientRegistration);
+
+		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
+				.isInstanceOf(OAuth2AuthenticationException.class)
+				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+				.satisfies(error -> {
+					assertThat(error.getErrorCode()).isEqualTo("invalid_client_metadata");
+					assertThat(error.getDescription()).contains(OidcClientMetadataClaimNames.POST_LOGOUT_REDIRECT_URIS);
+				});
+		verify(this.authorizationService).findByToken(
+				eq(jwtAccessToken.getTokenValue()), eq(OAuth2TokenType.ACCESS_TOKEN));
+	}
+
+	@Test
+	public void authenticateWhenPostLogoutRedirectUriContainsFragmentThenThrowOAuth2AuthenticationException() {
+		Jwt jwt = createJwtClientRegistration();
+		OAuth2AccessToken jwtAccessToken = new OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER,
+				jwt.getTokenValue(), jwt.getIssuedAt(),
+				jwt.getExpiresAt(), jwt.getClaim(OAuth2ParameterNames.SCOPE));
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(
+				registeredClient, jwtAccessToken, jwt.getClaims()).build();
+		when(this.authorizationService.findByToken(
+				eq(jwtAccessToken.getTokenValue()), eq(OAuth2TokenType.ACCESS_TOKEN)))
+				.thenReturn(authorization);
+
+		JwtAuthenticationToken principal = new JwtAuthenticationToken(
+				jwt, AuthorityUtils.createAuthorityList("SCOPE_client.create"));
+		// @formatter:off
+		OidcClientRegistration clientRegistration = OidcClientRegistration.builder()
+				.redirectUri("https://client.example.com")
+				.postLogoutRedirectUri("https://client.example.com/oidc-post-logout#fragment")
+				.build();
+		// @formatter:on
+
+		OidcClientRegistrationAuthenticationToken authentication = new OidcClientRegistrationAuthenticationToken(
+				principal, clientRegistration);
+
+		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
+				.isInstanceOf(OAuth2AuthenticationException.class)
+				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+				.satisfies(error -> {
+					assertThat(error.getErrorCode()).isEqualTo("invalid_client_metadata");
+					assertThat(error.getDescription()).contains(OidcClientMetadataClaimNames.POST_LOGOUT_REDIRECT_URIS);
+				});
+		verify(this.authorizationService).findByToken(
+				eq(jwtAccessToken.getTokenValue()), eq(OAuth2TokenType.ACCESS_TOKEN));
+	}
+
+	@Test
 	public void authenticateWhenInvalidTokenEndpointAuthenticationMethodThenThrowOAuth2AuthenticationException() {
 		Jwt jwt = createJwtClientRegistration();
 		OAuth2AccessToken jwtAccessToken = new OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER,
@@ -545,6 +617,7 @@ public class OidcClientRegistrationAuthenticationProviderTests {
 		OidcClientRegistration clientRegistration = OidcClientRegistration.builder()
 				.clientName("client-name")
 				.redirectUri("https://client.example.com")
+				.postLogoutRedirectUri("https://client.example.com/oidc-post-logout")
 				.grantType(AuthorizationGrantType.AUTHORIZATION_CODE.getValue())
 				.grantType(AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
 				.scope("scope1")
@@ -588,6 +661,7 @@ public class OidcClientRegistrationAuthenticationProviderTests {
 		assertThat(registeredClientResult.getClientName()).isEqualTo(clientRegistration.getClientName());
 		assertThat(registeredClientResult.getClientAuthenticationMethods()).containsExactly(ClientAuthenticationMethod.CLIENT_SECRET_BASIC);
 		assertThat(registeredClientResult.getRedirectUris()).containsExactly("https://client.example.com");
+		assertThat(registeredClientResult.getPostLogoutRedirectUris()).containsExactly("https://client.example.com/oidc-post-logout");
 		assertThat(registeredClientResult.getAuthorizationGrantTypes())
 				.containsExactlyInAnyOrder(AuthorizationGrantType.AUTHORIZATION_CODE, AuthorizationGrantType.CLIENT_CREDENTIALS);
 		assertThat(registeredClientResult.getScopes()).containsExactlyInAnyOrder("scope1", "scope2");
@@ -603,6 +677,8 @@ public class OidcClientRegistrationAuthenticationProviderTests {
 		assertThat(clientRegistrationResult.getClientName()).isEqualTo(registeredClientResult.getClientName());
 		assertThat(clientRegistrationResult.getRedirectUris())
 				.containsExactlyInAnyOrderElementsOf(registeredClientResult.getRedirectUris());
+		assertThat(clientRegistrationResult.getPostLogoutRedirectUris())
+				.containsExactlyInAnyOrderElementsOf(registeredClientResult.getPostLogoutRedirectUris());
 
 		List<String> grantTypes = new ArrayList<>();
 		registeredClientResult.getAuthorizationGrantTypes().forEach(authorizationGrantType ->

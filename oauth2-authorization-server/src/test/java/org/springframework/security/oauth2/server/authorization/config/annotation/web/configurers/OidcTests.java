@@ -47,6 +47,7 @@ import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseBuilder;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType;
 import org.springframework.mock.http.client.MockClientHttpResponse;
 import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.mock.web.MockHttpSession;
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -123,6 +124,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class OidcTests {
 	private static final String DEFAULT_AUTHORIZATION_ENDPOINT_URI = "/oauth2/authorize";
 	private static final String DEFAULT_TOKEN_ENDPOINT_URI = "/oauth2/token";
+	private static final String DEFAULT_OIDC_LOGOUT_ENDPOINT_URI = "/connect/logout";
 	private static final String AUTHORITIES_CLAIM = "authorities";
 	private static final OAuth2TokenType AUTHORIZATION_CODE_TOKEN_TYPE = new OAuth2TokenType(OAuth2ParameterNames.CODE);
 	private static EmbeddedDatabase db;
@@ -216,8 +218,9 @@ public class OidcTests {
 				servletResponse.getContentAsByteArray(), HttpStatus.valueOf(servletResponse.getStatus()));
 		OAuth2AccessTokenResponse accessTokenResponse = accessTokenHttpResponseConverter.read(OAuth2AccessTokenResponse.class, httpResponse);
 
-		// Assert user authorities was propagated as claim in ID Token
 		Jwt idToken = this.jwtDecoder.decode((String) accessTokenResponse.getAdditionalParameters().get(OidcParameterNames.ID_TOKEN));
+
+		// Assert user authorities was propagated as claim in ID Token
 		List<String> authoritiesClaim = idToken.getClaim(AUTHORITIES_CLAIM);
 		Authentication principal = authorization.getAttribute(Principal.class.getName());
 		Set<String> userAuthorities = new HashSet<>();
@@ -225,6 +228,59 @@ public class OidcTests {
 			userAuthorities.add(authority.getAuthority());
 		}
 		assertThat(authoritiesClaim).containsExactlyInAnyOrderElementsOf(userAuthorities);
+
+		// Assert sid claim was added in ID Token
+		assertThat(idToken.<String>getClaim("sid")).isNotNull();
+	}
+
+	@Test
+	public void requestWhenLogoutRequestThenLogout() throws Exception {
+		this.spring.register(AuthorizationServerConfiguration.class).autowire();
+
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().scope(OidcScopes.OPENID).build();
+		this.registeredClientRepository.save(registeredClient);
+
+		// Login
+		MultiValueMap<String, String> authorizationRequestParameters = getAuthorizationRequestParameters(registeredClient);
+		MvcResult mvcResult = this.mvc.perform(get(DEFAULT_AUTHORIZATION_ENDPOINT_URI)
+						.params(authorizationRequestParameters)
+						.with(user("user")))
+				.andExpect(status().is3xxRedirection())
+				.andReturn();
+
+		MockHttpSession session = (MockHttpSession) mvcResult.getRequest().getSession();
+		assertThat(session.isNew()).isTrue();
+
+		String redirectedUrl = mvcResult.getResponse().getRedirectedUrl();
+		String authorizationCode = extractParameterFromRedirectUri(redirectedUrl, "code");
+		OAuth2Authorization authorization = this.authorizationService.findByToken(authorizationCode, AUTHORIZATION_CODE_TOKEN_TYPE);
+
+		// Get ID Token
+		mvcResult = this.mvc.perform(post(DEFAULT_TOKEN_ENDPOINT_URI)
+						.params(getTokenRequestParameters(registeredClient, authorization))
+						.header(HttpHeaders.AUTHORIZATION, "Basic " + encodeBasicAuth(
+								registeredClient.getClientId(), registeredClient.getClientSecret()))
+						.session(session))
+				.andExpect(status().isOk())
+				.andReturn();
+
+		MockHttpServletResponse servletResponse = mvcResult.getResponse();
+		MockClientHttpResponse httpResponse = new MockClientHttpResponse(
+				servletResponse.getContentAsByteArray(), HttpStatus.valueOf(servletResponse.getStatus()));
+		OAuth2AccessTokenResponse accessTokenResponse = accessTokenHttpResponseConverter.read(OAuth2AccessTokenResponse.class, httpResponse);
+
+		String idToken = (String) accessTokenResponse.getAdditionalParameters().get(OidcParameterNames.ID_TOKEN);
+
+		// Logout
+		mvcResult = this.mvc.perform(post(DEFAULT_OIDC_LOGOUT_ENDPOINT_URI)
+						.param("id_token_hint", idToken)
+						.session(session))
+				.andExpect(status().is3xxRedirection())
+				.andReturn();
+		redirectedUrl = mvcResult.getResponse().getRedirectedUrl();
+
+		assertThat(redirectedUrl).matches("/");
+		assertThat(session.isInvalid()).isTrue();
 	}
 
 	@Test

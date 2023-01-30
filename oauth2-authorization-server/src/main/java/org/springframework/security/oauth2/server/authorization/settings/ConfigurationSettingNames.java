@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -115,6 +115,12 @@ public final class ConfigurationSettingNames {
 		 * Set the OpenID Connect 1.0 UserInfo endpoint.
 		 */
 		public static final String OIDC_USER_INFO_ENDPOINT = AUTHORIZATION_SERVER_SETTINGS_NAMESPACE.concat("oidc-user-info-endpoint");
+
+		/**
+		 * Set the OpenID Connect 1.0 Logout endpoint.
+		 * @since 1.1.0
+		 */
+		public static final String OIDC_LOGOUT_ENDPOINT = AUTHORIZATION_SERVER_SETTINGS_NAMESPACE.concat("oidc-logout-endpoint");
 
 		private AuthorizationServer() {
 		}

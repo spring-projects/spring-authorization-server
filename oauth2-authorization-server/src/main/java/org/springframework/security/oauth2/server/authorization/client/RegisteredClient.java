@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,6 +54,7 @@ public class RegisteredClient implements Serializable {
 	private Set<ClientAuthenticationMethod> clientAuthenticationMethods;
 	private Set<AuthorizationGrantType> authorizationGrantTypes;
 	private Set<String> redirectUris;
+	private Set<String> postLogoutRedirectUris;
 	private Set<String> scopes;
 	private ClientSettings clientSettings;
 	private TokenSettings tokenSettings;
@@ -146,6 +147,18 @@ public class RegisteredClient implements Serializable {
 	}
 
 	/**
+	 * Returns the post logout redirect URI(s) that the client may use for logout.
+	 * The {@code post_logout_redirect_uri} parameter is used by the client when requesting
+	 * that the End-User's User Agent be redirected to after a logout has been performed.
+	 *
+	 * @return the {@code Set} of post logout redirect URI(s)
+	 * @since 1.1.0
+	 */
+	public Set<String> getPostLogoutRedirectUris() {
+		return this.postLogoutRedirectUris;
+	}
+
+	/**
 	 * Returns the scope(s) that the client may use.
 	 *
 	 * @return the {@code Set} of scope(s)
@@ -190,6 +203,7 @@ public class RegisteredClient implements Serializable {
 				Objects.equals(this.clientAuthenticationMethods, that.clientAuthenticationMethods) &&
 				Objects.equals(this.authorizationGrantTypes, that.authorizationGrantTypes) &&
 				Objects.equals(this.redirectUris, that.redirectUris) &&
+				Objects.equals(this.postLogoutRedirectUris, that.postLogoutRedirectUris) &&
 				Objects.equals(this.scopes, that.scopes) &&
 				Objects.equals(this.clientSettings, that.clientSettings) &&
 				Objects.equals(this.tokenSettings, that.tokenSettings);
@@ -199,7 +213,7 @@ public class RegisteredClient implements Serializable {
 	public int hashCode() {
 		return Objects.hash(this.id, this.clientId, this.clientIdIssuedAt, this.clientSecret, this.clientSecretExpiresAt,
 				this.clientName, this.clientAuthenticationMethods, this.authorizationGrantTypes, this.redirectUris,
-				this.scopes, this.clientSettings, this.tokenSettings);
+				this.postLogoutRedirectUris, this.scopes, this.clientSettings, this.tokenSettings);
 	}
 
 	@Override
@@ -211,6 +225,7 @@ public class RegisteredClient implements Serializable {
 				", clientAuthenticationMethods=" + this.clientAuthenticationMethods +
 				", authorizationGrantTypes=" + this.authorizationGrantTypes +
 				", redirectUris=" + this.redirectUris +
+				", postLogoutRedirectUris=" + this.postLogoutRedirectUris +
 				", scopes=" + this.scopes +
 				", clientSettings=" + this.clientSettings +
 				", tokenSettings=" + this.tokenSettings +
@@ -253,6 +268,7 @@ public class RegisteredClient implements Serializable {
 		private final Set<ClientAuthenticationMethod> clientAuthenticationMethods = new HashSet<>();
 		private final Set<AuthorizationGrantType> authorizationGrantTypes = new HashSet<>();
 		private final Set<String> redirectUris = new HashSet<>();
+		private final Set<String> postLogoutRedirectUris = new HashSet<>();
 		private final Set<String> scopes = new HashSet<>();
 		private ClientSettings clientSettings;
 		private TokenSettings tokenSettings;
@@ -276,6 +292,9 @@ public class RegisteredClient implements Serializable {
 			}
 			if (!CollectionUtils.isEmpty(registeredClient.getRedirectUris())) {
 				this.redirectUris.addAll(registeredClient.getRedirectUris());
+			}
+			if (!CollectionUtils.isEmpty(registeredClient.getPostLogoutRedirectUris())) {
+				this.postLogoutRedirectUris.addAll(registeredClient.getPostLogoutRedirectUris());
 			}
 			if (!CollectionUtils.isEmpty(registeredClient.getScopes())) {
 				this.scopes.addAll(registeredClient.getScopes());
@@ -422,6 +441,33 @@ public class RegisteredClient implements Serializable {
 		}
 
 		/**
+		 * Adds a post logout redirect URI the client may use for logout.
+		 * The {@code post_logout_redirect_uri} parameter is used by the client when requesting
+		 * that the End-User's User Agent be redirected to after a logout has been performed.
+		 *
+		 * @param postLogoutRedirectUri the post logout redirect URI
+		 * @return the {@link Builder}
+		 * @since 1.1.0
+		 */
+		public Builder postLogoutRedirectUri(String postLogoutRedirectUri) {
+			this.postLogoutRedirectUris.add(postLogoutRedirectUri);
+			return this;
+		}
+
+		/**
+		 * A {@code Consumer} of the post logout redirect URI(s)
+		 * allowing the ability to add, replace, or remove.
+		 *
+		 * @param postLogoutRedirectUrisConsumer a {@link Consumer} of the post logout redirect URI(s)
+		 * @return the {@link Builder}
+		 * @since 1.1.0
+		 */
+		public Builder postLogoutRedirectUris(Consumer<Set<String>> postLogoutRedirectUrisConsumer) {
+			postLogoutRedirectUrisConsumer.accept(this.postLogoutRedirectUris);
+			return this;
+		}
+
+		/**
 		 * Adds a scope the client may use.
 		 *
 		 * @param scope the scope
@@ -499,6 +545,7 @@ public class RegisteredClient implements Serializable {
 			}
 			validateScopes();
 			validateRedirectUris();
+			validatePostLogoutRedirectUris();
 			return create();
 		}
 
@@ -523,6 +570,8 @@ public class RegisteredClient implements Serializable {
 					new HashSet<>(this.authorizationGrantTypes));
 			registeredClient.redirectUris = Collections.unmodifiableSet(
 					new HashSet<>(this.redirectUris));
+			registeredClient.postLogoutRedirectUris = Collections.unmodifiableSet(
+					new HashSet<>(this.postLogoutRedirectUris));
 			registeredClient.scopes = Collections.unmodifiableSet(
 					new HashSet<>(this.scopes));
 			registeredClient.clientSettings = this.clientSettings;
@@ -557,9 +606,20 @@ public class RegisteredClient implements Serializable {
 				return;
 			}
 
-			for (String redirectUri : redirectUris) {
+			for (String redirectUri : this.redirectUris) {
 				Assert.isTrue(validateRedirectUri(redirectUri),
 						"redirect_uri \"" + redirectUri + "\" is not a valid redirect URI or contains fragment");
+			}
+		}
+
+		private void validatePostLogoutRedirectUris() {
+			if (CollectionUtils.isEmpty(this.postLogoutRedirectUris)) {
+				return;
+			}
+
+			for (String postLogoutRedirectUri : this.postLogoutRedirectUris) {
+				Assert.isTrue(validateRedirectUri(postLogoutRedirectUri),
+						"post_logout_redirect_uri \"" + postLogoutRedirectUri + "\" is not a valid post logout redirect URI or contains fragment");
 			}
 		}
 
@@ -571,5 +631,6 @@ public class RegisteredClient implements Serializable {
 				return false;
 			}
 		}
+
 	}
 }

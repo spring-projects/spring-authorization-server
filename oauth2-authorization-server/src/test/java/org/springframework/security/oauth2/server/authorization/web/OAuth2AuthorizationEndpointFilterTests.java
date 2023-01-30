@@ -58,6 +58,7 @@ import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.WebAuthenticationDetails;
+import org.springframework.security.web.authentication.session.SessionAuthenticationStrategy;
 import org.springframework.util.StringUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -149,6 +150,13 @@ public class OAuth2AuthorizationEndpointFilterTests {
 		assertThatThrownBy(() -> this.filter.setAuthenticationFailureHandler(null))
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessage("authenticationFailureHandler cannot be null");
+	}
+
+	@Test
+	public void setSessionAuthenticationStrategyWhenNullThenThrowIllegalArgumentException() {
+		assertThatThrownBy(() -> this.filter.setSessionAuthenticationStrategy(null))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("sessionAuthenticationStrategy cannot be null");
 	}
 
 	@Test
@@ -381,6 +389,31 @@ public class OAuth2AuthorizationEndpointFilterTests {
 		verify(this.authenticationManager).authenticate(any());
 		verifyNoInteractions(filterChain);
 		verify(authenticationFailureHandler).onAuthenticationFailure(any(), any(), same(authenticationException));
+	}
+
+	@Test
+	public void doFilterWhenCustomSessionAuthenticationStrategyThenUsed() throws Exception {
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+		OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthenticationResult =
+				new OAuth2AuthorizationCodeRequestAuthenticationToken(
+						AUTHORIZATION_URI, registeredClient.getClientId(), principal, this.authorizationCode,
+						registeredClient.getRedirectUris().iterator().next(), STATE, registeredClient.getScopes());
+		authorizationCodeRequestAuthenticationResult.setAuthenticated(true);
+		when(this.authenticationManager.authenticate(any()))
+				.thenReturn(authorizationCodeRequestAuthenticationResult);
+
+		SessionAuthenticationStrategy sessionAuthenticationStrategy = mock(SessionAuthenticationStrategy.class);
+		this.filter.setSessionAuthenticationStrategy(sessionAuthenticationStrategy);
+
+		MockHttpServletRequest request = createAuthorizationRequest(registeredClient);
+		MockHttpServletResponse response = new MockHttpServletResponse();
+		FilterChain filterChain = mock(FilterChain.class);
+
+		this.filter.doFilter(request, response, filterChain);
+
+		verify(this.authenticationManager).authenticate(any());
+		verifyNoInteractions(filterChain);
+		verify(sessionAuthenticationStrategy).onAuthentication(same(authorizationCodeRequestAuthenticationResult), any(), any());
 	}
 
 	@Test

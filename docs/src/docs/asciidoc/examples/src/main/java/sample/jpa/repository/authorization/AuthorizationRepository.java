@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 the original author or authors.
+ * Copyright 2022-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,10 +30,12 @@ public interface AuthorizationRepository extends JpaRepository<Authorization, St
 	Optional<Authorization> findByAuthorizationCodeValue(String authorizationCode);
 	Optional<Authorization> findByAccessTokenValue(String accessToken);
 	Optional<Authorization> findByRefreshTokenValue(String refreshToken);
+	Optional<Authorization> findByOidcIdTokenValue(String idToken);
 	@Query("select a from Authorization a where a.state = :token" +
 			" or a.authorizationCodeValue = :token" +
 			" or a.accessTokenValue = :token" +
-			" or a.refreshTokenValue = :token"
+			" or a.refreshTokenValue = :token" +
+			" or a.oidcIdTokenValue = :token"
 	)
-	Optional<Authorization> findByStateOrAuthorizationCodeValueOrAccessTokenValueOrRefreshTokenValue(@Param("token") String token);
+	Optional<Authorization> findByStateOrAuthorizationCodeValueOrAccessTokenValueOrRefreshTokenValueOrOidcIdTokenValue(@Param("token") String token);
 }

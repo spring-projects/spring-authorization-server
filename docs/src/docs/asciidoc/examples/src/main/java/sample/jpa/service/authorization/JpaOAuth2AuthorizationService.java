@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 the original author or authors.
+ * Copyright 2022-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ import org.springframework.security.oauth2.core.OAuth2RefreshToken;
 import org.springframework.security.oauth2.core.OAuth2Token;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
+import org.springframework.security.oauth2.core.oidc.endpoint.OidcParameterNames;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationCode;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
@@ -88,7 +89,7 @@ public class JpaOAuth2AuthorizationService implements OAuth2AuthorizationService
 
 		Optional<Authorization> result;
 		if (tokenType == null) {
-			result = this.authorizationRepository.findByStateOrAuthorizationCodeValueOrAccessTokenValueOrRefreshTokenValue(token);
+			result = this.authorizationRepository.findByStateOrAuthorizationCodeValueOrAccessTokenValueOrRefreshTokenValueOrOidcIdTokenValue(token);
 		} else if (OAuth2ParameterNames.STATE.equals(tokenType.getValue())) {
 			result = this.authorizationRepository.findByState(token);
 		} else if (OAuth2ParameterNames.CODE.equals(tokenType.getValue())) {
@@ -97,6 +98,8 @@ public class JpaOAuth2AuthorizationService implements OAuth2AuthorizationService
 			result = this.authorizationRepository.findByAccessTokenValue(token);
 		} else if (OAuth2ParameterNames.REFRESH_TOKEN.equals(tokenType.getValue())) {
 			result = this.authorizationRepository.findByRefreshTokenValue(token);
+		} else if (OidcParameterNames.ID_TOKEN.equals(tokenType.getValue())) {
+			result = this.authorizationRepository.findByOidcIdTokenValue(token);
 		} else {
 			result = Optional.empty();
 		}

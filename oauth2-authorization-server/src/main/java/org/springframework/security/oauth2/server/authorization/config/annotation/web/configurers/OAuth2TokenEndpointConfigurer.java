@@ -26,6 +26,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.ObjectPostProcessor;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2Token;
@@ -216,9 +217,11 @@ public final class OAuth2TokenEndpointConfigurer extends AbstractOAuth2Configure
 
 		OAuth2AuthorizationService authorizationService = OAuth2ConfigurerUtils.getAuthorizationService(httpSecurity);
 		OAuth2TokenGenerator<? extends OAuth2Token> tokenGenerator = OAuth2ConfigurerUtils.getTokenGenerator(httpSecurity);
+		SessionRegistry sessionRegistry = OAuth2ConfigurerUtils.getSessionRegistry(httpSecurity);
 
 		OAuth2AuthorizationCodeAuthenticationProvider authorizationCodeAuthenticationProvider =
 				new OAuth2AuthorizationCodeAuthenticationProvider(authorizationService, tokenGenerator);
+		authorizationCodeAuthenticationProvider.setSessionRegistry(sessionRegistry);
 		authenticationProviders.add(authorizationCodeAuthenticationProvider);
 
 		OAuth2RefreshTokenAuthenticationProvider refreshTokenAuthenticationProvider =

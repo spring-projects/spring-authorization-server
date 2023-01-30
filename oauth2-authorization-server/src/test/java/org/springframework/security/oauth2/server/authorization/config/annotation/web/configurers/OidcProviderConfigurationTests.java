@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -126,6 +126,7 @@ public class OidcProviderConfigurationTests {
 				jsonPath("$.token_endpoint_auth_methods_supported[3]").value(ClientAuthenticationMethod.PRIVATE_KEY_JWT.getValue()),
 				jsonPath("jwks_uri").value(ISSUER_URL.concat(this.authorizationServerSettings.getJwkSetEndpoint())),
 				jsonPath("userinfo_endpoint").value(ISSUER_URL.concat(this.authorizationServerSettings.getOidcUserInfoEndpoint())),
+				jsonPath("end_session_endpoint").value(ISSUER_URL.concat(this.authorizationServerSettings.getOidcLogoutEndpoint())),
 				jsonPath("response_types_supported").value(OAuth2AuthorizationResponseType.CODE.getValue()),
 				jsonPath("$.grant_types_supported[0]").value(AuthorizationGrantType.AUTHORIZATION_CODE.getValue()),
 				jsonPath("$.grant_types_supported[1]").value(AuthorizationGrantType.CLIENT_CREDENTIALS.getValue()),

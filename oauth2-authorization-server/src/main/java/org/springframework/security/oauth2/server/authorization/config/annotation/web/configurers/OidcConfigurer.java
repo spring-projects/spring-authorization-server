@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ import org.springframework.web.util.UriComponentsBuilder;
  * @since 0.2.0
  * @see OAuth2AuthorizationServerConfigurer#oidc
  * @see OidcProviderConfigurationEndpointConfigurer
+ * @see OidcLogoutEndpointConfigurer
  * @see OidcClientRegistrationEndpointConfigurer
  * @see OidcUserInfoEndpointConfigurer
  */
@@ -50,6 +51,7 @@ public final class OidcConfigurer extends AbstractOAuth2Configurer {
 	OidcConfigurer(ObjectPostProcessor<Object> objectPostProcessor) {
 		super(objectPostProcessor);
 		addConfigurer(OidcProviderConfigurationEndpointConfigurer.class, new OidcProviderConfigurationEndpointConfigurer(objectPostProcessor));
+		addConfigurer(OidcLogoutEndpointConfigurer.class, new OidcLogoutEndpointConfigurer(objectPostProcessor));
 		addConfigurer(OidcUserInfoEndpointConfigurer.class, new OidcUserInfoEndpointConfigurer(objectPostProcessor));
 	}
 
@@ -62,6 +64,18 @@ public final class OidcConfigurer extends AbstractOAuth2Configurer {
 	 */
 	public OidcConfigurer providerConfigurationEndpoint(Customizer<OidcProviderConfigurationEndpointConfigurer> providerConfigurationEndpointCustomizer) {
 		providerConfigurationEndpointCustomizer.customize(getConfigurer(OidcProviderConfigurationEndpointConfigurer.class));
+		return this;
+	}
+
+	/**
+	 * Configures the OpenID Connect 1.0 RP-Initiated Logout Endpoint.
+	 *
+	 * @param logoutEndpointCustomizer the {@link Customizer} providing access to the {@link OidcLogoutEndpointConfigurer}
+	 * @return the {@link OidcConfigurer} for further configuration
+	 * @since 1.1.0
+	 */
+	public OidcConfigurer logoutEndpoint(Customizer<OidcLogoutEndpointConfigurer> logoutEndpointCustomizer) {
+		logoutEndpointCustomizer.customize(getConfigurer(OidcLogoutEndpointConfigurer.class));
 		return this;
 	}
 

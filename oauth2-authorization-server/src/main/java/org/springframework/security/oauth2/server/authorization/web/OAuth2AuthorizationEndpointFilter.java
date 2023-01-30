@@ -35,6 +35,7 @@ import org.springframework.security.authentication.AuthenticationDetailsSource;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationResponse;
@@ -54,6 +55,7 @@ import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+import org.springframework.security.web.authentication.session.SessionAuthenticationStrategy;
 import org.springframework.security.web.util.RedirectUrlBuilder;
 import org.springframework.security.web.util.UrlUtils;
 import org.springframework.security.web.util.matcher.AndRequestMatcher;
@@ -97,6 +99,7 @@ public final class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilte
 	private AuthenticationConverter authenticationConverter;
 	private AuthenticationSuccessHandler authenticationSuccessHandler = this::sendAuthorizationResponse;
 	private AuthenticationFailureHandler authenticationFailureHandler = this::sendErrorResponse;
+	private SessionAuthenticationStrategy sessionAuthenticationStrategy = (authentication, request, response) -> {};
 	private String consentPage;
 
 	/**
@@ -182,6 +185,9 @@ public final class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilte
 				return;
 			}
 
+			this.sessionAuthenticationStrategy.onAuthentication(
+					authenticationResult, request, response);
+
 			this.authenticationSuccessHandler.onAuthenticationSuccess(
 					request, response, authenticationResult);
 
@@ -236,6 +242,19 @@ public final class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilte
 	public void setAuthenticationFailureHandler(AuthenticationFailureHandler authenticationFailureHandler) {
 		Assert.notNull(authenticationFailureHandler, "authenticationFailureHandler cannot be null");
 		this.authenticationFailureHandler = authenticationFailureHandler;
+	}
+
+	/**
+	 * Sets the {@link SessionAuthenticationStrategy} used for handling an {@link OAuth2AuthorizationCodeRequestAuthenticationToken}
+	 * before calling the {@link AuthenticationSuccessHandler}.
+	 * If OpenID Connect is enabled, the default implementation tracks OpenID Connect sessions using a {@link SessionRegistry}.
+	 *
+	 * @param sessionAuthenticationStrategy the {@link SessionAuthenticationStrategy} used for handling an {@link OAuth2AuthorizationCodeRequestAuthenticationToken}
+	 * @since 1.1.0
+	 */
+	public void setSessionAuthenticationStrategy(SessionAuthenticationStrategy sessionAuthenticationStrategy) {
+		Assert.notNull(sessionAuthenticationStrategy, "sessionAuthenticationStrategy cannot be null");
+		this.sessionAuthenticationStrategy = sessionAuthenticationStrategy;
 	}
 
 	/**

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -99,6 +99,9 @@ public class OidcClientRegistrationHttpMessageConverterTests {
 				+"		\"redirect_uris\": [\n"
 				+ "			\"https://client.example.com\"\n"
 				+ "		],\n"
+				+"		\"post_logout_redirect_uris\": [\n"
+				+ "			\"https://client.example.com/oidc-post-logout\"\n"
+				+ "		],\n"
 				+"		\"token_endpoint_auth_method\": \"client_secret_jwt\",\n"
 				+"		\"token_endpoint_auth_signing_alg\": \"HS256\",\n"
 				+"		\"grant_types\": [\n"
@@ -125,6 +128,7 @@ public class OidcClientRegistrationHttpMessageConverterTests {
 		assertThat(clientRegistration.getClientSecretExpiresAt()).isEqualTo(Instant.ofEpochSecond(1607637467L));
 		assertThat(clientRegistration.getClientName()).isEqualTo("client-name");
 		assertThat(clientRegistration.getRedirectUris()).containsOnly("https://client.example.com");
+		assertThat(clientRegistration.getPostLogoutRedirectUris()).containsOnly("https://client.example.com/oidc-post-logout");
 		assertThat(clientRegistration.getTokenEndpointAuthenticationMethod()).isEqualTo(ClientAuthenticationMethod.CLIENT_SECRET_JWT.getValue());
 		assertThat(clientRegistration.getTokenEndpointAuthenticationSigningAlgorithm()).isEqualTo(MacAlgorithm.HS256.getName());
 		assertThat(clientRegistration.getGrantTypes()).containsExactlyInAnyOrder("authorization_code", "client_credentials");
@@ -183,6 +187,7 @@ public class OidcClientRegistrationHttpMessageConverterTests {
 				.clientSecretExpiresAt(Instant.ofEpochSecond(1607637467))
 				.clientName("client-name")
 				.redirectUri("https://client.example.com")
+				.postLogoutRedirectUri("https://client.example.com/oidc-post-logout")
 				.tokenEndpointAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_JWT.getValue())
 				.tokenEndpointAuthenticationSigningAlgorithm(MacAlgorithm.HS256.getName())
 				.grantType(AuthorizationGrantType.AUTHORIZATION_CODE.getValue())
@@ -208,6 +213,7 @@ public class OidcClientRegistrationHttpMessageConverterTests {
 		assertThat(clientRegistrationResponse).contains("\"client_secret_expires_at\":1607637467");
 		assertThat(clientRegistrationResponse).contains("\"client_name\":\"client-name\"");
 		assertThat(clientRegistrationResponse).contains("\"redirect_uris\":[\"https://client.example.com\"]");
+		assertThat(clientRegistrationResponse).contains("\"post_logout_redirect_uris\":[\"https://client.example.com/oidc-post-logout\"]");
 		assertThat(clientRegistrationResponse).contains("\"token_endpoint_auth_method\":\"client_secret_jwt\"");
 		assertThat(clientRegistrationResponse).contains("\"token_endpoint_auth_signing_alg\":\"HS256\"");
 		assertThat(clientRegistrationResponse).contains("\"grant_types\":[\"authorization_code\",\"client_credentials\"]");

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package org.springframework.security.oauth2.server.authorization.oidc;
 
-
 import java.net.URL;
 import java.util.List;
 
@@ -30,6 +29,7 @@ import org.springframework.security.oauth2.server.authorization.OAuth2Authorizat
  * in the OpenID Provider Configuration Response.
  *
  * @author Daniel Garnier-Moiroux
+ * @author Joe Grandja
  * @since 0.1.0
  * @see ClaimAccessor
  * @see OAuth2AuthorizationServerMetadataClaimAccessor
@@ -66,6 +66,16 @@ public interface OidcProviderMetadataClaimAccessor extends OAuth2AuthorizationSe
 	 */
 	default URL getUserInfoEndpoint() {
 		return getClaimAsURL(OidcProviderMetadataClaimNames.USER_INFO_ENDPOINT);
+	}
+
+	/**
+	 * Returns the {@code URL} of the OpenID Connect 1.0 End Session Endpoint {@code (end_session_endpoint)}.
+	 *
+	 * @return the {@code URL} of the OpenID Connect 1.0 End Session Endpoint
+	 * @since 1.1.0
+	 */
+	default URL getEndSessionEndpoint() {
+		return getClaimAsURL(OidcProviderMetadataClaimNames.END_SESSION_ENDPOINT);
 	}
 
 }

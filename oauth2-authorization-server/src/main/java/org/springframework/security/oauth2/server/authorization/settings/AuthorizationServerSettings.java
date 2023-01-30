@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ public final class AuthorizationServerSettings extends AbstractSettings {
 	}
 
 	/**
-	 * Returns the URL of the Authorization Server's Issuer Identifier
+	 * Returns the URL of the Authorization Server's Issuer Identifier.
 	 *
 	 * @return the URL of the Authorization Server's Issuer Identifier
 	 */
@@ -107,6 +107,16 @@ public final class AuthorizationServerSettings extends AbstractSettings {
 	}
 
 	/**
+	 * Returns the OpenID Connect 1.0 Logout endpoint. The default is {@code /connect/logout}.
+	 *
+	 * @return the OpenID Connect 1.0 Logout endpoint
+	 * @since 1.1.0
+	 */
+	public String getOidcLogoutEndpoint() {
+		return getSetting(ConfigurationSettingNames.AuthorizationServer.OIDC_LOGOUT_ENDPOINT);
+	}
+
+	/**
 	 * Constructs a new {@link Builder} with the default settings.
 	 *
 	 * @return the {@link Builder}
@@ -119,7 +129,8 @@ public final class AuthorizationServerSettings extends AbstractSettings {
 				.tokenRevocationEndpoint("/oauth2/revoke")
 				.tokenIntrospectionEndpoint("/oauth2/introspect")
 				.oidcClientRegistrationEndpoint("/connect/register")
-				.oidcUserInfoEndpoint("/userinfo");
+				.oidcUserInfoEndpoint("/userinfo")
+				.oidcLogoutEndpoint("/connect/logout");
 	}
 
 	/**
@@ -220,6 +231,17 @@ public final class AuthorizationServerSettings extends AbstractSettings {
 		 */
 		public Builder oidcUserInfoEndpoint(String oidcUserInfoEndpoint) {
 			return setting(ConfigurationSettingNames.AuthorizationServer.OIDC_USER_INFO_ENDPOINT, oidcUserInfoEndpoint);
+		}
+
+		/**
+		 * Sets the OpenID Connect 1.0 Logout endpoint.
+		 *
+		 * @param oidcLogoutEndpoint the OpenID Connect 1.0 Logout endpoint
+		 * @return the {@link Builder} for further configuration
+		 * @since 1.1.0
+		 */
+		public Builder oidcLogoutEndpoint(String oidcLogoutEndpoint) {
+			return setting(ConfigurationSettingNames.AuthorizationServer.OIDC_LOGOUT_ENDPOINT, oidcLogoutEndpoint);
 		}
 
 		/**

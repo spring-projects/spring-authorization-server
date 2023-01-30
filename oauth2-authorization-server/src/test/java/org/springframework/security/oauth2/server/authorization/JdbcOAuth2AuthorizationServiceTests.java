@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,6 +49,7 @@ import org.springframework.security.oauth2.core.OAuth2RefreshToken;
 import org.springframework.security.oauth2.core.OAuth2Token;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
+import org.springframework.security.oauth2.core.oidc.endpoint.OidcParameterNames;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
@@ -76,6 +77,7 @@ public class JdbcOAuth2AuthorizationServiceTests {
 	private static final String OAUTH2_AUTHORIZATION_SCHEMA_CLOB_DATA_TYPE_SQL_RESOURCE = "org/springframework/security/oauth2/server/authorization/custom-oauth2-authorization-schema-clob-data-type.sql";
 	private static final OAuth2TokenType AUTHORIZATION_CODE_TOKEN_TYPE = new OAuth2TokenType(OAuth2ParameterNames.CODE);
 	private static final OAuth2TokenType STATE_TOKEN_TYPE = new OAuth2TokenType(OAuth2ParameterNames.STATE);
+	private static final OAuth2TokenType ID_TOKEN_TOKEN_TYPE = new OAuth2TokenType(OidcParameterNames.ID_TOKEN);
 	private static final String ID = "id";
 	private static final RegisteredClient REGISTERED_CLIENT = TestRegisteredClients.registeredClient().build();
 	private static final String PRINCIPAL_NAME = "principal";
@@ -345,6 +347,32 @@ public class JdbcOAuth2AuthorizationServiceTests {
 	}
 
 	@Test
+	public void findByTokenWhenIdTokenExistsThenFound() {
+		when(this.registeredClientRepository.findById(eq(REGISTERED_CLIENT.getId())))
+				.thenReturn(REGISTERED_CLIENT);
+		OidcIdToken idToken =  OidcIdToken.withTokenValue("id-token")
+				.issuer("https://provider.com")
+				.subject("subject")
+				.issuedAt(Instant.now().minusSeconds(60).truncatedTo(ChronoUnit.MILLIS))
+				.expiresAt(Instant.now().truncatedTo(ChronoUnit.MILLIS))
+				.build();
+		OAuth2Authorization authorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
+				.id(ID)
+				.principalName(PRINCIPAL_NAME)
+				.authorizationGrantType(AUTHORIZATION_GRANT_TYPE)
+				.token(idToken, (metadata) ->
+						metadata.put(OAuth2Authorization.Token.CLAIMS_METADATA_NAME, idToken.getClaims()))
+				.build();
+		this.authorizationService.save(authorization);
+
+		OAuth2Authorization result = this.authorizationService.findByToken(
+				idToken.getTokenValue(), ID_TOKEN_TOKEN_TYPE);
+		assertThat(authorization).isEqualTo(result);
+		result = this.authorizationService.findByToken(idToken.getTokenValue(), null);
+		assertThat(authorization).isEqualTo(result);
+	}
+
+	@Test
 	public void findByTokenWhenRefreshTokenExistsThenFound() {
 		when(this.registeredClientRepository.findById(eq(REGISTERED_CLIENT.getId())))
 				.thenReturn(REGISTERED_CLIENT);
@@ -494,7 +522,7 @@ public class JdbcOAuth2AuthorizationServiceTests {
 
 		private static final String PK_FILTER = "id = ?";
 		private static final String UNKNOWN_TOKEN_TYPE_FILTER = "state = ? OR authorizationCodeValue = ? OR " +
-				"accessTokenValue = ? OR refreshTokenValue = ?";
+				"accessTokenValue = ? OR oidcIdTokenValue = ? OR refreshTokenValue = ?";
 
 		// @formatter:off
 		private static final String LOAD_AUTHORIZATION_SQL = "SELECT " + COLUMN_NAMES
@@ -539,7 +567,7 @@ public class JdbcOAuth2AuthorizationServiceTests {
 
 		@Override
 		public OAuth2Authorization findByToken(String token, OAuth2TokenType tokenType) {
-			return findBy(UNKNOWN_TOKEN_TYPE_FILTER, token, token, token, token);
+			return findBy(UNKNOWN_TOKEN_TYPE_FILTER, token, token, token, token, token);
 		}
 
 		private OAuth2Authorization findBy(String filter, Object... args) {

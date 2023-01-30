@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,14 @@ package org.springframework.security.oauth2.server.authorization.token;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 import org.springframework.lang.Nullable;
+import org.springframework.security.core.session.SessionInformation;
+import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
@@ -126,7 +131,11 @@ public final class JwtGenerator implements OAuth2TokenGenerator<Jwt> {
 					claimsBuilder.claim(IdTokenClaimNames.NONCE, nonce);
 				}
 			}
-			// TODO Add 'auth_time' claim
+			SessionInformation sessionInformation = getSessionInformation(context);
+			if (sessionInformation != null) {
+				claimsBuilder.claim("sid", sessionInformation.getSessionId());
+				claimsBuilder.claim(IdTokenClaimNames.AUTH_TIME, sessionInformation.getLastRequest());
+			}
 		}
 		// @formatter:on
 
@@ -159,6 +168,24 @@ public final class JwtGenerator implements OAuth2TokenGenerator<Jwt> {
 		Jwt jwt = this.jwtEncoder.encode(JwtEncoderParameters.from(jwsHeader, claims));
 
 		return jwt;
+	}
+
+	private static SessionInformation getSessionInformation(OAuth2TokenContext context) {
+		SessionInformation sessionInformation = null;
+		if (context.getAuthorizationServerContext().getSessionRegistry() != null) {
+			SessionRegistry sessionRegistry = context.getAuthorizationServerContext().getSessionRegistry();
+			List<SessionInformation> sessions = sessionRegistry.getAllSessions(context.getPrincipal().getPrincipal(), false);
+			if (!CollectionUtils.isEmpty(sessions)) {
+				sessionInformation = sessions.get(0);
+				if (sessions.size() > 1) {
+					// Get the most recent session
+					sessions = new ArrayList<>(sessions);
+					sessions.sort(Comparator.comparing(SessionInformation::getLastRequest));
+					sessionInformation = sessions.get(sessions.size() - 1);
+				}
+			}
+		}
+		return sessionInformation;
 	}
 
 	/**

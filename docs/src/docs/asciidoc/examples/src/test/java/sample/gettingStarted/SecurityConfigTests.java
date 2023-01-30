@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -102,7 +102,8 @@ public class SecurityConfigTests {
 		assertThatAuthorization(refreshToken, null).isNotNull();
 
 		String idToken = (String) tokenResponse.get(OidcParameterNames.ID_TOKEN);
-		assertThatAuthorization(idToken, OidcParameterNames.ID_TOKEN).isNull(); // id_token is not searchable
+		assertThatAuthorization(idToken, OidcParameterNames.ID_TOKEN).isNotNull();
+		assertThatAuthorization(idToken, null).isNotNull();
 
 		OAuth2Authorization authorization = findAuthorization(accessToken, OAuth2ParameterNames.ACCESS_TOKEN);
 		assertThat(authorization.getToken(idToken)).isNotNull();

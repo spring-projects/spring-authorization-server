@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,7 @@ import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.preauth.AbstractPreAuthenticatedProcessingFilter;
+import org.springframework.security.web.authentication.session.SessionAuthenticationStrategy;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.OrRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
@@ -68,6 +69,7 @@ public final class OAuth2AuthorizationEndpointConfigurer extends AbstractOAuth2C
 	private AuthenticationFailureHandler errorResponseHandler;
 	private String consentPage;
 	private Consumer<OAuth2AuthorizationCodeRequestAuthenticationContext> authorizationCodeRequestAuthenticationValidator;
+	private SessionAuthenticationStrategy sessionAuthenticationStrategy;
 
 	/**
 	 * Restrict for internal use only.
@@ -200,6 +202,10 @@ public final class OAuth2AuthorizationEndpointConfigurer extends AbstractOAuth2C
 						this.authorizationCodeRequestAuthenticationValidator.andThen(authenticationValidator);
 	}
 
+	void setSessionAuthenticationStrategy(SessionAuthenticationStrategy sessionAuthenticationStrategy) {
+		this.sessionAuthenticationStrategy = sessionAuthenticationStrategy;
+	}
+
 	@Override
 	void init(HttpSecurity httpSecurity) {
 		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils.getAuthorizationServerSettings(httpSecurity);
@@ -244,6 +250,9 @@ public final class OAuth2AuthorizationEndpointConfigurer extends AbstractOAuth2C
 		}
 		if (StringUtils.hasText(this.consentPage)) {
 			authorizationEndpointFilter.setConsentPage(this.consentPage);
+		}
+		if (this.sessionAuthenticationStrategy != null) {
+			authorizationEndpointFilter.setSessionAuthenticationStrategy(this.sessionAuthenticationStrategy);
 		}
 		httpSecurity.addFilterBefore(postProcess(authorizationEndpointFilter), AbstractPreAuthenticatedProcessingFilter.class);
 	}

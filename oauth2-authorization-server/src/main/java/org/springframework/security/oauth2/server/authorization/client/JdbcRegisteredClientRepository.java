@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,6 +77,7 @@ public class JdbcRegisteredClientRepository implements RegisteredClientRepositor
 			+ "client_authentication_methods, "
 			+ "authorization_grant_types, "
 			+ "redirect_uris, "
+			+ "post_logout_redirect_uris, "
 			+ "scopes, "
 			+ "client_settings,"
 			+ "token_settings";
@@ -90,13 +91,13 @@ public class JdbcRegisteredClientRepository implements RegisteredClientRepositor
 
 	// @formatter:off
 	private static final String INSERT_REGISTERED_CLIENT_SQL = "INSERT INTO " + TABLE_NAME
-			+ "(" + COLUMN_NAMES + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+			+ "(" + COLUMN_NAMES + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 	// @formatter:on
 
 	// @formatter:off
 	private static final String UPDATE_REGISTERED_CLIENT_SQL = "UPDATE " + TABLE_NAME
 			+ " SET client_name = ?, client_authentication_methods = ?, authorization_grant_types = ?,"
-			+ " redirect_uris = ?, scopes = ?, client_settings = ?, token_settings = ?"
+			+ " redirect_uris = ?, post_logout_redirect_uris = ?, scopes = ?, client_settings = ?, token_settings = ?"
 			+ " WHERE " + PK_FILTER;
 	// @formatter:on
 
@@ -241,6 +242,7 @@ public class JdbcRegisteredClientRepository implements RegisteredClientRepositor
 			Set<String> clientAuthenticationMethods = StringUtils.commaDelimitedListToSet(rs.getString("client_authentication_methods"));
 			Set<String> authorizationGrantTypes = StringUtils.commaDelimitedListToSet(rs.getString("authorization_grant_types"));
 			Set<String> redirectUris = StringUtils.commaDelimitedListToSet(rs.getString("redirect_uris"));
+			Set<String> postLogoutRedirectUris = StringUtils.commaDelimitedListToSet(rs.getString("post_logout_redirect_uris"));
 			Set<String> clientScopes = StringUtils.commaDelimitedListToSet(rs.getString("scopes"));
 
 			// @formatter:off
@@ -257,6 +259,7 @@ public class JdbcRegisteredClientRepository implements RegisteredClientRepositor
 							authorizationGrantTypes.forEach(grantType ->
 									grantTypes.add(resolveAuthorizationGrantType(grantType))))
 					.redirectUris((uris) -> uris.addAll(redirectUris))
+					.postLogoutRedirectUris((uris) -> uris.addAll(postLogoutRedirectUris))
 					.scopes((scopes) -> scopes.addAll(clientScopes));
 			// @formatter:on
 
@@ -354,6 +357,7 @@ public class JdbcRegisteredClientRepository implements RegisteredClientRepositor
 					new SqlParameterValue(Types.VARCHAR, StringUtils.collectionToCommaDelimitedString(clientAuthenticationMethods)),
 					new SqlParameterValue(Types.VARCHAR, StringUtils.collectionToCommaDelimitedString(authorizationGrantTypes)),
 					new SqlParameterValue(Types.VARCHAR, StringUtils.collectionToCommaDelimitedString(registeredClient.getRedirectUris())),
+					new SqlParameterValue(Types.VARCHAR, StringUtils.collectionToCommaDelimitedString(registeredClient.getPostLogoutRedirectUris())),
 					new SqlParameterValue(Types.VARCHAR, StringUtils.collectionToCommaDelimitedString(registeredClient.getScopes())),
 					new SqlParameterValue(Types.VARCHAR, writeMap(registeredClient.getClientSettings().getSettings())),
 					new SqlParameterValue(Types.VARCHAR, writeMap(registeredClient.getTokenSettings().getSettings())));

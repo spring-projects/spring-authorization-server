@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,8 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import org.springframework.lang.Nullable;
+import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.oauth2.server.authorization.context.AuthorizationServerContext;
 import org.springframework.security.oauth2.server.authorization.context.AuthorizationServerContextHolder;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
@@ -42,10 +44,15 @@ import org.springframework.web.util.UriComponentsBuilder;
  */
 final class AuthorizationServerContextFilter extends OncePerRequestFilter {
 	private final AuthorizationServerSettings authorizationServerSettings;
+	private SessionRegistry sessionRegistry;
 
 	AuthorizationServerContextFilter(AuthorizationServerSettings authorizationServerSettings) {
 		Assert.notNull(authorizationServerSettings, "authorizationServerSettings cannot be null");
 		this.authorizationServerSettings = authorizationServerSettings;
+	}
+
+	void setSessionRegistry(SessionRegistry sessionRegistry) {
+		this.sessionRegistry = sessionRegistry;
 	}
 
 	@Override
@@ -53,10 +60,11 @@ final class AuthorizationServerContextFilter extends OncePerRequestFilter {
 			throws ServletException, IOException {
 
 		try {
-			AuthorizationServerContext authorizationServerContext =
+			DefaultAuthorizationServerContext authorizationServerContext =
 					new DefaultAuthorizationServerContext(
 							() -> resolveIssuer(this.authorizationServerSettings, request),
 							this.authorizationServerSettings);
+			authorizationServerContext.setSessionRegistry(this.sessionRegistry);
 			AuthorizationServerContextHolder.setContext(authorizationServerContext);
 			filterChain.doFilter(request, response);
 		} finally {
@@ -84,6 +92,7 @@ final class AuthorizationServerContextFilter extends OncePerRequestFilter {
 	private static final class DefaultAuthorizationServerContext implements AuthorizationServerContext {
 		private final Supplier<String> issuerSupplier;
 		private final AuthorizationServerSettings authorizationServerSettings;
+		private SessionRegistry sessionRegistry;
 
 		private DefaultAuthorizationServerContext(Supplier<String> issuerSupplier, AuthorizationServerSettings authorizationServerSettings) {
 			this.issuerSupplier = issuerSupplier;
@@ -98,6 +107,16 @@ final class AuthorizationServerContextFilter extends OncePerRequestFilter {
 		@Override
 		public AuthorizationServerSettings getAuthorizationServerSettings() {
 			return this.authorizationServerSettings;
+		}
+
+		@Nullable
+		@Override
+		public SessionRegistry getSessionRegistry() {
+			return this.sessionRegistry;
+		}
+
+		private void setSessionRegistry(SessionRegistry sessionRegistry) {
+			this.sessionRegistry = sessionRegistry;
 		}
 
 	}

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.springframework.security.oauth2.server.authorization.context;
 import java.util.function.Supplier;
 
 import org.springframework.lang.Nullable;
+import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 
 /**
@@ -26,6 +27,7 @@ import org.springframework.security.oauth2.server.authorization.settings.Authori
 public class TestAuthorizationServerContext implements AuthorizationServerContext {
 	private final AuthorizationServerSettings authorizationServerSettings;
 	private final Supplier<String> issuerSupplier;
+	private SessionRegistry sessionRegistry;
 
 	public TestAuthorizationServerContext(AuthorizationServerSettings authorizationServerSettings, @Nullable Supplier<String> issuerSupplier) {
 		this.authorizationServerSettings = authorizationServerSettings;
@@ -42,6 +44,16 @@ public class TestAuthorizationServerContext implements AuthorizationServerContex
 	@Override
 	public AuthorizationServerSettings getAuthorizationServerSettings() {
 		return this.authorizationServerSettings;
+	}
+
+	@Nullable
+	@Override
+	public SessionRegistry getSessionRegistry() {
+		return this.sessionRegistry;
+	}
+
+	public void setSessionRegistry(SessionRegistry sessionRegistry) {
+		this.sessionRegistry = sessionRegistry;
 	}
 
 }

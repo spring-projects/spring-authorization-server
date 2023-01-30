@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
  * @see OidcClientMetadataClaimNames
  * @see OidcClientRegistration
  * @see <a target="_blank" href="https://openid.net/specs/openid-connect-registration-1_0.html#ClientMetadata">2. Client Metadata</a>
+ * @see <a target="_blank" href="https://openid.net/specs/openid-connect-rpinitiated-1_0.html#ClientMetadata">3.1. Client Registration Metadata</a>
  */
 public interface OidcClientMetadataClaimAccessor extends ClaimAccessor {
 
@@ -92,6 +93,18 @@ public interface OidcClientMetadataClaimAccessor extends ClaimAccessor {
 	 */
 	default List<String> getRedirectUris() {
 		return getClaimAsStringList(OidcClientMetadataClaimNames.REDIRECT_URIS);
+	}
+
+	/**
+	 * Returns the post logout redirection {@code URI} values used by the Client {@code (post_logout_redirect_uris)}.
+	 * The {@code post_logout_redirect_uri} parameter is used by the client when requesting
+	 * that the End-User's User Agent be redirected to after a logout has been performed.
+	 *
+	 * @return the post logout redirection {@code URI} values used by the Client
+	 * @since 1.1.0
+	 */
+	default List<String> getPostLogoutRedirectUris() {
+		return getClaimAsStringList(OidcClientMetadataClaimNames.POST_LOGOUT_REDIRECT_URIS);
 	}
 
 	/**

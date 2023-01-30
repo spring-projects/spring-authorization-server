@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -148,6 +148,7 @@ public class OidcClientRegistrationHttpMessageConverter extends AbstractHttpMess
 			claimConverters.put(OidcClientMetadataClaimNames.CLIENT_SECRET_EXPIRES_AT, MapOidcClientRegistrationConverter::convertClientSecretExpiresAt);
 			claimConverters.put(OidcClientMetadataClaimNames.CLIENT_NAME, stringConverter);
 			claimConverters.put(OidcClientMetadataClaimNames.REDIRECT_URIS, collectionStringConverter);
+			claimConverters.put(OidcClientMetadataClaimNames.POST_LOGOUT_REDIRECT_URIS, collectionStringConverter);
 			claimConverters.put(OidcClientMetadataClaimNames.TOKEN_ENDPOINT_AUTH_METHOD, stringConverter);
 			claimConverters.put(OidcClientMetadataClaimNames.TOKEN_ENDPOINT_AUTH_SIGNING_ALG, stringConverter);
 			claimConverters.put(OidcClientMetadataClaimNames.GRANT_TYPES, collectionStringConverter);

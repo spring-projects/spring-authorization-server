@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,8 +44,9 @@ import org.springframework.util.Assert;
  * @author Joe Grandja
  * @since 0.1.1
  * @see OidcClientMetadataClaimAccessor
- * @see <a href="https://openid.net/specs/openid-connect-registration-1_0.html#RegistrationRequest">3.1. Client Registration Request</a>
- * @see <a href="https://openid.net/specs/openid-connect-registration-1_0.html#RegistrationResponse">3.2. Client Registration Response</a>
+ * @see <a target="_blank" href="https://openid.net/specs/openid-connect-registration-1_0.html#RegistrationRequest">3.1. Client Registration Request</a>
+ * @see <a target="_blank" href="https://openid.net/specs/openid-connect-registration-1_0.html#RegistrationResponse">3.2. Client Registration Response</a>
+ * @see <a target="_blank" href="https://openid.net/specs/openid-connect-rpinitiated-1_0.html#ClientMetadata">3.1. Client Registration Metadata</a>
  */
 public final class OidcClientRegistration implements OidcClientMetadataClaimAccessor, Serializable {
 	private static final long serialVersionUID = SpringAuthorizationServerVersion.SERIAL_VERSION_UID;
@@ -165,6 +166,33 @@ public final class OidcClientRegistration implements OidcClientMetadataClaimAcce
 		 */
 		public Builder redirectUris(Consumer<List<String>> redirectUrisConsumer) {
 			acceptClaimValues(OidcClientMetadataClaimNames.REDIRECT_URIS, redirectUrisConsumer);
+			return this;
+		}
+
+		/**
+		 * Add the post logout redirection {@code URI} used by the Client, OPTIONAL.
+		 * The {@code post_logout_redirect_uri} parameter is used by the client when requesting
+		 * that the End-User's User Agent be redirected to after a logout has been performed.
+		 *
+		 * @param postLogoutRedirectUri the post logout redirection {@code URI} used by the Client
+		 * @return the {@link Builder} for further configuration
+		 * @since 1.1.0
+		 */
+		public Builder postLogoutRedirectUri(String postLogoutRedirectUri) {
+			addClaimToClaimList(OidcClientMetadataClaimNames.POST_LOGOUT_REDIRECT_URIS, postLogoutRedirectUri);
+			return this;
+		}
+
+		/**
+		 * A {@code Consumer} of the post logout redirection {@code URI} values used by the Client,
+		 * allowing the ability to add, replace, or remove, OPTIONAL.
+		 *
+		 * @param postLogoutRedirectUrisConsumer a {@code Consumer} of the post logout redirection {@code URI} values used by the Client
+		 * @return the {@link Builder} for further configuration
+		 * @since 1.1.0
+		 */
+		public Builder postLogoutRedirectUris(Consumer<List<String>> postLogoutRedirectUrisConsumer) {
+			acceptClaimValues(OidcClientMetadataClaimNames.POST_LOGOUT_REDIRECT_URIS, postLogoutRedirectUrisConsumer);
 			return this;
 		}
 
@@ -358,6 +386,10 @@ public final class OidcClientRegistration implements OidcClientMetadataClaimAcce
 			Assert.notNull(this.claims.get(OidcClientMetadataClaimNames.REDIRECT_URIS), "redirect_uris cannot be null");
 			Assert.isInstanceOf(List.class, this.claims.get(OidcClientMetadataClaimNames.REDIRECT_URIS), "redirect_uris must be of type List");
 			Assert.notEmpty((List<?>) this.claims.get(OidcClientMetadataClaimNames.REDIRECT_URIS), "redirect_uris cannot be empty");
+			if (this.claims.get(OidcClientMetadataClaimNames.POST_LOGOUT_REDIRECT_URIS) != null) {
+				Assert.isInstanceOf(List.class, this.claims.get(OidcClientMetadataClaimNames.POST_LOGOUT_REDIRECT_URIS), "post_logout_redirect_uris must be of type List");
+				Assert.notEmpty((List<?>) this.claims.get(OidcClientMetadataClaimNames.POST_LOGOUT_REDIRECT_URIS), "post_logout_redirect_uris cannot be empty");
+			}
 			if (this.claims.get(OidcClientMetadataClaimNames.GRANT_TYPES) != null) {
 				Assert.isInstanceOf(List.class, this.claims.get(OidcClientMetadataClaimNames.GRANT_TYPES), "grant_types must be of type List");
 				Assert.notEmpty((List<?>) this.claims.get(OidcClientMetadataClaimNames.GRANT_TYPES), "grant_types cannot be empty");

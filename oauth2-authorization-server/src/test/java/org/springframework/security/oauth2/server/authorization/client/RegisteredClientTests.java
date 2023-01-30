@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@ public class RegisteredClientTests {
 	private static final String CLIENT_ID = "client-1";
 	private static final String CLIENT_SECRET = "secret";
 	private static final Set<String> REDIRECT_URIS = Collections.singleton("https://example.com");
+	private static final Set<String> POST_LOGOUT_REDIRECT_URIS = Collections.singleton("https://example.com/oidc-post-logout");
 	private static final Set<String> SCOPES = Collections.unmodifiableSet(
 			Stream.of("openid", "profile", "email").collect(Collectors.toSet()));
 	private static final Set<ClientAuthenticationMethod> CLIENT_AUTHENTICATION_METHODS =
@@ -71,6 +72,7 @@ public class RegisteredClientTests {
 				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
 				.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
 				.redirectUris(redirectUris -> redirectUris.addAll(REDIRECT_URIS))
+				.postLogoutRedirectUris(postLogoutRedirectUris -> postLogoutRedirectUris.addAll(POST_LOGOUT_REDIRECT_URIS))
 				.scopes(scopes -> scopes.addAll(SCOPES))
 				.build();
 
@@ -84,6 +86,7 @@ public class RegisteredClientTests {
 				.isEqualTo(Collections.singleton(AuthorizationGrantType.AUTHORIZATION_CODE));
 		assertThat(registration.getClientAuthenticationMethods()).isEqualTo(CLIENT_AUTHENTICATION_METHODS);
 		assertThat(registration.getRedirectUris()).isEqualTo(REDIRECT_URIS);
+		assertThat(registration.getPostLogoutRedirectUris()).isEqualTo(POST_LOGOUT_REDIRECT_URIS);
 		assertThat(registration.getScopes()).isEqualTo(SCOPES);
 	}
 
@@ -230,6 +233,35 @@ public class RegisteredClientTests {
 	}
 
 	@Test
+	public void buildWhenPostLogoutRedirectUriInvalidThenThrowIllegalArgumentException() {
+		assertThatThrownBy(() ->
+				RegisteredClient.withId(ID)
+						.clientId(CLIENT_ID)
+						.clientSecret(CLIENT_SECRET)
+						.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+						.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
+						.redirectUris(redirectUris -> redirectUris.addAll(REDIRECT_URIS))
+						.postLogoutRedirectUri("invalid URI")
+						.build()
+		).isInstanceOf(IllegalArgumentException.class);
+	}
+
+	@Test
+	public void buildWhenPostLogoutRedirectUriContainsFragmentThenThrowIllegalArgumentException() {
+		assertThatThrownBy(() ->
+				RegisteredClient.withId(ID)
+						.clientId(CLIENT_ID)
+						.clientSecret(CLIENT_SECRET)
+						.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+						.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
+						.redirectUri("https://example.com")
+						.postLogoutRedirectUri("https://example.com/index#fragment")
+						.scopes(scopes -> scopes.addAll(SCOPES))
+						.build()
+		).isInstanceOf(IllegalArgumentException.class);
+	}
+
+	@Test
 	public void buildWhenTwoAuthorizationGrantTypesAreProvidedThenBothAreRegistered() {
 		RegisteredClient registration = RegisteredClient.withId(ID)
 				.clientId(CLIENT_ID)
@@ -345,6 +377,8 @@ public class RegisteredClientTests {
 		assertThat(registration.getAuthorizationGrantTypes()).isNotSameAs(updated.getAuthorizationGrantTypes());
 		assertThat(registration.getRedirectUris()).isEqualTo(updated.getRedirectUris());
 		assertThat(registration.getRedirectUris()).isNotSameAs(updated.getRedirectUris());
+		assertThat(registration.getPostLogoutRedirectUris()).isEqualTo(updated.getPostLogoutRedirectUris());
+		assertThat(registration.getPostLogoutRedirectUris()).isNotSameAs(updated.getPostLogoutRedirectUris());
 		assertThat(registration.getScopes()).isEqualTo(updated.getScopes());
 		assertThat(registration.getScopes()).isNotSameAs(updated.getScopes());
 		assertThat(registration.getClientSettings()).isEqualTo(updated.getClientSettings());
@@ -360,6 +394,7 @@ public class RegisteredClientTests {
 		String newSecret = "new-secret";
 		String newScope = "new-scope";
 		String newRedirectUri = "https://another-redirect-uri.com";
+		String newPostLogoutRedirectUri = "https://another-post-logout-redirect-uri.com";
 		RegisteredClient updated = RegisteredClient.from(registration)
 				.clientName(newName)
 				.clientSecret(newSecret)
@@ -371,6 +406,10 @@ public class RegisteredClientTests {
 					redirectUris.clear();
 					redirectUris.add(newRedirectUri);
 				})
+				.postLogoutRedirectUris(postLogoutRedirectUris -> {
+					postLogoutRedirectUris.clear();
+					postLogoutRedirectUris.add(newPostLogoutRedirectUri);
+				})
 				.build();
 
 		assertThat(registration.getClientName()).isNotEqualTo(newName);
@@ -381,6 +420,8 @@ public class RegisteredClientTests {
 		assertThat(updated.getScopes()).containsExactly(newScope);
 		assertThat(registration.getRedirectUris()).doesNotContain(newRedirectUri);
 		assertThat(updated.getRedirectUris()).containsExactly(newRedirectUri);
+		assertThat(registration.getPostLogoutRedirectUris()).doesNotContain(newPostLogoutRedirectUri);
+		assertThat(updated.getPostLogoutRedirectUris()).containsExactly(newPostLogoutRedirectUri);
 	}
 
 	@Test

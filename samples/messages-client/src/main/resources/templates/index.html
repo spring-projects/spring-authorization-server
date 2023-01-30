@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="https://www.thymeleaf.org" xmlns:sec="https://www.thymeleaf.org/thymeleaf-extras-springsecurity5">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="https://www.thymeleaf.org" xmlns:sec="https://www.thymeleaf.org/thymeleaf-extras-springsecurity6">
     <head>
         <title>Spring Security OAuth 2.0 Sample</title>
         <meta charset="utf-8" />
@@ -10,10 +10,11 @@
     <body>
         <div th:fragment="header">
             <nav class="navbar navbar-default">
-                <div class="container">
-                    <div class="container-fluid">
-                        <div class="navbar-collapse collapse" id="navbar">
-                        </div>
+                <div class="container-fluid">
+                    <div class="collapse navbar-collapse">
+                        <form class="navbar-form navbar-right" th:action="@{/logout}" method="post">
+                            <button type="submit" class="btn btn-default navbar-btn">Logout</button>
+                        </form>
                     </div>
                 </div>
             </nav>

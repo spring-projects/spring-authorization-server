@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import org.springframework.util.Assert;
  * The claims are defined by the OpenID Connect Discovery 1.0 specification.
  *
  * @author Daniel Garnier-Moiroux
+ * @author Joe Grandja
  * @since 0.1.0
  * @see AbstractOAuth2AuthorizationServerMetadata
  * @see OidcProviderMetadataClaimAccessor
@@ -131,6 +132,17 @@ public final class OidcProviderConfiguration extends AbstractOAuth2Authorization
 		}
 
 		/**
+		 * Use this {@code end_session_endpoint} in the resulting {@link OidcProviderConfiguration}, OPTIONAL.
+		 *
+		 * @param endSessionEndpoint the {@code URL} of the OpenID Connect 1.0 End Session Endpoint
+		 * @return the {@link Builder} for further configuration
+		 * @since 1.1.0
+		 */
+		public Builder endSessionEndpoint(String endSessionEndpoint) {
+			return claim(OidcProviderMetadataClaimNames.END_SESSION_ENDPOINT, endSessionEndpoint);
+		}
+
+		/**
 		 * Validate the claims and build the {@link OidcProviderConfiguration}.
 		 * <p>
 		 * The following claims are REQUIRED:
@@ -158,6 +170,9 @@ public final class OidcProviderConfiguration extends AbstractOAuth2Authorization
 			Assert.notEmpty((List<?>) getClaims().get(OidcProviderMetadataClaimNames.ID_TOKEN_SIGNING_ALG_VALUES_SUPPORTED), "idTokenSigningAlgorithms cannot be empty");
 			if (getClaims().get(OidcProviderMetadataClaimNames.USER_INFO_ENDPOINT) != null) {
 				validateURL(getClaims().get(OidcProviderMetadataClaimNames.USER_INFO_ENDPOINT), "userInfoEndpoint must be a valid URL");
+			}
+			if (getClaims().get(OidcProviderMetadataClaimNames.END_SESSION_ENDPOINT) != null) {
+				validateURL(getClaims().get(OidcProviderMetadataClaimNames.END_SESSION_ENDPOINT), "endSessionEndpoint must be a valid URL");
 			}
 		}
 

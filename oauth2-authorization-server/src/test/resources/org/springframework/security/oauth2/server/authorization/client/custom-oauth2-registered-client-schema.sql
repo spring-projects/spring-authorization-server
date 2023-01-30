@@ -8,6 +8,7 @@ CREATE TABLE oauth2RegisteredClient (
     clientAuthenticationMethods varchar(1000) NOT NULL,
     authorizationGrantTypes varchar(1000) NOT NULL,
     redirectUris varchar(1000) DEFAULT NULL,
+    postLogoutRedirectUris varchar(1000) DEFAULT NULL,
     scopes varchar(1000) NOT NULL,
     clientSettings varchar(2000) NOT NULL,
     tokenSettings varchar(2000) NOT NULL,

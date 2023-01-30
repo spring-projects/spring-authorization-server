@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,6 +58,7 @@ public class OidcClientRegistrationTests {
 				.clientSecretExpiresAt(clientSecretExpiresAt)
 				.clientName("client-name")
 				.redirectUri("https://client.example.com")
+				.postLogoutRedirectUri("https://client.example.com/oidc-post-logout")
 				.tokenEndpointAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_JWT.getValue())
 				.tokenEndpointAuthenticationSigningAlgorithm(MacAlgorithm.HS256.getName())
 				.grantType(AuthorizationGrantType.AUTHORIZATION_CODE.getValue())
@@ -79,6 +80,7 @@ public class OidcClientRegistrationTests {
 		assertThat(clientRegistration.getClientSecretExpiresAt()).isEqualTo(clientSecretExpiresAt);
 		assertThat(clientRegistration.getClientName()).isEqualTo("client-name");
 		assertThat(clientRegistration.getRedirectUris()).containsOnly("https://client.example.com");
+		assertThat(clientRegistration.getPostLogoutRedirectUris()).containsOnly("https://client.example.com/oidc-post-logout");
 		assertThat(clientRegistration.getTokenEndpointAuthenticationMethod()).isEqualTo(ClientAuthenticationMethod.CLIENT_SECRET_JWT.getValue());
 		assertThat(clientRegistration.getTokenEndpointAuthenticationSigningAlgorithm()).isEqualTo(MacAlgorithm.HS256.getName());
 		assertThat(clientRegistration.getGrantTypes()).containsExactlyInAnyOrder("authorization_code", "client_credentials");
@@ -108,6 +110,7 @@ public class OidcClientRegistrationTests {
 		claims.put(OidcClientMetadataClaimNames.CLIENT_SECRET_EXPIRES_AT, clientSecretExpiresAt);
 		claims.put(OidcClientMetadataClaimNames.CLIENT_NAME, "client-name");
 		claims.put(OidcClientMetadataClaimNames.REDIRECT_URIS, Collections.singletonList("https://client.example.com"));
+		claims.put(OidcClientMetadataClaimNames.POST_LOGOUT_REDIRECT_URIS, Collections.singletonList("https://client.example.com/oidc-post-logout"));
 		claims.put(OidcClientMetadataClaimNames.TOKEN_ENDPOINT_AUTH_METHOD, ClientAuthenticationMethod.CLIENT_SECRET_JWT.getValue());
 		claims.put(OidcClientMetadataClaimNames.TOKEN_ENDPOINT_AUTH_SIGNING_ALG, MacAlgorithm.HS256.getName());
 		claims.put(OidcClientMetadataClaimNames.GRANT_TYPES, Arrays.asList(
@@ -128,6 +131,7 @@ public class OidcClientRegistrationTests {
 		assertThat(clientRegistration.getClientSecretExpiresAt()).isEqualTo(clientSecretExpiresAt);
 		assertThat(clientRegistration.getClientName()).isEqualTo("client-name");
 		assertThat(clientRegistration.getRedirectUris()).containsOnly("https://client.example.com");
+		assertThat(clientRegistration.getPostLogoutRedirectUris()).containsOnly("https://client.example.com/oidc-post-logout");
 		assertThat(clientRegistration.getTokenEndpointAuthenticationMethod()).isEqualTo(ClientAuthenticationMethod.CLIENT_SECRET_JWT.getValue());
 		assertThat(clientRegistration.getTokenEndpointAuthenticationSigningAlgorithm()).isEqualTo(MacAlgorithm.HS256.getName());
 		assertThat(clientRegistration.getGrantTypes()).containsExactlyInAnyOrder("authorization_code", "client_credentials");
@@ -259,6 +263,41 @@ public class OidcClientRegistrationTests {
 		// @formatter:on
 
 		assertThat(clientRegistration.getRedirectUris()).containsExactly("https://client2.example.com");
+	}
+
+	@Test
+	public void buildWhenPostLogoutRedirectUrisNotListThenThrowIllegalArgumentException() {
+		OidcClientRegistration.Builder builder = this.minimalBuilder
+				.claim(OidcClientMetadataClaimNames.POST_LOGOUT_REDIRECT_URIS, "postLogoutRedirectUris");
+
+		assertThatIllegalArgumentException()
+				.isThrownBy(builder::build)
+				.withMessageStartingWith("post_logout_redirect_uris must be of type List");
+	}
+
+	@Test
+	public void buildWhenPostLogoutRedirectUrisEmptyListThenThrowIllegalArgumentException() {
+		OidcClientRegistration.Builder builder = this.minimalBuilder
+				.claim(OidcClientMetadataClaimNames.POST_LOGOUT_REDIRECT_URIS, Collections.emptyList());
+
+		assertThatIllegalArgumentException()
+				.isThrownBy(builder::build)
+				.withMessage("post_logout_redirect_uris cannot be empty");
+	}
+
+	@Test
+	public void buildWhenPostLogoutRedirectUrisAddingOrRemovingThenCorrectValues() {
+		// @formatter:off
+		OidcClientRegistration clientRegistration = this.minimalBuilder
+				.postLogoutRedirectUri("https://client1.example.com/oidc-post-logout")
+				.postLogoutRedirectUris(postLogoutRedirectUris -> {
+					postLogoutRedirectUris.clear();
+					postLogoutRedirectUris.add("https://client2.example.com/oidc-post-logout");
+				})
+				.build();
+		// @formatter:on
+
+		assertThat(clientRegistration.getPostLogoutRedirectUris()).containsExactly("https://client2.example.com/oidc-post-logout");
 	}
 
 	@Test

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
  * Tests for {@link AuthorizationServerSettings}.
  *
  * @author Daniel Garnier-Moiroux
+ * @author Joe Grandja
  */
 public class AuthorizationServerSettingsTests {
 
@@ -39,6 +40,7 @@ public class AuthorizationServerSettingsTests {
 		assertThat(authorizationServerSettings.getTokenIntrospectionEndpoint()).isEqualTo("/oauth2/introspect");
 		assertThat(authorizationServerSettings.getOidcClientRegistrationEndpoint()).isEqualTo("/connect/register");
 		assertThat(authorizationServerSettings.getOidcUserInfoEndpoint()).isEqualTo("/userinfo");
+		assertThat(authorizationServerSettings.getOidcLogoutEndpoint()).isEqualTo("/connect/logout");
 	}
 
 	@Test
@@ -50,6 +52,7 @@ public class AuthorizationServerSettingsTests {
 		String tokenIntrospectionEndpoint = "/oauth2/v1/introspect";
 		String oidcClientRegistrationEndpoint = "/connect/v1/register";
 		String oidcUserInfoEndpoint = "/connect/v1/userinfo";
+		String oidcLogoutEndpoint = "/connect/v1/logout";
 		String issuer = "https://example.com:9000";
 
 		AuthorizationServerSettings authorizationServerSettings = AuthorizationServerSettings.builder()
@@ -62,6 +65,7 @@ public class AuthorizationServerSettingsTests {
 				.tokenRevocationEndpoint(tokenRevocationEndpoint)
 				.oidcClientRegistrationEndpoint(oidcClientRegistrationEndpoint)
 				.oidcUserInfoEndpoint(oidcUserInfoEndpoint)
+				.oidcLogoutEndpoint(oidcLogoutEndpoint)
 				.build();
 
 		assertThat(authorizationServerSettings.getIssuer()).isEqualTo(issuer);
@@ -72,6 +76,7 @@ public class AuthorizationServerSettingsTests {
 		assertThat(authorizationServerSettings.getTokenIntrospectionEndpoint()).isEqualTo(tokenIntrospectionEndpoint);
 		assertThat(authorizationServerSettings.getOidcClientRegistrationEndpoint()).isEqualTo(oidcClientRegistrationEndpoint);
 		assertThat(authorizationServerSettings.getOidcUserInfoEndpoint()).isEqualTo(oidcUserInfoEndpoint);
+		assertThat(authorizationServerSettings.getOidcLogoutEndpoint()).isEqualTo(oidcLogoutEndpoint);
 	}
 
 	@Test
@@ -81,7 +86,7 @@ public class AuthorizationServerSettingsTests {
 				.settings(settings -> settings.put("name2", "value2"))
 				.build();
 
-		assertThat(authorizationServerSettings.getSettings()).hasSize(9);
+		assertThat(authorizationServerSettings.getSettings()).hasSize(10);
 		assertThat(authorizationServerSettings.<String>getSetting("name1")).isEqualTo("value1");
 		assertThat(authorizationServerSettings.<String>getSetting("name2")).isEqualTo("value2");
 	}
@@ -139,6 +144,13 @@ public class AuthorizationServerSettingsTests {
 	public void jwksEndpointWhenNullThenThrowIllegalArgumentException() {
 		assertThatIllegalArgumentException()
 				.isThrownBy(() -> AuthorizationServerSettings.builder().jwkSetEndpoint(null))
+				.withMessage("value cannot be null");
+	}
+
+	@Test
+	public void oidcLogoutEndpointWhenNullThenThrowIllegalArgumentException() {
+		assertThatIllegalArgumentException()
+				.isThrownBy(() -> AuthorizationServerSettings.builder().oidcLogoutEndpoint(null))
 				.withMessage("value cannot be null");
 	}
 

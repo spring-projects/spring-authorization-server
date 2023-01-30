@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,6 +53,7 @@ import org.springframework.security.oauth2.core.OAuth2RefreshToken;
 import org.springframework.security.oauth2.core.OAuth2Token;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
+import org.springframework.security.oauth2.core.oidc.endpoint.OidcParameterNames;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.jackson2.OAuth2AuthorizationServerJackson2Module;
@@ -112,11 +113,12 @@ public class JdbcOAuth2AuthorizationService implements OAuth2AuthorizationServic
 
 	private static final String PK_FILTER = "id = ?";
 	private static final String UNKNOWN_TOKEN_TYPE_FILTER = "state = ? OR authorization_code_value = ? OR " +
-			"access_token_value = ? OR refresh_token_value = ?";
+			"access_token_value = ? OR oidc_id_token_value = ? OR refresh_token_value = ?";
 
 	private static final String STATE_FILTER = "state = ?";
 	private static final String AUTHORIZATION_CODE_FILTER = "authorization_code_value = ?";
 	private static final String ACCESS_TOKEN_FILTER = "access_token_value = ?";
+	private static final String ID_TOKEN_FILTER = "oidc_id_token_value = ?";
 	private static final String REFRESH_TOKEN_FILTER = "refresh_token_value = ?";
 
 	// @formatter:off
@@ -240,6 +242,7 @@ public class JdbcOAuth2AuthorizationService implements OAuth2AuthorizationServic
 			parameters.add(new SqlParameterValue(Types.VARCHAR, token));
 			parameters.add(mapToSqlParameter("authorization_code_value", token));
 			parameters.add(mapToSqlParameter("access_token_value", token));
+			parameters.add(mapToSqlParameter("oidc_id_token_value", token));
 			parameters.add(mapToSqlParameter("refresh_token_value", token));
 			return findBy(UNKNOWN_TOKEN_TYPE_FILTER, parameters);
 		} else if (OAuth2ParameterNames.STATE.equals(tokenType.getValue())) {
@@ -251,6 +254,9 @@ public class JdbcOAuth2AuthorizationService implements OAuth2AuthorizationServic
 		} else if (OAuth2TokenType.ACCESS_TOKEN.equals(tokenType)) {
 			parameters.add(mapToSqlParameter("access_token_value", token));
 			return findBy(ACCESS_TOKEN_FILTER, parameters);
+		} else if (OidcParameterNames.ID_TOKEN.equals(tokenType.getValue())) {
+			parameters.add(mapToSqlParameter("oidc_id_token_value", token));
+			return findBy(ID_TOKEN_FILTER, parameters);
 		} else if (OAuth2TokenType.REFRESH_TOKEN.equals(tokenType)) {
 			parameters.add(mapToSqlParameter("refresh_token_value", token));
 			return findBy(REFRESH_TOKEN_FILTER, parameters);

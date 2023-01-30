@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -172,6 +172,10 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 
 		if (!isValidRedirectUris(clientRegistrationAuthentication.getClientRegistration().getRedirectUris())) {
 			throwInvalidClientRegistration(OAuth2ErrorCodes.INVALID_REDIRECT_URI, OidcClientMetadataClaimNames.REDIRECT_URIS);
+		}
+
+		if (!isValidRedirectUris(clientRegistrationAuthentication.getClientRegistration().getPostLogoutRedirectUris())) {
+			throwInvalidClientRegistration("invalid_client_metadata", OidcClientMetadataClaimNames.POST_LOGOUT_REDIRECT_URIS);
 		}
 
 		if (!isValidTokenEndpointAuthenticationMethod(clientRegistrationAuthentication.getClientRegistration())) {
@@ -370,6 +374,11 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 
 			builder.redirectUris(redirectUris ->
 					redirectUris.addAll(clientRegistration.getRedirectUris()));
+
+			if (!CollectionUtils.isEmpty(clientRegistration.getPostLogoutRedirectUris())) {
+				builder.postLogoutRedirectUris(postLogoutRedirectUris ->
+						postLogoutRedirectUris.addAll(clientRegistration.getPostLogoutRedirectUris()));
+			}
 
 			if (!CollectionUtils.isEmpty(clientRegistration.getGrantTypes())) {
 				builder.authorizationGrantTypes(authorizationGrantTypes ->

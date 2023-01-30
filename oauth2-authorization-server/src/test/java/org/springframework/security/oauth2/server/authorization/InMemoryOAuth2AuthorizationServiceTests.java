@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,8 @@ import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2RefreshToken;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
+import org.springframework.security.oauth2.core.oidc.OidcIdToken;
+import org.springframework.security.oauth2.core.oidc.endpoint.OidcParameterNames;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
 
@@ -47,6 +49,7 @@ public class InMemoryOAuth2AuthorizationServiceTests {
 			"code", Instant.now(), Instant.now().plus(5, ChronoUnit.MINUTES));
 	private static final OAuth2TokenType AUTHORIZATION_CODE_TOKEN_TYPE = new OAuth2TokenType(OAuth2ParameterNames.CODE);
 	private static final OAuth2TokenType STATE_TOKEN_TYPE = new OAuth2TokenType(OAuth2ParameterNames.STATE);
+	private static final OAuth2TokenType ID_TOKEN_TOKEN_TYPE = new OAuth2TokenType(OidcParameterNames.ID_TOKEN);
 	private InMemoryOAuth2AuthorizationService authorizationService;
 
 	@BeforeEach
@@ -260,6 +263,29 @@ public class InMemoryOAuth2AuthorizationServiceTests {
 				accessToken.getTokenValue(), OAuth2TokenType.ACCESS_TOKEN);
 		assertThat(authorization).isEqualTo(result);
 		result = this.authorizationService.findByToken(accessToken.getTokenValue(), null);
+		assertThat(authorization).isEqualTo(result);
+	}
+
+	@Test
+	public void findByTokenWhenIdTokenExistsThenFound() {
+		OidcIdToken idToken =  OidcIdToken.withTokenValue("id-token")
+				.issuer("https://provider.com")
+				.subject("subject")
+				.issuedAt(Instant.now().minusSeconds(60))
+				.expiresAt(Instant.now())
+				.build();
+		OAuth2Authorization authorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
+				.id(ID)
+				.principalName(PRINCIPAL_NAME)
+				.authorizationGrantType(AUTHORIZATION_GRANT_TYPE)
+				.token(idToken)
+				.build();
+		this.authorizationService.save(authorization);
+
+		OAuth2Authorization result = this.authorizationService.findByToken(
+				idToken.getTokenValue(), ID_TOKEN_TOKEN_TYPE);
+		assertThat(authorization).isEqualTo(result);
+		result = this.authorizationService.findByToken(idToken.getTokenValue(), null);
 		assertThat(authorization).isEqualTo(result);
 	}
 

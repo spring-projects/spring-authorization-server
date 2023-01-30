@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
  * @author Joe Grandja
  * @since 0.1.1
  * @see <a target="_blank" href="https://openid.net/specs/openid-connect-registration-1_0.html#ClientMetadata">2. Client Metadata</a>
+ * @see <a target="_blank" href="https://openid.net/specs/openid-connect-rpinitiated-1_0.html#ClientMetadata">3.1. Client Registration Metadata</a>
  */
 public final class OidcClientMetadataClaimNames {
 
@@ -60,6 +61,14 @@ public final class OidcClientMetadataClaimNames {
 	 * {@code redirect_uris} - the redirection {@code URI} values used by the Client
 	 */
 	public static final String REDIRECT_URIS = "redirect_uris";
+
+	/**
+	 * {@code post_logout_redirect_uris} - the post logout redirection {@code URI} values used by the Client.
+	 * The {@code post_logout_redirect_uri} parameter is used by the client when requesting
+	 * that the End-User's User Agent be redirected to after a logout has been performed.
+	 * @since 1.1.0
+	 */
+	public static final String POST_LOGOUT_REDIRECT_URIS = "post_logout_redirect_uris";
 
 	/**
 	 * {@code token_endpoint_auth_method} - the authentication method used by the Client for the Token Endpoint

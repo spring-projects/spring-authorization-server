@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.ObjectPostProcessor;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.server.authorization.oidc.OidcClientRegistration;
@@ -221,6 +222,10 @@ public final class OidcClientRegistrationEndpointConfigurer extends AbstractOAut
 						OAuth2ConfigurerUtils.getRegisteredClientRepository(httpSecurity),
 						OAuth2ConfigurerUtils.getAuthorizationService(httpSecurity),
 						OAuth2ConfigurerUtils.getTokenGenerator(httpSecurity));
+		PasswordEncoder passwordEncoder = OAuth2ConfigurerUtils.getOptionalBean(httpSecurity, PasswordEncoder.class);
+		if (passwordEncoder != null) {
+			oidcClientRegistrationAuthenticationProvider.setPasswordEncoder(passwordEncoder);
+		}
 		authenticationProviders.add(oidcClientRegistrationAuthenticationProvider);
 
 		OidcClientConfigurationAuthenticationProvider oidcClientConfigurationAuthenticationProvider =

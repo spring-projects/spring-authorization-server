@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,8 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.AuthorityUtils;
+import org.springframework.security.crypto.password.NoOpPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
@@ -90,6 +92,8 @@ public class OidcClientRegistrationAuthenticationProviderTests {
 	private AuthorizationServerSettings authorizationServerSettings;
 	private OidcClientRegistrationAuthenticationProvider authenticationProvider;
 
+	private PasswordEncoder passwordEncoder;
+
 	@BeforeEach
 	public void setUp() {
 		this.registeredClientRepository = mock(RegisteredClientRepository.class);
@@ -106,6 +110,18 @@ public class OidcClientRegistrationAuthenticationProviderTests {
 		AuthorizationServerContextHolder.setContext(new TestAuthorizationServerContext(this.authorizationServerSettings, null));
 		this.authenticationProvider = new OidcClientRegistrationAuthenticationProvider(
 				this.registeredClientRepository, this.authorizationService, this.tokenGenerator);
+		this.passwordEncoder = spy(new PasswordEncoder() {
+			@Override
+			public String encode(CharSequence rawPassword) {
+				return NoOpPasswordEncoder.getInstance().encode(rawPassword);
+			}
+
+			@Override
+			public boolean matches(CharSequence rawPassword, String encodedPassword) {
+				return NoOpPasswordEncoder.getInstance().matches(rawPassword, encodedPassword);
+			}
+		});
+		this.authenticationProvider.setPasswordEncoder(this.passwordEncoder);
 	}
 
 	@AfterEach
@@ -139,6 +155,13 @@ public class OidcClientRegistrationAuthenticationProviderTests {
 		assertThatIllegalArgumentException()
 				.isThrownBy(() -> this.authenticationProvider.setRegisteredClientConverter(null))
 				.withMessage("registeredClientConverter cannot be null");
+	}
+
+	@Test
+	public void setPasswordEncoderWhenNullThenThrowIllegalArgumentException() {
+		assertThatThrownBy(() -> this.authenticationProvider.setPasswordEncoder(null))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("passwordEncoder cannot be null");
 	}
 
 	@Test
@@ -472,6 +495,7 @@ public class OidcClientRegistrationAuthenticationProviderTests {
 		assertThat(authenticationResult.getClientRegistration().getTokenEndpointAuthenticationSigningAlgorithm())
 				.isEqualTo(MacAlgorithm.HS256.getName());
 		assertThat(authenticationResult.getClientRegistration().getClientSecret()).isNotNull();
+		verify(this.passwordEncoder).encode(any());
 
 		// @formatter:off
 		builder

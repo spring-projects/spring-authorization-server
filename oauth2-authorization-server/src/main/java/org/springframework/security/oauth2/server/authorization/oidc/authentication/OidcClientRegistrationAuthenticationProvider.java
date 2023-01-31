@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,8 +34,10 @@ import org.springframework.core.convert.converter.Converter;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.keygen.Base64StringKeyGenerator;
 import org.springframework.security.crypto.keygen.StringKeyGenerator;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClaimAccessor;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
@@ -79,6 +81,7 @@ import org.springframework.util.StringUtils;
  * @see OAuth2TokenGenerator
  * @see OidcClientRegistrationAuthenticationToken
  * @see OidcClientConfigurationAuthenticationProvider
+ * @see PasswordEncoder
  * @see <a href="https://openid.net/specs/openid-connect-registration-1_0.html#ClientRegistration">3. Client Registration Endpoint</a>
  */
 public final class OidcClientRegistrationAuthenticationProvider implements AuthenticationProvider {
@@ -90,6 +93,8 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 	private final OAuth2TokenGenerator<? extends OAuth2Token> tokenGenerator;
 	private final Converter<RegisteredClient, OidcClientRegistration> clientRegistrationConverter;
 	private Converter<OidcClientRegistration, RegisteredClient> registeredClientConverter;
+
+	private PasswordEncoder passwordEncoder;
 
 	/**
 	 * Constructs an {@code OidcClientRegistrationAuthenticationProvider} using the provided parameters.
@@ -109,6 +114,21 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 		this.tokenGenerator = tokenGenerator;
 		this.clientRegistrationConverter = new RegisteredClientOidcClientRegistrationConverter();
 		this.registeredClientConverter = new OidcClientRegistrationRegisteredClientConverter();
+		this.passwordEncoder = PasswordEncoderFactories.createDelegatingPasswordEncoder();
+	}
+
+	/**
+	 * Sets the {@link PasswordEncoder} used to encode the clientSecret
+	 * the {@link RegisteredClient#getClientSecret() client secret}.
+	 * If not set, the client secret will be encoded using
+	 * {@link PasswordEncoderFactories#createDelegatingPasswordEncoder()}.
+	 *
+	 * @param passwordEncoder the {@link PasswordEncoder} used to encode the clientSecret
+	 * @since 1.1.0
+	 */
+	public void setPasswordEncoder(PasswordEncoder passwordEncoder) {
+		Assert.notNull(passwordEncoder, "passwordEncoder cannot be null");
+		this.passwordEncoder = passwordEncoder;
 	}
 
 	@Override
@@ -183,7 +203,21 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 		}
 
 		RegisteredClient registeredClient = this.registeredClientConverter.convert(clientRegistrationAuthentication.getClientRegistration());
-		this.registeredClientRepository.save(registeredClient);
+
+		// When secret exists, copy RegisteredClient and encode only secret
+		String rawClientSecret = registeredClient.getClientSecret();
+		String clientSecret = null;
+		RegisteredClient saveRegisteredClient = null;
+		if (rawClientSecret != null) {
+			clientSecret = passwordEncoder.encode(rawClientSecret);
+			saveRegisteredClient = RegisteredClient.from(registeredClient)
+					.clientSecret(clientSecret)
+					.build();
+		} else {
+			saveRegisteredClient = registeredClient;
+		}
+
+		this.registeredClientRepository.save(saveRegisteredClient);
 
 		if (this.logger.isTraceEnabled()) {
 			this.logger.trace("Saved registered client");

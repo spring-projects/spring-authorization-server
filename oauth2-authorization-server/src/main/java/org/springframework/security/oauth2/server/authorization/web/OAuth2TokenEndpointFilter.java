@@ -86,6 +86,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
  * @author Joe Grandja
  * @author Madhu Bhat
  * @author Daniel Garnier-Moiroux
+ * @author luamas
  * @since 0.0.1
  * @see AuthenticationManager
  * @see OAuth2AuthorizationCodeAuthenticationProvider
@@ -102,9 +103,9 @@ public final class OAuth2TokenEndpointFilter extends OncePerRequestFilter {
 	private static final String DEFAULT_ERROR_URI = "https://datatracker.ietf.org/doc/html/rfc6749#section-5.2";
 	private final AuthenticationManager authenticationManager;
 	private final RequestMatcher tokenEndpointMatcher;
-	private final HttpMessageConverter<OAuth2AccessTokenResponse> accessTokenHttpResponseConverter =
+	private HttpMessageConverter<OAuth2AccessTokenResponse> accessTokenHttpResponseConverter =
 			new OAuth2AccessTokenResponseHttpMessageConverter();
-	private final HttpMessageConverter<OAuth2Error> errorHttpResponseConverter =
+	private HttpMessageConverter<OAuth2Error> errorHttpResponseConverter =
 			new OAuth2ErrorHttpMessageConverter();
 	private AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource =
 			new WebAuthenticationDetailsSource();
@@ -173,6 +174,26 @@ public final class OAuth2TokenEndpointFilter extends OncePerRequestFilter {
 			}
 			this.authenticationFailureHandler.onAuthenticationFailure(request, response, ex);
 		}
+	}
+
+	/**
+	 * Sets the {@link HttpMessageConverter} used for building a custom the response body from {@link OAuth2AccessTokenResponse}.
+	 *
+	 * @param accessTokenHttpResponseConverter the {@link HttpMessageConverter} used for building a custom the response body from {@link OAuth2AccessTokenResponse}
+	 */
+	public void setAccessTokenHttpResponseConverter(HttpMessageConverter<OAuth2AccessTokenResponse> accessTokenHttpResponseConverter) {
+		Assert.notNull(accessTokenHttpResponseConverter, "accessTokenHttpResponseConverter cannot be null");
+		this.accessTokenHttpResponseConverter = accessTokenHttpResponseConverter;
+	}
+
+	/**
+	 * Sets the {@link HttpMessageConverter} used for building a custom the response body from {@link OAuth2Error}.
+	 *
+	 * @param errorHttpResponseConverter the {@link HttpMessageConverter} used for building a custom the response body from {@link OAuth2Error}
+	 */
+	public void setErrorHttpResponseConverter(HttpMessageConverter<OAuth2Error> errorHttpResponseConverter) {
+		Assert.notNull(errorHttpResponseConverter, "errorHttpResponseConverter cannot be null");
+		this.errorHttpResponseConverter = errorHttpResponseConverter;
 	}
 
 	/**

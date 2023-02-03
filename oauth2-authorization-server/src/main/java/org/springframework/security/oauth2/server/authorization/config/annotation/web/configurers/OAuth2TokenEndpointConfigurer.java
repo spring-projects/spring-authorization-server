@@ -22,6 +22,7 @@ import java.util.function.Consumer;
 import jakarta.servlet.http.HttpServletRequest;
 
 import org.springframework.http.HttpMethod;
+import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.ObjectPostProcessor;
@@ -65,6 +66,8 @@ public final class OAuth2TokenEndpointConfigurer extends AbstractOAuth2Configure
 	private Consumer<List<AuthenticationConverter>> accessTokenRequestConvertersConsumer = (accessTokenRequestConverters) -> {};
 	private final List<AuthenticationProvider> authenticationProviders = new ArrayList<>();
 	private Consumer<List<AuthenticationProvider>> authenticationProvidersConsumer = (authenticationProviders) -> {};
+	private HttpMessageConverter<OAuth2AccessTokenResponse> accessTokenHttpResponseConverter;
+	private HttpMessageConverter<OAuth2Error> errorHttpResponseConverter;
 	private AuthenticationSuccessHandler accessTokenResponseHandler;
 	private AuthenticationFailureHandler errorResponseHandler;
 
@@ -133,6 +136,26 @@ public final class OAuth2TokenEndpointConfigurer extends AbstractOAuth2Configure
 	}
 
 	/**
+	 * Sets the {@link HttpMessageConverter} used for building a custom the response body from {@link OAuth2AccessTokenResponse}.
+	 *
+	 * @param accessTokenHttpResponseConverter the {@link HttpMessageConverter} used for building a custom the response body from {@link OAuth2AccessTokenResponse}
+	 */
+	public OAuth2TokenEndpointConfigurer accessTokenHttpResponseConverter(HttpMessageConverter<OAuth2AccessTokenResponse> accessTokenHttpResponseConverter) {
+		this.accessTokenHttpResponseConverter = accessTokenHttpResponseConverter;
+		return this;
+	}
+
+	/**
+	 * Sets the {@link HttpMessageConverter} used for building a custom the response body from {@link OAuth2Error}.
+	 *
+	 * @param errorHttpResponseConverter the {@link HttpMessageConverter} used for building a custom the response body from {@link OAuth2Error}
+	 */
+	public OAuth2TokenEndpointConfigurer errorHttpResponseConverter(HttpMessageConverter<OAuth2Error> errorHttpResponseConverter) {
+		this.errorHttpResponseConverter = errorHttpResponseConverter;
+		return this;
+	}
+
+	/**
 	 * Sets the {@link AuthenticationSuccessHandler} used for handling an {@link OAuth2AccessTokenAuthenticationToken}
 	 * and returning the {@link OAuth2AccessTokenResponse Access Token Response}.
 	 *
@@ -187,6 +210,12 @@ public final class OAuth2TokenEndpointConfigurer extends AbstractOAuth2Configure
 		this.accessTokenRequestConvertersConsumer.accept(authenticationConverters);
 		tokenEndpointFilter.setAuthenticationConverter(
 				new DelegatingAuthenticationConverter(authenticationConverters));
+		if (this.accessTokenHttpResponseConverter != null) {
+			tokenEndpointFilter.setAccessTokenHttpResponseConverter(this.accessTokenHttpResponseConverter);
+		}
+		if (this.errorHttpResponseConverter != null) {
+			tokenEndpointFilter.setErrorHttpResponseConverter(this.errorHttpResponseConverter);
+		}
 		if (this.accessTokenResponseHandler != null) {
 			tokenEndpointFilter.setAuthenticationSuccessHandler(this.accessTokenResponseHandler);
 		}

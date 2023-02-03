@@ -118,6 +118,21 @@ public class OAuth2TokenEndpointFilterTests {
 	}
 
 	@Test
+	public void setAccessTokenHttpResponseConverterWhenNullThenThrowIllegalArgumentException() {
+		assertThatThrownBy(() -> this.filter.setAccessTokenHttpResponseConverter(null))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("accessTokenHttpResponseConverter cannot be null");
+	}
+
+	@Test
+	public void setErrorHttpResponseConverterWhenNullThenThrowIllegalArgumentException() {
+		assertThatThrownBy(() -> this.filter.setErrorHttpResponseConverter(null))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("errorHttpResponseConverter cannot be null");
+	}
+
+
+	@Test
 	public void setAuthenticationDetailsSourceWhenNullThenThrowIllegalArgumentException() {
 		assertThatThrownBy(() -> this.filter.setAuthenticationDetailsSource(null))
 				.isInstanceOf(IllegalArgumentException.class)

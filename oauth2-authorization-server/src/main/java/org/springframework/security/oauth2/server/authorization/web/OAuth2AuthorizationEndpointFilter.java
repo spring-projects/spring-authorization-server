@@ -18,9 +18,7 @@ package org.springframework.security.oauth2.server.authorization.web;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 import javax.servlet.FilterChain;
@@ -66,10 +64,8 @@ import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
-import org.springframework.web.util.DefaultUriBuilderFactory;
-import org.springframework.web.util.UriBuilder;
-import org.springframework.web.util.UriBuilderFactory;
 import org.springframework.web.util.UriComponentsBuilder;
+import org.springframework.web.util.UriUtils;
 
 /**
  * A {@code Filter} for the OAuth 2.0 Authorization Code Grant,
@@ -299,18 +295,16 @@ public final class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilte
 
 		OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthentication =
 				(OAuth2AuthorizationCodeRequestAuthenticationToken) authentication;
-		UriBuilder uriBuilder = valuesOnlyEncodingUriBuilderFactory()
-				.uriString(authorizationCodeRequestAuthentication.getRedirectUri())
+		UriComponentsBuilder uriBuilder = UriComponentsBuilder
+				.fromUriString(authorizationCodeRequestAuthentication.getRedirectUri())
 				.queryParam(OAuth2ParameterNames.CODE, authorizationCodeRequestAuthentication.getAuthorizationCode().getTokenValue());
 		String redirectUri;
 		if (StringUtils.hasText(authorizationCodeRequestAuthentication.getState())) {
-			uriBuilder.queryParam(OAuth2ParameterNames.STATE, "{state}");
-			Map<String, String> queryParams = new HashMap<>();
-			queryParams.put(OAuth2ParameterNames.STATE, authorizationCodeRequestAuthentication.getState());
-			redirectUri = uriBuilder.build(queryParams).toString();
-		} else {
-			redirectUri = uriBuilder.build().toString();
+			uriBuilder.queryParam(
+					OAuth2ParameterNames.STATE,
+					UriUtils.encode(authorizationCodeRequestAuthentication.getState(), StandardCharsets.UTF_8));
 		}
+		redirectUri = uriBuilder.build(true).toUriString();		// build(true) -> Components are explicitly encoded
 		this.redirectStrategy.sendRedirect(request, response, redirectUri);
 	}
 
@@ -344,20 +338,12 @@ public final class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilte
 		}
 		String redirectUri;
 		if (StringUtils.hasText(authorizationCodeRequestAuthentication.getState())) {
-			uriBuilder.queryParam(OAuth2ParameterNames.STATE, "{state}");
-			Map<String, String> queryParams = new HashMap<>();
-			queryParams.put(OAuth2ParameterNames.STATE, authorizationCodeRequestAuthentication.getState());
-			redirectUri = uriBuilder.build(queryParams).toString();
-		} else {
-			redirectUri = uriBuilder.toUriString();
+			uriBuilder.queryParam(
+					OAuth2ParameterNames.STATE,
+					UriUtils.encode(authorizationCodeRequestAuthentication.getState(), StandardCharsets.UTF_8));
 		}
+		redirectUri = uriBuilder.build(true).toUriString();		// build(true) -> Components are explicitly encoded
 		this.redirectStrategy.sendRedirect(request, response, redirectUri);
-	}
-
-	private UriBuilderFactory valuesOnlyEncodingUriBuilderFactory() {
-		DefaultUriBuilderFactory uriBuilderFactory = new DefaultUriBuilderFactory();
-		uriBuilderFactory.setEncodingMode(DefaultUriBuilderFactory.EncodingMode.VALUES_ONLY);
-		return uriBuilderFactory;
 	}
 
 	/**

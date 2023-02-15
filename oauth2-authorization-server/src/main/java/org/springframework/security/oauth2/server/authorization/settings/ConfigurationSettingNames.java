@@ -139,6 +139,11 @@ public final class ConfigurationSettingNames {
 		public static final String ACCESS_TOKEN_TIME_TO_LIVE = TOKEN_SETTINGS_NAMESPACE.concat("access-token-time-to-live");
 
 		/**
+		 * Set the time-to-live for an id token.
+		 */
+		public static final String ID_TOKEN_TIME_TO_LIVE = TOKEN_SETTINGS_NAMESPACE.concat("id-token-time-to-live");
+
+		/**
 		 * Set the {@link OAuth2TokenFormat token format} for an access token.
 		 * @since 0.2.3
 		 */

@@ -56,6 +56,15 @@ public final class TokenSettings extends AbstractSettings {
 	}
 
 	/**
+	 * Returns the time-to-live for an id token. The default is 30 minutes.
+	 *
+	 * @return the time-to-live for an id token
+	 */
+	public Duration getIdTokenTimeToLive() {
+		return getSetting(ConfigurationSettingNames.Token.ID_TOKEN_TIME_TO_LIVE);
+	}
+
+	/**
 	 * Returns the token format for an access token.
 	 * The default is {@link OAuth2TokenFormat#SELF_CONTAINED}.
 	 *
@@ -102,6 +111,7 @@ public final class TokenSettings extends AbstractSettings {
 		return new Builder()
 				.authorizationCodeTimeToLive(Duration.ofMinutes(5))
 				.accessTokenTimeToLive(Duration.ofMinutes(5))
+				.idTokenTimeToLive(Duration.ofMinutes(30))
 				.accessTokenFormat(OAuth2TokenFormat.SELF_CONTAINED)
 				.reuseRefreshTokens(true)
 				.refreshTokenTimeToLive(Duration.ofMinutes(60))
@@ -152,6 +162,18 @@ public final class TokenSettings extends AbstractSettings {
 			Assert.notNull(accessTokenTimeToLive, "accessTokenTimeToLive cannot be null");
 			Assert.isTrue(accessTokenTimeToLive.getSeconds() > 0, "accessTokenTimeToLive must be greater than Duration.ZERO");
 			return setting(ConfigurationSettingNames.Token.ACCESS_TOKEN_TIME_TO_LIVE, accessTokenTimeToLive);
+		}
+
+		/**
+		 * Set the time-to-live for an id token. Must be greater than {@code Duration.ZERO}.
+		 *
+		 * @param idTokenTimeToLive the time-to-live for an id token
+		 * @return the {@link Builder} for further configuration
+		 */
+		public Builder idTokenTimeToLive(Duration idTokenTimeToLive) {
+			Assert.notNull(idTokenTimeToLive, "idTokenTimeToLive cannot be null");
+			Assert.isTrue(idTokenTimeToLive.getSeconds() > 0, "idTokenTimeToLive must be greater than Duration.ZERO");
+			return setting(ConfigurationSettingNames.Token.ID_TOKEN_TIME_TO_LIVE, idTokenTimeToLive);
 		}
 
 		/**

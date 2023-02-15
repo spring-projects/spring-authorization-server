@@ -16,6 +16,7 @@
 package org.springframework.security.oauth2.server.authorization.settings;
 
 import java.time.Duration;
+import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
@@ -34,9 +35,10 @@ public class TokenSettingsTests {
 	@Test
 	public void buildWhenDefaultThenDefaultsAreSet() {
 		TokenSettings tokenSettings = TokenSettings.builder().build();
-		assertThat(tokenSettings.getSettings()).hasSize(6);
+		assertThat(tokenSettings.getSettings()).hasSize(7);
 		assertThat(tokenSettings.getAuthorizationCodeTimeToLive()).isEqualTo(Duration.ofMinutes(5));
 		assertThat(tokenSettings.getAccessTokenTimeToLive()).isEqualTo(Duration.ofMinutes(5));
+		assertThat(tokenSettings.getIdTokenTimeToLive()).isEqualTo(Duration.ofMinutes(30));
 		assertThat(tokenSettings.getAccessTokenFormat()).isEqualTo(OAuth2TokenFormat.SELF_CONTAINED);
 		assertThat(tokenSettings.isReuseRefreshTokens()).isTrue();
 		assertThat(tokenSettings.getRefreshTokenTimeToLive()).isEqualTo(Duration.ofMinutes(60));
@@ -77,6 +79,34 @@ public class TokenSettingsTests {
 				.accessTokenTimeToLive(accessTokenTimeToLive)
 				.build();
 		assertThat(tokenSettings.getAccessTokenTimeToLive()).isEqualTo(accessTokenTimeToLive);
+	}
+
+	@Test
+	void idTokenTimeToLiveWhenProvidedThenSet() {
+		var accessTokenTimeToLive = Duration.ofMinutes(15);
+		var tokenSettings = TokenSettings.builder()
+				.accessTokenTimeToLive(accessTokenTimeToLive)
+				.build();
+		assertThat(tokenSettings.getAccessTokenTimeToLive()).isEqualTo(accessTokenTimeToLive);
+	}
+
+	@Test
+	void idTokenTimeToLiveWhenNullOrZeroOrNegativeThenThrowIllegalArgumentException() {
+		var builder = TokenSettings.builder();
+		assertThatThrownBy(() -> builder.idTokenTimeToLive(null))
+				.isInstanceOf(IllegalArgumentException.class)
+				.extracting(Throwable::getMessage)
+				.isEqualTo("idTokenTimeToLive cannot be null");
+
+		assertThatThrownBy(() -> builder.idTokenTimeToLive(Duration.ZERO))
+				.isInstanceOf(IllegalArgumentException.class)
+				.extracting(Throwable::getMessage)
+				.isEqualTo("idTokenTimeToLive must be greater than Duration.ZERO");
+
+		assertThatThrownBy(() -> builder.idTokenTimeToLive(Duration.ofSeconds(-10)))
+				.isInstanceOf(IllegalArgumentException.class)
+				.extracting(Throwable::getMessage)
+				.isEqualTo("idTokenTimeToLive must be greater than Duration.ZERO");
 	}
 
 	@Test
@@ -163,7 +193,16 @@ public class TokenSettingsTests {
 				.setting("name1", "value1")
 				.settings(settings -> settings.put("name2", "value2"))
 				.build();
-		assertThat(tokenSettings.getSettings()).hasSize(8);
+		assertThat(tokenSettings.getSettings()).hasSize(9);
+		assertThat(tokenSettings.<String>getSetting("name1")).isEqualTo("value1");
+		assertThat(tokenSettings.<String>getSetting("name2")).isEqualTo("value2");
+	}
+
+	@Test
+	void settingWithSettings() {
+		var settings = Map.<String, Object>of("name1", "value1", "name2", "value2");
+		var tokenSettings = TokenSettings.withSettings(settings).build();
+		assertThat(tokenSettings.getSettings()).hasSize(2);
 		assertThat(tokenSettings.<String>getSetting("name1")).isEqualTo("value1");
 		assertThat(tokenSettings.<String>getSetting("name2")).isEqualTo("value2");
 	}

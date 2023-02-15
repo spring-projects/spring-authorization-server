@@ -16,7 +16,6 @@
 package org.springframework.security.oauth2.server.authorization.token;
 
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 
 import org.springframework.lang.Nullable;
@@ -92,8 +91,7 @@ public final class JwtGenerator implements OAuth2TokenGenerator<Jwt> {
 		Instant expiresAt;
 		JwsAlgorithm jwsAlgorithm = SignatureAlgorithm.RS256;
 		if (OidcParameterNames.ID_TOKEN.equals(context.getTokenType().getValue())) {
-			// TODO Allow configuration for ID Token time-to-live
-			expiresAt = issuedAt.plus(30, ChronoUnit.MINUTES);
+			expiresAt = issuedAt.plus(registeredClient.getTokenSettings().getIdTokenTimeToLive());
 			if (registeredClient.getTokenSettings().getIdTokenSignatureAlgorithm() != null) {
 				jwsAlgorithm = registeredClient.getTokenSettings().getIdTokenSignatureAlgorithm();
 			}

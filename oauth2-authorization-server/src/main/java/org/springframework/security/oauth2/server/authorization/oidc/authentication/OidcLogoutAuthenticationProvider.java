@@ -27,7 +27,10 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.session.SessionInformation;
 import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
+import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
+import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
+import org.springframework.security.oauth2.core.oidc.IdTokenClaimNames;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.security.oauth2.core.oidc.endpoint.OidcParameterNames;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
@@ -78,7 +81,7 @@ public final class OidcLogoutAuthenticationProvider implements AuthenticationPro
 		OAuth2Authorization authorization = this.authorizationService.findByToken(
 				oidcLogoutAuthentication.getIdToken(), ID_TOKEN_TOKEN_TYPE);
 		if (authorization == null) {
-			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_TOKEN);
+			throwError(OAuth2ErrorCodes.INVALID_TOKEN, "id_token_hint");
 		}
 
 		RegisteredClient registeredClient = this.registeredClientRepository.findById(
@@ -94,15 +97,15 @@ public final class OidcLogoutAuthenticationProvider implements AuthenticationPro
 		List<String> audClaim = idToken.getAudience();
 		if (CollectionUtils.isEmpty(audClaim) ||
 				!audClaim.contains(registeredClient.getClientId())) {
-			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_TOKEN);
+			throwError(OAuth2ErrorCodes.INVALID_TOKEN, IdTokenClaimNames.AUD);
 		}
 		if (StringUtils.hasText(oidcLogoutAuthentication.getClientId()) &&
 				!oidcLogoutAuthentication.getClientId().equals(registeredClient.getClientId())) {
-			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_TOKEN);
+			throwError(OAuth2ErrorCodes.INVALID_TOKEN, OAuth2ParameterNames.CLIENT_ID);
 		}
 		if (StringUtils.hasText(oidcLogoutAuthentication.getPostLogoutRedirectUri()) &&
 				!registeredClient.getPostLogoutRedirectUris().contains(oidcLogoutAuthentication.getPostLogoutRedirectUri())) {
-			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_REQUEST);
+			throwError(OAuth2ErrorCodes.INVALID_REQUEST, "post_logout_redirect_uri");
 		}
 
 		if (this.logger.isTraceEnabled()) {
@@ -120,7 +123,7 @@ public final class OidcLogoutAuthenticationProvider implements AuthenticationPro
 				String sidClaim = idToken.getClaim("sid");
 				if (!StringUtils.hasText(sidClaim) ||
 						!sidClaim.equals(sessionInformation.getSessionId())) {
-					throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_TOKEN);
+					throwError(OAuth2ErrorCodes.INVALID_TOKEN, "sid");
 				}
 			}
 		}
@@ -158,6 +161,14 @@ public final class OidcLogoutAuthenticationProvider implements AuthenticationPro
 			}
 		}
 		return sessionInformation;
+	}
+
+	private static void throwError(String errorCode, String parameterName) {
+		OAuth2Error error = new OAuth2Error(
+				errorCode,
+				"OpenID Connect 1.0 Logout Request Parameter: " + parameterName,
+				"https://openid.net/specs/openid-connect-rpinitiated-1_0.html#ValidationAndErrorHandling");
+		throw new OAuth2AuthenticationException(error);
 	}
 
 }

@@ -214,8 +214,7 @@ public final class OidcLogoutEndpointFilter extends OncePerRequestFilter {
 			AuthenticationException exception) throws IOException {
 
 		OAuth2Error error = ((OAuth2AuthenticationException) exception).getError();
-		response.sendError(HttpStatus.BAD_REQUEST.value(),
-				"OpenID Connect 1.0 RP-Initiated Logout Error: " + error.toString());
+		response.sendError(HttpStatus.BAD_REQUEST.value(), error.toString());
 	}
 
 }

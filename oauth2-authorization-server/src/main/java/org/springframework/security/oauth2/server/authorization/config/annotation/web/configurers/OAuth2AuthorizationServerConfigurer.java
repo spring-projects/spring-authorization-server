@@ -304,9 +304,6 @@ public final class OAuth2AuthorizationServerConfigurer
 		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils.getAuthorizationServerSettings(httpSecurity);
 
 		AuthorizationServerContextFilter authorizationServerContextFilter = new AuthorizationServerContextFilter(authorizationServerSettings);
-		if (isOidcEnabled()) {
-			authorizationServerContextFilter.setSessionRegistry(OAuth2ConfigurerUtils.getSessionRegistry(httpSecurity));
-		}
 		httpSecurity.addFilterAfter(postProcess(authorizationServerContextFilter), SecurityContextHolderFilter.class);
 
 		JWKSource<com.nimbusds.jose.proc.SecurityContext> jwkSource = OAuth2ConfigurerUtils.getJwkSource(httpSecurity);

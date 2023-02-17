@@ -17,14 +17,10 @@ package org.springframework.security.oauth2.server.authorization.token;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
 
 import org.springframework.lang.Nullable;
 import org.springframework.security.core.session.SessionInformation;
-import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
@@ -131,7 +127,7 @@ public final class JwtGenerator implements OAuth2TokenGenerator<Jwt> {
 					claimsBuilder.claim(IdTokenClaimNames.NONCE, nonce);
 				}
 			}
-			SessionInformation sessionInformation = getSessionInformation(context);
+			SessionInformation sessionInformation = context.get(SessionInformation.class);
 			if (sessionInformation != null) {
 				claimsBuilder.claim("sid", sessionInformation.getSessionId());
 				claimsBuilder.claim(IdTokenClaimNames.AUTH_TIME, sessionInformation.getLastRequest());
@@ -156,6 +152,12 @@ public final class JwtGenerator implements OAuth2TokenGenerator<Jwt> {
 			if (context.getAuthorizationGrant() != null) {
 				jwtContextBuilder.authorizationGrant(context.getAuthorizationGrant());
 			}
+			if (OidcParameterNames.ID_TOKEN.equals(context.getTokenType().getValue())) {
+				SessionInformation sessionInformation = context.get(SessionInformation.class);
+				if (sessionInformation != null) {
+					jwtContextBuilder.put(SessionInformation.class, sessionInformation);
+				}
+			}
 			// @formatter:on
 
 			JwtEncodingContext jwtContext = jwtContextBuilder.build();
@@ -168,24 +170,6 @@ public final class JwtGenerator implements OAuth2TokenGenerator<Jwt> {
 		Jwt jwt = this.jwtEncoder.encode(JwtEncoderParameters.from(jwsHeader, claims));
 
 		return jwt;
-	}
-
-	private static SessionInformation getSessionInformation(OAuth2TokenContext context) {
-		SessionInformation sessionInformation = null;
-		if (context.getAuthorizationServerContext().getSessionRegistry() != null) {
-			SessionRegistry sessionRegistry = context.getAuthorizationServerContext().getSessionRegistry();
-			List<SessionInformation> sessions = sessionRegistry.getAllSessions(context.getPrincipal().getPrincipal(), false);
-			if (!CollectionUtils.isEmpty(sessions)) {
-				sessionInformation = sessions.get(0);
-				if (sessions.size() > 1) {
-					// Get the most recent session
-					sessions = new ArrayList<>(sessions);
-					sessions.sort(Comparator.comparing(SessionInformation::getLastRequest));
-					sessionInformation = sessions.get(sessions.size() - 1);
-				}
-			}
-		}
-		return sessionInformation;
 	}
 
 	/**

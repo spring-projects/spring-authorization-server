@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,11 @@ import java.security.Principal;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -31,6 +34,8 @@ import org.mockito.ArgumentCaptor;
 
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.session.SessionInformation;
+import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
@@ -95,6 +100,7 @@ public class OAuth2AuthorizationCodeAuthenticationProviderTests {
 	private OAuth2TokenCustomizer<JwtEncodingContext> jwtCustomizer;
 	private OAuth2TokenCustomizer<OAuth2TokenClaimsContext> accessTokenCustomizer;
 	private OAuth2TokenGenerator<?> tokenGenerator;
+	private SessionRegistry sessionRegistry;
 	private OAuth2AuthorizationCodeAuthenticationProvider authenticationProvider;
 
 	@BeforeEach
@@ -116,8 +122,10 @@ public class OAuth2AuthorizationCodeAuthenticationProviderTests {
 				return delegatingTokenGenerator.generate(context);
 			}
 		});
+		this.sessionRegistry = mock(SessionRegistry.class);
 		this.authenticationProvider = new OAuth2AuthorizationCodeAuthenticationProvider(
 				this.authorizationService, this.tokenGenerator);
+		this.authenticationProvider.setSessionRegistry(this.sessionRegistry);
 		AuthorizationServerSettings authorizationServerSettings = AuthorizationServerSettings.builder().issuer("https://provider.com").build();
 		AuthorizationServerContextHolder.setContext(new TestAuthorizationServerContext(authorizationServerSettings, null));
 	}
@@ -144,6 +152,13 @@ public class OAuth2AuthorizationCodeAuthenticationProviderTests {
 	@Test
 	public void supportsWhenTypeOAuth2AuthorizationCodeAuthenticationTokenThenReturnTrue() {
 		assertThat(this.authenticationProvider.supports(OAuth2AuthorizationCodeAuthenticationToken.class)).isTrue();
+	}
+
+	@Test
+	public void setSessionRegistryWhenNullThenThrowIllegalArgumentException() {
+		assertThatThrownBy(() -> this.authenticationProvider.setSessionRegistry(null))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("sessionRegistry cannot be null");
 	}
 
 	@Test
@@ -456,6 +471,19 @@ public class OAuth2AuthorizationCodeAuthenticationProviderTests {
 
 		when(this.jwtEncoder.encode(any())).thenReturn(createJwt());
 
+		Authentication principal = authorization.getAttribute(Principal.class.getName());
+
+		List<SessionInformation> sessions = new ArrayList<>();
+		sessions.add(new SessionInformation(principal.getPrincipal(),
+				"session3", Date.from(Instant.now())));
+		sessions.add(new SessionInformation(principal.getPrincipal(),
+				"session2", Date.from(Instant.now().minus(1, ChronoUnit.HOURS))));
+		sessions.add(new SessionInformation(principal.getPrincipal(),
+				"session1", Date.from(Instant.now().minus(2, ChronoUnit.HOURS))));
+		SessionInformation expectedSession = sessions.get(0);		// Most recent
+		when(this.sessionRegistry.getAllSessions(eq(principal.getPrincipal()), eq(false)))
+				.thenReturn(sessions);
+
 		OAuth2AccessTokenAuthenticationToken accessTokenAuthentication =
 				(OAuth2AccessTokenAuthenticationToken) this.authenticationProvider.authenticate(authentication);
 
@@ -464,7 +492,7 @@ public class OAuth2AuthorizationCodeAuthenticationProviderTests {
 		// Access Token context
 		JwtEncodingContext accessTokenContext = jwtEncodingContextCaptor.getAllValues().get(0);
 		assertThat(accessTokenContext.getRegisteredClient()).isEqualTo(registeredClient);
-		assertThat(accessTokenContext.<Authentication>getPrincipal()).isEqualTo(authorization.getAttribute(Principal.class.getName()));
+		assertThat(accessTokenContext.<Authentication>getPrincipal()).isEqualTo(principal);
 		assertThat(accessTokenContext.getAuthorization()).isEqualTo(authorization);
 		assertThat(accessTokenContext.getAuthorization().getAccessToken()).isNull();
 		assertThat(accessTokenContext.getAuthorizedScopes()).isEqualTo(authorization.getAuthorizedScopes());
@@ -480,13 +508,15 @@ public class OAuth2AuthorizationCodeAuthenticationProviderTests {
 		// ID Token context
 		JwtEncodingContext idTokenContext = jwtEncodingContextCaptor.getAllValues().get(1);
 		assertThat(idTokenContext.getRegisteredClient()).isEqualTo(registeredClient);
-		assertThat(idTokenContext.<Authentication>getPrincipal()).isEqualTo(authorization.getAttribute(Principal.class.getName()));
+		assertThat(idTokenContext.<Authentication>getPrincipal()).isEqualTo(principal);
 		assertThat(idTokenContext.getAuthorization()).isNotEqualTo(authorization);
 		assertThat(idTokenContext.getAuthorization().getAccessToken()).isNotNull();
 		assertThat(idTokenContext.getAuthorizedScopes()).isEqualTo(authorization.getAuthorizedScopes());
 		assertThat(idTokenContext.getTokenType().getValue()).isEqualTo(OidcParameterNames.ID_TOKEN);
 		assertThat(idTokenContext.getAuthorizationGrantType()).isEqualTo(AuthorizationGrantType.AUTHORIZATION_CODE);
 		assertThat(idTokenContext.<OAuth2AuthorizationGrantAuthenticationToken>getAuthorizationGrant()).isEqualTo(authentication);
+		SessionInformation sessionInformation = idTokenContext.get(SessionInformation.class);
+		assertThat(sessionInformation).isNotNull().isSameAs(expectedSession);
 		assertThat(idTokenContext.getJwsHeader()).isNotNull();
 		assertThat(idTokenContext.getClaims()).isNotNull();
 

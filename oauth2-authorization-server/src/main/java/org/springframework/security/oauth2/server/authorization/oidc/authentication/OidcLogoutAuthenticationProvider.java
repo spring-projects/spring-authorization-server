@@ -38,7 +38,6 @@ import org.springframework.security.oauth2.server.authorization.OAuth2Authorizat
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenType;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
-import org.springframework.security.oauth2.server.authorization.context.AuthorizationServerContextHolder;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
@@ -50,6 +49,7 @@ import org.springframework.util.StringUtils;
  * @since 1.1.0
  * @see RegisteredClientRepository
  * @see OAuth2AuthorizationService
+ * @see SessionRegistry
  * @see <a href="https://openid.net/specs/openid-connect-rpinitiated-1_0.html#RPLogout">2. RP-Initiated Logout</a>
  */
 public final class OidcLogoutAuthenticationProvider implements AuthenticationProvider {
@@ -58,19 +58,23 @@ public final class OidcLogoutAuthenticationProvider implements AuthenticationPro
 	private final Log logger = LogFactory.getLog(getClass());
 	private final RegisteredClientRepository registeredClientRepository;
 	private final OAuth2AuthorizationService authorizationService;
+	private final SessionRegistry sessionRegistry;
 
 	/**
 	 * Constructs an {@code OidcLogoutAuthenticationProvider} using the provided parameters.
 	 *
 	 * @param registeredClientRepository the repository of registered clients
 	 * @param authorizationService the authorization service
+	 * @param sessionRegistry the {@link SessionRegistry} used to track OpenID Connect sessions
 	 */
 	public OidcLogoutAuthenticationProvider(RegisteredClientRepository registeredClientRepository,
-			OAuth2AuthorizationService authorizationService) {
+			OAuth2AuthorizationService authorizationService, SessionRegistry sessionRegistry) {
 		Assert.notNull(registeredClientRepository, "registeredClientRepository cannot be null");
 		Assert.notNull(authorizationService, "authorizationService cannot be null");
+		Assert.notNull(sessionRegistry, "sessionRegistry cannot be null");
 		this.registeredClientRepository = registeredClientRepository;
 		this.authorizationService = authorizationService;
+		this.sessionRegistry = sessionRegistry;
 	}
 
 	@Override
@@ -152,9 +156,8 @@ public final class OidcLogoutAuthenticationProvider implements AuthenticationPro
 				principal.isAuthenticated();
 	}
 
-	private static SessionInformation findSessionInformation(Authentication principal, String sessionId) {
-		SessionRegistry sessionRegistry = AuthorizationServerContextHolder.getContext().getSessionRegistry();
-		List<SessionInformation> sessions = sessionRegistry.getAllSessions(principal.getPrincipal(), true);
+	private SessionInformation findSessionInformation(Authentication principal, String sessionId) {
+		List<SessionInformation> sessions = this.sessionRegistry.getAllSessions(principal.getPrincipal(), true);
 		SessionInformation sessionInformation = null;
 		if (!CollectionUtils.isEmpty(sessions)) {
 			for (SessionInformation session : sessions) {

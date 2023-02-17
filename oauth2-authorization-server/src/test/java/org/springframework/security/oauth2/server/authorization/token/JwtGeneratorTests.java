@@ -16,12 +16,10 @@
 package org.springframework.security.oauth2.server.authorization.token;
 
 import java.security.Principal;
-import java.sql.Date;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -31,7 +29,6 @@ import org.mockito.ArgumentCaptor;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.session.SessionInformation;
-import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
@@ -58,10 +55,8 @@ import org.springframework.security.oauth2.server.authorization.settings.TokenSe
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 /**
  * Tests for {@link JwtGenerator}.
@@ -74,7 +69,6 @@ public class JwtGeneratorTests {
 	private OAuth2TokenCustomizer<JwtEncodingContext> jwtCustomizer;
 	private JwtGenerator jwtGenerator;
 	private TestAuthorizationServerContext authorizationServerContext;
-	private SessionRegistry sessionRegistry;
 
 	@BeforeEach
 	public void setUp() {
@@ -84,8 +78,6 @@ public class JwtGeneratorTests {
 		this.jwtGenerator.setJwtCustomizer(this.jwtCustomizer);
 		AuthorizationServerSettings authorizationServerSettings = AuthorizationServerSettings.builder().issuer("https://provider.com").build();
 		this.authorizationServerContext = new TestAuthorizationServerContext(authorizationServerSettings, null);
-		this.sessionRegistry = mock(SessionRegistry.class);
-		this.authorizationServerContext.setSessionRegistry(this.sessionRegistry);
 	}
 
 	@Test
@@ -177,16 +169,21 @@ public class JwtGeneratorTests {
 		OAuth2AuthorizationCodeAuthenticationToken authentication =
 				new OAuth2AuthorizationCodeAuthenticationToken("code", clientPrincipal, authorizationRequest.getRedirectUri(), null);
 
+		Authentication principal = authorization.getAttribute(Principal.class.getName());
+		SessionInformation sessionInformation = new SessionInformation(
+				principal.getPrincipal(), "session1", Date.from(Instant.now().minus(2, ChronoUnit.HOURS)));
+
 		// @formatter:off
 		OAuth2TokenContext tokenContext = DefaultOAuth2TokenContext.builder()
 				.registeredClient(registeredClient)
-				.principal(authorization.getAttribute(Principal.class.getName()))
+				.principal(principal)
 				.authorizationServerContext(this.authorizationServerContext)
 				.authorization(authorization)
 				.authorizedScopes(authorization.getAuthorizedScopes())
 				.tokenType(ID_TOKEN_TOKEN_TYPE)
 				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
 				.authorizationGrant(authentication)
+				.put(SessionInformation.class, sessionInformation)
 				.build();
 		// @formatter:on
 
@@ -194,20 +191,6 @@ public class JwtGeneratorTests {
 	}
 
 	private void assertGeneratedTokenType(OAuth2TokenContext tokenContext) {
-		SessionInformation expectedSession = null;
-		if (OidcParameterNames.ID_TOKEN.equals(tokenContext.getTokenType().getValue())) {
-			List<SessionInformation> sessions = new ArrayList<>();
-			sessions.add(new SessionInformation(tokenContext.getPrincipal().getPrincipal(),
-					"session3", Date.from(Instant.now())));
-			sessions.add(new SessionInformation(tokenContext.getPrincipal().getPrincipal(),
-					"session2", Date.from(Instant.now().minus(1, ChronoUnit.HOURS))));
-			sessions.add(new SessionInformation(tokenContext.getPrincipal().getPrincipal(),
-					"session1", Date.from(Instant.now().minus(2, ChronoUnit.HOURS))));
-			expectedSession = sessions.get(0);		// Most recent
-			when(this.sessionRegistry.getAllSessions(eq(tokenContext.getPrincipal().getPrincipal()), eq(false)))
-					.thenReturn(sessions);
-		}
-
 		this.jwtGenerator.generate(tokenContext);
 
 		ArgumentCaptor<JwtEncodingContext> jwtEncodingContextCaptor = ArgumentCaptor.forClass(JwtEncodingContext.class);
@@ -261,8 +244,10 @@ public class JwtGeneratorTests {
 					OAuth2AuthorizationRequest.class.getName());
 			String nonce = (String) authorizationRequest.getAdditionalParameters().get(OidcParameterNames.NONCE);
 			assertThat(jwtClaimsSet.<String>getClaim(IdTokenClaimNames.NONCE)).isEqualTo(nonce);
-			assertThat(jwtClaimsSet.<String>getClaim("sid")).isEqualTo(expectedSession.getSessionId());
-			assertThat(jwtClaimsSet.<Date>getClaim(IdTokenClaimNames.AUTH_TIME)).isEqualTo(expectedSession.getLastRequest());
+
+			SessionInformation sessionInformation = tokenContext.get(SessionInformation.class);
+			assertThat(jwtClaimsSet.<String>getClaim("sid")).isEqualTo(sessionInformation.getSessionId());
+			assertThat(jwtClaimsSet.<Date>getClaim(IdTokenClaimNames.AUTH_TIME)).isEqualTo(sessionInformation.getLastRequest());
 		}
 	}
 

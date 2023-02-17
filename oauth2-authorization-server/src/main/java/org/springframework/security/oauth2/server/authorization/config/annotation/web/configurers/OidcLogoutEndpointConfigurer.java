@@ -209,7 +209,8 @@ public final class OidcLogoutEndpointConfigurer extends AbstractOAuth2Configurer
 		OidcLogoutAuthenticationProvider oidcLogoutAuthenticationProvider =
 				new OidcLogoutAuthenticationProvider(
 						OAuth2ConfigurerUtils.getRegisteredClientRepository(httpSecurity),
-						OAuth2ConfigurerUtils.getAuthorizationService(httpSecurity));
+						OAuth2ConfigurerUtils.getAuthorizationService(httpSecurity),
+						OAuth2ConfigurerUtils.getSessionRegistry(httpSecurity));
 		authenticationProviders.add(oidcLogoutAuthenticationProvider);
 
 		return authenticationProviders;

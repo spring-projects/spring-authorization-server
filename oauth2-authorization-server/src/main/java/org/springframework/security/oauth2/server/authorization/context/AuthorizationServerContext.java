@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 the original author or authors.
+ * Copyright 2020-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,6 @@
  */
 package org.springframework.security.oauth2.server.authorization.context;
 
-import org.springframework.lang.Nullable;
-import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 
 /**
@@ -42,16 +40,5 @@ public interface AuthorizationServerContext {
 	 * @return the {@link AuthorizationServerSettings}
 	 */
 	AuthorizationServerSettings getAuthorizationServerSettings();
-
-	/**
-	 * Returns the {@link SessionRegistry} used to track OpenID Connect sessions or {@code null} if OpenID Connect is disabled.
-	 *
-	 * @return the {@link SessionRegistry} used to track OpenID Connect sessions or {@code null} if OpenID Connect is disabled
-	 * @since 1.1.0
-	 */
-	@Nullable
-	default SessionRegistry getSessionRegistry() {
-		return null;
-	}
 
 }

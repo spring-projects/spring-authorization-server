@@ -74,10 +74,9 @@ public class OidcLogoutAuthenticationProviderTests {
 		this.authorizationServerSettings = AuthorizationServerSettings.builder().issuer("https://provider.com").build();
 		TestAuthorizationServerContext authorizationServerContext =
 				new TestAuthorizationServerContext(this.authorizationServerSettings, null);
-		authorizationServerContext.setSessionRegistry(this.sessionRegistry);
 		AuthorizationServerContextHolder.setContext(authorizationServerContext);
 		this.authenticationProvider = new OidcLogoutAuthenticationProvider(
-				this.registeredClientRepository, this.authorizationService);
+				this.registeredClientRepository, this.authorizationService, this.sessionRegistry);
 	}
 
 	@AfterEach
@@ -88,15 +87,22 @@ public class OidcLogoutAuthenticationProviderTests {
 	@Test
 	public void constructorWhenRegisteredClientRepositoryNullThenThrowIllegalArgumentException() {
 		assertThatIllegalArgumentException()
-				.isThrownBy(() -> new OidcLogoutAuthenticationProvider(null, this.authorizationService))
+				.isThrownBy(() -> new OidcLogoutAuthenticationProvider(null, this.authorizationService, this.sessionRegistry))
 				.withMessage("registeredClientRepository cannot be null");
 	}
 
 	@Test
 	public void constructorWhenAuthorizationServiceNullThenThrowIllegalArgumentException() {
 		assertThatIllegalArgumentException()
-				.isThrownBy(() -> new OidcLogoutAuthenticationProvider(this.registeredClientRepository, null))
+				.isThrownBy(() -> new OidcLogoutAuthenticationProvider(this.registeredClientRepository, null, this.sessionRegistry))
 				.withMessage("authorizationService cannot be null");
+	}
+
+	@Test
+	public void constructorWhenSessionRegistryNullThenThrowIllegalArgumentException() {
+		assertThatIllegalArgumentException()
+				.isThrownBy(() -> new OidcLogoutAuthenticationProvider(this.registeredClientRepository, this.authorizationService, null))
+				.withMessage("sessionRegistry cannot be null");
 	}
 
 	@Test

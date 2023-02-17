@@ -84,11 +84,15 @@ public final class OidcLogoutAuthenticationProvider implements AuthenticationPro
 			throwError(OAuth2ErrorCodes.INVALID_TOKEN, "id_token_hint");
 		}
 
+		if (this.logger.isTraceEnabled()) {
+			this.logger.trace("Retrieved authorization with ID Token");
+		}
+
 		RegisteredClient registeredClient = this.registeredClientRepository.findById(
 				authorization.getRegisteredClientId());
 
 		if (this.logger.isTraceEnabled()) {
-			this.logger.trace("Retrieved authorization with ID Token");
+			this.logger.trace("Retrieved registered client");
 		}
 
 		OidcIdToken idToken = authorization.getToken(OidcIdToken.class).getToken();

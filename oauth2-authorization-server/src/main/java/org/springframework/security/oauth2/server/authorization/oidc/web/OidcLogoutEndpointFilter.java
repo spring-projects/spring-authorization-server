@@ -16,8 +16,7 @@
 package org.springframework.security.oauth2.server.authorization.oidc.web;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
+import java.nio.charset.StandardCharsets;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -53,6 +52,7 @@ import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.util.UriComponentsBuilder;
+import org.springframework.web.util.UriUtils;
 
 /**
  * A {@code Filter} that processes OpenID Connect 1.0 RP-Initiated Logout Requests.
@@ -195,13 +195,11 @@ public final class OidcLogoutEndpointFilter extends OncePerRequestFilter {
 					.fromUriString(oidcLogoutAuthentication.getPostLogoutRedirectUri());
 			String redirectUri;
 			if (StringUtils.hasText(oidcLogoutAuthentication.getState())) {
-				uriBuilder.queryParam(OAuth2ParameterNames.STATE, "{state}");
-				Map<String, String> queryParams = new HashMap<>();
-				queryParams.put(OAuth2ParameterNames.STATE, oidcLogoutAuthentication.getState());
-				redirectUri = uriBuilder.build(queryParams).toString();
-			} else {
-				redirectUri = uriBuilder.toUriString();
+				uriBuilder.queryParam(
+						OAuth2ParameterNames.STATE,
+						UriUtils.encode(oidcLogoutAuthentication.getState(), StandardCharsets.UTF_8));
 			}
+			redirectUri = uriBuilder.build(true).toUriString();		// build(true) -> Components are explicitly encoded
 			this.redirectStrategy.sendRedirect(request, response, redirectUri);
 		} else {
 			// Perform default redirect

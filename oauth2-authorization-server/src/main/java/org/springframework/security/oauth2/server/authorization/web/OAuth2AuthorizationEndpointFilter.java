@@ -298,13 +298,12 @@ public final class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilte
 		UriComponentsBuilder uriBuilder = UriComponentsBuilder
 				.fromUriString(authorizationCodeRequestAuthentication.getRedirectUri())
 				.queryParam(OAuth2ParameterNames.CODE, authorizationCodeRequestAuthentication.getAuthorizationCode().getTokenValue());
-		String redirectUri;
 		if (StringUtils.hasText(authorizationCodeRequestAuthentication.getState())) {
 			uriBuilder.queryParam(
 					OAuth2ParameterNames.STATE,
 					UriUtils.encode(authorizationCodeRequestAuthentication.getState(), StandardCharsets.UTF_8));
 		}
-		redirectUri = uriBuilder.build(true).toUriString();		// build(true) -> Components are explicitly encoded
+		String redirectUri = uriBuilder.build(true).toUriString();		// build(true) -> Components are explicitly encoded
 		this.redirectStrategy.sendRedirect(request, response, redirectUri);
 	}
 
@@ -331,18 +330,21 @@ public final class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilte
 				.fromUriString(authorizationCodeRequestAuthentication.getRedirectUri())
 				.queryParam(OAuth2ParameterNames.ERROR, error.getErrorCode());
 		if (StringUtils.hasText(error.getDescription())) {
-			uriBuilder.queryParam(OAuth2ParameterNames.ERROR_DESCRIPTION, error.getDescription());
+			uriBuilder.queryParam(
+					OAuth2ParameterNames.ERROR_DESCRIPTION,
+					UriUtils.encode(error.getDescription(), StandardCharsets.UTF_8));
 		}
 		if (StringUtils.hasText(error.getUri())) {
-			uriBuilder.queryParam(OAuth2ParameterNames.ERROR_URI, error.getUri());
+			uriBuilder.queryParam(
+					OAuth2ParameterNames.ERROR_URI,
+					UriUtils.encode(error.getUri(), StandardCharsets.UTF_8));
 		}
-		String redirectUri;
 		if (StringUtils.hasText(authorizationCodeRequestAuthentication.getState())) {
 			uriBuilder.queryParam(
 					OAuth2ParameterNames.STATE,
 					UriUtils.encode(authorizationCodeRequestAuthentication.getState(), StandardCharsets.UTF_8));
 		}
-		redirectUri = uriBuilder.build(true).toUriString();		// build(true) -> Components are explicitly encoded
+		String redirectUri = uriBuilder.build(true).toUriString();		// build(true) -> Components are explicitly encoded
 		this.redirectStrategy.sendRedirect(request, response, redirectUri);
 	}
 

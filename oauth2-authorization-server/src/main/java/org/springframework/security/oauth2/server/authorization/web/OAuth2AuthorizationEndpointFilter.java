@@ -345,7 +345,8 @@ public final class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilte
 					UriUtils.encode(error.getDescription(), StandardCharsets.UTF_8));
 		}
 		if (StringUtils.hasText(error.getUri())) {
-			uriBuilder.queryParam(OAuth2ParameterNames.ERROR_URI, error.getUri());
+			uriBuilder.queryParam(OAuth2ParameterNames.ERROR_URI,
+					UriUtils.encode(error.getUri(), StandardCharsets.UTF_8));
 		}
 		String redirectUri;
 		if (StringUtils.hasText(authorizationCodeRequestAuthentication.getState())) {

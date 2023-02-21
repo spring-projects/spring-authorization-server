@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ package org.springframework.security.oauth2.server.authorization.util;
 public final class SpringAuthorizationServerVersion {
 	private static final int MAJOR = 0;
 	private static final int MINOR = 4;
-	private static final int PATCH = 1;
+	private static final int PATCH = 2;
 
 	/**
 	 * Global Serialization value for Spring Authorization Server classes.

@@ -128,6 +128,7 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
 import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
+import org.springframework.web.util.UriUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.containsString;
@@ -454,6 +455,36 @@ public class OAuth2AuthorizationCodeGrantTests {
 				.param(OAuth2ParameterNames.CLIENT_ID, registeredClient.getClientId())
 				.header(HttpHeaders.AUTHORIZATION, getAuthorizationHeader(registeredClient)))
 				.andExpect(status().isBadRequest());
+	}
+
+	// gh-1011
+	@Test
+	public void requestWhenConfidentialClientWithPkceAndMissingCodeChallengeThenErrorResponseEncoded() throws Exception {
+		this.spring.register(AuthorizationServerConfiguration.class).autowire();
+
+		String redirectUri = "https://example.com/callback-1?param=encoded%20parameter%20value";
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
+				.redirectUris(redirectUris -> {
+					redirectUris.clear();
+					redirectUris.add(redirectUri);
+				})
+				.clientSettings(ClientSettings.builder().requireProofKey(true).build())
+				.build();
+		this.registeredClientRepository.save(registeredClient);
+
+		MultiValueMap<String, String> authorizationRequestParameters = getAuthorizationRequestParameters(registeredClient);
+		MvcResult mvcResult = this.mvc.perform(get(DEFAULT_AUTHORIZATION_ENDPOINT_URI)
+				.params(authorizationRequestParameters)
+				.with(user("user")))
+				.andExpect(status().is3xxRedirection())
+				.andReturn();
+		String redirectedUrl = mvcResult.getResponse().getRedirectedUrl();
+		String expectedRedirectUri = redirectUri + "&" +
+				"error=invalid_request&" +
+				"error_description=" + UriUtils.encode("OAuth 2.0 Parameter: code_challenge", StandardCharsets.UTF_8) + "&" +
+				"error_uri=" + UriUtils.encode("https://datatracker.ietf.org/doc/html/rfc7636#section-4.4.1", StandardCharsets.UTF_8) + "&" +
+				"state=" + STATE_URL_ENCODED;
+		assertThat(redirectedUrl).isEqualTo(expectedRedirectUri);
 	}
 
 	@Test

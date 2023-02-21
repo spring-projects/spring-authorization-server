@@ -288,12 +288,17 @@ public class OAuth2AuthorizationEndpointFilterTests {
 
 	@Test
 	public void doFilterWhenAuthorizationRequestAuthenticationExceptionThenErrorResponse() throws Exception {
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
+				.redirectUris(redirectUris -> {
+					redirectUris.clear();
+					redirectUris.add("https://example.com?param=encoded%20parameter%20value");
+				})
+				.build();
 		OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthentication =
 				new OAuth2AuthorizationCodeRequestAuthenticationToken(
 						AUTHORIZATION_URI, registeredClient.getClientId(), principal,
-						registeredClient.getRedirectUris().iterator().next(), STATE, registeredClient.getScopes(), null);
-		OAuth2Error error = new OAuth2Error("errorCode", "errorDescription", "errorUri");
+						registeredClient.getRedirectUris().iterator().next(), "client state", registeredClient.getScopes(), null);
+		OAuth2Error error = new OAuth2Error(OAuth2ErrorCodes.INVALID_REQUEST, "error description", "error uri");
 		when(this.authenticationManager.authenticate(any()))
 				.thenThrow(new OAuth2AuthorizationCodeRequestAuthenticationException(error, authorizationCodeRequestAuthentication));
 
@@ -308,8 +313,7 @@ public class OAuth2AuthorizationEndpointFilterTests {
 
 		assertThat(response.getStatus()).isEqualTo(HttpStatus.FOUND.value());
 		assertThat(response.getRedirectedUrl()).isEqualTo(
-				request.getParameter(OAuth2ParameterNames.REDIRECT_URI) +
-						"?error=errorCode&error_description=errorDescription&error_uri=errorUri&state=state");
+				"https://example.com?param=encoded%20parameter%20value&error=invalid_request&error_description=error%20description&error_uri=error%20uri&state=client%20state");
 		assertThat(SecurityContextHolder.getContext().getAuthentication()).isSameAs(this.principal);
 	}
 
@@ -579,7 +583,7 @@ public class OAuth2AuthorizationEndpointFilterTests {
 		OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthenticationResult =
 				new OAuth2AuthorizationCodeRequestAuthenticationToken(
 						AUTHORIZATION_URI, registeredClient.getClientId(), principal, this.authorizationCode,
-						registeredClient.getRedirectUris().iterator().next(), STATE, registeredClient.getScopes());
+						registeredClient.getRedirectUris().iterator().next(), "client state", registeredClient.getScopes());
 		authorizationCodeRequestAuthenticationResult.setAuthenticated(true);
 		when(this.authenticationManager.authenticate(any()))
 				.thenReturn(authorizationCodeRequestAuthenticationResult);
@@ -601,7 +605,7 @@ public class OAuth2AuthorizationEndpointFilterTests {
 				.isEqualTo(REMOTE_ADDRESS);
 		assertThat(response.getStatus()).isEqualTo(HttpStatus.FOUND.value());
 		assertThat(response.getRedirectedUrl()).isEqualTo(
-				"https://example.com?param=encoded%20parameter%20value&code=code&state=state");
+				"https://example.com?param=encoded%20parameter%20value&code=code&state=client%20state");
 	}
 
 	@Test

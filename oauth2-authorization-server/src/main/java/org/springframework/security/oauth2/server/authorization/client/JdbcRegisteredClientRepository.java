@@ -96,8 +96,9 @@ public class JdbcRegisteredClientRepository implements RegisteredClientRepositor
 
 	// @formatter:off
 	private static final String UPDATE_REGISTERED_CLIENT_SQL = "UPDATE " + TABLE_NAME
-			+ " SET client_name = ?, client_authentication_methods = ?, authorization_grant_types = ?,"
-			+ " redirect_uris = ?, post_logout_redirect_uris = ?, scopes = ?, client_settings = ?, token_settings = ?"
+			+ " SET client_secret = ?, client_secret_expires_at = ?, client_name = ?, client_authentication_methods = ?,"
+			+ " authorization_grant_types = ?, redirect_uris = ?, post_logout_redirect_uris = ?, scopes = ?,"
+			+ " client_settings = ?, token_settings = ?"
 			+ " WHERE " + PK_FILTER;
 	// @formatter:on
 
@@ -136,8 +137,6 @@ public class JdbcRegisteredClientRepository implements RegisteredClientRepositor
 		SqlParameterValue id = parameters.remove(0);
 		parameters.remove(0); // remove client_id
 		parameters.remove(0); // remove client_id_issued_at
-		parameters.remove(0); // remove client_secret
-		parameters.remove(0); // remove client_secret_expires_at
 		parameters.add(id);
 		PreparedStatementSetter pss = new ArgumentPreparedStatementSetter(parameters.toArray());
 		this.jdbcOperations.update(UPDATE_REGISTERED_CLIENT_SQL, pss);

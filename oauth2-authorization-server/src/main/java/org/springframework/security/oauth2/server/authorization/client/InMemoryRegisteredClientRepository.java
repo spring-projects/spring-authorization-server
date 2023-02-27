@@ -72,9 +72,14 @@ public final class InMemoryRegisteredClientRepository implements RegisteredClien
 	@Override
 	public void save(RegisteredClient registeredClient) {
 		Assert.notNull(registeredClient, "registeredClient cannot be null");
-		assertUniqueIdentifiers(registeredClient, this.idRegistrationMap);
-		this.idRegistrationMap.put(registeredClient.getId(), registeredClient);
-		this.clientIdRegistrationMap.put(registeredClient.getClientId(), registeredClient);
+		if (this.idRegistrationMap.containsKey(registeredClient.getId())) {
+			this.idRegistrationMap.put(registeredClient.getId(), registeredClient);
+			this.clientIdRegistrationMap.put(registeredClient.getClientId(), registeredClient);
+		} else {
+			assertUniqueIdentifiers(registeredClient, this.idRegistrationMap);
+			this.idRegistrationMap.put(registeredClient.getId(), registeredClient);
+			this.clientIdRegistrationMap.put(registeredClient.getClientId(), registeredClient);
+		}
 	}
 
 	@Nullable

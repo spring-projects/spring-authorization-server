@@ -55,6 +55,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
@@ -229,6 +230,27 @@ public class OAuth2ClientCredentialsGrantTests {
 				.andExpect(jsonPath("$.scope").value("scope1 scope2"));
 
 		verify(jwtCustomizer).customize(any());
+	}
+
+	@Test
+	public void requestWhenTokenRequestPostsClientCredentialsThenTokenResponseAndSecretUpgraded() throws Exception {
+		this.spring.register(AuthorizationServerConfigurationCustomPasswordEncoder.class).autowire();
+
+		String clientSecret = "secret-2";
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient2().clientSecret("{noop}" + clientSecret).build();
+		this.registeredClientRepository.save(registeredClient);
+
+		this.mvc.perform(post(DEFAULT_TOKEN_ENDPOINT_URI)
+						.param(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
+						.param(OAuth2ParameterNames.SCOPE, "scope1 scope2")
+						.param(OAuth2ParameterNames.CLIENT_ID, registeredClient.getClientId())
+						.param(OAuth2ParameterNames.CLIENT_SECRET, clientSecret))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.access_token").isNotEmpty())
+				.andExpect(jsonPath("$.scope").value("scope1 scope2"));
+
+		verify(jwtCustomizer).customize(any());
+		assertThat(this.registeredClientRepository.findByClientId(registeredClient.getClientId()).getClientSecret()).startsWith("{bcrypt}");
 	}
 
 	@Test
@@ -427,6 +449,15 @@ public class OAuth2ClientCredentialsGrantTests {
 			return http.build();
 		}
 		// @formatter:on
+	}
+
+	@EnableWebSecurity
+	@Configuration(proxyBeanMethods = false)
+	static class AuthorizationServerConfigurationCustomPasswordEncoder extends AuthorizationServerConfiguration {
+		@Override
+		PasswordEncoder passwordEncoder() {
+			return PasswordEncoderFactories.createDelegatingPasswordEncoder();
+		}
 	}
 
 	@EnableWebSecurity

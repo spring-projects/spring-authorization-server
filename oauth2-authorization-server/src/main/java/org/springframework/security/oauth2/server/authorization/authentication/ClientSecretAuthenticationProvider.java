@@ -122,6 +122,13 @@ public final class ClientSecretAuthenticationProvider implements AuthenticationP
 			throwInvalidClient("client_secret_expires_at");
 		}
 
+		if (this.passwordEncoder.upgradeEncoding(registeredClient.getClientSecret())) {
+			registeredClient = RegisteredClient.from(registeredClient)
+					.clientSecret(this.passwordEncoder.encode(clientSecret))
+					.build();
+			registeredClientRepository.save(registeredClient);
+		}
+
 		if (this.logger.isTraceEnabled()) {
 			this.logger.trace("Validated client authentication parameters");
 		}

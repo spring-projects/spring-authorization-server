@@ -153,12 +153,12 @@ public class InMemoryRegisteredClientRepositoryTests {
 	}
 
 	@Test
-	public void saveWhenExistingIdThenThrowIllegalArgumentException() {
+	public void saveWhenExistingIdThenUpdate() {
 		RegisteredClient registeredClient = createRegisteredClient(
-				this.registration.getId(), "client-id-2", "client-secret-2");
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> this.clients.save(registeredClient))
-				.withMessage("Registered client must be unique. Found duplicate identifier: " + registeredClient.getId());
+				this.registration.getId(), "client-id", "client-secret-2");
+		this.clients.save(registeredClient);
+		RegisteredClient savedClient = this.clients.findByClientId(registeredClient.getClientId());
+		assertThat(savedClient.getClientSecret()).isEqualTo("client-secret-2");
 	}
 
 	@Test

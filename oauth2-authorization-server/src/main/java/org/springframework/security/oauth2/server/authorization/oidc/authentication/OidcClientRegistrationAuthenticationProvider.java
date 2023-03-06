@@ -30,6 +30,7 @@ import java.util.UUID;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
@@ -93,7 +94,6 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 	private final OAuth2TokenGenerator<? extends OAuth2Token> tokenGenerator;
 	private final Converter<RegisteredClient, OidcClientRegistration> clientRegistrationConverter;
 	private Converter<OidcClientRegistration, RegisteredClient> registeredClientConverter;
-
 	private PasswordEncoder passwordEncoder;
 
 	/**
@@ -115,20 +115,6 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 		this.clientRegistrationConverter = new RegisteredClientOidcClientRegistrationConverter();
 		this.registeredClientConverter = new OidcClientRegistrationRegisteredClientConverter();
 		this.passwordEncoder = PasswordEncoderFactories.createDelegatingPasswordEncoder();
-	}
-
-	/**
-	 * Sets the {@link PasswordEncoder} used to encode the clientSecret
-	 * the {@link RegisteredClient#getClientSecret() client secret}.
-	 * If not set, the client secret will be encoded using
-	 * {@link PasswordEncoderFactories#createDelegatingPasswordEncoder()}.
-	 *
-	 * @param passwordEncoder the {@link PasswordEncoder} used to encode the clientSecret
-	 * @since 1.1.0
-	 */
-	public void setPasswordEncoder(PasswordEncoder passwordEncoder) {
-		Assert.notNull(passwordEncoder, "passwordEncoder cannot be null");
-		this.passwordEncoder = passwordEncoder;
 	}
 
 	@Override
@@ -187,6 +173,13 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 		this.registeredClientConverter = registeredClientConverter;
 	}
 
+	// gh-1056
+	@Autowired(required = false)
+	void setPasswordEncoder(PasswordEncoder passwordEncoder) {
+		Assert.notNull(passwordEncoder, "passwordEncoder cannot be null");
+		this.passwordEncoder = passwordEncoder;
+	}
+
 	private OidcClientRegistrationAuthenticationToken registerClient(OidcClientRegistrationAuthenticationToken clientRegistrationAuthentication,
 			OAuth2Authorization authorization) {
 
@@ -204,20 +197,15 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 
 		RegisteredClient registeredClient = this.registeredClientConverter.convert(clientRegistrationAuthentication.getClientRegistration());
 
-		// When secret exists, copy RegisteredClient and encode only secret
-		String rawClientSecret = registeredClient.getClientSecret();
-		String clientSecret = null;
-		RegisteredClient saveRegisteredClient = null;
-		if (rawClientSecret != null) {
-			clientSecret = passwordEncoder.encode(rawClientSecret);
-			saveRegisteredClient = RegisteredClient.from(registeredClient)
-					.clientSecret(clientSecret)
+		if (StringUtils.hasText(registeredClient.getClientSecret())) {
+			// Encode the client secret
+			RegisteredClient updatedRegisteredClient = RegisteredClient.from(registeredClient)
+					.clientSecret(this.passwordEncoder.encode(registeredClient.getClientSecret()))
 					.build();
+			this.registeredClientRepository.save(updatedRegisteredClient);
 		} else {
-			saveRegisteredClient = registeredClient;
+			this.registeredClientRepository.save(registeredClient);
 		}
-
-		this.registeredClientRepository.save(saveRegisteredClient);
 
 		if (this.logger.isTraceEnabled()) {
 			this.logger.trace("Saved registered client");

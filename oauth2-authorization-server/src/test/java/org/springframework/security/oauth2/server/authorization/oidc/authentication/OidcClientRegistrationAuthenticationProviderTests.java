@@ -73,9 +73,11 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 /**
@@ -89,10 +91,9 @@ public class OidcClientRegistrationAuthenticationProviderTests {
 	private OAuth2AuthorizationService authorizationService;
 	private JwtEncoder jwtEncoder;
 	private OAuth2TokenGenerator<?> tokenGenerator;
+	private PasswordEncoder passwordEncoder;
 	private AuthorizationServerSettings authorizationServerSettings;
 	private OidcClientRegistrationAuthenticationProvider authenticationProvider;
-
-	private PasswordEncoder passwordEncoder;
 
 	@BeforeEach
 	public void setUp() {
@@ -106,10 +107,6 @@ public class OidcClientRegistrationAuthenticationProviderTests {
 				return jwtGenerator.generate(context);
 			}
 		});
-		this.authorizationServerSettings = AuthorizationServerSettings.builder().issuer("https://provider.com").build();
-		AuthorizationServerContextHolder.setContext(new TestAuthorizationServerContext(this.authorizationServerSettings, null));
-		this.authenticationProvider = new OidcClientRegistrationAuthenticationProvider(
-				this.registeredClientRepository, this.authorizationService, this.tokenGenerator);
 		this.passwordEncoder = spy(new PasswordEncoder() {
 			@Override
 			public String encode(CharSequence rawPassword) {
@@ -121,6 +118,10 @@ public class OidcClientRegistrationAuthenticationProviderTests {
 				return NoOpPasswordEncoder.getInstance().matches(rawPassword, encodedPassword);
 			}
 		});
+		this.authorizationServerSettings = AuthorizationServerSettings.builder().issuer("https://provider.com").build();
+		AuthorizationServerContextHolder.setContext(new TestAuthorizationServerContext(this.authorizationServerSettings, null));
+		this.authenticationProvider = new OidcClientRegistrationAuthenticationProvider(
+				this.registeredClientRepository, this.authorizationService, this.tokenGenerator);
 		this.authenticationProvider.setPasswordEncoder(this.passwordEncoder);
 	}
 
@@ -496,6 +497,7 @@ public class OidcClientRegistrationAuthenticationProviderTests {
 				.isEqualTo(MacAlgorithm.HS256.getName());
 		assertThat(authenticationResult.getClientRegistration().getClientSecret()).isNotNull();
 		verify(this.passwordEncoder).encode(any());
+		reset(this.passwordEncoder);
 
 		// @formatter:off
 		builder
@@ -507,6 +509,7 @@ public class OidcClientRegistrationAuthenticationProviderTests {
 		assertThat(authenticationResult.getClientRegistration().getTokenEndpointAuthenticationSigningAlgorithm())
 				.isEqualTo(SignatureAlgorithm.RS256.getName());
 		assertThat(authenticationResult.getClientRegistration().getClientSecret()).isNull();
+		verifyNoInteractions(this.passwordEncoder);
 	}
 
 	@Test
@@ -589,6 +592,7 @@ public class OidcClientRegistrationAuthenticationProviderTests {
 		verify(this.registeredClientRepository).save(registeredClientCaptor.capture());
 		verify(this.authorizationService, times(2)).save(authorizationCaptor.capture());
 		verify(this.jwtEncoder).encode(any());
+		verify(this.passwordEncoder).encode(any());
 
 		// assert "registration" access token, which should be used for subsequent calls to client configuration endpoint
 		OAuth2Authorization authorizationResult = authorizationCaptor.getAllValues().get(0);

@@ -290,6 +290,7 @@ public class OidcClientRegistrationTests {
 
 		assertThat(clientConfigurationResponse.getClientId()).isEqualTo(clientRegistrationResponse.getClientId());
 		assertThat(clientConfigurationResponse.getClientIdIssuedAt()).isEqualTo(clientRegistrationResponse.getClientIdIssuedAt());
+		assertThat(clientConfigurationResponse.getClientSecret()).isNotNull();
 		assertThat(clientConfigurationResponse.getClientSecretExpiresAt()).isEqualTo(clientRegistrationResponse.getClientSecretExpiresAt());
 		assertThat(clientConfigurationResponse.getClientName()).isEqualTo(clientRegistrationResponse.getClientName());
 		assertThat(clientConfigurationResponse.getRedirectUris())
@@ -357,6 +358,19 @@ public class OidcClientRegistrationTests {
 		verifyNoInteractions(authenticationFailureHandler);
 	}
 
+	@Test
+	public void requestWhenClientRegistrationEndpointCustomizedWithAuthenticationFailureHandlerThenUsed() throws Exception {
+		this.spring.register(CustomClientRegistrationConfiguration.class).autowire();
+
+		when(authenticationProvider.authenticate(any())).thenThrow(new OAuth2AuthenticationException("error"));
+
+		this.mvc.perform(get(DEFAULT_OIDC_CLIENT_REGISTRATION_ENDPOINT_URI)
+				.param(OAuth2ParameterNames.CLIENT_ID, "invalid").with(jwt()));
+
+		verify(authenticationFailureHandler).onAuthenticationFailure(any(), any(), any());
+		verifyNoInteractions(authenticationSuccessHandler);
+	}
+
 	// gh-1056
 	@Test
 	public void requestWhenClientRegistersWithSecretThenClientAuthenticationSuccess() throws Exception {
@@ -375,7 +389,7 @@ public class OidcClientRegistrationTests {
 
 		OidcClientRegistration clientRegistrationResponse = registerClient(clientRegistration);
 
-		MvcResult mvcResult = this.mvc.perform(post(DEFAULT_TOKEN_ENDPOINT_URI)
+		this.mvc.perform(post(DEFAULT_TOKEN_ENDPOINT_URI)
 						.param(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
 						.param(OAuth2ParameterNames.SCOPE, "scope1")
 						.with(httpBasic(clientRegistrationResponse.getClientId(), clientRegistrationResponse.getClientSecret())))
@@ -383,19 +397,6 @@ public class OidcClientRegistrationTests {
 				.andExpect(jsonPath("$.access_token").isNotEmpty())
 				.andExpect(jsonPath("$.scope").value("scope1"))
 				.andReturn();
-	}
-
-	@Test
-	public void requestWhenClientRegistrationEndpointCustomizedWithAuthenticationFailureHandlerThenUsed() throws Exception {
-		this.spring.register(CustomClientRegistrationConfiguration.class).autowire();
-
-		when(authenticationProvider.authenticate(any())).thenThrow(new OAuth2AuthenticationException("error"));
-
-		this.mvc.perform(get(DEFAULT_OIDC_CLIENT_REGISTRATION_ENDPOINT_URI)
-				.param(OAuth2ParameterNames.CLIENT_ID, "invalid").with(jwt()));
-
-		verify(authenticationFailureHandler).onAuthenticationFailure(any(), any(), any());
-		verifyNoInteractions(authenticationSuccessHandler);
 	}
 
 	private OidcClientRegistration registerClient(OidcClientRegistration clientRegistration) throws Exception {
@@ -595,4 +596,5 @@ public class OidcClientRegistrationTests {
 		}
 
 	}
+
 }

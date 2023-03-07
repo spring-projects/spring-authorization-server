@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -233,7 +233,7 @@ public class OAuth2ClientCredentialsGrantTests {
 	}
 
 	@Test
-	public void requestWhenTokenRequestPostsClientCredentialsThenTokenResponseAndSecretUpgraded() throws Exception {
+	public void requestWhenTokenRequestPostsClientCredentialsAndRequiresUpgradingThenClientSecretUpgraded() throws Exception {
 		this.spring.register(AuthorizationServerConfigurationCustomPasswordEncoder.class).autowire();
 
 		String clientSecret = "secret-2";
@@ -250,7 +250,8 @@ public class OAuth2ClientCredentialsGrantTests {
 				.andExpect(jsonPath("$.scope").value("scope1 scope2"));
 
 		verify(jwtCustomizer).customize(any());
-		assertThat(this.registeredClientRepository.findByClientId(registeredClient.getClientId()).getClientSecret()).startsWith("{bcrypt}");
+		RegisteredClient updatedRegisteredClient = this.registeredClientRepository.findByClientId(registeredClient.getClientId());
+		assertThat(updatedRegisteredClient.getClientSecret()).startsWith("{bcrypt}");
 	}
 
 	@Test

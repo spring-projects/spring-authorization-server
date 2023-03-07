@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -228,7 +228,7 @@ public class ClientSecretAuthenticationProviderTests {
 	}
 
 	@Test
-	public void authenticateWhenValidCredentialsAndNonExpiredThenPasswordUpgraded() {
+	public void authenticateWhenValidCredentialsAndRequiresUpgradingThenClientSecretUpgraded() {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
 				.thenReturn(registeredClient);
@@ -243,10 +243,9 @@ public class ClientSecretAuthenticationProviderTests {
 		verify(this.passwordEncoder).encode(any());
 		verify(this.registeredClientRepository).save(any());
 		assertThat(authenticationResult.isAuthenticated()).isTrue();
-		assertThat(registeredClient).isNotSameAs(authenticationResult.getPrincipal());
 		assertThat(authenticationResult.getPrincipal().toString()).isEqualTo(registeredClient.getClientId());
 		assertThat(authenticationResult.getCredentials().toString()).isEqualTo(registeredClient.getClientSecret());
-		assertThat(authenticationResult.getRegisteredClient()).isEqualTo(registeredClient);
+		assertThat(authenticationResult.getRegisteredClient()).isNotSameAs(registeredClient);
 	}
 
 	@Test

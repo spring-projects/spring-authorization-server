@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,14 +72,11 @@ public final class InMemoryRegisteredClientRepository implements RegisteredClien
 	@Override
 	public void save(RegisteredClient registeredClient) {
 		Assert.notNull(registeredClient, "registeredClient cannot be null");
-		if (this.idRegistrationMap.containsKey(registeredClient.getId())) {
-			this.idRegistrationMap.put(registeredClient.getId(), registeredClient);
-			this.clientIdRegistrationMap.put(registeredClient.getClientId(), registeredClient);
-		} else {
+		if (!this.idRegistrationMap.containsKey(registeredClient.getId())) {
 			assertUniqueIdentifiers(registeredClient, this.idRegistrationMap);
-			this.idRegistrationMap.put(registeredClient.getId(), registeredClient);
-			this.clientIdRegistrationMap.put(registeredClient.getClientId(), registeredClient);
 		}
+		this.idRegistrationMap.put(registeredClient.getId(), registeredClient);
+		this.clientIdRegistrationMap.put(registeredClient.getClientId(), registeredClient);
 	}
 
 	@Nullable

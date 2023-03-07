@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -155,10 +155,10 @@ public class InMemoryRegisteredClientRepositoryTests {
 	@Test
 	public void saveWhenExistingIdThenUpdate() {
 		RegisteredClient registeredClient = createRegisteredClient(
-				this.registration.getId(), "client-id", "client-secret-2");
+				this.registration.getId(), "client-id-2", "client-secret-2");
 		this.clients.save(registeredClient);
 		RegisteredClient savedClient = this.clients.findByClientId(registeredClient.getClientId());
-		assertThat(savedClient.getClientSecret()).isEqualTo("client-secret-2");
+		assertThat(savedClient).isEqualTo(registeredClient);
 	}
 
 	@Test

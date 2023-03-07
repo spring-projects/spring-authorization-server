@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,7 +57,7 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.oauth2.server.resource.OAuth2ResourceServerConfigurer;
-import org.springframework.security.crypto.password.NoOpPasswordEncoder;
+import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
@@ -112,6 +112,7 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -290,7 +291,7 @@ public class OidcClientRegistrationTests {
 
 		assertThat(clientConfigurationResponse.getClientId()).isEqualTo(clientRegistrationResponse.getClientId());
 		assertThat(clientConfigurationResponse.getClientIdIssuedAt()).isEqualTo(clientRegistrationResponse.getClientIdIssuedAt());
-		assertThat(clientConfigurationResponse.getClientSecret()).isEqualTo(clientRegistrationResponse.getClientSecret());
+		assertThat(clientConfigurationResponse.getClientSecret()).isNotNull();
 		assertThat(clientConfigurationResponse.getClientSecretExpiresAt()).isEqualTo(clientRegistrationResponse.getClientSecretExpiresAt());
 		assertThat(clientConfigurationResponse.getClientName()).isEqualTo(clientRegistrationResponse.getClientName());
 		assertThat(clientConfigurationResponse.getRedirectUris())
@@ -369,6 +370,34 @@ public class OidcClientRegistrationTests {
 
 		verify(authenticationFailureHandler).onAuthenticationFailure(any(), any(), any());
 		verifyNoInteractions(authenticationSuccessHandler);
+	}
+
+	// gh-1056
+	@Test
+	public void requestWhenClientRegistersWithSecretThenClientAuthenticationSuccess() throws Exception {
+		this.spring.register(AuthorizationServerConfiguration.class).autowire();
+
+		// @formatter:off
+		OidcClientRegistration clientRegistration = OidcClientRegistration.builder()
+				.clientName("client-name")
+				.redirectUri("https://client.example.com")
+				.grantType(AuthorizationGrantType.AUTHORIZATION_CODE.getValue())
+				.grantType(AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
+				.scope("scope1")
+				.scope("scope2")
+				.build();
+		// @formatter:on
+
+		OidcClientRegistration clientRegistrationResponse = registerClient(clientRegistration);
+
+		this.mvc.perform(post(DEFAULT_TOKEN_ENDPOINT_URI)
+						.param(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
+						.param(OAuth2ParameterNames.SCOPE, "scope1")
+						.with(httpBasic(clientRegistrationResponse.getClientId(), clientRegistrationResponse.getClientSecret())))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.access_token").isNotEmpty())
+				.andExpect(jsonPath("$.scope").value("scope1"))
+				.andReturn();
 	}
 
 	private OidcClientRegistration registerClient(OidcClientRegistration clientRegistration) throws Exception {
@@ -566,7 +595,7 @@ public class OidcClientRegistrationTests {
 
 		@Bean
 		PasswordEncoder passwordEncoder() {
-			return NoOpPasswordEncoder.getInstance();
+			return PasswordEncoderFactories.createDelegatingPasswordEncoder();
 		}
 
 	}

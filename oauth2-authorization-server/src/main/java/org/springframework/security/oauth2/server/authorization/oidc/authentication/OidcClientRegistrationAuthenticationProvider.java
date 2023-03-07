@@ -30,7 +30,6 @@ import java.util.UUID;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
@@ -173,9 +172,14 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 		this.registeredClientConverter = registeredClientConverter;
 	}
 
-	// gh-1056
-	@Autowired(required = false)
-	void setPasswordEncoder(PasswordEncoder passwordEncoder) {
+	/**
+	 * Sets the {@link PasswordEncoder} used to encode the {@link RegisteredClient#getClientSecret() client secret}.
+	 * If not set, the client secret will be encoded using {@link PasswordEncoderFactories#createDelegatingPasswordEncoder()}.
+	 *
+	 * @param passwordEncoder the {@link PasswordEncoder} used to encode the client secret
+	 * @since 1.1.0
+	 */
+	public void setPasswordEncoder(PasswordEncoder passwordEncoder) {
 		Assert.notNull(passwordEncoder, "passwordEncoder cannot be null");
 		this.passwordEncoder = passwordEncoder;
 	}

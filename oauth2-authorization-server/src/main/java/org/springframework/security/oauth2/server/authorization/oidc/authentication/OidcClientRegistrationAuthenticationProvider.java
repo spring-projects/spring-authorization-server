@@ -30,12 +30,15 @@ import java.util.UUID;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.keygen.Base64StringKeyGenerator;
 import org.springframework.security.crypto.keygen.StringKeyGenerator;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClaimAccessor;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
@@ -79,6 +82,7 @@ import org.springframework.util.StringUtils;
  * @see OAuth2TokenGenerator
  * @see OidcClientRegistrationAuthenticationToken
  * @see OidcClientConfigurationAuthenticationProvider
+ * @see PasswordEncoder
  * @see <a href="https://openid.net/specs/openid-connect-registration-1_0.html#ClientRegistration">3. Client Registration Endpoint</a>
  */
 public final class OidcClientRegistrationAuthenticationProvider implements AuthenticationProvider {
@@ -90,6 +94,7 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 	private final OAuth2TokenGenerator<? extends OAuth2Token> tokenGenerator;
 	private final Converter<RegisteredClient, OidcClientRegistration> clientRegistrationConverter;
 	private Converter<OidcClientRegistration, RegisteredClient> registeredClientConverter;
+	private PasswordEncoder passwordEncoder;
 
 	/**
 	 * Constructs an {@code OidcClientRegistrationAuthenticationProvider} using the provided parameters.
@@ -109,6 +114,7 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 		this.tokenGenerator = tokenGenerator;
 		this.clientRegistrationConverter = new RegisteredClientOidcClientRegistrationConverter();
 		this.registeredClientConverter = new OidcClientRegistrationRegisteredClientConverter();
+		this.passwordEncoder = PasswordEncoderFactories.createDelegatingPasswordEncoder();
 	}
 
 	@Override
@@ -167,6 +173,13 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 		this.registeredClientConverter = registeredClientConverter;
 	}
 
+	// gh-1056
+	@Autowired(required = false)
+	void setPasswordEncoder(PasswordEncoder passwordEncoder) {
+		Assert.notNull(passwordEncoder, "passwordEncoder cannot be null");
+		this.passwordEncoder = passwordEncoder;
+	}
+
 	private OidcClientRegistrationAuthenticationToken registerClient(OidcClientRegistrationAuthenticationToken clientRegistrationAuthentication,
 			OAuth2Authorization authorization) {
 
@@ -187,7 +200,16 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 		}
 
 		RegisteredClient registeredClient = this.registeredClientConverter.convert(clientRegistrationAuthentication.getClientRegistration());
-		this.registeredClientRepository.save(registeredClient);
+
+		if (StringUtils.hasText(registeredClient.getClientSecret())) {
+			// Encode the client secret
+			RegisteredClient updatedRegisteredClient = RegisteredClient.from(registeredClient)
+					.clientSecret(this.passwordEncoder.encode(registeredClient.getClientSecret()))
+					.build();
+			this.registeredClientRepository.save(updatedRegisteredClient);
+		} else {
+			this.registeredClientRepository.save(registeredClient);
+		}
 
 		if (this.logger.isTraceEnabled()) {
 			this.logger.trace("Saved registered client");

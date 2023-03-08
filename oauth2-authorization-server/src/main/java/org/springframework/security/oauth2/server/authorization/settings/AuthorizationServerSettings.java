@@ -130,7 +130,7 @@ public final class AuthorizationServerSettings extends AbstractSettings {
 	 * Returns the OpenID Connect 1.0 Logout endpoint. The default is {@code /connect/logout}.
 	 *
 	 * @return the OpenID Connect 1.0 Logout endpoint
-	 * @since 1.1.0
+	 * @since 1.1
 	 */
 	public String getOidcLogoutEndpoint() {
 		return getSetting(ConfigurationSettingNames.AuthorizationServer.OIDC_LOGOUT_ENDPOINT);
@@ -282,7 +282,7 @@ public final class AuthorizationServerSettings extends AbstractSettings {
 		 *
 		 * @param oidcLogoutEndpoint the OpenID Connect 1.0 Logout endpoint
 		 * @return the {@link Builder} for further configuration
-		 * @since 1.1.0
+		 * @since 1.1
 		 */
 		public Builder oidcLogoutEndpoint(String oidcLogoutEndpoint) {
 			return setting(ConfigurationSettingNames.AuthorizationServer.OIDC_LOGOUT_ENDPOINT, oidcLogoutEndpoint);

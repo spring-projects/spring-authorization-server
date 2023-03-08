@@ -66,7 +66,7 @@ public final class OidcClientMetadataClaimNames {
 	 * {@code post_logout_redirect_uris} - the post logout redirection {@code URI} values used by the Client.
 	 * The {@code post_logout_redirect_uri} parameter is used by the client when requesting
 	 * that the End-User's User Agent be redirected to after a logout has been performed.
-	 * @since 1.1.0
+	 * @since 1.1
 	 */
 	public static final String POST_LOGOUT_REDIRECT_URIS = "post_logout_redirect_uris";
 

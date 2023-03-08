@@ -72,7 +72,7 @@ public final class OidcConfigurer extends AbstractOAuth2Configurer {
 	 *
 	 * @param logoutEndpointCustomizer the {@link Customizer} providing access to the {@link OidcLogoutEndpointConfigurer}
 	 * @return the {@link OidcConfigurer} for further configuration
-	 * @since 1.1.0
+	 * @since 1.1
 	 */
 	public OidcConfigurer logoutEndpoint(Customizer<OidcLogoutEndpointConfigurer> logoutEndpointCustomizer) {
 		logoutEndpointCustomizer.customize(getConfigurer(OidcLogoutEndpointConfigurer.class));

@@ -24,14 +24,8 @@ import org.springframework.beans.factory.BeanFactoryUtils;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.NoUniqueBeanDefinitionException;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationListener;
-import org.springframework.context.event.GenericApplicationListenerAdapter;
-import org.springframework.context.event.SmartApplicationListener;
 import org.springframework.core.ResolvableType;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.context.DelegatingApplicationListener;
-import org.springframework.security.core.session.SessionRegistry;
-import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.security.oauth2.core.OAuth2Token;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
@@ -184,28 +178,6 @@ final class OAuth2ConfigurerUtils {
 			httpSecurity.setSharedObject(AuthorizationServerSettings.class, authorizationServerSettings);
 		}
 		return authorizationServerSettings;
-	}
-
-	static SessionRegistry getSessionRegistry(HttpSecurity httpSecurity) {
-		SessionRegistry sessionRegistry = httpSecurity.getSharedObject(SessionRegistry.class);
-		if (sessionRegistry == null) {
-			sessionRegistry = getOptionalBean(httpSecurity, SessionRegistry.class);
-			if (sessionRegistry == null) {
-				sessionRegistry = new SessionRegistryImpl();
-				registerDelegateApplicationListener(httpSecurity, (SessionRegistryImpl) sessionRegistry);
-			}
-			httpSecurity.setSharedObject(SessionRegistry.class, sessionRegistry);
-		}
-		return sessionRegistry;
-	}
-
-	private static void registerDelegateApplicationListener(HttpSecurity httpSecurity, ApplicationListener<?> delegate) {
-		DelegatingApplicationListener delegatingApplicationListener = getOptionalBean(httpSecurity, DelegatingApplicationListener.class);
-		if (delegatingApplicationListener == null) {
-			return;
-		}
-		SmartApplicationListener smartListener = new GenericApplicationListenerAdapter(delegate);
-		delegatingApplicationListener.addListener(smartListener);
 	}
 
 	static <T> T getBean(HttpSecurity httpSecurity, Class<T> type) {

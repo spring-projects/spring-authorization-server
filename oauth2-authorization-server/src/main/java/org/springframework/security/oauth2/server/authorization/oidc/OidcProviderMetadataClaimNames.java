@@ -49,7 +49,7 @@ public final class OidcProviderMetadataClaimNames extends OAuth2AuthorizationSer
 
 	/**
 	 * {@code end_session_endpoint} - the {@code URL} of the OpenID Connect 1.0 End Session Endpoint
-	 * @since 1.1.0
+	 * @since 1.1
 	 */
 	public static final String END_SESSION_ENDPOINT = "end_session_endpoint";
 

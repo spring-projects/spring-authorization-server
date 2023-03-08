@@ -128,7 +128,7 @@ public final class ConfigurationSettingNames {
 
 		/**
 		 * Set the OpenID Connect 1.0 Logout endpoint.
-		 * @since 1.1.0
+		 * @since 1.1
 		 */
 		public static final String OIDC_LOGOUT_ENDPOINT = AUTHORIZATION_SERVER_SETTINGS_NAMESPACE.concat("oidc-logout-endpoint");
 

@@ -152,7 +152,7 @@ public class RegisteredClient implements Serializable {
 	 * that the End-User's User Agent be redirected to after a logout has been performed.
 	 *
 	 * @return the {@code Set} of post logout redirect URI(s)
-	 * @since 1.1.0
+	 * @since 1.1
 	 */
 	public Set<String> getPostLogoutRedirectUris() {
 		return this.postLogoutRedirectUris;
@@ -447,7 +447,7 @@ public class RegisteredClient implements Serializable {
 		 *
 		 * @param postLogoutRedirectUri the post logout redirect URI
 		 * @return the {@link Builder}
-		 * @since 1.1.0
+		 * @since 1.1
 		 */
 		public Builder postLogoutRedirectUri(String postLogoutRedirectUri) {
 			this.postLogoutRedirectUris.add(postLogoutRedirectUri);
@@ -460,7 +460,7 @@ public class RegisteredClient implements Serializable {
 		 *
 		 * @param postLogoutRedirectUrisConsumer a {@link Consumer} of the post logout redirect URI(s)
 		 * @return the {@link Builder}
-		 * @since 1.1.0
+		 * @since 1.1
 		 */
 		public Builder postLogoutRedirectUris(Consumer<Set<String>> postLogoutRedirectUrisConsumer) {
 			postLogoutRedirectUrisConsumer.accept(this.postLogoutRedirectUris);

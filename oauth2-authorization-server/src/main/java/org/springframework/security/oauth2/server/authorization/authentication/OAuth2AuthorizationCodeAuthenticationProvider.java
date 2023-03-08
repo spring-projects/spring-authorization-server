@@ -282,7 +282,7 @@ public final class OAuth2AuthorizationCodeAuthenticationProvider implements Auth
 	 * Sets the {@link SessionRegistry} used to track OpenID Connect sessions.
 	 *
 	 * @param sessionRegistry the {@link SessionRegistry} used to track OpenID Connect sessions
-	 * @since 1.1.0
+	 * @since 1.1
 	 */
 	public void setSessionRegistry(SessionRegistry sessionRegistry) {
 		Assert.notNull(sessionRegistry, "sessionRegistry cannot be null");

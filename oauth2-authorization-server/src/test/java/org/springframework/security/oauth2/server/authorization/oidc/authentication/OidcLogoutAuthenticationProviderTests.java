@@ -126,7 +126,7 @@ public class OidcLogoutAuthenticationProviderTests {
 				});
 
 		verify(this.authorizationService).findByToken(
-				eq(authentication.getIdToken()), eq(ID_TOKEN_TOKEN_TYPE));
+				eq(authentication.getIdTokenHint()), eq(ID_TOKEN_TOKEN_TYPE));
 	}
 
 	@Test
@@ -160,7 +160,7 @@ public class OidcLogoutAuthenticationProviderTests {
 					assertThat(error.getDescription()).contains(IdTokenClaimNames.AUD);
 				});
 		verify(this.authorizationService).findByToken(
-				eq(authentication.getIdToken()), eq(ID_TOKEN_TOKEN_TYPE));
+				eq(authentication.getIdTokenHint()), eq(ID_TOKEN_TOKEN_TYPE));
 		verify(this.registeredClientRepository).findById(
 				eq(authorization.getRegisteredClientId()));
 	}
@@ -197,7 +197,7 @@ public class OidcLogoutAuthenticationProviderTests {
 					assertThat(error.getDescription()).contains(IdTokenClaimNames.AUD);
 				});
 		verify(this.authorizationService).findByToken(
-				eq(authentication.getIdToken()), eq(ID_TOKEN_TOKEN_TYPE));
+				eq(authentication.getIdTokenHint()), eq(ID_TOKEN_TOKEN_TYPE));
 		verify(this.registeredClientRepository).findById(
 				eq(authorization.getRegisteredClientId()));
 	}
@@ -234,7 +234,7 @@ public class OidcLogoutAuthenticationProviderTests {
 					assertThat(error.getDescription()).contains(OAuth2ParameterNames.CLIENT_ID);
 				});
 		verify(this.authorizationService).findByToken(
-				eq(authentication.getIdToken()), eq(ID_TOKEN_TOKEN_TYPE));
+				eq(authentication.getIdTokenHint()), eq(ID_TOKEN_TOKEN_TYPE));
 		verify(this.registeredClientRepository).findById(
 				eq(authorization.getRegisteredClientId()));
 	}
@@ -272,7 +272,46 @@ public class OidcLogoutAuthenticationProviderTests {
 					assertThat(error.getDescription()).contains("post_logout_redirect_uri");
 				});
 		verify(this.authorizationService).findByToken(
-				eq(authentication.getIdToken()), eq(ID_TOKEN_TOKEN_TYPE));
+				eq(authentication.getIdTokenHint()), eq(ID_TOKEN_TOKEN_TYPE));
+		verify(this.registeredClientRepository).findById(
+				eq(authorization.getRegisteredClientId()));
+	}
+
+	@Test
+	public void authenticateWhenInvalidSubThenThrowOAuth2AuthenticationException() {
+		TestingAuthenticationToken principal = new TestingAuthenticationToken("principal", "credentials");
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+		OidcIdToken idToken =  OidcIdToken.withTokenValue("id-token")
+				.issuer("https://provider.com")
+				.subject("other-sub")
+				.audience(Collections.singleton(registeredClient.getClientId()))
+				.issuedAt(Instant.now().minusSeconds(60).truncatedTo(ChronoUnit.MILLIS))
+				.expiresAt(Instant.now().plusSeconds(60).truncatedTo(ChronoUnit.MILLIS))
+				.build();
+		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient)
+				.principalName(principal.getName())
+				.token(idToken,
+						(metadata) -> metadata.put(OAuth2Authorization.Token.CLAIMS_METADATA_NAME, idToken.getClaims()))
+				.build();
+		when(this.authorizationService.findByToken(eq(idToken.getTokenValue()), eq(ID_TOKEN_TOKEN_TYPE)))
+				.thenReturn(authorization);
+		when(this.registeredClientRepository.findById(eq(authorization.getRegisteredClientId())))
+				.thenReturn(registeredClient);
+
+		principal.setAuthenticated(true);
+
+		OidcLogoutAuthenticationToken authentication = new OidcLogoutAuthenticationToken(
+				idToken.getTokenValue(), principal, "session-1", null, null, null);
+
+		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
+				.isInstanceOf(OAuth2AuthenticationException.class)
+				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+				.satisfies(error -> {
+					assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_TOKEN);
+					assertThat(error.getDescription()).contains("sub");
+				});
+		verify(this.authorizationService).findByToken(
+				eq(authentication.getIdTokenHint()), eq(ID_TOKEN_TOKEN_TYPE));
 		verify(this.registeredClientRepository).findById(
 				eq(authorization.getRegisteredClientId()));
 	}
@@ -317,7 +356,7 @@ public class OidcLogoutAuthenticationProviderTests {
 					assertThat(error.getDescription()).contains("sid");
 				});
 		verify(this.authorizationService).findByToken(
-				eq(authentication.getIdToken()), eq(ID_TOKEN_TOKEN_TYPE));
+				eq(authentication.getIdTokenHint()), eq(ID_TOKEN_TOKEN_TYPE));
 		verify(this.registeredClientRepository).findById(
 				eq(authorization.getRegisteredClientId()));
 	}
@@ -363,7 +402,7 @@ public class OidcLogoutAuthenticationProviderTests {
 					assertThat(error.getDescription()).contains("sid");
 				});
 		verify(this.authorizationService).findByToken(
-				eq(authentication.getIdToken()), eq(ID_TOKEN_TOKEN_TYPE));
+				eq(authentication.getIdTokenHint()), eq(ID_TOKEN_TOKEN_TYPE));
 		verify(this.registeredClientRepository).findById(
 				eq(authorization.getRegisteredClientId()));
 	}
@@ -408,15 +447,14 @@ public class OidcLogoutAuthenticationProviderTests {
 				(OidcLogoutAuthenticationToken) this.authenticationProvider.authenticate(authentication);
 
 		verify(this.authorizationService).findByToken(
-				eq(authentication.getIdToken()), eq(ID_TOKEN_TOKEN_TYPE));
+				eq(authentication.getIdTokenHint()), eq(ID_TOKEN_TOKEN_TYPE));
 		verify(this.registeredClientRepository).findById(
 				eq(authorization.getRegisteredClientId()));
 
 		assertThat(authenticationResult.getPrincipal()).isEqualTo(principal);
 		assertThat(authenticationResult.getCredentials().toString()).isEmpty();
-		assertThat(authenticationResult.getIdToken()).isEqualTo(idToken.getTokenValue());
+		assertThat(authenticationResult.getIdToken()).isEqualTo(idToken);
 		assertThat(authenticationResult.getSessionId()).isEqualTo(sessionInformation.getSessionId());
-		assertThat(authenticationResult.getSessionInformation()).isEqualTo(sessionInformation);
 		assertThat(authenticationResult.getClientId()).isEqualTo(registeredClient.getClientId());
 		assertThat(authenticationResult.getPostLogoutRedirectUri()).isEqualTo(postLogoutRedirectUri);
 		assertThat(authenticationResult.getState()).isEqualTo(state);

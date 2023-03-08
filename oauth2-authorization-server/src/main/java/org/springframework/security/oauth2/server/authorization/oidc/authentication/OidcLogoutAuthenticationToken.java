@@ -20,7 +20,7 @@ import java.util.Collections;
 import org.springframework.lang.Nullable;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.session.SessionInformation;
+import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.security.oauth2.server.authorization.util.SpringAuthorizationServerVersion;
 import org.springframework.util.Assert;
 
@@ -28,16 +28,16 @@ import org.springframework.util.Assert;
  * An {@link Authentication} implementation used for OpenID Connect 1.0 RP-Initiated Logout Endpoint.
  *
  * @author Joe Grandja
- * @since 1.1.0
+ * @since 1.1
  * @see AbstractAuthenticationToken
  * @see OidcLogoutAuthenticationProvider
  */
 public class OidcLogoutAuthenticationToken extends AbstractAuthenticationToken {
 	private static final long serialVersionUID = SpringAuthorizationServerVersion.SERIAL_VERSION_UID;
-	private final String idToken;
+	private final String idTokenHint;
+	private final OidcIdToken idToken;
 	private final Authentication principal;
 	private final String sessionId;
-	private final SessionInformation sessionInformation;
 	private final String clientId;
 	private final String postLogoutRedirectUri;
 	private final String state;
@@ -45,22 +45,22 @@ public class OidcLogoutAuthenticationToken extends AbstractAuthenticationToken {
 	/**
 	 * Constructs an {@code OidcLogoutAuthenticationToken} using the provided parameters.
 	 *
-	 * @param idToken the ID Token previously issued by the Provider to the Client and used as a hint about the End-User's current authenticated session with the Client
+	 * @param idTokenHint the ID Token previously issued by the Provider to the Client and used as a hint about the End-User's current authenticated session with the Client
 	 * @param principal the authenticated principal representing the End-User
-	 * @param sessionId the End-User's current authenticated session identifier with the Client
+	 * @param sessionId the End-User's current authenticated session identifier with the Provider
 	 * @param clientId the client identifier the ID Token was issued to
 	 * @param postLogoutRedirectUri the URI which the Client is requesting that the End-User's User Agent be redirected to after a logout has been performed
 	 * @param state the opaque value used by the Client to maintain state between the logout request and the callback to the {@code postLogoutRedirectUri}
 	 */
-	public OidcLogoutAuthenticationToken(String idToken, Authentication principal, @Nullable String sessionId,
+	public OidcLogoutAuthenticationToken(String idTokenHint, Authentication principal, @Nullable String sessionId,
 			@Nullable String clientId, @Nullable String postLogoutRedirectUri, @Nullable String state) {
 		super(Collections.emptyList());
-		Assert.hasText(idToken, "idToken cannot be empty");
+		Assert.hasText(idTokenHint, "idTokenHint cannot be empty");
 		Assert.notNull(principal, "principal cannot be null");
-		this.idToken = idToken;
+		this.idTokenHint = idTokenHint;
+		this.idToken = null;
 		this.principal = principal;
 		this.sessionId = sessionId;
-		this.sessionInformation = null;
 		this.clientId = clientId;
 		this.postLogoutRedirectUri = postLogoutRedirectUri;
 		this.state = state;
@@ -70,22 +70,22 @@ public class OidcLogoutAuthenticationToken extends AbstractAuthenticationToken {
 	/**
 	 * Constructs an {@code OidcLogoutAuthenticationToken} using the provided parameters.
 	 *
-	 * @param idToken the ID Token previously issued by the Provider to the Client and used as a hint about the End-User's current authenticated session with the Client
+	 * @param idToken the ID Token previously issued by the Provider to the Client
 	 * @param principal the authenticated principal representing the End-User
-	 * @param sessionInformation  the End-User's current authenticated session information with the Client
+	 * @param sessionId the End-User's current authenticated session identifier with the Provider
 	 * @param clientId the client identifier the ID Token was issued to
 	 * @param postLogoutRedirectUri the URI which the Client is requesting that the End-User's User Agent be redirected to after a logout has been performed
 	 * @param state the opaque value used by the Client to maintain state between the logout request and the callback to the {@code postLogoutRedirectUri}
 	 */
-	public OidcLogoutAuthenticationToken(String idToken, Authentication principal, @Nullable SessionInformation sessionInformation,
+	public OidcLogoutAuthenticationToken(OidcIdToken idToken, Authentication principal, @Nullable String sessionId,
 			@Nullable String clientId, @Nullable String postLogoutRedirectUri, @Nullable String state) {
 		super(Collections.emptyList());
-		Assert.hasText(idToken, "idToken cannot be empty");
+		Assert.notNull(idToken, "idToken cannot be null");
 		Assert.notNull(principal, "principal cannot be null");
+		this.idTokenHint = idToken.getTokenValue();
 		this.idToken = idToken;
 		this.principal = principal;
-		this.sessionId = sessionInformation != null ? sessionInformation.getSessionId() : null;
-		this.sessionInformation = sessionInformation;
+		this.sessionId = sessionId;
 		this.clientId = clientId;
 		this.postLogoutRedirectUri = postLogoutRedirectUri;
 		this.state = state;
@@ -95,7 +95,7 @@ public class OidcLogoutAuthenticationToken extends AbstractAuthenticationToken {
 	/**
 	 * Returns the authenticated principal representing the End-User.
 	 *
-	 * @return the authenticated principal
+	 * @return the authenticated principal representing the End-User
 	 */
 	@Override
 	public Object getPrincipal() {
@@ -113,28 +113,28 @@ public class OidcLogoutAuthenticationToken extends AbstractAuthenticationToken {
 	 *
 	 * @return the ID Token previously issued by the Provider to the Client
 	 */
-	public String getIdToken() {
+	public String getIdTokenHint() {
+		return this.idTokenHint;
+	}
+
+	/**
+	 * Returns the ID Token previously issued by the Provider to the Client.
+	 *
+	 * @return the ID Token previously issued by the Provider to the Client
+	 */
+	@Nullable
+	public OidcIdToken getIdToken() {
 		return this.idToken;
 	}
 
 	/**
-	 * Returns the End-User's current authenticated session identifier with the Client.
+	 * Returns the End-User's current authenticated session identifier with the Provider.
 	 *
-	 * @return the End-User's current authenticated session identifier
+	 * @return the End-User's current authenticated session identifier with the Provider
 	 */
 	@Nullable
 	public String getSessionId() {
 		return this.sessionId;
-	}
-
-	/**
-	 * Returns the End-User's current authenticated session information with the Client.
-	 *
-	 * @return the End-User's current authenticated session information
-	 */
-	@Nullable
-	public SessionInformation getSessionInformation() {
-		return this.sessionInformation;
 	}
 
 	/**

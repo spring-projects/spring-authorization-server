@@ -249,7 +249,7 @@ public final class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilte
 	 * If OpenID Connect is enabled, the default implementation tracks OpenID Connect sessions using a {@link SessionRegistry}.
 	 *
 	 * @param sessionAuthenticationStrategy the {@link SessionAuthenticationStrategy} used for handling an {@link OAuth2AuthorizationCodeRequestAuthenticationToken}
-	 * @since 1.1.0
+	 * @since 1.1
 	 */
 	public void setSessionAuthenticationStrategy(SessionAuthenticationStrategy sessionAuthenticationStrategy) {
 		Assert.notNull(sessionAuthenticationStrategy, "sessionAuthenticationStrategy cannot be null");

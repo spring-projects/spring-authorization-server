@@ -15,8 +15,6 @@
  */
 package org.springframework.security.oauth2.server.authorization.oidc.web;
 
-import java.time.Instant;
-import java.util.Date;
 import java.util.function.Consumer;
 
 import jakarta.servlet.FilterChain;
@@ -38,7 +36,6 @@ import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.session.SessionInformation;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
@@ -217,7 +214,7 @@ public class OidcLogoutEndpointFilterTests {
 	@Test
 	public void doFilterWhenCustomAuthenticationConverterThenUsed() throws Exception {
 		OidcLogoutAuthenticationToken authentication = new OidcLogoutAuthenticationToken(
-				"id-token", this.principal, (SessionInformation) null, null, null, null);
+				"id-token", this.principal, null, null, null, null);
 
 		AuthenticationConverter authenticationConverter = mock(AuthenticationConverter.class);
 		when(authenticationConverter.convert(any())).thenReturn(authentication);
@@ -240,7 +237,7 @@ public class OidcLogoutEndpointFilterTests {
 	@Test
 	public void doFilterWhenCustomAuthenticationSuccessHandlerThenUsed() throws Exception {
 		OidcLogoutAuthenticationToken authentication = new OidcLogoutAuthenticationToken(
-				"id-token", this.principal, (SessionInformation) null, null, null, null);
+				"id-token", this.principal, null, null, null, null);
 
 		AuthenticationSuccessHandler authenticationSuccessHandler = mock(AuthenticationSuccessHandler.class);
 		this.filter.setAuthenticationSuccessHandler(authenticationSuccessHandler);
@@ -292,11 +289,8 @@ public class OidcLogoutEndpointFilterTests {
 		MockHttpServletRequest request = createLogoutRequest(TestRegisteredClients.registeredClient().build());
 		MockHttpSession session = (MockHttpSession) request.getSession(true);
 
-		SessionInformation sessionInformation = new SessionInformation(
-				this.principal, session.getId(), Date.from(Instant.now()));
-
 		OidcLogoutAuthenticationToken authentication = new OidcLogoutAuthenticationToken(
-				"id-token", this.principal, sessionInformation, null, null, null);
+				"id-token", this.principal, session.getId(), null, null, null);
 
 		when(this.authenticationManager.authenticate(any()))
 				.thenReturn(authentication);
@@ -321,14 +315,12 @@ public class OidcLogoutEndpointFilterTests {
 		MockHttpServletRequest request = createLogoutRequest(registeredClient);
 		MockHttpSession session = (MockHttpSession) request.getSession(true);
 
-		SessionInformation sessionInformation = new SessionInformation(
-				this.principal, session.getId(), Date.from(Instant.now()));
-
 		String postLogoutRedirectUri = registeredClient.getPostLogoutRedirectUris().iterator().next();
 		String state = "state-1";
 		OidcLogoutAuthenticationToken authentication = new OidcLogoutAuthenticationToken(
-				"id-token", this.principal, sessionInformation,
+				"id-token", this.principal, session.getId(),
 				registeredClient.getClientId(), postLogoutRedirectUri, state);
+		authentication.setAuthenticated(true);
 
 		when(this.authenticationManager.authenticate(any()))
 				.thenReturn(authentication);

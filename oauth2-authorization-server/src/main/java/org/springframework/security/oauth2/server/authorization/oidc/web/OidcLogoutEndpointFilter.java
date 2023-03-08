@@ -26,6 +26,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.core.log.LogMessage;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -58,7 +59,7 @@ import org.springframework.web.util.UriUtils;
  * A {@code Filter} that processes OpenID Connect 1.0 RP-Initiated Logout Requests.
  *
  * @author Joe Grandja
- * @since 1.1.0
+ * @since 1.1
  * @see OidcLogoutAuthenticationConverter
  * @see OidcLogoutAuthenticationProvider
  * @see <a href="https://openid.net/specs/openid-connect-rpinitiated-1_0.html#RPLogout">2. RP-Initiated Logout</a>
@@ -182,7 +183,7 @@ public final class OidcLogoutEndpointFilter extends OncePerRequestFilter {
 		OidcLogoutAuthenticationToken oidcLogoutAuthentication = (OidcLogoutAuthenticationToken) authentication;
 
 		// Check for active user session
-		if (oidcLogoutAuthentication.getSessionInformation() != null) {
+		if (isSessionActive(oidcLogoutAuthentication)) {
 			// Perform logout
 			this.logoutHandler.logout(request, response,
 					(Authentication) oidcLogoutAuthentication.getPrincipal());
@@ -213,6 +214,17 @@ public final class OidcLogoutEndpointFilter extends OncePerRequestFilter {
 
 		OAuth2Error error = ((OAuth2AuthenticationException) exception).getError();
 		response.sendError(HttpStatus.BAD_REQUEST.value(), error.toString());
+	}
+
+	private static boolean isSessionActive(OidcLogoutAuthenticationToken oidcLogoutAuthentication) {
+		return isPrincipalAuthenticated((Authentication) oidcLogoutAuthentication.getPrincipal()) &&
+				StringUtils.hasText(oidcLogoutAuthentication.getSessionId());
+	}
+
+	private static boolean isPrincipalAuthenticated(Authentication principal) {
+		return principal != null &&
+				!AnonymousAuthenticationToken.class.isAssignableFrom(principal.getClass()) &&
+				principal.isAuthenticated();
 	}
 
 }

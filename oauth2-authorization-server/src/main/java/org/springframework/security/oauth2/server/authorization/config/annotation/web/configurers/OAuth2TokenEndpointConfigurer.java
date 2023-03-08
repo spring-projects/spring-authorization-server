@@ -220,11 +220,13 @@ public final class OAuth2TokenEndpointConfigurer extends AbstractOAuth2Configure
 
 		OAuth2AuthorizationService authorizationService = OAuth2ConfigurerUtils.getAuthorizationService(httpSecurity);
 		OAuth2TokenGenerator<? extends OAuth2Token> tokenGenerator = OAuth2ConfigurerUtils.getTokenGenerator(httpSecurity);
-		SessionRegistry sessionRegistry = OAuth2ConfigurerUtils.getSessionRegistry(httpSecurity);
 
 		OAuth2AuthorizationCodeAuthenticationProvider authorizationCodeAuthenticationProvider =
 				new OAuth2AuthorizationCodeAuthenticationProvider(authorizationService, tokenGenerator);
-		authorizationCodeAuthenticationProvider.setSessionRegistry(sessionRegistry);
+		SessionRegistry sessionRegistry = httpSecurity.getSharedObject(SessionRegistry.class);
+		if (sessionRegistry != null) {
+			authorizationCodeAuthenticationProvider.setSessionRegistry(sessionRegistry);
+		}
 		authenticationProviders.add(authorizationCodeAuthenticationProvider);
 
 		OAuth2RefreshTokenAuthenticationProvider refreshTokenAuthenticationProvider =

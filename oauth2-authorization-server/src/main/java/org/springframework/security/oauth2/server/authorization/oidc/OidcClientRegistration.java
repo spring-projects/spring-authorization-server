@@ -176,7 +176,7 @@ public final class OidcClientRegistration implements OidcClientMetadataClaimAcce
 		 *
 		 * @param postLogoutRedirectUri the post logout redirection {@code URI} used by the Client
 		 * @return the {@link Builder} for further configuration
-		 * @since 1.1.0
+		 * @since 1.1
 		 */
 		public Builder postLogoutRedirectUri(String postLogoutRedirectUri) {
 			addClaimToClaimList(OidcClientMetadataClaimNames.POST_LOGOUT_REDIRECT_URIS, postLogoutRedirectUri);
@@ -189,7 +189,7 @@ public final class OidcClientRegistration implements OidcClientMetadataClaimAcce
 		 *
 		 * @param postLogoutRedirectUrisConsumer a {@code Consumer} of the post logout redirection {@code URI} values used by the Client
 		 * @return the {@link Builder} for further configuration
-		 * @since 1.1.0
+		 * @since 1.1
 		 */
 		public Builder postLogoutRedirectUris(Consumer<List<String>> postLogoutRedirectUrisConsumer) {
 			acceptClaimValues(OidcClientMetadataClaimNames.POST_LOGOUT_REDIRECT_URIS, postLogoutRedirectUrisConsumer);

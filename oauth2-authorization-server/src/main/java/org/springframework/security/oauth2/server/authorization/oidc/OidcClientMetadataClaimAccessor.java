@@ -101,7 +101,7 @@ public interface OidcClientMetadataClaimAccessor extends ClaimAccessor {
 	 * that the End-User's User Agent be redirected to after a logout has been performed.
 	 *
 	 * @return the post logout redirection {@code URI} values used by the Client
-	 * @since 1.1.0
+	 * @since 1.1
 	 */
 	default List<String> getPostLogoutRedirectUris() {
 		return getClaimAsStringList(OidcClientMetadataClaimNames.POST_LOGOUT_REDIRECT_URIS);

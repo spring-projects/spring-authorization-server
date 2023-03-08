@@ -136,7 +136,7 @@ public final class OidcProviderConfiguration extends AbstractOAuth2Authorization
 		 *
 		 * @param endSessionEndpoint the {@code URL} of the OpenID Connect 1.0 End Session Endpoint
 		 * @return the {@link Builder} for further configuration
-		 * @since 1.1.0
+		 * @since 1.1
 		 */
 		public Builder endSessionEndpoint(String endSessionEndpoint) {
 			return claim(OidcProviderMetadataClaimNames.END_SESSION_ENDPOINT, endSessionEndpoint);

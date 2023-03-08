@@ -72,7 +72,7 @@ public interface OidcProviderMetadataClaimAccessor extends OAuth2AuthorizationSe
 	 * Returns the {@code URL} of the OpenID Connect 1.0 End Session Endpoint {@code (end_session_endpoint)}.
 	 *
 	 * @return the {@code URL} of the OpenID Connect 1.0 End Session Endpoint
-	 * @since 1.1.0
+	 * @since 1.1
 	 */
 	default URL getEndSessionEndpoint() {
 		return getClaimAsURL(OidcProviderMetadataClaimNames.END_SESSION_ENDPOINT);

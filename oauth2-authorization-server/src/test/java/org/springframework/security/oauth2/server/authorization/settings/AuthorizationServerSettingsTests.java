@@ -86,7 +86,7 @@ public class AuthorizationServerSettingsTests {
 				.settings(settings -> settings.put("name2", "value2"))
 				.build();
 
-		assertThat(authorizationServerSettings.getSettings()).hasSize(10);
+		assertThat(authorizationServerSettings.getSettings()).hasSize(12);
 		assertThat(authorizationServerSettings.<String>getSetting("name1")).isEqualTo("value1");
 		assertThat(authorizationServerSettings.<String>getSetting("name2")).isEqualTo("value2");
 	}

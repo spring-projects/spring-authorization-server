@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:th="https://www.thymeleaf.org">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <title>Device Grant Example</title>
+        <link rel="stylesheet" href="/webjars/bootstrap/css/bootstrap.css" th:href="@{/webjars/bootstrap/css/bootstrap.css}" />
+        <link rel="stylesheet" href="/assets/css/style.css" th:href="@{/assets/css/style.css}" />
+    </head>
+    <body>
+        <div class="jumbotron">
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-8">
+                        <h2>Device Activation</h2>
+                        <p>Please visit <a th:href="${verificationUri}" th:text="${verificationUri?.replaceFirst('https?://', '')}"></a> on another device to continue.</p>
+                        <p class="gap">Activation Code</p>
+                        <div class="well">
+                            <span class="code" th:text="${userCode}"></span>
+                            <form id="authorize-form" th:action="@{/authorize}" method="post">
+                                <input type="hidden" id="device_code" name="device_code" th:value="${deviceCode}" />
+                            </form>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <img src="https://cdn.pixabay.com/photo/2017/07/03/15/20/technology-2468063_1280.png" class="img-responsive" alt="Devices">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script src="/webjars/jquery/jquery.min.js" th:src="@{/webjars/jquery/jquery.min.js}"></script>
+        <script type="text/javascript">
+            function authorize() {
+                let deviceCode = $('#device_code').val();
+                let csrfToken = $('[name=_csrf]').val();
+                if (deviceCode) {
+                    $.ajax({
+                        url: '/authorize',
+                        method: 'POST',
+                        data: {
+                            device_code: deviceCode,
+                            _csrf: csrfToken
+                        },
+                        timeout: 0
+                    }).fail((err) => {
+                        let response = err.responseJSON;
+                        if (response.errorCode === 'authorization_pending') {
+                            console.log('authorization pending, continuing to poll...');
+                        } else if (response.errorCode === 'slow_down') {
+                            console.log('slowing down...');
+                            slowDown();
+                        } else if (response.errorCode === 'token_expired') {
+                            console.log('token expired, stopping...');
+                            clear();
+                            location.href = '/';
+                        } else if (response.errorCode === 'access_denied') {
+                            console.log('access denied, stopping...');
+                            clear();
+                            location.href = '/';
+                        }
+                    }).done(() => window.location.href = '/authorized');
+                }
+            }
+
+            function schedule() {
+                authorize.handler = window.setInterval(authorize, authorize.interval * 1000);
+            }
+
+            function clear() {
+                if (authorize.handler !== null) {
+                    window.clearInterval(authorize.handler);
+                }
+            }
+
+            function slowDown() {
+                authorize.interval += 5;
+                clear();
+                schedule();
+            }
+
+            authorize.interval = 5;
+            authorize.handler = null;
+
+            window.addEventListener('load', schedule);
+        </script>
+    </body>
+</html>

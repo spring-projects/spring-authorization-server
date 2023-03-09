@@ -1,0 +1,29 @@
+server:
+  port: 8080
+
+logging:
+  level:
+    root: INFO
+    org.springframework.security: trace
+
+spring:
+  thymeleaf:
+    cache: false
+  security:
+    oauth2:
+      client:
+        registration:
+          messaging-client-device-grant:
+            provider: spring
+            client-id: messaging-client
+            client-secret: secret
+            authorization-grant-type: urn:ietf:params:oauth:grant-type:device_code
+            scope: message.read,message.write
+            client-name: messaging-client-device-grant
+        provider:
+          spring:
+            issuer-uri: http://localhost:9000
+            authorization-uri: ${spring.security.oauth2.client.provider.spring.issuer-uri}/oauth2/device_authorization
+
+messages:
+  base-uri: http://127.0.0.1:8090/messages

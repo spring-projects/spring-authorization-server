@@ -211,6 +211,30 @@ public final class OAuth2AuthorizationServerConfigurer
 	}
 
 	/**
+	 * Configures the OAuth 2.0 Device Authorization Endpoint.
+	 *
+	 * @param deviceAuthorizationEndpointCustomizer the {@link Customizer} providing access to the {@link OAuth2DeviceAuthorizationEndpointConfigurer}
+	 * @return the {@link OAuth2AuthorizationServerConfigurer} for further configuration
+	 * @since 1.1
+	 */
+	public OAuth2AuthorizationServerConfigurer deviceAuthorizationEndpoint(Customizer<OAuth2DeviceAuthorizationEndpointConfigurer> deviceAuthorizationEndpointCustomizer) {
+		deviceAuthorizationEndpointCustomizer.customize(getConfigurer(OAuth2DeviceAuthorizationEndpointConfigurer.class));
+		return this;
+	}
+
+	/**
+	 * Configures the OAuth 2.0 Device Verification Endpoint.
+	 *
+	 * @param deviceVerificationEndpointCustomizer the {@link Customizer} providing access to the {@link OAuth2DeviceVerificationEndpointConfigurer}
+	 * @return the {@link OAuth2AuthorizationServerConfigurer} for further configuration
+	 * @since 1.1
+	 */
+	public OAuth2AuthorizationServerConfigurer deviceVerificationEndpoint(Customizer<OAuth2DeviceVerificationEndpointConfigurer> deviceVerificationEndpointCustomizer) {
+		deviceVerificationEndpointCustomizer.customize(getConfigurer(OAuth2DeviceVerificationEndpointConfigurer.class));
+		return this;
+	}
+
+	/**
 	 * Configures OpenID Connect 1.0 support (disabled by default).
 	 *
 	 * @param oidcCustomizer the {@link Customizer} providing access to the {@link OidcConfigurer}
@@ -326,6 +350,8 @@ public final class OAuth2AuthorizationServerConfigurer
 		configurers.put(OAuth2TokenEndpointConfigurer.class, new OAuth2TokenEndpointConfigurer(this::postProcess));
 		configurers.put(OAuth2TokenIntrospectionEndpointConfigurer.class, new OAuth2TokenIntrospectionEndpointConfigurer(this::postProcess));
 		configurers.put(OAuth2TokenRevocationEndpointConfigurer.class, new OAuth2TokenRevocationEndpointConfigurer(this::postProcess));
+		configurers.put(OAuth2DeviceAuthorizationEndpointConfigurer.class, new OAuth2DeviceAuthorizationEndpointConfigurer(this::postProcess));
+		configurers.put(OAuth2DeviceVerificationEndpointConfigurer.class, new OAuth2DeviceVerificationEndpointConfigurer(this::postProcess));
 		return configurers;
 	}
 

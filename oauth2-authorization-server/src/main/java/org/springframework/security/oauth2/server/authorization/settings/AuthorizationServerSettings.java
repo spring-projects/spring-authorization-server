@@ -53,6 +53,24 @@ public final class AuthorizationServerSettings extends AbstractSettings {
 	}
 
 	/**
+	 * Returns the OAuth 2.0 Device Authorization endpoint. The default is {@code /oauth2/device_authorization}.
+	 *
+	 * @return the Authorization endpoint
+	 */
+	public String getDeviceAuthorizationEndpoint() {
+		return getSetting(ConfigurationSettingNames.AuthorizationServer.DEVICE_AUTHORIZATION_ENDPOINT);
+	}
+
+	/**
+	 * Returns the OAuth 2.0 Device VERIFICATION endpoint. The default is {@code /oauth2/device_verification}.
+	 *
+	 * @return the Authorization endpoint
+	 */
+	public String getDeviceVerificationEndpoint() {
+		return getSetting(ConfigurationSettingNames.AuthorizationServer.DEVICE_VERIFICATION_ENDPOINT);
+	}
+
+	/**
 	 * Returns the OAuth 2.0 Token endpoint. The default is {@code /oauth2/token}.
 	 *
 	 * @return the Token endpoint
@@ -124,6 +142,8 @@ public final class AuthorizationServerSettings extends AbstractSettings {
 	public static Builder builder() {
 		return new Builder()
 				.authorizationEndpoint("/oauth2/authorize")
+				.deviceAuthorizationEndpoint("/oauth2/device_authorization")
+				.deviceVerificationEndpoint("/oauth2/device_verification")
 				.tokenEndpoint("/oauth2/token")
 				.jwkSetEndpoint("/oauth2/jwks")
 				.tokenRevocationEndpoint("/oauth2/revoke")
@@ -171,6 +191,26 @@ public final class AuthorizationServerSettings extends AbstractSettings {
 		 */
 		public Builder authorizationEndpoint(String authorizationEndpoint) {
 			return setting(ConfigurationSettingNames.AuthorizationServer.AUTHORIZATION_ENDPOINT, authorizationEndpoint);
+		}
+
+		/**
+		 * Sets the OAuth 2.0 Device Authorization endpoint.
+		 *
+		 * @param deviceAuthorizationEndpoint the Device Authorization endpoint
+		 * @return the {@link Builder} for further configuration
+		 */
+		public Builder deviceAuthorizationEndpoint(String deviceAuthorizationEndpoint) {
+			return setting(ConfigurationSettingNames.AuthorizationServer.DEVICE_AUTHORIZATION_ENDPOINT, deviceAuthorizationEndpoint);
+		}
+
+		/**
+		 * Sets the OAuth 2.0 Device Verification endpoint.
+		 *
+		 * @param deviceVerificationEndpoint the Device Verification endpoint
+		 * @return the {@link Builder} for further configuration
+		 */
+		public Builder deviceVerificationEndpoint(String deviceVerificationEndpoint) {
+			return setting(ConfigurationSettingNames.AuthorizationServer.DEVICE_VERIFICATION_ENDPOINT, deviceVerificationEndpoint);
 		}
 
 		/**

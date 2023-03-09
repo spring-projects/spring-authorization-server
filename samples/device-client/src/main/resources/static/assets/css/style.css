@@ -1,0 +1,13 @@
+html, body, .container, .jumbotron {
+    height: 100%;
+}
+.jumbotron {
+    margin-bottom: 0;
+}
+.gap {
+    margin-top: 70px;
+}
+.code {
+    font-size: 2em;
+    letter-spacing: 2rem;
+}

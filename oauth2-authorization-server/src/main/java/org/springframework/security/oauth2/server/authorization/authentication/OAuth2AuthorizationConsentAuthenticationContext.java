@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -110,6 +110,10 @@ public final class OAuth2AuthorizationConsentAuthenticationContext implements OA
 	public static final class Builder extends AbstractBuilder<OAuth2AuthorizationConsentAuthenticationContext, Builder> {
 
 		private Builder(OAuth2AuthorizationConsentAuthenticationToken authentication) {
+			super(authentication);
+		}
+
+		private Builder(OAuth2DeviceAuthorizationConsentAuthenticationToken authentication) {
 			super(authentication);
 		}
 

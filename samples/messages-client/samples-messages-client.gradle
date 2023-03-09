@@ -10,7 +10,6 @@ sourceCompatibility = "17"
 
 repositories {
 	mavenCentral()
-	maven { url 'https://repo.spring.io/milestone' }
 }
 
 dependencies {
@@ -20,7 +19,6 @@ dependencies {
 	implementation "org.springframework.boot:spring-boot-starter-oauth2-client"
 	implementation "org.springframework:spring-webflux"
 	implementation "io.projectreactor.netty:reactor-netty"
-	implementation "org.thymeleaf.extras:thymeleaf-extras-springsecurity6"
 	implementation "org.webjars:webjars-locator-core"
 	implementation "org.webjars:bootstrap:3.4.1"
 	implementation "org.webjars:jquery:3.4.1"

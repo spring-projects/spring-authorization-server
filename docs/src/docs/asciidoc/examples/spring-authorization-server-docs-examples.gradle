@@ -8,18 +8,18 @@ sourceCompatibility = "17"
 
 repositories {
 	mavenCentral()
-	maven { url 'https://repo.spring.io/milestone' }
+	maven { url "https://repo.spring.io/snapshot" }
 }
 
 dependencies {
 	implementation platform("org.springframework.boot:spring-boot-dependencies:3.0.0")
+	implementation platform("org.springframework.security:spring-security-bom:6.1.0-SNAPSHOT")
 	implementation "org.springframework.boot:spring-boot-starter-web"
 	implementation "org.springframework.boot:spring-boot-starter-thymeleaf"
 	implementation "org.springframework.boot:spring-boot-starter-security"
 	implementation "org.springframework.boot:spring-boot-starter-oauth2-client"
 	implementation "org.springframework.boot:spring-boot-starter-oauth2-resource-server"
 	implementation "org.springframework.boot:spring-boot-starter-data-jpa"
-	implementation "org.thymeleaf.extras:thymeleaf-extras-springsecurity6"
 	implementation project(":spring-security-oauth2-authorization-server")
 	runtimeOnly "com.h2database:h2"
 	testImplementation "org.springframework.boot:spring-boot-starter-test"

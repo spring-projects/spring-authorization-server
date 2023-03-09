@@ -9,15 +9,9 @@ version = project.rootProject.version
 sourceCompatibility = "17"
 
 repositories {
-	maven {
-		url = "https://repo.spring.io/snapshot"
-	}
 	mavenCentral()
+	maven { url = "https://repo.spring.io/snapshot" }
 }
-
-// Temporarily use SNAPSHOT version
-// TODO: Use 6.1.0-M2 version after release
-ext["spring-security.version"] = "6.1.0-SNAPSHOT"
 
 dependencies {
 	implementation "org.springframework.boot:spring-boot-starter-web"

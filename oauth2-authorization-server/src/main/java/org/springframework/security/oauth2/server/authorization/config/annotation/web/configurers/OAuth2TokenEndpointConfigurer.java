@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ import org.springframework.security.oauth2.server.authorization.authentication.O
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationGrantAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientCredentialsAuthenticationProvider;
+import org.springframework.security.oauth2.server.authorization.authentication.OAuth2DeviceCodeAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2RefreshTokenAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenGenerator;
@@ -43,6 +44,7 @@ import org.springframework.security.oauth2.server.authorization.web.OAuth2TokenE
 import org.springframework.security.oauth2.server.authorization.web.authentication.DelegatingAuthenticationConverter;
 import org.springframework.security.oauth2.server.authorization.web.authentication.OAuth2AuthorizationCodeAuthenticationConverter;
 import org.springframework.security.oauth2.server.authorization.web.authentication.OAuth2ClientCredentialsAuthenticationConverter;
+import org.springframework.security.oauth2.server.authorization.web.authentication.OAuth2DeviceCodeAuthenticationConverter;
 import org.springframework.security.oauth2.server.authorization.web.authentication.OAuth2RefreshTokenAuthenticationConverter;
 import org.springframework.security.web.access.intercept.AuthorizationFilter;
 import org.springframework.security.web.authentication.AuthenticationConverter;
@@ -208,6 +210,7 @@ public final class OAuth2TokenEndpointConfigurer extends AbstractOAuth2Configure
 		authenticationConverters.add(new OAuth2AuthorizationCodeAuthenticationConverter());
 		authenticationConverters.add(new OAuth2RefreshTokenAuthenticationConverter());
 		authenticationConverters.add(new OAuth2ClientCredentialsAuthenticationConverter());
+		authenticationConverters.add(new OAuth2DeviceCodeAuthenticationConverter());
 
 		return authenticationConverters;
 	}
@@ -231,6 +234,10 @@ public final class OAuth2TokenEndpointConfigurer extends AbstractOAuth2Configure
 		OAuth2ClientCredentialsAuthenticationProvider clientCredentialsAuthenticationProvider =
 				new OAuth2ClientCredentialsAuthenticationProvider(authorizationService, tokenGenerator);
 		authenticationProviders.add(clientCredentialsAuthenticationProvider);
+
+		OAuth2DeviceCodeAuthenticationProvider deviceCodeAuthenticationProvider =
+				new OAuth2DeviceCodeAuthenticationProvider(authorizationService, tokenGenerator);
+		authenticationProviders.add(deviceCodeAuthenticationProvider);
 
 		return authenticationProviders;
 	}

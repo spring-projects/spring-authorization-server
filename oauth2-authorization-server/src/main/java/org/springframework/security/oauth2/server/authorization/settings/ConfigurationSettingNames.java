@@ -87,6 +87,16 @@ public final class ConfigurationSettingNames {
 		public static final String AUTHORIZATION_ENDPOINT = AUTHORIZATION_SERVER_SETTINGS_NAMESPACE.concat("authorization-endpoint");
 
 		/**
+		 * Set the OAuth 2.0 Device Authorization endpoint.
+		 */
+		public static final String DEVICE_AUTHORIZATION_ENDPOINT = AUTHORIZATION_SERVER_SETTINGS_NAMESPACE.concat("device-authorization-endpoint");
+
+		/**
+		 * Set the OAuth 2.0 Device Verification endpoint.
+		 */
+		public static final String DEVICE_VERIFICATION_ENDPOINT = AUTHORIZATION_SERVER_SETTINGS_NAMESPACE.concat("device-verification-endpoint");
+
+		/**
 		 * Set the OAuth 2.0 Token endpoint.
 		 */
 		public static final String TOKEN_ENDPOINT = AUTHORIZATION_SERVER_SETTINGS_NAMESPACE.concat("token-endpoint");
@@ -149,6 +159,12 @@ public final class ConfigurationSettingNames {
 		 * @since 0.2.3
 		 */
 		public static final String ACCESS_TOKEN_FORMAT = TOKEN_SETTINGS_NAMESPACE.concat("access-token-format");
+
+		/**
+		 * Set the time-to-live for a device code.
+		 * @since 1.1
+		 */
+		public static final String DEVICE_CODE_TIME_TO_LIVE = TOKEN_SETTINGS_NAMESPACE.concat("device-code-time-to-live");
 
 		/**
 		 * Set to {@code true} if refresh tokens are reused when returning the access token response,

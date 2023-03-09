@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,8 +34,9 @@ public class TokenSettingsTests {
 	@Test
 	public void buildWhenDefaultThenDefaultsAreSet() {
 		TokenSettings tokenSettings = TokenSettings.builder().build();
-		assertThat(tokenSettings.getSettings()).hasSize(6);
+		assertThat(tokenSettings.getSettings()).hasSize(7);
 		assertThat(tokenSettings.getAuthorizationCodeTimeToLive()).isEqualTo(Duration.ofMinutes(5));
+		assertThat(tokenSettings.getDeviceCodeTimeToLive()).isEqualTo(Duration.ofMinutes(30));
 		assertThat(tokenSettings.getAccessTokenTimeToLive()).isEqualTo(Duration.ofMinutes(5));
 		assertThat(tokenSettings.getAccessTokenFormat()).isEqualTo(OAuth2TokenFormat.SELF_CONTAINED);
 		assertThat(tokenSettings.isReuseRefreshTokens()).isTrue();
@@ -163,7 +164,7 @@ public class TokenSettingsTests {
 				.setting("name1", "value1")
 				.settings(settings -> settings.put("name2", "value2"))
 				.build();
-		assertThat(tokenSettings.getSettings()).hasSize(8);
+		assertThat(tokenSettings.getSettings()).hasSize(9);
 		assertThat(tokenSettings.<String>getSetting("name1")).isEqualTo("value1");
 		assertThat(tokenSettings.<String>getSetting("name2")).isEqualTo("value2");
 	}

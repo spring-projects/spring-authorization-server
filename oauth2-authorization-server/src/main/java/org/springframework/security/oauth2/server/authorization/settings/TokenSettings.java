@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,6 +67,16 @@ public final class TokenSettings extends AbstractSettings {
 	}
 
 	/**
+	 * Returns the time-to-live for a device code. The default is 30 minutes.
+	 *
+	 * @return the time-to-live for an authorization code
+	 * @since 1.1
+	 */
+	public Duration getDeviceCodeTimeToLive() {
+		return getSetting(ConfigurationSettingNames.Token.DEVICE_CODE_TIME_TO_LIVE);
+	}
+
+	/**
 	 * Returns {@code true} if refresh tokens are reused when returning the access token response,
 	 * or {@code false} if a new refresh token is issued. The default is {@code true}.
 	 */
@@ -103,6 +113,7 @@ public final class TokenSettings extends AbstractSettings {
 				.authorizationCodeTimeToLive(Duration.ofMinutes(5))
 				.accessTokenTimeToLive(Duration.ofMinutes(5))
 				.accessTokenFormat(OAuth2TokenFormat.SELF_CONTAINED)
+				.deviceCodeTimeToLive(Duration.ofMinutes(30))
 				.reuseRefreshTokens(true)
 				.refreshTokenTimeToLive(Duration.ofMinutes(60))
 				.idTokenSignatureAlgorithm(SignatureAlgorithm.RS256);
@@ -164,6 +175,19 @@ public final class TokenSettings extends AbstractSettings {
 		public Builder accessTokenFormat(OAuth2TokenFormat accessTokenFormat) {
 			Assert.notNull(accessTokenFormat, "accessTokenFormat cannot be null");
 			return setting(ConfigurationSettingNames.Token.ACCESS_TOKEN_FORMAT, accessTokenFormat);
+		}
+
+		/**
+		 * Set the time-to-live for a device code. Must be greater than {@code Duration.ZERO}.
+		 *
+		 * @param deviceCodeTimeToLive the time-to-live for a device code
+		 * @return the {@link Builder} for further configuration
+		 * @since 1.1
+		 */
+		public Builder deviceCodeTimeToLive(Duration deviceCodeTimeToLive) {
+			Assert.notNull(deviceCodeTimeToLive, "deviceCodeTimeToLive cannot be null");
+			Assert.isTrue(deviceCodeTimeToLive.getSeconds() > 0, "deviceCodeTimeToLive must be greater than Duration.ZERO");
+			return setting(ConfigurationSettingNames.Token.DEVICE_CODE_TIME_TO_LIVE, deviceCodeTimeToLive);
 		}
 
 		/**

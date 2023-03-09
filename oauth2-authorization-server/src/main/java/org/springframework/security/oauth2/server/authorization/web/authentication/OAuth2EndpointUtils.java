@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.endpoint.PkceParameterNames;
+import org.springframework.util.Assert;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
@@ -79,6 +80,14 @@ final class OAuth2EndpointUtils {
 	static void throwError(String errorCode, String parameterName, String errorUri) {
 		OAuth2Error error = new OAuth2Error(errorCode, "OAuth 2.0 Parameter: " + parameterName, errorUri);
 		throw new OAuth2AuthenticationException(error);
+	}
+
+	static String normalizeUserCode(String userCode) {
+		Assert.hasText(userCode, "userCode cannot be empty");
+		StringBuilder sb = new StringBuilder(userCode.toUpperCase().replaceAll("[^A-Z\\d]+", ""));
+		Assert.isTrue(sb.length() == 8, "userCode must be exactly 8 alpha/numeric characters");
+		sb.insert(4, '-');
+		return sb.toString();
 	}
 
 }

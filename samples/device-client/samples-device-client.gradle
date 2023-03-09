@@ -1,0 +1,27 @@
+plugins {
+	id "org.springframework.boot" version "3.0.0"
+	id "io.spring.dependency-management" version "1.0.11.RELEASE"
+	id "java"
+}
+
+group = project.rootProject.group
+version = project.rootProject.version
+sourceCompatibility = "17"
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	implementation "org.springframework.boot:spring-boot-starter-web"
+	implementation "org.springframework.boot:spring-boot-starter-thymeleaf"
+	implementation "org.springframework.boot:spring-boot-starter-security"
+	implementation "org.springframework.boot:spring-boot-starter-oauth2-client"
+	implementation "org.springframework:spring-webflux"
+	implementation "org.webjars:webjars-locator-core"
+	implementation "org.webjars:bootstrap:3.4.1"
+	implementation "org.webjars:jquery:3.4.1"
+
+	testImplementation "org.springframework.boot:spring-boot-starter-test"
+	testImplementation "org.springframework.security:spring-security-test"
+}

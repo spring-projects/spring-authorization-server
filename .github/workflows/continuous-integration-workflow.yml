@@ -18,7 +18,7 @@ jobs:
       runjobs: ${{ steps.continue.outputs.runjobs }}
       project_version: ${{ steps.continue.outputs.project_version }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - id: continue
         name: Determine if should continue
         if: env.RUN_JOBS == 'true'
@@ -39,7 +39,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     if: needs.prerequisites.outputs.runjobs
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Set up JDK ${{ matrix.jdk }}
         uses: actions/setup-java@v1
         with:
@@ -66,7 +66,7 @@ jobs:
     runs-on: ubuntu-latest
     if: needs.prerequisites.outputs.runjobs
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Set up JDK
         uses: actions/setup-java@v1
         with:
@@ -86,7 +86,7 @@ jobs:
     needs: [build, snapshot_tests]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Set up JDK
         uses: actions/setup-java@v1
         with:
@@ -110,7 +110,7 @@ jobs:
     needs: [build, snapshot_tests]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Set up JDK
         uses: actions/setup-java@v1
         with:

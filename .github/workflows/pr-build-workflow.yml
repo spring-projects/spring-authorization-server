@@ -13,12 +13,16 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest]
         jdk: [8]
+        include:
+          - jdk: 8
+            distribution: adopt
       fail-fast: false
     steps:
       - uses: actions/checkout@v3
       - name: Set up JDK ${{ matrix.jdk }}
-        uses: actions/setup-java@v1
+        uses: spring-io/spring-gradle-build-action@v2
         with:
           java-version: ${{ matrix.jdk }}
+          distribution: ${{ matrix.distribution }}
       - name: Build with Gradle
         run: ./gradlew clean build

@@ -35,23 +35,23 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest]
         jdk: [8,11,17]
+        include:
+          - jdk: 8
+            distribution: adopt
+          - jdk: 11
+            distribution: adopt
+          - jdk: 17
+            distribution: temurin
       fail-fast: false
     runs-on: ${{ matrix.os }}
     if: needs.prerequisites.outputs.runjobs
     steps:
       - uses: actions/checkout@v3
       - name: Set up JDK ${{ matrix.jdk }}
-        uses: actions/setup-java@v1
+        uses: spring-io/spring-gradle-build-action@v2
         with:
           java-version: ${{ matrix.jdk }}
-      - name: Setup gradle user name
-        run: |
-          mkdir -p ~/.gradle
-          echo 'systemProp.user.name=spring-builds+github' >> ~/.gradle/gradle.properties
-      - name: Setup Gradle
-        uses: gradle/gradle-build-action@v2
-        env:
-          GRADLE_USER_HOME: ~/.gradle
+          distribution: ${{ matrix.distribution }}
       - name: Build with Gradle
         env:
           GRADLE_ENTERPRISE_CACHE_USERNAME: ${{ secrets.GRADLE_ENTERPRISE_CACHE_USER }}
@@ -68,11 +68,10 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Set up JDK
-        uses: actions/setup-java@v1
+        uses: spring-io/spring-gradle-build-action@v2
         with:
           java-version: 8
-      - name: Setup Gradle
-        uses: gradle/gradle-build-action@v2
+          distribution: adopt
       - name: Snapshot Tests
         env:
           GRADLE_ENTERPRISE_CACHE_USERNAME: ${{ secrets.GRADLE_ENTERPRISE_CACHE_USER }}
@@ -80,7 +79,7 @@ jobs:
           GRADLE_ENTERPRISE_ACCESS_KEY: ${{ secrets.GRADLE_ENTERPRISE_SECRET_ACCESS_KEY }}
           ARTIFACTORY_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
           ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
-        run: ./gradlew test --refresh-dependencies -Duser.name=spring-builds+github -PartifactoryUsername="$ARTIFACTORY_USERNAME" -PartifactoryPassword="$ARTIFACTORY_PASSWORD" -PforceMavenRepositories=snapshot -PspringFrameworkVersion='5.3.+' -PspringSecurityVersion='5.8.+' -PlocksDisabled --stacktrace
+        run: ./gradlew test --refresh-dependencies -Duser.name=spring-builds+github -PartifactoryUsername="$ARTIFACTORY_USERNAME" -PartifactoryPassword="$ARTIFACTORY_PASSWORD" -PforceMavenRepositories=snapshot -PspringFrameworkVersion='6.0.+' -PspringSecurityVersion='6.1.+' -PlocksDisabled --stacktrace
   deploy_artifacts:
     name: Deploy Artifacts
     needs: [build, snapshot_tests]
@@ -88,11 +87,10 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Set up JDK
-        uses: actions/setup-java@v1
+        uses: spring-io/spring-gradle-build-action@v2
         with:
           java-version: 8
-      - name: Setup Gradle
-        uses: gradle/gradle-build-action@v2
+          distribution: adopt
       - name: Deploy Artifacts
         env:
           GRADLE_ENTERPRISE_CACHE_USERNAME: ${{ secrets.GRADLE_ENTERPRISE_CACHE_USER }}
@@ -112,11 +110,10 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Set up JDK
-        uses: actions/setup-java@v1
+        uses: spring-io/spring-gradle-build-action@v2
         with:
           java-version: 8
-      - name: Setup Gradle
-        uses: gradle/gradle-build-action@v2
+          distribution: adopt
       - name: Deploy Docs
         env:
           GRADLE_ENTERPRISE_CACHE_USERNAME: ${{ secrets.GRADLE_ENTERPRISE_CACHE_USER }}

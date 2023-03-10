@@ -41,17 +41,10 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Set up JDK ${{ matrix.jdk }}
-        uses: actions/setup-java@v1
+        uses: spring-io/spring-gradle-build-action@v2
         with:
           java-version: ${{ matrix.jdk }}
-      - name: Setup gradle user name
-        run: |
-          mkdir -p ~/.gradle
-          echo 'systemProp.user.name=spring-builds+github' >> ~/.gradle/gradle.properties
-      - name: Setup Gradle
-        uses: gradle/gradle-build-action@v2
-        env:
-          GRADLE_USER_HOME: ~/.gradle
+          distribution: temurin
       - name: Build with Gradle
         env:
           GRADLE_ENTERPRISE_CACHE_USERNAME: ${{ secrets.GRADLE_ENTERPRISE_CACHE_USER }}
@@ -68,11 +61,10 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Set up JDK
-        uses: actions/setup-java@v1
+        uses: spring-io/spring-gradle-build-action@v2
         with:
           java-version: 17
-      - name: Setup Gradle
-        uses: gradle/gradle-build-action@v2
+          distribution: temurin
       - name: Snapshot Tests
         env:
           GRADLE_ENTERPRISE_CACHE_USERNAME: ${{ secrets.GRADLE_ENTERPRISE_CACHE_USER }}
@@ -88,11 +80,10 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Set up JDK
-        uses: actions/setup-java@v1
+        uses: spring-io/spring-gradle-build-action@v2
         with:
           java-version: 17
-      - name: Setup Gradle
-        uses: gradle/gradle-build-action@v2
+          distribution: temurin
       - name: Deploy Artifacts
         env:
           GRADLE_ENTERPRISE_CACHE_USERNAME: ${{ secrets.GRADLE_ENTERPRISE_CACHE_USER }}
@@ -112,11 +103,10 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Set up JDK
-        uses: actions/setup-java@v1
+        uses: spring-io/spring-gradle-build-action@v2
         with:
           java-version: 17
-      - name: Setup Gradle
-        uses: gradle/gradle-build-action@v2
+          distribution: temurin
       - name: Deploy Docs
         env:
           GRADLE_ENTERPRISE_CACHE_USERNAME: ${{ secrets.GRADLE_ENTERPRISE_CACHE_USER }}

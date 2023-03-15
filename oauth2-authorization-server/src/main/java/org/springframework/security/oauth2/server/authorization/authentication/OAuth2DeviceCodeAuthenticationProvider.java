@@ -66,7 +66,9 @@ public final class OAuth2DeviceCodeAuthenticationProvider implements Authenticat
 
 	private static final String DEFAULT_ERROR_URI = "https://datatracker.ietf.org/doc/html/rfc6749#section-5.2";
 	private static final String DEVICE_ERROR_URI = "https://datatracker.ietf.org/doc/html/rfc8628#section-3.5";
-	private static final OAuth2TokenType DEVICE_CODE_TOKEN_TYPE = new OAuth2TokenType(OAuth2ParameterNames.DEVICE_CODE);
+	static final OAuth2TokenType DEVICE_CODE_TOKEN_TYPE = new OAuth2TokenType(OAuth2ParameterNames.DEVICE_CODE);
+	static final String EXPIRED_TOKEN = "expired_token";
+	static final String AUTHORIZATION_PENDING = "authorization_pending";
 
 	private final Log logger = LogFactory.getLog(getClass());
 	private final OAuth2AuthorizationService authorizationService;
@@ -134,7 +136,7 @@ public final class OAuth2DeviceCodeAuthenticationProvider implements Authenticat
 		//   access_denied
 		//      The authorization request was denied.
 		if (Boolean.TRUE.equals(deviceCode.getMetadata(OAuth2Authorization.Token.ACCESS_DENIED_METADATA_NAME))) {
-			OAuth2Error error = new OAuth2Error("access_denied", null, DEVICE_ERROR_URI);
+			OAuth2Error error = new OAuth2Error(OAuth2ErrorCodes.ACCESS_DENIED, null, DEVICE_ERROR_URI);
 			throw new OAuth2AuthenticationException(error);
 		}
 
@@ -144,7 +146,7 @@ public final class OAuth2DeviceCodeAuthenticationProvider implements Authenticat
 		//      authorization request but SHOULD wait for user interaction before
 		//      restarting to avoid unnecessary polling.
 		if (deviceCode.isExpired()) {
-			OAuth2Error error = new OAuth2Error("expired_token", null, DEVICE_ERROR_URI);
+			OAuth2Error error = new OAuth2Error(EXPIRED_TOKEN, null, DEVICE_ERROR_URI);
 			throw new OAuth2AuthenticationException(error);
 		}
 
@@ -165,7 +167,7 @@ public final class OAuth2DeviceCodeAuthenticationProvider implements Authenticat
 		//      increase in the polling interval required by the "slow_down"
 		//      error.
 		if (!Boolean.TRUE.equals(deviceCode.getMetadata(OAuth2Authorization.Token.ACCESS_GRANTED_METADATA_NAME))) {
-			OAuth2Error error = new OAuth2Error("authorization_pending", null, DEVICE_ERROR_URI);
+			OAuth2Error error = new OAuth2Error(AUTHORIZATION_PENDING, null, DEVICE_ERROR_URI);
 			throw new OAuth2AuthenticationException(error);
 		}
 

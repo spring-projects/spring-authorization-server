@@ -29,7 +29,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
-import org.springframework.security.oauth2.core.OAuth2AuthorizationException;
 import org.springframework.security.oauth2.core.OAuth2DeviceCode;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
@@ -63,7 +62,7 @@ import org.springframework.util.Assert;
 public final class OAuth2DeviceAuthorizationConsentAuthenticationProvider implements AuthenticationProvider {
 
 	private static final String DEFAULT_ERROR_URI = "https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.2.1";
-	private static final OAuth2TokenType STATE_TOKEN_TYPE = new OAuth2TokenType(OAuth2ParameterNames.STATE);
+	static final OAuth2TokenType STATE_TOKEN_TYPE = new OAuth2TokenType(OAuth2ParameterNames.STATE);
 
 	private final Log logger = LogFactory.getLog(getClass());
 	private final RegisteredClientRepository registeredClientRepository;
@@ -261,7 +260,7 @@ public final class OAuth2DeviceAuthorizationConsentAuthenticationProvider implem
 
 	private static void throwError(String errorCode, String parameterName) {
 		OAuth2Error error = new OAuth2Error(errorCode, "OAuth 2.0 Parameter: " + parameterName, DEFAULT_ERROR_URI);
-		throw new OAuth2AuthorizationException(error);
+		throw new OAuth2AuthenticationException(error);
 	}
 
 }

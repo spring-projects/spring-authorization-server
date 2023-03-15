@@ -26,7 +26,7 @@ import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2DeviceCodeAuthenticationToken;
-import org.springframework.security.oauth2.server.authorization.web.OAuth2DeviceAuthorizationEndpointFilter;
+import org.springframework.security.oauth2.server.authorization.web.OAuth2TokenEndpointFilter;
 import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
@@ -41,7 +41,7 @@ import org.springframework.util.StringUtils;
  * @since 1.1
  * @see AuthenticationConverter
  * @see OAuth2DeviceCodeAuthenticationToken
- * @see OAuth2DeviceAuthorizationEndpointFilter
+ * @see OAuth2TokenEndpointFilter
  */
 public final class OAuth2DeviceCodeAuthenticationConverter implements AuthenticationConverter {
 

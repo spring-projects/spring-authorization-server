@@ -75,7 +75,10 @@ public final class OAuth2DeviceAuthorizationConsentAuthenticationConverter imple
 		// client_id (REQUIRED)
 		String clientId = parameters.getFirst(OAuth2ParameterNames.CLIENT_ID);
 		if (!StringUtils.hasText(clientId) || parameters.get(OAuth2ParameterNames.CLIENT_ID).size() != 1) {
-			OAuth2EndpointUtils.throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.CLIENT_ID, DEFAULT_ERROR_URI);
+			OAuth2EndpointUtils.throwError(
+					OAuth2ErrorCodes.INVALID_REQUEST,
+					OAuth2ParameterNames.CLIENT_ID,
+					DEFAULT_ERROR_URI);
 		}
 
 		Authentication principal = SecurityContextHolder.getContext().getAuthentication();

@@ -62,7 +62,7 @@ import org.springframework.util.Assert;
  */
 public final class OAuth2DeviceVerificationAuthenticationProvider implements AuthenticationProvider {
 
-	private static final OAuth2TokenType USER_CODE_TOKEN_TYPE = new OAuth2TokenType(OAuth2ParameterNames.USER_CODE);
+	static final OAuth2TokenType USER_CODE_TOKEN_TYPE = new OAuth2TokenType(OAuth2ParameterNames.USER_CODE);
 	private static final StringKeyGenerator DEFAULT_STATE_GENERATOR =
 			new Base64StringKeyGenerator(Base64.getUrlEncoder());
 
@@ -154,7 +154,7 @@ public final class OAuth2DeviceVerificationAuthenticationProvider implements Aut
 		OAuth2Authorization.Token<OAuth2UserCode> userCode = authorization.getToken(OAuth2UserCode.class);
 		OAuth2Authorization updatedAuthorization = OAuth2Authorization.from(authorization)
 				.principalName(principal.getName())
-				.authorizedScopes(currentAuthorizedScopes)
+				.authorizedScopes(authorizationRequest.getScopes())
 				.token(deviceCode.getToken(), metadata -> metadata
 						.put(OAuth2Authorization.Token.ACCESS_GRANTED_METADATA_NAME, true))
 				.token(userCode.getToken(), metadata -> metadata

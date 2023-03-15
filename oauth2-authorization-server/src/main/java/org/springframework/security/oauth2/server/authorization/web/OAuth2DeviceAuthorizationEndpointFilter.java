@@ -70,7 +70,7 @@ import org.springframework.web.util.UriComponentsBuilder;
  */
 public final class OAuth2DeviceAuthorizationEndpointFilter extends OncePerRequestFilter {
 
-	private static final String DEFAULT_DEVICE_AUTHORIZATION_ENDPOINT_URI = "/oauth2/device_authorize";
+	private static final String DEFAULT_DEVICE_AUTHORIZATION_ENDPOINT_URI = "/oauth2/device_authorization";
 
 	private static final String DEFAULT_DEVICE_VERIFICATION_URI = "/oauth2/device_verification";
 
@@ -88,10 +88,10 @@ public final class OAuth2DeviceAuthorizationEndpointFilter extends OncePerReques
 	private String verificationUri = DEFAULT_DEVICE_VERIFICATION_URI;
 
 	/**
-     * Constructs an {@code OAuth2DeviceAuthorizationEndpointFilter} using the provided parameters.
-     *
-     * @param authenticationManager the authentication manager
-     */
+	 * Constructs an {@code OAuth2DeviceAuthorizationEndpointFilter} using the provided parameters.
+	 *
+	 * @param authenticationManager the authentication manager
+	 */
 	public OAuth2DeviceAuthorizationEndpointFilter(AuthenticationManager authenticationManager) {
 		this(authenticationManager, DEFAULT_DEVICE_AUTHORIZATION_ENDPOINT_URI);
 	}

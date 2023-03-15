@@ -69,8 +69,8 @@ import static org.springframework.security.oauth2.server.authorization.authentic
 public final class OAuth2DeviceAuthorizationRequestAuthenticationProvider implements AuthenticationProvider {
 
 	private static final String ERROR_URI = "https://datatracker.ietf.org/doc/html/rfc6749#section-5.2";
-	private static final OAuth2TokenType DEVICE_CODE_TOKEN_TYPE = new OAuth2TokenType(OAuth2ParameterNames.DEVICE_CODE);
-	private static final OAuth2TokenType USER_CODE_TOKEN_TYPE = new OAuth2TokenType(OAuth2ParameterNames.USER_CODE);
+	static final OAuth2TokenType DEVICE_CODE_TOKEN_TYPE = new OAuth2TokenType(OAuth2ParameterNames.DEVICE_CODE);
+	static final OAuth2TokenType USER_CODE_TOKEN_TYPE = new OAuth2TokenType(OAuth2ParameterNames.USER_CODE);
 
 	private final Log logger = LogFactory.getLog(getClass());
 	private final OAuth2AuthorizationService authorizationService;

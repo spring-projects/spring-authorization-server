@@ -79,6 +79,8 @@ import org.springframework.web.util.UriComponentsBuilder;
  */
 public final class OAuth2DeviceVerificationEndpointFilter extends OncePerRequestFilter {
 
+	private static final String DEFAULT_DEVICE_VERIFICATION_URI = "/oauth2/device_verification";
+
 	private final AuthenticationManager authenticationManager;
 	private final RequestMatcher deviceVerificationEndpointMatcher;
 	private final RedirectStrategy redirectStrategy = new DefaultRedirectStrategy();
@@ -90,7 +92,24 @@ public final class OAuth2DeviceVerificationEndpointFilter extends OncePerRequest
 	private AuthenticationFailureHandler authenticationFailureHandler = this::sendErrorResponse;
 	private String consentPage;
 
+	/**
+	 * Construct an {@code OAuth2DeviceVerificationEndpointFilter} using the provided parameters.
+	 *
+	 * @param authenticationManager the authentication manager
+	 */
+	public OAuth2DeviceVerificationEndpointFilter(AuthenticationManager authenticationManager) {
+		this(authenticationManager, DEFAULT_DEVICE_VERIFICATION_URI);
+	}
+
+	/**
+	 * Construct an {@code OAuth2DeviceVerificationEndpointFilter} using the provided parameters.
+	 *
+	 * @param authenticationManager the authentication manager
+	 * @param deviceVerificationEndpointUri the endpoint {@code URI} for device verification requests
+	 */
 	public OAuth2DeviceVerificationEndpointFilter(AuthenticationManager authenticationManager, String deviceVerificationEndpointUri) {
+		Assert.notNull(authenticationManager, "authenticationManager cannot be null");
+		Assert.hasText(deviceVerificationEndpointUri, "deviceVerificationEndpointUri cannot be empty");
 		this.authenticationManager = authenticationManager;
 		this.deviceVerificationEndpointMatcher = createDefaultRequestMatcher(deviceVerificationEndpointUri);
 		this.authenticationConverter = new DelegatingAuthenticationConverter(

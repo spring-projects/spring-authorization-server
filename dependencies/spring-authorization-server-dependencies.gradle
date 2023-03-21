@@ -11,7 +11,7 @@ dependencies {
 	api platform("org.springframework.security:spring-security-bom:$springSecurityVersion")
 	api platform("com.fasterxml.jackson:jackson-bom:2.14.2")
 	constraints {
-		api "com.nimbusds:nimbus-jose-jwt:9.30.2"
+		api "com.nimbusds:nimbus-jose-jwt:9.31"
 		api "jakarta.servlet:jakarta.servlet-api:6.0.0"
 		api "org.junit.jupiter:junit-jupiter:5.9.2"
 		api "org.assertj:assertj-core:3.24.2"

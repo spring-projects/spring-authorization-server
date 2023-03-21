@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@ import org.springframework.util.Assert;
  * @since 0.1.1
  * @see <a target="_blank" href="https://tools.ietf.org/html/rfc8414#section-3.2">3.2. Authorization Server Metadata Response</a>
  * @see <a target="_blank" href="https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderConfigurationResponse">4.2. OpenID Provider Configuration Response</a>
+ * @see <a target="_blank" href="https://www.rfc-editor.org/rfc/rfc8628.html#section-4">4. Device Authorization Grant Metadata</a>
  */
 public abstract class AbstractOAuth2AuthorizationServerMetadata implements OAuth2AuthorizationServerMetadataClaimAccessor, Serializable {
 	private static final long serialVersionUID = SpringAuthorizationServerVersion.SERIAL_VERSION_UID;
@@ -94,6 +95,17 @@ public abstract class AbstractOAuth2AuthorizationServerMetadata implements OAuth
 		 */
 		public B authorizationEndpoint(String authorizationEndpoint) {
 			return claim(OAuth2AuthorizationServerMetadataClaimNames.AUTHORIZATION_ENDPOINT, authorizationEndpoint);
+		}
+
+		/**
+		 * Use this {@code device_authorization_endpoint} in the resulting {@link AbstractOAuth2AuthorizationServerMetadata}, OPTIONAL.
+		 *
+		 * @param deviceAuthorizationEndpoint the {@code URL} of the OAuth 2.0 Device Authorization Endpoint
+		 * @return the {@link AbstractBuilder} for further configuration
+		 * @since 1.1
+		 */
+		public B deviceAuthorizationEndpoint(String deviceAuthorizationEndpoint) {
+			return claim(OAuth2AuthorizationServerMetadataClaimNames.DEVICE_AUTHORIZATION_ENDPOINT, deviceAuthorizationEndpoint);
 		}
 
 		/**
@@ -346,6 +358,9 @@ public abstract class AbstractOAuth2AuthorizationServerMetadata implements OAuth
 			validateURL(getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.ISSUER), "issuer must be a valid URL");
 			Assert.notNull(getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.AUTHORIZATION_ENDPOINT), "authorizationEndpoint cannot be null");
 			validateURL(getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.AUTHORIZATION_ENDPOINT), "authorizationEndpoint must be a valid URL");
+			if (getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.DEVICE_AUTHORIZATION_ENDPOINT) != null) {
+				validateURL(getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.DEVICE_AUTHORIZATION_ENDPOINT), "deviceAuthorizationEndpoint must be a valid URL");
+			}
 			Assert.notNull(getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.TOKEN_ENDPOINT), "tokenEndpoint cannot be null");
 			validateURL(getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.TOKEN_ENDPOINT), "tokenEndpoint must be a valid URL");
 			if (getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.TOKEN_ENDPOINT_AUTH_METHODS_SUPPORTED) != null) {

@@ -23,7 +23,8 @@ import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.util.Assert;
 
 /**
- * An {@link Authentication} implementation used for the OAuth 2.0 Device Authorization Grant.
+ * An {@link Authentication} implementation for the Device Access Token Request
+ * used in the OAuth 2.0 Device Authorization Grant.
  *
  * @author Steve Riesenberg
  * @since 1.1
@@ -41,7 +42,8 @@ public class OAuth2DeviceCodeAuthenticationToken extends OAuth2AuthorizationGran
 	 * @param clientPrincipal the authenticated client principal
 	 * @param additionalParameters the additional parameters
 	 */
-	public OAuth2DeviceCodeAuthenticationToken(String deviceCode, Authentication clientPrincipal, @Nullable Map<String, Object> additionalParameters) {
+	public OAuth2DeviceCodeAuthenticationToken(String deviceCode, Authentication clientPrincipal,
+			@Nullable Map<String, Object> additionalParameters) {
 		super(AuthorizationGrantType.DEVICE_CODE, clientPrincipal, additionalParameters);
 		Assert.hasText(deviceCode, "deviceCode cannot be empty");
 		this.deviceCode = deviceCode;

@@ -67,6 +67,8 @@ import org.springframework.util.Assert;
  * @see OAuth2TokenEndpointConfigurer
  * @see OAuth2TokenIntrospectionEndpointConfigurer
  * @see OAuth2TokenRevocationEndpointConfigurer
+ * @see OAuth2DeviceAuthorizationEndpointConfigurer
+ * @see OAuth2DeviceVerificationEndpointConfigurer
  * @see OidcConfigurer
  * @see RegisteredClientRepository
  * @see OAuth2AuthorizationService
@@ -316,7 +318,8 @@ public final class OAuth2AuthorizationServerConfigurer
 					new OrRequestMatcher(
 							getRequestMatcher(OAuth2TokenEndpointConfigurer.class),
 							getRequestMatcher(OAuth2TokenIntrospectionEndpointConfigurer.class),
-							getRequestMatcher(OAuth2TokenRevocationEndpointConfigurer.class))
+							getRequestMatcher(OAuth2TokenRevocationEndpointConfigurer.class),
+							getRequestMatcher(OAuth2DeviceAuthorizationEndpointConfigurer.class))
 			);
 		}
 	}

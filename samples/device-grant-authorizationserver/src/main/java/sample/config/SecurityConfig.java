@@ -56,7 +56,7 @@ import org.springframework.security.web.authentication.LoginUrlAuthenticationEnt
  * @author Steve Riesenberg
  * @since 1.1
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 @EnableWebSecurity
 public class SecurityConfig {
 
@@ -100,7 +100,7 @@ public class SecurityConfig {
 	public UserDetailsService userDetailsService() {
 		// @formatter:off
 		UserDetails userDetails = User.withDefaultPasswordEncoder()
-				.username("user")
+				.username("user1")
 				.password("password")
 				.roles("USER")
 				.build();
@@ -144,7 +144,7 @@ public class SecurityConfig {
 		return new ImmutableJWKSet<>(jwkSet);
 	}
 
-	private static KeyPair generateRsaKey() { 
+	private static KeyPair generateRsaKey() {
 		KeyPair keyPair;
 		try {
 			KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");

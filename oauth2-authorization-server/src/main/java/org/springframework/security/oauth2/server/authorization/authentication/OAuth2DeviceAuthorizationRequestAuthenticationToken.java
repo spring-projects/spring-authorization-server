@@ -16,6 +16,7 @@
 package org.springframework.security.oauth2.server.authorization.authentication;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -29,12 +30,13 @@ import org.springframework.security.oauth2.server.authorization.util.SpringAutho
 import org.springframework.util.Assert;
 
 /**
- * An {@link Authentication} implementation for the OAuth 2.0 Device Authorization Request
- * used in the Device Authorization Grant.
+ * An {@link Authentication} implementation for the Device Authorization Request
+ * used in the OAuth 2.0 Device Authorization Grant.
  *
  * @author Steve Riesenberg
  * @since 1.1
  * @see AbstractAuthenticationToken
+ * @see OAuth2ClientAuthenticationToken
  * @see OAuth2DeviceAuthorizationRequestAuthenticationProvider
  */
 public class OAuth2DeviceAuthorizationRequestAuthenticationToken extends AbstractAuthenticationToken {
@@ -65,7 +67,10 @@ public class OAuth2DeviceAuthorizationRequestAuthenticationToken extends Abstrac
 				scopes != null ?
 						new HashSet<>(scopes) :
 						Collections.emptySet());
-		this.additionalParameters = additionalParameters;
+		this.additionalParameters = Collections.unmodifiableMap(
+				additionalParameters != null ?
+						new HashMap<>(additionalParameters) :
+						Collections.emptyMap());
 		this.deviceCode = null;
 		this.userCode = null;
 	}
@@ -109,16 +114,16 @@ public class OAuth2DeviceAuthorizationRequestAuthenticationToken extends Abstrac
 	/**
 	 * Returns the authorization {@code URI}.
 	 *
-	 * @return the authorization {@code URI}.
+	 * @return the authorization {@code URI}
 	 */
 	public String getAuthorizationUri() {
-		return authorizationUri;
+		return this.authorizationUri;
 	}
 
 	/**
 	 * Returns the requested scope(s).
 	 *
-	 * @return the requested scope(s).
+	 * @return the requested scope(s)
 	 */
 	public Set<String> getScopes() {
 		return this.scopes;

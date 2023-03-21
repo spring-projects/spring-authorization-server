@@ -26,7 +26,9 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.ObjectPostProcessor;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
+import org.springframework.security.oauth2.core.endpoint.OAuth2DeviceAuthorizationResponse;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2DeviceAuthorizationRequestAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2DeviceAuthorizationRequestAuthenticationToken;
@@ -41,6 +43,7 @@ import org.springframework.security.web.authentication.AuthenticationSuccessHand
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
+import org.springframework.util.StringUtils;
 
 /**
  * Configurer for the OAuth 2.0 Device Authorization Endpoint.
@@ -53,8 +56,8 @@ import org.springframework.util.Assert;
 public final class OAuth2DeviceAuthorizationEndpointConfigurer extends AbstractOAuth2Configurer {
 
 	private RequestMatcher requestMatcher;
-	private final List<AuthenticationConverter> authenticationConverters = new ArrayList<>();
-	private Consumer<List<AuthenticationConverter>> authenticationConvertersConsumer = (authenticationConverters) -> {};
+	private final List<AuthenticationConverter> deviceAuthorizationRequestConverters = new ArrayList<>();
+	private Consumer<List<AuthenticationConverter>> deviceAuthorizationRequestConvertersConsumer = (deviceAuthorizationRequestConverters) -> {};
 	private final List<AuthenticationProvider> authenticationProviders = new ArrayList<>();
 	private Consumer<List<AuthenticationProvider>> authenticationProvidersConsumer = (authenticationProviders) -> {};
 	private AuthenticationSuccessHandler deviceAuthorizationResponseHandler;
@@ -77,7 +80,7 @@ public final class OAuth2DeviceAuthorizationEndpointConfigurer extends AbstractO
 	 */
 	public OAuth2DeviceAuthorizationEndpointConfigurer deviceAuthorizationRequestConverter(AuthenticationConverter deviceAuthorizationRequestConverter) {
 		Assert.notNull(deviceAuthorizationRequestConverter, "deviceAuthorizationRequestConverter cannot be null");
-		this.authenticationConverters.add(deviceAuthorizationRequestConverter);
+		this.deviceAuthorizationRequestConverters.add(deviceAuthorizationRequestConverter);
 		return this;
 	}
 
@@ -92,7 +95,7 @@ public final class OAuth2DeviceAuthorizationEndpointConfigurer extends AbstractO
 	public OAuth2DeviceAuthorizationEndpointConfigurer deviceAuthorizationRequestConverters(
 			Consumer<List<AuthenticationConverter>> deviceAuthorizationRequestConvertersConsumer) {
 		Assert.notNull(deviceAuthorizationRequestConvertersConsumer, "deviceAuthorizationRequestConvertersConsumer cannot be null");
-		this.authenticationConvertersConsumer = deviceAuthorizationRequestConvertersConsumer;
+		this.deviceAuthorizationRequestConvertersConsumer = deviceAuthorizationRequestConvertersConsumer;
 		return this;
 	}
 
@@ -125,7 +128,7 @@ public final class OAuth2DeviceAuthorizationEndpointConfigurer extends AbstractO
 
 	/**
 	 * Sets the {@link AuthenticationSuccessHandler} used for handling an {@link OAuth2DeviceAuthorizationRequestAuthenticationToken}
-	 * and returning the Device Authorization Response.
+	 * and returning the {@link OAuth2DeviceAuthorizationResponse Device Authorization Response}.
 	 *
 	 * @param deviceAuthorizationResponseHandler the {@link AuthenticationSuccessHandler} used for handling an {@link OAuth2DeviceAuthorizationRequestAuthenticationToken}
 	 * @return the {@link OAuth2DeviceAuthorizationEndpointConfigurer} for further configuration
@@ -136,10 +139,10 @@ public final class OAuth2DeviceAuthorizationEndpointConfigurer extends AbstractO
 	}
 
 	/**
-	 * Sets the {@link AuthenticationFailureHandler} used for handling an {@link OAuth2DeviceAuthorizationRequestAuthenticationToken}
+	 * Sets the {@link AuthenticationFailureHandler} used for handling an {@link OAuth2AuthenticationException}
 	 * and returning the {@link OAuth2Error Error Response}.
 	 *
-	 * @param errorResponseHandler the {@link AuthenticationFailureHandler} used for handling an {@link OAuth2DeviceAuthorizationRequestAuthenticationToken}
+	 * @param errorResponseHandler the {@link AuthenticationFailureHandler} used for handling an {@link OAuth2AuthenticationException}
 	 * @return the {@link OAuth2DeviceAuthorizationEndpointConfigurer} for further configuration
 	 */
 	public OAuth2DeviceAuthorizationEndpointConfigurer errorResponseHandler(AuthenticationFailureHandler errorResponseHandler) {
@@ -184,10 +187,10 @@ public final class OAuth2DeviceAuthorizationEndpointConfigurer extends AbstractO
 						authenticationManager, authorizationServerSettings.getDeviceAuthorizationEndpoint());
 
 		List<AuthenticationConverter> authenticationConverters = createDefaultAuthenticationConverters();
-		if (!this.authenticationConverters.isEmpty()) {
-			authenticationConverters.addAll(0, this.authenticationConverters);
+		if (!this.deviceAuthorizationRequestConverters.isEmpty()) {
+			authenticationConverters.addAll(0, this.deviceAuthorizationRequestConverters);
 		}
-		this.authenticationConvertersConsumer.accept(authenticationConverters);
+		this.deviceAuthorizationRequestConvertersConsumer.accept(authenticationConverters);
 		deviceAuthorizationEndpointFilter.setAuthenticationConverter(
 				new DelegatingAuthenticationConverter(authenticationConverters));
 		if (this.deviceAuthorizationResponseHandler != null) {
@@ -196,7 +199,7 @@ public final class OAuth2DeviceAuthorizationEndpointConfigurer extends AbstractO
 		if (this.errorResponseHandler != null) {
 			deviceAuthorizationEndpointFilter.setAuthenticationFailureHandler(this.errorResponseHandler);
 		}
-		if (this.verificationUri != null) {
+		if (StringUtils.hasText(this.verificationUri)) {
 			deviceAuthorizationEndpointFilter.setVerificationUri(this.verificationUri);
 		}
 		builder.addFilterAfter(postProcess(deviceAuthorizationEndpointFilter), AuthorizationFilter.class);
@@ -214,7 +217,7 @@ public final class OAuth2DeviceAuthorizationEndpointConfigurer extends AbstractO
 		return authenticationConverters;
 	}
 
-	private List<AuthenticationProvider> createDefaultAuthenticationProviders(HttpSecurity builder) {
+	private static List<AuthenticationProvider> createDefaultAuthenticationProviders(HttpSecurity builder) {
 		List<AuthenticationProvider> authenticationProviders = new ArrayList<>();
 
 		OAuth2AuthorizationService authorizationService = OAuth2ConfigurerUtils.getAuthorizationService(builder);

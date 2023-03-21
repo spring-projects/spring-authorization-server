@@ -28,7 +28,7 @@ import org.springframework.security.web.authentication.LoginUrlAuthenticationEnt
  * @author Steve Riesenberg
  * @since 1.1
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 @EnableWebSecurity
 public class SecurityConfig {
 

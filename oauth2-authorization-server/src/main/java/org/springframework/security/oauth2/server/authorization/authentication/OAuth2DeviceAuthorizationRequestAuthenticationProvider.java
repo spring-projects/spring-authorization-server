@@ -18,6 +18,7 @@ package org.springframework.security.oauth2.server.authorization.authentication;
 import java.security.Principal;
 import java.time.Instant;
 import java.util.Base64;
+import java.util.HashSet;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
@@ -37,7 +38,6 @@ import org.springframework.security.oauth2.core.OAuth2DeviceCode;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.OAuth2UserCode;
-import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
@@ -48,6 +48,7 @@ import org.springframework.security.oauth2.server.authorization.token.DefaultOAu
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenContext;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenGenerator;
 import org.springframework.util.Assert;
+import org.springframework.util.CollectionUtils;
 
 import static org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthenticationProviderUtils.getAuthenticatedClientElseThrowInvalidClient;
 
@@ -100,9 +101,17 @@ public final class OAuth2DeviceAuthorizationRequestAuthenticationProvider implem
 			this.logger.trace("Retrieved registered client");
 		}
 
-		// Validate client grant types has device_code grant type
 		if (!registeredClient.getAuthorizationGrantTypes().contains(AuthorizationGrantType.DEVICE_CODE)) {
 			throwError(OAuth2ErrorCodes.UNAUTHORIZED_CLIENT, OAuth2ParameterNames.CLIENT_ID);
+		}
+
+		Set<String> requestedScopes = deviceAuthorizationRequestAuthentication.getScopes();
+		if (!CollectionUtils.isEmpty(requestedScopes)) {
+			for (String requestedScope : requestedScopes) {
+				if (!registeredClient.getScopes().contains(requestedScope)) {
+					throwError(OAuth2ErrorCodes.INVALID_SCOPE, OAuth2ParameterNames.SCOPE);
+				}
+			}
 		}
 
 		if (this.logger.isTraceEnabled()) {
@@ -128,7 +137,7 @@ public final class OAuth2DeviceAuthorizationRequestAuthenticationProvider implem
 		}
 
 		if (this.logger.isTraceEnabled()) {
-			logger.trace("Generated device code");
+			this.logger.trace("Generated device code");
 		}
 
 		// Generate a low-entropy string to use as the user code
@@ -141,20 +150,8 @@ public final class OAuth2DeviceAuthorizationRequestAuthenticationProvider implem
 		}
 
 		if (this.logger.isTraceEnabled()) {
-			logger.trace("Generated user code");
+			this.logger.trace("Generated user code");
 		}
-
-		String authorizationUri = deviceAuthorizationRequestAuthentication.getAuthorizationUri();
-
-		Set<String> requestedScopes = deviceAuthorizationRequestAuthentication.getScopes();
-
-		// @formatter:off
-		OAuth2AuthorizationRequest authorizationRequest = OAuth2AuthorizationRequest.authorizationCode()
-				.authorizationUri(authorizationUri)
-				.clientId(registeredClient.getClientId())
-				.scopes(requestedScopes)
-				.build();
-		// @formatter:on
 
 		// @formatter:off
 		OAuth2Authorization authorization = OAuth2Authorization.withRegisteredClient(registeredClient)
@@ -163,7 +160,7 @@ public final class OAuth2DeviceAuthorizationRequestAuthenticationProvider implem
 				.token(deviceCode)
 				.token(userCode)
 				.attribute(Principal.class.getName(), clientPrincipal)
-				.attribute(OAuth2AuthorizationRequest.class.getName(), authorizationRequest)
+				.attribute(OAuth2ParameterNames.SCOPE, new HashSet<>(requestedScopes))
 				.build();
 		// @formatter:on
 		this.authorizationService.save(authorization);
@@ -176,7 +173,8 @@ public final class OAuth2DeviceAuthorizationRequestAuthenticationProvider implem
 			this.logger.trace("Authenticated device authorization request");
 		}
 
-		return new OAuth2DeviceAuthorizationRequestAuthenticationToken(clientPrincipal, requestedScopes, deviceCode, userCode);
+		return new OAuth2DeviceAuthorizationRequestAuthenticationToken(
+				clientPrincipal, requestedScopes, deviceCode, userCode);
 	}
 
 	@Override

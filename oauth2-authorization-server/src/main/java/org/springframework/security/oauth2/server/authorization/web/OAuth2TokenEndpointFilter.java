@@ -49,6 +49,7 @@ import org.springframework.security.oauth2.server.authorization.authentication.O
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationGrantAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientCredentialsAuthenticationProvider;
+import org.springframework.security.oauth2.server.authorization.authentication.OAuth2DeviceCodeAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2RefreshTokenAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.web.authentication.DelegatingAuthenticationConverter;
 import org.springframework.security.oauth2.server.authorization.web.authentication.OAuth2AuthorizationCodeAuthenticationConverter;
@@ -92,6 +93,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
  * @see OAuth2AuthorizationCodeAuthenticationProvider
  * @see OAuth2RefreshTokenAuthenticationProvider
  * @see OAuth2ClientCredentialsAuthenticationProvider
+ * @see OAuth2DeviceCodeAuthenticationProvider
  * @see <a target="_blank" href="https://tools.ietf.org/html/rfc6749#section-3.2">Section 3.2 Token Endpoint</a>
  */
 public final class OAuth2TokenEndpointFilter extends OncePerRequestFilter {

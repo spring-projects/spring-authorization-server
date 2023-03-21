@@ -35,7 +35,7 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
 
 /**
- * Attempts to extract an Authorization Consent from {@link HttpServletRequest}
+ * Attempts to extract a Device Authorization Consent from {@link HttpServletRequest}
  * for the OAuth 2.0 Device Authorization Grant and then converts it to an
  * {@link OAuth2DeviceAuthorizationConsentAuthenticationToken} used for
  * authenticating the request.
@@ -48,14 +48,14 @@ import org.springframework.util.StringUtils;
  */
 public final class OAuth2DeviceAuthorizationConsentAuthenticationConverter implements AuthenticationConverter {
 
-	private static final String DEFAULT_ERROR_URI = "https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.2.1";
-	private static final String DEVICE_ERROR_URI = "https://datatracker.ietf.org/doc/html/rfc8628#section-3.3";
+	private static final String ERROR_URI = "https://datatracker.ietf.org/doc/html/rfc6749#section-5.2";
 	private static final Authentication ANONYMOUS_AUTHENTICATION = new AnonymousAuthenticationToken(
 			"anonymous", "anonymousUser", AuthorityUtils.createAuthorityList("ROLE_ANONYMOUS"));
 
 	@Override
 	public Authentication convert(HttpServletRequest request) {
-		if (!"POST".equals(request.getMethod())) {
+		if (!"POST".equals(request.getMethod()) ||
+				request.getParameter(OAuth2ParameterNames.STATE) == null) {
 			return null;
 		}
 
@@ -63,22 +63,14 @@ public final class OAuth2DeviceAuthorizationConsentAuthenticationConverter imple
 
 		String authorizationUri = request.getRequestURL().toString();
 
-		// user_code (REQUIRED)
-		String userCode = parameters.getFirst(OAuth2ParameterNames.USER_CODE);
-		if (!StringUtils.hasText(userCode) || parameters.get(OAuth2ParameterNames.USER_CODE).size() != 1) {
-			OAuth2EndpointUtils.throwError(
-					OAuth2ErrorCodes.INVALID_REQUEST,
-					OAuth2ParameterNames.USER_CODE,
-					DEVICE_ERROR_URI);
-		}
-
 		// client_id (REQUIRED)
 		String clientId = parameters.getFirst(OAuth2ParameterNames.CLIENT_ID);
-		if (!StringUtils.hasText(clientId) || parameters.get(OAuth2ParameterNames.CLIENT_ID).size() != 1) {
+		if (!StringUtils.hasText(clientId) ||
+				parameters.get(OAuth2ParameterNames.CLIENT_ID).size() != 1) {
 			OAuth2EndpointUtils.throwError(
 					OAuth2ErrorCodes.INVALID_REQUEST,
 					OAuth2ParameterNames.CLIENT_ID,
-					DEFAULT_ERROR_URI);
+					ERROR_URI);
 		}
 
 		Authentication principal = SecurityContextHolder.getContext().getAuthentication();
@@ -86,13 +78,24 @@ public final class OAuth2DeviceAuthorizationConsentAuthenticationConverter imple
 			principal = ANONYMOUS_AUTHENTICATION;
 		}
 
+		// user_code (REQUIRED)
+		String userCode = parameters.getFirst(OAuth2ParameterNames.USER_CODE);
+		if (!StringUtils.hasText(userCode) ||
+				parameters.get(OAuth2ParameterNames.USER_CODE).size() != 1) {
+			OAuth2EndpointUtils.throwError(
+					OAuth2ErrorCodes.INVALID_REQUEST,
+					OAuth2ParameterNames.USER_CODE,
+					ERROR_URI);
+		}
+
 		// state (REQUIRED)
 		String state = parameters.getFirst(OAuth2ParameterNames.STATE);
-		if (!StringUtils.hasText(state) || parameters.get(OAuth2ParameterNames.STATE).size() != 1) {
+		if (!StringUtils.hasText(state) ||
+				parameters.get(OAuth2ParameterNames.STATE).size() != 1) {
 			OAuth2EndpointUtils.throwError(
 					OAuth2ErrorCodes.INVALID_REQUEST,
 					OAuth2ParameterNames.STATE,
-					DEFAULT_ERROR_URI);
+					ERROR_URI);
 		}
 
 		// scope (OPTIONAL)
@@ -104,9 +107,9 @@ public final class OAuth2DeviceAuthorizationConsentAuthenticationConverter imple
 		Map<String, Object> additionalParameters = new HashMap<>();
 		parameters.forEach((key, value) -> {
 			if (!key.equals(OAuth2ParameterNames.CLIENT_ID) &&
+					!key.equals(OAuth2ParameterNames.USER_CODE) &&
 					!key.equals(OAuth2ParameterNames.STATE) &&
-					!key.equals(OAuth2ParameterNames.SCOPE) &&
-					!key.equals(OAuth2ParameterNames.USER_CODE)) {
+					!key.equals(OAuth2ParameterNames.SCOPE)) {
 				additionalParameters.put(key, value.get(0));
 			}
 		});

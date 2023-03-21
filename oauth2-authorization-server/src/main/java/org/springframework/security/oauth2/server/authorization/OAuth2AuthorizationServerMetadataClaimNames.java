@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ package org.springframework.security.oauth2.server.authorization;
  * @since 0.1.1
  * @see <a target="_blank" href="https://tools.ietf.org/html/rfc8414#section-2">2. Authorization Server Metadata</a>
  * @see <a target="_blank" href="https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderMetadata">3. OpenID Provider Metadata</a>
+ * @see <a target="_blank" href="https://www.rfc-editor.org/rfc/rfc8628.html#section-4">4. Device Authorization Grant Metadata</a>
  */
 public class OAuth2AuthorizationServerMetadataClaimNames {
 
@@ -35,6 +36,12 @@ public class OAuth2AuthorizationServerMetadataClaimNames {
 	 * {@code authorization_endpoint} - the {@code URL} of the OAuth 2.0 Authorization Endpoint
 	 */
 	public static final String AUTHORIZATION_ENDPOINT = "authorization_endpoint";
+
+	/**
+	 * {@code device_authorization_endpoint} - the {@code URL} of the OAuth 2.0 Device Authorization Endpoint
+	 * @since 1.1
+	 */
+	public static final String DEVICE_AUTHORIZATION_ENDPOINT = "device_authorization_endpoint";
 
 	/**
 	 * {@code token_endpoint} - the {@code URL} of the OAuth 2.0 Token Endpoint

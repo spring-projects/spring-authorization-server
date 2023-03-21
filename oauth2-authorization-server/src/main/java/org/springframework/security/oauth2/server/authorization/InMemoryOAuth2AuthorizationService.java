@@ -155,7 +155,9 @@ public final class InMemoryOAuth2AuthorizationService implements OAuth2Authoriza
 					matchesAuthorizationCode(authorization, token) ||
 					matchesAccessToken(authorization, token) ||
 					matchesIdToken(authorization, token) ||
-					matchesRefreshToken(authorization, token);
+					matchesRefreshToken(authorization, token) ||
+					matchesDeviceCode(authorization, token) ||
+					matchesUserCode(authorization, token);
 		} else if (OAuth2ParameterNames.STATE.equals(tokenType.getValue())) {
 			return matchesState(authorization, token);
 		} else if (OAuth2ParameterNames.CODE.equals(tokenType.getValue())) {

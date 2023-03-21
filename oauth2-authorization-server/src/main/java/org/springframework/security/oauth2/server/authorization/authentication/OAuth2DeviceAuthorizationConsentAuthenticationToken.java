@@ -21,16 +21,19 @@ import java.util.Map;
 import java.util.Set;
 
 import org.springframework.lang.Nullable;
+import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.server.authorization.util.SpringAuthorizationServerVersion;
 import org.springframework.util.Assert;
 
 /**
- * An {@link Authentication} implementation for the Authorization Consent used
+ * An {@link Authentication} implementation for the Device Authorization Consent used
  * in the OAuth 2.0 Device Authorization Grant.
  *
  * @author Steve Riesenberg
  * @since 1.1
+ * @see AbstractAuthenticationToken
+ * @see OAuth2DeviceAuthorizationConsentAuthenticationProvider
  */
 public class OAuth2DeviceAuthorizationConsentAuthenticationToken extends OAuth2AuthorizationConsentAuthenticationToken {
 	private static final long serialVersionUID = SpringAuthorizationServerVersion.SERIAL_VERSION_UID;
@@ -43,7 +46,7 @@ public class OAuth2DeviceAuthorizationConsentAuthenticationToken extends OAuth2A
 	 * @param authorizationUri the authorization URI
 	 * @param clientId the client identifier
 	 * @param principal the {@code Principal} (Resource Owner)
-	 * @param userCode the user code associated with the device authorization request
+	 * @param userCode the user code associated with the device authorization response
 	 * @param state the state
 	 * @param authorizedScopes the authorized scope(s)
 	 * @param additionalParameters the additional parameters
@@ -64,7 +67,7 @@ public class OAuth2DeviceAuthorizationConsentAuthenticationToken extends OAuth2A
 	 * @param authorizationUri the authorization URI
 	 * @param clientId the client identifier
 	 * @param principal the {@code Principal} (Resource Owner)
-	 * @param userCode the user code associated with the device authorization request
+	 * @param userCode the user code associated with the device authorization response
 	 * @param state the state
 	 * @param requestedScopes the requested scope(s)
 	 * @param authorizedScopes the authorized scope(s)

@@ -16,6 +16,7 @@
 package org.springframework.security.oauth2.server.authorization.authentication;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.springframework.lang.Nullable;
@@ -25,7 +26,7 @@ import org.springframework.security.oauth2.server.authorization.util.SpringAutho
 import org.springframework.util.Assert;
 
 /**
- * An {@link Authentication} implementation for the Verification {@code URI}
+ * An {@link Authentication} implementation for the Device Verification Request
  * (submission of the user code) used in the OAuth 2.0 Device Authorization Grant.
  *
  * @author Steve Riesenberg
@@ -35,44 +36,47 @@ import org.springframework.util.Assert;
  */
 public class OAuth2DeviceVerificationAuthenticationToken extends AbstractAuthenticationToken {
 	private static final long serialVersionUID = SpringAuthorizationServerVersion.SERIAL_VERSION_UID;
-	private final String clientId;
 	private final Authentication principal;
 	private final String userCode;
 	private final Map<String, Object> additionalParameters;
+	private final String clientId;
 
 	/**
 	 * Constructs an {@code OAuth2DeviceVerificationAuthenticationToken} using the provided parameters.
 	 *
 	 * @param principal the {@code Principal} (Resource Owner)
-	 * @param userCode the user code associated with the device authorization request
+	 * @param userCode the user code associated with the device authorization response
 	 * @param additionalParameters the additional parameters
 	 */
 	public OAuth2DeviceVerificationAuthenticationToken(Authentication principal, String userCode,
 			@Nullable Map<String, Object> additionalParameters) {
 		super(Collections.emptyList());
 		Assert.notNull(principal, "principal cannot be null");
-		Assert.notNull(userCode, "userCode cannot be null");
-		this.clientId = null;
+		Assert.hasText(userCode, "userCode cannot be empty");
 		this.principal = principal;
 		this.userCode = userCode;
-		this.additionalParameters = additionalParameters;
+		this.additionalParameters = Collections.unmodifiableMap(
+				additionalParameters != null ?
+						new HashMap<>(additionalParameters) :
+						Collections.emptyMap());
+		this.clientId = null;
 	}
 
 	/**
 	 * Constructs an {@code OAuth2DeviceVerificationAuthenticationToken} using the provided parameters.
 	 *
-	 * @param clientId the client identifier
 	 * @param principal the {@code Principal} (Resource Owner)
-	 * @param userCode the user code associated with the device authorization request
+	 * @param userCode the user code associated with the device authorization response
+	 * @param clientId the client identifier
 	 */
-	public OAuth2DeviceVerificationAuthenticationToken(String clientId, Authentication principal, String userCode) {
+	public OAuth2DeviceVerificationAuthenticationToken(Authentication principal, String userCode, String clientId) {
 		super(Collections.emptyList());
-		Assert.hasText(clientId, "clientId cannot be empty");
 		Assert.notNull(principal, "principal cannot be null");
-		Assert.notNull(userCode, "userCode cannot be null");
-		this.clientId = clientId;
+		Assert.hasText(userCode, "userCode cannot be empty");
+		Assert.hasText(clientId, "clientId cannot be empty");
 		this.principal = principal;
 		this.userCode = userCode;
+		this.clientId = clientId;
 		this.additionalParameters = null;
 		setAuthenticated(true);
 	}
@@ -85,15 +89,6 @@ public class OAuth2DeviceVerificationAuthenticationToken extends AbstractAuthent
 	@Override
 	public Object getCredentials() {
 		return "";
-	}
-
-	/**
-	 * Returns the client identifier.
-	 *
-	 * @return the client identifier
-	 */
-	public String getClientId() {
-		return this.clientId;
 	}
 
 	/**
@@ -112,6 +107,15 @@ public class OAuth2DeviceVerificationAuthenticationToken extends AbstractAuthent
 	 */
 	public Map<String, Object> getAdditionalParameters() {
 		return this.additionalParameters;
+	}
+
+	/**
+	 * Returns the client identifier.
+	 *
+	 * @return the client identifier
+	 */
+	public String getClientId() {
+		return this.clientId;
 	}
 
 }

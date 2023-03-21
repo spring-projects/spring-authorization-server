@@ -36,9 +36,9 @@ public class TokenSettingsTests {
 		TokenSettings tokenSettings = TokenSettings.builder().build();
 		assertThat(tokenSettings.getSettings()).hasSize(7);
 		assertThat(tokenSettings.getAuthorizationCodeTimeToLive()).isEqualTo(Duration.ofMinutes(5));
-		assertThat(tokenSettings.getDeviceCodeTimeToLive()).isEqualTo(Duration.ofMinutes(30));
 		assertThat(tokenSettings.getAccessTokenTimeToLive()).isEqualTo(Duration.ofMinutes(5));
 		assertThat(tokenSettings.getAccessTokenFormat()).isEqualTo(OAuth2TokenFormat.SELF_CONTAINED);
+		assertThat(tokenSettings.getDeviceCodeTimeToLive()).isEqualTo(Duration.ofMinutes(5));
 		assertThat(tokenSettings.isReuseRefreshTokens()).isTrue();
 		assertThat(tokenSettings.getRefreshTokenTimeToLive()).isEqualTo(Duration.ofMinutes(60));
 		assertThat(tokenSettings.getIdTokenSignatureAlgorithm()).isEqualTo(SignatureAlgorithm.RS256);

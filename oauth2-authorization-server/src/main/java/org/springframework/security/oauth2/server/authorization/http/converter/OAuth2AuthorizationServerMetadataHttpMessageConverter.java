@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -136,6 +136,7 @@ public class OAuth2AuthorizationServerMetadataHttpMessageConverter
 			Map<String, Converter<Object, ?>> claimConverters = new HashMap<>();
 			claimConverters.put(OAuth2AuthorizationServerMetadataClaimNames.ISSUER, urlConverter);
 			claimConverters.put(OAuth2AuthorizationServerMetadataClaimNames.AUTHORIZATION_ENDPOINT, urlConverter);
+			claimConverters.put(OAuth2AuthorizationServerMetadataClaimNames.DEVICE_AUTHORIZATION_ENDPOINT, urlConverter);
 			claimConverters.put(OAuth2AuthorizationServerMetadataClaimNames.TOKEN_ENDPOINT, urlConverter);
 			claimConverters.put(OAuth2AuthorizationServerMetadataClaimNames.TOKEN_ENDPOINT_AUTH_METHODS_SUPPORTED, collectionStringConverter);
 			claimConverters.put(OAuth2AuthorizationServerMetadataClaimNames.JWKS_URI, urlConverter);

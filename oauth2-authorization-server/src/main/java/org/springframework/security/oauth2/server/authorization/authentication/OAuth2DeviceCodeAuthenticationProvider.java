@@ -26,7 +26,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClaimAccessor;
-import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2DeviceCode;
@@ -34,7 +33,7 @@ import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.OAuth2RefreshToken;
 import org.springframework.security.oauth2.core.OAuth2Token;
-import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
+import org.springframework.security.oauth2.core.OAuth2UserCode;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
@@ -46,8 +45,11 @@ import org.springframework.security.oauth2.server.authorization.token.OAuth2Toke
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenGenerator;
 import org.springframework.util.Assert;
 
+import static org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthenticationProviderUtils.getAuthenticatedClientElseThrowInvalidClient;
+
 /**
- * An {@link AuthenticationProvider} implementation for the OAuth 2.0 Device Authorization Grant.
+ * An {@link AuthenticationProvider} implementation for the Device Access Token Request
+ * used in the OAuth 2.0 Device Authorization Grant.
  *
  * @author Steve Riesenberg
  * @since 1.1
@@ -94,8 +96,8 @@ public final class OAuth2DeviceCodeAuthenticationProvider implements Authenticat
 		OAuth2DeviceCodeAuthenticationToken deviceCodeAuthentication =
 				(OAuth2DeviceCodeAuthenticationToken) authentication;
 
-		OAuth2ClientAuthenticationToken clientPrincipal = OAuth2AuthenticationProviderUtils
-				.getAuthenticatedClientElseThrowInvalidClient(deviceCodeAuthentication);
+		OAuth2ClientAuthenticationToken clientPrincipal =
+				getAuthenticatedClientElseThrowInvalidClient(deviceCodeAuthentication);
 		RegisteredClient registeredClient = clientPrincipal.getRegisteredClient();
 
 		if (this.logger.isTraceEnabled()) {
@@ -112,19 +114,17 @@ public final class OAuth2DeviceCodeAuthenticationProvider implements Authenticat
 			this.logger.trace("Retrieved authorization with device code");
 		}
 
-		OAuth2AuthorizationRequest authorizationRequest = authorization.getAttribute(
-				OAuth2AuthorizationRequest.class.getName());
-
+		OAuth2Authorization.Token<OAuth2UserCode> userCode = authorization.getToken(OAuth2UserCode.class);
 		OAuth2Authorization.Token<OAuth2DeviceCode> deviceCode = authorization.getToken(OAuth2DeviceCode.class);
 
-		if (!registeredClient.getClientId().equals(authorizationRequest.getClientId())) {
+		if (!registeredClient.getId().equals(authorization.getRegisteredClientId())) {
 			if (!deviceCode.isInvalidated()) {
 				// Invalidate the device code given that a different client is attempting to use it
 				authorization = OAuth2AuthenticationProviderUtils.invalidate(authorization, deviceCode.getToken());
 				this.authorizationService.save(authorization);
 				if (this.logger.isWarnEnabled()) {
 					this.logger.warn(LogMessage.format(
-							"Invalidated device code used by registered client '%s'", registeredClient.getId()));
+							"Invalidated device code used by registered client '%s'", authorization.getRegisteredClientId()));
 				}
 			}
 			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_GRANT);
@@ -132,29 +132,6 @@ public final class OAuth2DeviceCodeAuthenticationProvider implements Authenticat
 
 		// In https://www.rfc-editor.org/rfc/rfc8628.html#section-3.5,
 		// the following error codes are defined:
-
-		//   access_denied
-		//      The authorization request was denied.
-		if (Boolean.TRUE.equals(deviceCode.getMetadata(OAuth2Authorization.Token.ACCESS_DENIED_METADATA_NAME))) {
-			OAuth2Error error = new OAuth2Error(OAuth2ErrorCodes.ACCESS_DENIED, null, DEVICE_ERROR_URI);
-			throw new OAuth2AuthenticationException(error);
-		}
-
-		//   expired_token
-		//      The "device_code" has expired, and the device authorization
-		//      session has concluded.  The client MAY commence a new device
-		//      authorization request but SHOULD wait for user interaction before
-		//      restarting to avoid unnecessary polling.
-		if (deviceCode.isExpired()) {
-			OAuth2Error error = new OAuth2Error(EXPIRED_TOKEN, null, DEVICE_ERROR_URI);
-			throw new OAuth2AuthenticationException(error);
-		}
-
-		//   slow_down
-		//      A variant of "authorization_pending", the authorization request is
-		//      still pending and polling should continue, but the interval MUST
-		//      be increased by 5 seconds for this and all subsequent requests.
-		// Note: This error is not handled in the framework.
 
 		//   authorization_pending
 		//      The authorization request is still pending as the end user hasn't
@@ -166,17 +143,43 @@ public final class OAuth2DeviceCodeAuthenticationProvider implements Authenticat
 		//      Section 3.2), or 5 seconds if none was provided, and respect any
 		//      increase in the polling interval required by the "slow_down"
 		//      error.
-		if (!Boolean.TRUE.equals(deviceCode.getMetadata(OAuth2Authorization.Token.ACCESS_GRANTED_METADATA_NAME))) {
+		if (!userCode.isInvalidated()) {
 			OAuth2Error error = new OAuth2Error(AUTHORIZATION_PENDING, null, DEVICE_ERROR_URI);
 			throw new OAuth2AuthenticationException(error);
 		}
 
-		if (!deviceCode.isActive()) {
-			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_GRANT);
+		//   slow_down
+		//      A variant of "authorization_pending", the authorization request is
+		//      still pending and polling should continue, but the interval MUST
+		//      be increased by 5 seconds for this and all subsequent requests.
+		//	NOTE: This error is not handled in the framework.
+
+		//   access_denied
+		//      The authorization request was denied.
+		if (deviceCode.isInvalidated()) {
+			OAuth2Error error = new OAuth2Error(OAuth2ErrorCodes.ACCESS_DENIED, null, DEVICE_ERROR_URI);
+			throw new OAuth2AuthenticationException(error);
+		}
+
+		//   expired_token
+		//      The "device_code" has expired, and the device authorization
+		//      session has concluded.  The client MAY commence a new device
+		//      authorization request but SHOULD wait for user interaction before
+		//      restarting to avoid unnecessary polling.
+		if (deviceCode.isExpired()) {
+			// Invalidate the device code
+			authorization = OAuth2AuthenticationProviderUtils.invalidate(authorization, deviceCode.getToken());
+			this.authorizationService.save(authorization);
+			if (this.logger.isWarnEnabled()) {
+				this.logger.warn(LogMessage.format(
+						"Invalidated device code used by registered client '%s'", authorization.getRegisteredClientId()));
+			}
+			OAuth2Error error = new OAuth2Error(EXPIRED_TOKEN, null, DEVICE_ERROR_URI);
+			throw new OAuth2AuthenticationException(error);
 		}
 
 		if (this.logger.isTraceEnabled()) {
-			this.logger.trace("Validated token request parameters");
+			this.logger.trace("Validated device token request parameters");
 		}
 
 		// @formatter:off
@@ -222,10 +225,7 @@ public final class OAuth2DeviceCodeAuthenticationProvider implements Authenticat
 
 		// ----- Refresh token -----
 		OAuth2RefreshToken refreshToken = null;
-		if (registeredClient.getAuthorizationGrantTypes().contains(AuthorizationGrantType.REFRESH_TOKEN) &&
-				// Do not issue refresh token to public client
-				!clientPrincipal.getClientAuthenticationMethod().equals(ClientAuthenticationMethod.NONE)) {
-
+		if (registeredClient.getAuthorizationGrantTypes().contains(AuthorizationGrantType.REFRESH_TOKEN)) {
 			tokenContext = tokenContextBuilder.tokenType(OAuth2TokenType.REFRESH_TOKEN).build();
 			OAuth2Token generatedRefreshToken = this.tokenGenerator.generate(tokenContext);
 			if (!(generatedRefreshToken instanceof OAuth2RefreshToken)) {
@@ -248,6 +248,10 @@ public final class OAuth2DeviceCodeAuthenticationProvider implements Authenticat
 
 		if (this.logger.isTraceEnabled()) {
 			this.logger.trace("Saved authorization");
+		}
+
+		if (this.logger.isTraceEnabled()) {
+			this.logger.trace("Authenticated device token request");
 		}
 
 		return new OAuth2AccessTokenAuthenticationToken(registeredClient, clientPrincipal, accessToken, refreshToken);

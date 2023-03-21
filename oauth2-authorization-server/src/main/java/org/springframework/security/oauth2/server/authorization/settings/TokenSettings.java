@@ -67,9 +67,9 @@ public final class TokenSettings extends AbstractSettings {
 	}
 
 	/**
-	 * Returns the time-to-live for a device code. The default is 30 minutes.
+	 * Returns the time-to-live for a device code. The default is 5 minutes.
 	 *
-	 * @return the time-to-live for an authorization code
+	 * @return the time-to-live for a device code
 	 * @since 1.1
 	 */
 	public Duration getDeviceCodeTimeToLive() {
@@ -113,7 +113,7 @@ public final class TokenSettings extends AbstractSettings {
 				.authorizationCodeTimeToLive(Duration.ofMinutes(5))
 				.accessTokenTimeToLive(Duration.ofMinutes(5))
 				.accessTokenFormat(OAuth2TokenFormat.SELF_CONTAINED)
-				.deviceCodeTimeToLive(Duration.ofMinutes(30))
+				.deviceCodeTimeToLive(Duration.ofMinutes(5))
 				.reuseRefreshTokens(true)
 				.refreshTokenTimeToLive(Duration.ofMinutes(60))
 				.idTokenSignatureAlgorithm(SignatureAlgorithm.RS256);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 the original author or authors.
+ * Copyright 2020-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -252,18 +252,6 @@ public class OAuth2Authorization implements Serializable {
 		 * The name of the metadata that indicates if the token has been invalidated.
 		 */
 		public static final String INVALIDATED_METADATA_NAME = TOKEN_METADATA_NAMESPACE.concat("invalidated");
-
-		/**
-		 * The name of the metadata that indicates if access has been denied by the resource owner.
-		 * Used with the OAuth 2.0 Device Authorization Grant.
-		 */
-		public static final String ACCESS_DENIED_METADATA_NAME = TOKEN_METADATA_NAMESPACE.concat("access_denied");
-
-		/**
-		 * The name of the metadata that indicates if access has been denied by the resource owner.
-		 * Used with the OAuth 2.0 Device Authorization Grant.
-		 */
-		public static final String ACCESS_GRANTED_METADATA_NAME = TOKEN_METADATA_NAMESPACE.concat("access_granted");
 
 		/**
 		 * The name of the metadata used for the claims of the token.

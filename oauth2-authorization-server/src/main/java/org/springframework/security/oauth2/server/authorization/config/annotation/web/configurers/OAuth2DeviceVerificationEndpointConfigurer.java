@@ -30,7 +30,6 @@ import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsentService;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
-import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeRequestAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2DeviceAuthorizationConsentAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2DeviceAuthorizationConsentAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2DeviceVerificationAuthenticationProvider;
@@ -41,10 +40,10 @@ import org.springframework.security.oauth2.server.authorization.web.OAuth2Device
 import org.springframework.security.oauth2.server.authorization.web.authentication.DelegatingAuthenticationConverter;
 import org.springframework.security.oauth2.server.authorization.web.authentication.OAuth2DeviceAuthorizationConsentAuthenticationConverter;
 import org.springframework.security.oauth2.server.authorization.web.authentication.OAuth2DeviceVerificationAuthenticationConverter;
-import org.springframework.security.web.access.intercept.AuthorizationFilter;
 import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.security.web.authentication.preauth.AbstractPreAuthenticatedProcessingFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.OrRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
@@ -62,8 +61,8 @@ import org.springframework.util.StringUtils;
 public final class OAuth2DeviceVerificationEndpointConfigurer extends AbstractOAuth2Configurer {
 
 	private RequestMatcher requestMatcher;
-	private final List<AuthenticationConverter> authenticationConverters = new ArrayList<>();
-	private Consumer<List<AuthenticationConverter>> authenticationConvertersConsumer = (authenticationConverters) -> {};
+	private final List<AuthenticationConverter> deviceVerificationRequestConverters = new ArrayList<>();
+	private Consumer<List<AuthenticationConverter>> deviceVerificationRequestConvertersConsumer = (deviceVerificationRequestConverters) -> {};
 	private final List<AuthenticationProvider> authenticationProviders = new ArrayList<>();
 	private Consumer<List<AuthenticationProvider>> authenticationProvidersConsumer = (authenticationProviders) -> {};
 	private AuthenticationSuccessHandler deviceVerificationResponseHandler;
@@ -78,15 +77,15 @@ public final class OAuth2DeviceVerificationEndpointConfigurer extends AbstractOA
 	}
 
 	/**
-	 * Sets the {@link AuthenticationConverter} used when attempting to extract a Device Verification Request (or Consent) from {@link HttpServletRequest}
+	 * Sets the {@link AuthenticationConverter} used when attempting to extract a Device Verification Request (or Device Authorization Consent) from {@link HttpServletRequest}
 	 * to an instance of {@link OAuth2DeviceVerificationAuthenticationToken} or {@link OAuth2DeviceAuthorizationConsentAuthenticationToken} used for authenticating the request.
 	 *
-	 * @param deviceVerificationRequestConverter the {@link AuthenticationConverter} used when attempting to extract a Device Authorization Request from {@link HttpServletRequest}
+	 * @param deviceVerificationRequestConverter the {@link AuthenticationConverter} used when attempting to extract a Device Verification Request (or Device Authorization Consent) from {@link HttpServletRequest}
 	 * @return the {@link OAuth2DeviceVerificationEndpointConfigurer} for further configuration
 	 */
 	public OAuth2DeviceVerificationEndpointConfigurer deviceVerificationRequestConverter(AuthenticationConverter deviceVerificationRequestConverter) {
 		Assert.notNull(deviceVerificationRequestConverter, "deviceVerificationRequestConverter cannot be null");
-		this.authenticationConverters.add(deviceVerificationRequestConverter);
+		this.deviceVerificationRequestConverters.add(deviceVerificationRequestConverter);
 		return this;
 	}
 
@@ -101,14 +100,14 @@ public final class OAuth2DeviceVerificationEndpointConfigurer extends AbstractOA
 	public OAuth2DeviceVerificationEndpointConfigurer deviceVerificationRequestConverters(
 			Consumer<List<AuthenticationConverter>> deviceVerificationRequestConvertersConsumer) {
 		Assert.notNull(deviceVerificationRequestConvertersConsumer, "deviceVerificationRequestConvertersConsumer cannot be null");
-		this.authenticationConvertersConsumer = deviceVerificationRequestConvertersConsumer;
+		this.deviceVerificationRequestConvertersConsumer = deviceVerificationRequestConvertersConsumer;
 		return this;
 	}
 
 	/**
-	 * Adds an {@link AuthenticationProvider} used for authenticating an {@link OAuth2DeviceVerificationAuthenticationToken}.
+	 * Adds an {@link AuthenticationProvider} used for authenticating an {@link OAuth2DeviceVerificationAuthenticationToken} or {@link OAuth2DeviceAuthorizationConsentAuthenticationToken}.
 	 *
-	 * @param authenticationProvider an {@link AuthenticationProvider} used for authenticating an {@link OAuth2DeviceVerificationAuthenticationToken}
+	 * @param authenticationProvider an {@link AuthenticationProvider} used for authenticating an {@link OAuth2DeviceVerificationAuthenticationToken} or {@link OAuth2DeviceAuthorizationConsentAuthenticationToken}
 	 * @return the {@link OAuth2DeviceVerificationEndpointConfigurer} for further configuration
 	 */
 	public OAuth2DeviceVerificationEndpointConfigurer authenticationProvider(AuthenticationProvider authenticationProvider) {
@@ -133,10 +132,10 @@ public final class OAuth2DeviceVerificationEndpointConfigurer extends AbstractOA
 	}
 
 	/**
-	 * Sets the {@link AuthenticationSuccessHandler} used for handling an {@link OAuth2DeviceAuthorizationConsentAuthenticationToken}
+	 * Sets the {@link AuthenticationSuccessHandler} used for handling an {@link OAuth2DeviceVerificationAuthenticationToken}
 	 * and returning the response.
 	 *
-	 * @param deviceVerificationResponseHandler the {@link AuthenticationSuccessHandler} used for handling an {@link OAuth2AuthorizationCodeRequestAuthenticationToken}
+	 * @param deviceVerificationResponseHandler the {@link AuthenticationSuccessHandler} used for handling an {@link OAuth2DeviceVerificationAuthenticationToken}
 	 * @return the {@link OAuth2DeviceVerificationEndpointConfigurer} for further configuration
 	 */
 	public OAuth2DeviceVerificationEndpointConfigurer deviceVerificationResponseHandler(AuthenticationSuccessHandler deviceVerificationResponseHandler) {
@@ -166,9 +165,9 @@ public final class OAuth2DeviceVerificationEndpointConfigurer extends AbstractOA
 	 *
 	 * <ul>
 	 * <li>{@code client_id} - the client identifier</li>
-	 * <li>{@code scope} - a space-delimited list of scopes present in the authorization request</li>
+	 * <li>{@code scope} - a space-delimited list of scopes present in the device authorization request</li>
 	 * <li>{@code state} - a CSRF protection token</li>
-	 * <li>@code code} - the user code</li>
+	 * <li>{@code user_code} - the user code</li>
 	 * </ul>
 	 *
 	 * In general, the consent page should create a form that submits
@@ -181,7 +180,7 @@ public final class OAuth2DeviceVerificationEndpointConfigurer extends AbstractOA
 	 * <li>It must include the received {@code state} as an HTTP parameter</li>
 	 * <li>It must include the list of {@code scope}s the {@code Resource Owner}
 	 * consented to as an HTTP parameter</li>
-	 * <li>It must include the user {@code code} as an HTTP parameter</li>
+	 * <li>It must include the received {@code user_code} as an HTTP parameter</li>
 	 * </ul>
 	 *
 	 * @param consentPage the URI of the custom consent page to redirect to if consent is required (e.g. "/oauth2/consent")
@@ -198,9 +197,11 @@ public final class OAuth2DeviceVerificationEndpointConfigurer extends AbstractOA
 				OAuth2ConfigurerUtils.getAuthorizationServerSettings(builder);
 		this.requestMatcher = new OrRequestMatcher(
 				new AntPathRequestMatcher(
-						authorizationServerSettings.getDeviceVerificationEndpoint(), HttpMethod.GET.name()),
+						authorizationServerSettings.getDeviceVerificationEndpoint(),
+						HttpMethod.GET.name()),
 				new AntPathRequestMatcher(
-						authorizationServerSettings.getDeviceVerificationEndpoint(), HttpMethod.POST.name()));
+						authorizationServerSettings.getDeviceVerificationEndpoint(),
+						HttpMethod.POST.name()));
 
 		List<AuthenticationProvider> authenticationProviders = createDefaultAuthenticationProviders(builder);
 		if (!this.authenticationProviders.isEmpty()) {
@@ -214,18 +215,18 @@ public final class OAuth2DeviceVerificationEndpointConfigurer extends AbstractOA
 	@Override
 	public void configure(HttpSecurity builder) {
 		AuthenticationManager authenticationManager = builder.getSharedObject(AuthenticationManager.class);
-
 		AuthorizationServerSettings authorizationServerSettings =
 				OAuth2ConfigurerUtils.getAuthorizationServerSettings(builder);
 
 		OAuth2DeviceVerificationEndpointFilter deviceVerificationEndpointFilter =
 				new OAuth2DeviceVerificationEndpointFilter(
-						authenticationManager, authorizationServerSettings.getDeviceVerificationEndpoint());
+						authenticationManager,
+						authorizationServerSettings.getDeviceVerificationEndpoint());
 		List<AuthenticationConverter> authenticationConverters = createDefaultAuthenticationConverters();
-		if (!this.authenticationConverters.isEmpty()) {
-			authenticationConverters.addAll(0, this.authenticationConverters);
+		if (!this.deviceVerificationRequestConverters.isEmpty()) {
+			authenticationConverters.addAll(0, this.deviceVerificationRequestConverters);
 		}
-		this.authenticationConvertersConsumer.accept(authenticationConverters);
+		this.deviceVerificationRequestConvertersConsumer.accept(authenticationConverters);
 		deviceVerificationEndpointFilter.setAuthenticationConverter(
 				new DelegatingAuthenticationConverter(authenticationConverters));
 		if (this.deviceVerificationResponseHandler != null) {
@@ -237,7 +238,7 @@ public final class OAuth2DeviceVerificationEndpointConfigurer extends AbstractOA
 		if (StringUtils.hasText(this.consentPage)) {
 			deviceVerificationEndpointFilter.setConsentPage(this.consentPage);
 		}
-		builder.addFilterAfter(postProcess(deviceVerificationEndpointFilter), AuthorizationFilter.class);
+		builder.addFilterBefore(postProcess(deviceVerificationEndpointFilter), AbstractPreAuthenticatedProcessingFilter.class);
 	}
 
 	@Override
@@ -247,6 +248,7 @@ public final class OAuth2DeviceVerificationEndpointConfigurer extends AbstractOA
 
 	private static List<AuthenticationConverter> createDefaultAuthenticationConverters() {
 		List<AuthenticationConverter> authenticationConverters = new ArrayList<>();
+
 		authenticationConverters.add(new OAuth2DeviceVerificationAuthenticationConverter());
 		authenticationConverters.add(new OAuth2DeviceAuthorizationConsentAuthenticationConverter());
 

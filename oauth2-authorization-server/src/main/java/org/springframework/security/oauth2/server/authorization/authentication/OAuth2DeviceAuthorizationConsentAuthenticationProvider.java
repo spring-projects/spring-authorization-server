@@ -15,7 +15,6 @@
  */
 package org.springframework.security.oauth2.server.authorization.authentication;
 
-import java.security.Principal;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -24,6 +23,7 @@ import java.util.function.Consumer;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -33,7 +33,6 @@ import org.springframework.security.oauth2.core.OAuth2DeviceCode;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.OAuth2UserCode;
-import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsent;
@@ -45,8 +44,8 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 import org.springframework.util.Assert;
 
 /**
- * An {@link AuthenticationProvider} implementation for the OAuth 2.0 Authorization Consent
- * used in the Device Authorization Grant.
+ * An {@link AuthenticationProvider} implementation for the Device Authorization Consent
+ * used in the OAuth 2.0 Device Authorization Grant.
  *
  * @author Steve Riesenberg
  * @since 1.1
@@ -61,7 +60,7 @@ import org.springframework.util.Assert;
  */
 public final class OAuth2DeviceAuthorizationConsentAuthenticationProvider implements AuthenticationProvider {
 
-	private static final String DEFAULT_ERROR_URI = "https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.2.1";
+	private static final String ERROR_URI = "https://datatracker.ietf.org/doc/html/rfc6749#section-5.2";
 	static final OAuth2TokenType STATE_TOKEN_TYPE = new OAuth2TokenType(OAuth2ParameterNames.STATE);
 
 	private final Log logger = LogFactory.getLog(getClass());
@@ -104,7 +103,11 @@ public final class OAuth2DeviceAuthorizationConsentAuthenticationProvider implem
 			this.logger.trace("Retrieved authorization with device authorization consent state");
 		}
 
+		// The authorization must be associated to the current principal
 		Authentication principal = (Authentication) deviceAuthorizationConsentAuthentication.getPrincipal();
+		if (!isPrincipalAuthenticated(principal) || !principal.getName().equals(authorization.getPrincipalName())) {
+			throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.STATE);
+		}
 
 		RegisteredClient registeredClient = this.registeredClientRepository.findByClientId(
 				deviceAuthorizationConsentAuthentication.getClientId());
@@ -116,12 +119,8 @@ public final class OAuth2DeviceAuthorizationConsentAuthenticationProvider implem
 			this.logger.trace("Retrieved registered client");
 		}
 
-		OAuth2AuthorizationRequest authorizationRequest = authorization.getAttribute(
-				OAuth2AuthorizationRequest.class.getName());
-		Set<String> requestedScopes = authorizationRequest.getScopes();
-		Set<String> authorizedScopes = deviceAuthorizationConsentAuthentication.getScopes() != null ?
-				new HashSet<>(deviceAuthorizationConsentAuthentication.getScopes()) :
-				new HashSet<>();
+		Set<String> requestedScopes = authorization.getAttribute(OAuth2ParameterNames.SCOPE);
+		Set<String> authorizedScopes = new HashSet<>(deviceAuthorizationConsentAuthentication.getScopes());
 		if (!requestedScopes.containsAll(authorizedScopes)) {
 			throwError(OAuth2ErrorCodes.INVALID_SCOPE, OAuth2ParameterNames.SCOPE);
 		}
@@ -162,7 +161,6 @@ public final class OAuth2DeviceAuthorizationConsentAuthenticationProvider implem
 							.authorizationConsent(authorizationConsentBuilder)
 							.registeredClient(registeredClient)
 							.authorization(authorization)
-							.authorizationRequest(authorizationRequest)
 							.build();
 			// @formatter:on
 			this.authorizationConsentCustomizer.accept(authorizationConsentAuthenticationContext);
@@ -187,15 +185,16 @@ public final class OAuth2DeviceAuthorizationConsentAuthenticationProvider implem
 			}
 			authorization = OAuth2Authorization.from(authorization)
 					.token(deviceCodeToken.getToken(), metadata ->
-							metadata.put(OAuth2Authorization.Token.ACCESS_DENIED_METADATA_NAME, true))
+							metadata.put(OAuth2Authorization.Token.INVALIDATED_METADATA_NAME, true))
 					.token(userCodeToken.getToken(), metadata ->
 							metadata.put(OAuth2Authorization.Token.INVALIDATED_METADATA_NAME, true))
+					.attributes(attrs -> attrs.remove(OAuth2ParameterNames.STATE))
 					.build();
 			this.authorizationService.save(authorization);
 			if (this.logger.isTraceEnabled()) {
 				this.logger.trace("Invalidated device code and user code because authorization consent was denied");
 			}
-			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.ACCESS_DENIED);
+			throwError(OAuth2ErrorCodes.ACCESS_DENIED, OAuth2ParameterNames.CLIENT_ID);
 		}
 
 		OAuth2AuthorizationConsent authorizationConsent = authorizationConsentBuilder.build();
@@ -206,26 +205,23 @@ public final class OAuth2DeviceAuthorizationConsentAuthenticationProvider implem
 			}
 		}
 
-		OAuth2Authorization updatedAuthorization = OAuth2Authorization.from(authorization)
-				.principalName(principal.getName())
+		authorization = OAuth2Authorization.from(authorization)
 				.authorizedScopes(authorizedScopes)
-				.token(deviceCodeToken.getToken(), metadata -> metadata
-						.put(OAuth2Authorization.Token.ACCESS_GRANTED_METADATA_NAME, true))
-				.token(userCodeToken.getToken(), metadata -> metadata
-						.put(OAuth2Authorization.Token.INVALIDATED_METADATA_NAME, true))
-				.attribute(Principal.class.getName(), principal)
+				.token(userCodeToken.getToken(), metadata ->
+						metadata.put(OAuth2Authorization.Token.INVALIDATED_METADATA_NAME, true))
 				.attributes(attrs -> attrs.remove(OAuth2ParameterNames.STATE))
+				.attributes(attrs -> attrs.remove(OAuth2ParameterNames.SCOPE))
 				.build();
-		this.authorizationService.save(updatedAuthorization);
+		this.authorizationService.save(authorization);
 
 		if (this.logger.isTraceEnabled()) {
 			this.logger.trace("Saved authorization with authorized scopes");
 			// This log is kept separate for consistency with other providers
-			this.logger.trace("Authenticated authorization consent request");
+			this.logger.trace("Authenticated device authorization consent request");
 		}
 
-		return new OAuth2DeviceVerificationAuthenticationToken(registeredClient.getClientId(), principal,
-				deviceAuthorizationConsentAuthentication.getUserCode());
+		return new OAuth2DeviceVerificationAuthenticationToken(principal,
+				deviceAuthorizationConsentAuthentication.getUserCode(), registeredClient.getClientId());
 	}
 
 	@Override
@@ -244,10 +240,9 @@ public final class OAuth2DeviceAuthorizationConsentAuthenticationProvider implem
 	 * prior to {@link OAuth2AuthorizationConsentService#save(OAuth2AuthorizationConsent)}.</li>
 	 * <li>The {@link Authentication} of type
 	 * {@link OAuth2DeviceAuthorizationConsentAuthenticationToken}.</li>
-	 * <li>The {@link RegisteredClient} associated with the authorization request.</li>
+	 * <li>The {@link RegisteredClient} associated with the device authorization request.</li>
 	 * <li>The {@link OAuth2Authorization} associated with the state token presented in the
-	 * authorization consent request.</li>
-	 * <li>The {@link OAuth2AuthorizationRequest} associated with the authorization consent request.</li>
+	 * device authorization consent request.</li>
 	 * </ul>
 	 *
 	 * @param authorizationConsentCustomizer the {@code Consumer} providing access to the
@@ -258,8 +253,14 @@ public final class OAuth2DeviceAuthorizationConsentAuthenticationProvider implem
 		this.authorizationConsentCustomizer = authorizationConsentCustomizer;
 	}
 
+	private static boolean isPrincipalAuthenticated(Authentication principal) {
+		return principal != null &&
+				!AnonymousAuthenticationToken.class.isAssignableFrom(principal.getClass()) &&
+				principal.isAuthenticated();
+	}
+
 	private static void throwError(String errorCode, String parameterName) {
-		OAuth2Error error = new OAuth2Error(errorCode, "OAuth 2.0 Parameter: " + parameterName, DEFAULT_ERROR_URI);
+		OAuth2Error error = new OAuth2Error(errorCode, "OAuth 2.0 Parameter: " + parameterName, ERROR_URI);
 		throw new OAuth2AuthenticationException(error);
 	}
 

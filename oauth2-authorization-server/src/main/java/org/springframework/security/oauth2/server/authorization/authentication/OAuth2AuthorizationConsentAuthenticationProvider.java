@@ -91,6 +91,12 @@ public final class OAuth2AuthorizationConsentAuthenticationProvider implements A
 
 	@Override
 	public Authentication authenticate(Authentication authentication) throws AuthenticationException {
+		if (authentication instanceof OAuth2DeviceAuthorizationConsentAuthenticationToken) {
+			// This is NOT an OAuth 2.0 Authorization Consent for the Authorization Code Grant,
+			// return null and let OAuth2DeviceAuthorizationConsentAuthenticationProvider handle it instead
+			return null;
+		}
+
 		OAuth2AuthorizationConsentAuthenticationToken authorizationConsentAuthentication =
 				(OAuth2AuthorizationConsentAuthenticationToken) authentication;
 

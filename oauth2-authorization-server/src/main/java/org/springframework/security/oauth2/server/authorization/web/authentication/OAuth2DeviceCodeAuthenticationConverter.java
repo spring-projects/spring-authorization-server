@@ -20,6 +20,7 @@ import java.util.Map;
 
 import jakarta.servlet.http.HttpServletRequest;
 
+import org.springframework.lang.Nullable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
@@ -32,7 +33,7 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
 
 /**
- * Attempts to extract an Access Token Request from {@link HttpServletRequest} for the
+ * Attempts to extract a Device Access Token Request from {@link HttpServletRequest} for the
  * OAuth 2.0 Device Authorization Grant and then converts it to an
  * {@link OAuth2DeviceCodeAuthenticationToken} used for authenticating the
  * authorization grant.
@@ -45,6 +46,7 @@ import org.springframework.util.StringUtils;
  */
 public final class OAuth2DeviceCodeAuthenticationConverter implements AuthenticationConverter {
 
+	@Nullable
 	@Override
 	public Authentication convert(HttpServletRequest request) {
 		// grant_type (REQUIRED)
@@ -59,7 +61,8 @@ public final class OAuth2DeviceCodeAuthenticationConverter implements Authentica
 
 		// device_code (REQUIRED)
 		String deviceCode = parameters.getFirst(OAuth2ParameterNames.DEVICE_CODE);
-		if (!StringUtils.hasText(deviceCode) || parameters.get(OAuth2ParameterNames.DEVICE_CODE).size() != 1) {
+		if (!StringUtils.hasText(deviceCode) ||
+				parameters.get(OAuth2ParameterNames.DEVICE_CODE).size() != 1) {
 			OAuth2EndpointUtils.throwError(
 					OAuth2ErrorCodes.INVALID_REQUEST,
 					OAuth2ParameterNames.DEVICE_CODE,

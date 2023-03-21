@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -92,6 +92,7 @@ public final class OAuth2AuthorizationServerMetadataEndpointFilter extends OnceP
 		OAuth2AuthorizationServerMetadata.Builder authorizationServerMetadata = OAuth2AuthorizationServerMetadata.builder()
 				.issuer(issuer)
 				.authorizationEndpoint(asUrl(issuer, authorizationServerSettings.getAuthorizationEndpoint()))
+				.deviceAuthorizationEndpoint(asUrl(issuer, authorizationServerSettings.getDeviceAuthorizationEndpoint()))
 				.tokenEndpoint(asUrl(issuer, authorizationServerSettings.getTokenEndpoint()))
 				.tokenEndpointAuthenticationMethods(clientAuthenticationMethods())
 				.jwkSetUrl(asUrl(issuer, authorizationServerSettings.getJwkSetEndpoint()))
@@ -99,6 +100,7 @@ public final class OAuth2AuthorizationServerMetadataEndpointFilter extends OnceP
 				.grantType(AuthorizationGrantType.AUTHORIZATION_CODE.getValue())
 				.grantType(AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
 				.grantType(AuthorizationGrantType.REFRESH_TOKEN.getValue())
+				.grantType(AuthorizationGrantType.DEVICE_CODE.getValue())
 				.tokenRevocationEndpoint(asUrl(issuer, authorizationServerSettings.getTokenRevocationEndpoint()))
 				.tokenRevocationEndpointAuthenticationMethods(clientAuthenticationMethods())
 				.tokenIntrospectionEndpoint(asUrl(issuer, authorizationServerSettings.getTokenIntrospectionEndpoint()))

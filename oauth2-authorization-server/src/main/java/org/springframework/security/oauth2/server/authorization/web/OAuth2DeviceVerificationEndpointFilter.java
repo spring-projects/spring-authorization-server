@@ -63,9 +63,9 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.util.UriComponentsBuilder;
 
 /**
- * A {@code Filter} for the OAuth 2.0 Device Authorization Grant, which handles
- * the processing of the Verification {@code URI} (submission of the user code)
- * and OAuth 2.0 Authorization Consent.
+ * A {@code Filter} for the OAuth 2.0 Device Authorization Grant,
+ * which handles the processing of the Device Verification Request (submission of the user code)
+ * and the Device Authorization Consent.
  *
  * @author Steve Riesenberg
  * @since 1.1
@@ -79,7 +79,7 @@ import org.springframework.web.util.UriComponentsBuilder;
  */
 public final class OAuth2DeviceVerificationEndpointFilter extends OncePerRequestFilter {
 
-	private static final String DEFAULT_DEVICE_VERIFICATION_URI = "/oauth2/device_verification";
+	static final String DEFAULT_DEVICE_VERIFICATION_ENDPOINT_URI = "/oauth2/device_verification";
 
 	private final AuthenticationManager authenticationManager;
 	private final RequestMatcher deviceVerificationEndpointMatcher;
@@ -93,16 +93,16 @@ public final class OAuth2DeviceVerificationEndpointFilter extends OncePerRequest
 	private String consentPage;
 
 	/**
-	 * Construct an {@code OAuth2DeviceVerificationEndpointFilter} using the provided parameters.
+	 * Constructs an {@code OAuth2DeviceVerificationEndpointFilter} using the provided parameters.
 	 *
 	 * @param authenticationManager the authentication manager
 	 */
 	public OAuth2DeviceVerificationEndpointFilter(AuthenticationManager authenticationManager) {
-		this(authenticationManager, DEFAULT_DEVICE_VERIFICATION_URI);
+		this(authenticationManager, DEFAULT_DEVICE_VERIFICATION_ENDPOINT_URI);
 	}
 
 	/**
-	 * Construct an {@code OAuth2DeviceVerificationEndpointFilter} using the provided parameters.
+	 * Constructs an {@code OAuth2DeviceVerificationEndpointFilter} using the provided parameters.
 	 *
 	 * @param authenticationManager the authentication manager
 	 * @param deviceVerificationEndpointUri the endpoint {@code URI} for device verification requests
@@ -184,11 +184,11 @@ public final class OAuth2DeviceVerificationEndpointFilter extends OncePerRequest
 	}
 
 	/**
-	 * Sets the {@link AuthenticationConverter} used when attempting to extract an Authorization Request (or Consent) from {@link HttpServletRequest}
+	 * Sets the {@link AuthenticationConverter} used when attempting to extract a Device Verification Request (or Device Authorization Consent) from {@link HttpServletRequest}
 	 * to an instance of {@link OAuth2DeviceVerificationAuthenticationToken} or {@link OAuth2DeviceAuthorizationConsentAuthenticationToken}
 	 * used for authenticating the request.
 	 *
-	 * @param authenticationConverter the {@link AuthenticationConverter} used when attempting to extract an Authorization Request (or Consent) from {@link HttpServletRequest}
+	 * @param authenticationConverter the {@link AuthenticationConverter} used when attempting to extract a Device Verification Request (or Device Authorization Consent) from {@link HttpServletRequest}
 	 */
 	public void setAuthenticationConverter(AuthenticationConverter authenticationConverter) {
 		Assert.notNull(authenticationConverter, "authenticationConverter cannot be null");
@@ -207,10 +207,10 @@ public final class OAuth2DeviceVerificationEndpointFilter extends OncePerRequest
 	}
 
 	/**
-	 * Sets the {@link AuthenticationFailureHandler} used for handling an {@link OAuth2DeviceVerificationAuthenticationToken}
+	 * Sets the {@link AuthenticationFailureHandler} used for handling an {@link OAuth2AuthenticationException}
 	 * and returning the {@link OAuth2Error Error Response}.
 	 *
-	 * @param authenticationFailureHandler the {@link AuthenticationFailureHandler} used for handling an {@link OAuth2DeviceVerificationAuthenticationToken}
+	 * @param authenticationFailureHandler the {@link AuthenticationFailureHandler} used for handling an {@link OAuth2AuthenticationException}
 	 */
 	public void setAuthenticationFailureHandler(AuthenticationFailureHandler authenticationFailureHandler) {
 		Assert.notNull(authenticationFailureHandler, "authenticationFailureHandler cannot be null");

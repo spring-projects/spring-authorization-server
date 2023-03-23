@@ -34,6 +34,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.context.SecurityContextHolderStrategy;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
@@ -51,6 +52,8 @@ import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+import org.springframework.security.web.context.RequestAttributeSecurityContextRepository;
+import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -82,6 +85,9 @@ public final class OAuth2ClientAuthenticationFilter extends OncePerRequestFilter
 	private AuthenticationSuccessHandler authenticationSuccessHandler = this::onAuthenticationSuccess;
 	private AuthenticationFailureHandler authenticationFailureHandler = this::onAuthenticationFailure;
 
+	private SecurityContextHolderStrategy securityContextHolderStrategy = SecurityContextHolder
+			.getContextHolderStrategy();
+	private SecurityContextRepository securityContextRepository = new RequestAttributeSecurityContextRepository();
 	/**
 	 * Constructs an {@code OAuth2ClientAuthenticationFilter} using the provided parameters.
 	 *
@@ -168,9 +174,10 @@ public final class OAuth2ClientAuthenticationFilter extends OncePerRequestFilter
 	private void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
 			Authentication authentication) {
 
-		SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
-		securityContext.setAuthentication(authentication);
-		SecurityContextHolder.setContext(securityContext);
+		SecurityContext context = this.securityContextHolderStrategy.createEmptyContext();
+		context.setAuthentication(authentication);
+		this.securityContextHolderStrategy.setContext(context);
+		this.securityContextRepository.saveContext(context, request, response);
 		if (this.logger.isDebugEnabled()) {
 			this.logger.debug(LogMessage.format("Set SecurityContextHolder authentication to %s",
 					authentication.getClass().getSimpleName()));
@@ -180,7 +187,7 @@ public final class OAuth2ClientAuthenticationFilter extends OncePerRequestFilter
 	private void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response,
 			AuthenticationException exception) throws IOException {
 
-		SecurityContextHolder.clearContext();
+		this.securityContextHolderStrategy.clearContext();
 
 		// TODO
 		// The authorization server MAY return an HTTP 401 (Unauthorized) status code

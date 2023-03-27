@@ -15,8 +15,8 @@ spring:
         registration:
           messaging-client-device-grant:
             provider: spring
-            client-id: messaging-client
-            client-secret: secret
+            client-id: device-messaging-client
+            client-authentication-method: none
             authorization-grant-type: urn:ietf:params:oauth:grant-type:device_code
             scope: message.read,message.write
             client-name: messaging-client-device-grant

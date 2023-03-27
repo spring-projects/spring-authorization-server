@@ -26,6 +26,8 @@ import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
+import sample.authentication.DeviceClientAuthenticationProvider;
+import sample.web.authentication.DeviceClientAuthenticationConverter;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -68,11 +70,22 @@ public class SecurityConfig {
 
 	@Bean
 	@Order(1)
-	public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
+	public SecurityFilterChain authorizationServerSecurityFilterChain(
+			HttpSecurity http, RegisteredClientRepository registeredClientRepository,
+			AuthorizationServerSettings authorizationServerSettings) throws Exception {
 		OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http);
 		http.getConfigurer(OAuth2AuthorizationServerConfigurer.class)
 			.deviceAuthorizationEndpoint((deviceAuthorizationEndpoint) -> deviceAuthorizationEndpoint
 				.verificationUri("/activate")
+			)
+			.clientAuthentication((clientAuthentication) ->
+				clientAuthentication
+					.authenticationConverter(
+						new DeviceClientAuthenticationConverter(
+							authorizationServerSettings.getDeviceAuthorizationEndpoint()))
+					.authenticationProvider(
+						new DeviceClientAuthenticationProvider(
+							registeredClientRepository))
 			)
 			.oidc(Customizer.withDefaults());	// Enable OpenID Connect 1.0
 
@@ -124,7 +137,6 @@ public class SecurityConfig {
 				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
 				.authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
 				.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
-				.authorizationGrantType(AuthorizationGrantType.DEVICE_CODE)
 				.redirectUri("http://127.0.0.1:8080/login/oauth2/code/messaging-client-oidc")
 				.redirectUri("http://127.0.0.1:8080/authorized")
 				.scope(OidcScopes.OPENID)
@@ -134,7 +146,16 @@ public class SecurityConfig {
 				.clientSettings(ClientSettings.builder().requireAuthorizationConsent(true).build())
 				.build();
 
-		return new InMemoryRegisteredClientRepository(registeredClient);
+		RegisteredClient deviceClient = RegisteredClient.withId(UUID.randomUUID().toString())
+				.clientId("device-messaging-client")
+				.clientAuthenticationMethod(ClientAuthenticationMethod.NONE)
+				.authorizationGrantType(AuthorizationGrantType.DEVICE_CODE)
+				.authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
+				.scope("message.read")
+				.scope("message.write")
+				.build();
+
+		return new InMemoryRegisteredClientRepository(registeredClient, deviceClient);
 	}
 
 	@Bean

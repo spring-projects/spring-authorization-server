@@ -105,8 +105,8 @@ public class DeviceController {
 		Map<String, Object> responseParameters =
 				this.webClient.post()
 						.uri(clientRegistration.getProviderDetails().getAuthorizationUri())
-						.headers(headers -> headers.setBasicAuth(clientRegistration.getClientId(),
-								clientRegistration.getClientSecret()))
+//						.headers(headers -> headers.setBasicAuth(clientRegistration.getClientId(),
+//								clientRegistration.getClientSecret()))
 						.contentType(MediaType.APPLICATION_FORM_URLENCODED)
 						.body(BodyInserters.fromFormData(requestParameters))
 						.retrieve()

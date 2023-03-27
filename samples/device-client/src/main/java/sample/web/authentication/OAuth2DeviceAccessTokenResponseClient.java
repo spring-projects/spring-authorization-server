@@ -58,7 +58,7 @@ public final class OAuth2DeviceAccessTokenResponseClient implements OAuth2Access
 		ClientRegistration clientRegistration = deviceGrantRequest.getClientRegistration();
 
 		HttpHeaders headers = new HttpHeaders();
-		headers.setBasicAuth(clientRegistration.getClientId(), clientRegistration.getClientSecret());
+//		headers.setBasicAuth(clientRegistration.getClientId(), clientRegistration.getClientSecret());
 
 		MultiValueMap<String, Object> requestParameters = new LinkedMultiValueMap<>();
 		requestParameters.add(OAuth2ParameterNames.GRANT_TYPE, deviceGrantRequest.getGrantType().getValue());

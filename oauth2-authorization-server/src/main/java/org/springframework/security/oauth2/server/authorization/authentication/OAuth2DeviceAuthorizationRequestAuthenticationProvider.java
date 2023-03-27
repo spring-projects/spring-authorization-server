@@ -15,7 +15,6 @@
  */
 package org.springframework.security.oauth2.server.authorization.authentication;
 
-import java.security.Principal;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.HashSet;
@@ -159,7 +158,6 @@ public final class OAuth2DeviceAuthorizationRequestAuthenticationProvider implem
 				.authorizationGrantType(AuthorizationGrantType.DEVICE_CODE)
 				.token(deviceCode)
 				.token(userCode)
-				.attribute(Principal.class.getName(), clientPrincipal)
 				.attribute(OAuth2ParameterNames.SCOPE, new HashSet<>(requestedScopes))
 				.build();
 		// @formatter:on

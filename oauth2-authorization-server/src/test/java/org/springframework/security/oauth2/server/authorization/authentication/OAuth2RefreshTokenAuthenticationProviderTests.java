@@ -400,7 +400,7 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 				.isInstanceOf(OAuth2AuthenticationException.class)
 				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
 				.extracting("errorCode")
-				.isEqualTo(OAuth2ErrorCodes.INVALID_CLIENT);
+				.isEqualTo(OAuth2ErrorCodes.INVALID_GRANT);
 	}
 
 	@Test

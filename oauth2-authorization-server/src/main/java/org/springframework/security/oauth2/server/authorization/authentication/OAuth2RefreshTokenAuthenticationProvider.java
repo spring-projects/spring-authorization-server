@@ -111,7 +111,7 @@ public final class OAuth2RefreshTokenAuthenticationProvider implements Authentic
 		}
 
 		if (!registeredClient.getId().equals(authorization.getRegisteredClientId())) {
-			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_CLIENT);
+			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_GRANT);
 		}
 
 		if (!registeredClient.getAuthorizationGrantTypes().contains(AuthorizationGrantType.REFRESH_TOKEN)) {

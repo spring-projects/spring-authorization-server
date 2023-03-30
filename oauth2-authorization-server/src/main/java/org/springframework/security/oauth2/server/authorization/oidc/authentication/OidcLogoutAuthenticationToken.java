@@ -19,6 +19,7 @@ import java.util.Collections;
 
 import org.springframework.lang.Nullable;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.security.oauth2.server.authorization.util.SpringAuthorizationServerVersion;
@@ -100,6 +101,16 @@ public class OidcLogoutAuthenticationToken extends AbstractAuthenticationToken {
 	@Override
 	public Object getPrincipal() {
 		return this.principal;
+	}
+
+	/**
+	 * Returns {@code true} if {@link #getPrincipal()} is authenticated, {@code false} otherwise.
+	 *
+	 * @return {@code true} if {@link #getPrincipal()} is authenticated, {@code false} otherwise
+	 */
+	public boolean isPrincipalAuthenticated() {
+		return !AnonymousAuthenticationToken.class.isAssignableFrom(this.principal.getClass()) &&
+				this.principal.isAuthenticated();
 	}
 
 	@Override

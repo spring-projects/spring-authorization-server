@@ -26,7 +26,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.core.log.LogMessage;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -183,7 +182,8 @@ public final class OidcLogoutEndpointFilter extends OncePerRequestFilter {
 		OidcLogoutAuthenticationToken oidcLogoutAuthentication = (OidcLogoutAuthenticationToken) authentication;
 
 		// Check for active user session
-		if (isSessionActive(oidcLogoutAuthentication)) {
+		if (oidcLogoutAuthentication.isPrincipalAuthenticated() &&
+				StringUtils.hasText(oidcLogoutAuthentication.getSessionId())) {
 			// Perform logout
 			this.logoutHandler.logout(request, response,
 					(Authentication) oidcLogoutAuthentication.getPrincipal());
@@ -214,17 +214,6 @@ public final class OidcLogoutEndpointFilter extends OncePerRequestFilter {
 
 		OAuth2Error error = ((OAuth2AuthenticationException) exception).getError();
 		response.sendError(HttpStatus.BAD_REQUEST.value(), error.toString());
-	}
-
-	private static boolean isSessionActive(OidcLogoutAuthenticationToken oidcLogoutAuthentication) {
-		return isPrincipalAuthenticated((Authentication) oidcLogoutAuthentication.getPrincipal()) &&
-				StringUtils.hasText(oidcLogoutAuthentication.getSessionId());
-	}
-
-	private static boolean isPrincipalAuthenticated(Authentication principal) {
-		return principal != null &&
-				!AnonymousAuthenticationToken.class.isAssignableFrom(principal.getClass()) &&
-				principal.isAuthenticated();
 	}
 
 }

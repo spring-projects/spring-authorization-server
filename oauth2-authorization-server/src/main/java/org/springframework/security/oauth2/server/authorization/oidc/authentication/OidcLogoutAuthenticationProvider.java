@@ -20,7 +20,6 @@ import java.util.List;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -109,7 +108,7 @@ public final class OidcLogoutAuthenticationProvider implements AuthenticationPro
 		}
 		if (StringUtils.hasText(oidcLogoutAuthentication.getClientId()) &&
 				!oidcLogoutAuthentication.getClientId().equals(registeredClient.getClientId())) {
-			throwError(OAuth2ErrorCodes.INVALID_TOKEN, OAuth2ParameterNames.CLIENT_ID);
+			throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.CLIENT_ID);
 		}
 		if (StringUtils.hasText(oidcLogoutAuthentication.getPostLogoutRedirectUri()) &&
 				!registeredClient.getPostLogoutRedirectUris().contains(oidcLogoutAuthentication.getPostLogoutRedirectUri())) {
@@ -121,8 +120,8 @@ public final class OidcLogoutAuthenticationProvider implements AuthenticationPro
 		}
 
 		// Validate user identity
-		Authentication userPrincipal = (Authentication) oidcLogoutAuthentication.getPrincipal();
-		if (isPrincipalAuthenticated(userPrincipal)) {
+		if (oidcLogoutAuthentication.isPrincipalAuthenticated()) {
+			Authentication userPrincipal = (Authentication) oidcLogoutAuthentication.getPrincipal();
 			if (!StringUtils.hasText(idToken.getSubject()) ||
 					!idToken.getSubject().equals(userPrincipal.getName())) {
 				throwError(OAuth2ErrorCodes.INVALID_TOKEN, IdTokenClaimNames.SUB);
@@ -146,7 +145,7 @@ public final class OidcLogoutAuthenticationProvider implements AuthenticationPro
 			this.logger.trace("Authenticated logout request");
 		}
 
-		return new OidcLogoutAuthenticationToken(idToken, userPrincipal,
+		return new OidcLogoutAuthenticationToken(idToken, (Authentication) oidcLogoutAuthentication.getPrincipal(),
 				oidcLogoutAuthentication.getSessionId(), oidcLogoutAuthentication.getClientId(),
 				oidcLogoutAuthentication.getPostLogoutRedirectUri(), oidcLogoutAuthentication.getState());
 	}
@@ -154,12 +153,6 @@ public final class OidcLogoutAuthenticationProvider implements AuthenticationPro
 	@Override
 	public boolean supports(Class<?> authentication) {
 		return OidcLogoutAuthenticationToken.class.isAssignableFrom(authentication);
-	}
-
-	private static boolean isPrincipalAuthenticated(Authentication principal) {
-		return principal != null &&
-				!AnonymousAuthenticationToken.class.isAssignableFrom(principal.getClass()) &&
-				principal.isAuthenticated();
 	}
 
 	private SessionInformation findSessionInformation(Authentication principal, String sessionId) {

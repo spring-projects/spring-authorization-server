@@ -230,7 +230,7 @@ public class OidcLogoutAuthenticationProviderTests {
 				.isInstanceOf(OAuth2AuthenticationException.class)
 				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
 				.satisfies(error -> {
-					assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_TOKEN);
+					assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_REQUEST);
 					assertThat(error.getDescription()).contains(OAuth2ParameterNames.CLIENT_ID);
 				});
 		verify(this.authorizationService).findByToken(

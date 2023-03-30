@@ -130,6 +130,41 @@ public class OidcLogoutAuthenticationProviderTests {
 	}
 
 	@Test
+	public void authenticateWhenIdTokenNotActiveThenThrowOAuth2AuthenticationException() {
+		TestingAuthenticationToken principal = new TestingAuthenticationToken("principal", "credentials");
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+		OidcIdToken idToken =  OidcIdToken.withTokenValue("id-token")
+				.issuer("https://provider.com")
+				.subject(principal.getName())
+				.issuedAt(Instant.now().minusSeconds(60).truncatedTo(ChronoUnit.MILLIS))
+				.expiresAt(Instant.now().plusSeconds(60).truncatedTo(ChronoUnit.MILLIS))
+				.build();
+		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient)
+				.principalName(principal.getName())
+				.token(idToken, (metadata) -> {
+					metadata.put(OAuth2Authorization.Token.CLAIMS_METADATA_NAME, idToken.getClaims());
+					metadata.put(OAuth2Authorization.Token.INVALIDATED_METADATA_NAME, true);
+				})
+				.build();
+		when(this.authorizationService.findByToken(eq(idToken.getTokenValue()), eq(ID_TOKEN_TOKEN_TYPE)))
+				.thenReturn(authorization);
+
+		OidcLogoutAuthenticationToken authentication = new OidcLogoutAuthenticationToken(
+				idToken.getTokenValue(), principal, "session-1", null, null, null);
+
+		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
+				.isInstanceOf(OAuth2AuthenticationException.class)
+				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+				.satisfies(error -> {
+					assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_TOKEN);
+					assertThat(error.getDescription()).contains("id_token_hint");
+				});
+
+		verify(this.authorizationService).findByToken(
+				eq(authentication.getIdTokenHint()), eq(ID_TOKEN_TOKEN_TYPE));
+	}
+
+	@Test
 	public void authenticateWhenMissingAudienceThenThrowOAuth2AuthenticationException() {
 		TestingAuthenticationToken principal = new TestingAuthenticationToken("principal", "credentials");
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();

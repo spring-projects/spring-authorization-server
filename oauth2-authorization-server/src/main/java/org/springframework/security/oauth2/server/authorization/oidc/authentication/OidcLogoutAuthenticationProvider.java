@@ -91,6 +91,11 @@ public final class OidcLogoutAuthenticationProvider implements AuthenticationPro
 			this.logger.trace("Retrieved authorization with ID Token");
 		}
 
+		OAuth2Authorization.Token<OidcIdToken> authorizedIdToken = authorization.getToken(OidcIdToken.class);
+		if (!authorizedIdToken.isActive()) {
+			throwError(OAuth2ErrorCodes.INVALID_TOKEN, "id_token_hint");
+		}
+
 		RegisteredClient registeredClient = this.registeredClientRepository.findById(
 				authorization.getRegisteredClientId());
 
@@ -98,7 +103,7 @@ public final class OidcLogoutAuthenticationProvider implements AuthenticationPro
 			this.logger.trace("Retrieved registered client");
 		}
 
-		OidcIdToken idToken = authorization.getToken(OidcIdToken.class).getToken();
+		OidcIdToken idToken = authorizedIdToken.getToken();
 
 		// Validate client identity
 		List<String> audClaim = idToken.getAudience();

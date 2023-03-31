@@ -60,6 +60,9 @@ final class CodeVerifierAuthenticator {
 
 	void authenticateRequired(OAuth2ClientAuthenticationToken clientAuthentication,
 			RegisteredClient registeredClient) {
+		if (!authorizationCodeGrant(clientAuthentication.getAdditionalParameters())) {
+			return;
+		}
 		if (!authenticate(clientAuthentication, registeredClient)) {
 			throwInvalidGrant(PkceParameterNames.CODE_VERIFIER);
 		}
@@ -67,6 +70,9 @@ final class CodeVerifierAuthenticator {
 
 	void authenticateIfAvailable(OAuth2ClientAuthenticationToken clientAuthentication,
 			RegisteredClient registeredClient) {
+		if (!authorizationCodeGrant(clientAuthentication.getAdditionalParameters())) {
+			return;
+		}
 		authenticate(clientAuthentication, registeredClient);
 	}
 
@@ -74,9 +80,6 @@ final class CodeVerifierAuthenticator {
 			RegisteredClient registeredClient) {
 
 		Map<String, Object> parameters = clientAuthentication.getAdditionalParameters();
-		if (!authorizationCodeGrant(parameters)) {
-			return false;
-		}
 
 		OAuth2Authorization authorization = this.authorizationService.findByToken(
 				(String) parameters.get(OAuth2ParameterNames.CODE),

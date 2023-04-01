@@ -27,10 +27,7 @@ import java.util.UUID;
 import java.util.function.Consumer;
 
 import org.springframework.lang.Nullable;
-import org.springframework.security.oauth2.core.AuthorizationGrantType;
-import org.springframework.security.oauth2.core.OAuth2AccessToken;
-import org.springframework.security.oauth2.core.OAuth2RefreshToken;
-import org.springframework.security.oauth2.core.OAuth2Token;
+import org.springframework.security.oauth2.core.*;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.util.SpringAuthorizationServerVersion;
 import org.springframework.util.Assert;
@@ -50,6 +47,8 @@ import org.springframework.util.StringUtils;
  * @see OAuth2Token
  * @see OAuth2AccessToken
  * @see OAuth2RefreshToken
+ * @see OAuth2UserCode
+ * @see OAuth2DeviceCode
  */
 public class OAuth2Authorization implements Serializable {
 	private static final long serialVersionUID = SpringAuthorizationServerVersion.SERIAL_VERSION_UID;
@@ -127,6 +126,28 @@ public class OAuth2Authorization implements Serializable {
 	@Nullable
 	public Token<OAuth2RefreshToken> getRefreshToken() {
 		return getToken(OAuth2RefreshToken.class);
+	}
+
+	/**
+	 * Returns the {@link Token} of type {@link OAuth2UserCode}.
+	 *
+	 * @return the {@link Token} of type {@link OAuth2UserCode}, or {@code null} if not
+	 * available
+	 */
+	@Nullable
+	public Token<OAuth2UserCode> getUserCode() {
+		return getToken(OAuth2UserCode.class);
+	}
+
+	/**
+	 * Returns the {@link Token} of type {@link OAuth2DeviceCode}.
+	 *
+	 * @return the {@link Token} of type {@link OAuth2DeviceCode}, or {@code null} if not
+	 * available
+	 */
+	@Nullable
+	public Token<OAuth2DeviceCode> getDeviceCode() {
+		return getToken(OAuth2DeviceCode.class);
 	}
 
 	/**
@@ -458,6 +479,26 @@ public class OAuth2Authorization implements Serializable {
 		 */
 		public Builder refreshToken(OAuth2RefreshToken refreshToken) {
 			return token(refreshToken);
+		}
+
+		/**
+		 * Sets the {@link OAuth2UserCode user token}.
+		 *
+		 * @param userCode the {@link OAuth2UserCode}
+		 * @return the {@link Builder}
+		 */
+		public Builder userCode(OAuth2UserCode userCode) {
+			return token(userCode);
+		}
+
+		/**
+		 * Sets the {@link OAuth2DeviceCode device token}.
+		 *
+		 * @param deviceCode the {@link OAuth2DeviceCode}
+		 * @return the {@link Builder}
+		 */
+		public Builder deviceCode(OAuth2DeviceCode deviceCode) {
+			return token(deviceCode);
 		}
 
 		/**

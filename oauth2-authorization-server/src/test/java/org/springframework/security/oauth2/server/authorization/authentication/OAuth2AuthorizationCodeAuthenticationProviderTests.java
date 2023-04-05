@@ -271,6 +271,12 @@ public class OAuth2AuthorizationCodeAuthenticationProviderTests {
 				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
 				.extracting("errorCode")
 				.isEqualTo(OAuth2ErrorCodes.INVALID_GRANT);
+
+		ArgumentCaptor<OAuth2Authorization> authorizationCaptor = ArgumentCaptor.forClass(OAuth2Authorization.class);
+		verify(this.authorizationService).save(authorizationCaptor.capture());
+		OAuth2Authorization updatedAuthorization = authorizationCaptor.getValue();
+		assertThat(updatedAuthorization.getAccessToken().isInvalidated()).isTrue();
+		assertThat(updatedAuthorization.getRefreshToken().isInvalidated()).isTrue();
 	}
 
 	// gh-290

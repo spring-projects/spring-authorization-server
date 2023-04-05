@@ -149,6 +149,13 @@ public final class OAuth2AuthorizationCodeAuthenticationProvider implements Auth
 		}
 
 		if (!authorizationCode.isActive()) {
+			if (authorizationCode.isInvalidated()) {
+				authorization = OAuth2AuthenticationProviderUtils.invalidate(authorization, authorizationCode.getToken());
+				this.authorizationService.save(authorization);
+				if (this.logger.isWarnEnabled()) {
+					this.logger.warn(LogMessage.format("Invalidated authorization tokens previously issued based on the authorization code"));
+				}
+			}
 			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_GRANT);
 		}
 
@@ -169,7 +176,12 @@ public final class OAuth2AuthorizationCodeAuthenticationProvider implements Auth
 				.authorizationGrant(authorizationCodeAuthentication);
 		// @formatter:on
 
-		OAuth2Authorization.Builder authorizationBuilder = OAuth2Authorization.from(authorization);
+		// @formatter:off
+		OAuth2Authorization.Builder authorizationBuilder = OAuth2Authorization.from(authorization)
+				// Invalidate the authorization code as it can only be used once
+				.token(authorizationCode.getToken(), metadata ->
+						metadata.put(OAuth2Authorization.Token.INVALIDATED_METADATA_NAME, true));
+		// @formatter:on
 
 		// ----- Access token -----
 		OAuth2TokenContext tokenContext = tokenContextBuilder.tokenType(OAuth2TokenType.ACCESS_TOKEN).build();
@@ -250,9 +262,6 @@ public final class OAuth2AuthorizationCodeAuthenticationProvider implements Auth
 
 		authorization = authorizationBuilder.build();
 
-		// Invalidate the authorization code as it can only be used once
-		authorization = OAuth2AuthenticationProviderUtils.invalidate(authorization, authorizationCode.getToken());
-
 		this.authorizationService.save(authorization);
 
 		if (this.logger.isTraceEnabled()) {
@@ -305,5 +314,4 @@ public final class OAuth2AuthorizationCodeAuthenticationProvider implements Auth
 		}
 		return sessionInformation;
 	}
-
 }

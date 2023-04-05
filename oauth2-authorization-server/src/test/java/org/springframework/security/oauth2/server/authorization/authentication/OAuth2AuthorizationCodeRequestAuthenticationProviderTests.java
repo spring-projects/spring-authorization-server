@@ -181,27 +181,6 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 				);
 	}
 
-	// gh-243
-	@Test
-	public void authenticateWhenRedirectUriLocalhostThenThrowOAuth2AuthorizationCodeRequestAuthenticationException() {
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
-		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
-				.thenReturn(registeredClient);
-		OAuth2AuthorizationCodeRequestAuthenticationToken authentication =
-				new OAuth2AuthorizationCodeRequestAuthenticationToken(
-						AUTHORIZATION_URI, registeredClient.getClientId(), principal,
-						"https://localhost:5000", STATE, registeredClient.getScopes(), null);
-		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
-				.isInstanceOf(OAuth2AuthorizationCodeRequestAuthenticationException.class)
-				.satisfies(ex ->
-						assertAuthenticationException((OAuth2AuthorizationCodeRequestAuthenticationException) ex,
-								OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.REDIRECT_URI, null)
-				)
-				.extracting(ex -> ((OAuth2AuthorizationCodeRequestAuthenticationException) ex).getError())
-				.satisfies(error ->
-						assertThat(error.getDescription()).isEqualTo("localhost is not allowed for the redirect_uri (https://localhost:5000). Use the IP literal (127.0.0.1) instead."));
-	}
-
 	@Test
 	public void authenticateWhenUnregisteredRedirectUriThenThrowOAuth2AuthorizationCodeRequestAuthenticationException() {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();

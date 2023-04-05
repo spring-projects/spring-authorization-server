@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -100,23 +100,8 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationValidator impleme
 						authorizationCodeRequestAuthentication, registeredClient);
 			}
 
-			String requestedRedirectHost = requestedRedirect.getHost();
-			if (requestedRedirectHost == null || requestedRedirectHost.equals("localhost")) {
-				// As per https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-07#section-9.7.1
-				// While redirect URIs using localhost (i.e., "http://localhost:{port}/{path}")
-				// function similarly to loopback IP redirects described in Section 10.3.3,
-				// the use of "localhost" is NOT RECOMMENDED.
-				OAuth2Error error = new OAuth2Error(
-						OAuth2ErrorCodes.INVALID_REQUEST,
-						"localhost is not allowed for the redirect_uri (" + requestedRedirectUri + "). " +
-								"Use the IP literal (127.0.0.1) instead.",
-						"https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-07#section-9.7.1");
-				throwError(error, OAuth2ParameterNames.REDIRECT_URI,
-						authorizationCodeRequestAuthentication, registeredClient);
-			}
-
-			if (!isLoopbackAddress(requestedRedirectHost)) {
-				// As per https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-07#section-9.7
+			if (!isLoopbackAddress(requestedRedirect.getHost())) {
+				// As per https://datatracker.ietf.org/doc/html/draft-ietf-oauth-security-topics-22#section-4.1.3
 				// When comparing client redirect URIs against pre-registered URIs,
 				// authorization servers MUST utilize exact string matching.
 				if (!registeredClient.getRedirectUris().contains(requestedRedirectUri)) {
@@ -124,7 +109,7 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationValidator impleme
 							authorizationCodeRequestAuthentication, registeredClient);
 				}
 			} else {
-				// As per https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-07#section-10.3.3
+				// As per https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-08#section-8.4.2
 				// The authorization server MUST allow any port to be specified at the
 				// time of the request for loopback IP redirect URIs, to accommodate
 				// clients that obtain an available ephemeral port from the operating
@@ -157,6 +142,9 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationValidator impleme
 	}
 
 	private static boolean isLoopbackAddress(String host) {
+		if (!StringUtils.hasText(host)) {
+			return false;
+		}
 		// IPv6 loopback address should either be "0:0:0:0:0:0:0:1" or "::1"
 		if ("[0:0:0:0:0:0:0:1]".equals(host) || "[::1]".equals(host)) {
 			return true;

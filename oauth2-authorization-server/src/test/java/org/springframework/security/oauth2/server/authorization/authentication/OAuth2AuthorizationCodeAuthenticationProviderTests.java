@@ -155,6 +155,13 @@ public class OAuth2AuthorizationCodeAuthenticationProviderTests {
 	}
 
 	@Test
+	public void setAuthenticationValidatorWhenNullThenThrowIllegalArgumentException() {
+		assertThatThrownBy(() -> this.authenticationProvider.setAuthenticationValidator(null))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("authenticationValidator cannot be null");
+	}
+
+	@Test
 	public void setSessionRegistryWhenNullThenThrowIllegalArgumentException() {
 		assertThatThrownBy(() -> this.authenticationProvider.setSessionRegistry(null))
 				.isInstanceOf(IllegalArgumentException.class)

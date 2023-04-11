@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 import org.springframework.lang.Nullable;
+import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsent;
@@ -162,7 +163,10 @@ public final class OAuth2AuthorizationConsentAuthenticationContext implements OA
 			Assert.notNull(get(OAuth2AuthorizationConsent.Builder.class), "authorizationConsentBuilder cannot be null");
 			Assert.notNull(get(RegisteredClient.class), "registeredClient cannot be null");
 			Assert.notNull(get(OAuth2Authorization.class), "authorization cannot be null");
-			Assert.notNull(get(OAuth2AuthorizationRequest.class), "authorizationRequest cannot be null");
+			OAuth2Authorization authorization = get(OAuth2Authorization.class);
+			if (authorization.getAuthorizationGrantType().equals(AuthorizationGrantType.AUTHORIZATION_CODE)) {
+				Assert.notNull(get(OAuth2AuthorizationRequest.class), "authorizationRequest cannot be null");
+			}
 			return new OAuth2AuthorizationConsentAuthenticationContext(getContext());
 		}
 

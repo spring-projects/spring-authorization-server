@@ -47,7 +47,12 @@ import org.springframework.jdbc.support.lob.LobCreator;
 import org.springframework.jdbc.support.lob.LobHandler;
 import org.springframework.lang.Nullable;
 import org.springframework.security.jackson2.SecurityJackson2Modules;
-import org.springframework.security.oauth2.core.*;
+import org.springframework.security.oauth2.core.AuthorizationGrantType;
+import org.springframework.security.oauth2.core.OAuth2AccessToken;
+import org.springframework.security.oauth2.core.OAuth2DeviceCode;
+import org.springframework.security.oauth2.core.OAuth2RefreshToken;
+import org.springframework.security.oauth2.core.OAuth2Token;
+import org.springframework.security.oauth2.core.OAuth2UserCode;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.security.oauth2.core.oidc.endpoint.OidcParameterNames;
@@ -118,8 +123,8 @@ public class JdbcOAuth2AuthorizationService implements OAuth2AuthorizationServic
 
 	private static final String PK_FILTER = "id = ?";
 	private static final String UNKNOWN_TOKEN_TYPE_FILTER = "state = ? OR authorization_code_value = ? OR "
-			+ "access_token_value = ? OR oidc_id_token_value = ? OR refresh_token_value = ? OR "
-			+ "user_code_value = ? OR device_code_value = ?";
+			+ "access_token_value = ? OR oidc_id_token_value = ? OR refresh_token_value = ? OR user_code_value = ? OR "
+			+ "device_code_value = ?";
 
 	private static final String STATE_FILTER = "state = ?";
 	private static final String AUTHORIZATION_CODE_FILTER = "authorization_code_value = ?";
@@ -272,10 +277,10 @@ public class JdbcOAuth2AuthorizationService implements OAuth2AuthorizationServic
 		} else if (OAuth2TokenType.REFRESH_TOKEN.equals(tokenType)) {
 			parameters.add(mapToSqlParameter("refresh_token_value", token));
 			return findBy(REFRESH_TOKEN_FILTER, parameters);
-		} else if (OAuth2TokenType.USER_CODE.equals(tokenType)) {
+		} else if (OAuth2ParameterNames.USER_CODE.equals(tokenType.getValue())) {
 			parameters.add(mapToSqlParameter("user_code_value", token));
 			return findBy(USER_CODE_FILTER, parameters);
-		} else if (OAuth2TokenType.DEVICE_CODE.equals(tokenType)) {
+		} else if (OAuth2ParameterNames.DEVICE_CODE.equals(tokenType.getValue())) {
 			parameters.add(mapToSqlParameter("device_code_value", token));
 			return findBy(DEVICE_CODE_FILTER, parameters);
 		}
@@ -447,11 +452,7 @@ public class JdbcOAuth2AuthorizationService implements OAuth2AuthorizationServic
 			String userCodeValue = getLobValue(rs, "user_code_value");
 			if (StringUtils.hasText(userCodeValue)) {
 				tokenIssuedAt = rs.getTimestamp("user_code_issued_at").toInstant();
-				tokenExpiresAt = null;
-				Timestamp userCodeExpiresAt = rs.getTimestamp("user_code_expires_at");
-				if (userCodeExpiresAt != null) {
-					tokenExpiresAt = userCodeExpiresAt.toInstant();
-				}
+				tokenExpiresAt = rs.getTimestamp("user_code_expires_at").toInstant();
 				Map<String, Object> userCodeMetadata = parseMap(getLobValue(rs, "user_code_metadata"));
 
 				OAuth2UserCode userCode = new OAuth2UserCode(userCodeValue, tokenIssuedAt, tokenExpiresAt);
@@ -461,11 +462,7 @@ public class JdbcOAuth2AuthorizationService implements OAuth2AuthorizationServic
 			String deviceCodeValue = getLobValue(rs, "device_code_value");
 			if (StringUtils.hasText(deviceCodeValue)) {
 				tokenIssuedAt = rs.getTimestamp("device_code_issued_at").toInstant();
-				tokenExpiresAt = null;
-				Timestamp deviceCodeExpiresAt = rs.getTimestamp("device_code_expires_at");
-				if (deviceCodeExpiresAt != null) {
-					tokenExpiresAt = deviceCodeExpiresAt.toInstant();
-				}
+				tokenExpiresAt = rs.getTimestamp("device_code_expires_at").toInstant();
 				Map<String, Object> deviceCodeMetadata = parseMap(getLobValue(rs, "device_code_metadata"));
 
 				OAuth2DeviceCode deviceCode = new OAuth2DeviceCode(deviceCodeValue, tokenIssuedAt, tokenExpiresAt);

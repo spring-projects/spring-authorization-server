@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,6 +69,20 @@ public class Authorization {
 	private String oidcIdTokenMetadata;
 	@Column(length = 2000)
 	private String oidcIdTokenClaims;
+
+	@Column(length = 4000)
+	private String userCodeValue;
+	private Instant userCodeIssuedAt;
+	private Instant userCodeExpiresAt;
+	@Column(length = 2000)
+	private String userCodeMetadata;
+
+	@Column(length = 4000)
+	private String deviceCodeValue;
+	private Instant deviceCodeIssuedAt;
+	private Instant deviceCodeExpiresAt;
+	@Column(length = 2000)
+	private String deviceCodeMetadata;
 
 	// @fold:on
 	public String getId() {
@@ -277,6 +291,70 @@ public class Authorization {
 
 	public void setOidcIdTokenClaims(String idTokenClaims) {
 		this.oidcIdTokenClaims = idTokenClaims;
+	}
+
+	public String getUserCodeValue() {
+		return this.userCodeValue;
+	}
+
+	public void setUserCodeValue(String userCodeValue) {
+		this.userCodeValue = userCodeValue;
+	}
+
+	public Instant getUserCodeIssuedAt() {
+		return this.userCodeIssuedAt;
+	}
+
+	public void setUserCodeIssuedAt(Instant userCodeIssuedAt) {
+		this.userCodeIssuedAt = userCodeIssuedAt;
+	}
+
+	public Instant getUserCodeExpiresAt() {
+		return this.userCodeExpiresAt;
+	}
+
+	public void setUserCodeExpiresAt(Instant userCodeExpiresAt) {
+		this.userCodeExpiresAt = userCodeExpiresAt;
+	}
+
+	public String getUserCodeMetadata() {
+		return this.userCodeMetadata;
+	}
+
+	public void setUserCodeMetadata(String userCodeMetadata) {
+		this.userCodeMetadata = userCodeMetadata;
+	}
+
+	public String getDeviceCodeValue() {
+		return this.deviceCodeValue;
+	}
+
+	public void setDeviceCodeValue(String deviceCodeValue) {
+		this.deviceCodeValue = deviceCodeValue;
+	}
+
+	public Instant getDeviceCodeIssuedAt() {
+		return this.deviceCodeIssuedAt;
+	}
+
+	public void setDeviceCodeIssuedAt(Instant deviceCodeIssuedAt) {
+		this.deviceCodeIssuedAt = deviceCodeIssuedAt;
+	}
+
+	public Instant getDeviceCodeExpiresAt() {
+		return this.deviceCodeExpiresAt;
+	}
+
+	public void setDeviceCodeExpiresAt(Instant deviceCodeExpiresAt) {
+		this.deviceCodeExpiresAt = deviceCodeExpiresAt;
+	}
+
+	public String getDeviceCodeMetadata() {
+		return this.deviceCodeMetadata;
+	}
+
+	public void setDeviceCodeMetadata(String deviceCodeMetadata) {
+		this.deviceCodeMetadata = deviceCodeMetadata;
 	}
 	// @fold:off
 }

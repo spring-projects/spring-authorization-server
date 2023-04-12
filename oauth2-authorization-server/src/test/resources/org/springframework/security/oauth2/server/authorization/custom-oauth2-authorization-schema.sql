@@ -24,5 +24,13 @@ CREATE TABLE oauth2Authorization (
     refreshTokenIssuedAt timestamp DEFAULT NULL,
     refreshTokenExpiresAt timestamp DEFAULT NULL,
     refreshTokenMetadata varchar(2000) DEFAULT NULL,
+    userCodeValue varchar(1000) DEFAULT NULL,
+    userCodeIssuedAt timestamp DEFAULT NULL,
+    userCodeExpiresAt timestamp DEFAULT NULL,
+    userCodeMetadata varchar(2000) DEFAULT NULL,
+    deviceCodeValue varchar(1000) DEFAULT NULL,
+    deviceCodeIssuedAt timestamp DEFAULT NULL,
+    deviceCodeExpiresAt timestamp DEFAULT NULL,
+    deviceCodeMetadata varchar(2000) DEFAULT NULL,
     PRIMARY KEY (id)
 );

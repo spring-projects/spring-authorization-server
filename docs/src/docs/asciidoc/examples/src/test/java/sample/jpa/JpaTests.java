@@ -25,6 +25,7 @@ import org.assertj.core.api.ObjectAssert;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import sample.AuthorizationCodeGrantFlow;
+import sample.DeviceAuthorizationGrantFlow;
 import sample.jose.TestJwks;
 import sample.jpa.service.authorization.JpaOAuth2AuthorizationService;
 import sample.jpa.service.authorizationConsent.JpaOAuth2AuthorizationConsentService;
@@ -122,6 +123,53 @@ public class JpaTests {
 
 		OAuth2Authorization authorization = findAuthorization(accessToken, OAuth2ParameterNames.ACCESS_TOKEN);
 		assertThat(authorization.getToken(idToken)).isNotNull();
+
+		String scopes = (String) tokenResponse.get(OAuth2ParameterNames.SCOPE);
+		OAuth2AuthorizationConsent authorizationConsent = this.authorizationConsentService.findById(
+				registeredClient.getId(), "user");
+		assertThat(authorizationConsent).isNotNull();
+		assertThat(authorizationConsent.getScopes()).containsExactlyInAnyOrder(
+				StringUtils.delimitedListToStringArray(scopes, " "));
+	}
+
+	@Test
+	public void deviceAuthorizationWhenJpaCoreServicesAutowiredThenSuccess() throws Exception {
+		this.spring.register(AuthorizationServerConfig.class).autowire();
+		assertThat(this.registeredClientRepository).isInstanceOf(JpaRegisteredClientRepository.class);
+		assertThat(this.authorizationService).isInstanceOf(JpaOAuth2AuthorizationService.class);
+		assertThat(this.authorizationConsentService).isInstanceOf(JpaOAuth2AuthorizationConsentService.class);
+
+		RegisteredClient registeredClient = messagingClient();
+		this.registeredClientRepository.save(registeredClient);
+
+		DeviceAuthorizationGrantFlow deviceAuthorizationGrantFlow = new DeviceAuthorizationGrantFlow(this.mockMvc);
+		deviceAuthorizationGrantFlow.setUsername("user");
+		deviceAuthorizationGrantFlow.addScope("message.read");
+		deviceAuthorizationGrantFlow.addScope("message.write");
+
+		Map<String, Object> deviceAuthorizationResponse = deviceAuthorizationGrantFlow.authorize(registeredClient);
+		String userCode = (String) deviceAuthorizationResponse.get(OAuth2ParameterNames.USER_CODE);
+		assertThatAuthorization(userCode, OAuth2ParameterNames.USER_CODE).isNotNull();
+		assertThatAuthorization(userCode, null).isNotNull();
+
+		String deviceCode = (String) deviceAuthorizationResponse.get(OAuth2ParameterNames.DEVICE_CODE);
+		assertThatAuthorization(deviceCode, OAuth2ParameterNames.DEVICE_CODE).isNotNull();
+		assertThatAuthorization(deviceCode, null).isNotNull();
+
+		String state = deviceAuthorizationGrantFlow.submitCode(userCode);
+		assertThatAuthorization(state, OAuth2ParameterNames.STATE).isNotNull();
+		assertThatAuthorization(state, null).isNotNull();
+
+		deviceAuthorizationGrantFlow.submitConsent(registeredClient, state, userCode);
+
+		Map<String, Object> tokenResponse = deviceAuthorizationGrantFlow.getTokenResponse(registeredClient, deviceCode);
+		String accessToken = (String) tokenResponse.get(OAuth2ParameterNames.ACCESS_TOKEN);
+		assertThatAuthorization(accessToken, OAuth2ParameterNames.ACCESS_TOKEN).isNotNull();
+		assertThatAuthorization(accessToken, null).isNotNull();
+
+		String refreshToken = (String) tokenResponse.get(OAuth2ParameterNames.REFRESH_TOKEN);
+		assertThatAuthorization(refreshToken, OAuth2ParameterNames.REFRESH_TOKEN).isNotNull();
+		assertThatAuthorization(refreshToken, null).isNotNull();
 
 		String scopes = (String) tokenResponse.get(OAuth2ParameterNames.SCOPE);
 		OAuth2AuthorizationConsent authorizationConsent = this.authorizationConsentService.findById(

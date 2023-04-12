@@ -45,8 +45,10 @@ import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseBuilder;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
+import org.springframework.security.oauth2.core.OAuth2DeviceCode;
 import org.springframework.security.oauth2.core.OAuth2RefreshToken;
 import org.springframework.security.oauth2.core.OAuth2Token;
+import org.springframework.security.oauth2.core.OAuth2UserCode;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.security.oauth2.core.oidc.endpoint.OidcParameterNames;
@@ -70,6 +72,7 @@ import static org.mockito.Mockito.when;
  * Tests for {@link JdbcOAuth2AuthorizationService}.
  *
  * @author Ovidiu Popa
+ * @author Steve Riesenberg
  */
 public class JdbcOAuth2AuthorizationServiceTests {
 	private static final String OAUTH2_AUTHORIZATION_SCHEMA_SQL_RESOURCE = "org/springframework/security/oauth2/server/authorization/oauth2-authorization-schema.sql";
@@ -78,6 +81,8 @@ public class JdbcOAuth2AuthorizationServiceTests {
 	private static final OAuth2TokenType AUTHORIZATION_CODE_TOKEN_TYPE = new OAuth2TokenType(OAuth2ParameterNames.CODE);
 	private static final OAuth2TokenType STATE_TOKEN_TYPE = new OAuth2TokenType(OAuth2ParameterNames.STATE);
 	private static final OAuth2TokenType ID_TOKEN_TOKEN_TYPE = new OAuth2TokenType(OidcParameterNames.ID_TOKEN);
+	private static final OAuth2TokenType USER_CODE_TOKEN_TYPE = new OAuth2TokenType(OAuth2ParameterNames.USER_CODE);
+	private static final OAuth2TokenType DEVICE_CODE_TOKEN_TYPE = new OAuth2TokenType(OAuth2ParameterNames.DEVICE_CODE);
 	private static final String ID = "id";
 	private static final RegisteredClient REGISTERED_CLIENT = TestRegisteredClients.registeredClient().build();
 	private static final String PRINCIPAL_NAME = "principal";
@@ -395,6 +400,50 @@ public class JdbcOAuth2AuthorizationServiceTests {
 	}
 
 	@Test
+	public void findByTokenWhenDeviceCodeExistsThenFound() {
+		when(this.registeredClientRepository.findById(eq(REGISTERED_CLIENT.getId())))
+				.thenReturn(REGISTERED_CLIENT);
+		OAuth2DeviceCode deviceCode = new OAuth2DeviceCode("device-code",
+				Instant.now().truncatedTo(ChronoUnit.MILLIS),
+				Instant.now().plus(5, ChronoUnit.MINUTES).truncatedTo(ChronoUnit.MILLIS));
+		OAuth2Authorization authorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
+				.id(ID)
+				.principalName(PRINCIPAL_NAME)
+				.authorizationGrantType(AUTHORIZATION_GRANT_TYPE)
+				.token(deviceCode)
+				.build();
+		this.authorizationService.save(authorization);
+
+		OAuth2Authorization result = this.authorizationService.findByToken(
+				deviceCode.getTokenValue(), DEVICE_CODE_TOKEN_TYPE);
+		assertThat(authorization).isEqualTo(result);
+		result = this.authorizationService.findByToken(deviceCode.getTokenValue(), null);
+		assertThat(authorization).isEqualTo(result);
+	}
+
+	@Test
+	public void findByTokenWhenUserCodeExistsThenFound() {
+		when(this.registeredClientRepository.findById(eq(REGISTERED_CLIENT.getId())))
+				.thenReturn(REGISTERED_CLIENT);
+		OAuth2UserCode userCode = new OAuth2UserCode("user-code",
+				Instant.now().truncatedTo(ChronoUnit.MILLIS),
+				Instant.now().plus(5, ChronoUnit.MINUTES).truncatedTo(ChronoUnit.MILLIS));
+		OAuth2Authorization authorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
+				.id(ID)
+				.principalName(PRINCIPAL_NAME)
+				.authorizationGrantType(AUTHORIZATION_GRANT_TYPE)
+				.token(userCode)
+				.build();
+		this.authorizationService.save(authorization);
+
+		OAuth2Authorization result = this.authorizationService.findByToken(
+				userCode.getTokenValue(), USER_CODE_TOKEN_TYPE);
+		assertThat(authorization).isEqualTo(result);
+		result = this.authorizationService.findByToken(userCode.getTokenValue(), null);
+		assertThat(authorization).isEqualTo(result);
+	}
+
+	@Test
 	public void findByTokenWhenWrongTokenTypeThenNotFound() {
 		OAuth2RefreshToken refreshToken = new OAuth2RefreshToken("refresh-token", Instant.now().truncatedTo(ChronoUnit.MILLIS));
 		OAuth2Authorization authorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
@@ -515,14 +564,23 @@ public class JdbcOAuth2AuthorizationServiceTests {
 				+ "refreshTokenValue,"
 				+ "refreshTokenIssuedAt,"
 				+ "refreshTokenExpiresAt,"
-				+ "refreshTokenMetadata";
+				+ "refreshTokenMetadata,"
+				+ "userCodeValue,"
+				+ "userCodeIssuedAt,"
+				+ "userCodeExpiresAt,"
+				+ "userCodeMetadata,"
+				+ "deviceCodeValue,"
+				+ "deviceCodeIssuedAt,"
+				+ "deviceCodeExpiresAt,"
+				+ "deviceCodeMetadata";
 		// @formatter:on
 
 		private static final String TABLE_NAME = "oauth2Authorization";
 
 		private static final String PK_FILTER = "id = ?";
 		private static final String UNKNOWN_TOKEN_TYPE_FILTER = "state = ? OR authorizationCodeValue = ? OR " +
-				"accessTokenValue = ? OR oidcIdTokenValue = ? OR refreshTokenValue = ?";
+				"accessTokenValue = ? OR oidcIdTokenValue = ? OR refreshTokenValue = ? OR userCodeValue = ? OR " +
+				"deviceCodeValue = ?";
 
 		// @formatter:off
 		private static final String LOAD_AUTHORIZATION_SQL = "SELECT " + COLUMN_NAMES
@@ -532,7 +590,7 @@ public class JdbcOAuth2AuthorizationServiceTests {
 
 		// @formatter:off
 		private static final String SAVE_AUTHORIZATION_SQL = "INSERT INTO " + TABLE_NAME
-				+ " (" + COLUMN_NAMES + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+				+ " (" + COLUMN_NAMES + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 		// @formatter:on
 
 		private static final String REMOVE_AUTHORIZATION_SQL = "DELETE FROM " + TABLE_NAME + " WHERE " + PK_FILTER;
@@ -567,7 +625,7 @@ public class JdbcOAuth2AuthorizationServiceTests {
 
 		@Override
 		public OAuth2Authorization findByToken(String token, OAuth2TokenType tokenType) {
-			return findBy(UNKNOWN_TOKEN_TYPE_FILTER, token, token, token, token, token);
+			return findBy(UNKNOWN_TOKEN_TYPE_FILTER, token, token, token, token, token, token, token);
 		}
 
 		private OAuth2Authorization findBy(String filter, Object... args) {
@@ -672,6 +730,26 @@ public class JdbcOAuth2AuthorizationServiceTests {
 					builder.token(refreshToken, (metadata) -> metadata.putAll(refreshTokenMetadata));
 				}
 
+				tokenValue = rs.getString("userCodeValue");
+				if (tokenValue != null) {
+					tokenIssuedAt = rs.getTimestamp("userCodeIssuedAt").toInstant();
+					tokenExpiresAt = rs.getTimestamp("userCodeExpiresAt").toInstant();
+					Map<String, Object> userCodeMetadata = parseMap(rs.getString("userCodeMetadata"));
+
+					OAuth2UserCode userCode = new OAuth2UserCode(tokenValue, tokenIssuedAt, tokenExpiresAt);
+					builder.token(userCode, (metadata) -> metadata.putAll(userCodeMetadata));
+				}
+
+				tokenValue = rs.getString("deviceCodeValue");
+				if (tokenValue != null) {
+					tokenIssuedAt = rs.getTimestamp("deviceCodeIssuedAt").toInstant();
+					tokenExpiresAt = rs.getTimestamp("deviceCodeExpiresAt").toInstant();
+					Map<String, Object> deviceCodeMetadata = parseMap(rs.getString("deviceCodeMetadata"));
+
+					OAuth2UserCode deviceCode = new OAuth2UserCode(tokenValue, tokenIssuedAt, tokenExpiresAt);
+					builder.token(deviceCode, (metadata) -> metadata.putAll(deviceCodeMetadata));
+				}
+
 				return builder.build();
 			}
 
@@ -738,6 +816,15 @@ public class JdbcOAuth2AuthorizationServiceTests {
 				OAuth2Authorization.Token<OAuth2RefreshToken> refreshToken = authorization.getRefreshToken();
 				List<SqlParameterValue> refreshTokenSqlParameters = toSqlParameterList(refreshToken);
 				parameters.addAll(refreshTokenSqlParameters);
+
+				OAuth2Authorization.Token<OAuth2UserCode> userCode = authorization.getToken(OAuth2UserCode.class);
+				List<SqlParameterValue> userCodeSqlParameters = toSqlParameterList(userCode);
+				parameters.addAll(userCodeSqlParameters);
+
+				OAuth2Authorization.Token<OAuth2DeviceCode> deviceCode = authorization.getToken(OAuth2DeviceCode.class);
+				List<SqlParameterValue> deviceCodeSqlParameters = toSqlParameterList(deviceCode);
+				parameters.addAll(deviceCodeSqlParameters);
+
 				return parameters;
 			}
 

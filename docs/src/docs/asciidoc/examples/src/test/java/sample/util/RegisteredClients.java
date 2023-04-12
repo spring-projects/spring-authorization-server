@@ -36,6 +36,7 @@ public class RegisteredClients {
 				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
 				.authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
 				.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
+				.authorizationGrantType(AuthorizationGrantType.DEVICE_CODE)
 				.redirectUri("http://127.0.0.1:8080/authorized")
 				.postLogoutRedirectUri("http://127.0.0.1:8080/index")
 				.scope(OidcScopes.OPENID)

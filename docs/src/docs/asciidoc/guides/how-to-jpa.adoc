@@ -95,6 +95,14 @@ CREATE TABLE authorization (
     oidcIdTokenExpiresAt timestamp DEFAULT NULL,
     oidcIdTokenMetadata varchar(2000) DEFAULT NULL,
     oidcIdTokenClaims varchar(2000) DEFAULT NULL,
+    userCodeValue varchar(4000) DEFAULT NULL,
+    userCodeIssuedAt timestamp DEFAULT NULL,
+    userCodeExpiresAt timestamp DEFAULT NULL,
+    userCodeMetadata varchar(2000) DEFAULT NULL,
+    deviceCodeValue varchar(4000) DEFAULT NULL,
+    deviceCodeIssuedAt timestamp DEFAULT NULL,
+    deviceCodeExpiresAt timestamp DEFAULT NULL,
+    deviceCodeMetadata varchar(2000) DEFAULT NULL,
     PRIMARY KEY (id)
 );
 ----

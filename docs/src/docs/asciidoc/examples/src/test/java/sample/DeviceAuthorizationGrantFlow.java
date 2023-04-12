@@ -15,8 +15,6 @@
  */
 package sample;
 
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -29,7 +27,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
-import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationResponseType;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.test.web.servlet.MockMvc;
@@ -37,8 +34,6 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
-import org.springframework.web.util.UriComponents;
-import org.springframework.web.util.UriComponentsBuilder;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -50,14 +45,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Helper class that performs steps of the {@code authorization_code} flow using
- * {@link MockMvc} for testing.
+ * Helper class that performs steps of the {@code urn:ietf:params:oauth:grant-type:device_code}
+ * flow using {@link MockMvc} for testing.
  *
  * @author Steve Riesenberg
  */
-public class AuthorizationCodeGrantFlow {
+public class DeviceAuthorizationGrantFlow {
 	private static final Pattern HIDDEN_STATE_INPUT_PATTERN = Pattern.compile(".+<input type=\"hidden\" name=\"state\" value=\"([^\"]+)\">.+");
-	private static final TypeReference<Map<String, Object>> TOKEN_RESPONSE_TYPE_REFERENCE = new TypeReference<Map<String, Object>>() {
+	private static final TypeReference<Map<String, Object>> JSON_RESPONSE_TYPE_REFERENCE = new TypeReference<>() {
 	};
 
 	private final MockMvc mockMvc;
@@ -66,7 +61,7 @@ public class AuthorizationCodeGrantFlow {
 
 	private Set<String> scopes = new HashSet<>();
 
-	public AuthorizationCodeGrantFlow(MockMvc mockMvc) {
+	public DeviceAuthorizationGrantFlow(MockMvc mockMvc) {
 		this.mockMvc = mockMvc;
 	}
 
@@ -79,25 +74,53 @@ public class AuthorizationCodeGrantFlow {
 	}
 
 	/**
-	 * Perform the authorization request and obtain a state parameter.
+	 * Perform the device authorization request and obtain the response
+	 * containing a user code and device code.
 	 *
 	 * @param registeredClient The registered client
-	 * @return The state parameter for submitting consent for authorization
+	 * @return The device authorization response
 	 */
-	public String authorize(RegisteredClient registeredClient) throws Exception {
+	public Map<String, Object> authorize(RegisteredClient registeredClient) throws Exception {
 		MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
-		parameters.set(OAuth2ParameterNames.RESPONSE_TYPE, OAuth2AuthorizationResponseType.CODE.getValue());
 		parameters.set(OAuth2ParameterNames.CLIENT_ID, registeredClient.getClientId());
-		parameters.set(OAuth2ParameterNames.REDIRECT_URI, registeredClient.getRedirectUris().iterator().next());
 		parameters.set(OAuth2ParameterNames.SCOPE,
 				StringUtils.collectionToDelimitedString(registeredClient.getScopes(), " "));
-		parameters.set(OAuth2ParameterNames.STATE, "state");
 
-		MvcResult mvcResult = this.mockMvc.perform(get("/oauth2/authorize")
+		HttpHeaders basicAuth = new HttpHeaders();
+		basicAuth.setBasicAuth(registeredClient.getClientId(), "secret");
+
+		MvcResult mvcResult = this.mockMvc.perform(post("/oauth2/device_authorization")
+				.params(parameters)
+				.headers(basicAuth))
+				.andExpect(status().isOk())
+				.andExpect(header().string(HttpHeaders.CONTENT_TYPE, containsString(MediaType.APPLICATION_JSON_VALUE)))
+				.andExpect(jsonPath("$.user_code").isNotEmpty())
+				.andExpect(jsonPath("$.device_code").isNotEmpty())
+				.andExpect(jsonPath("$.verification_uri").isNotEmpty())
+				.andExpect(jsonPath("$.verification_uri_complete").isNotEmpty())
+				.andExpect(jsonPath("$.expires_in").isNotEmpty())
+				.andReturn();
+
+		ObjectMapper objectMapper = new ObjectMapper();
+		String responseJson = mvcResult.getResponse().getContentAsString();
+		return objectMapper.readValue(responseJson, JSON_RESPONSE_TYPE_REFERENCE);
+	}
+
+	/**
+	 * Submit the user code and obtain a state parameter from the consent screen.
+	 *
+	 * @param userCode The user code from the device authorization request
+	 * @return The state parameter for submitting consent for authorization
+	 */
+	public String submitCode(String userCode) throws Exception {
+		MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+		parameters.set(OAuth2ParameterNames.USER_CODE, userCode);
+
+		MvcResult mvcResult = this.mockMvc.perform(get("/oauth2/device_verification")
 				.params(parameters)
 				.with(user(this.username).roles("USER")))
 				.andExpect(status().isOk())
-				.andExpect(header().string("content-type", containsString(MediaType.TEXT_HTML_VALUE)))
+				.andExpect(header().string(HttpHeaders.CONTENT_TYPE, containsString(MediaType.TEXT_HTML_VALUE)))
 				.andReturn();
 		String responseHtml = mvcResult.getResponse().getContentAsString();
 		Matcher matcher = HIDDEN_STATE_INPUT_PATTERN.matcher(responseHtml);
@@ -106,47 +129,42 @@ public class AuthorizationCodeGrantFlow {
 	}
 
 	/**
-	 * Submit consent for the authorization request and obtain an authorization code.
+	 * Submit consent for the device authorization request.
 	 *
 	 * @param registeredClient The registered client
-	 * @param state The state parameter from the authorization request
-	 * @return An authorization code
+	 * @param state The state parameter from the consent screen
+	 * @param userCode The user code from the device authorization request
 	 */
-	public String submitConsent(RegisteredClient registeredClient, String state) throws Exception {
+	public void submitConsent(RegisteredClient registeredClient, String state, String userCode) throws Exception {
 		MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
 		parameters.set(OAuth2ParameterNames.CLIENT_ID, registeredClient.getClientId());
 		parameters.set(OAuth2ParameterNames.STATE, state);
-		for (String scope : scopes) {
+		for (String scope : this.scopes) {
 			parameters.add(OAuth2ParameterNames.SCOPE, scope);
 		}
+		parameters.set(OAuth2ParameterNames.USER_CODE, userCode);
 
-		MvcResult mvcResult = this.mockMvc.perform(post("/oauth2/authorize")
+		MvcResult mvcResult = this.mockMvc.perform(post("/oauth2/device_verification")
 				.params(parameters)
 				.with(user(this.username).roles("USER")))
 				.andExpect(status().is3xxRedirection())
 				.andReturn();
 		String redirectedUrl = mvcResult.getResponse().getRedirectedUrl();
 		assertThat(redirectedUrl).isNotNull();
-		assertThat(redirectedUrl).matches("http://127.0.0.1:8080/authorized\\?code=.{15,}&state=state");
-
-		String locationHeader = URLDecoder.decode(redirectedUrl, StandardCharsets.UTF_8.name());
-		UriComponents uriComponents = UriComponentsBuilder.fromUriString(locationHeader).build();
-
-		return uriComponents.getQueryParams().getFirst("code");
+		assertThat(redirectedUrl).isEqualTo("/?success");
 	}
 
 	/**
-	 * Exchange an authorization code for an access token.
+	 * Exchange a device code for an access token.
 	 *
 	 * @param registeredClient The registered client
-	 * @param authorizationCode The authorization code obtained from the authorization request
+	 * @param deviceCode The device code obtained from the device authorization request
 	 * @return The token response
 	 */
-	public Map<String, Object> getTokenResponse(RegisteredClient registeredClient, String authorizationCode) throws Exception {
+	public Map<String, Object> getTokenResponse(RegisteredClient registeredClient, String deviceCode) throws Exception {
 		MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
-		parameters.set(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.AUTHORIZATION_CODE.getValue());
-		parameters.set(OAuth2ParameterNames.CODE, authorizationCode);
-		parameters.set(OAuth2ParameterNames.REDIRECT_URI, registeredClient.getRedirectUris().iterator().next());
+		parameters.set(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.DEVICE_CODE.getValue());
+		parameters.set(OAuth2ParameterNames.DEVICE_CODE, deviceCode);
 
 		HttpHeaders basicAuth = new HttpHeaders();
 		basicAuth.setBasicAuth(registeredClient.getClientId(), "secret");
@@ -157,15 +175,14 @@ public class AuthorizationCodeGrantFlow {
 				.andExpect(status().isOk())
 				.andExpect(header().string(HttpHeaders.CONTENT_TYPE, containsString(MediaType.APPLICATION_JSON_VALUE)))
 				.andExpect(jsonPath("$.access_token").isNotEmpty())
-				.andExpect(jsonPath("$.token_type").isNotEmpty())
-				.andExpect(jsonPath("$.expires_in").isNotEmpty())
 				.andExpect(jsonPath("$.refresh_token").isNotEmpty())
+				.andExpect(jsonPath("$.token_type").isNotEmpty())
 				.andExpect(jsonPath("$.scope").isNotEmpty())
-				.andExpect(jsonPath("$.id_token").isNotEmpty())
+				.andExpect(jsonPath("$.expires_in").isNotEmpty())
 				.andReturn();
 
 		ObjectMapper objectMapper = new ObjectMapper();
 		String responseJson = mvcResult.getResponse().getContentAsString();
-		return objectMapper.readValue(responseJson, TOKEN_RESPONSE_TYPE_REFERENCE);
+		return objectMapper.readValue(responseJson, JSON_RESPONSE_TYPE_REFERENCE);
 	}
 }

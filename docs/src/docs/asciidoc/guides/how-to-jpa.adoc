@@ -185,7 +185,7 @@ include::code:ClientRepository[]
 [[authorization-repository]]
 === Authorization Repository
 
-The following listing shows the `AuthorizationRepository`, which is able to find an <<authorization-entity,`Authorization`>> by the `id` field as well as the `state`, `authorizationCodeValue`, `accessTokenValue` and `refreshTokenValue` token fields.
+The following listing shows the `AuthorizationRepository`, which is able to find an <<authorization-entity,`Authorization`>> by the `id` field as well as the `state`, `authorizationCodeValue`, `accessTokenValue`, `refreshTokenValue`, `userCodeValue` and `deviceCodeValue` token fields.
 It also allows querying a combination of token fields.
 
 [[sample.jpa.repository.authorization]]

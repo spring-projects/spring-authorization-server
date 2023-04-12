@@ -173,7 +173,7 @@ public class JpaOAuth2AuthorizationService implements OAuth2AuthorizationService
 			builder.token(userCode, metadata -> metadata.putAll(parseMap(entity.getUserCodeMetadata())));
 		}
 
-		if (entity.getUserCodeValue() != null) {
+		if (entity.getDeviceCodeValue() != null) {
 			OAuth2DeviceCode deviceCode = new OAuth2DeviceCode(
 					entity.getDeviceCodeValue(),
 					entity.getDeviceCodeIssuedAt(),

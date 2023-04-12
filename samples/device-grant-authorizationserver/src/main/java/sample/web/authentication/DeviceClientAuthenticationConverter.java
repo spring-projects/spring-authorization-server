@@ -16,7 +16,6 @@
 package sample.web.authentication;
 
 import jakarta.servlet.http.HttpServletRequest;
-
 import sample.authentication.DeviceClientAuthenticationToken;
 
 import org.springframework.http.HttpMethod;
@@ -33,6 +32,11 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.StringUtils;
 
+/**
+ * @author Joe Grandja
+ * @author Steve Riesenberg
+ * @since 1.1
+ */
 public final class DeviceClientAuthenticationConverter implements AuthenticationConverter {
 	private final RequestMatcher deviceAuthorizationRequestMatcher;
 	private final RequestMatcher deviceAccessTokenRequestMatcher;

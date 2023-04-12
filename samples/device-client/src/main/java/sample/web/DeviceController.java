@@ -36,6 +36,7 @@ import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.annotation.RegisteredOAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.OAuth2DeviceCode;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
@@ -105,8 +106,22 @@ public class DeviceController {
 		Map<String, Object> responseParameters =
 				this.webClient.post()
 						.uri(clientRegistration.getProviderDetails().getAuthorizationUri())
-//						.headers(headers -> headers.setBasicAuth(clientRegistration.getClientId(),
-//								clientRegistration.getClientSecret()))
+						.headers(headers -> {
+							/*
+							 * This sample demonstrates the use of a public client that does not
+							 * store credentials or authenticate with the authorization server.
+							 *
+							 * See DeviceClientAuthenticationProvider in the authorization server
+							 * sample for an example customization that allows public clients.
+							 *
+							 * For a confidential client, change the client-authentication-method to
+							 * client_secret_basic and set the client-secret to send the
+							 * OAuth 2.0 Device Authorization Request with a clientId/clientSecret.
+							 */
+							if (!clientRegistration.getClientAuthenticationMethod().equals(ClientAuthenticationMethod.NONE)) {
+								headers.setBasicAuth(clientRegistration.getClientId(), clientRegistration.getClientSecret());
+							}
+						})
 						.contentType(MediaType.APPLICATION_FORM_URLENCODED)
 						.body(BodyInserters.fromFormData(requestParameters))
 						.retrieve()
@@ -142,19 +157,21 @@ public class DeviceController {
 			@RegisteredOAuth2AuthorizedClient("messaging-client-device-grant")
 					OAuth2AuthorizedClient authorizedClient) {
 
-		// The client will repeatedly poll until authorization is granted.
-		//
-		// The OAuth2AuthorizedClientManager uses the device_code parameter
-		// to make a token request, which returns authorization_pending until
-		// the user has granted authorization.
-		//
-		// If the user has denied authorization, access_denied is returned and
-		// polling should stop.
-		//
-		// If the device code expires, expired_token is returned and polling
-		// should stop.
-		//
-		// This endpoint simply returns 200 OK when client is authorized.
+		/*
+		 * The client will repeatedly poll until authorization is granted.
+		 *
+		 * The OAuth2AuthorizedClientManager uses the device_code parameter
+		 * to make a token request, which returns authorization_pending until
+		 * the user has granted authorization.
+		 *
+		 * If the user has denied authorization, access_denied is returned and
+		 * polling should stop.
+		 *
+		 * If the device code expires, expired_token is returned and polling
+		 * should stop.
+		 *
+		 * This endpoint simply returns 200 OK when the client is authorized.
+		 */
 		return ResponseEntity.status(HttpStatus.OK).build();
 	}
 

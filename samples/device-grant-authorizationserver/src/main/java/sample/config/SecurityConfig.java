@@ -74,20 +74,40 @@ public class SecurityConfig {
 			HttpSecurity http, RegisteredClientRepository registeredClientRepository,
 			AuthorizationServerSettings authorizationServerSettings) throws Exception {
 		OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http);
+
+		/*
+		 * This sample demonstrates the use of a public client that does not
+		 * store credentials or authenticate with the authorization server.
+		 *
+		 * The following components show how to customize the authorization
+		 * server to allow for device clients to perform requests to the
+		 * OAuth 2.0 Device Authorization Endpoint and Token Endpoint without
+		 * a clientId/clientSecret.
+		 *
+		 * CAUTION: These endpoints will not require any authentication, and can
+		 * be accessed by any client that has a valid clientId.
+		 *
+		 * It is therefore RECOMMENDED to carefully monitor the use of these
+		 * endpoints and employ any additional protections as needed, which is
+		 * outside the scope of this sample.
+		 */
+		DeviceClientAuthenticationConverter deviceClientAuthenticationConverter =
+				new DeviceClientAuthenticationConverter(
+						authorizationServerSettings.getDeviceAuthorizationEndpoint());
+		DeviceClientAuthenticationProvider deviceClientAuthenticationProvider =
+				new DeviceClientAuthenticationProvider(registeredClientRepository);
+
+		// @formatter:off
 		http.getConfigurer(OAuth2AuthorizationServerConfigurer.class)
 			.deviceAuthorizationEndpoint((deviceAuthorizationEndpoint) -> deviceAuthorizationEndpoint
 				.verificationUri("/activate")
 			)
-			.clientAuthentication((clientAuthentication) ->
-				clientAuthentication
-					.authenticationConverter(
-						new DeviceClientAuthenticationConverter(
-							authorizationServerSettings.getDeviceAuthorizationEndpoint()))
-					.authenticationProvider(
-						new DeviceClientAuthenticationProvider(
-							registeredClientRepository))
+			.clientAuthentication((clientAuthentication) -> clientAuthentication
+				.authenticationConverter(deviceClientAuthenticationConverter)
+				.authenticationProvider(deviceClientAuthenticationProvider)
 			)
 			.oidc(Customizer.withDefaults());	// Enable OpenID Connect 1.0
+		// @formatter:on
 
 		// @formatter:off
 		http

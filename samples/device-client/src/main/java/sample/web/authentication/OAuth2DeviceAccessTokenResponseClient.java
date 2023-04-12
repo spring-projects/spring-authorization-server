@@ -23,6 +23,7 @@ import org.springframework.http.converter.FormHttpMessageConverter;
 import org.springframework.security.oauth2.client.endpoint.OAuth2AccessTokenResponseClient;
 import org.springframework.security.oauth2.client.http.OAuth2ErrorResponseErrorHandler;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
+import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.OAuth2AuthorizationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AccessTokenResponse;
@@ -58,7 +59,20 @@ public final class OAuth2DeviceAccessTokenResponseClient implements OAuth2Access
 		ClientRegistration clientRegistration = deviceGrantRequest.getClientRegistration();
 
 		HttpHeaders headers = new HttpHeaders();
-//		headers.setBasicAuth(clientRegistration.getClientId(), clientRegistration.getClientSecret());
+		/*
+		 * This sample demonstrates the use of a public client that does not
+		 * store credentials or authenticate with the authorization server.
+		 *
+		 * See DeviceClientAuthenticationProvider in the authorization server
+		 * sample for an example customization that allows public clients.
+		 *
+		 * For a confidential client, change the client-authentication-method
+		 * to client_secret_basic and set the client-secret to send the
+		 * OAuth 2.0 Token Request with a clientId/clientSecret.
+		 */
+		if (!clientRegistration.getClientAuthenticationMethod().equals(ClientAuthenticationMethod.NONE)) {
+			headers.setBasicAuth(clientRegistration.getClientId(), clientRegistration.getClientSecret());
+		}
 
 		MultiValueMap<String, Object> requestParameters = new LinkedMultiValueMap<>();
 		requestParameters.add(OAuth2ParameterNames.GRANT_TYPE, deviceGrantRequest.getGrantType().getValue());

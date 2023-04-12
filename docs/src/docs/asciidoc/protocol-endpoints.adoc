@@ -120,6 +120,104 @@ static class CustomRedirectUriValidator implements Consumer<OAuth2AuthorizationC
 }
 ----
 
+[[oauth2-device-authorization-endpoint]]
+== OAuth2 Device Authorization Endpoint
+
+`OAuth2DeviceAuthorizationEndpointConfigurer` provides the ability to customize the https://datatracker.ietf.org/doc/html/rfc8628#section-3.1[OAuth2 Device Authorization Endpoint].
+It defines extension points that let you customize the pre-processing, main processing, and post-processing logic for OAuth2 device authorization requests.
+
+`OAuth2DeviceAuthorizationEndpointConfigurer` provides the following configuration options:
+
+[source,java]
+----
+@Bean
+public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
+	OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
+		new OAuth2AuthorizationServerConfigurer();
+	http.apply(authorizationServerConfigurer);
+
+	authorizationServerConfigurer
+		.deviceAuthorizationEndpoint(deviceAuthorizationEndpoint ->
+			deviceAuthorizationEndpoint
+				.deviceAuthorizationRequestConverter(deviceAuthorizationRequestConverter) <1>
+				.deviceAuthorizationRequestConverters(deviceAuthorizationRequestConvertersConsumer) <2>
+				.authenticationProvider(authenticationProvider) <3>
+				.authenticationProviders(authenticationProvidersConsumer) <4>
+				.deviceAuthorizationResponseHandler(deviceAuthorizationResponseHandler) <5>
+				.errorResponseHandler(errorResponseHandler) <6>
+				.verificationUri("/oauth2/v1/device_authorization") <7>
+		);
+
+	return http.build();
+}
+----
+<1> `deviceAuthorizationRequestConverter()`: Adds an `AuthenticationConverter` (_pre-processor_) used when attempting to extract an https://datatracker.ietf.org/doc/html/rfc8628#section-3.1[OAuth2 device authorization request] from `HttpServletRequest` to an instance of `OAuth2DeviceAuthorizationRequestAuthenticationToken`.
+<2> `deviceAuthorizationRequestConverters()`: Sets the `Consumer` providing access to the `List` of default and (optionally) added ``AuthenticationConverter``'s allowing the ability to add, remove, or customize a specific `AuthenticationConverter`.
+<3> `authenticationProvider()`: Adds an `AuthenticationProvider` (_main processor_) used for authenticating the `OAuth2DeviceAuthorizationRequestAuthenticationToken`.
+<4> `authenticationProviders()`: Sets the `Consumer` providing access to the `List` of default and (optionally) added ``AuthenticationProvider``'s allowing the ability to add, remove, or customize a specific `AuthenticationProvider`.
+<5> `deviceAuthorizationResponseHandler()`: The `AuthenticationSuccessHandler` (_post-processor_) used for handling an "`authenticated`" `OAuth2DeviceAuthorizationRequestAuthenticationToken` and returning the https://datatracker.ietf.org/doc/html/rfc8628#section-3.2[OAuth2DeviceAuthorizationResponse].
+<6> `errorResponseHandler()`: The `AuthenticationFailureHandler` (_post-processor_) used for handling an `OAuth2AuthenticationException` and returning the https://datatracker.ietf.org/doc/html/rfc6749#section-5.2[OAuth2Error response].
+<7> `verificationUri()`: The `URI` of the custom end-user verification page to direct resource owners to on a secondary device.
+
+`OAuth2DeviceAuthorizationEndpointConfigurer` configures the `OAuth2DeviceAuthorizationEndpointFilter` and registers it with the OAuth2 authorization server `SecurityFilterChain` `@Bean`.
+`OAuth2DeviceAuthorizationEndpointFilter` is the `Filter` that processes OAuth2 device authorization requests.
+
+`OAuth2DeviceAuthorizationEndpointFilter` is configured with the following defaults:
+
+* `*AuthenticationConverter*` -- An `OAuth2DeviceAuthorizationRequestAuthenticationConverter`.
+* `*AuthenticationManager*` -- An `AuthenticationManager` composed of `OAuth2DeviceAuthorizationRequestAuthenticationProvider`.
+* `*AuthenticationSuccessHandler*` -- An internal implementation that handles an "`authenticated`" `OAuth2DeviceAuthorizationRequestAuthenticationToken` and returns the `OAuth2DeviceAuthorizationResponse`.
+* `*AuthenticationFailureHandler*` -- An internal implementation that uses the `OAuth2Error` associated with the `OAuth2AuthenticationException` and returns the `OAuth2Error` response.
+
+[[oauth2-device-verification-endpoint]]
+== OAuth2 Device Verification Endpoint
+
+`OAuth2DeviceVerificationEndpointConfigurer` provides the ability to customize the https://datatracker.ietf.org/doc/html/rfc8628#section-3.3[OAuth2 Device Verification endpoint] (or "User Interaction").
+It defines extension points that let you customize the pre-processing, main processing, and post-processing logic for OAuth2 device verification requests.
+
+`OAuth2DeviceVerificationEndpointConfigurer` provides the following configuration options:
+
+[source,java]
+----
+@Bean
+public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
+	OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
+		new OAuth2AuthorizationServerConfigurer();
+	http.apply(authorizationServerConfigurer);
+
+	authorizationServerConfigurer
+		.deviceVerificationEndpoint(deviceVerificationEndpoint ->
+			deviceVerificationEndpoint
+				.deviceVerificationRequestConverter(deviceVerificationRequestConverter) <1>
+				.deviceVerificationRequestConverters(deviceVerificationRequestConvertersConsumer) <2>
+				.authenticationProvider(authenticationProvider) <3>
+				.authenticationProviders(authenticationProvidersConsumer) <4>
+				.deviceVerificationResponseHandler(deviceVerificationResponseHandler) <5>
+				.errorResponseHandler(errorResponseHandler) <6>
+				.consentPage("/oauth2/v1/consent") <7>
+		);
+
+	return http.build();
+}
+----
+<1> `deviceVerificationRequestConverter()`: Adds an `AuthenticationConverter` (_pre-processor_) used when attempting to extract an https://datatracker.ietf.org/doc/html/rfc8628#section-3.3[OAuth2 device verification request] (or consent) from `HttpServletRequest` to an instance of `OAuth2DeviceVerificationAuthenticationToken` or `OAuth2DeviceAuthorizationConsentAuthenticationToken`.
+<2> `deviceVerificationRequestConverters()`: Sets the `Consumer` providing access to the `List` of default and (optionally) added ``AuthenticationConverter``'s allowing the ability to add, remove, or customize a specific `AuthenticationConverter`.
+<3> `authenticationProvider()`: Adds an `AuthenticationProvider` (_main processor_) used for authenticating the `OAuth2DeviceVerificationAuthenticationToken` or `OAuth2DeviceAuthorizationConsentAuthenticationToken`.
+<4> `authenticationProviders()`: Sets the `Consumer` providing access to the `List` of default and (optionally) added ``AuthenticationProvider``'s allowing the ability to add, remove, or customize a specific `AuthenticationProvider`.
+<5> `deviceVerificationResponseHandler()`: The `AuthenticationSuccessHandler` (_post-processor_) used for handling an "`authenticated`" `OAuth2DeviceVerificationAuthenticationToken` and directing the resource owner to return to their device.
+<6> `errorResponseHandler()`: The `AuthenticationFailureHandler` (_post-processor_) used for handling an `OAuth2AuthenticationException` and returning the error response.
+<7> `consentPage()`: The `URI` of the custom consent page to redirect resource owners to if consent is required during the device verification request flow.
+
+`OAuth2DeviceVerificationEndpointConfigurer` configures the `OAuth2DeviceVerificationEndpointFilter` and registers it with the OAuth2 authorization server `SecurityFilterChain` `@Bean`.
+`OAuth2DeviceVerificationEndpointFilter` is the `Filter` that processes OAuth2 device verification requests (and consents).
+
+`OAuth2DeviceVerificationEndpointFilter` is configured with the following defaults:
+
+* `*AuthenticationConverter*` -- A `DelegatingAuthenticationConverter` composed of `OAuth2DeviceVerificationAuthenticationConverter` and `OAuth2DeviceAuthorizationConsentAuthenticationConverter`.
+* `*AuthenticationManager*` -- An `AuthenticationManager` composed of `OAuth2DeviceVerificationAuthenticationProvider` and `OAuth2DeviceAuthorizationConsentAuthenticationProvider`.
+* `*AuthenticationSuccessHandler*` -- A `SimpleUrlAuthenticationSuccessHandler` that handles an "`authenticated`" `OAuth2DeviceVerificationAuthenticationToken` and redirects the user to a success page (`/?success`).
+* `*AuthenticationFailureHandler*` -- An internal implementation that uses the `OAuth2Error` associated with the `OAuth2AuthenticationException` and returns the `OAuth2Error` response.
+
 [[oauth2-token-endpoint]]
 == OAuth2 Token Endpoint
 
@@ -159,12 +257,12 @@ public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity h
 `OAuth2TokenEndpointConfigurer` configures the `OAuth2TokenEndpointFilter` and registers it with the OAuth2 authorization server `SecurityFilterChain` `@Bean`.
 `OAuth2TokenEndpointFilter` is the `Filter` that processes OAuth2 access token requests.
 
-The supported https://datatracker.ietf.org/doc/html/rfc6749#section-1.3[authorization grant types] are `authorization_code`, `refresh_token`, and `client_credentials`.
+The supported https://datatracker.ietf.org/doc/html/rfc6749#section-1.3[authorization grant types] are `authorization_code`, `refresh_token`, `client_credentials`, and `urn:ietf:params:oauth:grant-type:device_code`.
 
 `OAuth2TokenEndpointFilter` is configured with the following defaults:
 
-* `*AuthenticationConverter*` -- A `DelegatingAuthenticationConverter` composed of `OAuth2AuthorizationCodeAuthenticationConverter`, `OAuth2RefreshTokenAuthenticationConverter`, and `OAuth2ClientCredentialsAuthenticationConverter`.
-* `*AuthenticationManager*` -- An `AuthenticationManager` composed of `OAuth2AuthorizationCodeAuthenticationProvider`, `OAuth2RefreshTokenAuthenticationProvider`, and `OAuth2ClientCredentialsAuthenticationProvider`.
+* `*AuthenticationConverter*` -- A `DelegatingAuthenticationConverter` composed of `OAuth2AuthorizationCodeAuthenticationConverter`, `OAuth2RefreshTokenAuthenticationConverter`, `OAuth2ClientCredentialsAuthenticationConverter`, and `OAuth2DeviceCodeAuthenticationConverter`.
+* `*AuthenticationManager*` -- An `AuthenticationManager` composed of `OAuth2AuthorizationCodeAuthenticationProvider`, `OAuth2RefreshTokenAuthenticationProvider`, `OAuth2ClientCredentialsAuthenticationProvider`, and `OAuth2DeviceCodeAuthenticationProvider`.
 * `*AuthenticationSuccessHandler*` -- An internal implementation that handles an `OAuth2AccessTokenAuthenticationToken` and returns the `OAuth2AccessTokenResponse`.
 * `*AuthenticationFailureHandler*` -- An internal implementation that uses the `OAuth2Error` associated with the `OAuth2AuthenticationException` and returns the `OAuth2Error` response.
 

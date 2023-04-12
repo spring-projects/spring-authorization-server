@@ -24,6 +24,8 @@ Spring Authorization Server supports the following features:
 ** xref:protocol-endpoints.adoc#oauth2-authorization-endpoint[User Consent]
 * Client Credentials
 * Refresh Token
+* Device Code
+** xref:protocol-endpoints.adoc#oauth2-device-verification-endpoint[User Consent]
 |
 * The OAuth 2.1 Authorization Framework (https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-07[draft])
 ** https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-07#section-4.1[Authorization Code Grant]
@@ -31,6 +33,9 @@ Spring Authorization Server supports the following features:
 ** https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-07#section-4.3[Refresh Token Grant]
 * OpenID Connect Core 1.0 (https://openid.net/specs/openid-connect-core-1_0.html[spec])
 ** https://openid.net/specs/openid-connect-core-1_0.html#CodeFlowAuth[Authorization Code Flow]
+* OAuth 2.0 Device Authorization Grant
+(https://tools.ietf.org/html/rfc8628[spec])
+** https://tools.ietf.org/html/rfc8628#section-3[Device Flow]
 
 |xref:core-model-components.adoc#oauth2-token-generator[Token Formats]
 |
@@ -55,6 +60,8 @@ Spring Authorization Server supports the following features:
 |xref:protocol-endpoints.adoc[Protocol Endpoints]
 |
 * xref:protocol-endpoints.adoc#oauth2-authorization-endpoint[OAuth2 Authorization Endpoint]
+* xref:protocol-endpoints.adoc#oauth2-device-authorization-endpoint[OAuth2 Device Authorization Endpoint]
+* xref:protocol-endpoints.adoc#oauth2-device-verification-endpoint[OAuth2 Device Verification Endpoint]
 * xref:protocol-endpoints.adoc#oauth2-token-endpoint[OAuth2 Token Endpoint]
 * xref:protocol-endpoints.adoc#oauth2-token-introspection-endpoint[OAuth2 Token Introspection Endpoint]
 * xref:protocol-endpoints.adoc#oauth2-token-revocation-endpoint[OAuth2 Token Revocation Endpoint]
@@ -67,6 +74,9 @@ Spring Authorization Server supports the following features:
 * The OAuth 2.1 Authorization Framework (https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-07[draft])
 ** https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-07#section-3.1[Authorization Endpoint]
 ** https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-07#section-3.2[Token Endpoint]
+* OAuth 2.0 Device Authorization Grant (https://tools.ietf.org/html/rfc8628[RFC 8628])
+** https://tools.ietf.org/html/rfc8628#section-3.1[Device Authorization Endpoint]
+** https://tools.ietf.org/html/rfc8628#section-3.3[Device Verification Endpoint]
 * OAuth 2.0 Token Introspection (https://tools.ietf.org/html/rfc7662[RFC 7662])
 * OAuth 2.0 Token Revocation (https://tools.ietf.org/html/rfc7009[RFC 7009])
 * OAuth 2.0 Authorization Server Metadata (https://tools.ietf.org/html/rfc8414[RFC 8414])

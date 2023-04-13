@@ -118,7 +118,7 @@ public class OAuth2DeviceVerificationAuthenticationProviderTests {
 	}
 
 	@Test
-	public void supportsWhenTypeOAuth2DeviceAuthorizationRequestAuthenticationTokenThenReturnTrue() {
+	public void supportsWhenTypeOAuth2DeviceVerificationAuthenticationTokenThenReturnTrue() {
 		assertThat(this.authenticationProvider.supports(OAuth2DeviceVerificationAuthenticationToken.class)).isTrue();
 	}
 

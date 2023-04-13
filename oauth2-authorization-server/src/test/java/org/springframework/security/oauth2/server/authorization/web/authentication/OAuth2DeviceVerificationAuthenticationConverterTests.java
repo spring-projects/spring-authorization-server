@@ -81,7 +81,7 @@ public class OAuth2DeviceVerificationAuthenticationConverterTests {
 	}
 
 	@Test
-	public void convertWhenBlankUserCodeParametersThenInvalidRequestError() {
+	public void convertWhenEmptyUserCodeParameterThenInvalidRequestError() {
 		MockHttpServletRequest request = createRequest();
 		request.addParameter(OAuth2ParameterNames.USER_CODE, "");
 		// @formatter:off
@@ -95,7 +95,7 @@ public class OAuth2DeviceVerificationAuthenticationConverterTests {
 	}
 
 	@Test
-	public void convertWhenMultipleUserCodeParametersThenInvalidRequestError() {
+	public void convertWhenMultipleUserCodeParameterThenInvalidRequestError() {
 		MockHttpServletRequest request = createRequest();
 		request.addParameter(OAuth2ParameterNames.USER_CODE, USER_CODE);
 		request.addParameter(OAuth2ParameterNames.USER_CODE, "another");

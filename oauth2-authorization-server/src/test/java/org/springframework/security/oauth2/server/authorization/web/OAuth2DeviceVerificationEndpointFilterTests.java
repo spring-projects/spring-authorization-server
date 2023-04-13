@@ -75,7 +75,6 @@ public class OAuth2DeviceVerificationEndpointFilterTests {
 	private static final String VERIFICATION_URI = "/oauth2/device_verification";
 	private static final String CLIENT_ID = "client-1";
 	private static final String STATE = "12345";
-	private static final String DEVICE_CODE = "EfYu_0jEL";
 	private static final String USER_CODE = "BCDF-GHJK";
 
 	private AuthenticationManager authenticationManager;
@@ -95,7 +94,7 @@ public class OAuth2DeviceVerificationEndpointFilterTests {
 	}
 
 	@Test
-	public void constructorWhenAuthenticationMangerIsNullThenThrowIllegalArgumentException() {
+	public void constructorWhenAuthenticationManagerIsNullThenThrowIllegalArgumentException() {
 		// @formatter:off
 		assertThatIllegalArgumentException()
 				.isThrownBy(() -> new OAuth2DeviceVerificationEndpointFilter(null))

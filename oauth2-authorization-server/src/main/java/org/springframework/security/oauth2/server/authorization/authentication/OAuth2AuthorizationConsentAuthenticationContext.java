@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -162,8 +162,8 @@ public final class OAuth2AuthorizationConsentAuthenticationContext implements OA
 		public OAuth2AuthorizationConsentAuthenticationContext build() {
 			Assert.notNull(get(OAuth2AuthorizationConsent.Builder.class), "authorizationConsentBuilder cannot be null");
 			Assert.notNull(get(RegisteredClient.class), "registeredClient cannot be null");
-			Assert.notNull(get(OAuth2Authorization.class), "authorization cannot be null");
 			OAuth2Authorization authorization = get(OAuth2Authorization.class);
+			Assert.notNull(authorization, "authorization cannot be null");
 			if (authorization.getAuthorizationGrantType().equals(AuthorizationGrantType.AUTHORIZATION_CODE)) {
 				Assert.notNull(get(OAuth2AuthorizationRequest.class), "authorizationRequest cannot be null");
 			}

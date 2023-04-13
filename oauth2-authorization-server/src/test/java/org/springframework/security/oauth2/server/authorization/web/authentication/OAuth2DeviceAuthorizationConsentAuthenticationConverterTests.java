@@ -86,7 +86,7 @@ public class OAuth2DeviceAuthorizationConsentAuthenticationConverterTests {
 	}
 
 	@Test
-	public void convertWhenBlankClientIdThenInvalidRequestError() {
+	public void convertWhenEmptyClientIdThenInvalidRequestError() {
 		MockHttpServletRequest request = createRequest();
 		request.addParameter(OAuth2ParameterNames.STATE, STATE);
 		request.addParameter(OAuth2ParameterNames.CLIENT_ID, "");
@@ -132,7 +132,7 @@ public class OAuth2DeviceAuthorizationConsentAuthenticationConverterTests {
 	}
 
 	@Test
-	public void convertWhenBlankUserCodeThenInvalidRequestError() {
+	public void convertWhenEmptyUserCodeThenInvalidRequestError() {
 		MockHttpServletRequest request = createRequest();
 		request.addParameter(OAuth2ParameterNames.STATE, STATE);
 		request.addParameter(OAuth2ParameterNames.CLIENT_ID, CLIENT_ID);
@@ -165,7 +165,7 @@ public class OAuth2DeviceAuthorizationConsentAuthenticationConverterTests {
 	}
 
 	@Test
-	public void convertWhenBlankStateParameterThenInvalidRequestError() {
+	public void convertWhenEmptyStateParameterThenInvalidRequestError() {
 		MockHttpServletRequest request = createRequest();
 		request.addParameter(OAuth2ParameterNames.STATE, "");
 		request.addParameter(OAuth2ParameterNames.CLIENT_ID, CLIENT_ID);

@@ -124,7 +124,7 @@ public class OAuth2DeviceAuthorizationConsentAuthenticationProviderTests {
 	}
 
 	@Test
-	public void supportsWhenTypeOAuth2DeviceAuthorizationRequestAuthenticationTokenThenReturnTrue() {
+	public void supportsWhenTypeOAuth2DeviceAuthorizationConsentAuthenticationTokenThenReturnTrue() {
 		assertThat(this.authenticationProvider.supports(OAuth2DeviceAuthorizationConsentAuthenticationToken.class)).isTrue();
 	}
 

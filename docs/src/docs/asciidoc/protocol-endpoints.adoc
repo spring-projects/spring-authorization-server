@@ -123,7 +123,7 @@ static class CustomRedirectUriValidator implements Consumer<OAuth2AuthorizationC
 [[oauth2-device-authorization-endpoint]]
 == OAuth2 Device Authorization Endpoint
 
-`OAuth2DeviceAuthorizationEndpointConfigurer` provides the ability to customize the https://datatracker.ietf.org/doc/html/rfc8628#section-3.1[OAuth2 Device Authorization Endpoint].
+`OAuth2DeviceAuthorizationEndpointConfigurer` provides the ability to customize the https://datatracker.ietf.org/doc/html/rfc8628#section-3.1[OAuth2 Device Authorization endpoint].
 It defines extension points that let you customize the pre-processing, main processing, and post-processing logic for OAuth2 device authorization requests.
 
 `OAuth2DeviceAuthorizationEndpointConfigurer` provides the following configuration options:
@@ -145,7 +145,7 @@ public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity h
 				.authenticationProviders(authenticationProvidersConsumer) <4>
 				.deviceAuthorizationResponseHandler(deviceAuthorizationResponseHandler) <5>
 				.errorResponseHandler(errorResponseHandler) <6>
-				.verificationUri("/oauth2/v1/device_authorization") <7>
+				.verificationUri("/oauth2/v1/device_verification") <7>
 		);
 
 	return http.build();

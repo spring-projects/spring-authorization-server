@@ -68,6 +68,7 @@ Spring Authorization Server supports the following features:
 * xref:protocol-endpoints.adoc#oauth2-authorization-server-metadata-endpoint[OAuth2 Authorization Server Metadata Endpoint]
 * xref:protocol-endpoints.adoc#jwk-set-endpoint[JWK Set Endpoint]
 * xref:protocol-endpoints.adoc#oidc-provider-configuration-endpoint[OpenID Connect 1.0 Provider Configuration Endpoint]
+* xref:protocol-endpoints.adoc#oidc-logout-endpoint[OpenID Connect 1.0 Logout Endpoint]
 * xref:protocol-endpoints.adoc#oidc-user-info-endpoint[OpenID Connect 1.0 UserInfo Endpoint]
 * xref:protocol-endpoints.adoc#oidc-client-registration-endpoint[OpenID Connect 1.0 Client Registration Endpoint]
 |
@@ -83,6 +84,8 @@ Spring Authorization Server supports the following features:
 * JSON Web Key (JWK) (https://tools.ietf.org/html/rfc7517[RFC 7517])
 * OpenID Connect Discovery 1.0 (https://openid.net/specs/openid-connect-discovery-1_0.html[spec])
 ** https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderConfig[Provider Configuration Endpoint]
+* OpenID Connect RP-Initiated Logout 1.0 (https://openid.net/specs/openid-connect-rpinitiated-1_0.html[spec])
+** https://openid.net/specs/openid-connect-rpinitiated-1_0.html#RPLogout[Logout Endpoint]
 * OpenID Connect Core 1.0 (https://openid.net/specs/openid-connect-core-1_0.html[spec])
 ** https://openid.net/specs/openid-connect-core-1_0.html#UserInfo[UserInfo Endpoint]
 * OpenID Connect Dynamic Client Registration 1.0 (https://openid.net/specs/openid-connect-registration-1_0.html[spec])

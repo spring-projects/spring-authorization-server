@@ -119,6 +119,7 @@ public class SecurityConfig {
 				.authorizationGrantType(AuthorizationGrantType.DEVICE_CODE)
 				.redirectUri("http://127.0.0.1:8080/login/oauth2/code/messaging-client-oidc")
 				.redirectUri("http://127.0.0.1:8080/authorized")
+				.postLogoutRedirectUri("http://127.0.0.1:8080/index")
 				.scope(OidcScopes.OPENID)
 				.scope(OidcScopes.PROFILE)
 				.scope("message.read")

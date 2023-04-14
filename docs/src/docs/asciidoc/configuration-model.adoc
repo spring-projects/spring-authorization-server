@@ -70,6 +70,7 @@ public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity h
 In addition to the default protocol endpoints, the OAuth2 authorization server `SecurityFilterChain` `@Bean` is configured with the following OpenID Connect 1.0 protocol endpoints:
 
 * xref:protocol-endpoints.adoc#oidc-provider-configuration-endpoint[OpenID Connect 1.0 Provider Configuration endpoint]
+* xref:protocol-endpoints.adoc#oidc-logout-endpoint[OpenID Connect 1.0 Logout endpoint]
 * xref:protocol-endpoints.adoc#oidc-user-info-endpoint[OpenID Connect 1.0 UserInfo endpoint]
 
 [NOTE]
@@ -123,8 +124,9 @@ public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity h
 		.authorizationServerMetadataEndpoint(authorizationServerMetadataEndpoint -> { })    <13>
 		.oidc(oidc -> oidc
 			.providerConfigurationEndpoint(providerConfigurationEndpoint -> { })    <14>
-			.userInfoEndpoint(userInfoEndpoint -> { })  <15>
-			.clientRegistrationEndpoint(clientRegistrationEndpoint -> { })  <16>
+			.logoutEndpoint(logoutEndpoint -> { })  <15>
+			.userInfoEndpoint(userInfoEndpoint -> { })  <16>
+			.clientRegistrationEndpoint(clientRegistrationEndpoint -> { })  <17>
 		);
 
 	return http.build();
@@ -144,8 +146,9 @@ public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity h
 <12> `tokenRevocationEndpoint()`: The configurer for the xref:protocol-endpoints.adoc#oauth2-token-revocation-endpoint[OAuth2 Token Revocation endpoint].
 <13> `authorizationServerMetadataEndpoint()`: The configurer for the xref:protocol-endpoints.adoc#oauth2-authorization-server-metadata-endpoint[OAuth2 Authorization Server Metadata endpoint].
 <14> `providerConfigurationEndpoint()`: The configurer for the xref:protocol-endpoints.adoc#oidc-provider-configuration-endpoint[OpenID Connect 1.0 Provider Configuration endpoint].
-<15> `userInfoEndpoint()`: The configurer for the xref:protocol-endpoints.adoc#oidc-user-info-endpoint[OpenID Connect 1.0 UserInfo endpoint].
-<16> `clientRegistrationEndpoint()`: The configurer for the xref:protocol-endpoints.adoc#oidc-client-registration-endpoint[OpenID Connect 1.0 Client Registration endpoint].
+<15> `logoutEndpoint()`: The configurer for the xref:protocol-endpoints.adoc#oidc-logout-endpoint[OpenID Connect 1.0 Logout endpoint].
+<16> `userInfoEndpoint()`: The configurer for the xref:protocol-endpoints.adoc#oidc-user-info-endpoint[OpenID Connect 1.0 UserInfo endpoint].
+<17> `clientRegistrationEndpoint()`: The configurer for the xref:protocol-endpoints.adoc#oidc-client-registration-endpoint[OpenID Connect 1.0 Client Registration endpoint].
 
 [[configuring-authorization-server-settings]]
 == Configuring Authorization Server Settings
@@ -169,6 +172,7 @@ public final class AuthorizationServerSettings extends AbstractSettings {
 			.tokenIntrospectionEndpoint("/oauth2/introspect")
 			.tokenRevocationEndpoint("/oauth2/revoke")
 			.jwkSetEndpoint("/oauth2/jwks")
+			.oidcLogoutEndpoint("/connect/logout")
 			.oidcUserInfoEndpoint("/userinfo")
 			.oidcClientRegistrationEndpoint("/connect/register");
 	}
@@ -199,6 +203,7 @@ public AuthorizationServerSettings authorizationServerSettings() {
 		.tokenIntrospectionEndpoint("/oauth2/v1/introspect")
 		.tokenRevocationEndpoint("/oauth2/v1/revoke")
 		.jwkSetEndpoint("/oauth2/v1/jwks")
+		.oidcLogoutEndpoint("/connect/v1/logout")
 		.oidcUserInfoEndpoint("/connect/v1/userinfo")
 		.oidcClientRegistrationEndpoint("/connect/v1/register")
 		.build();

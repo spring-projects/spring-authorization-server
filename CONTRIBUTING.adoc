@@ -11,7 +11,7 @@ Please report unacceptable behavior to spring-code-of-conduct@pivotal.io.
 == Using GitHub Issues
 We use GitHub issues to track bugs and enhancements.
 If you have a general usage question please ask on https://stackoverflow.com[Stack Overflow].
-The Spring Security team and the broader community monitor the https://stackoverflow.com/tags/spring-security[`spring-security`] tag.
+The Spring Security team and the broader community monitor the https://stackoverflow.com/tags/spring-authorization-server[`spring-authorization-server`] tag.
 
 If you are reporting a bug, please help to speed up problem diagnosis by providing as much information as possible.
 Ideally, that would include a https://stackoverflow.com/help/minimal-reproducible-example[complete & minimal sample project] that reproduces the problem.

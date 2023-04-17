@@ -79,7 +79,7 @@ git clone git@github.com:spring-projects/spring-authorization-server.git
 Discover more commands with `./gradlew tasks`.
 
 == Getting Support
-Check out the https://stackoverflow.com/questions/tagged/spring-security[Spring Security tags on Stack Overflow].
+Check out the https://stackoverflow.com/questions/tagged/spring-authorization-server[Spring Authorization Server tags on Stack Overflow].
 https://spring.io/support[Commercial support] is available too.
 
 == Contributing

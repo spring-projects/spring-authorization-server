@@ -90,7 +90,7 @@ public class AuthorizationServerConfig {
 				.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
 				.redirectUri("http://127.0.0.1:8080/login/oauth2/code/messaging-client-oidc")
 				.redirectUri("http://127.0.0.1:8080/authorized")
-				.postLogoutRedirectUri("http://127.0.0.1:8080/index")
+				.postLogoutRedirectUri("http://127.0.0.1:8080/logged-out")
 				.scope(OidcScopes.OPENID)
 				.scope(OidcScopes.PROFILE)
 				.scope("message.read")

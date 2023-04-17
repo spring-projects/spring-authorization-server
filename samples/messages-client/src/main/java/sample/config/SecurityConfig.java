@@ -30,6 +30,7 @@ import static org.springframework.security.config.Customizer.withDefaults;
 
 /**
  * @author Joe Grandja
+ * @author Dmitriy Dubson
  * @since 0.0.1
  */
 @EnableWebSecurity
@@ -49,7 +50,9 @@ public class SecurityConfig {
 	SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 		http
 			.authorizeHttpRequests(authorize ->
-				authorize.anyRequest().authenticated()
+				authorize
+					.requestMatchers("/logged-out").permitAll()
+					.anyRequest().authenticated()
 			)
 			.oauth2Login(oauth2Login ->
 				oauth2Login.loginPage("/oauth2/authorization/messaging-client-oidc"))
@@ -66,7 +69,7 @@ public class SecurityConfig {
 
 		// Set the location that the End-User's User Agent will be redirected to
 		// after the logout has been performed at the Provider
-		oidcLogoutSuccessHandler.setPostLogoutRedirectUri("{baseUrl}/index");
+		oidcLogoutSuccessHandler.setPostLogoutRedirectUri("{baseUrl}/logged-out");
 
 		return oidcLogoutSuccessHandler;
 	}

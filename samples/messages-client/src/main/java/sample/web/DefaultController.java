@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 
 /**
  * @author Joe Grandja
+ * @author Dmitriy Dubson
  * @since 0.0.1
  */
 @Controller
@@ -34,4 +35,10 @@ public class DefaultController {
 	public String index() {
 		return "index";
 	}
+
+	@GetMapping("/logged-out")
+	public String loggedOut() {
+		return "logged-out";
+	}
+
 }

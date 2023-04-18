@@ -13,7 +13,7 @@ repositories {
 
 dependencies {
 	implementation platform("org.springframework.boot:spring-boot-dependencies:3.0.0")
-	implementation platform("org.springframework.security:spring-security-bom:6.1.0-M2")
+	implementation platform("org.springframework.security:spring-security-bom:6.1.0-RC1")
 	implementation "org.springframework.boot:spring-boot-starter-web"
 	implementation "org.springframework.boot:spring-boot-starter-thymeleaf"
 	implementation "org.springframework.boot:spring-boot-starter-security"

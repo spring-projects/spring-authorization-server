@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2022 the original author or authors.
+ * Copyright 2002-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.plugins.BasePlugin;
 import org.gradle.api.plugins.PluginManager;
+import org.jfrog.gradle.plugin.artifactory.ArtifactoryPlugin;
 
 import org.springframework.gradle.classpath.SpringCheckProhibitedDependenciesLifecyclePlugin;
 import org.springframework.gradle.maven.SpringNexusPlugin;
@@ -38,6 +39,7 @@ public class SpringRootProjectPlugin implements Plugin<Project> {
 		pluginManager.apply(SpringNoHttpPlugin.class);
 		pluginManager.apply(SpringNexusPlugin.class);
 		pluginManager.apply(SpringCheckProhibitedDependenciesLifecyclePlugin.class);
+		pluginManager.apply(ArtifactoryPlugin.class);
 		pluginManager.apply(SpringSonarQubePlugin.class);
 
 		// Apply default repositories

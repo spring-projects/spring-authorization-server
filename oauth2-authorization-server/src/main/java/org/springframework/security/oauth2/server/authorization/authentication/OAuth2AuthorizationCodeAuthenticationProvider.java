@@ -23,7 +23,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import java.util.function.Consumer;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -59,6 +58,7 @@ import org.springframework.security.oauth2.server.authorization.token.OAuth2Toke
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenGenerator;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 import static org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthenticationProviderUtils.getAuthenticatedClientElseThrowInvalidClient;
 
@@ -86,8 +86,6 @@ public final class OAuth2AuthorizationCodeAuthenticationProvider implements Auth
 	private final OAuth2AuthorizationService authorizationService;
 	private final OAuth2TokenGenerator<? extends OAuth2Token> tokenGenerator;
 	private SessionRegistry sessionRegistry;
-	private Consumer<OAuth2AuthorizationCodeAuthenticationContext> authenticationValidator =
-			new OAuth2AuthorizationCodeAuthenticationValidator();
 
 	/**
 	 * Constructs an {@code OAuth2AuthorizationCodeAuthenticationProvider} using the provided parameters.
@@ -145,13 +143,20 @@ public final class OAuth2AuthorizationCodeAuthenticationProvider implements Auth
 			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_GRANT);
 		}
 
-		OAuth2AuthorizationCodeAuthenticationContext authenticationContext =
-				OAuth2AuthorizationCodeAuthenticationContext.with(authorizationCodeAuthentication)
-						.authorizationCode(authorizationCode)
-						.authorizationRequest(authorizationRequest)
-						.registeredClient(registeredClient)
-						.build();
-		this.authenticationValidator.accept(authenticationContext);
+		if (StringUtils.hasText(authorizationRequest.getRedirectUri()) &&
+				!authorizationRequest.getRedirectUri().equals(authorizationCodeAuthentication.getRedirectUri())) {
+			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_GRANT);
+		}
+
+		if (!authorizationCode.isActive()) {
+			if (authorizationCode.isInvalidated()) {
+				invalidateAuthorizationTokens(authorization);
+				if (this.logger.isWarnEnabled()) {
+					this.logger.warn(LogMessage.format("Invalidated authorization tokens previously issued based on the authorization code"));
+				}
+			}
+			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_GRANT);
+		}
 
 		if (this.logger.isTraceEnabled()) {
 			this.logger.trace("Validated token request parameters");
@@ -307,20 +312,23 @@ public final class OAuth2AuthorizationCodeAuthenticationProvider implements Auth
 		return sessionInformation;
 	}
 
-	/**
-	 * Sets the {@code Consumer} providing access to the {@link OAuth2AuthorizationCodeAuthenticationContext}
-	 * and is responsible for validating specific OAuth 2.0 Authorization Request parameters
-	 * associated in the {@link OAuth2AuthorizationCodeAuthenticationToken}.
-	 * The default authentication validator is {@link OAuth2AuthorizationCodeAuthenticationValidator}.
-	 *
-	 * <p>
-	 * <b>NOTE:</b> The authentication validator MUST throw {@link OAuth2AuthenticationException} if validation fails.
-	 *
-	 * @param authenticationValidator the {@code Consumer} providing access to the {@link OAuth2AuthorizationCodeAuthenticationContext} and is responsible for validating specific OAuth 2.0 Token Request parameters
-	 */
-	public void setAuthenticationValidator(Consumer<OAuth2AuthorizationCodeAuthenticationContext> authenticationValidator) {
-		Assert.notNull(authenticationValidator, "authenticationValidator cannot be null");
-		this.authenticationValidator = authenticationValidator;
-	}
+	private void invalidateAuthorizationTokens(OAuth2Authorization authorization) {
+		boolean invalidated = false;
 
+		OAuth2Authorization.Token<OAuth2AccessToken> accessToken = authorization.getAccessToken();
+		if (accessToken != null) {
+			authorization = OAuth2AuthenticationProviderUtils.invalidate(authorization, accessToken.getToken());
+			invalidated = true;
+		}
+
+		OAuth2Authorization.Token<OAuth2RefreshToken> refreshToken = authorization.getRefreshToken();
+		if (refreshToken != null) {
+			authorization = OAuth2AuthenticationProviderUtils.invalidate(authorization, refreshToken.getToken());
+			invalidated = true;
+		}
+
+		if (invalidated) {
+			this.authorizationService.save(authorization);
+		}
+	}
 }

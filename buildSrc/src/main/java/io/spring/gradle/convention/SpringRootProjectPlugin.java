@@ -20,9 +20,9 @@ import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.plugins.BasePlugin;
 import org.gradle.api.plugins.PluginManager;
-import org.jfrog.gradle.plugin.artifactory.ArtifactoryPlugin;
 
 import org.springframework.gradle.classpath.SpringCheckProhibitedDependenciesLifecyclePlugin;
+import org.springframework.gradle.maven.SpringArtifactoryPlugin;
 import org.springframework.gradle.maven.SpringNexusPlugin;
 import org.springframework.gradle.nohttp.SpringNoHttpPlugin;
 import org.springframework.gradle.sonarqube.SpringSonarQubePlugin;
@@ -39,7 +39,7 @@ public class SpringRootProjectPlugin implements Plugin<Project> {
 		pluginManager.apply(SpringNoHttpPlugin.class);
 		pluginManager.apply(SpringNexusPlugin.class);
 		pluginManager.apply(SpringCheckProhibitedDependenciesLifecyclePlugin.class);
-		pluginManager.apply(ArtifactoryPlugin.class);
+		pluginManager.apply(SpringArtifactoryPlugin.class);
 		pluginManager.apply(SpringSonarQubePlugin.class);
 
 		// Apply default repositories

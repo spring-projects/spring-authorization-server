@@ -150,7 +150,8 @@ public final class OAuth2AuthorizationCodeAuthenticationProvider implements Auth
 
 		if (!authorizationCode.isActive()) {
 			if (authorizationCode.isInvalidated()) {
-				invalidateAuthorizationTokens(authorization);
+				authorization = OAuth2AuthenticationProviderUtils.invalidateAuthorizationTokens(authorization);
+				this.authorizationService.save(authorization);
 				if (this.logger.isWarnEnabled()) {
 					this.logger.warn(LogMessage.format("Invalidated authorization tokens previously issued based on the authorization code"));
 				}
@@ -310,25 +311,5 @@ public final class OAuth2AuthorizationCodeAuthenticationProvider implements Auth
 			}
 		}
 		return sessionInformation;
-	}
-
-	private void invalidateAuthorizationTokens(OAuth2Authorization authorization) {
-		boolean invalidated = false;
-
-		OAuth2Authorization.Token<OAuth2AccessToken> accessToken = authorization.getAccessToken();
-		if (accessToken != null) {
-			authorization = OAuth2AuthenticationProviderUtils.invalidate(authorization, accessToken.getToken());
-			invalidated = true;
-		}
-
-		OAuth2Authorization.Token<OAuth2RefreshToken> refreshToken = authorization.getRefreshToken();
-		if (refreshToken != null) {
-			authorization = OAuth2AuthenticationProviderUtils.invalidate(authorization, refreshToken.getToken());
-			invalidated = true;
-		}
-
-		if (invalidated) {
-			this.authorizationService.save(authorization);
-		}
 	}
 }

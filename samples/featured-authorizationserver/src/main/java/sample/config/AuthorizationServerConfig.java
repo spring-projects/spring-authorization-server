@@ -53,16 +53,20 @@ import org.springframework.security.web.authentication.LoginUrlAuthenticationEnt
 
 /**
  * @author Joe Grandja
+ * @author Daniel Garnier-Moiroux
  * @since 1.1.0
  */
 @Configuration(proxyBeanMethods = false)
 public class AuthorizationServerConfig {
+	private static final String CUSTOM_CONSENT_PAGE_URI = "/oauth2/consent";
 
 	@Bean
 	@Order(Ordered.HIGHEST_PRECEDENCE)
 	public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
 		OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http);
 		http.getConfigurer(OAuth2AuthorizationServerConfigurer.class)
+				.authorizationEndpoint(authorizationEndpoint ->
+						authorizationEndpoint.consentPage(CUSTOM_CONSENT_PAGE_URI))
 				.oidc(Customizer.withDefaults());	// Enable OpenID Connect 1.0
 
 		// @formatter:off
@@ -113,6 +117,7 @@ public class AuthorizationServerConfig {
 	@Bean
 	public OAuth2AuthorizationConsentService authorizationConsentService(JdbcTemplate jdbcTemplate,
 			RegisteredClientRepository registeredClientRepository) {
+		// Will be used by the ConsentController
 		return new JdbcOAuth2AuthorizationConsentService(jdbcTemplate, registeredClientRepository);
 	}
 

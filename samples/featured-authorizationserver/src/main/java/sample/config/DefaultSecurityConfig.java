@@ -15,6 +15,9 @@
  */
 package sample.config;
 
+import sample.security.FederatedIdentityConfigurer;
+import sample.security.UserRepositoryOAuth2UserHandler;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -32,6 +35,7 @@ import static org.springframework.security.config.Customizer.withDefaults;
 
 /**
  * @author Joe Grandja
+ * @author Steve Riesenberg
  * @since 1.1.0
  */
 @EnableWebSecurity
@@ -41,11 +45,17 @@ public class DefaultSecurityConfig {
 	// @formatter:off
 	@Bean
 	public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
+		FederatedIdentityConfigurer federatedIdentityConfigurer = new FederatedIdentityConfigurer()
+				.oauth2UserHandler(new UserRepositoryOAuth2UserHandler());
+
 		http
 			.authorizeHttpRequests(authorize ->
-				authorize.anyRequest().authenticated()
+				authorize
+					.requestMatchers("/assets/**", "/webjars/**", "/login").permitAll()
+					.anyRequest().authenticated()
 			)
-			.formLogin(withDefaults());
+			.formLogin(withDefaults())
+			.apply(federatedIdentityConfigurer);
 		return http.build();
 	}
 	// @formatter:on

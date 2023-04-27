@@ -22,6 +22,8 @@ import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
 import sample.jose.Jwks;
+import sample.security.FederatedIdentityConfigurer;
+import sample.security.FederatedIdentityIdTokenCustomizer;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -48,12 +50,15 @@ import org.springframework.security.oauth2.server.authorization.config.annotatio
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
+import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext;
+import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 
 /**
  * @author Joe Grandja
  * @author Daniel Garnier-Moiroux
+ * @author Steve Riesenberg
  * @since 1.1.0
  */
 @Configuration(proxyBeanMethods = false)
@@ -75,7 +80,8 @@ public class AuthorizationServerConfig {
 				exceptions.authenticationEntryPoint(new LoginUrlAuthenticationEntryPoint("/login"))
 			)
 			.oauth2ResourceServer(oauth2ResourceServer ->
-				oauth2ResourceServer.jwt(Customizer.withDefaults()));
+				oauth2ResourceServer.jwt(Customizer.withDefaults()))
+			.apply(new FederatedIdentityConfigurer());
 		// @formatter:on
 		return http.build();
 	}
@@ -119,6 +125,11 @@ public class AuthorizationServerConfig {
 			RegisteredClientRepository registeredClientRepository) {
 		// Will be used by the ConsentController
 		return new JdbcOAuth2AuthorizationConsentService(jdbcTemplate, registeredClientRepository);
+	}
+
+	@Bean
+	public OAuth2TokenCustomizer<JwtEncodingContext> idTokenCustomizer() {
+		return new FederatedIdentityIdTokenCustomizer();
 	}
 
 	@Bean

@@ -35,7 +35,7 @@ public final class OAuth2DeviceGrantRequest extends AbstractOAuth2AuthorizationG
 	}
 
 	public String getDeviceCode() {
-		return deviceCode;
+		return this.deviceCode;
 	}
 
 }

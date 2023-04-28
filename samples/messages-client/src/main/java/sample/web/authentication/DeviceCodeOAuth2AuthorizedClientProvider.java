@@ -50,9 +50,6 @@ public final class DeviceCodeOAuth2AuthorizedClientProvider implements OAuth2Aut
 
 	private Clock clock = Clock.systemUTC();
 
-	public DeviceCodeOAuth2AuthorizedClientProvider() {
-	}
-
 	public void setAccessTokenResponseClient(OAuth2AccessTokenResponseClient<OAuth2DeviceGrantRequest> accessTokenResponseClient) {
 		this.accessTokenResponseClient = accessTokenResponseClient;
 	}

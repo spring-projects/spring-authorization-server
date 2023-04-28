@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package sample.config;
 
+import sample.web.authentication.DeviceCodeOAuth2AuthorizedClientProvider;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
@@ -28,35 +30,47 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 /**
  * @author Joe Grandja
+ * @author Steve Riesenberg
  * @since 0.0.1
  */
 @Configuration
 public class WebClientConfig {
 
 	@Bean
-	WebClient webClient(OAuth2AuthorizedClientManager authorizedClientManager) {
+	public WebClient webClient(OAuth2AuthorizedClientManager authorizedClientManager) {
 		ServletOAuth2AuthorizedClientExchangeFilterFunction oauth2Client =
 				new ServletOAuth2AuthorizedClientExchangeFilterFunction(authorizedClientManager);
+		// @formatter:off
 		return WebClient.builder()
 				.apply(oauth2Client.oauth2Configuration())
 				.build();
+		// @formatter:on
 	}
 
 	@Bean
-	OAuth2AuthorizedClientManager authorizedClientManager(
+	public OAuth2AuthorizedClientManager authorizedClientManager(
 			ClientRegistrationRepository clientRegistrationRepository,
 			OAuth2AuthorizedClientRepository authorizedClientRepository) {
 
+		// @formatter:off
 		OAuth2AuthorizedClientProvider authorizedClientProvider =
 				OAuth2AuthorizedClientProviderBuilder.builder()
 						.authorizationCode()
 						.refreshToken()
 						.clientCredentials()
+						.provider(new DeviceCodeOAuth2AuthorizedClientProvider())
 						.build();
+		// @formatter:on
+
 		DefaultOAuth2AuthorizedClientManager authorizedClientManager = new DefaultOAuth2AuthorizedClientManager(
 				clientRegistrationRepository, authorizedClientRepository);
 		authorizedClientManager.setAuthorizedClientProvider(authorizedClientProvider);
 
+		// Set a contextAttributesMapper to obtain device_code from the request
+		authorizedClientManager.setContextAttributesMapper(DeviceCodeOAuth2AuthorizedClientProvider
+				.deviceCodeContextAttributesMapper());
+
 		return authorizedClientManager;
 	}
+
 }

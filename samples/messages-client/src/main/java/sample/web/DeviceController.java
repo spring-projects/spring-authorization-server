@@ -16,8 +16,11 @@
 package sample.web;
 
 import java.time.Instant;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -37,7 +40,9 @@ import org.springframework.security.oauth2.client.annotation.RegisteredOAuth2Aut
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
+import org.springframework.security.oauth2.core.OAuth2AuthorizationException;
 import org.springframework.security.oauth2.core.OAuth2DeviceCode;
+import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
@@ -46,6 +51,7 @@ import org.springframework.ui.Model;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -60,6 +66,13 @@ import static org.springframework.security.oauth2.client.web.reactive.function.c
  */
 @Controller
 public class DeviceController {
+
+	private static final Set<String> DEVICE_GRANT_ERRORS = new HashSet<>(Arrays.asList(
+			"authorization_pending",
+			"slow_down",
+			"access_denied",
+			"expired_token"
+	));
 
 	private static final ParameterizedTypeReference<Map<String, Object>> TYPE_REFERENCE =
 			new ParameterizedTypeReference<>() {};
@@ -84,17 +97,12 @@ public class DeviceController {
 		this.messagesBaseUri = messagesBaseUri;
 	}
 
-	@GetMapping("/")
-	public String index() {
-		return "index";
-	}
-
-	@GetMapping("/authorize")
+	@GetMapping("/device_authorize")
 	public String authorize(Model model, HttpServletRequest request, HttpServletResponse response) {
 		// @formatter:off
 		ClientRegistration clientRegistration =
 				this.clientRegistrationRepository.findByRegistrationId(
-						"messaging-client-device-grant");
+						"messaging-client-device-code");
 		// @formatter:on
 
 		MultiValueMap<String, String> requestParameters = new LinkedMultiValueMap<>();
@@ -102,10 +110,12 @@ public class DeviceController {
 		requestParameters.add(OAuth2ParameterNames.SCOPE, StringUtils.collectionToDelimitedString(
 				clientRegistration.getScopes(), " "));
 
+		String deviceAuthorizationUri = (String) clientRegistration.getProviderDetails().getConfigurationMetadata().get("device_authorization_endpoint");
+
 		// @formatter:off
 		Map<String, Object> responseParameters =
 				this.webClient.post()
-						.uri(clientRegistration.getProviderDetails().getAuthorizationUri())
+						.uri(deviceAuthorizationUri)
 						.headers(headers -> {
 							/*
 							 * This sample demonstrates the use of a public client that does not
@@ -146,15 +156,15 @@ public class DeviceController {
 		model.addAttribute("verificationUriComplete", responseParameters.get(
 				OAuth2ParameterNames.VERIFICATION_URI_COMPLETE));
 
-		return "authorize";
+		return "device-authorize";
 	}
 
 	/**
-	 * @see DeviceControllerAdvice
+	 * @see #handleError(OAuth2AuthorizationException)
 	 */
-	@PostMapping("/authorize")
+	@PostMapping("/device_authorize")
 	public ResponseEntity<Void> poll(@RequestParam(OAuth2ParameterNames.DEVICE_CODE) String deviceCode,
-			@RegisteredOAuth2AuthorizedClient("messaging-client-device-grant")
+			@RegisteredOAuth2AuthorizedClient("messaging-client-device-code")
 					OAuth2AuthorizedClient authorizedClient) {
 
 		/*
@@ -175,9 +185,18 @@ public class DeviceController {
 		return ResponseEntity.status(HttpStatus.OK).build();
 	}
 
-	@GetMapping("/authorized")
+	@ExceptionHandler(OAuth2AuthorizationException.class)
+	public ResponseEntity<OAuth2Error> handleError(OAuth2AuthorizationException ex) {
+		String errorCode = ex.getError().getErrorCode();
+		if (DEVICE_GRANT_ERRORS.contains(errorCode)) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ex.getError());
+		}
+		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ex.getError());
+	}
+
+	@GetMapping("/device_authorized")
 	public String authorized(Model model,
-			@RegisteredOAuth2AuthorizedClient("messaging-client-device-grant")
+			@RegisteredOAuth2AuthorizedClient("messaging-client-device-code")
 					OAuth2AuthorizedClient authorizedClient) {
 
 		String[] messages = this.webClient.get()
@@ -188,7 +207,7 @@ public class DeviceController {
 				.block();
 		model.addAttribute("messages", messages);
 
-		return "authorized";
+		return "index";
 	}
 
 	private void saveSecurityContext(OAuth2DeviceCode deviceCode, HttpServletRequest request,

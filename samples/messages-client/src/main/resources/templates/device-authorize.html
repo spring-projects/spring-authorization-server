@@ -17,7 +17,7 @@
                         <p class="gap">Activation Code</p>
                         <div class="well">
                             <span class="code" th:text="${userCode}"></span>
-                            <form id="authorize-form" th:action="@{/authorize}" method="post">
+                            <form id="authorize-form" th:action="@{/device_authorize}" method="post">
                                 <input type="hidden" id="device_code" name="device_code" th:value="${deviceCode}" />
                             </form>
                         </div>
@@ -35,7 +35,7 @@
                 let csrfToken = $('[name=_csrf]').val();
                 if (deviceCode) {
                     $.ajax({
-                        url: '/authorize',
+                        url: '/device_authorize',
                         method: 'POST',
                         data: {
                             device_code: deviceCode,
@@ -58,7 +58,7 @@
                             clear();
                             location.href = '/';
                         }
-                    }).done(() => window.location.href = '/authorized');
+                    }).done(() => window.location.href = '/device_authorized');
                 }
             }
 

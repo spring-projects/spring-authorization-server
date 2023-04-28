@@ -15,7 +15,6 @@
  */
 package sample.config;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -31,23 +30,22 @@ import static org.springframework.security.config.Customizer.withDefaults;
 /**
  * @author Joe Grandja
  * @author Dmitriy Dubson
+ * @author Steve Riesenberg
  * @since 0.0.1
  */
 @EnableWebSecurity
 @Configuration(proxyBeanMethods = false)
 public class SecurityConfig {
 
-	@Autowired
-	private ClientRegistrationRepository clientRegistrationRepository;
-
 	@Bean
-	WebSecurityCustomizer webSecurityCustomizer() {
-		return (web) -> web.ignoring().requestMatchers("/webjars/**");
+	public WebSecurityCustomizer webSecurityCustomizer() {
+		return (web) -> web.ignoring().requestMatchers("/webjars/**", "/assets/**");
 	}
 
 	// @formatter:off
 	@Bean
-	SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+	public SecurityFilterChain securityFilterChain(HttpSecurity http,
+			ClientRegistrationRepository clientRegistrationRepository) throws Exception {
 		http
 			.authorizeHttpRequests(authorize ->
 				authorize
@@ -58,14 +56,15 @@ public class SecurityConfig {
 				oauth2Login.loginPage("/oauth2/authorization/messaging-client-oidc"))
 			.oauth2Client(withDefaults())
 			.logout(logout ->
-				logout.logoutSuccessHandler(oidcLogoutSuccessHandler()));
+				logout.logoutSuccessHandler(oidcLogoutSuccessHandler(clientRegistrationRepository)));
 		return http.build();
 	}
 	// @formatter:on
 
-	private LogoutSuccessHandler oidcLogoutSuccessHandler() {
+	private LogoutSuccessHandler oidcLogoutSuccessHandler(
+			ClientRegistrationRepository clientRegistrationRepository) {
 		OidcClientInitiatedLogoutSuccessHandler oidcLogoutSuccessHandler =
-				new OidcClientInitiatedLogoutSuccessHandler(this.clientRegistrationRepository);
+				new OidcClientInitiatedLogoutSuccessHandler(clientRegistrationRepository);
 
 		// Set the location that the End-User's User Agent will be redirected to
 		// after the logout has been performed at the Provider

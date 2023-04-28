@@ -21,9 +21,11 @@ import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
+import sample.authentication.DeviceClientAuthenticationProvider;
 import sample.jose.Jwks;
 import sample.security.FederatedIdentityConfigurer;
 import sample.security.FederatedIdentityIdTokenCustomizer;
+import sample.web.authentication.DeviceClientAuthenticationConverter;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -67,12 +69,48 @@ public class AuthorizationServerConfig {
 
 	@Bean
 	@Order(Ordered.HIGHEST_PRECEDENCE)
-	public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
+	public SecurityFilterChain authorizationServerSecurityFilterChain(
+			HttpSecurity http, RegisteredClientRepository registeredClientRepository,
+			AuthorizationServerSettings authorizationServerSettings) throws Exception {
+
 		OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http);
+
+		/*
+		 * This sample demonstrates the use of a public client that does not
+		 * store credentials or authenticate with the authorization server.
+		 *
+		 * The following components show how to customize the authorization
+		 * server to allow for device clients to perform requests to the
+		 * OAuth 2.0 Device Authorization Endpoint and Token Endpoint without
+		 * a clientId/clientSecret.
+		 *
+		 * CAUTION: These endpoints will not require any authentication, and can
+		 * be accessed by any client that has a valid clientId.
+		 *
+		 * It is therefore RECOMMENDED to carefully monitor the use of these
+		 * endpoints and employ any additional protections as needed, which is
+		 * outside the scope of this sample.
+		 */
+		DeviceClientAuthenticationConverter deviceClientAuthenticationConverter =
+				new DeviceClientAuthenticationConverter(
+						authorizationServerSettings.getDeviceAuthorizationEndpoint());
+		DeviceClientAuthenticationProvider deviceClientAuthenticationProvider =
+				new DeviceClientAuthenticationProvider(registeredClientRepository);
+
+		// @formatter:off
 		http.getConfigurer(OAuth2AuthorizationServerConfigurer.class)
-				.authorizationEndpoint(authorizationEndpoint ->
-						authorizationEndpoint.consentPage(CUSTOM_CONSENT_PAGE_URI))
-				.oidc(Customizer.withDefaults());	// Enable OpenID Connect 1.0
+			.deviceAuthorizationEndpoint(deviceAuthorizationEndpoint ->
+				deviceAuthorizationEndpoint.verificationUri("/activate")
+			)
+			.clientAuthentication(clientAuthentication ->
+				clientAuthentication
+					.authenticationConverter(deviceClientAuthenticationConverter)
+					.authenticationProvider(deviceClientAuthenticationProvider)
+			)
+			.authorizationEndpoint(authorizationEndpoint ->
+				authorizationEndpoint.consentPage(CUSTOM_CONSENT_PAGE_URI))
+			.oidc(Customizer.withDefaults());	// Enable OpenID Connect 1.0
+		// @formatter:on
 
 		// @formatter:off
 		http
@@ -106,9 +144,19 @@ public class AuthorizationServerConfig {
 				.clientSettings(ClientSettings.builder().requireAuthorizationConsent(true).build())
 				.build();
 
-		// Save registered client in db as if in-memory
+		RegisteredClient deviceClient = RegisteredClient.withId(UUID.randomUUID().toString())
+				.clientId("device-messaging-client")
+				.clientAuthenticationMethod(ClientAuthenticationMethod.NONE)
+				.authorizationGrantType(AuthorizationGrantType.DEVICE_CODE)
+				.authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
+				.scope("message.read")
+				.scope("message.write")
+				.build();
+
+		// Save registered client's in db as if in-memory
 		JdbcRegisteredClientRepository registeredClientRepository = new JdbcRegisteredClientRepository(jdbcTemplate);
 		registeredClientRepository.save(registeredClient);
+		registeredClientRepository.save(deviceClient);
 
 		return registeredClientRepository;
 	}

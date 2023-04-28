@@ -16,6 +16,7 @@
 package sample.web.authentication;
 
 import jakarta.servlet.http.HttpServletRequest;
+
 import sample.authentication.DeviceClientAuthenticationToken;
 
 import org.springframework.http.HttpMethod;

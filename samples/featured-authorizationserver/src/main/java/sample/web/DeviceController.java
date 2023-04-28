@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package sample.web;
 
 import org.springframework.stereotype.Controller;
@@ -22,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 /**
  * @author Steve Riesenberg
+ * @since 1.1
  */
 @Controller
 public class DeviceController {

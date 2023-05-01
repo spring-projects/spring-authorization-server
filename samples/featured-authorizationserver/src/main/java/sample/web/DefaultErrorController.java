@@ -30,7 +30,7 @@ import org.springframework.web.servlet.ModelAndView;
  * @since 1.1
  */
 @Controller
-public class DeviceErrorController implements ErrorController {
+public class DefaultErrorController implements ErrorController {
 
 	@RequestMapping("/error")
 	public ModelAndView handleError(HttpServletRequest request) {

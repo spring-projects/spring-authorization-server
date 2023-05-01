@@ -22,30 +22,19 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.authority.AuthorityUtils;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.context.SecurityContextHolderStrategy;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.annotation.RegisteredOAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.OAuth2AuthorizationException;
-import org.springframework.security.oauth2.core.OAuth2DeviceCode;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
-import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
-import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.util.LinkedMultiValueMap;
@@ -83,12 +72,6 @@ public class DeviceController {
 
 	private final String messagesBaseUri;
 
-	private final SecurityContextRepository securityContextRepository =
-			new HttpSessionSecurityContextRepository();
-
-	private final SecurityContextHolderStrategy securityContextHolderStrategy =
-			SecurityContextHolder.getContextHolderStrategy();
-
 	public DeviceController(ClientRegistrationRepository clientRegistrationRepository, WebClient webClient,
 			@Value("${messages.base-uri}") String messagesBaseUri) {
 
@@ -98,7 +81,7 @@ public class DeviceController {
 	}
 
 	@GetMapping("/device_authorize")
-	public String authorize(Model model, HttpServletRequest request, HttpServletResponse response) {
+	public String authorize(Model model) {
 		// @formatter:off
 		ClientRegistration clientRegistration =
 				this.clientRegistrationRepository.findByRegistrationId(
@@ -143,13 +126,9 @@ public class DeviceController {
 		Instant issuedAt = Instant.now();
 		Integer expiresIn = (Integer) responseParameters.get(OAuth2ParameterNames.EXPIRES_IN);
 		Instant expiresAt = issuedAt.plusSeconds(expiresIn);
-		String deviceCodeValue = (String) responseParameters.get(OAuth2ParameterNames.DEVICE_CODE);
 
-		OAuth2DeviceCode deviceCode = new OAuth2DeviceCode(deviceCodeValue, issuedAt, expiresAt);
-		saveSecurityContext(deviceCode, request, response);
-
-		model.addAttribute("deviceCode", deviceCode.getTokenValue());
-		model.addAttribute("expiresAt", deviceCode.getExpiresAt());
+		model.addAttribute("deviceCode", responseParameters.get(OAuth2ParameterNames.DEVICE_CODE));
+		model.addAttribute("expiresAt", expiresAt);
 		model.addAttribute("userCode", responseParameters.get(OAuth2ParameterNames.USER_CODE));
 		model.addAttribute("verificationUri", responseParameters.get(OAuth2ParameterNames.VERIFICATION_URI));
 		// Note: You could use a QR-code to display this URL
@@ -208,21 +187,6 @@ public class DeviceController {
 		model.addAttribute("messages", messages);
 
 		return "index";
-	}
-
-	private void saveSecurityContext(OAuth2DeviceCode deviceCode, HttpServletRequest request,
-			HttpServletResponse response) {
-
-		// @formatter:off
-		UsernamePasswordAuthenticationToken deviceAuthentication =
-				UsernamePasswordAuthenticationToken.authenticated(
-						deviceCode, null, AuthorityUtils.createAuthorityList("ROLE_DEVICE"));
-		// @formatter:on
-
-		SecurityContext securityContext = this.securityContextHolderStrategy.createEmptyContext();
-		securityContext.setAuthentication(deviceAuthentication);
-		this.securityContextHolderStrategy.setContext(securityContext);
-		this.securityContextRepository.saveContext(securityContext, request, response);
 	}
 
 }

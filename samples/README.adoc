@@ -1,32 +1,36 @@
 = Samples
 
-[[messages-sample]]
-== Messages Sample
+[[default-sample]]
+== Default Sample
 
-The messages sample integrates `spring-security-oauth2-client` and `spring-security-oauth2-resource-server` with *Spring Authorization Server*.
+The default sample provides the minimal configuration to get started with Spring Authorization Server.
 
-The username is `user1` and the password is `password`.
+[[demo-sample]]
+== Demo Sample
 
-[[run-messages-sample]]
+The demo sample provides custom configuration for various features implemented by Spring Authorization Server.
+
+[[run-demo-sample]]
 === Run the Sample
 
-* Run Authorization Server -> `./gradlew -b samples/default-authorizationserver/samples-default-authorizationserver.gradle bootRun`
+* Run Authorization Server -> `./gradlew -b samples/demo-authorizationserver/samples-demo-authorizationserver.gradle bootRun`
+* Run Client -> `./gradlew -b samples/demo-client/samples-demo-client.gradle bootRun`
 * Run Resource Server -> `./gradlew -b samples/messages-resource/samples-messages-resource.gradle bootRun`
-* Run Client -> `./gradlew -b samples/messages-client/samples-messages-client.gradle bootRun`
 * Go to `http://127.0.0.1:8080`
+** Login with credentials -> user1 \ password
 
-[[federated-identity-sample]]
-== Federated Identity Sample
+[[configuring-social-login]]
+=== Configuring Social Login
 
-The federated identity sample builds on the messages sample above, adding social login and federated identity features to *Spring Authorization Server* using custom configuration.
+The demo sample may be configured to provide social login capability.
 
 [[google-login]]
-=== Login with Google
+==== Login with Google
 
-This section shows how to configure Spring Security using Google as an Authentication Provider.
+This section shows how to configure Google as a social login provider.
 
 [[google-initial-setup]]
-==== Initial setup
+===== Initial setup
 
 To use Google's OAuth 2.0 authentication system for login, you must set up a project in the Google API Console to obtain OAuth 2.0 credentials.
 
@@ -38,7 +42,7 @@ Follow the instructions on the https://developers.google.com/identity/protocols/
 After completing the "Obtain OAuth 2.0 credentials" instructions, you should have a new OAuth Client with credentials consisting of a Client ID and a Client Secret.
 
 [[google-redirect-uri]]
-==== Setting the redirect URI
+===== Setting the redirect URI
 
 The redirect URI is the path in the application that the end-user's user-agent is redirected back to after they have authenticated with Google
 and have granted access to the OAuth Client _(created in the previous step)_ on the Consent page.
@@ -49,7 +53,7 @@ TIP: The default redirect URI template is `{baseUrl}/login/oauth2/code/{registra
 The *_registrationId_* is a unique identifier for the `ClientRegistration`.
 
 [[google-application-config]]
-==== Configure application.yml
+===== Configure application.yml
 
 Now that you have a new OAuth Client with Google, you need to configure the application to use the OAuth Client for the _authentication flow_. To do so:
 
@@ -80,12 +84,12 @@ Alternatively, you can set the following environment variables in the Spring Boo
     * `GOOGLE_CLIENT_SECRET`
 
 [[github-login]]
-=== Login with GitHub
+==== Login with GitHub
 
-This section shows how to configure Spring Security using Github as an Authentication Provider.
+This section shows how to configure GitHub as a social login provider.
 
 [[github-register-application]]
-==== Register OAuth application
+===== Register OAuth application
 
 To use GitHub's OAuth 2.0 authentication system for login, you must https://github.com/settings/applications/new[Register a new OAuth application].
 
@@ -98,7 +102,7 @@ TIP: The default redirect URI template is `{baseUrl}/login/oauth2/code/{registra
 The *_registrationId_* is a unique identifier for the `ClientRegistration`.
 
 [[github-application-config]]
-==== Configure application.yml
+===== Configure application.yml
 
 Now that you have a new OAuth application with GitHub, you need to configure the application to use the OAuth application for the _authentication flow_. To do so:
 
@@ -127,11 +131,3 @@ spring:
 Alternatively, you can set the following environment variables in the Spring Boot application:
 * `GITHUB_CLIENT_ID`
 * `GITHUB_CLIENT_SECRET`
-
-[[run-federated-identity-sample]]
-=== Run the Sample
-
-* Run Authorization Server -> `./gradlew -b samples/federated-identity-authorizationserver/samples-federated-identity-authorizationserver.gradle bootRun`
-* Run Resource Server -> `./gradlew -b samples/messages-resource/samples-messages-resource.gradle bootRun`
-* Run Client -> `./gradlew -b samples/messages-client/samples-messages-client.gradle bootRun`
-* Go to `http://127.0.0.1:8080`

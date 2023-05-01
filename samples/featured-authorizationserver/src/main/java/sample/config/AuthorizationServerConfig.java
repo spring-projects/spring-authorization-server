@@ -102,6 +102,9 @@ public class AuthorizationServerConfig {
 			.deviceAuthorizationEndpoint(deviceAuthorizationEndpoint ->
 				deviceAuthorizationEndpoint.verificationUri("/activate")
 			)
+			.deviceVerificationEndpoint(deviceVerificationEndpoint ->
+				deviceVerificationEndpoint.consentPage(CUSTOM_CONSENT_PAGE_URI)
+			)
 			.clientAuthentication(clientAuthentication ->
 				clientAuthentication
 					.authenticationConverter(deviceClientAuthenticationConverter)

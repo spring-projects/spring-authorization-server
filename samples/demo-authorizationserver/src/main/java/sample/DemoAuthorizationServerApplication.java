@@ -23,10 +23,10 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * @since 1.1
  */
 @SpringBootApplication
-public class FeaturedAuthorizationServerApplication {
+public class DemoAuthorizationServerApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(FeaturedAuthorizationServerApplication.class, args);
+		SpringApplication.run(DemoAuthorizationServerApplication.class, args);
 	}
 
 }

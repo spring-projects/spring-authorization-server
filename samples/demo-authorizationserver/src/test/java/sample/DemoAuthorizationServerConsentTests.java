@@ -50,7 +50,7 @@ import static org.mockito.Mockito.when;
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
-public class FeaturedAuthorizationServerConsentTests {
+public class DemoAuthorizationServerConsentTests {
 
 	@Autowired
 	private WebClient webClient;

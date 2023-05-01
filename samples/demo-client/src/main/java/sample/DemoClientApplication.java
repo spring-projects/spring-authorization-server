@@ -23,10 +23,10 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * @since 0.0.1
  */
 @SpringBootApplication
-public class MessagesClientApplication {
+public class DemoClientApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(MessagesClientApplication.class, args);
+		SpringApplication.run(DemoClientApplication.class, args);
 	}
 
 }

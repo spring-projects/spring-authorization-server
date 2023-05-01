@@ -36,7 +36,7 @@ import org.springframework.security.oauth2.server.authorization.token.OAuth2Toke
  * the {@code id_token} produced by this authorization server.
  *
  * @author Steve Riesenberg
- * @since 1.1.0
+ * @since 1.1
  */
 public final class FederatedIdentityIdTokenCustomizer implements OAuth2TokenCustomizer<JwtEncodingContext> {
 

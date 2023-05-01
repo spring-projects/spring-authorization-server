@@ -61,7 +61,7 @@ import org.springframework.security.web.authentication.LoginUrlAuthenticationEnt
  * @author Joe Grandja
  * @author Daniel Garnier-Moiroux
  * @author Steve Riesenberg
- * @since 1.1.0
+ * @since 1.1
  */
 @Configuration(proxyBeanMethods = false)
 public class AuthorizationServerConfig {

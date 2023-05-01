@@ -31,7 +31,7 @@ import com.nimbusds.jose.jwk.RSAKey;
 
 /**
  * @author Joe Grandja
- * @since 1.1.0
+ * @since 1.1
  */
 public final class Jwks {
 

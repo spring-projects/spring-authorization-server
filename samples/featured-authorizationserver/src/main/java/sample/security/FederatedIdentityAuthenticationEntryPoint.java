@@ -38,7 +38,7 @@ import org.springframework.web.util.UriComponentsBuilder;
  * {@code registrationId} of the desired {@link ClientRegistration}.
  *
  * @author Steve Riesenberg
- * @since 1.1.0
+ * @since 1.1
  */
 public final class FederatedIdentityAuthenticationEntryPoint implements AuthenticationEntryPoint {
 

@@ -34,7 +34,7 @@ import org.springframework.security.web.authentication.SavedRequestAwareAuthenti
  * {@link OAuth2User} for Federated Account Linking or JIT Account Provisioning.
  *
  * @author Steve Riesenberg
- * @since 1.1.0
+ * @since 1.1
  */
 public final class FederatedIdentityAuthenticationSuccessHandler implements AuthenticationSuccessHandler {
 

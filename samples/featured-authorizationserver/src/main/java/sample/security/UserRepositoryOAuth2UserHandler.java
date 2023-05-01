@@ -25,7 +25,7 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
  * Example {@link Consumer} to perform JIT provisioning of an {@link OAuth2User}.
  *
  * @author Steve Riesenberg
- * @since 1.1.0
+ * @since 1.1
  */
 public final class UserRepositoryOAuth2UserHandler implements Consumer<OAuth2User> {
 

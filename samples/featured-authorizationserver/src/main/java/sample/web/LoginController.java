@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 
 /**
  * @author Steve Riesenberg
- * @since 1.1.0
+ * @since 1.1
  */
 @Controller
 public class LoginController {

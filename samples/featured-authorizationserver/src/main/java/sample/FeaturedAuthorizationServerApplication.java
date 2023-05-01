@@ -20,7 +20,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 /**
  * @author Joe Grandja
- * @since 1.1.0
+ * @since 1.1
  */
 @SpringBootApplication
 public class FeaturedAuthorizationServerApplication {

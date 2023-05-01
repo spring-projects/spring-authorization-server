@@ -29,7 +29,7 @@ import org.springframework.util.Assert;
  * A configurer for setting up Federated Identity Management.
  *
  * @author Steve Riesenberg
- * @since 1.1.0
+ * @since 1.1
  */
 public final class FederatedIdentityConfigurer extends AbstractHttpConfigurer<FederatedIdentityConfigurer, HttpSecurity> {
 

@@ -32,7 +32,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configurers.oauth2.server.resource.OAuth2ResourceServerConfigurer;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -52,6 +52,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 
 @Configuration
+@EnableWebSecurity
 public class SecurityConfig {
 
 	@Bean // <1>
@@ -70,7 +71,7 @@ public class SecurityConfig {
 					new LoginUrlAuthenticationEntryPoint("/login"))
 			)
 			// Accept access tokens for User Info and/or Client Registration
-			.oauth2ResourceServer(OAuth2ResourceServerConfigurer::jwt);
+			.oauth2ResourceServer((oauth2) -> oauth2.jwt(Customizer.withDefaults()));
 		// @formatter:on
 
 		return http.build();
@@ -109,26 +110,21 @@ public class SecurityConfig {
 	@Bean // <4>
 	public RegisteredClientRepository registeredClientRepository() {
 		// @formatter:off
-		RegisteredClient registeredClient = RegisteredClient.withId(UUID.randomUUID().toString())
-				.clientId("messaging-client")
+		RegisteredClient oidcClient = RegisteredClient.withId(UUID.randomUUID().toString())
+				.clientId("oidc-client")
 				.clientSecret("{noop}secret")
 				.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
 				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
 				.authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
-				.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
-				.authorizationGrantType(AuthorizationGrantType.DEVICE_CODE)
-				.redirectUri("http://127.0.0.1:8080/login/oauth2/code/messaging-client-oidc")
-				.redirectUri("http://127.0.0.1:8080/authorized")
-				.postLogoutRedirectUri("http://127.0.0.1:8080/index")
+				.redirectUri("http://127.0.0.1:8080/login/oauth2/code/oidc-client")
+				.postLogoutRedirectUri("http://127.0.0.1:8080/")
 				.scope(OidcScopes.OPENID)
 				.scope(OidcScopes.PROFILE)
-				.scope("message.read")
-				.scope("message.write")
 				.clientSettings(ClientSettings.builder().requireAuthorizationConsent(true).build())
 				.build();
 		// @formatter:on
 
-		return new InMemoryRegisteredClientRepository(registeredClient);
+		return new InMemoryRegisteredClientRepository(oidcClient);
 	}
 
 	@Bean // <5>

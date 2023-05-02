@@ -127,7 +127,7 @@ public class AuthorizationCodeGrantFlow {
 				.andReturn();
 		String redirectedUrl = mvcResult.getResponse().getRedirectedUrl();
 		assertThat(redirectedUrl).isNotNull();
-		assertThat(redirectedUrl).matches("http://127.0.0.1:8080/authorized\\?code=.{15,}&state=state");
+		assertThat(redirectedUrl).matches("http://127.0.0.1:8080/\\S+\\?code=.{15,}&state=state");
 
 		String locationHeader = URLDecoder.decode(redirectedUrl, StandardCharsets.UTF_8.name());
 		UriComponents uriComponents = UriComponentsBuilder.fromUriString(locationHeader).build();

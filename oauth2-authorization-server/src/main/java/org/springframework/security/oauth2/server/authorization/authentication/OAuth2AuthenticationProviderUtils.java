@@ -56,6 +56,25 @@ final class OAuth2AuthenticationProviderUtils {
 						(metadata) ->
 								metadata.put(OAuth2Authorization.Token.INVALIDATED_METADATA_NAME, true));
 
+		if (OAuth2AuthorizationCode.class.isAssignableFrom(token.getClass())) {
+			OAuth2Authorization.Token<OAuth2AccessToken> accessToken = authorization.getAccessToken();
+			if (accessToken != null && !accessToken.isInvalidated()) {
+				authorizationBuilder.token(
+						accessToken.getToken(),
+						(metadata) ->
+								metadata.put(OAuth2Authorization.Token.INVALIDATED_METADATA_NAME, true));
+			}
+
+			OAuth2Authorization.Token<OAuth2RefreshToken> refreshToken = authorization.getRefreshToken();
+			if (refreshToken != null && !refreshToken.isInvalidated()) {
+				authorizationBuilder.token(
+						refreshToken.getToken(),
+						(metadata) ->
+								metadata.put(OAuth2Authorization.Token.INVALIDATED_METADATA_NAME, true));
+			}
+
+		}
+
 		if (OAuth2RefreshToken.class.isAssignableFrom(token.getClass())) {
 			authorizationBuilder.token(
 					authorization.getAccessToken().getToken(),
@@ -72,29 +91,6 @@ final class OAuth2AuthenticationProviderUtils {
 			}
 		}
 		// @formatter:on
-
-		return authorizationBuilder.build();
-	}
-
-	static OAuth2Authorization invalidateAuthorizationTokens(OAuth2Authorization authorization) {
-
-		OAuth2Authorization.Builder authorizationBuilder = OAuth2Authorization.from(authorization);
-
-		OAuth2Authorization.Token<OAuth2AccessToken> accessToken = authorization.getAccessToken();
-		if (accessToken != null && !accessToken.isInvalidated()) {
-			authorizationBuilder.token(
-					accessToken.getToken(),
-					(metadata) ->
-							metadata.put(OAuth2Authorization.Token.INVALIDATED_METADATA_NAME, true));
-		}
-
-		OAuth2Authorization.Token<OAuth2RefreshToken> refreshToken = authorization.getRefreshToken();
-		if (refreshToken != null && !refreshToken.isInvalidated()) {
-			authorizationBuilder.token(
-					refreshToken.getToken(),
-					(metadata) ->
-							metadata.put(OAuth2Authorization.Token.INVALIDATED_METADATA_NAME, true));
-		}
 
 		return authorizationBuilder.build();
 	}

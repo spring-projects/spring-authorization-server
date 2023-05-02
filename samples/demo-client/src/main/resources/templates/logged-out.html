@@ -1,22 +1,20 @@
 <!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="https://www.thymeleaf.org" xmlns:sec="https://www.thymeleaf.org/thymeleaf-extras-springsecurity6">
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:th="https://www.thymeleaf.org">
 <head>
-	<title>Spring Security OAuth 2.0 Sample</title>
-	<meta charset="utf-8"/>
-	<meta http-equiv="X-UA-Compatible" content="IE=edge"/>
-	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-	<link rel="stylesheet" href="/webjars/bootstrap/css/bootstrap.css"
-		  th:href="@{/webjars/bootstrap/css/bootstrap.css}"/>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Spring Authorization Server sample</title>
+    <link rel="stylesheet" href="/webjars/bootstrap/css/bootstrap.css" th:href="@{/webjars/bootstrap/css/bootstrap.css}" />
 </head>
 <body>
-<div th:fragment="header">
-	<nav class="navbar navbar-default"></nav>
-</div>
+<div th:replace="~{page-templates :: navbar}"></div>
 <div class="container">
-	<h1>You are now logged out.</h1>
-	<a href="/" th:href="@{/}">Go back home</a>
+    <div class="row">
+        <h2>You are now logged out.</h2>
+    </div>
 </div>
+<script src="/webjars/bootstrap/js/bootstrap.bundle.min.js" th:src="@{/webjars/bootstrap/js/bootstrap.bundle.min.js}"></script>
 <script src="/webjars/jquery/jquery.min.js" th:src="@{/webjars/jquery/jquery.min.js}"></script>
-<script src="/webjars/bootstrap/js/bootstrap.min.js" th:src="@{/webjars/bootstrap/js/bootstrap.min.js}"></script>
+<script src="/webjars/popper.js/umd/popper.js" th:src="@{/webjars/popper.js/umd/popper.js}"></script>
 </body>
 </html>

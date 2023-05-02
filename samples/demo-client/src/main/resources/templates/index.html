@@ -1,57 +1,19 @@
 <!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="https://www.thymeleaf.org" xmlns:sec="https://www.thymeleaf.org/thymeleaf-extras-springsecurity6">
-    <head>
-        <title>Spring Security OAuth 2.0 Sample</title>
-        <meta charset="utf-8" />
-        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-        <link rel="stylesheet" href="/webjars/bootstrap/css/bootstrap.css" th:href="@{/webjars/bootstrap/css/bootstrap.css}" />
-    </head>
-    <body>
-        <div th:fragment="header">
-            <nav class="navbar navbar-default">
-                <div class="container-fluid">
-                    <div class="collapse navbar-collapse">
-                        <form class="navbar-form navbar-right" th:action="@{/logout}" method="post">
-                            <button type="submit" class="btn btn-default navbar-btn">Logout</button>
-                        </form>
-                    </div>
-                </div>
-            </nav>
-        </div>
-        <div class="container">
-            <div th:if="${error}" class="alert alert-danger alert-dismissible" role="alert">
-                <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                <h4 th:text="${error}" class="text-center"></h4>
-            </div>
-            <div class="panel panel-default">
-                <div class="panel-heading">
-                    <h3 class="panel-title">Authorize the client using <span style="font-family:monospace">grant_type</span>:</h3>
-                </div>
-                <ul class="list-group">
-                    <li class="list-group-item">
-                        <a href="/authorize?grant_type=authorization_code" th:href="@{/authorize?grant_type=authorization_code}"><span style="font-size:medium">Authorization Code</span></a>
-                    </li>
-                    <li class="list-group-item">
-                        <a href="/authorize?grant_type=client_credentials" th:href="@{/authorize?grant_type=client_credentials}"><span style="font-size:medium">Client Credentials</span></a>
-                    </li>
-                    <li class="list-group-item">
-                        <a href="/authorize?grant_type=device_code" th:href="@{/authorize?grant_type=device_code}"><span style="font-size:medium">Device Code</span></a>
-                    </li>
-                </ul>
-                <div th:if="${messages}" class="panel-footer">
-                    <h4>Messages:</h4>
-                    <table class="table table-condensed">
-                        <tbody>
-                            <tr class="row" th:each="message : ${messages}">
-                                <td th:text="${message}">message</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-        <script src="/webjars/jquery/jquery.min.js" th:src="@{/webjars/jquery/jquery.min.js}"></script>
-        <script src="/webjars/bootstrap/js/bootstrap.min.js" th:src="@{/webjars/bootstrap/js/bootstrap.min.js}"></script>
-    </body>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:th="https://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Spring Authorization Server sample</title>
+    <link rel="stylesheet" href="/webjars/bootstrap/css/bootstrap.css" th:href="@{/webjars/bootstrap/css/bootstrap.css}" />
+</head>
+<body>
+<div th:replace="~{page-templates :: navbar}"></div>
+<div class="container">
+    <div th:replace="~{page-templates :: error-message}"></div>
+    <div th:replace="~{page-templates :: message-list}"></div>
+</div>
+<script src="/webjars/bootstrap/js/bootstrap.bundle.min.js" th:src="@{/webjars/bootstrap/js/bootstrap.bundle.min.js}"></script>
+<script src="/webjars/jquery/jquery.min.js" th:src="@{/webjars/jquery/jquery.min.js}"></script>
+<script src="/webjars/popper.js/umd/popper.js" th:src="@{/webjars/popper.js/umd/popper.js}"></script>
+</body>
 </html>

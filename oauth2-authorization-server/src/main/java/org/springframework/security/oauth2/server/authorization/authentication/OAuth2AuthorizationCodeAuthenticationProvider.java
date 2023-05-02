@@ -178,7 +178,7 @@ public final class OAuth2AuthorizationCodeAuthenticationProvider implements Auth
 
 		// @formatter:off
 		OAuth2Authorization.Builder authorizationBuilder = OAuth2Authorization.from(authorization)
-				// Invalidate the device code as it can only be used (successfully) once
+				// Invalidate the authorization code as it can only be used once
 				.token(authorizationCode.getToken(), metadata ->
 						metadata.put(OAuth2Authorization.Token.INVALIDATED_METADATA_NAME, true));
 		// @formatter:on

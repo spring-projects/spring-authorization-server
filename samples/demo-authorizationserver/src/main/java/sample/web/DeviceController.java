@@ -31,17 +31,17 @@ public class DeviceController {
 		if (userCode != null) {
 			return "redirect:/oauth2/device_verification?user_code=" + userCode;
 		}
-		return "activate";
+		return "device-activate";
 	}
 
 	@GetMapping("/activated")
 	public String activated() {
-		return "activated";
+		return "device-activated";
 	}
 
 	@GetMapping(value = "/", params = "success")
 	public String success() {
-		return "activated";
+		return "device-activated";
 	}
 
 }

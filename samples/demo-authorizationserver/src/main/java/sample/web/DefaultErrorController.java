@@ -15,15 +15,13 @@
  */
 package sample.web;
 
-import java.util.Map;
-
 import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.http.HttpServletRequest;
 
 import org.springframework.boot.web.servlet.error.ErrorController;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.servlet.ModelAndView;
 
 /**
  * @author Steve Riesenberg
@@ -33,12 +31,16 @@ import org.springframework.web.servlet.ModelAndView;
 public class DefaultErrorController implements ErrorController {
 
 	@RequestMapping("/error")
-	public ModelAndView handleError(HttpServletRequest request) {
-		String message = getErrorMessage(request);
-		if (message.startsWith("[access_denied]")) {
-			return new ModelAndView("access-denied");
+	public String handleError(Model model, HttpServletRequest request) {
+		String errorMessage = getErrorMessage(request);
+		if (errorMessage.startsWith("[access_denied]")) {
+			model.addAttribute("errorTitle", "Access Denied");
+			model.addAttribute("errorMessage", "You have denied access.");
+		} else {
+			model.addAttribute("errorTitle", "Error");
+			model.addAttribute("errorMessage", errorMessage);
 		}
-		return new ModelAndView("error", Map.of("message", message));
+		return "error";
 	}
 
 	private String getErrorMessage(HttpServletRequest request) {

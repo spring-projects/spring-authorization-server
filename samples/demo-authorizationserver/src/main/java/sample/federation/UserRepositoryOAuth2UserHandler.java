@@ -15,11 +15,13 @@
  */
 package sample.federation;
 
+// tag::imports[]
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
 import org.springframework.security.oauth2.core.user.OAuth2User;
+// end::imports[]
 
 /**
  * Example {@link Consumer} to perform JIT provisioning of an {@link OAuth2User}.
@@ -27,6 +29,7 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
  * @author Steve Riesenberg
  * @since 1.1
  */
+// tag::class[]
 public final class UserRepositoryOAuth2UserHandler implements Consumer<OAuth2User> {
 
 	private final UserRepository userRepository = new UserRepository();
@@ -55,3 +58,4 @@ public final class UserRepositoryOAuth2UserHandler implements Consumer<OAuth2Use
 	}
 
 }
+// end::class[]

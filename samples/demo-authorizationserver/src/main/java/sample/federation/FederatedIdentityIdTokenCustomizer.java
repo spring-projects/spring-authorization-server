@@ -15,6 +15,7 @@
  */
 package sample.federation;
 
+// tag::imports[]
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -30,6 +31,7 @@ import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer;
+// end::imports[]
 
 /**
  * An {@link OAuth2TokenCustomizer} to map claims from a federated identity to
@@ -38,6 +40,7 @@ import org.springframework.security.oauth2.server.authorization.token.OAuth2Toke
  * @author Steve Riesenberg
  * @since 1.1
  */
+// tag::class[]
 public final class FederatedIdentityIdTokenCustomizer implements OAuth2TokenCustomizer<JwtEncodingContext> {
 
 	private static final Set<String> ID_TOKEN_CLAIMS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
@@ -89,3 +92,4 @@ public final class FederatedIdentityIdTokenCustomizer implements OAuth2TokenCust
 	}
 
 }
+// end::class[]

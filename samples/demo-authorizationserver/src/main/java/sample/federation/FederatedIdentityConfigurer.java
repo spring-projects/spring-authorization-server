@@ -15,6 +15,7 @@
  */
 package sample.federation;
 
+// tag::imports[]
 import java.util.function.Consumer;
 
 import org.springframework.context.ApplicationContext;
@@ -24,6 +25,7 @@ import org.springframework.security.oauth2.client.registration.ClientRegistratio
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.util.Assert;
+// end::imports[]
 
 /**
  * A configurer for setting up Federated Identity Management.
@@ -31,6 +33,7 @@ import org.springframework.util.Assert;
  * @author Steve Riesenberg
  * @since 1.1
  */
+// tag::class[]
 public final class FederatedIdentityConfigurer extends AbstractHttpConfigurer<FederatedIdentityConfigurer, HttpSecurity> {
 
 	private String loginPageUrl = "/login";
@@ -123,3 +126,4 @@ public final class FederatedIdentityConfigurer extends AbstractHttpConfigurer<Fe
 	// @formatter:on
 
 }
+// end::class[]

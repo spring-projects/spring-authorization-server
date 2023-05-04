@@ -15,6 +15,7 @@
  */
 package sample.federation;
 
+// tag::imports[]
 import java.io.IOException;
 
 import jakarta.servlet.ServletException;
@@ -31,6 +32,7 @@ import org.springframework.security.web.DefaultRedirectStrategy;
 import org.springframework.security.web.RedirectStrategy;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.web.util.UriComponentsBuilder;
+// end::imports[]
 
 /**
  * An {@link AuthenticationEntryPoint} for initiating the login flow to an
@@ -40,6 +42,7 @@ import org.springframework.web.util.UriComponentsBuilder;
  * @author Steve Riesenberg
  * @since 1.1
  */
+// tag::class[]
 public final class FederatedIdentityAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
 	private final RedirectStrategy redirectStrategy = new DefaultRedirectStrategy();
@@ -80,3 +83,4 @@ public final class FederatedIdentityAuthenticationEntryPoint implements Authenti
 	}
 
 }
+// end::class[]

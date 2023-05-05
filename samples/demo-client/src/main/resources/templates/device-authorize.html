@@ -9,11 +9,11 @@
 <body>
 <div th:replace="~{page-templates :: navbar}"></div>
 <div class="container">
-    <div class="row">
+    <div class="row py-5">
         <div class="col-md-5">
             <h2>Device Activation</h2>
             <p>Please visit <a th:href="${verificationUri}" th:text="${verificationUri?.replaceFirst('https?://', '')}"></a> on another device to continue.</p>
-            <p style="margin-top: 70px">Activation Code</p>
+            <p class="mt-5">Activation Code</p>
             <div class="card text-bg-light">
                 <span class="card-body" style="font-size: 2em; letter-spacing: 2rem" th:text="${userCode}"></span>
                 <form id="authorize-form" th:action="@{/device_authorize}" method="post">

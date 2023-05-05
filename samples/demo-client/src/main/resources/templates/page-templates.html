@@ -36,13 +36,13 @@
     </div>
 </nav>
 <div class="container">
-    <div th:fragment="error-message" th:if="${error}" class="row justify-content-center alert alert-danger alert-dismissible fade show" role="alert">
-        <div class="col">
+    <div th:fragment="error-message" th:if="${error}" class="row py-5 justify-content-center">
+        <div class="col alert alert-danger alert-dismissible fade show" role="alert">
             <strong th:text="${error}"></strong>
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     </div>
-    <div th:fragment="message-list" th:if="${messages}" class="row justify-content-start">
+    <div th:fragment="message-list" th:if="${messages}" class="row py-5 justify-content-start">
         <div class="col">
             <table class="table table-striped caption-top">
                 <caption>Messages</caption>

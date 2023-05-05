@@ -4,6 +4,7 @@
 [[how-to-overview]]
 == List of Guides
 
+* xref:guides/how-to-pkce.adoc[Authenticate using a Single Page Application with PKCE]
 * xref:guides/how-to-social-login.adoc[Authenticate using Social Login]
 * xref:guides/how-to-userinfo.adoc[Customize the OpenID Connect 1.0 UserInfo response]
 * xref:guides/how-to-jpa.adoc[Implement core services with JPA]

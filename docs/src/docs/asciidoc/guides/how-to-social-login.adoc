@@ -135,7 +135,7 @@ For example, assuming Google is configured as a social login provider with a `re
 .`FederatedIdentityAuthenticationEntryPoint`
 [source,java]
 ----
-include::{samples-dir}/demo-authorizationserver/src/main/java/sample/federation/FederatedIdentityAuthenticationEntryPoint.java[]
+include::{samples-dir}/demo-authorizationserver/src/main/java/sample/federation/FederatedIdentityAuthenticationEntryPoint.java[tags=imports;class]
 ----
 
 [[advanced-use-cases-capture-users]]
@@ -146,7 +146,7 @@ The following example `AuthenticationSuccessHandler` uses a custom component to 
 .`FederatedIdentityAuthenticationSuccessHandler`
 [source,java]
 ----
-include::{samples-dir}/demo-authorizationserver/src/main/java/sample/federation/FederatedIdentityAuthenticationSuccessHandler.java[]
+include::{samples-dir}/demo-authorizationserver/src/main/java/sample/federation/FederatedIdentityAuthenticationSuccessHandler.java[tags=imports;class]
 ----
 
 Using the `AuthenticationSuccessHandler` above, you can plug in your own `Consumer<OAuth2User>` that can capture users in a database or other data store for concepts like Federated Account Linking or JIT Account Provisioning.
@@ -155,7 +155,7 @@ Here is an example that simply stores users in-memory:
 .`UserRepositoryOAuth2UserHandler`
 [source,java]
 ----
-include::{samples-dir}/demo-authorizationserver/src/main/java/sample/federation/UserRepositoryOAuth2UserHandler.java[]
+include::{samples-dir}/demo-authorizationserver/src/main/java/sample/federation/UserRepositoryOAuth2UserHandler.java[tags=imports;class]
 ----
 
 [[advanced-use-cases-map-claims]]
@@ -166,7 +166,7 @@ The following example `OAuth2TokenCustomizer` maps a user's claims from an authe
 .`FederatedIdentityIdTokenCustomizer`
 [source,java]
 ----
-include::{samples-dir}/demo-authorizationserver/src/main/java/sample/federation/FederatedIdentityIdTokenCustomizer.java[]
+include::{samples-dir}/demo-authorizationserver/src/main/java/sample/federation/FederatedIdentityIdTokenCustomizer.java[tags=imports;class]
 ----
 
 You can configure Spring Authorization Server to use this customizer by publishing it as a `@Bean` as in the following example:
@@ -188,7 +188,7 @@ The following example `SecurityConfigurer` combines configuration for all of the
 .`FederatedIdentityConfigurer`
 [source,java]
 ----
-include::{samples-dir}/demo-authorizationserver/src/main/java/sample/federation/FederatedIdentityConfigurer.java[]
+include::{samples-dir}/demo-authorizationserver/src/main/java/sample/federation/FederatedIdentityConfigurer.java[tags=imports;class]
 ----
 
 The configurer can be applied using the Spring Security DSL as in the following example:

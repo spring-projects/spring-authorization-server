@@ -15,7 +15,7 @@
  */
 package sample.config;
 
-import sample.web.authentication.DeviceCodeOAuth2AuthorizedClientProvider;
+import sample.authorization.DeviceCodeOAuth2AuthorizedClientProvider;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

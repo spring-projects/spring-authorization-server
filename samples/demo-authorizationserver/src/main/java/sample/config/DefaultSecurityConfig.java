@@ -15,8 +15,8 @@
  */
 package sample.config;
 
-import sample.security.FederatedIdentityConfigurer;
-import sample.security.UserRepositoryOAuth2UserHandler;
+import sample.federation.FederatedIdentityConfigurer;
+import sample.federation.UserRepositoryOAuth2UserHandler;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package sample.security;
+package sample.federation;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;

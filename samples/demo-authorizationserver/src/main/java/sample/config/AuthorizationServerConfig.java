@@ -23,8 +23,8 @@ import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
 import sample.authentication.DeviceClientAuthenticationProvider;
 import sample.jose.Jwks;
-import sample.security.FederatedIdentityConfigurer;
-import sample.security.FederatedIdentityIdTokenCustomizer;
+import sample.federation.FederatedIdentityConfigurer;
+import sample.federation.FederatedIdentityIdTokenCustomizer;
 import sample.web.authentication.DeviceClientAuthenticationConverter;
 
 import org.springframework.context.annotation.Bean;

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package sample.web.authentication;
+package sample.authorization;
 
 import java.time.Clock;
 import java.time.Duration;

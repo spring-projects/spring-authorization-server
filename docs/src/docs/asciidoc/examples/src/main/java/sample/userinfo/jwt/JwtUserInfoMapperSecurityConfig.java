@@ -31,6 +31,7 @@ import com.nimbusds.jose.proc.SecurityContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
+import org.springframework.http.MediaType;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.oauth2.server.resource.OAuth2ResourceServerConfigurer;
@@ -55,6 +56,7 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
+import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 
 @Configuration(proxyBeanMethods = false)
@@ -90,7 +92,10 @@ public class JwtUserInfoMapperSecurityConfig {
 			.csrf(csrf -> csrf.ignoringRequestMatchers(endpointsMatcher))
 			.oauth2ResourceServer(OAuth2ResourceServerConfigurer::jwt) // <4>
 			.exceptionHandling((exceptions) -> exceptions
-				.authenticationEntryPoint(new LoginUrlAuthenticationEntryPoint("/login"))
+				.defaultAuthenticationEntryPointFor(
+					new LoginUrlAuthenticationEntryPoint("/login"),
+					new MediaTypeRequestMatcher(MediaType.TEXT_HTML)
+				)
 			)
 			.apply(authorizationServerConfigurer); // <5>
 		// @formatter:on

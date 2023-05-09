@@ -22,7 +22,7 @@ The following listing shows how to enable the {spring-security-reference-base-ur
 [[sample.userinfo]]
 include::code:EnableUserInfoSecurityConfig[]
 
-TIP: Click on the "Expanded folded text" icon in the code sample above to display the full example.
+TIP: Click on the "Expand folded text" icon in the code sample above to display the full example.
 
 This configuration provides the following:
 

@@ -557,7 +557,7 @@ public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity h
 
 	...
 
-	http.oauth2ResourceServer(OAuth2ResourceServerConfigurer::jwt);
+	http.oauth2ResourceServer(resourceServer -> resourceServer.jwt(Customizer.withDefaults()));
 
 	return http.build();
 }
@@ -650,7 +650,7 @@ public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity h
 
 	...
 
-	http.oauth2ResourceServer(OAuth2ResourceServerConfigurer::jwt);
+	http.oauth2ResourceServer(resourceServer -> resourceServer.jwt(Customizer.withDefaults()));
 
 	return http.build();
 }

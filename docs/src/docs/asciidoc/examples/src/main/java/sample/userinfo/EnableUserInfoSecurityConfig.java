@@ -33,7 +33,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.http.MediaType;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configurers.oauth2.server.resource.OAuth2ResourceServerConfigurer;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -54,6 +54,7 @@ import org.springframework.security.web.authentication.LoginUrlAuthenticationEnt
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
 
 @Configuration(proxyBeanMethods = false)
+@EnableWebSecurity
 public class EnableUserInfoSecurityConfig {
 
 	@Bean // <1>
@@ -64,7 +65,7 @@ public class EnableUserInfoSecurityConfig {
 			.oidc(Customizer.withDefaults());	// Enable OpenID Connect 1.0
 		// @formatter:off
 		http
-			.oauth2ResourceServer(OAuth2ResourceServerConfigurer::jwt) // <2>
+			.oauth2ResourceServer((oauth2) -> oauth2.jwt(Customizer.withDefaults())) // <2>
 			.exceptionHandling((exceptions) -> exceptions
 				.defaultAuthenticationEntryPointFor(
 					new LoginUrlAuthenticationEntryPoint("/login"),

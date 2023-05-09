@@ -43,7 +43,6 @@ import org.springframework.http.MediaType;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configurers.oauth2.server.resource.OAuth2ResourceServerConfigurer;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.oidc.endpoint.OidcParameterNames;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
@@ -209,7 +208,9 @@ public class JpaTests {
 						new MediaTypeRequestMatcher(MediaType.TEXT_HTML)
 					)
 				)
-				.oauth2ResourceServer(OAuth2ResourceServerConfigurer::jwt);
+				.oauth2ResourceServer((resourceServer) -> resourceServer
+					.jwt(Customizer.withDefaults())
+				);
 			// @formatter:on
 			return http.build();
 		}

@@ -121,22 +121,9 @@ If you configured a `UserDetailsService` when xref:{docs-dir}/getting-started.ad
 The https://github.com/spring-projects/spring-authorization-server/tree/{github-ref}/samples#demo-sample[demo authorization server sample^] demonstrates advanced configuration options for federating identity providers.
 Select from the following use cases to see an example of each:
 
-* I want to <<advanced-use-cases-automatically-redirect>>
 * I want to <<advanced-use-cases-capture-users>>
 * I want to <<advanced-use-cases-map-claims>>
 * I want to <<advanced-use-cases-configurer>>
-
-[[advanced-use-cases-automatically-redirect]]
-=== Automatically Redirect to a Provider
-
-The following example `AuthenticationEntryPoint` uses a query parameter as a hint from the client to indicate which provider to automatically redirect to for authentication.
-For example, assuming Google is configured as a social login provider with a `registrationId` of `google`, a request to `/oauth2/authorize?idp=google&...` will redirect an unauthenticated user to `/oauth2/authorization/google` which will initiate logging in with Google:
-
-.`FederatedIdentityAuthenticationEntryPoint`
-[source,java]
-----
-include::{samples-dir}/demo-authorizationserver/src/main/java/sample/federation/FederatedIdentityAuthenticationEntryPoint.java[tags=imports;class]
-----
 
 [[advanced-use-cases-capture-users]]
 === Capture Users in a Database

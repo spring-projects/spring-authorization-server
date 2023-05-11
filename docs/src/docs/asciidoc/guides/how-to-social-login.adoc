@@ -108,7 +108,7 @@ Continuing our <<configure-oauth2-login-okta-example,earlier example>>, configur
 include::{examples-dir}/src/main/java/sample/socialLogin/SecurityConfig.java[]
 ----
 
-<1> A Spring Security filter chain for the xref:protocol-endpoints.adoc[Protocol Endpoints].
+<1> A Spring Security filter chain for the xref:{docs-dir}/protocol-endpoints.adoc[Protocol Endpoints].
 <2> Configure an `AuthenticationEntryPoint` for redirecting to the {spring-security-reference-base-url}/servlet/oauth2/login/advanced.html#oauth2login-advanced-login-page[OAuth 2.0 Login endpoint].
 <3> A Spring Security filter chain for https://docs.spring.io/spring-security/reference/servlet/authentication/index.html[authentication].
 <4> Configure {spring-security-reference-base-url}/servlet/oauth2/login/index.html[OAuth 2.0 Login] for authentication.
@@ -193,8 +193,6 @@ Here's a full example:
 [source,java]
 ----
 http.apply(new FederatedIdentityConfigurer())
-	.loginPageUrl("/social/login")
-	.authorizationRequestUri("/social/login/{registrationId}")
 	.oauth2UserHandler((oauth2User) -> {
 		// TODO: Handle login of an OAuth2 user...
 	})

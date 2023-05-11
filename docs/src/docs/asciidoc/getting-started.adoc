@@ -75,8 +75,6 @@ TIP: Beyond the Getting Started experience, most users will want to customize th
 
 If you want to customize the default configuration (regardless of whether you're using Spring Boot), you can define the minimum required components as a `@Bean` in a Spring `@Configuration`.
 
-TIP: To skip the setup and run a working example, see the https://github.com/spring-projects/spring-authorization-server/tree/main/samples/default-authorizationserver[default authorization server sample].
-
 These components can be defined as follows:
 
 [[sample.gettingStarted]]

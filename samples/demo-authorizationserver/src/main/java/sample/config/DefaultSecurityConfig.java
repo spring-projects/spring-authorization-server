@@ -15,6 +15,8 @@
  */
 package sample.config;
 
+import sample.federation.FederatedIdentityAuthenticationSuccessHandler;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -26,6 +28,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.session.HttpSessionEventPublisher;
 
 /**
@@ -47,12 +50,22 @@ public class DefaultSecurityConfig {
 					.anyRequest().authenticated()
 			)
 			.formLogin(formLogin ->
-				formLogin.loginPage("/login")
+				formLogin
+					.loginPage("/login")
+			)
+			.oauth2Login(oauth2Login ->
+				oauth2Login
+					.loginPage("/login")
+					.successHandler(authenticationSuccessHandler())
 			);
 
 		return http.build();
 	}
 	// @formatter:on
+
+	private AuthenticationSuccessHandler authenticationSuccessHandler() {
+		return new FederatedIdentityAuthenticationSuccessHandler();
+	}
 
 	// @formatter:off
 	@Bean

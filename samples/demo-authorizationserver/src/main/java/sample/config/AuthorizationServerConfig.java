@@ -22,9 +22,8 @@ import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
 import sample.authentication.DeviceClientAuthenticationProvider;
-import sample.jose.Jwks;
-import sample.federation.FederatedIdentityConfigurer;
 import sample.federation.FederatedIdentityIdTokenCustomizer;
+import sample.jose.Jwks;
 import sample.web.authentication.DeviceClientAuthenticationConverter;
 
 import org.springframework.context.annotation.Bean;
@@ -121,8 +120,7 @@ public class AuthorizationServerConfig {
 				exceptions.authenticationEntryPoint(new LoginUrlAuthenticationEntryPoint("/login"))
 			)
 			.oauth2ResourceServer(oauth2ResourceServer ->
-				oauth2ResourceServer.jwt(Customizer.withDefaults()))
-			.apply(new FederatedIdentityConfigurer());
+				oauth2ResourceServer.jwt(Customizer.withDefaults()));
 		// @formatter:on
 		return http.build();
 	}

@@ -61,9 +61,9 @@ public class EnableUserInfoSecurityConfig {
 			.oidc(Customizer.withDefaults());	// Enable OpenID Connect 1.0
 		// @formatter:off
 		http
-			.oauth2ResourceServer(oauth2ResourceServerConfigurer -> oauth2ResourceServerConfigurer
+			.oauth2ResourceServer(oauth2ResourceServerConfigurer -> oauth2ResourceServerConfigurer // <2>
 					.jwt(Customizer.withDefaults())
-			) // <2>
+			)
 			.exceptionHandling((exceptions) -> exceptions
 				.authenticationEntryPoint(new LoginUrlAuthenticationEntryPoint("/login"))
 			);

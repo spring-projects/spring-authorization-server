@@ -87,9 +87,9 @@ public class JwtUserInfoMapperSecurityConfig {
 				.anyRequest().authenticated()
 			)
 			.csrf(csrf -> csrf.ignoringRequestMatchers(endpointsMatcher))
-			.oauth2ResourceServer(oauth2ResourceServerConfigurer -> oauth2ResourceServerConfigurer
+			.oauth2ResourceServer(oauth2ResourceServerConfigurer -> oauth2ResourceServerConfigurer // <4>
 					.jwt(Customizer.withDefaults())
-			) // <4>
+			)
 			.exceptionHandling((exceptions) -> exceptions
 				.authenticationEntryPoint(new LoginUrlAuthenticationEntryPoint("/login"))
 			)

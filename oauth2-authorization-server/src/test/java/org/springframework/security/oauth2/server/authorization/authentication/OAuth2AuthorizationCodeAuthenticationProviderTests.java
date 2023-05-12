@@ -15,11 +15,15 @@
  */
 package org.springframework.security.oauth2.server.authorization.authentication;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -460,7 +464,7 @@ public class OAuth2AuthorizationCodeAuthenticationProviderTests {
 	}
 
 	@Test
-	public void authenticateWhenValidCodeAndAuthenticationRequestThenReturnIdToken() {
+	public void authenticateWhenValidCodeAndAuthenticationRequestThenReturnIdToken() throws Exception {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().scope(OidcScopes.OPENID).build();
 		OAuth2AuthorizationCode authorizationCode = new OAuth2AuthorizationCode(
 				"code", Instant.now(), Instant.now().plusSeconds(120));
@@ -522,7 +526,8 @@ public class OAuth2AuthorizationCodeAuthenticationProviderTests {
 		assertThat(idTokenContext.getAuthorizationGrantType()).isEqualTo(AuthorizationGrantType.AUTHORIZATION_CODE);
 		assertThat(idTokenContext.<OAuth2AuthorizationGrantAuthenticationToken>getAuthorizationGrant()).isEqualTo(authentication);
 		SessionInformation sessionInformation = idTokenContext.get(SessionInformation.class);
-		assertThat(sessionInformation).isNotNull().isSameAs(expectedSession);
+		assertThat(sessionInformation).isNotNull();
+		assertThat(sessionInformation.getSessionId()).isEqualTo(createHash(expectedSession.getSessionId()));
 		assertThat(idTokenContext.getJwsHeader()).isNotNull();
 		assertThat(idTokenContext.getClaims()).isNotNull();
 
@@ -710,4 +715,11 @@ public class OAuth2AuthorizationCodeAuthenticationProviderTests {
 				.expiresAt(expiresAt)
 				.build();
 	}
+
+	private static String createHash(String value) throws NoSuchAlgorithmException {
+		MessageDigest md = MessageDigest.getInstance("SHA-256");
+		byte[] digest = md.digest(value.getBytes(StandardCharsets.US_ASCII));
+		return Base64.getUrlEncoder().withoutPadding().encodeToString(digest);
+	}
+
 }

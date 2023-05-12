@@ -15,8 +15,7 @@
  */
 package sample.config;
 
-import sample.federation.FederatedIdentityConfigurer;
-import sample.federation.UserRepositoryOAuth2UserHandler;
+import sample.federation.FederatedIdentityAuthenticationSuccessHandler;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -29,9 +28,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.session.HttpSessionEventPublisher;
-
-import static org.springframework.security.config.Customizer.withDefaults;
 
 /**
  * @author Joe Grandja
@@ -45,20 +43,29 @@ public class DefaultSecurityConfig {
 	// @formatter:off
 	@Bean
 	public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
-		FederatedIdentityConfigurer federatedIdentityConfigurer = new FederatedIdentityConfigurer()
-				.oauth2UserHandler(new UserRepositoryOAuth2UserHandler());
-
 		http
 			.authorizeHttpRequests(authorize ->
 				authorize
 					.requestMatchers("/assets/**", "/webjars/**", "/login").permitAll()
 					.anyRequest().authenticated()
 			)
-			.formLogin(withDefaults())
-			.apply(federatedIdentityConfigurer);
+			.formLogin(formLogin ->
+				formLogin
+					.loginPage("/login")
+			)
+			.oauth2Login(oauth2Login ->
+				oauth2Login
+					.loginPage("/login")
+					.successHandler(authenticationSuccessHandler())
+			);
+
 		return http.build();
 	}
 	// @formatter:on
+
+	private AuthenticationSuccessHandler authenticationSuccessHandler() {
+		return new FederatedIdentityAuthenticationSuccessHandler();
+	}
 
 	// @formatter:off
 	@Bean

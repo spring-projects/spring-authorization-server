@@ -71,7 +71,8 @@ public class SecurityConfig {
 					new LoginUrlAuthenticationEntryPoint("/login"))
 			)
 			// Accept access tokens for User Info and/or Client Registration
-			.oauth2ResourceServer((oauth2) -> oauth2.jwt(Customizer.withDefaults()));
+			.oauth2ResourceServer((resourceServer) -> resourceServer
+				.jwt(Customizer.withDefaults()));
 		// @formatter:on
 
 		return http.build();

@@ -23,11 +23,10 @@ import java.util.List;
 import java.util.UUID;
 import java.util.function.Consumer;
 
-import jakarta.servlet.http.HttpServletResponse;
-
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
+import jakarta.servlet.http.HttpServletResponse;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.junit.jupiter.api.AfterAll;
@@ -59,7 +58,6 @@ import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configurers.oauth2.server.resource.OAuth2ResourceServerConfigurer;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.keygen.Base64StringKeyGenerator;
 import org.springframework.security.crypto.keygen.StringKeyGenerator;
@@ -559,7 +557,9 @@ public class OidcClientRegistrationTests {
 							authorize.anyRequest().authenticated()
 					)
 					.csrf(csrf -> csrf.ignoringRequestMatchers(endpointsMatcher))
-					.oauth2ResourceServer(OAuth2ResourceServerConfigurer::jwt)
+					.oauth2ResourceServer(resourceServer ->
+						resourceServer.jwt(Customizer.withDefaults())
+					)
 					.apply(authorizationServerConfigurer);
 			return http.build();
 		}
@@ -592,7 +592,9 @@ public class OidcClientRegistrationTests {
 							authorize.anyRequest().authenticated()
 					)
 					.csrf(csrf -> csrf.ignoringRequestMatchers(endpointsMatcher))
-					.oauth2ResourceServer(OAuth2ResourceServerConfigurer::jwt)
+					.oauth2ResourceServer(resourceServer ->
+							resourceServer.jwt(Customizer.withDefaults())
+					)
 					.apply(authorizationServerConfigurer);
 			return http.build();
 		}
@@ -727,7 +729,9 @@ public class OidcClientRegistrationTests {
 							authorize.anyRequest().authenticated()
 					)
 					.csrf(csrf -> csrf.ignoringRequestMatchers(endpointsMatcher))
-					.oauth2ResourceServer(OAuth2ResourceServerConfigurer::jwt)
+					.oauth2ResourceServer(resourceServer ->
+							resourceServer.jwt(Customizer.withDefaults())
+					)
 					.apply(authorizationServerConfigurer);
 			return http.build();
 		}

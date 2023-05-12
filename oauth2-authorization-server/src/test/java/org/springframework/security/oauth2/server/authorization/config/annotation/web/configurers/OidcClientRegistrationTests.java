@@ -59,7 +59,6 @@ import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configurers.oauth2.server.resource.OAuth2ResourceServerConfigurer;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.keygen.Base64StringKeyGenerator;
 import org.springframework.security.crypto.keygen.StringKeyGenerator;
@@ -559,7 +558,9 @@ public class OidcClientRegistrationTests {
 							authorize.anyRequest().authenticated()
 					)
 					.csrf(csrf -> csrf.ignoringRequestMatchers(endpointsMatcher))
-					.oauth2ResourceServer(OAuth2ResourceServerConfigurer::jwt)
+					.oauth2ResourceServer(oauth2ResourceServerConfigurer -> oauth2ResourceServerConfigurer
+							.jwt(Customizer.withDefaults())
+					)
 					.apply(authorizationServerConfigurer);
 			return http.build();
 		}
@@ -592,7 +593,7 @@ public class OidcClientRegistrationTests {
 							authorize.anyRequest().authenticated()
 					)
 					.csrf(csrf -> csrf.ignoringRequestMatchers(endpointsMatcher))
-					.oauth2ResourceServer(OAuth2ResourceServerConfigurer::jwt)
+					.oauth2ResourceServer(oauth2ResourceServerConfigurer -> oauth2ResourceServerConfigurer.jwt(Customizer.withDefaults()))
 					.apply(authorizationServerConfigurer);
 			return http.build();
 		}
@@ -727,7 +728,7 @@ public class OidcClientRegistrationTests {
 							authorize.anyRequest().authenticated()
 					)
 					.csrf(csrf -> csrf.ignoringRequestMatchers(endpointsMatcher))
-					.oauth2ResourceServer(OAuth2ResourceServerConfigurer::jwt)
+					.oauth2ResourceServer(oauth2ResourceServerConfigurer -> oauth2ResourceServerConfigurer.jwt(Customizer.withDefaults()))
 					.apply(authorizationServerConfigurer);
 			return http.build();
 		}

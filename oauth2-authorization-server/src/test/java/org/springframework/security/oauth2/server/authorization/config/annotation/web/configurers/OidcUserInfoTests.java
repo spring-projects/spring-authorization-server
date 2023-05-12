@@ -45,7 +45,6 @@ import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configurers.oauth2.server.resource.OAuth2ResourceServerConfigurer;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
@@ -402,7 +401,9 @@ public class OidcUserInfoTests {
 					authorize.anyRequest().authenticated()
 				)
 				.csrf(csrf -> csrf.ignoringRequestMatchers(endpointsMatcher))
-				.oauth2ResourceServer(OAuth2ResourceServerConfigurer::jwt)
+				.oauth2ResourceServer(oauth2ResourceServerConfigurer -> oauth2ResourceServerConfigurer
+						.jwt(Customizer.withDefaults())
+				)
 				.apply(authorizationServerConfigurer)
 					.oidc(oidc -> oidc
 						.userInfoEndpoint(userInfo -> userInfo
@@ -442,7 +443,7 @@ public class OidcUserInfoTests {
 					authorize.anyRequest().authenticated()
 				)
 				.csrf(csrf -> csrf.ignoringRequestMatchers(endpointsMatcher))
-				.oauth2ResourceServer(OAuth2ResourceServerConfigurer::jwt)
+				.oauth2ResourceServer(oauth2ResourceServerConfigurer -> oauth2ResourceServerConfigurer.jwt(Customizer.withDefaults()))
 				.securityContext(securityContext ->
 					securityContext.securityContextRepository(securityContextRepository))
 				.apply(authorizationServerConfigurer);
@@ -472,7 +473,7 @@ public class OidcUserInfoTests {
 					authorize.anyRequest().authenticated()
 				)
 				.csrf(csrf -> csrf.ignoringRequestMatchers(endpointsMatcher))
-				.oauth2ResourceServer(OAuth2ResourceServerConfigurer::jwt)
+				.oauth2ResourceServer(oauth2ResourceServerConfigurer -> oauth2ResourceServerConfigurer.jwt(Customizer.withDefaults()))
 				.apply(authorizationServerConfigurer);
 			// @formatter:on
 

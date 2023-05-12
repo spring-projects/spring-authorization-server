@@ -33,7 +33,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configurers.oauth2.server.resource.OAuth2ResourceServerConfigurer;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -88,7 +87,9 @@ public class JwtUserInfoMapperSecurityConfig {
 				.anyRequest().authenticated()
 			)
 			.csrf(csrf -> csrf.ignoringRequestMatchers(endpointsMatcher))
-			.oauth2ResourceServer(OAuth2ResourceServerConfigurer::jwt) // <4>
+			.oauth2ResourceServer(oauth2ResourceServerConfigurer -> oauth2ResourceServerConfigurer
+					.jwt(Customizer.withDefaults())
+			) // <4>
 			.exceptionHandling((exceptions) -> exceptions
 				.authenticationEntryPoint(new LoginUrlAuthenticationEntryPoint("/login"))
 			)

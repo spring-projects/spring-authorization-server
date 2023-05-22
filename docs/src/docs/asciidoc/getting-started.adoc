@@ -1,3 +1,5 @@
+include::attributes.adoc[]
+
 [[getting-started]]
 = Getting Started
 

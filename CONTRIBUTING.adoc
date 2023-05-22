@@ -45,7 +45,7 @@ Please add the Apache License header to all new classes, for example:
 
 ```java
 /*
- * Copyright 2020-2021 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,7 +67,7 @@ Use git rebase –interactive, git add –patch and other tools to "squash" mult
 
 == Format commit messages
 
-. Keep the subject line to 50 characters or less if possible.
+. Keep the subject line to 50 characters or fewer if possible.
 . Do not end the subject line with a period.
 . In the body of the commit message, explain how things worked before this commit, what has changed, and how things work now.
 . Include Fixes gh-<issue-number> at the end if this fixes a GitHub issue.

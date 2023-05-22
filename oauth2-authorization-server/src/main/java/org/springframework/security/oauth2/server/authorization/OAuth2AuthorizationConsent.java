@@ -93,7 +93,7 @@ public final class OAuth2AuthorizationConsent implements Serializable {
 		Set<String> authorities = new HashSet<>();
 		for (GrantedAuthority authority : getAuthorities()) {
 			if (authority.getAuthority().startsWith(AUTHORITIES_SCOPE_PREFIX)) {
-				authorities.add(authority.getAuthority().replaceFirst(AUTHORITIES_SCOPE_PREFIX, ""));
+				authorities.add(authority.getAuthority().substring(AUTHORITIES_SCOPE_PREFIX.length()));
 			}
 		}
 		return authorities;

@@ -1,8 +1,9 @@
+include::attributes.adoc[]
+
 [[how-to-pkce]]
 = How-to: Authenticate using a Single Page Application with PKCE
 :index-link: ../how-to.html
 :docs-dir: ..
-:examples-dir: {docs-dir}/examples
 
 This guide shows how to configure xref:{docs-dir}/index.adoc#top[Spring Authorization Server] to support a Single Page Application (SPA) with Proof Key for Code Exchange (PKCE).
 The purpose of this guide is to demonstrate how to support a public client and require PKCE for client authentication.

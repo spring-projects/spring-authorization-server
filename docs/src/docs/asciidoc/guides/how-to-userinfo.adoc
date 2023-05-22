@@ -1,3 +1,5 @@
+include::attributes.adoc[]
+
 [[how-to-userinfo]]
 = How-to: Customize the OpenID Connect 1.0 UserInfo response
 :index-link: ../how-to.html

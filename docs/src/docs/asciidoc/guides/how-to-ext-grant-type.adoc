@@ -1,8 +1,9 @@
+include::attributes.adoc[]
+
 [[how-to-extension-grant-type]]
 = How-to: Implement an Extension Authorization Grant Type
 :index-link: ../how-to.html
 :docs-dir: ..
-:examples-dir: {docs-dir}/examples
 
 This guide shows how to extend xref:{docs-dir}/index.adoc#top[Spring Authorization Server] with an https://datatracker.ietf.org/doc/html/rfc6749#section-4.5[extension authorization grant type].
 The purpose of this guide is to demonstrate how to implement an extension authorization grant type and configure it at the xref:{docs-dir}/protocol-endpoints.adoc#oauth2-token-endpoint[OAuth2 Token endpoint].

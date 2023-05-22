@@ -1,9 +1,9 @@
+include::attributes.adoc[]
+
 [[how-to-social-login]]
 = How-to: Authenticate using Social Login
 :index-link: ../how-to.html
 :docs-dir: ..
-:examples-dir: {docs-dir}/examples
-:samples-dir: {docs-dir}/../../../../samples
 :github-ref: main
 :github-base-url: https://github.com/spring-projects/spring-authorization-server/blob/{github-ref}
 

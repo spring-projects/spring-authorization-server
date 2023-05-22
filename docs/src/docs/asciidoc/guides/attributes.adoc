@@ -1,0 +1,3 @@
+:examples-dir:                  ../examples
+:samples-dir:                   ../../../../../samples
+:docs-java:                     {docdir}/examples/src/main/java

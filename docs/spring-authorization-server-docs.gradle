@@ -8,9 +8,6 @@ asciidoctor {
 			"spring-security-reference-base-url": "https://docs.spring.io/spring-security/reference",
 			"spring-security-api-base-url": "https://docs.spring.io/spring-security/site/docs/current/api",
 			"spring-boot-reference-base-url": "https://docs.spring.io/spring-boot/docs/current/reference/html",
-			"examples-dir": "examples",
-			"samples-dir": "$rootDir/samples",
-			"docs-java": "$sourceDir/examples/src/main/java",
 			"chomp": "default headers packages",
 			"toc": "left",
 			"toclevels": "4"

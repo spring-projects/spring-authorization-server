@@ -120,6 +120,9 @@ public class SpringAsciidoctorPlugin implements Plugin<Project> {
 				// Not using intermediateWorkDir.
 				// See https://github.com/asciidoctor/asciidoctor-gradle-plugin/issues/523
 				resourcesSrcDirSpec.include("images/*.png", "css/**", "js/**", "**/*.java");
+				// This exclusion is required to allow cacheability of :spring-authorization-server-docs:asciidoctor
+				// The whole docs/src/docs/asciidoc folder is being passed as a task input
+				resourcesSrcDirSpec.exclude("**/examples/build/**");
 			});
 		});
 		if (asciidoctorTask instanceof AsciidoctorTask) {

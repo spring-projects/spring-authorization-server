@@ -133,8 +133,9 @@ public class AuthorizationServerConfig {
 	// @formatter:off
 	@Bean
 	public RegisteredClientRepository registeredClientRepository(JdbcTemplate jdbcTemplate) {
+		String messagingClientId = "messaging-client";
 		RegisteredClient registeredClient = RegisteredClient.withId(UUID.randomUUID().toString())
-				.clientId("messaging-client")
+				.clientId(messagingClientId)
 				.clientSecret("{noop}secret")
 				.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
 				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
@@ -150,8 +151,9 @@ public class AuthorizationServerConfig {
 				.clientSettings(ClientSettings.builder().requireAuthorizationConsent(true).build())
 				.build();
 
+		String deviceClientId = "device-messaging-client";
 		RegisteredClient deviceClient = RegisteredClient.withId(UUID.randomUUID().toString())
-				.clientId("device-messaging-client")
+				.clientId(deviceClientId)
 				.clientAuthenticationMethod(ClientAuthenticationMethod.NONE)
 				.authorizationGrantType(AuthorizationGrantType.DEVICE_CODE)
 				.authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
@@ -161,8 +163,14 @@ public class AuthorizationServerConfig {
 
 		// Save registered client's in db as if in-memory
 		JdbcRegisteredClientRepository registeredClientRepository = new JdbcRegisteredClientRepository(jdbcTemplate);
-		registeredClientRepository.save(registeredClient);
+		RegisteredClient registeredMessagingClient = registeredClientRepository.findByClientId(messagingClientId);
+        if (registeredMessagingClient == null) {
+			registeredClientRepository.save(registeredClient);
+		}
+		RegisteredClient registeredDeviceClient = registeredClientRepository.findByClientId(deviceClientId);
+        if (registeredDeviceClient == null) {
 		registeredClientRepository.save(deviceClient);
+		}
 
 		return registeredClientRepository;
 	}

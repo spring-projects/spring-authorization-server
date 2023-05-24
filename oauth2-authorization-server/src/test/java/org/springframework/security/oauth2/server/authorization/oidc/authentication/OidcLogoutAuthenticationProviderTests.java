@@ -15,8 +15,12 @@
  */
 package org.springframework.security.oauth2.server.authorization.oidc.authentication;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -443,7 +447,7 @@ public class OidcLogoutAuthenticationProviderTests {
 	}
 
 	@Test
-	public void authenticateWhenValidIdTokenThenAuthenticated() {
+	public void authenticateWhenValidIdTokenThenAuthenticated() throws Exception {
 		TestingAuthenticationToken principal = new TestingAuthenticationToken("principal", "credentials");
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 		String sessionId = "session-1";
@@ -453,7 +457,7 @@ public class OidcLogoutAuthenticationProviderTests {
 				.audience(Collections.singleton(registeredClient.getClientId()))
 				.issuedAt(Instant.now().minusSeconds(60).truncatedTo(ChronoUnit.MILLIS))
 				.expiresAt(Instant.now().plusSeconds(60).truncatedTo(ChronoUnit.MILLIS))
-				.claim("sid", sessionId)
+				.claim("sid", createHash(sessionId))
 				.build();
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient)
 				.principalName(principal.getName())
@@ -494,6 +498,12 @@ public class OidcLogoutAuthenticationProviderTests {
 		assertThat(authenticationResult.getPostLogoutRedirectUri()).isEqualTo(postLogoutRedirectUri);
 		assertThat(authenticationResult.getState()).isEqualTo(state);
 		assertThat(authenticationResult.isAuthenticated()).isTrue();
+	}
+
+	private static String createHash(String value) throws NoSuchAlgorithmException {
+		MessageDigest md = MessageDigest.getInstance("SHA-256");
+		byte[] digest = md.digest(value.getBytes(StandardCharsets.US_ASCII));
+		return Base64.getUrlEncoder().withoutPadding().encodeToString(digest);
 	}
 
 }

@@ -15,8 +15,12 @@
  */
 package org.springframework.security.oauth2.server.authorization.authentication;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -234,6 +238,15 @@ public final class OAuth2AuthorizationCodeAuthenticationProvider implements Auth
 		if (authorizationRequest.getScopes().contains(OidcScopes.OPENID)) {
 			SessionInformation sessionInformation = getSessionInformation(principal);
 			if (sessionInformation != null) {
+				try {
+					// Compute (and use) hash for Session ID
+					sessionInformation = new SessionInformation(sessionInformation.getPrincipal(),
+							createHash(sessionInformation.getSessionId()), sessionInformation.getLastRequest());
+				} catch (NoSuchAlgorithmException ex) {
+					OAuth2Error error = new OAuth2Error(OAuth2ErrorCodes.SERVER_ERROR,
+							"Failed to compute hash for Session ID.", ERROR_URI);
+					throw new OAuth2AuthenticationException(error);
+				}
 				tokenContextBuilder.put(SessionInformation.class, sessionInformation);
 			}
 			// @formatter:off
@@ -317,6 +330,12 @@ public final class OAuth2AuthorizationCodeAuthenticationProvider implements Auth
 			}
 		}
 		return sessionInformation;
+	}
+
+	private static String createHash(String value) throws NoSuchAlgorithmException {
+		MessageDigest md = MessageDigest.getInstance("SHA-256");
+		byte[] digest = md.digest(value.getBytes(StandardCharsets.US_ASCII));
+		return Base64.getUrlEncoder().withoutPadding().encodeToString(digest);
 	}
 
 }

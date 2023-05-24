@@ -108,7 +108,7 @@ Continuing our <<configure-oauth2-login-okta-example,earlier example>>, configur
 include::{examples-dir}/src/main/java/sample/socialLogin/SecurityConfig.java[]
 ----
 
-<1> A Spring Security filter chain for the xref:protocol-endpoints.adoc[Protocol Endpoints].
+<1> A Spring Security filter chain for the xref:{docs-dir}/protocol-endpoints.adoc[Protocol Endpoints].
 <2> Configure an `AuthenticationEntryPoint` for redirecting to the {spring-security-reference-base-url}/servlet/oauth2/login/advanced.html#oauth2login-advanced-login-page[OAuth 2.0 Login endpoint].
 <3> A Spring Security filter chain for https://docs.spring.io/spring-security/reference/servlet/authentication/index.html[authentication].
 <4> Configure {spring-security-reference-base-url}/servlet/oauth2/login/index.html[OAuth 2.0 Login] for authentication.
@@ -121,22 +121,8 @@ If you configured a `UserDetailsService` when xref:{docs-dir}/getting-started.ad
 The https://github.com/spring-projects/spring-authorization-server/tree/{github-ref}/samples#demo-sample[demo authorization server sample^] demonstrates advanced configuration options for federating identity providers.
 Select from the following use cases to see an example of each:
 
-* I want to <<advanced-use-cases-automatically-redirect>>
 * I want to <<advanced-use-cases-capture-users>>
 * I want to <<advanced-use-cases-map-claims>>
-* I want to <<advanced-use-cases-configurer>>
-
-[[advanced-use-cases-automatically-redirect]]
-=== Automatically Redirect to a Provider
-
-The following example `AuthenticationEntryPoint` uses a query parameter as a hint from the client to indicate which provider to automatically redirect to for authentication.
-For example, assuming Google is configured as a social login provider with a `registrationId` of `google`, a request to `/oauth2/authorize?idp=google&...` will redirect an unauthenticated user to `/oauth2/authorization/google` which will initiate logging in with Google:
-
-.`FederatedIdentityAuthenticationEntryPoint`
-[source,java]
-----
-include::{samples-dir}/demo-authorizationserver/src/main/java/sample/federation/FederatedIdentityAuthenticationEntryPoint.java[tags=imports;class]
-----
 
 [[advanced-use-cases-capture-users]]
 === Capture Users in a Database
@@ -178,40 +164,4 @@ You can configure Spring Authorization Server to use this customizer by publishi
 public OAuth2TokenCustomizer<JwtEncodingContext> idTokenCustomizer() {
     return new FederatedIdentityIdTokenCustomizer();
 }
-----
-
-[[advanced-use-cases-configurer]]
-=== Create My Own Configurer
-
-The following example `SecurityConfigurer` combines configuration for all of the above examples into a single reusable component:
-
-.`FederatedIdentityConfigurer`
-[source,java]
-----
-include::{samples-dir}/demo-authorizationserver/src/main/java/sample/federation/FederatedIdentityConfigurer.java[tags=imports;class]
-----
-
-The configurer can be applied using the Spring Security DSL as in the following example:
-
-.Apply Configurer
-[source,java]
-----
-http.apply(new FederatedIdentityConfigurer());
-----
-
-The configurer also has its own DSL to customize the defaults.
-Here's a full example:
-
-.Customize using Configurer
-[source,java]
-----
-http.apply(new FederatedIdentityConfigurer())
-	.loginPageUrl("/social/login")
-	.authorizationRequestUri("/social/login/{registrationId}")
-	.oauth2UserHandler((oauth2User) -> {
-		// TODO: Handle login of an OAuth2 user...
-	})
-	.oidcUserHandler((oidcUser) -> {
-		// TODO: Handle login of an OIDC user...
-	});
 ----

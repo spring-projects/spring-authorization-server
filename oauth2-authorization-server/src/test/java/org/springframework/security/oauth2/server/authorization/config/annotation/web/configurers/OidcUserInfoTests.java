@@ -24,12 +24,11 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import jakarta.servlet.http.HttpServletResponse;
-
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
+import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -45,7 +44,6 @@ import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configurers.oauth2.server.resource.OAuth2ResourceServerConfigurer;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
@@ -402,7 +400,9 @@ public class OidcUserInfoTests {
 					authorize.anyRequest().authenticated()
 				)
 				.csrf(csrf -> csrf.ignoringRequestMatchers(endpointsMatcher))
-				.oauth2ResourceServer(OAuth2ResourceServerConfigurer::jwt)
+				.oauth2ResourceServer(resourceServer ->
+					resourceServer.jwt(Customizer.withDefaults())
+				)
 				.apply(authorizationServerConfigurer)
 					.oidc(oidc -> oidc
 						.userInfoEndpoint(userInfo -> userInfo
@@ -442,7 +442,9 @@ public class OidcUserInfoTests {
 					authorize.anyRequest().authenticated()
 				)
 				.csrf(csrf -> csrf.ignoringRequestMatchers(endpointsMatcher))
-				.oauth2ResourceServer(OAuth2ResourceServerConfigurer::jwt)
+				.oauth2ResourceServer(resourceServer ->
+					resourceServer.jwt(Customizer.withDefaults())
+				)
 				.securityContext(securityContext ->
 					securityContext.securityContextRepository(securityContextRepository))
 				.apply(authorizationServerConfigurer);
@@ -472,7 +474,9 @@ public class OidcUserInfoTests {
 					authorize.anyRequest().authenticated()
 				)
 				.csrf(csrf -> csrf.ignoringRequestMatchers(endpointsMatcher))
-				.oauth2ResourceServer(OAuth2ResourceServerConfigurer::jwt)
+				.oauth2ResourceServer(resourceServer ->
+					resourceServer.jwt(Customizer.withDefaults())
+				)
 				.apply(authorizationServerConfigurer);
 			// @formatter:on
 

@@ -15,6 +15,10 @@
  */
 package org.springframework.security.oauth2.server.authorization.oidc.authentication;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
 import java.util.List;
 
 import org.apache.commons.logging.Log;
@@ -137,9 +141,18 @@ public final class OidcLogoutAuthenticationProvider implements AuthenticationPro
 				SessionInformation sessionInformation = findSessionInformation(
 						userPrincipal, oidcLogoutAuthentication.getSessionId());
 				if (sessionInformation != null) {
+					String sessionIdHash;
+					try {
+						sessionIdHash = createHash(sessionInformation.getSessionId());
+					} catch (NoSuchAlgorithmException ex) {
+						OAuth2Error error = new OAuth2Error(OAuth2ErrorCodes.SERVER_ERROR,
+								"Failed to compute hash for Session ID.", null);
+						throw new OAuth2AuthenticationException(error);
+					}
+
 					String sidClaim = idToken.getClaim("sid");
 					if (!StringUtils.hasText(sidClaim) ||
-							!sidClaim.equals(sessionInformation.getSessionId())) {
+							!sidClaim.equals(sessionIdHash)) {
 						throwError(OAuth2ErrorCodes.INVALID_TOKEN, "sid");
 					}
 				}
@@ -182,4 +195,9 @@ public final class OidcLogoutAuthenticationProvider implements AuthenticationPro
 		throw new OAuth2AuthenticationException(error);
 	}
 
+	private static String createHash(String value) throws NoSuchAlgorithmException {
+		MessageDigest md = MessageDigest.getInstance("SHA-256");
+		byte[] digest = md.digest(value.getBytes(StandardCharsets.US_ASCII));
+		return Base64.getUrlEncoder().withoutPadding().encodeToString(digest);
+	}
 }

@@ -283,6 +283,33 @@ public class OAuth2AuthorizationCodeAuthenticationProviderTests {
 		assertThat(updatedAuthorization.getRefreshToken().isInvalidated()).isTrue();
 	}
 
+	// gh PR 1233
+	@Test
+	public void authenticateWhenInvalidatedCodeAndNullRefreshAndAccessTokensThenThrowOAuth2AuthenticationException() {
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+		OAuth2AuthorizationCode authorizationCode = new OAuth2AuthorizationCode(
+				AUTHORIZATION_CODE, Instant.now(), Instant.now().plusSeconds(120));
+		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient, authorizationCode)
+				.token(authorizationCode, (metadata) -> metadata.put(OAuth2Authorization.Token.INVALIDATED_METADATA_NAME, true))
+				.build();
+
+		when(this.authorizationService.findByToken(eq(AUTHORIZATION_CODE), eq(AUTHORIZATION_CODE_TOKEN_TYPE)))
+				.thenReturn(authorization);
+
+		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(
+				registeredClient, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
+		OAuth2AuthorizationRequest authorizationRequest = authorization.getAttribute(
+				OAuth2AuthorizationRequest.class.getName());
+		OAuth2AuthorizationCodeAuthenticationToken authentication =
+				new OAuth2AuthorizationCodeAuthenticationToken(AUTHORIZATION_CODE, clientPrincipal, authorizationRequest.getRedirectUri(), null);
+
+		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
+				.isInstanceOf(OAuth2AuthenticationException.class)
+				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+				.extracting("errorCode")
+				.isEqualTo(OAuth2ErrorCodes.INVALID_GRANT);
+	}
+
 	// gh-290
 	@Test
 	public void authenticateWhenExpiredCodeThenThrowOAuth2AuthenticationException() {

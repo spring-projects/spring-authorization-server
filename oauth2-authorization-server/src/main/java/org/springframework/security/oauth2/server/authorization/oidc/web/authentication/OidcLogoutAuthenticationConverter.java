@@ -65,6 +65,12 @@ public final class OidcLogoutAuthenticationConverter implements AuthenticationCo
 			principal = ANONYMOUS_AUTHENTICATION;
 		}
 
+		String sessionId = null;
+		HttpSession session = request.getSession(false);
+		if (session != null) {
+			sessionId = session.getId();
+		}
+
 		// client_id (OPTIONAL)
 		String clientId = parameters.getFirst(OAuth2ParameterNames.CLIENT_ID);
 		if (StringUtils.hasText(clientId) &&
@@ -84,12 +90,6 @@ public final class OidcLogoutAuthenticationConverter implements AuthenticationCo
 		if (StringUtils.hasText(state) &&
 				parameters.get(OAuth2ParameterNames.STATE).size() != 1) {
 			throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.STATE);
-		}
-
-		String sessionId = null;
-		HttpSession session = request.getSession(false);
-		if (session != null) {
-			sessionId = session.getId();
 		}
 
 		return new OidcLogoutAuthenticationToken(idTokenHint, principal,

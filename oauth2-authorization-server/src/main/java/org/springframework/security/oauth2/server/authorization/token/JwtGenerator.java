@@ -18,6 +18,7 @@ package org.springframework.security.oauth2.server.authorization.token;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
+import java.util.Date;
 
 import org.springframework.lang.Nullable;
 import org.springframework.security.core.session.SessionInformation;
@@ -126,11 +127,15 @@ public final class JwtGenerator implements OAuth2TokenGenerator<Jwt> {
 				if (StringUtils.hasText(nonce)) {
 					claimsBuilder.claim(IdTokenClaimNames.NONCE, nonce);
 				}
-			}
-			SessionInformation sessionInformation = context.get(SessionInformation.class);
-			if (sessionInformation != null) {
-				claimsBuilder.claim("sid", sessionInformation.getSessionId());
-				claimsBuilder.claim(IdTokenClaimNames.AUTH_TIME, sessionInformation.getLastRequest());
+				SessionInformation sessionInformation = context.get(SessionInformation.class);
+				if (sessionInformation != null) {
+					claimsBuilder.claim("sid", sessionInformation.getSessionId());
+					claimsBuilder.claim(IdTokenClaimNames.AUTH_TIME, sessionInformation.getLastRequest());
+				}
+			} else if (AuthorizationGrantType.REFRESH_TOKEN.equals(context.getAuthorizationGrantType())) {
+				OidcIdToken currentIdToken = context.getAuthorization().getToken(OidcIdToken.class).getToken();
+				claimsBuilder.claim("sid", currentIdToken.getClaim("sid"));
+				claimsBuilder.claim(IdTokenClaimNames.AUTH_TIME, currentIdToken.<Date>getClaim(IdTokenClaimNames.AUTH_TIME));
 			}
 		}
 		// @formatter:on

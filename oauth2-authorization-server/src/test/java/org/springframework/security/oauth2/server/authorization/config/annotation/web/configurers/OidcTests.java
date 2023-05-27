@@ -237,6 +237,63 @@ public class OidcTests {
 		assertThat(idToken.<String>getClaim("sid")).isNotNull();
 	}
 
+	// gh-1224
+	@Test
+	public void requestWhenRefreshTokenRequestThenIdTokenContainsSidClaim() throws Exception {
+		this.spring.register(AuthorizationServerConfiguration.class).autowire();
+
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().scope(OidcScopes.OPENID).build();
+		this.registeredClientRepository.save(registeredClient);
+
+		MultiValueMap<String, String> authorizationRequestParameters = getAuthorizationRequestParameters(registeredClient);
+		MvcResult mvcResult = this.mvc.perform(get(DEFAULT_AUTHORIZATION_ENDPOINT_URI)
+						.params(authorizationRequestParameters)
+						.with(user("user").roles("A", "B")))
+				.andExpect(status().is3xxRedirection())
+				.andReturn();
+		String redirectedUrl = mvcResult.getResponse().getRedirectedUrl();
+		String expectedRedirectUri = authorizationRequestParameters.getFirst(OAuth2ParameterNames.REDIRECT_URI);
+		assertThat(redirectedUrl).matches(expectedRedirectUri + "\\?code=.{15,}&state=state");
+
+		String authorizationCode = extractParameterFromRedirectUri(redirectedUrl, "code");
+		OAuth2Authorization authorization = this.authorizationService.findByToken(authorizationCode, AUTHORIZATION_CODE_TOKEN_TYPE);
+
+		mvcResult = this.mvc.perform(post(DEFAULT_TOKEN_ENDPOINT_URI)
+						.params(getTokenRequestParameters(registeredClient, authorization))
+						.header(HttpHeaders.AUTHORIZATION, "Basic " + encodeBasicAuth(
+								registeredClient.getClientId(), registeredClient.getClientSecret())))
+				.andExpect(status().isOk())
+				.andReturn();
+
+		MockHttpServletResponse servletResponse = mvcResult.getResponse();
+		MockClientHttpResponse httpResponse = new MockClientHttpResponse(
+				servletResponse.getContentAsByteArray(), HttpStatus.valueOf(servletResponse.getStatus()));
+		OAuth2AccessTokenResponse accessTokenResponse = accessTokenHttpResponseConverter.read(OAuth2AccessTokenResponse.class, httpResponse);
+
+		Jwt idToken = this.jwtDecoder.decode((String) accessTokenResponse.getAdditionalParameters().get(OidcParameterNames.ID_TOKEN));
+
+		String sidClaim = idToken.getClaim("sid");
+		assertThat(sidClaim).isNotNull();
+
+		// Refresh access token
+		mvcResult = this.mvc.perform(post(DEFAULT_TOKEN_ENDPOINT_URI)
+						.param(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.REFRESH_TOKEN.getValue())
+						.param(OAuth2ParameterNames.REFRESH_TOKEN, accessTokenResponse.getRefreshToken().getTokenValue())
+						.header(HttpHeaders.AUTHORIZATION, "Basic " + encodeBasicAuth(
+								registeredClient.getClientId(), registeredClient.getClientSecret())))
+				.andExpect(status().isOk())
+				.andReturn();
+
+		servletResponse = mvcResult.getResponse();
+		httpResponse = new MockClientHttpResponse(
+				servletResponse.getContentAsByteArray(), HttpStatus.valueOf(servletResponse.getStatus()));
+		accessTokenResponse = accessTokenHttpResponseConverter.read(OAuth2AccessTokenResponse.class, httpResponse);
+
+		idToken = this.jwtDecoder.decode((String) accessTokenResponse.getAdditionalParameters().get(OidcParameterNames.ID_TOKEN));
+
+		assertThat(idToken.<String>getClaim("sid")).isEqualTo(sidClaim);
+	}
+
 	@Test
 	public void requestWhenLogoutRequestThenLogout() throws Exception {
 		this.spring.register(AuthorizationServerConfiguration.class).autowire();

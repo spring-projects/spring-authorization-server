@@ -107,6 +107,8 @@ public class JwtClientAssertionAuthenticationConverterTests {
 		request.addParameter(OAuth2ParameterNames.CLIENT_ID, "client-1");
 		request.addParameter(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.AUTHORIZATION_CODE.getValue());
 		request.addParameter(OAuth2ParameterNames.CODE, "code");
+		request.addParameter("custom-param-1", "custom-value-1");
+		request.addParameter("custom-param-2", "custom-value-2a", "custom-value-2b");
 		OAuth2ClientAuthenticationToken authentication = (OAuth2ClientAuthenticationToken) this.converter.convert(request);
 		assertThat(authentication.getPrincipal()).isEqualTo("client-1");
 		assertThat(authentication.getCredentials()).isEqualTo("jwt-assertion");
@@ -114,7 +116,9 @@ public class JwtClientAssertionAuthenticationConverterTests {
 		assertThat(authentication.getAdditionalParameters())
 				.containsOnly(
 						entry(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.AUTHORIZATION_CODE.getValue()),
-						entry(OAuth2ParameterNames.CODE, "code"));
+						entry(OAuth2ParameterNames.CODE, "code"),
+						entry("custom-param-1", "custom-value-1"),
+						entry("custom-param-2", new String[] {"custom-value-2a", "custom-value-2b"}));
 	}
 
 	private void assertThrown(MockHttpServletRequest request, String errorCode) {

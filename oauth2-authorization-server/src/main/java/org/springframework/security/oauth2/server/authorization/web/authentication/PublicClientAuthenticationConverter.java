@@ -16,6 +16,7 @@
 package org.springframework.security.oauth2.server.authorization.web.authentication;
 
 import java.util.HashMap;
+import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -68,7 +69,12 @@ public final class PublicClientAuthenticationConverter implements Authentication
 
 		parameters.remove(OAuth2ParameterNames.CLIENT_ID);
 
+		Map<String, Object> additionalParameters = new HashMap<>();
+		parameters.forEach((key, value) -> {
+			additionalParameters.put(key, value.size() == 1 ? value.get(0) : value.toArray(new String[0]));
+		});
+
 		return new OAuth2ClientAuthenticationToken(clientId, ClientAuthenticationMethod.NONE, null,
-				new HashMap<>(parameters.toSingleValueMap()));
+				additionalParameters);
 	}
 }

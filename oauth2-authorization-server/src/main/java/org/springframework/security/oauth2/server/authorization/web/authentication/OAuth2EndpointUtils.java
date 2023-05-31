@@ -16,8 +16,8 @@
 package org.springframework.security.oauth2.server.authorization.web.authentication;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -58,11 +58,13 @@ final class OAuth2EndpointUtils {
 		if (!matchesAuthorizationCodeGrantRequest(request)) {
 			return Collections.emptyMap();
 		}
-		Map<String, Object> parameters = new HashMap<>(getParameters(request).toSingleValueMap());
+		MultiValueMap<String, String> parameters = getParameters(request);
 		for (String exclusion : exclusions) {
 			parameters.remove(exclusion);
 		}
-		return parameters;
+		return parameters.entrySet().stream()
+			.collect(Collectors.toMap(Map.Entry::getKey,
+				e -> e.getValue().size() == 1 ? e.getValue().get(0) : e.getValue().toArray(new String[0])));
 	}
 
 	static boolean matchesAuthorizationCodeGrantRequest(HttpServletRequest request) {

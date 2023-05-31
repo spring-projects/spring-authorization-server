@@ -95,6 +95,7 @@ public class ClientSecretPostAuthenticationConverterTests {
 		MockHttpServletRequest request = createPkceTokenRequest();
 		request.addParameter(OAuth2ParameterNames.CLIENT_ID, "client-1");
 		request.addParameter(OAuth2ParameterNames.CLIENT_SECRET, "client-secret");
+		request.addParameter("custom-param-1", "custom-value-1a", "custom-value-1b");
 		OAuth2ClientAuthenticationToken authentication = (OAuth2ClientAuthenticationToken) this.converter.convert(request);
 		assertThat(authentication.getPrincipal()).isEqualTo("client-1");
 		assertThat(authentication.getCredentials()).isEqualTo("client-secret");
@@ -103,7 +104,8 @@ public class ClientSecretPostAuthenticationConverterTests {
 				.containsOnly(
 						entry(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.AUTHORIZATION_CODE.getValue()),
 						entry(OAuth2ParameterNames.CODE, "code"),
-						entry(PkceParameterNames.CODE_VERIFIER, "code-verifier-1"));
+						entry(PkceParameterNames.CODE_VERIFIER, "code-verifier-1"),
+						entry("custom-param-1", new String[] { "custom-value-1a", "custom-value-1b" }));
 	}
 
 	private static MockHttpServletRequest createPkceTokenRequest() {

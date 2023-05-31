@@ -90,7 +90,7 @@ public final class OAuth2RefreshTokenAuthenticationConverter implements Authenti
 			if (!key.equals(OAuth2ParameterNames.GRANT_TYPE) &&
 					!key.equals(OAuth2ParameterNames.REFRESH_TOKEN) &&
 					!key.equals(OAuth2ParameterNames.SCOPE)) {
-				additionalParameters.put(key, value.get(0));
+				additionalParameters.put(key, value.size() == 1 ? value.get(0) : value.toArray(new String[0]));
 			}
 		});
 

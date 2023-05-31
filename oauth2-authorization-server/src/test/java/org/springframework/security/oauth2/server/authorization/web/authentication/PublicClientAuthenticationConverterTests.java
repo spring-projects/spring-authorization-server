@@ -82,6 +82,8 @@ public class PublicClientAuthenticationConverterTests {
 	@Test
 	public void convertWhenPublicClientThenReturnClientAuthenticationToken() {
 		MockHttpServletRequest request = createPkceTokenRequest();
+		request.addParameter("param-1", "value-1");
+		request.addParameter("param-2", "value-2", "value-2b");
 		OAuth2ClientAuthenticationToken authentication = (OAuth2ClientAuthenticationToken) this.converter.convert(request);
 		assertThat(authentication.getPrincipal()).isEqualTo("client-1");
 		assertThat(authentication.getClientAuthenticationMethod()).isEqualTo(ClientAuthenticationMethod.NONE);
@@ -89,7 +91,9 @@ public class PublicClientAuthenticationConverterTests {
 				.containsOnly(
 						entry(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.AUTHORIZATION_CODE.getValue()),
 						entry(OAuth2ParameterNames.CODE, "code"),
-						entry(PkceParameterNames.CODE_VERIFIER, "code-verifier-1"));
+						entry(PkceParameterNames.CODE_VERIFIER, "code-verifier-1"),
+						entry("param-1", "value-1"),
+						entry("param-2", new String[] {"value-2", "value-2b"}));
 	}
 
 	private static MockHttpServletRequest createPkceTokenRequest() {

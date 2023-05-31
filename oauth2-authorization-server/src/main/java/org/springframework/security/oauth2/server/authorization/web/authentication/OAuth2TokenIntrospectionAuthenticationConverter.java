@@ -69,7 +69,7 @@ public final class OAuth2TokenIntrospectionAuthenticationConverter implements Au
 		parameters.forEach((key, value) -> {
 			if (!key.equals(OAuth2ParameterNames.TOKEN) &&
 					!key.equals(OAuth2ParameterNames.TOKEN_TYPE_HINT)) {
-				additionalParameters.put(key, value.get(0));
+				additionalParameters.put(key, value.size() == 1 ? value.get(0) : value.toArray(new String[0]));
 			}
 		});
 

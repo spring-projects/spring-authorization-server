@@ -34,6 +34,7 @@ import org.springframework.security.oauth2.core.converter.ClaimConversionService
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenIntrospection;
+import org.springframework.security.oauth2.server.authorization.OAuth2TokenType;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.util.Assert;
@@ -82,8 +83,11 @@ public final class OAuth2TokenIntrospectionAuthenticationProvider implements Aut
 		OAuth2ClientAuthenticationToken clientPrincipal =
 				getAuthenticatedClientElseThrowInvalidClient(tokenIntrospectionAuthentication);
 
+		String tokenTypeHint = tokenIntrospectionAuthentication.getTokenTypeHint();
+		OAuth2TokenType tokenType = (null == tokenTypeHint) ? null : (new OAuth2TokenType(tokenTypeHint));
+
 		OAuth2Authorization authorization = this.authorizationService.findByToken(
-				tokenIntrospectionAuthentication.getToken(), null);
+				tokenIntrospectionAuthentication.getToken(), tokenType);
 		if (authorization == null) {
 			if (this.logger.isTraceEnabled()) {
 				this.logger.trace("Did not authenticate token introspection request since token was not found");

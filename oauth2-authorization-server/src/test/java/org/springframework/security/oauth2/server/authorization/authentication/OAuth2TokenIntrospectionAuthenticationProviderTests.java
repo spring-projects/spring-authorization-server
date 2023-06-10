@@ -24,8 +24,9 @@ import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
+import org.mockito.ArgumentCaptor;
 import org.springframework.security.authentication.TestingAuthenticationToken;
+import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
@@ -35,6 +36,7 @@ import org.springframework.security.oauth2.core.OAuth2TokenIntrospectionClaimNam
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenIntrospection;
+import org.springframework.security.oauth2.server.authorization.OAuth2TokenType;
 import org.springframework.security.oauth2.server.authorization.TestOAuth2Authorizations;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
@@ -293,4 +295,49 @@ public class OAuth2TokenIntrospectionAuthenticationProviderTests {
 		assertThat(tokenClaims.getExpiresAt()).isEqualTo(refreshToken.getExpiresAt());
 	}
 
+	@Test
+	public void authenticateWhenFindByTokenWithTokenTypeHintNullThenTokenTypeIsNull() {
+		String testTokenTypeHint = null;
+		ArgumentCaptor<OAuth2TokenType> tokenTypeCaptor = ArgumentCaptor.forClass(OAuth2TokenType.class);
+
+		RegisteredClient authorizedClient = TestRegisteredClients.registeredClient().build();
+		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization().build();
+		OAuth2RefreshToken refreshToken = authorization.getRefreshToken().getToken();
+		when(this.authorizationService.findByToken(eq(refreshToken.getTokenValue()), tokenTypeCaptor.capture()))
+				.thenReturn(authorization);
+		when(this.registeredClientRepository.findById(eq(authorizedClient.getId()))).thenReturn(authorizedClient);
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient2().build();
+		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(
+				registeredClient, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
+
+		OAuth2TokenIntrospectionAuthenticationToken authentication = new OAuth2TokenIntrospectionAuthenticationToken(
+				refreshToken.getTokenValue(), clientPrincipal, testTokenTypeHint, null);
+
+		this.authenticationProvider.authenticate(authentication);
+
+		assertThat(tokenTypeCaptor.getValue()).isEqualTo(null);
+	}
+
+	@Test
+	public void authenticateWhenFindByTokenWithTokenTypeHintThenTokenTypeIsNotNull() {
+		String testTokenTypeHint = OAuth2ParameterNames.REFRESH_TOKEN;
+		ArgumentCaptor<OAuth2TokenType> tokenTypeCaptor = ArgumentCaptor.forClass(OAuth2TokenType.class);
+
+		RegisteredClient authorizedClient = TestRegisteredClients.registeredClient().build();
+		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization().build();
+		OAuth2RefreshToken refreshToken = authorization.getRefreshToken().getToken();
+		when(this.authorizationService.findByToken(eq(refreshToken.getTokenValue()), tokenTypeCaptor.capture()))
+				.thenReturn(authorization);
+		when(this.registeredClientRepository.findById(eq(authorizedClient.getId()))).thenReturn(authorizedClient);
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient2().build();
+		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(
+				registeredClient, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
+
+		OAuth2TokenIntrospectionAuthenticationToken authentication = new OAuth2TokenIntrospectionAuthenticationToken(
+				refreshToken.getTokenValue(), clientPrincipal, testTokenTypeHint, null);
+
+		this.authenticationProvider.authenticate(authentication);
+
+		assertThat(tokenTypeCaptor.getValue()).isEqualTo(new OAuth2TokenType(testTokenTypeHint));
+	}
 }

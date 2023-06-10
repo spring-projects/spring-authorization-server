@@ -132,7 +132,7 @@ final class CodeVerifierAuthenticator {
 
 	private boolean codeVerifierValid(String codeVerifier, String codeChallenge, String codeChallengeMethod) {
 		if (!StringUtils.hasText(codeVerifier)) {
-			logDebugMessage("Missing code_challenge");
+			logDebugMessage("Missing code_verifier");
 			return false;
 		} else if ("S256".equals(codeChallengeMethod)) {
 			try {

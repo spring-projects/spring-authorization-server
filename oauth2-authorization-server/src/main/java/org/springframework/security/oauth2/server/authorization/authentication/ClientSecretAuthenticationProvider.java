@@ -114,6 +114,9 @@ public final class ClientSecretAuthenticationProvider implements AuthenticationP
 
 		String clientSecret = clientAuthentication.getCredentials().toString();
 		if (!this.passwordEncoder.matches(clientSecret, registeredClient.getClientSecret())) {
+			if(this.logger.isDebugEnabled()){
+				this.logger.debug("Invalid client_secret");
+			}
 			throwInvalidClient(OAuth2ParameterNames.CLIENT_SECRET);
 		}
 

@@ -96,6 +96,7 @@ final class CodeVerifierAuthenticator {
 				.get(PkceParameterNames.CODE_CHALLENGE);
 		if (!StringUtils.hasText(codeChallenge)) {
 			if (registeredClient.getClientSettings().isRequireProofKey()) {
+				logDebugMessage("Missing code_challenge");
 				throwInvalidGrant(PkceParameterNames.CODE_CHALLENGE);
 			} else {
 				if (this.logger.isTraceEnabled()) {
@@ -129,8 +130,9 @@ final class CodeVerifierAuthenticator {
 				parameters.get(OAuth2ParameterNames.CODE) != null;
 	}
 
-	private static boolean codeVerifierValid(String codeVerifier, String codeChallenge, String codeChallengeMethod) {
+	private boolean codeVerifierValid(String codeVerifier, String codeChallenge, String codeChallengeMethod) {
 		if (!StringUtils.hasText(codeVerifier)) {
+			logDebugMessage("Missing code_verifier");
 			return false;
 		} else if ("S256".equals(codeChallengeMethod)) {
 			try {
@@ -156,4 +158,9 @@ final class CodeVerifierAuthenticator {
 		throw new OAuth2AuthenticationException(error);
 	}
 
+	private void logDebugMessage(String logMessage){
+		if(this.logger.isDebugEnabled()){
+			this.logger.debug(logMessage);
+		}
+	}
 }

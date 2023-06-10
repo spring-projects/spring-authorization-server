@@ -80,9 +80,7 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationValidator impleme
 		Set<String> requestedScopes = authorizationCodeRequestAuthentication.getScopes();
 		Set<String> allowedScopes = registeredClient.getScopes();
 		if (!requestedScopes.isEmpty() && !allowedScopes.containsAll(requestedScopes)) {
-			if(this.logger.isDebugEnabled()){
-				this.logger.debug("Invalid scope");
-			}
+			logDebugMessage("Invalid scope");
 			throwError(OAuth2ErrorCodes.INVALID_SCOPE, OAuth2ParameterNames.SCOPE,
 					authorizationCodeRequestAuthentication, registeredClient);
 		}
@@ -131,9 +129,7 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationValidator impleme
 					}
 				}
 				if (!validRedirectUri) {
-					if(this.logger.isDebugEnabled()){
-						this.logger.debug("Invalid redirect_uri");
-					}
+					logDebugMessage("Invalid redirect_uri");
 					throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.REDIRECT_URI,
 							authorizationCodeRequestAuthentication, registeredClient);
 				}
@@ -204,6 +200,12 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationValidator impleme
 		authorizationCodeRequestAuthenticationResult.setAuthenticated(true);
 
 		throw new OAuth2AuthorizationCodeRequestAuthenticationException(error, authorizationCodeRequestAuthenticationResult);
+	}
+
+	private void logDebugMessage(String logMessage){
+		if(this.logger.isDebugEnabled()){
+			this.logger.debug(logMessage);
+		}
 	}
 
 }

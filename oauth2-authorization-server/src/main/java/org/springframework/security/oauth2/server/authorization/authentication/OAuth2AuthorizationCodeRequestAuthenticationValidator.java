@@ -51,7 +51,6 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationValidator impleme
 	private static final String ERROR_URI = "https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.2.1";
 
 	private final Log logger = LogFactory.getLog(getClass());
-
 	/**
 	 * The default validator for {@link OAuth2AuthorizationCodeRequestAuthenticationToken#getScopes()}.
 	 */

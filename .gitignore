@@ -9,6 +9,11 @@ target/
 *.log
 *.log.*
 
+buildSrc/gradle/
+buildSrc/gradlew
+buildSrc/gradlew.bat
+
+
 ### STS ###
 .apt_generated
 .classpath

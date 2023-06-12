@@ -1,0 +1,54 @@
+[[how-to-custom-claims-authorities]]
+= How-to: Add authorities as custom claims in JWT-based access tokens
+:index-link: ../how-to.html
+:docs-dir: ..
+
+This guide demonstrates how to add resource owner authorities to a JWT access token.
+The term "authorities" may represent varying forms such as roles, permissions, or groups of the resource owner.
+
+To make resource owners' authorities available to the resource server, we add custom claims to an access token issued by Spring Authorization Server.
+The client using the issued token to access protected resources will then have information about the resource owner’s level of access, among other potential uses and benefits.
+
+* xref:guides/how-to-custom-claims-authorities.adoc#custom-claims[Add custom claims to JWT access tokens]
+* xref:guides/how-to-custom-claims-authorities.adoc#custom-claims-authorities[Add authorities as custom claims to JWT access tokens]
+
+[[custom-claims]]
+== Add custom claims to JWT access tokens
+
+You may add your own custom claims to an access token using `OAuth2TokenCustomizer<JWTEncodingContext>` bean.
+Please note that this bean may only be defined once, and so care must be taken care of to ensure that you are customizing the appropriate token type — an access token in this case.
+If you are interested in customizing the identity token, see xref:guides/how-to-userinfo.adoc#customize-user-info-mapper[the UserInfo mapper guide for more information].
+
+The following is an example of adding custom claims to an access token — in other words, every access token that is issued by the authorization server will have the custom claims populated.
+
+[[sample.customClaims]]
+[source,java]
+----
+include::{examples-dir}/main/java/sample/customClaims/CustomClaimsConfiguration.java[]
+----
+
+[[custom-claims-authorities]]
+== Add authorities as custom claims to JWT access tokens
+
+To add authorities of the resource owner to a JWT-based access token, we can refer to the custom claim mapping method above
+and populate custom claims with the authorities of the `Principal`.
+
+We define a sample user with a mix of authorities for demonstration purposes, and populate custom claims in an access token
+with those authorities.
+
+[[sample.customClaims.authorities]]
+[source,java]
+----
+include::{examples-dir}/main/java/sample/customClaims/authorities/CustomClaimsWithAuthoritiesConfiguration.java[]
+----
+
+<1> Define a sample user `user1` with an in-memory user details service.
+<2> Define a few roles for  `user1`.
+<3> Define `OAuth2TokenCustomizer<JwtEncodingContext>` `@Bean` that allows for customizing JWT token claims.
+<4> Check whether the JWT token is an access token.
+<5> From the encoding context, modify the claims of the access token.
+<6> Extract user roles from the `Principal` object. The role information for internal users is stored as a string prefixed with `ROLE_`, so we strip the prefix here.
+<7> Set custom claim `roles` to the set of roles collected from the previous step.
+
+As a result of this customization, authorities information about the user will be included as a custom claim within the
+access token.

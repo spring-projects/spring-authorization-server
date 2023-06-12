@@ -36,15 +36,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.session.SessionInformation;
 import org.springframework.security.core.session.SessionRegistry;
-import org.springframework.security.oauth2.core.AuthorizationGrantType;
-import org.springframework.security.oauth2.core.ClaimAccessor;
-import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
-import org.springframework.security.oauth2.core.OAuth2AccessToken;
-import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
-import org.springframework.security.oauth2.core.OAuth2Error;
-import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
-import org.springframework.security.oauth2.core.OAuth2RefreshToken;
-import org.springframework.security.oauth2.core.OAuth2Token;
+import org.springframework.security.oauth2.core.*;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
@@ -154,7 +146,7 @@ public final class OAuth2AuthorizationCodeAuthenticationProvider implements Auth
 
 		if (!authorizationCode.isActive()) {
 			if (authorizationCode.isInvalidated()) {
-				var token = authorization.getRefreshToken() != null ?
+				OAuth2Authorization.Token<? extends AbstractOAuth2Token> token = authorization.getRefreshToken() != null ?
 						authorization.getRefreshToken() :
 						authorization.getAccessToken();
 				if (token != null) {

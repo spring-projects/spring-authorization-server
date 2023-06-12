@@ -31,9 +31,11 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.session.SessionInformation;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
+import org.springframework.security.oauth2.core.OAuth2RefreshToken;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.oidc.IdTokenClaimNames;
+import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
 import org.springframework.security.oauth2.core.oidc.endpoint.OidcParameterNames;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
@@ -46,6 +48,7 @@ import org.springframework.security.oauth2.server.authorization.OAuth2TokenType;
 import org.springframework.security.oauth2.server.authorization.TestOAuth2Authorizations;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientAuthenticationToken;
+import org.springframework.security.oauth2.server.authorization.authentication.OAuth2RefreshTokenAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
 import org.springframework.security.oauth2.server.authorization.context.TestAuthorizationServerContext;
@@ -152,7 +155,7 @@ public class JwtGeneratorTests {
 	}
 
 	@Test
-	public void generateWhenIdTokenTypeThenReturnJwt() {
+	public void generateWhenIdTokenTypeAndAuthorizationCodeGrantThenReturnJwt() {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
 				.scope(OidcScopes.OPENID)
 				.tokenSettings(TokenSettings.builder().idTokenSignatureAlgorithm(SignatureAlgorithm.ES256).build())
@@ -184,6 +187,49 @@ public class JwtGeneratorTests {
 				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
 				.authorizationGrant(authentication)
 				.put(SessionInformation.class, sessionInformation)
+				.build();
+		// @formatter:on
+
+		assertGeneratedTokenType(tokenContext);
+	}
+
+	// gh-1224
+	@Test
+	public void generateWhenIdTokenTypeAndRefreshTokenGrantThenReturnJwt() {
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
+				.scope(OidcScopes.OPENID)
+				.build();
+		OidcIdToken idToken =  OidcIdToken.withTokenValue("id-token")
+				.issuer("https://provider.com")
+				.subject("subject")
+				.issuedAt(Instant.now())
+				.expiresAt(Instant.now().plusSeconds(60))
+				.claim("sid", "sessionId-1234")
+				.claim(IdTokenClaimNames.AUTH_TIME, Date.from(Instant.now()))
+				.build();
+		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient)
+				.token(idToken)
+				.build();
+
+		OAuth2RefreshToken refreshToken = authorization.getRefreshToken().getToken();
+		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(
+				registeredClient, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
+
+		OAuth2RefreshTokenAuthenticationToken authentication = new OAuth2RefreshTokenAuthenticationToken(
+				refreshToken.getTokenValue(), clientPrincipal, null, null);
+
+		Authentication principal = authorization.getAttribute(Principal.class.getName());
+
+		// @formatter:off
+		OAuth2TokenContext tokenContext = DefaultOAuth2TokenContext.builder()
+				.registeredClient(registeredClient)
+				.principal(principal)
+				.authorizationServerContext(this.authorizationServerContext)
+				.authorization(authorization)
+				.authorizedScopes(authorization.getAuthorizedScopes())
+				.tokenType(ID_TOKEN_TOKEN_TYPE)
+				.authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
+				.authorizationGrant(authentication)
 				.build();
 		// @formatter:on
 
@@ -239,15 +285,20 @@ public class JwtGeneratorTests {
 			assertThat(scopes).isEqualTo(tokenContext.getAuthorizedScopes());
 		} else {
 			assertThat(jwtClaimsSet.<String>getClaim(IdTokenClaimNames.AZP)).isEqualTo(tokenContext.getRegisteredClient().getClientId());
+			if (tokenContext.getAuthorizationGrantType().equals(AuthorizationGrantType.AUTHORIZATION_CODE)) {
+				OAuth2AuthorizationRequest authorizationRequest = tokenContext.getAuthorization().getAttribute(
+						OAuth2AuthorizationRequest.class.getName());
+				String nonce = (String) authorizationRequest.getAdditionalParameters().get(OidcParameterNames.NONCE);
+				assertThat(jwtClaimsSet.<String>getClaim(IdTokenClaimNames.NONCE)).isEqualTo(nonce);
 
-			OAuth2AuthorizationRequest authorizationRequest = tokenContext.getAuthorization().getAttribute(
-					OAuth2AuthorizationRequest.class.getName());
-			String nonce = (String) authorizationRequest.getAdditionalParameters().get(OidcParameterNames.NONCE);
-			assertThat(jwtClaimsSet.<String>getClaim(IdTokenClaimNames.NONCE)).isEqualTo(nonce);
-
-			SessionInformation sessionInformation = tokenContext.get(SessionInformation.class);
-			assertThat(jwtClaimsSet.<String>getClaim("sid")).isEqualTo(sessionInformation.getSessionId());
-			assertThat(jwtClaimsSet.<Date>getClaim(IdTokenClaimNames.AUTH_TIME)).isEqualTo(sessionInformation.getLastRequest());
+				SessionInformation sessionInformation = tokenContext.get(SessionInformation.class);
+				assertThat(jwtClaimsSet.<String>getClaim("sid")).isEqualTo(sessionInformation.getSessionId());
+				assertThat(jwtClaimsSet.<Date>getClaim(IdTokenClaimNames.AUTH_TIME)).isEqualTo(sessionInformation.getLastRequest());
+			} else if (tokenContext.getAuthorizationGrantType().equals(AuthorizationGrantType.REFRESH_TOKEN)) {
+				OidcIdToken currentIdToken = tokenContext.getAuthorization().getToken(OidcIdToken.class).getToken();
+				assertThat(jwtClaimsSet.<String>getClaim("sid")).isEqualTo(currentIdToken.getClaim("sid"));
+				assertThat(jwtClaimsSet.<Date>getClaim(IdTokenClaimNames.AUTH_TIME)).isEqualTo(currentIdToken.<Date>getClaim(IdTokenClaimNames.AUTH_TIME));
+			}
 		}
 	}
 

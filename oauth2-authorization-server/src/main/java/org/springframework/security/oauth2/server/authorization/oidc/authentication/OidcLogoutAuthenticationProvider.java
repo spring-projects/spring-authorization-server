@@ -18,6 +18,7 @@ package org.springframework.security.oauth2.server.authorization.oidc.authentica
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.Principal;
 import java.util.Base64;
 import java.util.List;
 
@@ -130,16 +131,17 @@ public final class OidcLogoutAuthenticationProvider implements AuthenticationPro
 
 		// Validate user identity
 		if (oidcLogoutAuthentication.isPrincipalAuthenticated()) {
-			Authentication userPrincipal = (Authentication) oidcLogoutAuthentication.getPrincipal();
+			Authentication currentUserPrincipal = (Authentication) oidcLogoutAuthentication.getPrincipal();
+			Authentication authorizedUserPrincipal = authorization.getAttribute(Principal.class.getName());
 			if (!StringUtils.hasText(idToken.getSubject()) ||
-					!idToken.getSubject().equals(userPrincipal.getName())) {
+					!currentUserPrincipal.getName().equals(authorizedUserPrincipal.getName())) {
 				throwError(OAuth2ErrorCodes.INVALID_TOKEN, IdTokenClaimNames.SUB);
 			}
 
 			// Check for active session
 			if (StringUtils.hasText(oidcLogoutAuthentication.getSessionId())) {
 				SessionInformation sessionInformation = findSessionInformation(
-						userPrincipal, oidcLogoutAuthentication.getSessionId());
+						currentUserPrincipal, oidcLogoutAuthentication.getSessionId());
 				if (sessionInformation != null) {
 					String sessionIdHash;
 					try {

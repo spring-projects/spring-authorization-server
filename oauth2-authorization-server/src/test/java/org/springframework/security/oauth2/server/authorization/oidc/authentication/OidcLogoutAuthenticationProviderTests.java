@@ -317,12 +317,11 @@ public class OidcLogoutAuthenticationProviderTests {
 	}
 
 	@Test
-	public void authenticateWhenInvalidSubThenThrowOAuth2AuthenticationException() {
+	public void authenticateWhenMissingSubThenThrowOAuth2AuthenticationException() {
 		TestingAuthenticationToken principal = new TestingAuthenticationToken("principal", "credentials");
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 		OidcIdToken idToken =  OidcIdToken.withTokenValue("id-token")
 				.issuer("https://provider.com")
-				.subject("other-sub")
 				.audience(Collections.singleton(registeredClient.getClientId()))
 				.issuedAt(Instant.now().minusSeconds(60).truncatedTo(ChronoUnit.MILLIS))
 				.expiresAt(Instant.now().plusSeconds(60).truncatedTo(ChronoUnit.MILLIS))
@@ -341,6 +340,49 @@ public class OidcLogoutAuthenticationProviderTests {
 
 		OidcLogoutAuthenticationToken authentication = new OidcLogoutAuthenticationToken(
 				idToken.getTokenValue(), principal, "session-1", null, null, null);
+
+		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
+				.isInstanceOf(OAuth2AuthenticationException.class)
+				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+				.satisfies(error -> {
+					assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_TOKEN);
+					assertThat(error.getDescription()).contains("sub");
+				});
+		verify(this.authorizationService).findByToken(
+				eq(authentication.getIdTokenHint()), eq(ID_TOKEN_TOKEN_TYPE));
+		verify(this.registeredClientRepository).findById(
+				eq(authorization.getRegisteredClientId()));
+	}
+
+	// gh-1235
+	@Test
+	public void authenticateWhenInvalidPrincipalThenThrowOAuth2AuthenticationException() {
+		TestingAuthenticationToken principal = new TestingAuthenticationToken("principal", "credentials");
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+		OidcIdToken idToken =  OidcIdToken.withTokenValue("id-token")
+				.issuer("https://provider.com")
+				.subject(principal.getName())
+				.audience(Collections.singleton(registeredClient.getClientId()))
+				.issuedAt(Instant.now().minusSeconds(60).truncatedTo(ChronoUnit.MILLIS))
+				.expiresAt(Instant.now().plusSeconds(60).truncatedTo(ChronoUnit.MILLIS))
+				.build();
+		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient)
+				.principalName(principal.getName())
+				.token(idToken,
+						(metadata) -> metadata.put(OAuth2Authorization.Token.CLAIMS_METADATA_NAME, idToken.getClaims()))
+				.build();
+		when(this.authorizationService.findByToken(eq(idToken.getTokenValue()), eq(ID_TOKEN_TOKEN_TYPE)))
+				.thenReturn(authorization);
+		when(this.registeredClientRepository.findById(eq(authorization.getRegisteredClientId())))
+				.thenReturn(registeredClient);
+
+		principal.setAuthenticated(true);
+
+		TestingAuthenticationToken otherPrincipal = new TestingAuthenticationToken("other-principal", "credentials");
+		otherPrincipal.setAuthenticated(true);
+
+		OidcLogoutAuthenticationToken authentication = new OidcLogoutAuthenticationToken(
+				idToken.getTokenValue(), otherPrincipal, "session-1", null, null, null);
 
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 				.isInstanceOf(OAuth2AuthenticationException.class)

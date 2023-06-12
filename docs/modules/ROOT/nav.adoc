@@ -10,3 +10,4 @@
 ** xref:guides/how-to-pkce.adoc[]
 ** xref:guides/how-to-social-login.adoc[]
 ** xref:guides/how-to-userinfo.adoc[]
+** xref:guides/how-to-custom-claims-authorities.adoc[]

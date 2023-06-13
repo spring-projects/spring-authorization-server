@@ -273,7 +273,8 @@ public class OAuth2TokenEndpointFilterTests {
 		assertThat(authorizationCodeAuthentication.getRedirectUri()).isEqualTo(
 				request.getParameter(OAuth2ParameterNames.REDIRECT_URI));
 		assertThat(authorizationCodeAuthentication.getAdditionalParameters())
-				.containsExactly(entry("custom-param-1", "custom-value-1"));
+				.containsExactly(entry("custom-param-1", "custom-value-1"),
+					entry("custom-param-2", new String[]{ "custom-value-2a", "custom-value-2b" }));
 		assertThat(authorizationCodeAuthentication.getDetails())
 				.asInstanceOf(type(WebAuthenticationDetails.class))
 				.extracting(WebAuthenticationDetails::getRemoteAddress)
@@ -340,7 +341,8 @@ public class OAuth2TokenEndpointFilterTests {
 		assertThat(clientCredentialsAuthentication.getPrincipal()).isEqualTo(clientPrincipal);
 		assertThat(clientCredentialsAuthentication.getScopes()).isEqualTo(registeredClient.getScopes());
 		assertThat(clientCredentialsAuthentication.getAdditionalParameters())
-				.containsExactly(entry("custom-param-1", "custom-value-1"));
+				.containsExactly(entry("custom-param-1", "custom-value-1"),
+					entry("custom-param-2", new String[]{ "custom-value-2a", "custom-value-2b" }));
 		assertThat(clientCredentialsAuthentication.getDetails())
 				.asInstanceOf(type(WebAuthenticationDetails.class))
 				.extracting(WebAuthenticationDetails::getRemoteAddress)
@@ -430,7 +432,8 @@ public class OAuth2TokenEndpointFilterTests {
 		assertThat(refreshTokenAuthenticationToken.getPrincipal()).isEqualTo(clientPrincipal);
 		assertThat(refreshTokenAuthenticationToken.getScopes()).isEqualTo(registeredClient.getScopes());
 		assertThat(refreshTokenAuthenticationToken.getAdditionalParameters())
-				.containsExactly(entry("custom-param-1", "custom-value-1"));
+				.containsExactly(entry("custom-param-1", "custom-value-1"),
+					entry("custom-param-2", new String[]{ "custom-value-2a", "custom-value-2b" }));
 		assertThat(refreshTokenAuthenticationToken.getDetails())
 				.asInstanceOf(type(WebAuthenticationDetails.class))
 				.extracting(WebAuthenticationDetails::getRemoteAddress)
@@ -613,6 +616,7 @@ public class OAuth2TokenEndpointFilterTests {
 		// The client does not need to send the client ID param, but we are resilient in case they do
 		request.addParameter(OAuth2ParameterNames.CLIENT_ID, registeredClient.getClientId());
 		request.addParameter("custom-param-1", "custom-value-1");
+		request.addParameter("custom-param-2", "custom-value-2a", "custom-value-2b");
 
 		return request;
 	}
@@ -627,6 +631,7 @@ public class OAuth2TokenEndpointFilterTests {
 		request.addParameter(OAuth2ParameterNames.SCOPE,
 				StringUtils.collectionToDelimitedString(registeredClient.getScopes(), " "));
 		request.addParameter("custom-param-1", "custom-value-1");
+		request.addParameter("custom-param-2", "custom-value-2a", "custom-value-2b");
 
 		return request;
 	}
@@ -642,6 +647,7 @@ public class OAuth2TokenEndpointFilterTests {
 		request.addParameter(OAuth2ParameterNames.SCOPE,
 				StringUtils.collectionToDelimitedString(registeredClient.getScopes(), " "));
 		request.addParameter("custom-param-1", "custom-value-1");
+		request.addParameter("custom-param-2", "custom-value-2a", "custom-value-2b");
 
 		return request;
 	}

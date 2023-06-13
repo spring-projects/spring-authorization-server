@@ -84,7 +84,7 @@ public final class OAuth2AuthorizationCodeAuthenticationConverter implements Aut
 					!key.equals(OAuth2ParameterNames.CLIENT_ID) &&
 					!key.equals(OAuth2ParameterNames.CODE) &&
 					!key.equals(OAuth2ParameterNames.REDIRECT_URI)) {
-				additionalParameters.put(key, value.get(0));
+				additionalParameters.put(key, value.size() == 1 ? value.get(0) : value.toArray(new String[0]));
 			}
 		});
 

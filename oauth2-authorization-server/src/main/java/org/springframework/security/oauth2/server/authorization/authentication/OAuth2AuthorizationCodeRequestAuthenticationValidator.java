@@ -20,6 +20,8 @@ import java.util.function.Consumer;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
+import org.springframework.core.log.LogMessage;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
@@ -49,19 +51,19 @@ import org.springframework.web.util.UriComponentsBuilder;
  */
 public final class OAuth2AuthorizationCodeRequestAuthenticationValidator implements Consumer<OAuth2AuthorizationCodeRequestAuthenticationContext> {
 	private static final String ERROR_URI = "https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.2.1";
+	private static final Log LOGGER = LogFactory.getLog(OAuth2AuthorizationCodeRequestAuthenticationValidator.class);
 
-	private final Log logger = LogFactory.getLog(getClass());
 	/**
 	 * The default validator for {@link OAuth2AuthorizationCodeRequestAuthenticationToken#getScopes()}.
 	 */
-	public final Consumer<OAuth2AuthorizationCodeRequestAuthenticationContext> DEFAULT_SCOPE_VALIDATOR =
-			this::validateScope;
+	public static final Consumer<OAuth2AuthorizationCodeRequestAuthenticationContext> DEFAULT_SCOPE_VALIDATOR =
+			OAuth2AuthorizationCodeRequestAuthenticationValidator::validateScope;
 
 	/**
 	 * The default validator for {@link OAuth2AuthorizationCodeRequestAuthenticationToken#getRedirectUri()}.
 	 */
-	public final Consumer<OAuth2AuthorizationCodeRequestAuthenticationContext> DEFAULT_REDIRECT_URI_VALIDATOR =
-			this::validateRedirectUri;
+	public static final Consumer<OAuth2AuthorizationCodeRequestAuthenticationContext> DEFAULT_REDIRECT_URI_VALIDATOR =
+			OAuth2AuthorizationCodeRequestAuthenticationValidator::validateRedirectUri;
 
 	private final Consumer<OAuth2AuthorizationCodeRequestAuthenticationContext> authenticationValidator =
 			DEFAULT_REDIRECT_URI_VALIDATOR.andThen(DEFAULT_SCOPE_VALIDATOR);
@@ -71,7 +73,7 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationValidator impleme
 		this.authenticationValidator.accept(authenticationContext);
 	}
 
-	private void validateScope(OAuth2AuthorizationCodeRequestAuthenticationContext authenticationContext) {
+	private static void validateScope(OAuth2AuthorizationCodeRequestAuthenticationContext authenticationContext) {
 		OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthentication =
 				authenticationContext.getAuthentication();
 		RegisteredClient registeredClient = authenticationContext.getRegisteredClient();
@@ -79,13 +81,16 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationValidator impleme
 		Set<String> requestedScopes = authorizationCodeRequestAuthentication.getScopes();
 		Set<String> allowedScopes = registeredClient.getScopes();
 		if (!requestedScopes.isEmpty() && !allowedScopes.containsAll(requestedScopes)) {
-			logDebugMessage("Invalid scope");
+			if (LOGGER.isDebugEnabled()) {
+				LOGGER.debug(LogMessage.format("Invalid request: requested scope is not allowed" +
+						" for registered client '%s'", registeredClient.getId()));
+			}
 			throwError(OAuth2ErrorCodes.INVALID_SCOPE, OAuth2ParameterNames.SCOPE,
 					authorizationCodeRequestAuthentication, registeredClient);
 		}
 	}
 
-	private void validateRedirectUri(OAuth2AuthorizationCodeRequestAuthenticationContext authenticationContext) {
+	private static void validateRedirectUri(OAuth2AuthorizationCodeRequestAuthenticationContext authenticationContext) {
 		OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthentication =
 				authenticationContext.getAuthentication();
 		RegisteredClient registeredClient = authenticationContext.getRegisteredClient();
@@ -100,6 +105,10 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationValidator impleme
 				requestedRedirect = UriComponentsBuilder.fromUriString(requestedRedirectUri).build();
 			} catch (Exception ex) { }
 			if (requestedRedirect == null || requestedRedirect.getFragment() != null) {
+				if (LOGGER.isDebugEnabled()) {
+					LOGGER.debug(LogMessage.format("Invalid request: redirect_uri is missing or contains a fragment" +
+							" for registered client '%s'", registeredClient.getId()));
+				}
 				throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.REDIRECT_URI,
 						authorizationCodeRequestAuthentication, registeredClient);
 			}
@@ -128,7 +137,10 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationValidator impleme
 					}
 				}
 				if (!validRedirectUri) {
-					logDebugMessage("Invalid redirect_uri");
+					if (LOGGER.isDebugEnabled()) {
+						LOGGER.debug(LogMessage.format("Invalid request: redirect_uri does not match" +
+								" for registered client '%s'", registeredClient.getId()));
+					}
 					throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.REDIRECT_URI,
 							authorizationCodeRequestAuthentication, registeredClient);
 				}
@@ -199,12 +211,6 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationValidator impleme
 		authorizationCodeRequestAuthenticationResult.setAuthenticated(true);
 
 		throw new OAuth2AuthorizationCodeRequestAuthenticationException(error, authorizationCodeRequestAuthenticationResult);
-	}
-
-	private void logDebugMessage(String logMessage){
-		if(this.logger.isDebugEnabled()){
-			this.logger.debug(logMessage);
-		}
 	}
 
 }

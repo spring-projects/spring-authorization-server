@@ -80,7 +80,11 @@ If you want to customize the default configuration (regardless of whether you're
 These components can be defined as follows:
 
 [[sample.gettingStarted]]
-include::code:SecurityConfig[]
+.SecurityConfig.java
+[source,java]
+----
+include::{docs-java}/sample/gettingStarted/SecurityConfig.java[]
+----
 
 This is a minimal configuration for getting started quickly. To understand what each component is used for, see the following descriptions:
 

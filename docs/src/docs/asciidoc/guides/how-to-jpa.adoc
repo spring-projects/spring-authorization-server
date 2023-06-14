@@ -146,7 +146,10 @@ The following listing shows the `Client` entity, which is used to persist inform
 
 [[sample.jpa.entity.client]]
 .Client Entity
-include::code:Client[]
+[source,java]
+----
+include::{examples-dir}/src/main/java/sample/jpa/entity/client/Client.java[]
+----
 
 [[authorization-entity]]
 === Authorization Entity
@@ -155,7 +158,10 @@ The following listing shows the `Authorization` entity, which is used to persist
 
 [[sample.jpa.entity.authorization]]
 .Authorization Entity
-include::code:Authorization[]
+[source,java]
+----
+include::{examples-dir}/src/main/java/sample/jpa/entity/authorization/Authorization.java[]
+----
 
 [[authorization-consent-entity]]
 === Authorization Consent Entity
@@ -164,7 +170,10 @@ The following listing shows the `AuthorizationConsent` entity, which is used to 
 
 [[sample.jpa.entity.authorizationConsent]]
 .Authorization Consent Entity
-include::code:AuthorizationConsent[]
+[source,java]
+----
+include::{examples-dir}/src/main/java/sample/jpa/entity/authorizationConsent/AuthorizationConsent.java[]
+----
 
 [[create-spring-data-repositories]]
 == Create Spring Data repositories
@@ -182,7 +191,10 @@ The following listing shows the `ClientRepository`, which is able to find a <<cl
 
 [[sample.jpa.repository.client]]
 .Client Repository
-include::code:ClientRepository[]
+[source,java]
+----
+include::{examples-dir}/src/main/java/sample/jpa/repository/client/ClientRepository.java[]
+----
 
 [[authorization-repository]]
 === Authorization Repository
@@ -192,7 +204,10 @@ It also allows querying a combination of token fields.
 
 [[sample.jpa.repository.authorization]]
 .Authorization Repository
-include::code:AuthorizationRepository[]
+[source,java]
+----
+include::{examples-dir}/src/main/java/sample/jpa/repository/authorization/AuthorizationRepository.java[]
+----
 
 [[authorization-consent-repository]]
 === Authorization Consent Repository
@@ -201,7 +216,10 @@ The following listing shows the `AuthorizationConsentRepository`, which is able 
 
 [[sample.jpa.repository.authorizationConsent]]
 .Authorization Consent Repository
-include::code:AuthorizationConsentRepository[]
+[source,java]
+----
+include::{examples-dir}/src/main/java/sample/jpa/repository/authorizationConsent/AuthorizationConsentRepository.java[]
+----
 
 [[implement-core-services]]
 == Implement core services
@@ -224,7 +242,10 @@ The following listing shows the `JpaRegisteredClientRepository`, which uses a <<
 
 [[sample.jpa.service.client]]
 .`RegisteredClientRepository` Implementation
-include::code:JpaRegisteredClientRepository[]
+[source,java]
+----
+include::{examples-dir}/src/main/java/sample/jpa/service/client/JpaRegisteredClientRepository.java[]
+----
 
 [[authorization-service]]
 === Authorization Service
@@ -233,7 +254,10 @@ The following listing shows the `JpaOAuth2AuthorizationService`, which uses an <
 
 [[sample.jpa.service.authorization]]
 .`OAuth2AuthorizationService` Implementation
-include::code:JpaOAuth2AuthorizationService[]
+[source,java]
+----
+include::{examples-dir}/src/main/java/sample/jpa/service/authorization/JpaOAuth2AuthorizationService.java[]
+----
 
 [[authorization-consent-service]]
 === Authorization Consent Service
@@ -242,4 +266,7 @@ The following listing shows the `JpaOAuth2AuthorizationConsentService`, which us
 
 [[sample.jpa.service.authorizationConsent]]
 .`OAuth2AuthorizationConsentService` Implementation
-include::code:JpaOAuth2AuthorizationConsentService[]
+[source,java]
+----
+include::{examples-dir}/src/main/java/sample/jpa/service/authorizationConsent/JpaOAuth2AuthorizationConsentService.java[]
+----

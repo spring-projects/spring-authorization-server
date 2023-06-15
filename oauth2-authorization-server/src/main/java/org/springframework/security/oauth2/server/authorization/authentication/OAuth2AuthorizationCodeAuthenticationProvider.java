@@ -36,7 +36,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.session.SessionInformation;
 import org.springframework.security.core.session.SessionRegistry;
-import org.springframework.security.oauth2.core.AbstractOAuth2Token;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClaimAccessor;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
@@ -155,7 +154,7 @@ public final class OAuth2AuthorizationCodeAuthenticationProvider implements Auth
 
 		if (!authorizationCode.isActive()) {
 			if (authorizationCode.isInvalidated()) {
-				OAuth2Authorization.Token<? extends AbstractOAuth2Token> token = authorization.getRefreshToken() != null ?
+				OAuth2Authorization.Token<? extends OAuth2Token> token = authorization.getRefreshToken() != null ?
 						authorization.getRefreshToken() :
 						authorization.getAccessToken();
 				if (token != null) {

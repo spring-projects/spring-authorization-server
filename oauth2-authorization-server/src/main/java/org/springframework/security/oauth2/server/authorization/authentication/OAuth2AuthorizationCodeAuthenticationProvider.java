@@ -154,12 +154,12 @@ public final class OAuth2AuthorizationCodeAuthenticationProvider implements Auth
 
 		if (!authorizationCode.isActive()) {
 			if (authorizationCode.isInvalidated()) {
-				OAuth2Token token = authorization.getRefreshToken() != null ?
-						authorization.getRefreshToken().getToken() :
-						authorization.getAccessToken().getToken();
+				OAuth2Authorization.Token<? extends OAuth2Token> token = authorization.getRefreshToken() != null ?
+						authorization.getRefreshToken() :
+						authorization.getAccessToken();
 				if (token != null) {
 					// Invalidate the access (and refresh) token as the client is attempting to use the authorization code more than once
-					authorization = OAuth2AuthenticationProviderUtils.invalidate(authorization, token);
+					authorization = OAuth2AuthenticationProviderUtils.invalidate(authorization, token.getToken());
 					this.authorizationService.save(authorization);
 					if (this.logger.isWarnEnabled()) {
 						this.logger.warn(LogMessage.format("Invalidated authorization token(s) previously issued to registered client '%s'", registeredClient.getId()));

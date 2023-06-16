@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,10 +58,15 @@ final class OAuth2EndpointUtils {
 		if (!matchesAuthorizationCodeGrantRequest(request)) {
 			return Collections.emptyMap();
 		}
-		Map<String, Object> parameters = new HashMap<>(getParameters(request).toSingleValueMap());
+		MultiValueMap<String, String> multiValueParameters = getParameters(request);
 		for (String exclusion : exclusions) {
-			parameters.remove(exclusion);
+			multiValueParameters.remove(exclusion);
 		}
+
+		Map<String, Object> parameters = new HashMap<>();
+		multiValueParameters.forEach((key, value) ->
+				parameters.put(key, (value.size() == 1) ? value.get(0) : value.toArray(new String[0])));
+
 		return parameters;
 	}
 

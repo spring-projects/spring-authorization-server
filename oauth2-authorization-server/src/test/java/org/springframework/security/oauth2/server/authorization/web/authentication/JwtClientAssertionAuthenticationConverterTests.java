@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -107,6 +107,8 @@ public class JwtClientAssertionAuthenticationConverterTests {
 		request.addParameter(OAuth2ParameterNames.CLIENT_ID, "client-1");
 		request.addParameter(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.AUTHORIZATION_CODE.getValue());
 		request.addParameter(OAuth2ParameterNames.CODE, "code");
+		request.addParameter("custom-param-1", "custom-value-1");
+		request.addParameter("custom-param-2", "custom-value-1", "custom-value-2");
 		OAuth2ClientAuthenticationToken authentication = (OAuth2ClientAuthenticationToken) this.converter.convert(request);
 		assertThat(authentication.getPrincipal()).isEqualTo("client-1");
 		assertThat(authentication.getCredentials()).isEqualTo("jwt-assertion");
@@ -114,7 +116,9 @@ public class JwtClientAssertionAuthenticationConverterTests {
 		assertThat(authentication.getAdditionalParameters())
 				.containsOnly(
 						entry(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.AUTHORIZATION_CODE.getValue()),
-						entry(OAuth2ParameterNames.CODE, "code"));
+						entry(OAuth2ParameterNames.CODE, "code"),
+						entry("custom-param-1", "custom-value-1"),
+						entry("custom-param-2", new String[] {"custom-value-1", "custom-value-2"}));
 	}
 
 	private void assertThrown(MockHttpServletRequest request, String errorCode) {

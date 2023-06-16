@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,6 +82,8 @@ public class PublicClientAuthenticationConverterTests {
 	@Test
 	public void convertWhenPublicClientThenReturnClientAuthenticationToken() {
 		MockHttpServletRequest request = createPkceTokenRequest();
+		request.addParameter("custom-param-1", "custom-value-1");
+		request.addParameter("custom-param-2", "custom-value-1", "custom-value-2");
 		OAuth2ClientAuthenticationToken authentication = (OAuth2ClientAuthenticationToken) this.converter.convert(request);
 		assertThat(authentication.getPrincipal()).isEqualTo("client-1");
 		assertThat(authentication.getClientAuthenticationMethod()).isEqualTo(ClientAuthenticationMethod.NONE);
@@ -89,7 +91,9 @@ public class PublicClientAuthenticationConverterTests {
 				.containsOnly(
 						entry(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.AUTHORIZATION_CODE.getValue()),
 						entry(OAuth2ParameterNames.CODE, "code"),
-						entry(PkceParameterNames.CODE_VERIFIER, "code-verifier-1"));
+						entry(PkceParameterNames.CODE_VERIFIER, "code-verifier-1"),
+						entry("custom-param-1", "custom-value-1"),
+						entry("custom-param-2", new String[] {"custom-value-1", "custom-value-2"}));
 	}
 
 	private static MockHttpServletRequest createPkceTokenRequest() {

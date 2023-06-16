@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package org.springframework.security.oauth2.server.authorization.web;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 
@@ -242,10 +241,9 @@ public class OAuth2TokenEndpointFilterTests {
 				new HashSet<>(Arrays.asList("scope1", "scope2")));
 		OAuth2RefreshToken refreshToken = new OAuth2RefreshToken(
 				"refresh-token", Instant.now(), Instant.now().plus(Duration.ofDays(1)));
-		Map<String, Object> additionalParameters = Collections.singletonMap("custom-param", "custom-value");
 		OAuth2AccessTokenAuthenticationToken accessTokenAuthentication =
 				new OAuth2AccessTokenAuthenticationToken(
-						registeredClient, clientPrincipal, accessToken, refreshToken, additionalParameters);
+						registeredClient, clientPrincipal, accessToken, refreshToken);
 
 		when(this.authenticationManager.authenticate(any())).thenReturn(accessTokenAuthentication);
 
@@ -273,7 +271,8 @@ public class OAuth2TokenEndpointFilterTests {
 		assertThat(authorizationCodeAuthentication.getRedirectUri()).isEqualTo(
 				request.getParameter(OAuth2ParameterNames.REDIRECT_URI));
 		assertThat(authorizationCodeAuthentication.getAdditionalParameters())
-				.containsExactly(entry("custom-param-1", "custom-value-1"));
+				.containsExactly(entry("custom-param-1", "custom-value-1"),
+					entry("custom-param-2", new String[] { "custom-value-1", "custom-value-2" }));
 		assertThat(authorizationCodeAuthentication.getDetails())
 				.asInstanceOf(type(WebAuthenticationDetails.class))
 				.extracting(WebAuthenticationDetails::getRemoteAddress)
@@ -291,7 +290,6 @@ public class OAuth2TokenEndpointFilterTests {
 				accessToken.getExpiresAt().minusSeconds(1), accessToken.getExpiresAt().plusSeconds(1));
 		assertThat(accessTokenResult.getScopes()).isEqualTo(accessToken.getScopes());
 		assertThat(accessTokenResponse.getRefreshToken().getTokenValue()).isEqualTo(refreshToken.getTokenValue());
-		assertThat(accessTokenResponse.getAdditionalParameters()).containsExactly(entry("custom-param", "custom-value"));
 	}
 
 	@Test
@@ -340,7 +338,8 @@ public class OAuth2TokenEndpointFilterTests {
 		assertThat(clientCredentialsAuthentication.getPrincipal()).isEqualTo(clientPrincipal);
 		assertThat(clientCredentialsAuthentication.getScopes()).isEqualTo(registeredClient.getScopes());
 		assertThat(clientCredentialsAuthentication.getAdditionalParameters())
-				.containsExactly(entry("custom-param-1", "custom-value-1"));
+				.containsExactly(entry("custom-param-1", "custom-value-1"),
+					entry("custom-param-2", new String[] { "custom-value-1", "custom-value-2" }));
 		assertThat(clientCredentialsAuthentication.getDetails())
 				.asInstanceOf(type(WebAuthenticationDetails.class))
 				.extracting(WebAuthenticationDetails::getRemoteAddress)
@@ -430,7 +429,8 @@ public class OAuth2TokenEndpointFilterTests {
 		assertThat(refreshTokenAuthenticationToken.getPrincipal()).isEqualTo(clientPrincipal);
 		assertThat(refreshTokenAuthenticationToken.getScopes()).isEqualTo(registeredClient.getScopes());
 		assertThat(refreshTokenAuthenticationToken.getAdditionalParameters())
-				.containsExactly(entry("custom-param-1", "custom-value-1"));
+				.containsExactly(entry("custom-param-1", "custom-value-1"),
+					entry("custom-param-2", new String[] { "custom-value-1", "custom-value-2" }));
 		assertThat(refreshTokenAuthenticationToken.getDetails())
 				.asInstanceOf(type(WebAuthenticationDetails.class))
 				.extracting(WebAuthenticationDetails::getRemoteAddress)
@@ -613,6 +613,7 @@ public class OAuth2TokenEndpointFilterTests {
 		// The client does not need to send the client ID param, but we are resilient in case they do
 		request.addParameter(OAuth2ParameterNames.CLIENT_ID, registeredClient.getClientId());
 		request.addParameter("custom-param-1", "custom-value-1");
+		request.addParameter("custom-param-2", "custom-value-1", "custom-value-2");
 
 		return request;
 	}
@@ -627,6 +628,7 @@ public class OAuth2TokenEndpointFilterTests {
 		request.addParameter(OAuth2ParameterNames.SCOPE,
 				StringUtils.collectionToDelimitedString(registeredClient.getScopes(), " "));
 		request.addParameter("custom-param-1", "custom-value-1");
+		request.addParameter("custom-param-2", "custom-value-1", "custom-value-2");
 
 		return request;
 	}
@@ -642,6 +644,7 @@ public class OAuth2TokenEndpointFilterTests {
 		request.addParameter(OAuth2ParameterNames.SCOPE,
 				StringUtils.collectionToDelimitedString(registeredClient.getScopes(), " "));
 		request.addParameter("custom-param-1", "custom-value-1");
+		request.addParameter("custom-param-2", "custom-value-1", "custom-value-2");
 
 		return request;
 	}

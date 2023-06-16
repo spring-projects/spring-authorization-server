@@ -195,7 +195,7 @@ public class OAuth2DeviceAuthorizationEndpointFilterTests {
 
 		MockHttpServletRequest request = createRequest();
 		request.addParameter("custom-param-1", "custom-value-1");
-		request.addParameter("custom-param-2", "custom-value-2a", "custom-value-2b");
+		request.addParameter("custom-param-2", "custom-value-1", "custom-value-2");
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		FilterChain filterChain = mock(FilterChain.class);
 		this.filter.doFilter(request, response, filterChain);
@@ -213,7 +213,7 @@ public class OAuth2DeviceAuthorizationEndpointFilterTests {
 		assertThat(deviceAuthorizationRequestAuthentication.getScopes()).isEmpty();
 		assertThat(deviceAuthorizationRequestAuthentication.getAdditionalParameters())
 				.containsExactly(entry("custom-param-1", "custom-value-1"),
-					entry("custom-param-2", new String[] { "custom-value-2a", "custom-value-2b" }));
+					entry("custom-param-2", new String[] { "custom-value-1", "custom-value-2" }));
 		// @formatter:off
 		assertThat(deviceAuthorizationRequestAuthentication.getDetails())
 				.asInstanceOf(type(WebAuthenticationDetails.class))

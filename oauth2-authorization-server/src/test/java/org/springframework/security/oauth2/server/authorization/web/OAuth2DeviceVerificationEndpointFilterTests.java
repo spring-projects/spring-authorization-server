@@ -187,7 +187,7 @@ public class OAuth2DeviceVerificationEndpointFilterTests {
 		request.addParameter(OAuth2ParameterNames.STATE, STATE);
 		request.addParameter(OAuth2ParameterNames.USER_CODE, USER_CODE);
 		request.addParameter("custom-param-1", "custom-value-1");
-		request.addParameter("custom-param-2", "custom-value-2a", "custom-value-2b");
+		request.addParameter("custom-param-2", "custom-value-1", "custom-value-2");
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		FilterChain filterChain = mock(FilterChain.class);
 		this.filter.doFilter(request, response, filterChain);
@@ -208,7 +208,8 @@ public class OAuth2DeviceVerificationEndpointFilterTests {
 		assertThat(deviceAuthorizationConsentAuthentication.getUserCode()).isEqualTo(USER_CODE);
 		assertThat(deviceAuthorizationConsentAuthentication.getScopes()).containsExactly("scope-1", "scope-2");
 		assertThat(deviceAuthorizationConsentAuthentication.getAdditionalParameters())
-				.containsExactly(entry("custom-param-1", "custom-value-1"), entry("custom-param-2", new String[]{ "custom-value-2a", "custom-value-2b" }));
+				.containsExactly(entry("custom-param-1", "custom-value-1"),
+						entry("custom-param-2", new String[] { "custom-value-1", "custom-value-2" }));
 	}
 
 	@Test

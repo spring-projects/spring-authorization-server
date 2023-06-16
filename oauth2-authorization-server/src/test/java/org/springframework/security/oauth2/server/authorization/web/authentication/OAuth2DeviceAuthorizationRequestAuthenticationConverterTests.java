@@ -95,7 +95,7 @@ public class OAuth2DeviceAuthorizationRequestAuthenticationConverterTests {
 		request.addParameter(OAuth2ParameterNames.CLIENT_ID, CLIENT_ID);
 		request.addParameter(OAuth2ParameterNames.SCOPE, "message.read message.write");
 		request.addParameter("param-1", "value-1");
-		request.addParameter("param-2", "value-2", "value-2b");
+		request.addParameter("param-2", "value-1", "value-2");
 
 		SecurityContextImpl securityContext = new SecurityContextImpl();
 		securityContext.setAuthentication(new TestingAuthenticationToken(CLIENT_ID, null));
@@ -109,7 +109,7 @@ public class OAuth2DeviceAuthorizationRequestAuthenticationConverterTests {
 		assertThat(authentication.getScopes()).containsExactly("message.read", "message.write");
 		assertThat(authentication.getAdditionalParameters())
 				.containsExactly(entry("param-1", "value-1"),
-					entry("param-2", new String[]{"value-2", "value-2b"}));
+					entry("param-2", new String[] {"value-1", "value-2"}));
 	}
 
 	private static MockHttpServletRequest createRequest() {

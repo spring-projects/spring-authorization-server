@@ -246,7 +246,7 @@ public class OAuth2DeviceAuthorizationConsentAuthenticationConverterTests {
 		request.addParameter(OAuth2ParameterNames.SCOPE, "message.read");
 		request.addParameter(OAuth2ParameterNames.SCOPE, "message.write");
 		request.addParameter("param-1", "value-1");
-		request.addParameter("param-2", "value-2", "value-2b");
+		request.addParameter("param-2", "value-1", "value-2");
 
 		SecurityContextImpl securityContext = new SecurityContextImpl();
 		securityContext.setAuthentication(new TestingAuthenticationToken("user", null));
@@ -262,7 +262,7 @@ public class OAuth2DeviceAuthorizationConsentAuthenticationConverterTests {
 		assertThat(authentication.getScopes()).containsExactly("message.read", "message.write");
 		assertThat(authentication.getAdditionalParameters())
 				.containsExactly(entry("param-1", "value-1"),
-					entry("param-2", new String[]{"value-2", "value-2b"}));
+					entry("param-2", new String[] {"value-1", "value-2"}));
 	}
 
 	@Test

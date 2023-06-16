@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -106,6 +106,7 @@ public class ClientSecretBasicAuthenticationConverterTests {
 	@Test
 	public void convertWhenConfidentialClientWithPkceParametersThenAdditionalParametersIncluded() throws Exception {
 		MockHttpServletRequest request = createPkceTokenRequest();
+		request.addParameter("custom-param", "custom-value-1", "custom-value-2");
 		request.addHeader(HttpHeaders.AUTHORIZATION, "Basic " + encodeBasicAuth("clientId", "secret"));
 		OAuth2ClientAuthenticationToken authentication = (OAuth2ClientAuthenticationToken) this.converter.convert(request);
 		assertThat(authentication.getPrincipal()).isEqualTo("clientId");
@@ -115,7 +116,8 @@ public class ClientSecretBasicAuthenticationConverterTests {
 				.containsOnly(
 						entry(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.AUTHORIZATION_CODE.getValue()),
 						entry(OAuth2ParameterNames.CODE, "code"),
-						entry(PkceParameterNames.CODE_VERIFIER, "code-verifier-1"));
+						entry(PkceParameterNames.CODE_VERIFIER, "code-verifier-1"),
+						entry("custom-param", new String[] { "custom-value-1", "custom-value-2" }));
 	}
 
 	private static String encodeBasicAuth(String clientId, String secret) throws Exception {

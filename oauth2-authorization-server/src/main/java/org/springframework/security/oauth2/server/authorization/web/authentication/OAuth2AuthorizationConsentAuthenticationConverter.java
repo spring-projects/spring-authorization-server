@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,7 +93,7 @@ public final class OAuth2AuthorizationConsentAuthenticationConverter implements 
 			if (!key.equals(OAuth2ParameterNames.CLIENT_ID) &&
 					!key.equals(OAuth2ParameterNames.STATE) &&
 					!key.equals(OAuth2ParameterNames.SCOPE)) {
-				additionalParameters.put(key, value.get(0));
+				additionalParameters.put(key, (value.size() == 1) ? value.get(0) : value.toArray(new String[0]));
 			}
 		});
 

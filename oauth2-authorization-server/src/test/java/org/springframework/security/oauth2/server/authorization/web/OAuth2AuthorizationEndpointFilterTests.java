@@ -589,6 +589,8 @@ public class OAuth2AuthorizationEndpointFilterTests {
 				.thenReturn(authorizationCodeRequestAuthenticationResult);
 
 		MockHttpServletRequest request = createAuthorizationRequest(registeredClient);
+		request.addParameter("custom-param", "custom-value-1", "custom-value-2");
+
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		FilterChain filterChain = mock(FilterChain.class);
 
@@ -603,6 +605,12 @@ public class OAuth2AuthorizationEndpointFilterTests {
 				.asInstanceOf(type(WebAuthenticationDetails.class))
 				.extracting(WebAuthenticationDetails::getRemoteAddress)
 				.isEqualTo(REMOTE_ADDRESS);
+
+		// Assert that multi-valued request parameters are preserved
+		assertThat(authorizationCodeRequestAuthenticationCaptor.getValue().getAdditionalParameters())
+				.extracting(params -> params.get("custom-param"))
+				.asInstanceOf(type(String[].class))
+				.isEqualTo(new String[] { "custom-value-1", "custom-value-2" });
 		assertThat(response.getStatus()).isEqualTo(HttpStatus.FOUND.value());
 		assertThat(response.getRedirectedUrl()).isEqualTo(
 				"https://example.com?param=encoded%20parameter%20value&code=code&state=client%20state");

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@
 package org.springframework.security.oauth2.server.authorization.web.authentication;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -58,13 +58,16 @@ final class OAuth2EndpointUtils {
 		if (!matchesAuthorizationCodeGrantRequest(request)) {
 			return Collections.emptyMap();
 		}
-		MultiValueMap<String, String> parameters = getParameters(request);
+		MultiValueMap<String, String> multiValueParameters = getParameters(request);
 		for (String exclusion : exclusions) {
-			parameters.remove(exclusion);
+			multiValueParameters.remove(exclusion);
 		}
-		return parameters.entrySet().stream()
-			.collect(Collectors.toMap(Map.Entry::getKey,
-				e -> e.getValue().size() == 1 ? e.getValue().get(0) : e.getValue().toArray(new String[0])));
+
+		Map<String, Object> parameters = new HashMap<>();
+		multiValueParameters.forEach((key, value) ->
+				parameters.put(key, (value.size() == 1) ? value.get(0) : value.toArray(new String[0])));
+
+		return parameters;
 	}
 
 	static boolean matchesAuthorizationCodeGrantRequest(HttpServletRequest request) {

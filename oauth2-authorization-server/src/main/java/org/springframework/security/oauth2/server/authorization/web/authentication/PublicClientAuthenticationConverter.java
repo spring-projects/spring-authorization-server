@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,9 +70,8 @@ public final class PublicClientAuthenticationConverter implements Authentication
 		parameters.remove(OAuth2ParameterNames.CLIENT_ID);
 
 		Map<String, Object> additionalParameters = new HashMap<>();
-		parameters.forEach((key, value) -> {
-			additionalParameters.put(key, value.size() == 1 ? value.get(0) : value.toArray(new String[0]));
-		});
+		parameters.forEach((key, value) ->
+				additionalParameters.put(key, (value.size() == 1) ? value.get(0) : value.toArray(new String[0])));
 
 		return new OAuth2ClientAuthenticationToken(clientId, ClientAuthenticationMethod.NONE, null,
 				additionalParameters);

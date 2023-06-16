@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -219,7 +219,7 @@ public class OAuth2TokenIntrospectionEndpointFilterTests {
 		MockHttpServletRequest request = createTokenIntrospectionRequest(
 				accessToken.getTokenValue(), OAuth2TokenType.ACCESS_TOKEN.getValue());
 		request.addParameter("custom-param-1", "custom-value-1");
-		request.addParameter("custom-param-2", "custom-value-2");
+		request.addParameter("custom-param-2", "custom-value-1", "custom-value-2");
 
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		FilterChain filterChain = mock(FilterChain.class);
@@ -236,7 +236,7 @@ public class OAuth2TokenIntrospectionEndpointFilterTests {
 		assertThat(tokenIntrospectionAuthentication.getValue().getAdditionalParameters())
 				.contains(
 						entry("custom-param-1", "custom-value-1"),
-						entry("custom-param-2", "custom-value-2"));
+						entry("custom-param-2", new String[] {"custom-value-1", "custom-value-2"}));
 
 		OAuth2TokenIntrospection tokenIntrospectionResponse = readTokenIntrospectionResponse(response);
 		assertThat(tokenIntrospectionResponse.isActive()).isEqualTo(tokenClaims.isActive());

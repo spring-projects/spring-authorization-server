@@ -110,7 +110,7 @@ public final class OAuth2DeviceAuthorizationConsentAuthenticationConverter imple
 					!key.equals(OAuth2ParameterNames.USER_CODE) &&
 					!key.equals(OAuth2ParameterNames.STATE) &&
 					!key.equals(OAuth2ParameterNames.SCOPE)) {
-				additionalParameters.put(key, value.get(0));
+				additionalParameters.put(key, (value.size() == 1) ? value.get(0) : value.toArray(new String[0]));
 			}
 		});
 

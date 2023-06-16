@@ -102,7 +102,7 @@ public class OAuth2DeviceCodeAuthenticationConverterTests {
 		request.addParameter(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.DEVICE_CODE.getValue());
 		request.addParameter(OAuth2ParameterNames.DEVICE_CODE, DEVICE_CODE);
 		request.addParameter("param-1", "value-1");
-		request.addParameter("param-2", "value-2");
+		request.addParameter("param-2", "value-1", "value-2");
 
 		SecurityContextImpl securityContext = new SecurityContextImpl();
 		securityContext.setAuthentication(new TestingAuthenticationToken(CLIENT_ID, null));
@@ -114,7 +114,8 @@ public class OAuth2DeviceCodeAuthenticationConverterTests {
 		assertThat(authentication.getDeviceCode()).isEqualTo(DEVICE_CODE);
 		assertThat(authentication.getPrincipal()).isInstanceOf(TestingAuthenticationToken.class);
 		assertThat(authentication.getAdditionalParameters())
-				.containsExactly(entry("param-1", "value-1"), entry("param-2", "value-2"));
+				.containsExactly(entry("param-1", "value-1"),
+					entry("param-2", new String[] {"value-1", "value-2"}));
 	}
 
 	private static MockHttpServletRequest createRequest() {

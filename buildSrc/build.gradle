@@ -23,5 +23,5 @@ dependencies {
 	implementation "org.hidetake:gradle-ssh-plugin:2.10.1"
 	implementation "org.jfrog.buildinfo:build-info-extractor-gradle:4.29.0"
 	implementation "org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:2.7.1"
-	implementation "org.springframework:spring-core:6.0.9"
+	implementation "org.springframework:spring-core:6.0.10"
 }

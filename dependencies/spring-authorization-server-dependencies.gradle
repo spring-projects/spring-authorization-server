@@ -9,7 +9,7 @@ javaPlatform {
 dependencies {
 	api platform("org.springframework:spring-framework-bom:$springFrameworkVersion")
 	api platform("org.springframework.security:spring-security-bom:$springSecurityVersion")
-	api platform("com.fasterxml.jackson:jackson-bom:2.15.0")
+	api platform("com.fasterxml.jackson:jackson-bom:2.15.2")
 	constraints {
 		api "com.nimbusds:nimbus-jose-jwt:9.31"
 		api "jakarta.servlet:jakarta.servlet-api:6.0.0"

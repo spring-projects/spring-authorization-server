@@ -9,9 +9,8 @@ The Spring Authorization Server project, led by the https://spring.io/projects/s
 This project replaces the Authorization Server support provided by https://spring.io/projects/spring-security-oauth/[Spring Security OAuth].
 
 == Feature Planning
-This project uses https://www.zenhub.com/[ZenHub] to prioritize the feature roadmap and help organize the project plan.
-The project board can be accessed https://app.zenhub.com/workspaces/authorization-server-5e8f3182b5e8f5841bfc4902/board?repos=248032165[here].
-It is recommended to install the ZenHub https://www.zenhub.com/extension[browser extension] as it integrates natively within GitHub's user interface.
+This project uses https://docs.github.com/en/issues/planning-and-tracking-with-projects/learning-about-projects/about-projects[GitHub Projects] to prioritize the feature roadmap and help organize the project plan.
+The project board can be accessed https://github.com/orgs/spring-projects/projects/8[here].
 
 The feature list can be viewed in the https://docs.spring.io/spring-authorization-server/docs/current/reference/html/overview.html#feature-list[reference documentation].
 

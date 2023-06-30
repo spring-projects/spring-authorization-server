@@ -21,6 +21,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.boot.web.servlet.error.ErrorController;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 /**
@@ -44,7 +45,8 @@ public class DefaultErrorController implements ErrorController {
 	}
 
 	private String getErrorMessage(HttpServletRequest request) {
-		return (String) request.getAttribute(RequestDispatcher.ERROR_MESSAGE);
+		String errorMessage = (String) request.getAttribute(RequestDispatcher.ERROR_MESSAGE);
+		return StringUtils.hasText(errorMessage) ? errorMessage : "";
 	}
 
 }

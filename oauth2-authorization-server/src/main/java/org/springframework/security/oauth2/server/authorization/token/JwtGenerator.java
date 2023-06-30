@@ -137,7 +137,9 @@ public final class JwtGenerator implements OAuth2TokenGenerator<Jwt> {
 				if (currentIdToken.hasClaim("sid")) {
 					claimsBuilder.claim("sid", currentIdToken.getClaim("sid"));
 				}
-				claimsBuilder.claim(IdTokenClaimNames.AUTH_TIME, currentIdToken.<Date>getClaim(IdTokenClaimNames.AUTH_TIME));
+				if (currentIdToken.hasClaim(IdTokenClaimNames.AUTH_TIME)) {
+					claimsBuilder.claim(IdTokenClaimNames.AUTH_TIME, currentIdToken.<Date>getClaim(IdTokenClaimNames.AUTH_TIME));
+				}
 			}
 		}
 		// @formatter:on

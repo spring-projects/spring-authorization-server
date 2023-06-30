@@ -236,6 +236,47 @@ public class JwtGeneratorTests {
 		assertGeneratedTokenType(tokenContext);
 	}
 
+	// gh-1283
+	@Test
+	public void generateWhenIdTokenTypeWithoutSidAndRefreshTokenGrantThenReturnJwt() {
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
+				.scope(OidcScopes.OPENID)
+				.build();
+		OidcIdToken idToken =  OidcIdToken.withTokenValue("id-token")
+				.issuer("https://provider.com")
+				.subject("subject")
+				.issuedAt(Instant.now())
+				.expiresAt(Instant.now().plusSeconds(60))
+				.build();
+		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient)
+				.token(idToken)
+				.build();
+
+		OAuth2RefreshToken refreshToken = authorization.getRefreshToken().getToken();
+		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(
+				registeredClient, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
+
+		OAuth2RefreshTokenAuthenticationToken authentication = new OAuth2RefreshTokenAuthenticationToken(
+				refreshToken.getTokenValue(), clientPrincipal, null, null);
+
+		Authentication principal = authorization.getAttribute(Principal.class.getName());
+
+		// @formatter:off
+		OAuth2TokenContext tokenContext = DefaultOAuth2TokenContext.builder()
+				.registeredClient(registeredClient)
+				.principal(principal)
+				.authorizationServerContext(this.authorizationServerContext)
+				.authorization(authorization)
+				.authorizedScopes(authorization.getAuthorizedScopes())
+				.tokenType(ID_TOKEN_TOKEN_TYPE)
+				.authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
+				.authorizationGrant(authentication)
+				.build();
+		// @formatter:on
+
+		assertGeneratedTokenType(tokenContext);
+	}
+
 	private void assertGeneratedTokenType(OAuth2TokenContext tokenContext) {
 		this.jwtGenerator.generate(tokenContext);
 

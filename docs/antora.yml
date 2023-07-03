@@ -1,6 +1,6 @@
-name: framework
+name: authorization-server
 version: true
-title: Spring Framework Documentation
+title: Spring Authorization Server
 nav:
   - modules/ROOT/nav.adoc
 ext:

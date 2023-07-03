@@ -6,6 +6,9 @@ antora:
     - '@antora/collector-extension'
     - require: '@springio/antora-extensions/tabs-migration-extension'
       unwrap_example_block: always
+    - require: '@springio/antora-extensions/root-component-extension'
+      root_component_name: 'authorization-server'
+    - '@antora/atlas-extension'
 site:
   title: Spring Authorization Server
   url: https://https://rwinch.github.io/spring-authorization-server/

@@ -1,17 +1,34 @@
 plugins {
 	id "io.spring.convention.docs"
+	id 'io.spring.antora.generate-antora-yml' version '0.0.1'
+	id 'org.antora' version '1.0.0'
+	id "java"
 }
 
-asciidoctor {
-	attributes([
-			"spring-authorization-server-version": project.version,
-			"spring-security-reference-base-url": "https://docs.spring.io/spring-security/reference",
-			"spring-security-api-base-url": "https://docs.spring.io/spring-security/site/docs/current/api",
-			"spring-boot-reference-base-url": "https://docs.spring.io/spring-boot/docs/current/reference/html",
-			"chomp": "default headers packages",
-			"toc": "left",
-			"toclevels": "4"
-	])
+group = project.rootProject.group
+version = project.rootProject.version
+sourceCompatibility = "17"
+
+antora {
+	playbook = 'cached-antora-playbook.yml'
+	playbookProvider {
+		repository = 'rwinch/spring-authorization-server'
+		branch = 'docs-build'
+		path = 'lib/antora/templates/per-branch-antora-playbook.yml'
+		checkLocalBranch = true
+	}
+	options = [clean: true, fetch: !project.gradle.startParameter.offline, stacktrace: true]
+}
+
+tasks.named("generateAntoraYml") {
+	asciidocAttributes = project.provider( { generateAttributes() } )
+}
+
+
+def generateAttributes() {
+	return [
+			"spring-authorization-server-version": project.version
+	]
 }
 
 docsZip {
@@ -21,4 +38,30 @@ docsZip {
 	from(asciidoctor) {
 		into "reference/html"
 	}
+}
+
+repositories {
+	mavenCentral()
+	maven { url "https://repo.spring.io/milestone" }
+}
+
+dependencies {
+	implementation(platform("org.springframework.boot:spring-boot-dependencies:3.1.0")) {
+		exclude group: "org.springframework.security", module: "spring-security-oauth2-authorization-server"
+	}
+	implementation platform("org.springframework.security:spring-security-bom:6.1.0")
+	implementation "org.springframework.boot:spring-boot-starter-web"
+	implementation "org.springframework.boot:spring-boot-starter-thymeleaf"
+	implementation "org.springframework.boot:spring-boot-starter-security"
+	implementation "org.springframework.boot:spring-boot-starter-oauth2-client"
+	implementation "org.springframework.boot:spring-boot-starter-oauth2-resource-server"
+	implementation "org.springframework.boot:spring-boot-starter-data-jpa"
+	implementation project(":spring-security-oauth2-authorization-server")
+	runtimeOnly "com.h2database:h2"
+	testImplementation "org.springframework.boot:spring-boot-starter-test"
+	testImplementation "org.springframework.security:spring-security-test"
+}
+
+tasks.named("test") {
+	useJUnitPlatform()
 }

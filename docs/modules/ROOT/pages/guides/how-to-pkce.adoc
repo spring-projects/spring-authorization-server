@@ -1,0 +1,82 @@
+
+[[how-to-pkce]]
+= How-to: Authenticate using a Single Page Application with PKCE
+:index-link: ../how-to.html
+:docs-dir: ..
+
+This guide shows how to configure xref:index.adoc[Spring Authorization Server] to support a Single Page Application (SPA) with Proof Key for Code Exchange (PKCE).
+The purpose of this guide is to demonstrate how to support a public client and require PKCE for client authentication.
+
+NOTE: Spring Authorization Server will not issue refresh tokens for a public client. We recommend the backend for frontend (BFF) pattern as an alternative to exposing a public client. See https://github.com/spring-projects/spring-authorization-server/issues/297#issue-896744390[gh-297] for more information.
+
+* xref:guides/how-to-pkce.adoc#enable-cors[Enable CORS]
+* xref:guides/how-to-pkce.adoc#configure-public-client[Configure a Public Client]
+* xref:guides/how-to-pkce.adoc#authenticate-with-client[Authenticate with the Client]
+
+[[enable-cors]]
+== Enable CORS
+
+A SPA consists of static resources that can be deployed in a variety of ways.
+It can be deployed separately from the backend such as with a CDN or separate web server, or it can be deployed along side the backend using Spring Boot.
+
+When a SPA is hosted under a different domain, Cross Origin Resource Sharing (CORS) can be used to allow the application to communicate with the backend.
+
+For example, if you have an Angular dev server running locally on port `4200`, you can define a `CorsConfigurationSource` `@Bean` and configure Spring Security to allow pre-flight requests using the `cors()` DSL as in the following example:
+
+[[enable-cors-configuration]]
+.Enable CORS
+[source,java]
+----
+include::{examples-dir}/main/java/sample/pkce/SecurityConfig.java[]
+----
+
+TIP: Click on the "Expand folded text" icon in the code sample above to display the full example.
+
+[[configure-public-client]]
+== Configure a Public Client
+
+A SPA cannot securely store credentials and therefore must be treated as a https://datatracker.ietf.org/doc/html/rfc6749#section-2.1[public client^].
+Public clients should be required to use https://datatracker.ietf.org/doc/html/rfc7636#section-4[Proof Key for Code Exchange] (PKCE).
+
+Continuing the xref:guides/how-to-pkce.adoc#enable-cors-configuration[earlier] example, you can configure Spring Authorization Server to support a public client using the Client Authentication Method `none` and require PKCE as in the following example:
+
+[tabs]
+======
+Yaml::
++
+[[configure-public-client-example]]
+[source,yaml,role="primary"]
+----
+include::{examples-dir}/main/java/sample/pkce/application.yml[]
+----
+
+Java::
++
+[source,java,role="secondary"]
+----
+include::{examples-dir}/main/java/sample/pkce/ClientConfig.java[tag=client,indent=0]
+----
+======
+
+NOTE: The `requireProofKey` setting is helpful in situations where you forget to include the `code_challenge` and `code_challenge_method` query parameters because you will receive an error indicating PKCE is required during the xref:protocol-endpoints.adoc#oauth2-authorization-endpoint[Authorization Request] instead of a general client authentication error during the xref:protocol-endpoints.adoc#oauth2-token-endpoint[Token Request].
+
+[[authenticate-with-client]]
+== Authenticate with the Client
+
+Once the server is configured to support a public client, a common question is: _How do I authenticate the client and get an access token?_
+The short answer is: The same way you would with any other client.
+
+NOTE: A SPA is a browser-based application and therefore uses the same redirection-based flow as any other client. This question is usually related to an expectation that authentication can be performed via a REST API, which is not the case with OAuth2.
+
+A more detailed answer requires an understanding of the flow(s) involved in OAuth2 and OpenID Connect, in this case the Authorization Code flow.
+The steps of the Authorization Code flow are as follows:
+
+1. The client initiates an OAuth2 request via a redirect to the xref:protocol-endpoints.adoc#oauth2-authorization-endpoint[Authorization Endpoint]. For a public client, this step includes generating the `code_verifier` and calculating the `code_challenge`, which is then sent as a query parameter.
+2. If the user is not authenticated, the authorization server will redirect to the login page. After authentication, the user is redirected back to the Authorization Endpoint again.
+3. If the user has not consented to the requested scope(s) and consent is required, the consent page is displayed.
+4. Once the user has consented, the authorization server generates an `authorization_code` and redirects back to the client via the `redirect_uri`.
+5. The client obtains the `authorization_code` via a query parameter and performs a request to the xref:protocol-endpoints.adoc#oauth2-token-endpoint[Token Endpoint]. For a public client, this step includes sending the `code_verifier` parameter instead of credentials for authentication.
+
+As you can see, the flow is fairly involved and this overview only scratches the surface.
+
+TIP: It is recommended that you use a robust client-side library supported by your single-page app framework to handle the Authorization Code flow.

@@ -37,3 +37,4 @@ out/
 
 ### Mac ###
 .DS_Store
+cached-antora-playbook.yml

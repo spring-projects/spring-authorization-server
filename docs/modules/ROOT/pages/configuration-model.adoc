@@ -1,0 +1,322 @@
+[[configuration-model]]
+= Configuration Model
+
+[[default-configuration]]
+== Default configuration
+
+`OAuth2AuthorizationServerConfiguration` is a `@Configuration` that provides the minimal default configuration for an OAuth2 authorization server.
+
+`OAuth2AuthorizationServerConfiguration` uses xref:configuration-model.adoc#customizing-the-configuration[`OAuth2AuthorizationServerConfigurer`] to apply the default configuration and registers a `SecurityFilterChain` `@Bean` composed of all the infrastructure components supporting an OAuth2 authorization server.
+
+[TIP]
+`OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(HttpSecurity)` is a convenience (`static`) utility method that applies the default OAuth2 security configuration to `HttpSecurity`.
+
+The OAuth2 authorization server `SecurityFilterChain` `@Bean` is configured with the following default protocol endpoints:
+
+* xref:protocol-endpoints.adoc#oauth2-authorization-endpoint[OAuth2 Authorization endpoint]
+* xref:protocol-endpoints.adoc#oauth2-device-authorization-endpoint[OAuth2 Device Authorization Endpoint]
+* xref:protocol-endpoints.adoc#oauth2-device-verification-endpoint[OAuth2 Device Verification Endpoint]
+* xref:protocol-endpoints.adoc#oauth2-token-endpoint[OAuth2 Token endpoint]
+* xref:protocol-endpoints.adoc#oauth2-token-introspection-endpoint[OAuth2 Token Introspection endpoint]
+* xref:protocol-endpoints.adoc#oauth2-token-revocation-endpoint[OAuth2 Token Revocation endpoint]
+* xref:protocol-endpoints.adoc#oauth2-authorization-server-metadata-endpoint[OAuth2 Authorization Server Metadata endpoint]
+* xref:protocol-endpoints.adoc#jwk-set-endpoint[JWK Set endpoint]
+
+[NOTE]
+The JWK Set endpoint is configured *only* if a `JWKSource<SecurityContext>` `@Bean` is registered.
+
+The following example shows how to use `OAuth2AuthorizationServerConfiguration` to apply the minimal default configuration:
+
+[source,java]
+----
+@Configuration
+@Import(OAuth2AuthorizationServerConfiguration.class)
+public class AuthorizationServerConfig {
+
+	@Bean
+	public RegisteredClientRepository registeredClientRepository() {
+		List<RegisteredClient> registrations = ...
+		return new InMemoryRegisteredClientRepository(registrations);
+	}
+
+	@Bean
+	public JWKSource<SecurityContext> jwkSource() {
+		RSAKey rsaKey = ...
+		JWKSet jwkSet = new JWKSet(rsaKey);
+		return (jwkSelector, securityContext) -> jwkSelector.select(jwkSet);
+	}
+
+}
+----
+
+[IMPORTANT]
+The https://datatracker.ietf.org/doc/html/rfc6749#section-4.1[authorization_code grant] requires the resource owner to be authenticated. Therefore, a user authentication mechanism *must* be configured in addition to the default OAuth2 security configuration.
+
+https://openid.net/specs/openid-connect-core-1_0.html[OpenID Connect 1.0] is disabled in the default configuration. The following example shows how to enable OpenID Connect 1.0 by initializing the `OidcConfigurer`:
+
+[source,java]
+----
+@Bean
+public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
+	OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http);
+
+	http.getConfigurer(OAuth2AuthorizationServerConfigurer.class)
+		.oidc(Customizer.withDefaults());	// Initialize `OidcConfigurer`
+
+	return http.build();
+}
+----
+
+In addition to the default protocol endpoints, the OAuth2 authorization server `SecurityFilterChain` `@Bean` is configured with the following OpenID Connect 1.0 protocol endpoints:
+
+* xref:protocol-endpoints.adoc#oidc-provider-configuration-endpoint[OpenID Connect 1.0 Provider Configuration endpoint]
+* xref:protocol-endpoints.adoc#oidc-logout-endpoint[OpenID Connect 1.0 Logout endpoint]
+* xref:protocol-endpoints.adoc#oidc-user-info-endpoint[OpenID Connect 1.0 UserInfo endpoint]
+
+[NOTE]
+The xref:protocol-endpoints.adoc#oidc-client-registration-endpoint[OpenID Connect 1.0 Client Registration endpoint] is disabled by default because many deployments do not require dynamic client registration.
+
+[TIP]
+`OAuth2AuthorizationServerConfiguration.jwtDecoder(JWKSource<SecurityContext>)` is a convenience (`static`) utility method that can be used to register a `JwtDecoder` `@Bean`, which is *REQUIRED* for the xref:protocol-endpoints.adoc#oidc-user-info-endpoint[OpenID Connect 1.0 UserInfo endpoint] and the xref:protocol-endpoints.adoc#oidc-client-registration-endpoint[OpenID Connect 1.0 Client Registration endpoint].
+
+The following example shows how to register a `JwtDecoder` `@Bean`:
+
+[source,java]
+----
+@Bean
+public JwtDecoder jwtDecoder(JWKSource<SecurityContext> jwkSource) {
+	return OAuth2AuthorizationServerConfiguration.jwtDecoder(jwkSource);
+}
+----
+
+The main intent of `OAuth2AuthorizationServerConfiguration` is to provide a convenient method to apply the minimal default configuration for an OAuth2 authorization server. However, in most cases, customizing the configuration will be required.
+
+[[customizing-the-configuration]]
+== Customizing the configuration
+
+`OAuth2AuthorizationServerConfigurer` provides the ability to fully customize the security configuration for an OAuth2 authorization server.
+It lets you specify the core components to use - for example, xref:core-model-components.adoc#registered-client-repository[`RegisteredClientRepository`],  xref:core-model-components.adoc#oauth2-authorization-service[`OAuth2AuthorizationService`], xref:core-model-components.adoc#oauth2-token-generator[`OAuth2TokenGenerator`], and others.
+Furthermore, it lets you customize the request processing logic for the protocol endpoints – for example, xref:protocol-endpoints.adoc#oauth2-authorization-endpoint[authorization endpoint], xref:protocol-endpoints.adoc#oauth2-device-authorization-endpoint[device authorization endpoint], xref:protocol-endpoints.adoc#oauth2-device-verification-endpoint[device verification endpoint], xref:protocol-endpoints.adoc#oauth2-token-endpoint[token endpoint], xref:protocol-endpoints.adoc#oauth2-token-introspection-endpoint[token introspection endpoint], and others.
+
+`OAuth2AuthorizationServerConfigurer` provides the following configuration options:
+
+[source,java]
+----
+@Bean
+public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
+	OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
+		new OAuth2AuthorizationServerConfigurer();
+	http.apply(authorizationServerConfigurer);
+
+	authorizationServerConfigurer
+		.registeredClientRepository(registeredClientRepository) <1>
+		.authorizationService(authorizationService) <2>
+		.authorizationConsentService(authorizationConsentService)   <3>
+		.authorizationServerSettings(authorizationServerSettings) <4>
+		.tokenGenerator(tokenGenerator) <5>
+		.clientAuthentication(clientAuthentication -> { })  <6>
+		.authorizationEndpoint(authorizationEndpoint -> { })    <7>
+		.deviceAuthorizationEndpoint(deviceAuthorizationEndpoint -> { })    <8>
+		.deviceVerificationEndpoint(deviceVerificationEndpoint -> { })  <9>
+		.tokenEndpoint(tokenEndpoint -> { })    <10>
+		.tokenIntrospectionEndpoint(tokenIntrospectionEndpoint -> { })  <11>
+		.tokenRevocationEndpoint(tokenRevocationEndpoint -> { })    <12>
+		.authorizationServerMetadataEndpoint(authorizationServerMetadataEndpoint -> { })    <13>
+		.oidc(oidc -> oidc
+			.providerConfigurationEndpoint(providerConfigurationEndpoint -> { })    <14>
+			.logoutEndpoint(logoutEndpoint -> { })  <15>
+			.userInfoEndpoint(userInfoEndpoint -> { })  <16>
+			.clientRegistrationEndpoint(clientRegistrationEndpoint -> { })  <17>
+		);
+
+	return http.build();
+}
+----
+<1> `registeredClientRepository()`: The xref:core-model-components.adoc#registered-client-repository[`RegisteredClientRepository`] (*REQUIRED*) for managing new and existing clients.
+<2> `authorizationService()`: The xref:core-model-components.adoc#oauth2-authorization-service[`OAuth2AuthorizationService`] for managing new and existing authorizations.
+<3> `authorizationConsentService()`: The xref:core-model-components.adoc#oauth2-authorization-consent-service[`OAuth2AuthorizationConsentService`] for managing new and existing authorization consents.
+<4> `authorizationServerSettings()`: The xref:configuration-model.adoc#configuring-authorization-server-settings[`AuthorizationServerSettings`] (*REQUIRED*) for customizing configuration settings for the OAuth2 authorization server.
+<5> `tokenGenerator()`: The xref:core-model-components.adoc#oauth2-token-generator[`OAuth2TokenGenerator`] for generating tokens supported by the OAuth2 authorization server.
+<6> `clientAuthentication()`: The configurer for xref:configuration-model.adoc#configuring-client-authentication[OAuth2 Client Authentication].
+<7> `authorizationEndpoint()`: The configurer for the xref:protocol-endpoints.adoc#oauth2-authorization-endpoint[OAuth2 Authorization endpoint].
+<8> `deviceAuthorizationEndpoint()`: The configurer for the xref:protocol-endpoints.adoc#oauth2-device-authorization-endpoint[OAuth2 Device Authorization endpoint].
+<9> `deviceVerificationEndpoint()`: The configurer for the xref:protocol-endpoints.adoc#oauth2-device-verification-endpoint[OAuth2 Device Verification endpoint].
+<10> `tokenEndpoint()`: The configurer for the xref:protocol-endpoints.adoc#oauth2-token-endpoint[OAuth2 Token endpoint].
+<11> `tokenIntrospectionEndpoint()`: The configurer for the xref:protocol-endpoints.adoc#oauth2-token-introspection-endpoint[OAuth2 Token Introspection endpoint].
+<12> `tokenRevocationEndpoint()`: The configurer for the xref:protocol-endpoints.adoc#oauth2-token-revocation-endpoint[OAuth2 Token Revocation endpoint].
+<13> `authorizationServerMetadataEndpoint()`: The configurer for the xref:protocol-endpoints.adoc#oauth2-authorization-server-metadata-endpoint[OAuth2 Authorization Server Metadata endpoint].
+<14> `providerConfigurationEndpoint()`: The configurer for the xref:protocol-endpoints.adoc#oidc-provider-configuration-endpoint[OpenID Connect 1.0 Provider Configuration endpoint].
+<15> `logoutEndpoint()`: The configurer for the xref:protocol-endpoints.adoc#oidc-logout-endpoint[OpenID Connect 1.0 Logout endpoint].
+<16> `userInfoEndpoint()`: The configurer for the xref:protocol-endpoints.adoc#oidc-user-info-endpoint[OpenID Connect 1.0 UserInfo endpoint].
+<17> `clientRegistrationEndpoint()`: The configurer for the xref:protocol-endpoints.adoc#oidc-client-registration-endpoint[OpenID Connect 1.0 Client Registration endpoint].
+
+[[configuring-authorization-server-settings]]
+== Configuring Authorization Server Settings
+
+`AuthorizationServerSettings` contains the configuration settings for the OAuth2 authorization server.
+It specifies the `URI` for the protocol endpoints as well as the https://datatracker.ietf.org/doc/html/rfc8414#section-2[issuer identifier].
+The default `URI` for the protocol endpoints are as follows:
+
+[source,java]
+----
+public final class AuthorizationServerSettings extends AbstractSettings {
+
+	...
+
+	public static Builder builder() {
+		return new Builder()
+			.authorizationEndpoint("/oauth2/authorize")
+			.deviceAuthorizationEndpoint("/oauth2/device_authorization")
+			.deviceVerificationEndpoint("/oauth2/device_verification")
+			.tokenEndpoint("/oauth2/token")
+			.tokenIntrospectionEndpoint("/oauth2/introspect")
+			.tokenRevocationEndpoint("/oauth2/revoke")
+			.jwkSetEndpoint("/oauth2/jwks")
+			.oidcLogoutEndpoint("/connect/logout")
+			.oidcUserInfoEndpoint("/userinfo")
+			.oidcClientRegistrationEndpoint("/connect/register");
+	}
+
+	...
+
+}
+----
+
+[NOTE]
+`AuthorizationServerSettings` is a *REQUIRED* component.
+
+[TIP]
+xref:configuration-model.adoc#default-configuration[`@Import(OAuth2AuthorizationServerConfiguration.class)`] automatically registers an `AuthorizationServerSettings` `@Bean`, if not already provided.
+
+The following example shows how to customize the configuration settings and register an `AuthorizationServerSettings` `@Bean`:
+
+[source,java]
+----
+@Bean
+public AuthorizationServerSettings authorizationServerSettings() {
+	return AuthorizationServerSettings.builder()
+		.issuer("https://example.com")
+		.authorizationEndpoint("/oauth2/v1/authorize")
+		.deviceAuthorizationEndpoint("/oauth2/v1/device_authorization")
+		.deviceVerificationEndpoint("/oauth2/v1/device_verification")
+		.tokenEndpoint("/oauth2/v1/token")
+		.tokenIntrospectionEndpoint("/oauth2/v1/introspect")
+		.tokenRevocationEndpoint("/oauth2/v1/revoke")
+		.jwkSetEndpoint("/oauth2/v1/jwks")
+		.oidcLogoutEndpoint("/connect/v1/logout")
+		.oidcUserInfoEndpoint("/connect/v1/userinfo")
+		.oidcClientRegistrationEndpoint("/connect/v1/register")
+		.build();
+}
+----
+
+The `AuthorizationServerContext` is a context object that holds information of the Authorization Server runtime environment.
+It provides access to the `AuthorizationServerSettings` and the "`current`" issuer identifier.
+
+[NOTE]
+If the issuer identifier is not configured in `AuthorizationServerSettings.builder().issuer(String)`, it is resolved from the current request.
+
+[NOTE]
+The `AuthorizationServerContext` is accessible through the `AuthorizationServerContextHolder`, which associates it with the current request thread by using a `ThreadLocal`.
+
+[[configuring-client-authentication]]
+== Configuring Client Authentication
+
+`OAuth2ClientAuthenticationConfigurer` provides the ability to customize https://datatracker.ietf.org/doc/html/rfc6749#section-2.3[OAuth2 client authentication].
+It defines extension points that let you customize the pre-processing, main processing, and post-processing logic for client authentication requests.
+
+`OAuth2ClientAuthenticationConfigurer` provides the following configuration options:
+
+[source,java]
+----
+@Bean
+public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
+	OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
+		new OAuth2AuthorizationServerConfigurer();
+	http.apply(authorizationServerConfigurer);
+
+	authorizationServerConfigurer
+		.clientAuthentication(clientAuthentication ->
+			clientAuthentication
+				.authenticationConverter(authenticationConverter)   <1>
+				.authenticationConverters(authenticationConvertersConsumer) <2>
+				.authenticationProvider(authenticationProvider) <3>
+				.authenticationProviders(authenticationProvidersConsumer)   <4>
+				.authenticationSuccessHandler(authenticationSuccessHandler) <5>
+				.errorResponseHandler(errorResponseHandler) <6>
+		);
+
+	return http.build();
+}
+----
+<1> `authenticationConverter()`: Adds an `AuthenticationConverter` (_pre-processor_) used when attempting to extract client credentials from `HttpServletRequest` to an instance of `OAuth2ClientAuthenticationToken`.
+<2> `authenticationConverters()`: Sets the `Consumer` providing access to the `List` of default and (optionally) added ``AuthenticationConverter``'s allowing the ability to add, remove, or customize a specific `AuthenticationConverter`.
+<3> `authenticationProvider()`: Adds an `AuthenticationProvider` (_main processor_) used for authenticating the `OAuth2ClientAuthenticationToken`.
+<4> `authenticationProviders()`: Sets the `Consumer` providing access to the `List` of default and (optionally) added ``AuthenticationProvider``'s allowing the ability to add, remove, or customize a specific `AuthenticationProvider`.
+<5> `authenticationSuccessHandler()`: The `AuthenticationSuccessHandler` (_post-processor_) used for handling a successful client authentication and associating the `OAuth2ClientAuthenticationToken` to the `SecurityContext`.
+<6> `errorResponseHandler()`: The `AuthenticationFailureHandler` (_post-processor_) used for handling a failed client authentication and returning the https://datatracker.ietf.org/doc/html/rfc6749#section-5.2[`OAuth2Error` response].
+
+`OAuth2ClientAuthenticationConfigurer` configures the `OAuth2ClientAuthenticationFilter` and registers it with the OAuth2 authorization server `SecurityFilterChain` `@Bean`.
+`OAuth2ClientAuthenticationFilter` is the `Filter` that processes client authentication requests.
+
+By default, client authentication is required for the xref:protocol-endpoints.adoc#oauth2-token-endpoint[OAuth2 Token endpoint], the xref:protocol-endpoints.adoc#oauth2-token-introspection-endpoint[OAuth2 Token Introspection endpoint], and the xref:protocol-endpoints.adoc#oauth2-token-revocation-endpoint[OAuth2 Token Revocation endpoint].
+The supported client authentication methods are `client_secret_basic`, `client_secret_post`, `private_key_jwt`, `client_secret_jwt`, and `none` (public clients).
+
+`OAuth2ClientAuthenticationFilter` is configured with the following defaults:
+
+* `*AuthenticationConverter*` -- A `DelegatingAuthenticationConverter` composed of  `JwtClientAssertionAuthenticationConverter`, `ClientSecretBasicAuthenticationConverter`, `ClientSecretPostAuthenticationConverter`, and `PublicClientAuthenticationConverter`.
+* `*AuthenticationManager*` -- An `AuthenticationManager` composed of `JwtClientAssertionAuthenticationProvider`, `ClientSecretAuthenticationProvider`, and `PublicClientAuthenticationProvider`.
+* `*AuthenticationSuccessHandler*` -- An internal implementation that associates the "`authenticated`" `OAuth2ClientAuthenticationToken` (current `Authentication`) to the `SecurityContext`.
+* `*AuthenticationFailureHandler*` -- An internal implementation that uses the `OAuth2Error` associated with the `OAuth2AuthenticationException` to return the OAuth2 error response.
+
+[[configuring-client-authentication-customizing-jwt-client-assertion-validation]]
+=== Customizing Jwt Client Assertion Validation
+
+`JwtClientAssertionDecoderFactory.DEFAULT_JWT_VALIDATOR_FACTORY` is the default factory that provides an `OAuth2TokenValidator<Jwt>` for the specified `RegisteredClient` and is used for validating the `iss`, `sub`, `aud`, `exp` and `nbf` claims of the `Jwt` client assertion.
+
+`JwtClientAssertionDecoderFactory` provides the ability to override the default `Jwt` client assertion validation by supplying a custom factory of type `Function<RegisteredClient, OAuth2TokenValidator<Jwt>>` to `setJwtValidatorFactory()`.
+
+[NOTE]
+`JwtClientAssertionDecoderFactory` is the default `JwtDecoderFactory` used by `JwtClientAssertionAuthenticationProvider` that provides a `JwtDecoder` for the specified `RegisteredClient` and is used for authenticating a `Jwt` Bearer Token during OAuth2 client authentication.
+
+A common use case for customizing `JwtClientAssertionDecoderFactory` is to validate additional claims in the `Jwt` client assertion.
+
+The following example shows how to configure `JwtClientAssertionAuthenticationProvider` with a customized `JwtClientAssertionDecoderFactory` that validates an additional claim in the `Jwt` client assertion:
+
+[source,java]
+----
+@Bean
+public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
+	OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
+		new OAuth2AuthorizationServerConfigurer();
+	http.apply(authorizationServerConfigurer);
+
+	authorizationServerConfigurer
+		.clientAuthentication(clientAuthentication ->
+			clientAuthentication
+				.authenticationProviders(configureJwtClientAssertionValidator())
+		);
+
+	return http.build();
+}
+
+private Consumer<List<AuthenticationProvider>> configureJwtClientAssertionValidator() {
+	return (authenticationProviders) ->
+		authenticationProviders.forEach((authenticationProvider) -> {
+			if (authenticationProvider instanceof JwtClientAssertionAuthenticationProvider) {
+				// Customize JwtClientAssertionDecoderFactory
+				JwtClientAssertionDecoderFactory jwtDecoderFactory = new JwtClientAssertionDecoderFactory();
+				Function<RegisteredClient, OAuth2TokenValidator<Jwt>> jwtValidatorFactory = (registeredClient) ->
+					new DelegatingOAuth2TokenValidator<>(
+						// Use default validators
+						JwtClientAssertionDecoderFactory.DEFAULT_JWT_VALIDATOR_FACTORY.apply(registeredClient),
+						// Add custom validator
+						new JwtClaimValidator<>("claim", "value"::equals));
+				jwtDecoderFactory.setJwtValidatorFactory(jwtValidatorFactory);
+
+				((JwtClientAssertionAuthenticationProvider) authenticationProvider)
+					.setJwtDecoderFactory(jwtDecoderFactory);
+			}
+		});
+}
+----

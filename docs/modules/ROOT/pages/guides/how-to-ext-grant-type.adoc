@@ -1,0 +1,76 @@
+
+[[how-to-extension-grant-type]]
+= How-to: Implement an Extension Authorization Grant Type
+:index-link: ../how-to.html
+:docs-dir: ..
+
+This guide shows how to extend xref:index.adoc[Spring Authorization Server] with an https://datatracker.ietf.org/doc/html/rfc6749#section-4.5[extension authorization grant type].
+The purpose of this guide is to demonstrate how to implement an extension authorization grant type and configure it at the xref:protocol-endpoints.adoc#oauth2-token-endpoint[OAuth2 Token endpoint].
+
+Extending Spring Authorization Server with a new authorization grant type requires implementing an `AuthenticationConverter` and `AuthenticationProvider`, and configuring both components at the xref:protocol-endpoints.adoc#oauth2-token-endpoint[OAuth2 Token endpoint].
+In addition to the component implementations, a unique absolute URI needs to be assigned for use with the `grant_type` parameter.
+
+* xref:guides/how-to-ext-grant-type.adoc#implement-authentication-converter[Implement AuthenticationConverter]
+* xref:guides/how-to-ext-grant-type.adoc#implement-authentication-provider[Implement AuthenticationProvider]
+* xref:guides/how-to-ext-grant-type.adoc#configure-token-endpoint[Configure OAuth2 Token Endpoint]
+* xref:guides/how-to-ext-grant-type.adoc#request-access-token[Request the Access Token]
+
+[[implement-authentication-converter]]
+== Implement AuthenticationConverter
+
+Assuming the absolute URI for the `grant_type` parameter is `urn:ietf:params:oauth:grant-type:custom_code` and the `code` parameter represents the authorization grant, the following example shows a sample implementation of the `AuthenticationConverter`:
+
+.AuthenticationConverter
+[source,java]
+----
+include::{examples-dir}/main/java/sample/extgrant/CustomCodeGrantAuthenticationConverter.java[]
+----
+
+TIP: Click on the "Expand folded text" icon in the code sample above to display the full example.
+
+<1> If the `grant_type` parameter is *not* `urn:ietf:params:oauth:grant-type:custom_code`, then return `null`, allowing another `AuthenticationConverter` to process the token request.
+<2> The `code` parameter contains the authorization grant.
+<3> Return an instance of `CustomCodeGrantAuthenticationToken`, which is processed by xref:guides/how-to-ext-grant-type.adoc#implement-authentication-provider[`CustomCodeGrantAuthenticationProvider`].
+
+[[implement-authentication-provider]]
+== Implement AuthenticationProvider
+
+The `AuthenticationProvider` implementation is responsible for validating the authorization grant, and if valid and authorized, issues an access token.
+
+The following example shows a sample implementation of the `AuthenticationProvider`:
+
+.AuthenticationProvider
+[source,java]
+----
+include::{examples-dir}/main/java/sample/extgrant/CustomCodeGrantAuthenticationProvider.java[]
+----
+
+NOTE: `CustomCodeGrantAuthenticationProvider` processes `CustomCodeGrantAuthenticationToken`, which is created by xref:guides/how-to-ext-grant-type.adoc#implement-authentication-converter[`CustomCodeGrantAuthenticationConverter`].
+
+[[configure-token-endpoint]]
+== Configure OAuth2 Token Endpoint
+
+The following example shows how to configure the xref:protocol-endpoints.adoc#oauth2-token-endpoint[OAuth2 Token endpoint] with the `AuthenticationConverter` and `AuthenticationProvider`:
+
+.SecurityConfig
+[source,java]
+----
+include::{examples-dir}/main/java/sample/extgrant/SecurityConfig.java[]
+----
+
+<1> Add the `AuthenticationConverter` to the OAuth2 Token endpoint configuration.
+<2> Add the `AuthenticationProvider` to the OAuth2 Token endpoint configuration.
+
+[[request-access-token]]
+== Request the Access Token
+
+The client can request the access token by making the following (authenticated) request to the OAuth2 Token endpoint:
+
+[source,shell]
+----
+POST /oauth2/token HTTP/1.1
+Authorization: Basic bWVzc2FnaW5nLWNsaWVudDpzZWNyZXQ=
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=urn:ietf:params:oauth:grant-type:custom_code&code=7QR49T1W3
+----

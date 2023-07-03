@@ -1,0 +1,23 @@
+name: authorization-server
+version: true
+title: Spring Authorization Server
+nav:
+  - modules/ROOT/nav.adoc
+ext:
+  collector:
+    run:
+      command: gradlew -q -PbuildSrc.skipTests=true "-Dorg.gradle.jvmargs=-Xmx3g -XX:+HeapDumpOnOutOfMemoryError" :spring-authorization-server-docs:generateAntoraYml
+      local: true
+    scan:
+      dir: ./build/generated-antora-resources
+
+asciidoc:
+  attributes:
+    attribute-missing: 'warn'
+    chomp: 'all'
+    spring-security-reference-base-url: "https://docs.spring.io/spring-security/reference"
+    spring-security-api-base-url: "https://docs.spring.io/spring-security/site/docs/current/api"
+    spring-boot-reference-base-url: "https://docs.spring.io/spring-boot/docs/current/reference/html"
+    examples-dir: example$docs-src
+    samples-dir: example$samples
+    docs-java: '{examples-dir}/main/java'

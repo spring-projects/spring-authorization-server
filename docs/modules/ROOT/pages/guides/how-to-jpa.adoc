@@ -1,4 +1,3 @@
-include::attributes.adoc[]
 
 [[how-to-jpa]]
 = How-to: Implement core services with JPA

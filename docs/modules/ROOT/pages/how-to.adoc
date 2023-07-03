@@ -1,4 +1,3 @@
-include::attributes.adoc[]
 
 [[how-to]]
 = How-to Guides

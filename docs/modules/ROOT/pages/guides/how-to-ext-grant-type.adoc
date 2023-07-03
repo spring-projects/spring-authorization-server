@@ -1,4 +1,3 @@
-include::attributes.adoc[]
 
 [[how-to-extension-grant-type]]
 = How-to: Implement an Extension Authorization Grant Type

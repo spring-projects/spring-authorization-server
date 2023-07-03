@@ -1,4 +1,3 @@
-include::attributes.adoc[]
 
 [[how-to-social-login]]
 = How-to: Authenticate using Social Login

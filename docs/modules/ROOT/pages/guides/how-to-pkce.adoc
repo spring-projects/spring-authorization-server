@@ -1,4 +1,3 @@
-include::attributes.adoc[]
 
 [[how-to-pkce]]
 = How-to: Authenticate using a Single Page Application with PKCE

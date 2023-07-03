@@ -18,8 +18,11 @@ The easiest way to begin using Spring Authorization Server is by creating a http
 You can use https://start.spring.io[start.spring.io] to generate a basic project or use the https://github.com/spring-projects/spring-authorization-server/tree/main/samples/default-authorizationserver[default authorization server sample] as a guide.
 Then add Spring Boot's starter for Spring Authorization Server as a dependency:
 
+[tabs]
+======
+Maven::
++
 [[spring-boot-maven-dependency]]
-.Maven
 [source,xml,role="primary",subs="attributes,verbatim"]
 ----
 <dependency>
@@ -28,19 +31,24 @@ Then add Spring Boot's starter for Spring Authorization Server as a dependency:
 </dependency>
 ----
 
+Gradle::
++
 [[spring-boot-gradle-dependency]]
-.Gradle
 [source,gradle,role="secondary",subs="attributes,verbatim"]
 ----
 implementation "org.springframework.boot:spring-boot-starter-oauth2-authorization-server"
 ----
+======
 
 TIP: See https://docs.spring.io/spring-boot/docs/current/reference/html/getting-started.html#getting-started.installing[Installing Spring Boot] for more information on using Spring Boot with Maven or Gradle.
 
 Alternatively, you can add Spring Authorization Server without Spring Boot using the following example:
 
+[tabs]
+======
+Maven::
++
 [[maven-dependency]]
-.Maven
 [source,xml,role="primary",subs="attributes,verbatim"]
 ----
 <dependency>
@@ -50,12 +58,14 @@ Alternatively, you can add Spring Authorization Server without Spring Boot using
 </dependency>
 ----
 
+Gradle::
++
 [[gradle-dependency]]
-.Gradle
 [source,gradle,role="secondary",subs="attributes,verbatim"]
 ----
 implementation "org.springframework.security:spring-security-oauth2-authorization-server:{spring-authorization-server-version}"
 ----
+======
 
 [[developing-your-first-application]]
 == Developing Your First Application

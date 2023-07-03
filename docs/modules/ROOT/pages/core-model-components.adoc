@@ -141,7 +141,7 @@ The `OAuth2AuthorizationServerConfigurer` is useful when applying multiple confi
 [[oauth2-authorization]]
 == OAuth2Authorization
 
-An `OAuth2Authorization` is a representation of an OAuth2 authorization, which holds state related to the authorization granted to a <<registered-client, client>>, by the resource owner or itself in the case of the `client_credentials` authorization grant type.
+An `OAuth2Authorization` is a representation of an OAuth2 authorization, which holds state related to the authorization granted to a xref:core-model-components.adoc#registered-client[client], by the resource owner or itself in the case of the `client_credentials` authorization grant type.
 
 [TIP]
 The corresponding authorization model in Spring Security's OAuth2 Client support is {spring-security-reference-base-url}/servlet/oauth2/client/core.html#oauth2Client-authorized-client[OAuth2AuthorizedClient].
@@ -174,7 +174,7 @@ public class OAuth2Authorization implements Serializable {
 }
 ----
 <1> `id`: The ID that uniquely identifies the `OAuth2Authorization`.
-<2> `registeredClientId`: The ID that uniquely identifies the <<registered-client, RegisteredClient>>.
+<2> `registeredClientId`: The ID that uniquely identifies the xref:core-model-components.adoc#registered-client[RegisteredClient].
 <3> `principalName`: The principal name of the resource owner (or client).
 <4> `authorizationGrantType`: The `AuthorizationGrantType` used.
 <5> `authorizedScopes`: The `Set` of scope(s) authorized for the client.
@@ -236,7 +236,7 @@ The `OAuth2AuthorizationServerConfigurer` is useful when applying multiple confi
 [[oauth2-authorization-consent]]
 == OAuth2AuthorizationConsent
 
-An `OAuth2AuthorizationConsent` is a representation of an authorization "consent" (decision) from an https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.1[OAuth2 authorization request flow] – for example, the `authorization_code` grant, which holds the authorities granted to a <<registered-client, client>> by the resource owner.
+An `OAuth2AuthorizationConsent` is a representation of an authorization "consent" (decision) from an https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.1[OAuth2 authorization request flow] – for example, the `authorization_code` grant, which holds the authorities granted to a xref:core-model-components.adoc#registered-client[client] by the resource owner.
 
 When authorizing access to a client, the resource owner may grant only a subset of the authorities requested by the client.
 The typical use case is the `authorization_code` grant flow, in which the client requests scope(s) and the resource owner grants (or denies) access to the requested scope(s).
@@ -256,7 +256,7 @@ public final class OAuth2AuthorizationConsent implements Serializable {
 
 }
 ----
-<1> `registeredClientId`: The ID that uniquely identifies the <<registered-client, RegisteredClient>>.
+<1> `registeredClientId`: The ID that uniquely identifies the xref:core-model-components.adoc#registered-client[RegisteredClient].
 <2> `principalName`: The principal name of the resource owner.
 <3> `authorities`: The authorities granted to the client by the resource owner. An authority can represent a scope, a claim, a permission, a role, and others.
 
@@ -308,7 +308,7 @@ The `OAuth2AuthorizationServerConfigurer` is useful when applying multiple confi
 [[oauth2-token-context]]
 == OAuth2TokenContext
 
-An `OAuth2TokenContext` is a context object that holds information associated with an `OAuth2Token` and is used by an <<oauth2-token-generator, OAuth2TokenGenerator>> and <<oauth2-token-customizer, OAuth2TokenCustomizer>>.
+An `OAuth2TokenContext` is a context object that holds information associated with an `OAuth2Token` and is used by an xref:core-model-components.adoc#oauth2-token-generator[OAuth2TokenGenerator] and xref:core-model-components.adoc#oauth2-token-customizer[OAuth2TokenCustomizer].
 
 `OAuth2TokenContext` provides the following accessors:
 
@@ -337,10 +337,10 @@ public interface OAuth2TokenContext extends Context {
 
 }
 ----
-<1> `getRegisteredClient()`: The <<registered-client, RegisteredClient>> associated with the authorization grant.
+<1> `getRegisteredClient()`: The xref:core-model-components.adoc#registered-client[RegisteredClient] associated with the authorization grant.
 <2> `getPrincipal()`: The `Authentication` instance of the resource owner (or client).
 <3> `getAuthorizationServerContext()`: The xref:configuration-model.adoc#configuring-authorization-server-settings[`AuthorizationServerContext`] object that holds information of the Authorization Server runtime environment.
-<4> `getAuthorization()`: The <<oauth2-authorization, OAuth2Authorization>> associated with the authorization grant.
+<4> `getAuthorization()`: The xref:core-model-components.adoc#oauth2-authorization[OAuth2Authorization] associated with the authorization grant.
 <5> `getAuthorizedScopes()`: The scope(s) authorized for the client.
 <6> `getTokenType()`: The `OAuth2TokenType` to generate. The supported values are `code`, `access_token`, `refresh_token`, and `id_token`.
 <7> `getAuthorizationGrantType()`: The `AuthorizationGrantType` associated with the authorization grant.
@@ -349,7 +349,7 @@ public interface OAuth2TokenContext extends Context {
 [[oauth2-token-generator]]
 == OAuth2TokenGenerator
 
-An `OAuth2TokenGenerator` is responsible for generating an `OAuth2Token` from the information contained in the provided <<oauth2-token-context, OAuth2TokenContext>>.
+An `OAuth2TokenGenerator` is responsible for generating an `OAuth2Token` from the information contained in the provided xref:core-model-components.adoc#oauth2-token-context[OAuth2TokenContext].
 
 The `OAuth2Token` generated primarily depends on the type of `OAuth2TokenType` specified in the `OAuth2TokenContext`.
 
@@ -360,11 +360,11 @@ For example, when the `value` for `OAuth2TokenType` is:
 * `refresh_token`, then `OAuth2RefreshToken` is generated.
 * `id_token`, then `OidcIdToken` is generated.
 
-Furthermore, the format of the generated `OAuth2AccessToken` varies, depending on the `TokenSettings.getAccessTokenFormat()` configured for the <<registered-client, RegisteredClient>>.
+Furthermore, the format of the generated `OAuth2AccessToken` varies, depending on the `TokenSettings.getAccessTokenFormat()` configured for the xref:core-model-components.adoc#registered-client[RegisteredClient].
 If the format is `OAuth2TokenFormat.SELF_CONTAINED` (the default), then a `Jwt` is generated.
 If the format is `OAuth2TokenFormat.REFERENCE`, then an "opaque" token is generated.
 
-Finally, if the generated `OAuth2Token` has a set of claims and implements `ClaimAccessor`, the claims are made accessible from <<oauth2-authorization, OAuth2Authorization.Token.getClaims()>>.
+Finally, if the generated `OAuth2Token` has a set of claims and implements `ClaimAccessor`, the claims are made accessible from xref:core-model-components.adoc#oauth2-authorization[OAuth2Authorization.Token.getClaims()].
 
 The `OAuth2TokenGenerator` is primarily used by components that implement authorization grant processing – for example, `authorization_code`, `client_credentials`, and `refresh_token`.
 
@@ -419,8 +419,8 @@ The `OAuth2AuthorizationServerConfigurer` is useful when applying multiple confi
 [[oauth2-token-customizer]]
 == OAuth2TokenCustomizer
 
-An `OAuth2TokenCustomizer` provides the ability to customize the attributes of an `OAuth2Token`, which are accessible in the provided <<oauth2-token-context, OAuth2TokenContext>>.
-It is used by an <<oauth2-token-generator, OAuth2TokenGenerator>> to let it customize the attributes of the `OAuth2Token` before it is generated.
+An `OAuth2TokenCustomizer` provides the ability to customize the attributes of an `OAuth2Token`, which are accessible in the provided xref:core-model-components.adoc#oauth2-token-context[OAuth2TokenContext].
+It is used by an xref:core-model-components.adoc#oauth2-token-generator[OAuth2TokenGenerator] to let it customize the attributes of the `OAuth2Token` before it is generated.
 
 An `OAuth2TokenCustomizer<OAuth2TokenClaimsContext>` declared with a generic type of `OAuth2TokenClaimsContext` (`implements OAuth2TokenContext`) provides the ability to customize the claims of an "opaque" `OAuth2AccessToken`.
 `OAuth2TokenClaimsContext.getClaims()` provides access to the `OAuth2TokenClaimsSet.Builder`, allowing the ability to add, replace, and remove claims.
@@ -492,7 +492,7 @@ public OAuth2TokenCustomizer<JwtEncodingContext> jwtCustomizer() {
 If the `OAuth2TokenGenerator` is not provided as a `@Bean` or is not configured through the `OAuth2AuthorizationServerConfigurer`, an `OAuth2TokenCustomizer<JwtEncodingContext>` `@Bean` will automatically be configured with a `JwtGenerator`.
 
 [TIP]
-For an example showing how you can xref:guides/how-to-userinfo.adoc#customize-id-token[customize the ID token], see the guide xref:guides/how-to-userinfo.adoc#how-to-userinfo[How-to: Customize the OpenID Connect 1.0 UserInfo response].
+For an example showing how you can xref:guides/how-to-userinfo.adoc#customize-id-token[customize the ID token], see the guide xref:guides/how-to-userinfo.adoc[How-to: Customize the OpenID Connect 1.0 UserInfo response].
 
 [[session-registry]]
 == SessionRegistry

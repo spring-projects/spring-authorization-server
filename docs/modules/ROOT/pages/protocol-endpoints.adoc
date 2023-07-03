@@ -572,7 +572,7 @@ public JwtDecoder jwtDecoder(JWKSource<SecurityContext> jwkSource) {
 A `JwtDecoder` `@Bean` is *REQUIRED* for the OpenID Connect 1.0 UserInfo endpoint.
 
 [TIP]
-The guide xref:guides/how-to-userinfo.adoc#how-to-userinfo[How-to: Customize the OpenID Connect 1.0 UserInfo response] contains examples of customizing the UserInfo endpoint.
+The guide xref:guides/how-to-userinfo.adoc[How-to: Customize the OpenID Connect 1.0 UserInfo response] contains examples of customizing the UserInfo endpoint.
 
 [[oidc-client-registration-endpoint]]
 == OpenID Connect 1.0 Client Registration Endpoint

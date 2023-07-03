@@ -6,7 +6,7 @@
 
 `OAuth2AuthorizationServerConfiguration` is a `@Configuration` that provides the minimal default configuration for an OAuth2 authorization server.
 
-`OAuth2AuthorizationServerConfiguration` uses <<customizing-the-configuration, `OAuth2AuthorizationServerConfigurer`>> to apply the default configuration and registers a `SecurityFilterChain` `@Bean` composed of all the infrastructure components supporting an OAuth2 authorization server.
+`OAuth2AuthorizationServerConfiguration` uses xref:configuration-model.adoc#customizing-the-configuration[`OAuth2AuthorizationServerConfigurer`] to apply the default configuration and registers a `SecurityFilterChain` `@Bean` composed of all the infrastructure components supporting an OAuth2 authorization server.
 
 [TIP]
 `OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(HttpSecurity)` is a convenience (`static`) utility method that applies the default OAuth2 security configuration to `HttpSecurity`.
@@ -135,9 +135,9 @@ public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity h
 <1> `registeredClientRepository()`: The xref:core-model-components.adoc#registered-client-repository[`RegisteredClientRepository`] (*REQUIRED*) for managing new and existing clients.
 <2> `authorizationService()`: The xref:core-model-components.adoc#oauth2-authorization-service[`OAuth2AuthorizationService`] for managing new and existing authorizations.
 <3> `authorizationConsentService()`: The xref:core-model-components.adoc#oauth2-authorization-consent-service[`OAuth2AuthorizationConsentService`] for managing new and existing authorization consents.
-<4> `authorizationServerSettings()`: The <<configuring-authorization-server-settings, `AuthorizationServerSettings`>> (*REQUIRED*) for customizing configuration settings for the OAuth2 authorization server.
+<4> `authorizationServerSettings()`: The xref:configuration-model.adoc#configuring-authorization-server-settings[`AuthorizationServerSettings`] (*REQUIRED*) for customizing configuration settings for the OAuth2 authorization server.
 <5> `tokenGenerator()`: The xref:core-model-components.adoc#oauth2-token-generator[`OAuth2TokenGenerator`] for generating tokens supported by the OAuth2 authorization server.
-<6> `clientAuthentication()`: The configurer for <<configuring-client-authentication, OAuth2 Client Authentication>>.
+<6> `clientAuthentication()`: The configurer for xref:configuration-model.adoc#configuring-client-authentication[OAuth2 Client Authentication].
 <7> `authorizationEndpoint()`: The configurer for the xref:protocol-endpoints.adoc#oauth2-authorization-endpoint[OAuth2 Authorization endpoint].
 <8> `deviceAuthorizationEndpoint()`: The configurer for the xref:protocol-endpoints.adoc#oauth2-device-authorization-endpoint[OAuth2 Device Authorization endpoint].
 <9> `deviceVerificationEndpoint()`: The configurer for the xref:protocol-endpoints.adoc#oauth2-device-verification-endpoint[OAuth2 Device Verification endpoint].
@@ -186,7 +186,7 @@ public final class AuthorizationServerSettings extends AbstractSettings {
 `AuthorizationServerSettings` is a *REQUIRED* component.
 
 [TIP]
-<<default-configuration, `@Import(OAuth2AuthorizationServerConfiguration.class)`>> automatically registers an `AuthorizationServerSettings` `@Bean`, if not already provided.
+xref:configuration-model.adoc#default-configuration[`@Import(OAuth2AuthorizationServerConfiguration.class)`] automatically registers an `AuthorizationServerSettings` `@Bean`, if not already provided.
 
 The following example shows how to customize the configuration settings and register an `AuthorizationServerSettings` `@Bean`:
 

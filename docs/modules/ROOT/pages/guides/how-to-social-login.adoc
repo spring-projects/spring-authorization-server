@@ -6,14 +6,14 @@
 :github-ref: main
 :github-base-url: https://github.com/spring-projects/spring-authorization-server/blob/{github-ref}
 
-This guide shows how to configure xref:{docs-dir}/index.adoc#top[Spring Authorization Server] with a social login provider (such as Google, GitHub, etc.) for {spring-security-reference-base-url}/servlet/authentication/index.html[authentication].
+This guide shows how to configure xref:index.adoc[Spring Authorization Server] with a social login provider (such as Google, GitHub, etc.) for {spring-security-reference-base-url}/servlet/authentication/index.html[authentication].
 The purpose of this guide is to demonstrate how to replace {spring-security-reference-base-url}/servlet/authentication/passwords/form.html[Form Login] with {spring-security-reference-base-url}/servlet/oauth2/login/index.html[OAuth 2.0 Login].
 
 NOTE: Spring Authorization Server is built on {spring-security-reference-base-url}/index.html[Spring Security] and we will be using Spring Security concepts throughout this guide.
 
-* <<register-social-login-provider>>
-* <<configure-oauth2-login>>
-* <<advanced-use-cases>>
+* xref:guides/how-to-social-login.adoc#register-social-login-provider[Register with Social Login Provider]
+* xref:guides/how-to-social-login.adoc#configure-oauth2-login[Configure OAuth 2.0 Login]
+* xref:guides/how-to-social-login.adoc#advanced-use-cases[Advanced Use Cases]
 
 [[register-social-login-provider]]
 == Register with Social Login Provider
@@ -45,11 +45,11 @@ In addition, you will need to reference the provider's documentation and take no
 [[configure-oauth2-login]]
 == Configure OAuth 2.0 Login
 
-Once you've <<register-social-login-provider,registered>> with a social login provider, you can proceed to configuring Spring Security for {spring-security-reference-base-url}/servlet/oauth2/login/index.html[OAuth 2.0 Login].
+Once you've xref:guides/how-to-social-login.adoc#register-social-login-provider[registered] with a social login provider, you can proceed to configuring Spring Security for {spring-security-reference-base-url}/servlet/oauth2/login/index.html[OAuth 2.0 Login].
 
-* <<configure-oauth2-login-dependency>>
-* <<configure-oauth2-login-client-registration>>
-* <<configure-oauth2-login-authentication>>
+* xref:guides/how-to-social-login.adoc#configure-oauth2-login-dependency[Add OAuth2 Client Dependency]
+* xref:guides/how-to-social-login.adoc#configure-oauth2-login-client-registration[Register a Client]
+* xref:guides/how-to-social-login.adoc#configure-oauth2-login-authentication[Configure Authentication]
 
 [[configure-oauth2-login-dependency]]
 === Add OAuth2 Client Dependency
@@ -76,7 +76,7 @@ implementation "org.springframework.boot:spring-boot-starter-oauth2-client"
 [[configure-oauth2-login-client-registration]]
 === Register a Client
 
-Next, configure the `ClientRegistration` with the values obtained <<register-social-login-provider,earlier>>.
+Next, configure the `ClientRegistration` with the values obtained xref:guides/how-to-social-login.adoc#register-social-login-provider[earlier].
 Using Okta as an example, configure the following properties:
 
 [[configure-oauth2-login-okta-example]]
@@ -99,7 +99,7 @@ For more information about configuring the `ClientRegistration`, see {spring-sec
 Finally, to configure Spring Authorization Server to use a social login provider for authentication, you can use `oauth2Login()` instead of `formLogin()`.
 You can also automatically redirect an unauthenticated user to the provider by configuring `exceptionHandling()` with an `AuthenticationEntryPoint`.
 
-Continuing our <<configure-oauth2-login-okta-example,earlier example>>, configure Spring Security using a `@Configuration` as in the following example:
+Continuing our xref:guides/how-to-social-login.adoc#configure-oauth2-login-okta-example[earlier example], configure Spring Security using a `@Configuration` as in the following example:
 
 .Configure OAuth 2.0 Login
 [source,java]
@@ -112,7 +112,7 @@ include::{examples-dir}/src/main/java/sample/socialLogin/SecurityConfig.java[]
 <3> A Spring Security filter chain for https://docs.spring.io/spring-security/reference/servlet/authentication/index.html[authentication].
 <4> Configure {spring-security-reference-base-url}/servlet/oauth2/login/index.html[OAuth 2.0 Login] for authentication.
 
-If you configured a `UserDetailsService` when xref:{docs-dir}/getting-started.adoc#developing-your-first-application[getting started], you can remove it now.
+If you configured a `UserDetailsService` when xref:getting-started.adoc#developing-your-first-application[getting started], you can remove it now.
 
 [[advanced-use-cases]]
 == Advanced Use Cases
@@ -120,8 +120,8 @@ If you configured a `UserDetailsService` when xref:{docs-dir}/getting-started.ad
 The https://github.com/spring-projects/spring-authorization-server/tree/{github-ref}/samples#demo-sample[demo authorization server sample^] demonstrates advanced configuration options for federating identity providers.
 Select from the following use cases to see an example of each:
 
-* I want to <<advanced-use-cases-capture-users>>
-* I want to <<advanced-use-cases-map-claims>>
+* I want to xref:guides/how-to-social-login.adoc#advanced-use-cases-capture-users[Capture Users in a Database]
+* I want to xref:guides/how-to-social-login.adoc#advanced-use-cases-map-claims[Map Claims to an ID Token]
 
 [[advanced-use-cases-capture-users]]
 === Capture Users in a Database

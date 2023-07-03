@@ -1,5 +1,6 @@
 [[top]]
 = Spring Authorization Server Reference
+:page-section-summary-toc: 1
 Joe Grandja, Steve Riesenberg
 v{spring-authorization-server-version}
 :docinfo: private-footer

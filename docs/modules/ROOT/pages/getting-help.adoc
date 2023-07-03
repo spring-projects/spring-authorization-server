@@ -1,5 +1,6 @@
 [[getting-help]]
 = Getting Help
+:page-section-summary-toc: 1
 
 [[community]]
 == Community

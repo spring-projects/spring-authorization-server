@@ -1,6 +1,7 @@
 
 [[how-to]]
 = How-to Guides
+:page-section-summary-toc: 1
 
 [[how-to-overview]]
 == List of Guides

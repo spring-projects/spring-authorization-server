@@ -1,0 +1,39 @@
+antora:
+  extensions:
+  - '@springio/antora-extensions/partial-build-extension'
+  - require: '@springio/antora-extensions/latest-version-extension'
+  - require: '@springio/antora-extensions/inject-collector-cache-config-extension'
+  - '@antora/collector-extension'
+  - '@antora/atlas-extension'
+  - require: '@springio/antora-extensions/root-component-extension'
+    root_component_name: 'authorization-server'
+site:
+  title: Spring Authorization Server
+  url: https://rwinch.github.io/spring-authorization-server
+  robots: allow
+git:
+  ensure_git_suffix: false
+content:
+  sources:
+  - url: https://github.com/rwinch/spring-authorization-server
+    branches: [antora]
+    start_path: docs
+asciidoc:
+  attributes:
+    page-pagination: ''
+    hide-uri-scheme: '@'
+    tabs-sync-option: '@'
+  extensions:
+  - '@asciidoctor/tabs'
+  - '@springio/asciidoctor-extensions'
+urls:
+  latest_version_segment_strategy: redirect:to
+  latest_version_segment: ''
+  redirect_facility: httpd
+ui:
+  bundle:
+    url: https://github.com/spring-io/antora-ui-spring/releases/download/latest/ui-bundle.zip
+    snapshot: true
+runtime:
+  log:
+    failure_level: warn

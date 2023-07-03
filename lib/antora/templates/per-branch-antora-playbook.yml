@@ -1,0 +1,38 @@
+# PACKAGES antora@3.2.0-alpha.2 @antora/atlas-extension:1.0.0-alpha.1 @antora/collector-extension@1.0.0-alpha.3 @springio/antora-extensions@1.1.0 @asciidoctor/tabs@1.0.0-beta.3 @opendevise/antora-release-line-extension@1.0.0
+#
+# The purpose of this Antora playbook is to build the docs in the current branch.
+antora:
+  extensions:
+  - '@antora/collector-extension'
+  - id: '@antora/atlas-extension'
+    require: '@antora/atlas-extension'
+    enabled: false
+  - '@opendevise/antora-release-line-extension'
+  - require: '@springio/antora-extensions/tabs-migration-extension'
+    unwrap_example_block: always
+site:
+  title: Spring Authorization Server
+content:
+  sources:
+  - url: ./..
+    branches: HEAD
+    start_path: docs
+    worktrees: true
+asciidoc:
+  attributes:
+    hide-uri-scheme: '@'
+    page-pagination: ''
+    primary-site-url: https://rwinch.github.io/spring-authorization-server/reference
+    tabs-sync-option: '@'
+  extensions:
+  - '@asciidoctor/tabs'
+  sourcemap: true
+urls:
+  latest_version_segment: ''
+runtime:
+  log:
+    failure_level: warn
+ui:
+  bundle:
+    url: https://github.com/spring-io/antora-ui-spring/releases/download/latest/ui-bundle.zip
+    snapshot: true

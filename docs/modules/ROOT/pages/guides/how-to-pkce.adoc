@@ -27,7 +27,7 @@ For example, if you have an Angular dev server running locally on port `4200`, y
 .Enable CORS
 [source,java]
 ----
-include::{examples-dir}/src/main/java/sample/pkce/SecurityConfig.java[]
+include::{examples-dir}/main/java/sample/pkce/SecurityConfig.java[]
 ----
 
 TIP: Click on the "Expand folded text" icon in the code sample above to display the full example.
@@ -44,13 +44,13 @@ Continuing the xref:guides/how-to-pkce.adoc#enable-cors-configuration[earlier] e
 .Yaml
 [source,yaml,role="primary"]
 ----
-include::{examples-dir}/src/main/java/sample/pkce/application.yml[]
+include::{examples-dir}/main/java/sample/pkce/application.yml[]
 ----
 
 .Java
 [source,java,role="secondary"]
 ----
-include::{examples-dir}/src/main/java/sample/pkce/ClientConfig.java[tag=client,indent=0]
+include::{examples-dir}/main/java/sample/pkce/ClientConfig.java[tag=client,indent=0]
 ----
 
 NOTE: The `requireProofKey` setting is helpful in situations where you forget to include the `code_challenge` and `code_challenge_method` query parameters because you will receive an error indicating PKCE is required during the xref:protocol-endpoints.adoc#oauth2-authorization-endpoint[Authorization Request] instead of a general client authentication error during the xref:protocol-endpoints.adoc#oauth2-token-endpoint[Token Request].

@@ -2,7 +2,6 @@
 * xref:overview.adoc[]
 * xref:getting-help.adoc[]
 * xref:getting-started.adoc[]
-* xref:attributes.adoc[]
 * xref:configuration-model.adoc[]
 * xref:core-model-components.adoc[]
 * xref:protocol-endpoints.adoc[]

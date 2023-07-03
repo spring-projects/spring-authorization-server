@@ -23,7 +23,7 @@ Assuming the absolute URI for the `grant_type` parameter is `urn:ietf:params:oau
 .AuthenticationConverter
 [source,java]
 ----
-include::{examples-dir}/src/main/java/sample/extgrant/CustomCodeGrantAuthenticationConverter.java[]
+include::{examples-dir}/main/java/sample/extgrant/CustomCodeGrantAuthenticationConverter.java[]
 ----
 
 TIP: Click on the "Expand folded text" icon in the code sample above to display the full example.
@@ -42,7 +42,7 @@ The following example shows a sample implementation of the `AuthenticationProvid
 .AuthenticationProvider
 [source,java]
 ----
-include::{examples-dir}/src/main/java/sample/extgrant/CustomCodeGrantAuthenticationProvider.java[]
+include::{examples-dir}/main/java/sample/extgrant/CustomCodeGrantAuthenticationProvider.java[]
 ----
 
 NOTE: `CustomCodeGrantAuthenticationProvider` processes `CustomCodeGrantAuthenticationToken`, which is created by xref:guides/how-to-ext-grant-type.adoc#implement-authentication-converter[`CustomCodeGrantAuthenticationConverter`].
@@ -55,7 +55,7 @@ The following example shows how to configure the xref:protocol-endpoints.adoc#oa
 .SecurityConfig
 [source,java]
 ----
-include::{examples-dir}/src/main/java/sample/extgrant/SecurityConfig.java[]
+include::{examples-dir}/main/java/sample/extgrant/SecurityConfig.java[]
 ----
 
 <1> Add the `AuthenticationConverter` to the OAuth2 Token endpoint configuration.

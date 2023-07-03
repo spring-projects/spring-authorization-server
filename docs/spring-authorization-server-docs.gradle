@@ -1,17 +1,55 @@
 plugins {
 	id "io.spring.convention.docs"
+	id 'io.spring.antora.generate-antora-yml' version '0.0.1'
+	id 'org.antora' version '1.0.0'
+	id "java"
 }
 
-asciidoctor {
-	attributes([
-			"spring-authorization-server-version": project.version,
-			"spring-security-reference-base-url": "https://docs.spring.io/spring-security/reference",
-			"spring-security-api-base-url": "https://docs.spring.io/spring-security/site/docs/current/api",
-			"spring-boot-reference-base-url": "https://docs.spring.io/spring-boot/docs/current/reference/html",
-			"chomp": "default headers packages",
-			"toc": "left",
-			"toclevels": "4"
-	])
+group = project.rootProject.group
+version = project.rootProject.version
+sourceCompatibility = "17"
+
+antora {
+//	playbook = 'cached-antora-playbook.yml'
+//	playbookProvider {
+//		repository = 'spring-projects/spring-security'
+//		branch = 'docs-build'
+//		path = 'lib/antora/templates/per-branch-antora-playbook.yml'
+//		checkLocalBranch = true
+//	}
+	options = [clean: true, fetch: !project.gradle.startParameter.offline, stacktrace: true]
+
+	version = '3.2.0-alpha.2'
+	playbook = 'antora-playbook.yml'
+//	playbookProvider {
+//		repository = 'rwinch/spring-framework'
+//		branch = 'docs-build'
+//		path = 'lib/antora/templates/per-branch-antora-playbook.yml'
+//		checkLocalBranch = true
+//	}
+	environment = [
+		'ALGOLIA_API_KEY': '9d489079e5ec46dbb238909fee5c9c29',
+		'ALGOLIA_APP_ID': 'WB1FQYI187',
+		'ALGOLIA_INDEX_NAME': 'springsecurity',
+	]
+	dependencies = [
+		'@antora/atlas-extension': '1.0.0-alpha.1',
+		'@antora/collector-extension': '1.0.0-alpha.3',
+		'@asciidoctor/tabs': '1.0.0-beta.3',
+		'@springio/antora-extensions': '1.4.2',
+		'@springio/asciidoctor-extensions': '1.0.0-alpha.8',
+	]
+}
+
+tasks.named("generateAntoraYml") {
+	asciidocAttributes = project.provider( { generateAttributes() } )
+}
+
+
+def generateAttributes() {
+	return [
+			"spring-authorization-server-version": project.version
+	]
 }
 
 docsZip {
@@ -21,4 +59,30 @@ docsZip {
 	from(asciidoctor) {
 		into "reference/html"
 	}
+}
+
+repositories {
+	mavenCentral()
+	maven { url "https://repo.spring.io/milestone" }
+}
+
+dependencies {
+	implementation(platform("org.springframework.boot:spring-boot-dependencies:3.1.0")) {
+		exclude group: "org.springframework.security", module: "spring-security-oauth2-authorization-server"
+	}
+	implementation platform("org.springframework.security:spring-security-bom:6.1.0")
+	implementation "org.springframework.boot:spring-boot-starter-web"
+	implementation "org.springframework.boot:spring-boot-starter-thymeleaf"
+	implementation "org.springframework.boot:spring-boot-starter-security"
+	implementation "org.springframework.boot:spring-boot-starter-oauth2-client"
+	implementation "org.springframework.boot:spring-boot-starter-oauth2-resource-server"
+	implementation "org.springframework.boot:spring-boot-starter-data-jpa"
+	implementation project(":spring-security-oauth2-authorization-server")
+	runtimeOnly "com.h2database:h2"
+	testImplementation "org.springframework.boot:spring-boot-starter-test"
+	testImplementation "org.springframework.security:spring-security-test"
+}
+
+tasks.named("test") {
+	useJUnitPlatform()
 }

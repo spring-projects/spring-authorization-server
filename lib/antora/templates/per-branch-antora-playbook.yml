@@ -21,7 +21,7 @@ asciidoc:
   attributes:
     hide-uri-scheme: '@'
     page-pagination: ''
-    primary-site-url: https://rwinch.github.io/spring-authorization-server/reference
+    primary-site-url: https://docs.spring.io/spring-authorization-server/reference
     tabs-sync-option: '@'
   extensions:
   - '@asciidoctor/tabs'

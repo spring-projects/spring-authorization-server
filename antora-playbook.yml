@@ -9,14 +9,15 @@ antora:
     root_component_name: 'authorization-server'
 site:
   title: Spring Authorization Server
-  url: https://rwinch.github.io/spring-authorization-server
+  url: https://docs.spring.io/spring-authorization-server
   robots: allow
 git:
   ensure_git_suffix: false
 content:
   sources:
-  - url: https://github.com/rwinch/spring-authorization-server
-    branches: [antora]
+  - url: https://github.com/spring-projects/spring-authorization-server
+    branches: [main]
+    tags: []
     start_path: docs
 asciidoc:
   attributes:

@@ -76,7 +76,7 @@ To get started, you need the minimum required components defined as a `@Bean`. W
 .application.yml
 [source,yaml]
 ----
-include::{docs-java}/sample/gettingStarted/application.yml[]
+include::{docs-java}/sample/gettingstarted/application.yml[]
 ----
 
 TIP: Beyond the Getting Started experience, most users will want to customize the default configuration. The xref:getting-started.adoc#defining-required-components[next section] demonstrates providing all of the necessary beans yourself.
@@ -92,7 +92,7 @@ These components can be defined as follows:
 .SecurityConfig.java
 [source,java]
 ----
-include::{docs-java}/sample/gettingStarted/SecurityConfig.java[]
+include::{docs-java}/sample/gettingstarted/SecurityConfig.java[]
 ----
 
 This is a minimal configuration for getting started quickly. To understand what each component is used for, see the following descriptions:

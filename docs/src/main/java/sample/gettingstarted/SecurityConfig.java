@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package sample.gettingStarted;
+package sample.gettingstarted;
 
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;

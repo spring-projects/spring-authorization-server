@@ -88,7 +88,7 @@ Using Okta as an example, configure the following properties:
 .application.yml
 [source,yaml]
 ----
-include::{examples-dir}/main/java/sample/socialLogin/application.yml[]
+include::{examples-dir}/main/java/sample/sociallogin/application.yml[]
 ----
 
 NOTE: The `registrationId` in the above example is `my-client`.
@@ -109,7 +109,7 @@ Continuing our xref:guides/how-to-social-login.adoc#configure-oauth2-login-okta-
 .Configure OAuth 2.0 Login
 [source,java]
 ----
-include::{examples-dir}/main/java/sample/socialLogin/SecurityConfig.java[]
+include::{examples-dir}/main/java/sample/sociallogin/SecurityConfig.java[]
 ----
 
 <1> A Spring Security filter chain for the xref:{docs-dir}/protocol-endpoints.adoc[Protocol Endpoints].

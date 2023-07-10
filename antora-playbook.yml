@@ -9,7 +9,7 @@ antora:
     root_component_name: 'authorization-server'
 site:
   title: Spring Authorization Server
-  url: https://docs.spring.io/spring-authorization-server
+  url: https://docs.spring.io/spring-authorization-server/reference
   robots: allow
 git:
   ensure_git_suffix: false

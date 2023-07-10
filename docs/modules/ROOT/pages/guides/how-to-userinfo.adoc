@@ -83,7 +83,7 @@ The following listing shows how to use the customization option that is availabl
 include::{examples-dir}/main/java/sample/userinfo/jwt/JwtUserInfoMapperSecurityConfig.java[]
 ----
 
-This configuration maps claims from the access token (which is a JWT when using the xref:getting-started.adoc#sample.gettingStarted[Getting Started config]) to populate the user info response and provides the following:
+This configuration maps claims from the access token (which is a JWT when using the xref:getting-started.adoc#sample.gettingstarted[Getting Started config]) to populate the user info response and provides the following:
 
 <1> A Spring Security filter chain for the xref:{docs-dir}/protocol-endpoints.adoc[Protocol Endpoints].
 <2> A user info mapper that maps claims in a domain-specific way.

@@ -11,11 +11,11 @@ antora:
     - '@antora/atlas-extension'
 site:
   title: Spring Authorization Server
-  url: https://https://rwinch.github.io/spring-authorization-server/
+  url: https://docs.spring.io/spring-authorization-server/
 content:
   sources:
     - url: ..
-      branches: antora
+      branches: HEAD
       start_path: docs
       worktrees: true
 asciidoc:

@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package sample.jpa.service.authorizationConsent;
+package sample.jpa.service.authorizationconsent;
 
 import java.util.HashSet;
 import java.util.Set;
 
-import sample.jpa.entity.authorizationConsent.AuthorizationConsent;
-import sample.jpa.repository.authorizationConsent.AuthorizationConsentRepository;
+import sample.jpa.entity.authorizationconsent.AuthorizationConsent;
+import sample.jpa.repository.authorizationconsent.AuthorizationConsentRepository;
 
 import org.springframework.dao.DataRetrievalFailureException;
 import org.springframework.security.core.GrantedAuthority;

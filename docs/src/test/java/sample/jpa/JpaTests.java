@@ -28,7 +28,7 @@ import sample.AuthorizationCodeGrantFlow;
 import sample.DeviceAuthorizationGrantFlow;
 import sample.jose.TestJwks;
 import sample.jpa.service.authorization.JpaOAuth2AuthorizationService;
-import sample.jpa.service.authorizationConsent.JpaOAuth2AuthorizationConsentService;
+import sample.jpa.service.authorizationconsent.JpaOAuth2AuthorizationConsentService;
 import sample.jpa.service.client.JpaRegisteredClientRepository;
 import sample.test.SpringTestContext;
 import sample.test.SpringTestContextExtension;

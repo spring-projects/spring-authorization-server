@@ -1,7 +1,7 @@
 plugins {
 	id "io.spring.convention.docs"
-	id 'io.spring.antora.generate-antora-yml' version '0.0.1'
-	id 'org.antora' version '1.0.0'
+	id "io.spring.antora.generate-antora-yml" version "0.0.1"
+	id "org.antora" version "1.0.0"
 	id "java"
 }
 
@@ -10,11 +10,11 @@ version = project.rootProject.version
 sourceCompatibility = "17"
 
 antora {
-	playbook = 'cached-antora-playbook.yml'
+	playbook = "cached-antora-playbook.yml"
 	playbookProvider {
-		repository = 'rwinch/spring-authorization-server'
-		branch = 'docs-build'
-		path = 'lib/antora/templates/per-branch-antora-playbook.yml'
+		repository = "spring-projects/spring-authorization-server"
+		branch = "docs-build"
+		path = "lib/antora/templates/per-branch-antora-playbook.yml"
 		checkLocalBranch = true
 	}
 	options = [clean: true, fetch: !project.gradle.startParameter.offline, stacktrace: true]

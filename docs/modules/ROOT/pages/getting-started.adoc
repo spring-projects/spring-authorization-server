@@ -88,7 +88,7 @@ If you want to customize the default configuration (regardless of whether you're
 
 These components can be defined as follows:
 
-[[sample.gettingStarted]]
+[[sample.gettingstarted]]
 .SecurityConfig.java
 [source,java]
 ----

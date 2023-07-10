@@ -1,4 +1,4 @@
-* xref:index.adoc[]
+* xref:overview.adoc[]
 * xref:getting-help.adoc[]
 * xref:getting-started.adoc[]
 * xref:configuration-model.adoc[]

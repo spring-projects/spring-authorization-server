@@ -103,6 +103,12 @@ public final class InMemoryRegisteredClientRepository implements RegisteredClien
 				throw new IllegalArgumentException("Registered client must be unique. " +
 						"Found duplicate client identifier: " + registeredClient.getClientId());
 			}
+
+			// client_secert: OAuth 2.0 client secret string.
+			// 		If issued, this MUST be unique for each "client_id" and SHOULD be unique for multiple instances of a client
+			// 		using the same "client_id".  This value is used by confidential clients to authenticate to the token
+			//      endpoint, as described in OAuth 2.0 [RFC6749], Section 2.3.1.
+			// https://datatracker.ietf.org/doc/html/rfc7591#section-3.2.1
 			if (StringUtils.hasText(registeredClient.getClientSecret()) &&
 					registeredClient.getClientSecret().equals(registration.getClientSecret())) {
 				throw new IllegalArgumentException("Registered client must be unique. " +

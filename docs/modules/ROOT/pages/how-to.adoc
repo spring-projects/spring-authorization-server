@@ -11,4 +11,4 @@
 * xref:guides/how-to-ext-grant-type.adoc[Implement an Extension Authorization Grant Type]
 * xref:guides/how-to-userinfo.adoc[Customize the OpenID Connect 1.0 UserInfo response]
 * xref:guides/how-to-jpa.adoc[Implement core services with JPA]
-* xref:guides/how-to-custom-claims-authorities.adoc[Add authorities as custom claims in JWT-based access tokens]
+* xref:guides/how-to-custom-claims-authorities.adoc[Add authorities as custom claims in JWT access tokens]

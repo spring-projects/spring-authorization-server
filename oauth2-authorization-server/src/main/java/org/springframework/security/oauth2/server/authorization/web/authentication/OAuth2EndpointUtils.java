@@ -95,4 +95,7 @@ final class OAuth2EndpointUtils {
 		return sb.toString();
 	}
 
+	static boolean validateUserCode(String userCode) {
+		return userCode != null && userCode.toUpperCase().replaceAll("[^A-Z\\d]+", "").length() == 8;
+	}
 }

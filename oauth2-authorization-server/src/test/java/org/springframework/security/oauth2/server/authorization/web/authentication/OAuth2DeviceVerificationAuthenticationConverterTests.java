@@ -107,6 +107,7 @@ public class OAuth2DeviceVerificationAuthenticationConverterTests {
 				.isEqualTo(OAuth2ErrorCodes.INVALID_REQUEST);
 		// @formatter:on
 	}
+
 	@Test
 	public void convertWhenMultipleUserCodeParameterThenInvalidRequestError() {
 		MockHttpServletRequest request = createRequest();

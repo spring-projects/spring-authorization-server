@@ -94,7 +94,8 @@ final class OAuth2EndpointUtils {
 		sb.insert(4, '-');
 		return sb.toString();
 	}
-	static boolean validateUserCode(String userCode){
-		return userCode != null && userCode.replaceAll("[^A-Z\\d]+", "").length() == 8;
+
+	static boolean validateUserCode(String userCode) {
+		return userCode != null && userCode.toUpperCase().replaceAll("[^A-Z\\d]+", "").length() == 8;
 	}
 }

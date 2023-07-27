@@ -80,7 +80,7 @@ public final class OAuth2DeviceAuthorizationConsentAuthenticationConverter imple
 
 		// user_code (REQUIRED)
 		String userCode = parameters.getFirst(OAuth2ParameterNames.USER_CODE);
-		if (!StringUtils.hasText(userCode) ||
+		if (!OAuth2EndpointUtils.validateUserCode(userCode) ||
 				parameters.get(OAuth2ParameterNames.USER_CODE).size() != 1) {
 			OAuth2EndpointUtils.throwError(
 					OAuth2ErrorCodes.INVALID_REQUEST,

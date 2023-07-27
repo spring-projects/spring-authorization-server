@@ -30,7 +30,6 @@ import org.springframework.security.oauth2.server.authorization.authentication.O
 import org.springframework.security.oauth2.server.authorization.web.OAuth2DeviceVerificationEndpointFilter;
 import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.util.MultiValueMap;
-import org.springframework.util.StringUtils;
 
 /**
  * Attempts to extract a user code from {@link HttpServletRequest} for the
@@ -64,7 +63,7 @@ public final class OAuth2DeviceVerificationAuthenticationConverter implements Au
 
 		// user_code (REQUIRED)
 		String userCode = parameters.getFirst(OAuth2ParameterNames.USER_CODE);
-		if (!StringUtils.hasText(userCode) ||
+		if (!OAuth2EndpointUtils.validateUserCode(userCode) ||
 				parameters.get(OAuth2ParameterNames.USER_CODE).size() != 1) {
 			OAuth2EndpointUtils.throwError(
 					OAuth2ErrorCodes.INVALID_REQUEST,

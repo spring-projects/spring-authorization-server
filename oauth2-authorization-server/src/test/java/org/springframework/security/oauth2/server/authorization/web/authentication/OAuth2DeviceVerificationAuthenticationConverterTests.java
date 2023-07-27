@@ -95,6 +95,20 @@ public class OAuth2DeviceVerificationAuthenticationConverterTests {
 	}
 
 	@Test
+	public void convertWhenInvalidUserCodeParameterThenInvalidRequestError() {
+		MockHttpServletRequest request = createRequest();
+		request.addParameter(OAuth2ParameterNames.USER_CODE, "LONG-USER-CODE");
+		// @formatter:off
+		assertThatExceptionOfType(OAuth2AuthenticationException.class)
+				.isThrownBy(() -> this.converter.convert(request))
+				.withMessageContaining(OAuth2ParameterNames.USER_CODE)
+				.extracting(OAuth2AuthenticationException::getError)
+				.extracting(OAuth2Error::getErrorCode)
+				.isEqualTo(OAuth2ErrorCodes.INVALID_REQUEST);
+		// @formatter:on
+	}
+
+	@Test
 	public void convertWhenMultipleUserCodeParameterThenInvalidRequestError() {
 		MockHttpServletRequest request = createRequest();
 		request.addParameter(OAuth2ParameterNames.USER_CODE, USER_CODE);

@@ -61,9 +61,6 @@ public final class ClientSecretPostAuthenticationConverter implements Authentica
 
 		// client_secret (REQUIRED)
 		String clientSecret = parameters.getFirst(OAuth2ParameterNames.CLIENT_SECRET);
-		if (!StringUtils.hasText(clientSecret)) {
-			return null;
-		}
 
 		if (parameters.get(OAuth2ParameterNames.CLIENT_SECRET).size() != 1) {
 			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_REQUEST);

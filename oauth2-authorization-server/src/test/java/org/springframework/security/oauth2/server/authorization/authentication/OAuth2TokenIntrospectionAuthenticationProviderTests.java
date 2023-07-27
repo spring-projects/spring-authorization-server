@@ -158,6 +158,41 @@ public class OAuth2TokenIntrospectionAuthenticationProviderTests {
 	}
 
 	@Test
+	public void authenticateWhenTokenRefreshedThenNotActive() {
+		Instant issuedAt = Instant.now().minus(Duration.ofHours(1));
+		Instant expiresAt = Instant.now().plus(Duration.ofMinutes(1));
+
+		OAuth2AccessToken staleAccessToken = new OAuth2AccessToken(
+				OAuth2AccessToken.TokenType.BEARER, "access-token-stale", issuedAt, expiresAt);
+
+		OAuth2AccessToken refreshedAccessToken = new OAuth2AccessToken(
+				OAuth2AccessToken.TokenType.BEARER, "access-token-refreshed", issuedAt, expiresAt);
+
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).accessToken(staleAccessToken).build();
+
+		authorization = OAuth2AuthenticationProviderUtils.invalidate(authorization, staleAccessToken);
+		authorization = OAuth2Authorization.from(authorization).accessToken(refreshedAccessToken).build();
+
+		when(this.authorizationService.findByToken(eq(staleAccessToken.getTokenValue()), isNull()))
+				.thenReturn(authorization);
+		when(this.authorizationService.findByToken(eq(refreshedAccessToken.getTokenValue()), isNull()))
+				.thenReturn(authorization);
+		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(
+				registeredClient, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
+
+		OAuth2TokenIntrospectionAuthenticationToken authentication = new OAuth2TokenIntrospectionAuthenticationToken(
+				staleAccessToken.getTokenValue(), clientPrincipal, null, null);
+		OAuth2TokenIntrospectionAuthenticationToken authenticationResult =
+				(OAuth2TokenIntrospectionAuthenticationToken) this.authenticationProvider.authenticate(authentication);
+
+		verify(this.authorizationService).findByToken(eq(authentication.getToken()), isNull());
+		assertThat(authenticationResult.isAuthenticated()).isTrue();
+		assertThat(authenticationResult.getTokenClaims().getClaims()).hasSize(1);
+		assertThat(authenticationResult.getTokenClaims().isActive()).isFalse();
+	}
+
+	@Test
 	public void authenticateWhenTokenExpiredThenNotActive() {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 		Instant issuedAt = Instant.now().minus(Duration.ofHours(1));

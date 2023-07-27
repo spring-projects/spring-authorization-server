@@ -48,6 +48,7 @@ public final class OAuth2DeviceVerificationAuthenticationConverter implements Au
 	private static final String ERROR_URI = "https://datatracker.ietf.org/doc/html/rfc6749#section-5.2";
 	private static final Authentication ANONYMOUS_AUTHENTICATION = new AnonymousAuthenticationToken(
 			"anonymous", "anonymousUser", AuthorityUtils.createAuthorityList("ROLE_ANONYMOUS"));
+
 	@Override
 	public Authentication convert(HttpServletRequest request) {
 		if (!("GET".equals(request.getMethod()) || "POST".equals(request.getMethod()))) {

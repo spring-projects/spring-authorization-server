@@ -1,0 +1,119 @@
+[[how-to-dynamic-client-registration]]
+= How-to: Register a client dynamically
+:index-link: ../how-to.html
+:docs-dir: ..
+
+This guide shows how to configure OpenID Connect Dynamic Client Registration 1.0 in Spring Authorization Server and walks through an example of how to register a client.
+Spring Authorization Server implements https://openid.net/specs/openid-connect-registration-1_0.html[OpenID Connect Dynamic Client Registration 1.0]
+specification, gaining the ability to dynamically register and retrieve OpenID clients.
+
+- xref:guides/how-to-dynamic-client-registration.adoc#enable[Enable Dynamic Client Registration]
+- xref:guides/how-to-dynamic-client-registration.adoc#configure-initial-client[Configure initial client]
+- xref:guides/how-to-dynamic-client-registration.adoc#obtain-initial-access-token[Obtain initial access token]
+- xref:guides/how-to-dynamic-client-registration.adoc#register-client[Register a client]
+
+[[enable]]
+== Enable Dynamic Client Registration
+
+By default, dynamic client registration functionality is disabled in Spring Authorization Server.
+To enable, add the following configuration:
+
+[[sample.dcrAuthServerConfig]]
+[source,java]
+----
+include::{examples-dir}/main/java/sample/dcr/DcrConfiguration.java[]
+----
+
+<1> Add a `SecurityFilterChain` `@Bean` that registers an `OAuth2AuthorizationServerConfigurer`
+<2> In the configurer, apply OIDC client registration endpoint customizer with default values.
+This enables dynamic client registration functionality.
+
+Please refer to xref:protocol-endpoints.adoc#oidc-client-registration-endpoint[Client Registration Endpoint docs] for in-depth configuration details.
+
+[[configure-initial-client]]
+== Configure initial client
+
+An initial client is required in order to register new clients in the authorization server.
+The client must be configured with scopes `client.create` and optionally `client.read` for creating clients and reading clients, respectively.
+A programmatic example of such a client is below.
+
+[[sample.dcrRegisteredClientConfig]]
+[source,java]
+----
+include::{examples-dir}/main/java/sample/dcr/RegisteredClientConfiguration.java[]
+----
+
+<1> A `RegisteredClientRepository` `@Bean` is configured with a set of clients.
+<2> An initial client with client id `dcr-client` is configured.
+<3> `client_credentials` grant type is set to fetch access tokens directly.
+<4> `client.create` scope is configured for the client to ensure they are able to create clients.
+<5> `client.read` scope is configured for the client to ensure they are able to fetch and read clients.
+<6> The initial client is saved into the data store.
+
+After configuring the above, run the authorization server in your preferred environment.
+
+[[obtain-initial-access-token]]
+== Obtain initial access token
+
+An initial access token is required to be able to create client registration requests.
+The token request must contain a request for scope `client.create` only.
+
+[source,httprequest]
+----
+POST /oauth2/token HTTP/1.1
+Authorization: Basic <base64-encoded-credentials>
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=client_credentials&scope=client.create
+----
+
+[WARNING]
+====
+If you provide more than one scope in the request, you will not be able to register a client.
+The client creation request requires an access token with a single scope of `client.create`
+====
+
+[TIP]
+====
+To obtain encoded credentials for the above request, `base64` encode the client credentials in the format of
+`<clientId>:<clientSecret>`. Below is an encoding operation for the example in this guide.
+
+[source,console]
+----
+echo -n "initial-app:secret" | base64
+----
+====
+
+[[register-client]]
+== Register a client
+
+With an access token obtained from the previous step, a client can now be dynamically registered.
+
+[NOTE]
+The access token can only be used once. After a single registration request, the access token is invalidated.
+
+[[sample.dcrClientRegistration]]
+[source,java]
+----
+include::{examples-dir}/main/java/sample/dcr/DcrClient.java[]
+----
+
+<1> A minimal client registration request object.
+You may add additional fields as per https://openid.net/specs/openid-connect-registration-1_0.html#RegistrationRequest[OpenID Connect Dynamic Client Registration 1.0 spec - Client Registration Request].
+<2> A minimal client registration response object.
+You may add additional response fields as per https://openid.net/specs/openid-connect-registration-1_0.html#RegistrationResponse[OpenID Connect Dynamic Client Registration 1.0 spec - Client Registration Response].
+<3> A sample client registration request object which will be used to register a sample client.
+<4> Example dynamic client registration procedure, demonstrating dynamic registration and client retrieval.
+<5> Register a client using sample request from step 2, using initial access token from previous step.
+Skip to step 10 for implementation.
+<6> After registration, assert on the fields that should be populated in the response upon successful registration.
+<7> Extract `registration_access_token` and `registration_client_uri` fields, for use in retrieval of the newly registered client.
+<8> Retrieve client. Skip to step 11 for implementation.
+<9> After client retrieval, assert on the fields that should be populated in the response.
+<10> Sample client registration procedure using Spring WebFlux's `WebClient`.
+Note that the `WebClient` must have `baseUrl` of the authorization server configured.
+<11> Sample client retrieval procedure using Spring WebFlux's `WebClient`.
+Note that the `WebClient` must have `baseUrl` of the authorization server configured.
+
+The retrieve client response should contain the same information about the client as seen when the client was first
+registered, except for `registration_access_token` field.

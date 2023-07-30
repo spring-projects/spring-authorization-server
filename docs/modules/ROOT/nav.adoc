@@ -11,3 +11,4 @@
 ** xref:guides/how-to-userinfo.adoc[]
 ** xref:guides/how-to-jpa.adoc[]
 ** xref:guides/how-to-custom-claims-authorities.adoc[]
+** xref:guides/how-to-dynamic-client-registration.adoc[]

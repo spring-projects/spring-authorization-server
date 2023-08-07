@@ -141,6 +141,7 @@ public class OidcProviderConfigurationTests {
 				jsonPath("$.introspection_endpoint_auth_methods_supported[1]").value(ClientAuthenticationMethod.CLIENT_SECRET_POST.getValue()),
 				jsonPath("$.introspection_endpoint_auth_methods_supported[2]").value(ClientAuthenticationMethod.CLIENT_SECRET_JWT.getValue()),
 				jsonPath("$.introspection_endpoint_auth_methods_supported[3]").value(ClientAuthenticationMethod.PRIVATE_KEY_JWT.getValue()),
+				jsonPath("$.code_challenge_methods_supported[0]").value("S256"),
 				jsonPath("subject_types_supported").value("public"),
 				jsonPath("id_token_signing_alg_values_supported").value(SignatureAlgorithm.RS256.getName()),
 				jsonPath("scopes_supported").value(OidcScopes.OPENID)

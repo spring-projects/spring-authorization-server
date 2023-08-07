@@ -111,7 +111,8 @@ public final class OidcProviderConfigurationEndpointFilter extends OncePerReques
 				.tokenIntrospectionEndpointAuthenticationMethods(clientAuthenticationMethods())
 				.subjectType("public")
 				.idTokenSigningAlgorithm(SignatureAlgorithm.RS256.getName())
-				.scope(OidcScopes.OPENID);
+				.scope(OidcScopes.OPENID)
+				.codeChallengeMethod("S256");
 
 		this.providerConfigurationCustomizer.accept(providerConfiguration);
 

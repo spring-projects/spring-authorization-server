@@ -68,7 +68,7 @@ public class DemoAuthorizationServerApplicationTests {
 	}
 
 	@Test
-	public void whenLoginSuccessfulThenDisplayNotFoundError() throws IOException {
+	public void whenLoginSuccessfulThenDisplayBadRequestError() throws IOException {
 		HtmlPage page = this.webClient.getPage("/");
 
 		assertLoginPage(page);

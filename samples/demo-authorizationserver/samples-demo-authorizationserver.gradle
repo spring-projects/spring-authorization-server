@@ -31,6 +31,6 @@ dependencies {
 	testImplementation "net.sourceforge.htmlunit:htmlunit"
 }
 
-test {
+tasks.named("test") {
 	useJUnitPlatform()
 }

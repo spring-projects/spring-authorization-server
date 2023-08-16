@@ -68,14 +68,15 @@ public class DemoAuthorizationServerApplicationTests {
 	}
 
 	@Test
-	public void whenLoginSuccessfulThenDisplayNotFoundError() throws IOException {
+	public void whenLoginSuccessfulThenDisplayBadRequestError() throws IOException {
 		HtmlPage page = this.webClient.getPage("/");
 
 		assertLoginPage(page);
 
 		this.webClient.getOptions().setThrowExceptionOnFailingStatusCode(false);
 		WebResponse signInResponse = signIn(page, "user1", "password").getWebResponse();
-		assertThat(signInResponse.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND.value());	// there is no "default" index page
+
+		assertThat(signInResponse.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST.value());	// there is no "default" index page
 	}
 
 	@Test
@@ -86,7 +87,7 @@ public class DemoAuthorizationServerApplicationTests {
 
 		HtmlElement alert = loginErrorPage.querySelector("div[role=\"alert\"]");
 		assertThat(alert).isNotNull();
-		assertThat(alert.getTextContent()).isEqualTo("Bad credentials");
+		assertThat(alert.asNormalizedText()).isEqualTo("Invalid username or password.");
 	}
 
 	@Test

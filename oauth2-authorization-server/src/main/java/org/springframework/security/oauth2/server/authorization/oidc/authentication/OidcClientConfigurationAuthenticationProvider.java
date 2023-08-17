@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ import org.springframework.security.oauth2.server.authorization.OAuth2TokenType;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.oidc.OidcClientRegistration;
+import org.springframework.security.oauth2.server.authorization.oidc.converter.RegisteredClientOidcClientRegistrationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.AbstractOAuth2TokenAuthenticationToken;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
@@ -46,11 +47,13 @@ import org.springframework.util.StringUtils;
  * @author Ovidiu Popa
  * @author Joe Grandja
  * @author Rafal Lewczuk
+ * @author Dmitriy Dubson
  * @since 0.4.0
  * @see RegisteredClientRepository
  * @see OAuth2AuthorizationService
  * @see OidcClientRegistrationAuthenticationToken
  * @see OidcClientRegistrationAuthenticationProvider
+ * @see RegisteredClientOidcClientRegistrationConverter
  * @see <a href="https://openid.net/specs/openid-connect-registration-1_0.html#ClientConfigurationEndpoint">4. Client Configuration Endpoint</a>
  */
 public final class OidcClientConfigurationAuthenticationProvider implements AuthenticationProvider {
@@ -58,7 +61,7 @@ public final class OidcClientConfigurationAuthenticationProvider implements Auth
 	private final Log logger = LogFactory.getLog(getClass());
 	private final RegisteredClientRepository registeredClientRepository;
 	private final OAuth2AuthorizationService authorizationService;
-	private final Converter<RegisteredClient, OidcClientRegistration> clientRegistrationConverter;
+	private Converter<RegisteredClient, OidcClientRegistration> clientRegistrationConverter;
 
 	/**
 	 * Constructs an {@code OidcClientConfigurationAuthenticationProvider} using the provided parameters.
@@ -73,6 +76,17 @@ public final class OidcClientConfigurationAuthenticationProvider implements Auth
 		this.registeredClientRepository = registeredClientRepository;
 		this.authorizationService = authorizationService;
 		this.clientRegistrationConverter = new RegisteredClientOidcClientRegistrationConverter();
+	}
+
+	/**
+	 * Sets the {@link Converter} used for converting an {@link RegisteredClient} to a {@link OidcClientRegistration}.
+	 *
+	 * @param clientRegistrationConverter the {@link Converter} used for converting an {@link RegisteredClient} to a {@link OidcClientRegistration}
+	 * @since 1.2.0
+	 */
+	public void setClientRegistrationConverter(Converter<RegisteredClient, OidcClientRegistration> clientRegistrationConverter) {
+		Assert.notNull(clientRegistrationConverter, "clientRegistrationConverter cannot be null");
+		this.clientRegistrationConverter = clientRegistrationConverter;
 	}
 
 	@Override

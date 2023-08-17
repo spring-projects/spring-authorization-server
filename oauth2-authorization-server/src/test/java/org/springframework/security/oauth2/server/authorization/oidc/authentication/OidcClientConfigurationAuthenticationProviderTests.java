@@ -378,6 +378,13 @@ public class OidcClientConfigurationAuthenticationProviderTests {
 		assertThat(clientRegistrationResult.getRegistrationAccessToken()).isNull();
 	}
 
+	@Test
+	public void setClientRegistrationConverterWhenNullThenThrowIllegalArgumentException() {
+		assertThatIllegalArgumentException()
+				.isThrownBy(() -> this.authenticationProvider.setClientRegistrationConverter(null))
+				.withMessage("clientRegistrationConverter cannot be null");
+	}
+
 	private static Jwt createJwtClientConfiguration() {
 		return createJwt(Collections.singleton("client.read"));
 	}

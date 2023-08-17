@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.security.oauth2.server.authorization.oidc.authentication;
+package org.springframework.security.oauth2.server.authorization.oidc.converter;
 
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
@@ -29,9 +29,9 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 /**
  * @author Joe Grandja
- * @since 0.4.0
+ * @since 1.2.0
  */
-final class RegisteredClientOidcClientRegistrationConverter implements Converter<RegisteredClient, OidcClientRegistration> {
+public final class RegisteredClientOidcClientRegistrationConverter implements Converter<RegisteredClient, OidcClientRegistration> {
 
 	@Override
 	public OidcClientRegistration convert(RegisteredClient registeredClient) {

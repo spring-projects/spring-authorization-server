@@ -49,7 +49,7 @@ import org.springframework.util.StringUtils;
  * @see OAuth2ClientAuthenticationToken
  * @see OAuth2AuthorizationService
  */
-final class CodeVerifierAuthenticator {
+public final class CodeVerifierAuthenticator {
 	private static final OAuth2TokenType AUTHORIZATION_CODE_TOKEN_TYPE = new OAuth2TokenType(OAuth2ParameterNames.CODE);
 	private final Log logger = LogFactory.getLog(getClass());
 	private final OAuth2AuthorizationService authorizationService;

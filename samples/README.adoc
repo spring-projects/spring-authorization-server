@@ -131,3 +131,4 @@ spring:
 Alternatively, you can set the following environment variables in the Spring Boot application:
 * `GITHUB_CLIENT_ID`
 * `GITHUB_CLIENT_SECRET`
+

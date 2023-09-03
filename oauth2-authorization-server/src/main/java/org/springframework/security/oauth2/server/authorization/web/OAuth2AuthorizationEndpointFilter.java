@@ -91,6 +91,10 @@ public final class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilte
 	 */
 	private static final String DEFAULT_AUTHORIZATION_ENDPOINT_URI = "/oauth2/authorize";
 
+	private static final String OIDC_PROMPT_PARAMETER_NAME = "prompt";
+	private static final String OIDC_NO_PROMPT_PARAMETER_VALUE = "none";
+	private static final String OIDC_AUTH_ERROR_URL = "https://openid.net/specs/openid-connect-core-1_0.html#AuthError";
+
 	private final AuthenticationManager authenticationManager;
 	private final RequestMatcher authorizationEndpointMatcher;
 	private final RedirectStrategy redirectStrategy = new DefaultRedirectStrategy();
@@ -158,6 +162,9 @@ public final class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilte
 			return;
 		}
 
+		// Experimental support for OIDC 'prompt=none' parameter
+		boolean noPrompt = OIDC_NO_PROMPT_PARAMETER_VALUE.equals(request.getParameter(OIDC_PROMPT_PARAMETER_NAME));
+
 		try {
 			Authentication authentication = this.authenticationConverter.convert(request);
 			if (authentication instanceof AbstractAuthenticationToken) {
@@ -167,6 +174,13 @@ public final class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilte
 			Authentication authenticationResult = this.authenticationManager.authenticate(authentication);
 
 			if (!authenticationResult.isAuthenticated()) {
+				if (noPrompt) {
+					throw new OAuth2AuthorizationCodeRequestAuthenticationException(
+							new OAuth2Error("login_required", "User login is required", OIDC_AUTH_ERROR_URL),
+							(OAuth2AuthorizationCodeRequestAuthenticationToken) authentication
+					);
+				}
+
 				// If the Principal (Resource Owner) is not authenticated then
 				// pass through the chain with the expectation that the authentication process
 				// will commence via AuthenticationEntryPoint
@@ -178,6 +192,14 @@ public final class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilte
 				if (this.logger.isTraceEnabled()) {
 					this.logger.trace("Authorization consent is required");
 				}
+
+				if (noPrompt) {
+					throw new OAuth2AuthorizationCodeRequestAuthenticationException(
+							new OAuth2Error("consent_required", "Authorization consent is required", OIDC_AUTH_ERROR_URL),
+							(OAuth2AuthorizationCodeRequestAuthenticationToken) authentication
+					);
+				}
+
 				sendAuthorizationConsent(request, response,
 						(OAuth2AuthorizationCodeRequestAuthenticationToken) authentication,
 						(OAuth2AuthorizationConsentAuthenticationToken) authenticationResult);

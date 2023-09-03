@@ -59,7 +59,10 @@ import org.springframework.security.web.authentication.AuthenticationFailureHand
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.WebAuthenticationDetails;
 import org.springframework.security.web.authentication.session.SessionAuthenticationStrategy;
+import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
+import org.springframework.web.util.UriComponents;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -86,6 +89,7 @@ public class OAuth2AuthorizationEndpointFilterTests {
 	private static final String AUTHORIZATION_URI = "https://provider.com/oauth2/authorize";
 	private static final String STATE = "state";
 	private static final String REMOTE_ADDRESS = "remote-address";
+	private static final String OIDC_PROMPT_PARAMETER_NAME = "prompt";
 	private AuthenticationManager authenticationManager;
 	private OAuth2AuthorizationEndpointFilter filter;
 	private TestingAuthenticationToken principal;
@@ -471,6 +475,41 @@ public class OAuth2AuthorizationEndpointFilterTests {
 	}
 
 	@Test
+	public void doFilterWhenAuthorizationRequestPromptNonePrincipalNotAuthenticatedThenErrorResponse() throws Exception {
+		this.principal.setAuthenticated(false);
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+		OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthenticationResult =
+				new OAuth2AuthorizationCodeRequestAuthenticationToken(
+						AUTHORIZATION_URI, registeredClient.getClientId(), principal,
+						registeredClient.getRedirectUris().iterator().next(), STATE, registeredClient.getScopes(), null);
+		authorizationCodeRequestAuthenticationResult.setAuthenticated(false);
+		when(this.authenticationManager.authenticate(any()))
+				.thenReturn(authorizationCodeRequestAuthenticationResult);
+
+		MockHttpServletRequest request = createAuthorizationRequest(registeredClient);
+		request.addParameter(OIDC_PROMPT_PARAMETER_NAME, "none");
+		MockHttpServletResponse response = new MockHttpServletResponse();
+		FilterChain filterChain = mock(FilterChain.class);
+
+		this.filter.doFilter(request, response, filterChain);
+
+		verifyNoInteractions(filterChain);
+
+		assertThat(response.getStatus()).isEqualTo(HttpStatus.FOUND.value());
+		assertThat(response.getRedirectedUrl()).isNotNull();
+		UriComponents uriComponents = UriComponentsBuilder.fromUriString(response.getRedirectedUrl()).build();
+
+		// check URI host and path
+		String withoutParams = UriComponentsBuilder.newInstance().uriComponents(uriComponents).replaceQuery("").toUriString();
+		assertThat(withoutParams).isEqualTo(request.getParameter(OAuth2ParameterNames.REDIRECT_URI));
+
+		// check URI query parameters in any order
+		MultiValueMap<String, String> parameters = uriComponents.getQueryParams();
+		assertMapHasSingleValue(parameters, OAuth2ParameterNames.ERROR, "login_required");
+		assertMapHasSingleValue(parameters, OAuth2ParameterNames.STATE, request.getParameter(OAuth2ParameterNames.STATE));
+	}
+
+	@Test
 	public void doFilterWhenAuthorizationRequestConsentRequiredWithCustomConsentUriThenRedirectConsentResponse() throws Exception {
 		Set<String> requestedScopes = new HashSet<>(Arrays.asList("scope1", "scope2"));
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
@@ -570,6 +609,41 @@ public class OAuth2AuthorizationEndpointFilterTests {
 		for (String approvedScope : approvedScopes) {
 			assertThat(response.getContentAsString()).contains(disabledScopeCheckbox(approvedScope));
 		}
+	}
+
+	@Test
+	public void doFilterWhenAuthorizationConsentRequiredWithPromptNoneThenErrorResponse() throws Exception {
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+		OAuth2AuthorizationConsentAuthenticationToken authorizationConsentAuthenticationResult =
+				new OAuth2AuthorizationConsentAuthenticationToken(
+						AUTHORIZATION_URI, registeredClient.getClientId(), principal,
+						STATE, new HashSet<>(), null);
+		authorizationConsentAuthenticationResult.setAuthenticated(true);
+		when(this.authenticationManager.authenticate(any()))
+				.thenReturn(authorizationConsentAuthenticationResult);
+
+		MockHttpServletRequest request = createAuthorizationRequest(registeredClient);
+		request.addParameter(OIDC_PROMPT_PARAMETER_NAME, "none");
+		MockHttpServletResponse response = new MockHttpServletResponse();
+		FilterChain filterChain = mock(FilterChain.class);
+
+		this.filter.doFilter(request, response, filterChain);
+
+		verify(this.authenticationManager).authenticate(any());
+		verifyNoInteractions(filterChain);
+
+		assertThat(response.getStatus()).isEqualTo(HttpStatus.FOUND.value());
+		assertThat(response.getRedirectedUrl()).isNotNull();
+		UriComponents uriComponents = UriComponentsBuilder.fromUriString(response.getRedirectedUrl()).build();
+
+		// check URI host and path
+		String withoutParams = UriComponentsBuilder.newInstance().uriComponents(uriComponents).replaceQuery("").toUriString();
+		assertThat(withoutParams).isEqualTo(request.getParameter(OAuth2ParameterNames.REDIRECT_URI));
+
+		// check URI query parameters in any order
+		MultiValueMap<String, String> parameters = uriComponents.getQueryParams();
+		assertMapHasSingleValue(parameters, OAuth2ParameterNames.ERROR, "consent_required");
+		assertMapHasSingleValue(parameters, OAuth2ParameterNames.STATE, request.getParameter(OAuth2ParameterNames.STATE));
 	}
 
 	@Test
@@ -718,6 +792,12 @@ public class OAuth2AuthorizationEndpointFilterTests {
 				"<input class=\"form-check-input\" type=\"checkbox\" name=\"scope\" id=\"{0}\" checked disabled>",
 				scope
 		);
+	}
+
+	private static void assertMapHasSingleValue(MultiValueMap<String, String> map, String key, String value) {
+		assertThat(map.containsKey(key)).isTrue();
+		assertThat(map.get(key).size()).isEqualTo(1);
+		assertThat(map.getFirst(key)).isEqualTo(value);
 	}
 
 }

@@ -136,6 +136,7 @@ public class OidcProviderConfigurationEndpointFilterTests {
 		assertThat(providerConfigurationResponse).contains("\"userinfo_endpoint\":\"https://example.com/issuer1/userinfo\"");
 		assertThat(providerConfigurationResponse).contains("\"end_session_endpoint\":\"https://example.com/issuer1/connect/logout\"");
 		assertThat(providerConfigurationResponse).contains("\"token_endpoint_auth_methods_supported\":[\"client_secret_basic\",\"client_secret_post\",\"client_secret_jwt\",\"private_key_jwt\"]");
+		assertThat(providerConfigurationResponse).contains("\"code_challenge_methods_supported\":[\"S256\"]");
 	}
 
 	@Test

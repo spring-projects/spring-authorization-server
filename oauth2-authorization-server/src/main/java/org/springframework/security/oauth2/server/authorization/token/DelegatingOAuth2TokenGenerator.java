@@ -32,10 +32,10 @@ import org.springframework.util.Assert;
  * with the first {@code non-null} {@link OAuth2Token} being returned.
  *
  * @author Joe Grandja
- * @since 0.2.3
  * @see OAuth2TokenGenerator
  * @see JwtGenerator
  * @see OAuth2RefreshTokenGenerator
+ * @since 0.2.3
  */
 public final class DelegatingOAuth2TokenGenerator implements OAuth2TokenGenerator<OAuth2Token> {
 	private final List<OAuth2TokenGenerator<OAuth2Token>> tokenGenerators;
@@ -62,6 +62,19 @@ public final class DelegatingOAuth2TokenGenerator implements OAuth2TokenGenerato
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * Set customizer to {@code OAuth2TokenGenerator} in tokenGenerators.
+	 *
+	 * @param customizer Customizer of {@link OAuth2TokenCustomizer}
+	 */
+	public void setCustomizer(OAuth2TokenCustomizer<OAuth2TokenClaimsContext> customizer) {
+		for (OAuth2TokenGenerator<?> tokenGenerator : this.tokenGenerators) {
+			if (tokenGenerator instanceof OAuth2AccessTokenGenerator) {
+				((OAuth2AccessTokenGenerator) tokenGenerator).setAccessTokenCustomizer(customizer);
+			}
+		}
 	}
 
 	@SuppressWarnings("unchecked")

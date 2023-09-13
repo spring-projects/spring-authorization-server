@@ -168,9 +168,9 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 	}
 
 	/**
-	 * Sets the {@link Converter} used for converting an {@link RegisteredClient} to a {@link OidcClientRegistration}.
+	 * Sets the {@link Converter} used for converting a {@link RegisteredClient} to an {@link OidcClientRegistration}.
 	 *
-	 * @param clientRegistrationConverter the {@link Converter} used for converting an {@link RegisteredClient} to a {@link OidcClientRegistration}
+	 * @param clientRegistrationConverter the {@link Converter} used for converting a {@link RegisteredClient} to an {@link OidcClientRegistration}
 	 * @since 1.2.0
 	 */
 	public void setClientRegistrationConverter(Converter<RegisteredClient, OidcClientRegistration> clientRegistrationConverter) {

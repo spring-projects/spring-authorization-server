@@ -28,6 +28,8 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.web.util.UriComponentsBuilder;
 
 /**
+ * A {@link Converter} that converts the provided {@link RegisteredClient} to an {@link OidcClientRegistration}.
+ *
  * @author Joe Grandja
  * @since 1.2.0
  */

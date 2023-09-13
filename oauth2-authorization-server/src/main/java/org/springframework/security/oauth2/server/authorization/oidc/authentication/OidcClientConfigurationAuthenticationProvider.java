@@ -53,7 +53,6 @@ import org.springframework.util.StringUtils;
  * @see OAuth2AuthorizationService
  * @see OidcClientRegistrationAuthenticationToken
  * @see OidcClientRegistrationAuthenticationProvider
- * @see RegisteredClientOidcClientRegistrationConverter
  * @see <a href="https://openid.net/specs/openid-connect-registration-1_0.html#ClientConfigurationEndpoint">4. Client Configuration Endpoint</a>
  */
 public final class OidcClientConfigurationAuthenticationProvider implements AuthenticationProvider {
@@ -79,9 +78,9 @@ public final class OidcClientConfigurationAuthenticationProvider implements Auth
 	}
 
 	/**
-	 * Sets the {@link Converter} used for converting an {@link RegisteredClient} to a {@link OidcClientRegistration}.
+	 * Sets the {@link Converter} used for converting a {@link RegisteredClient} to an {@link OidcClientRegistration}.
 	 *
-	 * @param clientRegistrationConverter the {@link Converter} used for converting an {@link RegisteredClient} to a {@link OidcClientRegistration}
+	 * @param clientRegistrationConverter the {@link Converter} used for converting a {@link RegisteredClient} to an {@link OidcClientRegistration}
 	 * @since 1.2.0
 	 */
 	public void setClientRegistrationConverter(Converter<RegisteredClient, OidcClientRegistration> clientRegistrationConverter) {

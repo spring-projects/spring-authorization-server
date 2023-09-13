@@ -15,6 +15,10 @@
  */
 package org.springframework.security.oauth2.server.authorization.oidc.converter;
 
+import java.time.Instant;
+import java.util.Base64;
+import java.util.UUID;
+
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.security.crypto.keygen.Base64StringKeyGenerator;
 import org.springframework.security.crypto.keygen.StringKeyGenerator;
@@ -29,11 +33,9 @@ import org.springframework.security.oauth2.server.authorization.settings.ClientS
 import org.springframework.security.oauth2.server.authorization.settings.TokenSettings;
 import org.springframework.util.CollectionUtils;
 
-import java.time.Instant;
-import java.util.Base64;
-import java.util.UUID;
-
 /**
+ * A {@link Converter} that converts the provided {@link OidcClientRegistration} to a {@link RegisteredClient}.
+ *
  * @author Joe Grandja
  * @author Dmitriy Dubson
  * @since 1.2.0

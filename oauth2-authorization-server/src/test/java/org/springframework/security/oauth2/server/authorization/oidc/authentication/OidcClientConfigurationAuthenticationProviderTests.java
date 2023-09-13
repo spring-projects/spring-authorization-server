@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -109,6 +109,13 @@ public class OidcClientConfigurationAuthenticationProviderTests {
 	@Test
 	public void supportsWhenTypeOidcClientRegistrationAuthenticationTokenThenReturnTrue() {
 		assertThat(this.authenticationProvider.supports(OidcClientRegistrationAuthenticationToken.class)).isTrue();
+	}
+
+	@Test
+	public void setClientRegistrationConverterWhenNullThenThrowIllegalArgumentException() {
+		assertThatIllegalArgumentException()
+				.isThrownBy(() -> this.authenticationProvider.setClientRegistrationConverter(null))
+				.withMessage("clientRegistrationConverter cannot be null");
 	}
 
 	@Test
@@ -376,13 +383,6 @@ public class OidcClientConfigurationAuthenticationProviderTests {
 
 		assertThat(clientRegistrationResult.getRegistrationClientUrl().toString()).isEqualTo(expectedRegistrationClientUrl);
 		assertThat(clientRegistrationResult.getRegistrationAccessToken()).isNull();
-	}
-
-	@Test
-	public void setClientRegistrationConverterWhenNullThenThrowIllegalArgumentException() {
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> this.authenticationProvider.setClientRegistrationConverter(null))
-				.withMessage("clientRegistrationConverter cannot be null");
 	}
 
 	private static Jwt createJwtClientConfiguration() {

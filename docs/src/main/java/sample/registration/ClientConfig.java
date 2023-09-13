@@ -13,7 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package sample.dcr;
+package sample.registration;
+
+import java.util.UUID;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -23,21 +25,21 @@ import org.springframework.security.oauth2.server.authorization.client.InMemoryR
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 
-import java.util.UUID;
-
 @Configuration
-public class RegisteredClientConfiguration {
-	@Bean // <1>
+public class ClientConfig {
+
+	@Bean
 	public RegisteredClientRepository registeredClientRepository() {
-		RegisteredClient initialClient = RegisteredClient.withId(UUID.randomUUID().toString())
-				.clientId("dcr-client") // <2>
+		RegisteredClient registrarClient = RegisteredClient.withId(UUID.randomUUID().toString())
+				.clientId("registrar-client")
 				.clientSecret("{noop}secret")
 				.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
-				.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS) // <3>
-				.scope("client.create") // <4>
-				.scope("client.read") // <5>
+				.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)	// <1>
+				.scope("client.create")	// <2>
+				.scope("client.read")	// <3>
 				.build();
 
-		return new InMemoryRegisteredClientRepository(initialClient); // <6>
+		return new InMemoryRegisteredClientRepository(registrarClient);
 	}
+
 }

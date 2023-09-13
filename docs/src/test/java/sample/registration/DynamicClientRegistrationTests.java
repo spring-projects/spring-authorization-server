@@ -13,19 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package sample.dcr;
+package sample.registration;
 
 import com.jayway.jsonpath.JsonPath;
 import org.junit.jupiter.api.Test;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.oauth2.core.AuthorizationGrantType;
+import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -34,9 +37,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-
 /**
- * Tests for Dynamic Client Registration how-to guide
+ * Tests for Dynamic Client Registration how-to guide.
  *
  * @author Dmitriy Dubson
  */
@@ -54,12 +56,12 @@ public class DynamicClientRegistrationTests {
 	private String port;
 
 	@Test
-	public void dynamicallyRegisterAClient() throws Exception {
-		String tokenRequestBody = "scope=client.create&grant_type=client_credentials" ;
+	public void dynamicallyRegisterClient() throws Exception {
 		MockHttpServletResponse tokenResponse = this.mvc.perform(post("/oauth2/token")
-						.with(httpBasic("dcr-client", "secret"))
-						.contentType(MediaType.APPLICATION_FORM_URLENCODED_VALUE)
-						.content(tokenRequestBody))
+						.with(httpBasic("registrar-client", "secret"))
+						.param(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
+						.param(OAuth2ParameterNames.SCOPE, "client.create")
+						.contentType(MediaType.APPLICATION_FORM_URLENCODED_VALUE))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.access_token").isNotEmpty())
 				.andReturn()
@@ -67,15 +69,16 @@ public class DynamicClientRegistrationTests {
 
 		String initialAccessToken = JsonPath.parse(tokenResponse.getContentAsString()).read("$.access_token");
 
-		WebClient webClient = WebClient.builder().baseUrl("http://127.0.0.1:%s".formatted(port)).build();
-		DcrClient dcrClient = new DcrClient(webClient);
+		WebClient webClient = WebClient.builder().baseUrl("http://127.0.0.1:%s".formatted(this.port)).build();
+		ClientRegistrar clientRegistrar = new ClientRegistrar(webClient);
 
-		dcrClient.exampleRegistration(initialAccessToken);
+		clientRegistrar.exampleRegistration(initialAccessToken);
 	}
 
 	@EnableAutoConfiguration
 	@EnableWebSecurity
-	@Import({DcrConfiguration.class, RegisteredClientConfiguration.class})
+	@ComponentScan
 	static class AuthorizationServerConfig {
 	}
+
 }

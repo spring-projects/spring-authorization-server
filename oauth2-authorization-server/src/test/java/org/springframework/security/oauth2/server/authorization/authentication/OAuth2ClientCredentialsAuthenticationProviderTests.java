@@ -15,16 +15,10 @@
  */
 package org.springframework.security.oauth2.server.authorization.authentication;
 
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.Collections;
-import java.util.Set;
-
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
@@ -55,6 +49,12 @@ import org.springframework.security.oauth2.server.authorization.token.OAuth2Toke
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenContext;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenGenerator;
+
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Collections;
+import java.util.Set;
+import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -209,6 +209,16 @@ public class OAuth2ClientCredentialsAuthenticationProviderTests {
 		OAuth2AccessTokenAuthenticationToken accessTokenAuthentication =
 				(OAuth2AccessTokenAuthenticationToken) this.authenticationProvider.authenticate(authentication);
 		assertThat(accessTokenAuthentication.getAccessToken().getScopes()).isEqualTo(requestedScope);
+	}
+
+	@Test
+	public void authenticateWhenCustomAuthenticationValidatorThenInvokeValidator() {
+		Consumer<OAuth2ClientCredentialsAuthenticationContext> validator = mock(Consumer.class);
+		this.authenticationProvider.setAuthenticationValidator(validator);
+
+		authenticateWhenScopeRequestedThenAccessTokenContainsScope();
+
+		verify(validator).accept(any(OAuth2ClientCredentialsAuthenticationContext.class));
 	}
 
 	@Test

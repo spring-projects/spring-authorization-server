@@ -15,17 +15,19 @@
  */
 package org.springframework.security.oauth2.server.authorization.client;
 
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
+
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 
 /**
  * @author Anoop Garlapati
  */
 public class TestRegisteredClients {
+	public static final String SCOPE_1 = "scope1";
+	public static final String SCOPE_2 = "scope2";
 
 	public static RegisteredClient.Builder registeredClient() {
 		return RegisteredClient.withId("registration-1")
@@ -39,7 +41,7 @@ public class TestRegisteredClients {
 				.redirectUri("https://example.com/callback-2")
 				.redirectUri("https://example.com/callback-3")
 				.postLogoutRedirectUri("https://example.com/oidc-post-logout")
-				.scope("scope1");
+				.scope(SCOPE_1);
 	}
 
 	public static RegisteredClient.Builder registeredClient2() {
@@ -54,8 +56,8 @@ public class TestRegisteredClients {
 				.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_POST)
 				.redirectUri("https://example.com")
 				.postLogoutRedirectUri("https://example.com/oidc-post-logout")
-				.scope("scope1")
-				.scope("scope2");
+				.scope(SCOPE_1)
+				.scope(SCOPE_2);
 	}
 
 	public static RegisteredClient.Builder registeredPublicClient() {
@@ -65,7 +67,7 @@ public class TestRegisteredClients {
 				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
 				.clientAuthenticationMethod(ClientAuthenticationMethod.NONE)
 				.redirectUri("https://example.com")
-				.scope("scope1")
+				.scope(SCOPE_1)
 				.clientSettings(ClientSettings.builder().requireProofKey(true).build());
 	}
 }

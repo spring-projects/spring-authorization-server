@@ -63,20 +63,25 @@ public final class OAuth2ClientCredentialsAuthenticationProvider implements Auth
 	private final Log logger = LogFactory.getLog(getClass());
 	private final OAuth2AuthorizationService authorizationService;
 	private final OAuth2TokenGenerator<? extends OAuth2Token> tokenGenerator;
+	private final OAuth2ClientCredentialsScopeValidator scopeValidator;
 
 	/**
 	 * Constructs an {@code OAuth2ClientCredentialsAuthenticationProvider} using the provided parameters.
 	 *
 	 * @param authorizationService the authorization service
 	 * @param tokenGenerator the token generator
+	 * @param scopeValidator	   the scope validator
 	 * @since 0.2.3
 	 */
 	public OAuth2ClientCredentialsAuthenticationProvider(OAuth2AuthorizationService authorizationService,
-			OAuth2TokenGenerator<? extends OAuth2Token> tokenGenerator) {
+			OAuth2TokenGenerator<? extends OAuth2Token> tokenGenerator,
+			OAuth2ClientCredentialsScopeValidator scopeValidator) {
 		Assert.notNull(authorizationService, "authorizationService cannot be null");
 		Assert.notNull(tokenGenerator, "tokenGenerator cannot be null");
+		Assert.notNull(scopeValidator, "scopeValidator cannot be null");
 		this.authorizationService = authorizationService;
 		this.tokenGenerator = tokenGenerator;
+		this.scopeValidator = scopeValidator;
 	}
 
 	@Override
@@ -96,15 +101,9 @@ public final class OAuth2ClientCredentialsAuthenticationProvider implements Auth
 			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.UNAUTHORIZED_CLIENT);
 		}
 
-		Set<String> authorizedScopes = Collections.emptySet();
-		if (!CollectionUtils.isEmpty(clientCredentialsAuthentication.getScopes())) {
-			for (String requestedScope : clientCredentialsAuthentication.getScopes()) {
-				if (!registeredClient.getScopes().contains(requestedScope)) {
-					throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_SCOPE);
-				}
-			}
-			authorizedScopes = new LinkedHashSet<>(clientCredentialsAuthentication.getScopes());
-		}
+		Set<String> authorizedScopes = scopeValidator.validateScopes(clientCredentialsAuthentication.getScopes(),
+				clientCredentialsAuthentication,
+				clientPrincipal);
 
 		if (this.logger.isTraceEnabled()) {
 			this.logger.trace("Validated token request parameters");

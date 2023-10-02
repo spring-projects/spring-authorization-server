@@ -78,6 +78,8 @@ public class OAuth2ClientCredentialsAuthenticationProviderTests {
 	private OAuth2TokenCustomizer<OAuth2TokenClaimsContext> accessTokenCustomizer;
 	private OAuth2TokenGenerator<?> tokenGenerator;
 	private OAuth2ClientCredentialsAuthenticationProvider authenticationProvider;
+	// TODO mock
+	private OAuth2ClientCredentialsScopeValidator scopeValidator = new OAuth2ClientCredentialsScopeValidator();
 
 	@BeforeEach
 	public void setUp() {

@@ -15,13 +15,8 @@
  */
 package org.springframework.security.oauth2.server.authorization.authentication;
 
-import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.Set;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -41,7 +36,9 @@ import org.springframework.security.oauth2.server.authorization.token.DefaultOAu
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenContext;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenGenerator;
 import org.springframework.util.Assert;
-import org.springframework.util.CollectionUtils;
+
+import java.util.Set;
+import java.util.function.Consumer;
 
 import static org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthenticationProviderUtils.getAuthenticatedClientElseThrowInvalidClient;
 
@@ -63,6 +60,8 @@ public final class OAuth2ClientCredentialsAuthenticationProvider implements Auth
 	private final Log logger = LogFactory.getLog(getClass());
 	private final OAuth2AuthorizationService authorizationService;
 	private final OAuth2TokenGenerator<? extends OAuth2Token> tokenGenerator;
+	private Consumer<OAuth2ClientCredentialsAuthenticationContext> authenticationValidator =
+			new OAuth2ClientCredentialsAuthenticationValidator();
 
 	/**
 	 * Constructs an {@code OAuth2ClientCredentialsAuthenticationProvider} using the provided parameters.
@@ -96,19 +95,17 @@ public final class OAuth2ClientCredentialsAuthenticationProvider implements Auth
 			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.UNAUTHORIZED_CLIENT);
 		}
 
-		Set<String> authorizedScopes = Collections.emptySet();
-		if (!CollectionUtils.isEmpty(clientCredentialsAuthentication.getScopes())) {
-			for (String requestedScope : clientCredentialsAuthentication.getScopes()) {
-				if (!registeredClient.getScopes().contains(requestedScope)) {
-					throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_SCOPE);
-				}
-			}
-			authorizedScopes = new LinkedHashSet<>(clientCredentialsAuthentication.getScopes());
-		}
+		OAuth2ClientCredentialsAuthenticationContext authenticationContext =
+				OAuth2ClientCredentialsAuthenticationContext.with(clientCredentialsAuthentication)
+						.registeredClient(registeredClient)
+						.build();
+		authenticationValidator.accept(authenticationContext);
 
 		if (this.logger.isTraceEnabled()) {
 			this.logger.trace("Validated token request parameters");
 		}
+
+		Set<String> authorizedScopes = Set.copyOf(clientCredentialsAuthentication.getScopes());
 
 		// @formatter:off
 		OAuth2TokenContext tokenContext = DefaultOAuth2TokenContext.builder()
@@ -166,6 +163,24 @@ public final class OAuth2ClientCredentialsAuthenticationProvider implements Auth
 	@Override
 	public boolean supports(Class<?> authentication) {
 		return OAuth2ClientCredentialsAuthenticationToken.class.isAssignableFrom(authentication);
+	}
+
+	/**
+	 * Sets the {@code Consumer} providing access to the {@link OAuth2ClientCredentialsAuthenticationContext}
+	 * and is responsible for validating specific OAuth 2.0 Client Credentials parameters
+	 * associated in the {@link OAuth2ClientCredentialsAuthenticationToken}.
+	 * The default authentication validator is {@link OAuth2ClientCredentialsAuthenticationValidator}.
+	 *
+	 * <p>
+	 * <b>NOTE:</b> The authentication validator MUST throw {@link OAuth2ClientCredentialsAuthenticationException} if validation fails.
+	 *
+	 * @param authenticationValidator the {@code Consumer} providing access to the {@link OAuth2ClientCredentialsAuthenticationContext}
+	 *                                   and is responsible for validating specific OAuth 2.0 Authorization Request parameters
+	 * @since 1.3.0
+	 */
+	public void setAuthenticationValidator(Consumer<OAuth2ClientCredentialsAuthenticationContext> authenticationValidator) {
+		Assert.notNull(authenticationValidator, "authenticationValidator cannot be null");
+		this.authenticationValidator = authenticationValidator;
 	}
 
 }

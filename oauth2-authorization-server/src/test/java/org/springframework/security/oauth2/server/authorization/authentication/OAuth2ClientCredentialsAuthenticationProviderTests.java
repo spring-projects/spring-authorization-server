@@ -15,16 +15,10 @@
  */
 package org.springframework.security.oauth2.server.authorization.authentication;
 
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.Collections;
-import java.util.Set;
-
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
@@ -56,6 +50,11 @@ import org.springframework.security.oauth2.server.authorization.token.OAuth2Toke
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenGenerator;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Collections;
+import java.util.Set;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -78,8 +77,7 @@ public class OAuth2ClientCredentialsAuthenticationProviderTests {
 	private OAuth2TokenCustomizer<OAuth2TokenClaimsContext> accessTokenCustomizer;
 	private OAuth2TokenGenerator<?> tokenGenerator;
 	private OAuth2ClientCredentialsAuthenticationProvider authenticationProvider;
-	// TODO mock
-	private OAuth2ClientCredentialsScopeValidator scopeValidator = new OAuth2ClientCredentialsScopeValidator();
+	private OAuth2ClientCredentialsScopeValidator scopeValidator = new DefaultOAuth2ClientCredentialsScopeValidator();
 
 	@BeforeEach
 	public void setUp() {
@@ -100,7 +98,7 @@ public class OAuth2ClientCredentialsAuthenticationProviderTests {
 			}
 		});
 		this.authenticationProvider = new OAuth2ClientCredentialsAuthenticationProvider(
-				this.authorizationService, this.tokenGenerator);
+				this.authorizationService, this.tokenGenerator, scopeValidator);
 		AuthorizationServerSettings authorizationServerSettings = AuthorizationServerSettings.builder().issuer("https://provider.com").build();
 		AuthorizationServerContextHolder.setContext(new TestAuthorizationServerContext(authorizationServerSettings, null));
 	}
@@ -112,14 +110,14 @@ public class OAuth2ClientCredentialsAuthenticationProviderTests {
 
 	@Test
 	public void constructorWhenAuthorizationServiceNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> new OAuth2ClientCredentialsAuthenticationProvider(null, this.tokenGenerator))
+		assertThatThrownBy(() -> new OAuth2ClientCredentialsAuthenticationProvider(null, this.tokenGenerator, scopeValidator))
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessage("authorizationService cannot be null");
 	}
 
 	@Test
 	public void constructorWhenTokenGeneratorNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> new OAuth2ClientCredentialsAuthenticationProvider(this.authorizationService, null))
+		assertThatThrownBy(() -> new OAuth2ClientCredentialsAuthenticationProvider(this.authorizationService, null, scopeValidator))
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessage("tokenGenerator cannot be null");
 	}

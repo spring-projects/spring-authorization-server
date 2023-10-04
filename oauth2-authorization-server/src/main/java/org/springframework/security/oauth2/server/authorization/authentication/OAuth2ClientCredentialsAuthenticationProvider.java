@@ -15,13 +15,8 @@
  */
 package org.springframework.security.oauth2.server.authorization.authentication;
 
-import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.Set;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -41,7 +36,8 @@ import org.springframework.security.oauth2.server.authorization.token.DefaultOAu
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenContext;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenGenerator;
 import org.springframework.util.Assert;
-import org.springframework.util.CollectionUtils;
+
+import java.util.Set;
 
 import static org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthenticationProviderUtils.getAuthenticatedClientElseThrowInvalidClient;
 
@@ -101,9 +97,7 @@ public final class OAuth2ClientCredentialsAuthenticationProvider implements Auth
 			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.UNAUTHORIZED_CLIENT);
 		}
 
-		Set<String> authorizedScopes = scopeValidator.validateScopes(clientCredentialsAuthentication.getScopes(),
-				clientCredentialsAuthentication,
-				clientPrincipal);
+		Set<String> authorizedScopes = scopeValidator.validateScopes(clientCredentialsAuthentication, clientPrincipal);
 
 		if (this.logger.isTraceEnabled()) {
 			this.logger.trace("Validated token request parameters");

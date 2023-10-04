@@ -4,7 +4,7 @@
     <property name="charset" value="UTF-8"/>
     <property name="fileExtensions" value=""/>
     <module name="io.spring.nohttp.checkstyle.check.NoHttpCheck">
-        <!--  Workaround for https://github.com/spring-io/nohttp/issues/55  -->
+<!--          Workaround for https://github.com/spring-io/nohttp/issues/55  -->
         <property name="allowlistFileName" value="${config_loc}/allowlist.lines" default=""/>
     </module>
     <module name="SuppressionFilter">

@@ -15,12 +15,7 @@
  */
 package org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.function.Consumer;
-
 import jakarta.servlet.http.HttpServletRequest;
-
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -32,6 +27,7 @@ import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2Token;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AccessTokenResponse;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
+import org.springframework.security.oauth2.server.authorization.authentication.DefaultOAuth2ClientCredentialsScopeValidator;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AccessTokenAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationGrantAuthenticationToken;
@@ -55,6 +51,10 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Consumer;
+
 /**
  * Configurer for the OAuth 2.0 Token Endpoint.
  *
@@ -71,7 +71,7 @@ public final class OAuth2TokenEndpointConfigurer extends AbstractOAuth2Configure
 	private Consumer<List<AuthenticationProvider>> authenticationProvidersConsumer = (authenticationProviders) -> {};
 	private AuthenticationSuccessHandler accessTokenResponseHandler;
 	private AuthenticationFailureHandler errorResponseHandler;
-	private OAuth2ClientCredentialsScopeValidator scopeValidator = new OAuth2ClientCredentialsScopeValidator();
+	private OAuth2ClientCredentialsScopeValidator scopeValidator = new DefaultOAuth2ClientCredentialsScopeValidator();
 
 	/**
 	 * Restrict for internal use only.
@@ -228,7 +228,7 @@ public final class OAuth2TokenEndpointConfigurer extends AbstractOAuth2Configure
 		return authenticationConverters;
 	}
 
-	private static List<AuthenticationProvider> createDefaultAuthenticationProviders(HttpSecurity httpSecurity) {
+	private List<AuthenticationProvider> createDefaultAuthenticationProviders(HttpSecurity httpSecurity) {
 		List<AuthenticationProvider> authenticationProviders = new ArrayList<>();
 
 		OAuth2AuthorizationService authorizationService = OAuth2ConfigurerUtils.getAuthorizationService(httpSecurity);
@@ -247,7 +247,7 @@ public final class OAuth2TokenEndpointConfigurer extends AbstractOAuth2Configure
 		authenticationProviders.add(refreshTokenAuthenticationProvider);
 
 		OAuth2ClientCredentialsAuthenticationProvider clientCredentialsAuthenticationProvider =
-				new OAuth2ClientCredentialsAuthenticationProvider(authorizationService, tokenGenerator);
+				new OAuth2ClientCredentialsAuthenticationProvider(authorizationService, tokenGenerator, scopeValidator);
 		authenticationProviders.add(clientCredentialsAuthenticationProvider);
 
 		OAuth2DeviceCodeAuthenticationProvider deviceCodeAuthenticationProvider =

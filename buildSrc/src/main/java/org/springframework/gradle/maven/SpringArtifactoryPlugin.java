@@ -40,15 +40,15 @@ public class SpringArtifactoryPlugin implements Plugin<Project> {
 		@SuppressWarnings("deprecation")
 		ArtifactoryPluginConvention artifactoryExtension = project.getConvention().getPlugin(ArtifactoryPluginConvention.class);
 		artifactoryExtension.artifactory((artifactory) -> {
-			artifactory.setContextUrl("https://repo.spring.io");
+			artifactory.setContextUrl("http://internal.jfrog.leantech.me:8082/artifactory");
 			artifactory.publish((publish) -> {
 				publish.repository((repository) -> {
-					String repoKey = isSnapshot ? "libs-snapshot-local" : isMilestone ? "libs-milestone-local" : "libs-release-local";
+					String repoKey = isSnapshot ? "libs-snapshot-local" : "libs-release";
 					repository.setRepoKey(repoKey);
-					if (project.hasProperty("artifactoryUsername")) {
-						repository.setUsername(project.findProperty("artifactoryUsername"));
-						repository.setPassword(project.findProperty("artifactoryPassword"));
-					}
+//					if (project.hasProperty("artifactoryUsername")) {
+//						repository.setUsername(project.findProperty("artifactoryUsername"));
+//						repository.setPassword(project.findProperty("artifactoryPassword"));
+//					}
 				});
 				// Would fail if maven publish is not applied, i.e. in root project (SpringRootProjectPlugin)
 				project.getPlugins().withType(MavenPublishPlugin.class, mavenPublish -> {

@@ -16,15 +16,13 @@
 
 package org.springframework.gradle.maven;
 
+import org.gradle.api.Plugin;
+import org.gradle.api.Project;
+import org.springframework.gradle.ProjectUtils;
+
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
-
-import org.gradle.api.Plugin;
-import org.gradle.api.Project;
-
-import org.springframework.gradle.ProjectUtils;
 
 /**
  * @author Steve Riesenberg
@@ -48,23 +46,23 @@ public class SpringRepositoryPlugin implements Plugin<Project> {
 		}
 		project.getRepositories().mavenCentral();
 		if (isSnapshot) {
-			repository(project, "artifactory-snapshot", "https://repo.spring.io/snapshot/");
+			repository(project, "artifactory-snapshot", "https://jfrog.leantech.me/artifactory/libs-snapshot-local");
 		}
 		if (isSnapshot || isMilestone) {
-			repository(project, "artifactory-milestone", "https://repo.spring.io/milestone/");
+			repository(project, "artifactory-milestone", "https://jfrog.leantech.me/milestone/");
 		}
-		repository(project, "artifactory-release", "https://repo.spring.io/release/");
+		repository(project, "artifactory-release", "https://jfrog.leantech.me/artifactory/libs-release");
 	}
 
 	private void repository(Project project, String name, String url) {
 		project.getRepositories().maven((repo) -> {
 			repo.setName(name);
-			if (project.hasProperty("artifactoryUsername")) {
-				repo.credentials((credentials) -> {
-					credentials.setUsername(Objects.requireNonNull(project.findProperty("artifactoryUsername")).toString());
-					credentials.setPassword(Objects.requireNonNull(project.findProperty("artifactoryPassword")).toString());
-				});
-			}
+//			if (project.hasProperty("artifactoryUsername")) {
+//				repo.credentials((credentials) -> {
+//					credentials.setUsername(Objects.requireNonNull(project.findProperty("artifactoryUsername")).toString());
+//					credentials.setPassword(Objects.requireNonNull(project.findProperty("artifactoryPassword")).toString());
+//				});
+//			}
 			repo.setUrl(url);
 		});
 	}

@@ -196,28 +196,26 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 		}
 
 		RegisteredClient registeredClient = this.registeredClientConverter.convert(clientRegistrationAuthentication.getClientRegistration());
-		RegisteredClient.Builder registeredClientForDBBuilder = RegisteredClient.from(registeredClient);
-		RegisteredClient.Builder registeredClientForResponseBuilder = RegisteredClient.from(registeredClient);
 
 		if (StringUtils.hasText(registeredClient.getClientSecret())) {
 			// Encode the client secret
-			String encodedClientSecret = this.passwordEncoder.encode(registeredClient.getClientSecret());
-			registeredClientForDBBuilder = registeredClientForDBBuilder
-					.clientSecret(encodedClientSecret);
+			RegisteredClient updatedRegisteredClient = RegisteredClient.from(registeredClient)
+					.clientSecret(this.passwordEncoder.encode(registeredClient.getClientSecret()))
+					.build();
+			this.registeredClientRepository.save(updatedRegisteredClient);
 			if (ClientAuthenticationMethod.CLIENT_SECRET_JWT.getValue().equals(clientRegistrationAuthentication.getClientRegistration().getTokenEndpointAuthenticationMethod())) {
-				registeredClientForResponseBuilder.clientSecret(encodedClientSecret);
+				// gh-1344 Return the hashed client_secret
+				registeredClient = updatedRegisteredClient;
 			}
+		} else {
+			this.registeredClientRepository.save(registeredClient);
 		}
-
-		this.registeredClientRepository.save(registeredClientForDBBuilder.build());
-
-		RegisteredClient registeredClientForResponse = registeredClientForResponseBuilder.build();
 
 		if (this.logger.isTraceEnabled()) {
 			this.logger.trace("Saved registered client");
 		}
 
-		OAuth2Authorization registeredClientAuthorization = registerAccessToken(registeredClientForResponse);
+		OAuth2Authorization registeredClientAuthorization = registerAccessToken(registeredClient);
 
 		// Invalidate the "initial" access token as it can only be used once
 		authorization = OidcAuthenticationProviderUtils.invalidate(authorization, authorization.getAccessToken().getToken());
@@ -230,7 +228,7 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 			this.logger.trace("Saved authorization with invalidated initial access token");
 		}
 
-		Map<String, Object> clientRegistrationClaims = this.clientRegistrationConverter.convert(registeredClientForResponse).getClaims();
+		Map<String, Object> clientRegistrationClaims = this.clientRegistrationConverter.convert(registeredClient).getClaims();
 		OidcClientRegistration clientRegistration = OidcClientRegistration.withClaims(clientRegistrationClaims)
 				.registrationAccessToken(registeredClientAuthorization.getAccessToken().getToken().getTokenValue())
 				.build();

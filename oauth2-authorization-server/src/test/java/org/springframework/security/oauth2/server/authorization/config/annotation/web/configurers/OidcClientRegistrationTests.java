@@ -402,6 +402,7 @@ public class OidcClientRegistrationTests {
 				.andReturn();
 	}
 
+	// gh-1344
 	@Test
 	public void requestWhenClientRegistersWithClientSecretJwtThenClientAuthenticationSuccess() throws Exception {
 		this.spring.register(AuthorizationServerConfiguration.class).autowire();

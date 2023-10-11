@@ -203,6 +203,10 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 					.clientSecret(this.passwordEncoder.encode(registeredClient.getClientSecret()))
 					.build();
 			this.registeredClientRepository.save(updatedRegisteredClient);
+			if (ClientAuthenticationMethod.CLIENT_SECRET_JWT.getValue().equals(clientRegistrationAuthentication.getClientRegistration().getTokenEndpointAuthenticationMethod())) {
+				// gh-1344 Return the hashed client_secret
+				registeredClient = updatedRegisteredClient;
+			}
 		} else {
 			this.registeredClientRepository.save(registeredClient);
 		}

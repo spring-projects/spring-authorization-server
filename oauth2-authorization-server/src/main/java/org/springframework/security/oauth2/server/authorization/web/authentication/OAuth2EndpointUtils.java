@@ -78,7 +78,7 @@ final class OAuth2EndpointUtils {
 	}
 
 	static boolean matchesPkceTokenRequest(HttpServletRequest request) {
-		return matchesAuthorizationCodeGrantRequest(request) &&
+		return request.getParameter(OAuth2ParameterNames.CODE) != null &&
 				request.getParameter(PkceParameterNames.CODE_VERIFIER) != null;
 	}
 

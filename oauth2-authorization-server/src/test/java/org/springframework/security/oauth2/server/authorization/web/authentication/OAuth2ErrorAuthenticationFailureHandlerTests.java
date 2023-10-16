@@ -15,16 +15,10 @@
  */
 package org.springframework.security.oauth2.server.authorization.web.authentication;
 
-import java.io.IOException;
-
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageConverter;
-import org.springframework.http.server.ServletServerHttpResponse;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -32,58 +26,61 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
+import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 
 /**
- * Tests for {@link OAuth2ErrorAuthenticationFailureHandler}
+ * Tests for {@link OAuth2ErrorAuthenticationFailureHandler}.
  *
  * @author Dmitriy Dubson
  */
 public class OAuth2ErrorAuthenticationFailureHandlerTests {
+	private final OAuth2ErrorAuthenticationFailureHandler authenticationFailureHandler = new OAuth2ErrorAuthenticationFailureHandler();
 
-	private HttpMessageConverter<OAuth2Error> errorHttpMessageConverter;
-
-	private HttpServletRequest request;
-
-	private HttpServletResponse response;
-
-	@BeforeEach
-	@SuppressWarnings("unchecked")
-	public void setUp() {
-		errorHttpMessageConverter = (HttpMessageConverter<OAuth2Error>) mock(HttpMessageConverter.class);
-		request = new MockHttpServletRequest();
-		response = new MockHttpServletResponse();
+	@Test
+	public void setErrorResponseConverterWhenNullThenThrowIllegalArgumentException() {
+		// @formatter:off
+		assertThatThrownBy(() -> this.authenticationFailureHandler.setErrorResponseConverter(null))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("errorResponseConverter cannot be null");
+		// @formatter:on
 	}
 
 	@Test
-	public void onAuthenticationFailure() throws IOException, ServletException {
-		OAuth2Error invalidRequestError = new OAuth2Error(OAuth2ErrorCodes.INVALID_REQUEST);
-		AuthenticationException authenticationException = new OAuth2AuthenticationException(invalidRequestError);
-		OAuth2ErrorAuthenticationFailureHandler handler = new OAuth2ErrorAuthenticationFailureHandler();
-		handler.setErrorHttpResponseConverter(errorHttpMessageConverter);
+	public void onAuthenticationFailureWhenValidExceptionThenErrorResponse() throws Exception {
+		MockHttpServletRequest request = new MockHttpServletRequest();
+		MockHttpServletResponse response = new MockHttpServletResponse();
+		OAuth2Error error = new OAuth2Error(OAuth2ErrorCodes.INVALID_REQUEST, "error description", "error uri");
+		AuthenticationException authenticationException = new OAuth2AuthenticationException(error);
 
-		handler.onAuthenticationFailure(request, response, authenticationException);
+		this.authenticationFailureHandler.onAuthenticationFailure(request, response, authenticationException);
 
-		verify(errorHttpMessageConverter).write(eq(invalidRequestError), isNull(), any(ServletServerHttpResponse.class));
 		assertThat(response.getStatus()).isEqualTo(HttpStatus.BAD_REQUEST.value());
+		assertThat(response.getContentAsString()).contains("invalid_request");
+		assertThat(response.getContentAsString()).contains("error description");
+		assertThat(response.getContentAsString()).contains("error uri");
 	}
 
 	@Test
-	public void onAuthenticationFailure_ifExceptionProvidedIsNotOAuth2AuthenticationException() throws ServletException, IOException {
-		OAuth2ErrorAuthenticationFailureHandler handler = new OAuth2ErrorAuthenticationFailureHandler();
-		handler.setErrorHttpResponseConverter(errorHttpMessageConverter);
+	public void onAuthenticationFailureWhenInvalidExceptionThenStatusResponse() throws Exception {
+		MockHttpServletRequest request = new MockHttpServletRequest();
+		MockHttpServletResponse response = new MockHttpServletResponse();
+		AuthenticationException authenticationException = new BadCredentialsException("Not a valid exception.");
 
-		handler.onAuthenticationFailure(request, response, new BadCredentialsException("Not a valid exception."));
+		HttpMessageConverter<OAuth2Error> errorResponseConverter = mock(HttpMessageConverter.class);
+		this.authenticationFailureHandler.setErrorResponseConverter(errorResponseConverter);
 
-		verifyNoInteractions(errorHttpMessageConverter);
+		this.authenticationFailureHandler.onAuthenticationFailure(request, response, authenticationException);
+
+		verifyNoInteractions(errorResponseConverter);
 		assertThat(response.getStatus()).isEqualTo(HttpStatus.BAD_REQUEST.value());
+		assertThat(response.getContentAsString()).doesNotContain(OAuth2ParameterNames.ERROR);
+		assertThat(response.getContentAsString()).doesNotContain(OAuth2ParameterNames.ERROR_DESCRIPTION);
+		assertThat(response.getContentAsString()).doesNotContain(OAuth2ParameterNames.ERROR_URI);
 	}
 
 }

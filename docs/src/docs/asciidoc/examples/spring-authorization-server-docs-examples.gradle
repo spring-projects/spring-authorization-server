@@ -12,7 +12,7 @@ repositories {
 }
 
 dependencies {
-	implementation(platform("org.springframework.boot:spring-boot-dependencies:3.1.0")) {
+	implementation(platform("org.springframework.boot:spring-boot-dependencies:3.1.4")) {
 		exclude group: "org.springframework.security", module: "spring-security-oauth2-authorization-server"
 	}
 	implementation platform("org.springframework.security:spring-security-bom:6.1.0")

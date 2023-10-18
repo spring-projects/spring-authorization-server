@@ -19,6 +19,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.Date;
+import java.util.UUID;
 
 import org.springframework.lang.Nullable;
 import org.springframework.security.core.session.SessionInformation;
@@ -112,7 +113,8 @@ public final class JwtGenerator implements OAuth2TokenGenerator<Jwt> {
 				.subject(context.getPrincipal().getName())
 				.audience(Collections.singletonList(registeredClient.getClientId()))
 				.issuedAt(issuedAt)
-				.expiresAt(expiresAt);
+				.expiresAt(expiresAt)
+				.id(UUID.randomUUID().toString());
 		if (OAuth2TokenType.ACCESS_TOKEN.equals(context.getTokenType())) {
 			claimsBuilder.notBefore(issuedAt);
 			if (!CollectionUtils.isEmpty(context.getAuthorizedScopes())) {

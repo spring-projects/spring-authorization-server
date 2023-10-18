@@ -318,6 +318,7 @@ public class JwtGeneratorTests {
 		}
 		assertThat(jwtClaimsSet.getIssuedAt()).isBetween(issuedAt.minusSeconds(1), issuedAt.plusSeconds(1));
 		assertThat(jwtClaimsSet.getExpiresAt()).isBetween(expiresAt.minusSeconds(1), expiresAt.plusSeconds(1));
+		assertThat(jwtClaimsSet.getId()).isNotNull();
 
 		if (tokenContext.getTokenType().equals(OAuth2TokenType.ACCESS_TOKEN)) {
 			assertThat(jwtClaimsSet.getNotBefore()).isBetween(issuedAt.minusSeconds(1), issuedAt.plusSeconds(1));

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 the original author or authors.
+ * Copyright 2020-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -303,9 +303,11 @@ public class OidcTests {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().scope(OidcScopes.OPENID).build();
 		this.registeredClientRepository.save(registeredClient);
 
+		String issuer = "https://example.com:8443/issuer1";
+
 		// Login
 		MultiValueMap<String, String> authorizationRequestParameters = getAuthorizationRequestParameters(registeredClient);
-		MvcResult mvcResult = this.mvc.perform(get(DEFAULT_AUTHORIZATION_ENDPOINT_URI)
+		MvcResult mvcResult = this.mvc.perform(get(issuer.concat(DEFAULT_AUTHORIZATION_ENDPOINT_URI))
 						.queryParams(authorizationRequestParameters)
 						.with(user("user")))
 				.andExpect(status().is3xxRedirection())
@@ -319,7 +321,7 @@ public class OidcTests {
 		OAuth2Authorization authorization = this.authorizationService.findByToken(authorizationCode, AUTHORIZATION_CODE_TOKEN_TYPE);
 
 		// Get ID Token
-		mvcResult = this.mvc.perform(post(DEFAULT_TOKEN_ENDPOINT_URI)
+		mvcResult = this.mvc.perform(post(issuer.concat(DEFAULT_TOKEN_ENDPOINT_URI))
 						.params(getTokenRequestParameters(registeredClient, authorization))
 						.header(HttpHeaders.AUTHORIZATION, "Basic " + encodeBasicAuth(
 								registeredClient.getClientId(), registeredClient.getClientSecret())))
@@ -334,7 +336,7 @@ public class OidcTests {
 		String idToken = (String) accessTokenResponse.getAdditionalParameters().get(OidcParameterNames.ID_TOKEN);
 
 		// Logout
-		mvcResult = this.mvc.perform(post(DEFAULT_OIDC_LOGOUT_ENDPOINT_URI)
+		mvcResult = this.mvc.perform(post(issuer.concat(DEFAULT_OIDC_LOGOUT_ENDPOINT_URI))
 						.param("id_token_hint", idToken)
 						.session(session))
 				.andExpect(status().is3xxRedirection())

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,6 +48,8 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.OrRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
+
+import static org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2ConfigurerUtils.withMultipleIssuerPattern;
 
 /**
  * Configurer for OpenID Connect 1.0 UserInfo Endpoint.
@@ -185,7 +187,7 @@ public final class OidcUserInfoEndpointConfigurer extends AbstractOAuth2Configur
 	@Override
 	void init(HttpSecurity httpSecurity) {
 		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils.getAuthorizationServerSettings(httpSecurity);
-		String userInfoEndpointUri = authorizationServerSettings.getOidcUserInfoEndpoint();
+		String userInfoEndpointUri = withMultipleIssuerPattern(authorizationServerSettings.getOidcUserInfoEndpoint());
 		this.requestMatcher = new OrRequestMatcher(
 				new AntPathRequestMatcher(userInfoEndpointUri, HttpMethod.GET.name()),
 				new AntPathRequestMatcher(userInfoEndpointUri, HttpMethod.POST.name()));
@@ -207,7 +209,7 @@ public final class OidcUserInfoEndpointConfigurer extends AbstractOAuth2Configur
 		OidcUserInfoEndpointFilter oidcUserInfoEndpointFilter =
 				new OidcUserInfoEndpointFilter(
 						authenticationManager,
-						authorizationServerSettings.getOidcUserInfoEndpoint());
+						withMultipleIssuerPattern(authorizationServerSettings.getOidcUserInfoEndpoint()));
 		List<AuthenticationConverter> authenticationConverters = createDefaultAuthenticationConverters();
 		if (!this.userInfoRequestConverters.isEmpty()) {
 			authenticationConverters.addAll(0, this.userInfoRequestConverters);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,7 +70,7 @@ public final class OidcProviderConfigurationEndpointConfigurer extends AbstractO
 	@Override
 	void init(HttpSecurity httpSecurity) {
 		this.requestMatcher = new AntPathRequestMatcher(
-				"/.well-known/openid-configuration", HttpMethod.GET.name());
+				"/**/.well-known/openid-configuration", HttpMethod.GET.name());
 	}
 
 	@Override

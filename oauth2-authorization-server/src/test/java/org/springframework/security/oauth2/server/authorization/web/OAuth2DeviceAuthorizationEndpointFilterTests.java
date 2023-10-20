@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 the original author or authors.
+ * Copyright 2020-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import java.time.temporal.ChronoUnit;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -404,6 +405,9 @@ public class OAuth2DeviceAuthorizationEndpointFilterTests {
 		request.setRequestURI(AUTHORIZATION_URI);
 		request.setServletPath(AUTHORIZATION_URI);
 		request.setRemoteAddr(REMOTE_ADDRESS);
+		request.setScheme("https");
+		request.setServerName("provider.com");
+		request.setServerPort(-1);
 		return request;
 	}
 

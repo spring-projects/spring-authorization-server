@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,11 +24,12 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import jakarta.servlet.http.HttpServletResponse;
+
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
-import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -187,6 +188,24 @@ public class OidcUserInfoTests {
 		OAuth2AccessToken accessToken = authorization.getAccessToken().getToken();
 		// @formatter:off
 		this.mvc.perform(post(DEFAULT_OIDC_USER_INFO_ENDPOINT_URI)
+				.header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken.getTokenValue()))
+				.andExpect(status().is2xxSuccessful())
+				.andExpectAll(userInfoResponse());
+		// @formatter:on
+	}
+
+	@Test
+	public void requestWhenUserInfoRequestIncludesIssuerPathThenUserInfoResponse() throws Exception {
+		this.spring.register(AuthorizationServerConfiguration.class).autowire();
+
+		OAuth2Authorization authorization = createAuthorization();
+		this.authorizationService.save(authorization);
+
+		String issuer = "https://example.com:8443/issuer1";
+
+		OAuth2AccessToken accessToken = authorization.getAccessToken().getToken();
+		// @formatter:off
+		this.mvc.perform(get(issuer.concat(DEFAULT_OIDC_USER_INFO_ENDPOINT_URI))
 				.header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken.getTokenValue()))
 				.andExpect(status().is2xxSuccessful())
 				.andExpectAll(userInfoResponse());
@@ -512,7 +531,6 @@ public class OidcUserInfoTests {
 		@Bean
 		AuthorizationServerSettings authorizationServerSettings() {
 			return AuthorizationServerSettings.builder()
-					.issuer("https://auth-server:9000")
 					.build();
 		}
 

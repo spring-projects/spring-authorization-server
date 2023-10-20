@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 the original author or authors.
+ * Copyright 2020-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,7 +55,7 @@ public final class OAuth2AuthorizationServerMetadataEndpointFilter extends OnceP
 	/**
 	 * The default endpoint {@code URI} for OAuth 2.0 Authorization Server Metadata requests.
 	 */
-	private static final String DEFAULT_OAUTH2_AUTHORIZATION_SERVER_METADATA_ENDPOINT_URI = "/.well-known/oauth-authorization-server";
+	private static final String DEFAULT_OAUTH2_AUTHORIZATION_SERVER_METADATA_ENDPOINT_URI = "/.well-known/oauth-authorization-server/**";
 
 	private final RequestMatcher requestMatcher = new AntPathRequestMatcher(
 			DEFAULT_OAUTH2_AUTHORIZATION_SERVER_METADATA_ENDPOINT_URI,

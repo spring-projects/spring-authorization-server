@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 the original author or authors.
+ * Copyright 2020-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -137,6 +137,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @ExtendWith(SpringTestContextExtension.class)
 public class OidcClientRegistrationTests {
+	private static final String ISSUER = "https://example.com:8443/issuer1";
 	private static final String DEFAULT_TOKEN_ENDPOINT_URI = "/oauth2/token";
 	private static final String DEFAULT_OIDC_CLIENT_REGISTRATION_ENDPOINT_URI = "/connect/register";
 	private static final HttpMessageConverter<OAuth2AccessTokenResponse> accessTokenHttpResponseConverter =
@@ -374,7 +375,7 @@ public class OidcClientRegistrationTests {
 
 		when(authenticationProvider.authenticate(any())).thenThrow(new OAuth2AuthenticationException("error"));
 
-		this.mvc.perform(get(DEFAULT_OIDC_CLIENT_REGISTRATION_ENDPOINT_URI)
+		this.mvc.perform(get(ISSUER.concat(DEFAULT_OIDC_CLIENT_REGISTRATION_ENDPOINT_URI))
 				.param(OAuth2ParameterNames.CLIENT_ID, "invalid").with(jwt()));
 
 		verify(authenticationFailureHandler).onAuthenticationFailure(any(), any(), any());
@@ -399,7 +400,7 @@ public class OidcClientRegistrationTests {
 
 		OidcClientRegistration clientRegistrationResponse = registerClient(clientRegistration);
 
-		this.mvc.perform(post(DEFAULT_TOKEN_ENDPOINT_URI)
+		this.mvc.perform(post(ISSUER.concat(DEFAULT_TOKEN_ENDPOINT_URI))
 						.param(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
 						.param(OAuth2ParameterNames.SCOPE, "scope1")
 						.with(httpBasic(clientRegistrationResponse.getClientId(), clientRegistrationResponse.getClientSecret())))
@@ -436,7 +437,7 @@ public class OidcClientRegistrationTests {
 		JwtClaimsSet jwtClaimsSet = JwtClaimsSet.builder()
 				.issuer(clientRegistrationResponse.getClientId())
 				.subject(clientRegistrationResponse.getClientId())
-				.audience(Collections.singletonList(asUrl(this.authorizationServerSettings.getIssuer(), this.authorizationServerSettings.getTokenEndpoint())))
+				.audience(Collections.singletonList(asUrl(ISSUER, this.authorizationServerSettings.getTokenEndpoint())))
 				.issuedAt(issuedAt)
 				.expiresAt(expiresAt)
 				.build();
@@ -447,7 +448,7 @@ public class OidcClientRegistrationTests {
 
 		Jwt jwtAssertion = jwtClientAssertionEncoder.encode(JwtEncoderParameters.from(jwsHeader, jwtClaimsSet));
 
-		this.mvc.perform(post(DEFAULT_TOKEN_ENDPOINT_URI)
+		this.mvc.perform(post(ISSUER.concat(DEFAULT_TOKEN_ENDPOINT_URI))
 						.param(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
 						.param(OAuth2ParameterNames.SCOPE, "scope1")
 						.param(OAuth2ParameterNames.CLIENT_ASSERTION_TYPE, "urn:ietf:params:oauth:client-assertion-type:jwt-bearer")
@@ -520,7 +521,7 @@ public class OidcClientRegistrationTests {
 		// @formatter:on
 		Jwt jwtAssertion = jwtClientAssertionEncoder.encode(JwtEncoderParameters.from(jwsHeader, jwtClaimsSet));
 
-		MvcResult mvcResult = this.mvc.perform(post(DEFAULT_TOKEN_ENDPOINT_URI)
+		MvcResult mvcResult = this.mvc.perform(post(ISSUER.concat(DEFAULT_TOKEN_ENDPOINT_URI))
 				.param(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
 				.param(OAuth2ParameterNames.SCOPE, clientRegistrationScope)
 				.param(OAuth2ParameterNames.CLIENT_ASSERTION_TYPE, "urn:ietf:params:oauth:client-assertion-type:jwt-bearer")
@@ -539,7 +540,7 @@ public class OidcClientRegistrationTests {
 		httpHeaders.setBearerAuth(accessToken.getTokenValue());
 
 		// Register the client
-		mvcResult = this.mvc.perform(post(DEFAULT_OIDC_CLIENT_REGISTRATION_ENDPOINT_URI)
+		mvcResult = this.mvc.perform(post(ISSUER.concat(DEFAULT_OIDC_CLIENT_REGISTRATION_ENDPOINT_URI))
 				.headers(httpHeaders)
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(getClientRegistrationRequestContent(clientRegistration)))
@@ -557,7 +558,7 @@ public class OidcClientRegistrationTests {
 		return JwtClaimsSet.builder()
 				.issuer(registeredClient.getClientId())
 				.subject(registeredClient.getClientId())
-				.audience(Collections.singletonList(asUrl(this.authorizationServerSettings.getIssuer(), this.authorizationServerSettings.getTokenEndpoint())))
+				.audience(Collections.singletonList(asUrl(ISSUER, this.authorizationServerSettings.getTokenEndpoint())))
 				.issuedAt(issuedAt)
 				.expiresAt(expiresAt);
 	}
@@ -734,7 +735,6 @@ public class OidcClientRegistrationTests {
 		@Bean
 		AuthorizationServerSettings authorizationServerSettings() {
 			return AuthorizationServerSettings.builder()
-					.issuer("https://auth-server:9000")
 					.build();
 		}
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 the original author or authors.
+ * Copyright 2020-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,8 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.OrRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
+
+import static org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2ConfigurerUtils.withMultipleIssuerPattern;
 
 /**
  * Configurer for OpenID Connect 1.0 RP-Initiated Logout Endpoint.
@@ -151,7 +153,7 @@ public final class OidcLogoutEndpointConfigurer extends AbstractOAuth2Configurer
 	@Override
 	void init(HttpSecurity httpSecurity) {
 		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils.getAuthorizationServerSettings(httpSecurity);
-		String logoutEndpointUri = authorizationServerSettings.getOidcLogoutEndpoint();
+		String logoutEndpointUri = withMultipleIssuerPattern(authorizationServerSettings.getOidcLogoutEndpoint());
 		this.requestMatcher = new OrRequestMatcher(
 				new AntPathRequestMatcher(logoutEndpointUri, HttpMethod.GET.name()),
 				new AntPathRequestMatcher(logoutEndpointUri, HttpMethod.POST.name())
@@ -174,7 +176,7 @@ public final class OidcLogoutEndpointConfigurer extends AbstractOAuth2Configurer
 		OidcLogoutEndpointFilter oidcLogoutEndpointFilter =
 				new OidcLogoutEndpointFilter(
 						authenticationManager,
-						authorizationServerSettings.getOidcLogoutEndpoint());
+						withMultipleIssuerPattern(authorizationServerSettings.getOidcLogoutEndpoint()));
 		List<AuthenticationConverter> authenticationConverters = createDefaultAuthenticationConverters();
 		if (!this.logoutRequestConverters.isEmpty()) {
 			authenticationConverters.addAll(0, this.logoutRequestConverters);

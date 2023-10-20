@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 the original author or authors.
+ * Copyright 2020-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,8 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
+
+import static org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2ConfigurerUtils.withMultipleIssuerPattern;
 
 /**
  * Configurer for the OAuth 2.0 Device Authorization Endpoint.
@@ -166,7 +168,7 @@ public final class OAuth2DeviceAuthorizationEndpointConfigurer extends AbstractO
 		AuthorizationServerSettings authorizationServerSettings =
 				OAuth2ConfigurerUtils.getAuthorizationServerSettings(builder);
 		this.requestMatcher = new AntPathRequestMatcher(
-				authorizationServerSettings.getDeviceAuthorizationEndpoint(), HttpMethod.POST.name());
+				withMultipleIssuerPattern(authorizationServerSettings.getDeviceAuthorizationEndpoint()), HttpMethod.POST.name());
 
 		List<AuthenticationProvider> authenticationProviders = createDefaultAuthenticationProviders(builder);
 		if (!this.authenticationProviders.isEmpty()) {
@@ -184,7 +186,7 @@ public final class OAuth2DeviceAuthorizationEndpointConfigurer extends AbstractO
 
 		OAuth2DeviceAuthorizationEndpointFilter deviceAuthorizationEndpointFilter =
 				new OAuth2DeviceAuthorizationEndpointFilter(
-						authenticationManager, authorizationServerSettings.getDeviceAuthorizationEndpoint());
+						authenticationManager, withMultipleIssuerPattern(authorizationServerSettings.getDeviceAuthorizationEndpoint()));
 
 		List<AuthenticationConverter> authenticationConverters = createDefaultAuthenticationConverters();
 		if (!this.deviceAuthorizationRequestConverters.isEmpty()) {

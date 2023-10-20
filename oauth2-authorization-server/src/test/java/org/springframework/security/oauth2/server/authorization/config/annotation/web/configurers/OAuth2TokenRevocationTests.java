@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -193,6 +193,35 @@ public class OAuth2TokenRevocationTests {
 				.header(HttpHeaders.AUTHORIZATION, "Basic " + encodeBasicAuth(
 						registeredClient.getClientId(), registeredClient.getClientSecret())))
 				.andExpect(status().isOk());
+
+		OAuth2Authorization updatedAuthorization = this.authorizationService.findById(authorization.getId());
+		OAuth2Authorization.Token<OAuth2AccessToken> accessToken = updatedAuthorization.getAccessToken();
+		assertThat(accessToken.isInvalidated()).isTrue();
+		OAuth2Authorization.Token<OAuth2RefreshToken> refreshToken = updatedAuthorization.getRefreshToken();
+		assertThat(refreshToken.isInvalidated()).isFalse();
+	}
+
+	@Test
+	public void requestWhenRevokeAccessTokenAndRequestIncludesIssuerPathThenRevoked() throws Exception {
+		this.spring.register(AuthorizationServerConfiguration.class).autowire();
+
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+		this.registeredClientRepository.save(registeredClient);
+
+		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();
+		OAuth2AccessToken token = authorization.getAccessToken().getToken();
+		OAuth2TokenType tokenType = OAuth2TokenType.ACCESS_TOKEN;
+		this.authorizationService.save(authorization);
+
+		String issuer = "https://example.com:8443/issuer1";
+
+		// @formatter:off
+		this.mvc.perform(post(issuer.concat(DEFAULT_TOKEN_REVOCATION_ENDPOINT_URI))
+						.params(getTokenRevocationRequestParameters(token, tokenType))
+						.header(HttpHeaders.AUTHORIZATION, "Basic " + encodeBasicAuth(
+								registeredClient.getClientId(), registeredClient.getClientSecret())))
+				.andExpect(status().isOk());
+		// @formatter:on
 
 		OAuth2Authorization updatedAuthorization = this.authorizationService.findById(authorization.getId());
 		OAuth2Authorization.Token<OAuth2AccessToken> accessToken = updatedAuthorization.getAccessToken();

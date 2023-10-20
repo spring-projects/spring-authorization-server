@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 the original author or authors.
+ * Copyright 2020-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,7 @@ import org.springframework.security.oauth2.server.authorization.token.OAuth2Refr
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenClaimsContext;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenGenerator;
+import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
 /**
@@ -54,6 +55,13 @@ import org.springframework.util.StringUtils;
 final class OAuth2ConfigurerUtils {
 
 	private OAuth2ConfigurerUtils() {
+	}
+
+	static String withMultipleIssuerPattern(String endpointUri) {
+		Assert.hasText(endpointUri, "endpointUri cannot be empty");
+		return endpointUri.startsWith("/") ?
+				"/**" + endpointUri :
+				"/**/" + endpointUri;
 	}
 
 	static RegisteredClientRepository getRegisteredClientRepository(HttpSecurity httpSecurity) {

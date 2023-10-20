@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 the original author or authors.
+ * Copyright 2020-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -218,8 +218,10 @@ public class OAuth2DeviceCodeGrantTests {
 		parameters.set(OAuth2ParameterNames.SCOPE,
 				StringUtils.collectionToDelimitedString(registeredClient.getScopes(), " "));
 
+		String issuer = "https://example.com:8443/issuer1";
+
 		// @formatter:off
-		MvcResult mvcResult = this.mvc.perform(post(DEFAULT_DEVICE_AUTHORIZATION_ENDPOINT_URI)
+		MvcResult mvcResult = this.mvc.perform(post(issuer.concat(DEFAULT_DEVICE_AUTHORIZATION_ENDPOINT_URI))
 				.params(parameters)
 				.headers(withClientAuth(registeredClient)))
 				.andExpect(status().isOk())
@@ -240,9 +242,9 @@ public class OAuth2DeviceCodeGrantTests {
 		String userCode = deviceAuthorizationResponse.getUserCode().getTokenValue();
 		assertThat(userCode).matches("[A-Z]{4}-[A-Z]{4}");
 		assertThat(deviceAuthorizationResponse.getVerificationUri())
-				.isEqualTo("http://localhost/oauth2/device_verification");
+				.isEqualTo("https://example.com:8443/oauth2/device_verification");
 		assertThat(deviceAuthorizationResponse.getVerificationUriComplete())
-				.isEqualTo("http://localhost/oauth2/device_verification?user_code=" + userCode);
+				.isEqualTo("https://example.com:8443/oauth2/device_verification?user_code=" + userCode);
 
 		String deviceCode = deviceAuthorizationResponse.getDeviceCode().getTokenValue();
 		OAuth2Authorization authorization = this.authorizationService.findByToken(deviceCode, DEVICE_CODE_TOKEN_TYPE);
@@ -311,8 +313,10 @@ public class OAuth2DeviceCodeGrantTests {
 		MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
 		parameters.set(OAuth2ParameterNames.USER_CODE, USER_CODE);
 
+		String issuer = "https://example.com:8443/issuer1";
+
 		// @formatter:off
-		MvcResult mvcResult = this.mvc.perform(get(DEFAULT_DEVICE_VERIFICATION_ENDPOINT_URI)
+		MvcResult mvcResult = this.mvc.perform(get(issuer.concat(DEFAULT_DEVICE_VERIFICATION_ENDPOINT_URI))
 				.queryParams(parameters)
 				.with(user("user")))
 				.andExpect(status().isOk())

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 the original author or authors.
+ * Copyright 2020-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -824,6 +824,46 @@ public class OAuth2AuthorizationCodeGrantTests {
 		org.springframework.security.core.context.SecurityContext securityContext =
 				securityContextRepository.loadDeferredContext(mvcResult.getRequest()).get();
 		assertThat(securityContext.getAuthentication()).isNull();
+	}
+
+	@Test
+	public void requestWhenAuthorizationAndTokenRequestIncludesIssuerPathThenIssuerResolvedWithPath() throws Exception {
+		this.spring.register(AuthorizationServerConfigurationWithTokenGenerator.class).autowire();
+
+		RegisteredClient registeredClient = TestRegisteredClients.registeredPublicClient().build();
+		this.registeredClientRepository.save(registeredClient);
+
+		String issuer = "https://example.com:8443/issuer1";
+
+		MvcResult mvcResult = this.mvc.perform(get(issuer.concat(DEFAULT_AUTHORIZATION_ENDPOINT_URI))
+						.queryParams(getAuthorizationRequestParameters(registeredClient))
+						.queryParam(PkceParameterNames.CODE_CHALLENGE, S256_CODE_CHALLENGE)
+						.queryParam(PkceParameterNames.CODE_CHALLENGE_METHOD, "S256")
+						.with(user("user")))
+				.andExpect(status().is3xxRedirection())
+				.andReturn();
+
+		String authorizationCode = extractParameterFromRedirectUri(mvcResult.getResponse().getRedirectedUrl(), "code");
+		OAuth2Authorization authorizationCodeAuthorization = this.authorizationService.findByToken(authorizationCode, AUTHORIZATION_CODE_TOKEN_TYPE);
+
+		this.mvc.perform(post(issuer.concat(DEFAULT_TOKEN_ENDPOINT_URI))
+				.params(getTokenRequestParameters(registeredClient, authorizationCodeAuthorization))
+				.param(OAuth2ParameterNames.CLIENT_ID, registeredClient.getClientId())
+				.param(PkceParameterNames.CODE_VERIFIER, S256_CODE_VERIFIER))
+				.andExpect(header().string(HttpHeaders.CACHE_CONTROL, containsString("no-store")))
+				.andExpect(header().string(HttpHeaders.PRAGMA, containsString("no-cache")))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.access_token").isNotEmpty())
+				.andExpect(jsonPath("$.token_type").isNotEmpty())
+				.andExpect(jsonPath("$.expires_in").isNotEmpty())
+				.andExpect(jsonPath("$.refresh_token").doesNotExist())
+				.andExpect(jsonPath("$.scope").isNotEmpty())
+				.andReturn();
+
+		ArgumentCaptor<OAuth2TokenContext> tokenContextCaptor = ArgumentCaptor.forClass(OAuth2TokenContext.class);
+		verify(tokenGenerator).generate(tokenContextCaptor.capture());
+		OAuth2TokenContext tokenContext = tokenContextCaptor.getValue();
+		assertThat(tokenContext.getAuthorizationServerContext().getIssuer()).isEqualTo(issuer);
 	}
 
 	private static MultiValueMap<String, String> getAuthorizationRequestParameters(RegisteredClient registeredClient) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,6 +55,8 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.OrRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
+
+import static org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2ConfigurerUtils.withMultipleIssuerPattern;
 
 /**
  * An {@link AbstractHttpConfigurer} for OAuth 2.0 Authorization Server support.
@@ -314,7 +316,7 @@ public final class OAuth2AuthorizationServerConfigurer
 			requestMatchers.add(configurer.getRequestMatcher());
 		});
 		requestMatchers.add(new AntPathRequestMatcher(
-				authorizationServerSettings.getJwkSetEndpoint(), HttpMethod.GET.name()));
+				withMultipleIssuerPattern(authorizationServerSettings.getJwkSetEndpoint()), HttpMethod.GET.name()));
 		this.endpointsMatcher = new OrRequestMatcher(requestMatchers);
 
 		ExceptionHandlingConfigurer<HttpSecurity> exceptionHandling = httpSecurity.getConfigurer(ExceptionHandlingConfigurer.class);
@@ -342,7 +344,7 @@ public final class OAuth2AuthorizationServerConfigurer
 		JWKSource<com.nimbusds.jose.proc.SecurityContext> jwkSource = OAuth2ConfigurerUtils.getJwkSource(httpSecurity);
 		if (jwkSource != null) {
 			NimbusJwkSetEndpointFilter jwkSetEndpointFilter = new NimbusJwkSetEndpointFilter(
-					jwkSource, authorizationServerSettings.getJwkSetEndpoint());
+					jwkSource, withMultipleIssuerPattern(authorizationServerSettings.getJwkSetEndpoint()));
 			httpSecurity.addFilterBefore(postProcess(jwkSetEndpointFilter), AbstractPreAuthenticatedProcessingFilter.class);
 		}
 	}

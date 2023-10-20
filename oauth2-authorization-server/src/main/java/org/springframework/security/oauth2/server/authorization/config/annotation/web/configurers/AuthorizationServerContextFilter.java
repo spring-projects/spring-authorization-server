@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,10 @@
 package org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers;
 
 import java.io.IOException;
-import java.util.function.Supplier;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -28,6 +31,7 @@ import org.springframework.security.oauth2.server.authorization.context.Authoriz
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.web.util.UrlUtils;
 import org.springframework.util.Assert;
+import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -42,10 +46,12 @@ import org.springframework.web.util.UriComponentsBuilder;
  */
 final class AuthorizationServerContextFilter extends OncePerRequestFilter {
 	private final AuthorizationServerSettings authorizationServerSettings;
+	private final IssuerResolver issuerResolver;
 
 	AuthorizationServerContextFilter(AuthorizationServerSettings authorizationServerSettings) {
 		Assert.notNull(authorizationServerSettings, "authorizationServerSettings cannot be null");
 		this.authorizationServerSettings = authorizationServerSettings;
+		this.issuerResolver = new IssuerResolver(authorizationServerSettings);
 	}
 
 	@Override
@@ -53,10 +59,9 @@ final class AuthorizationServerContextFilter extends OncePerRequestFilter {
 			throws ServletException, IOException {
 
 		try {
+			String issuer = this.issuerResolver.resolve(request);
 			AuthorizationServerContext authorizationServerContext =
-					new DefaultAuthorizationServerContext(
-							() -> resolveIssuer(this.authorizationServerSettings, request),
-							this.authorizationServerSettings);
+					new DefaultAuthorizationServerContext(issuer, this.authorizationServerSettings);
 			AuthorizationServerContextHolder.setContext(authorizationServerContext);
 			filterChain.doFilter(request, response);
 		} finally {
@@ -64,35 +69,69 @@ final class AuthorizationServerContextFilter extends OncePerRequestFilter {
 		}
 	}
 
-	private static String resolveIssuer(AuthorizationServerSettings authorizationServerSettings, HttpServletRequest request) {
-		return authorizationServerSettings.getIssuer() != null ?
-				authorizationServerSettings.getIssuer() :
-				getContextPath(request);
-	}
+	private static final class IssuerResolver {
+		private final String issuer;
+		private final Set<String> endpointUris;
 
-	private static String getContextPath(HttpServletRequest request) {
-		// @formatter:off
-		return UriComponentsBuilder.fromHttpUrl(UrlUtils.buildFullRequestUrl(request))
-				.replacePath(request.getContextPath())
-				.replaceQuery(null)
-				.fragment(null)
-				.build()
-				.toUriString();
-		// @formatter:on
+		private IssuerResolver(AuthorizationServerSettings authorizationServerSettings) {
+			if (authorizationServerSettings.getIssuer() != null) {
+				this.issuer = authorizationServerSettings.getIssuer();
+				this.endpointUris = Collections.emptySet();
+			} else {
+				this.issuer = null;
+				this.endpointUris = new HashSet<>();
+				this.endpointUris.add("/.well-known/oauth-authorization-server");
+				this.endpointUris.add("/.well-known/openid-configuration");
+				for (Map.Entry<String, Object> setting : authorizationServerSettings.getSettings().entrySet()) {
+					if (setting.getKey().endsWith("-endpoint")) {
+						this.endpointUris.add((String) setting.getValue());
+					}
+				}
+			}
+		}
+
+		private String resolve(HttpServletRequest request) {
+			if (this.issuer != null) {
+				return this.issuer;
+			}
+
+			// Resolve Issuer Identifier dynamically from request
+			String path = request.getRequestURI();
+			if (!StringUtils.hasText(path)) {
+				path = "";
+			} else {
+				for (String endpointUri : this.endpointUris) {
+					if (path.contains(endpointUri)) {
+						path = path.replace(endpointUri, "");
+						break;
+					}
+				}
+			}
+
+			// @formatter:off
+			return UriComponentsBuilder.fromHttpUrl(UrlUtils.buildFullRequestUrl(request))
+					.replacePath(path)
+					.replaceQuery(null)
+					.fragment(null)
+					.build()
+					.toUriString();
+			// @formatter:on
+		}
+
 	}
 
 	private static final class DefaultAuthorizationServerContext implements AuthorizationServerContext {
-		private final Supplier<String> issuerSupplier;
+		private final String issuer;
 		private final AuthorizationServerSettings authorizationServerSettings;
 
-		private DefaultAuthorizationServerContext(Supplier<String> issuerSupplier, AuthorizationServerSettings authorizationServerSettings) {
-			this.issuerSupplier = issuerSupplier;
+		private DefaultAuthorizationServerContext(String issuer, AuthorizationServerSettings authorizationServerSettings) {
+			this.issuer = issuer;
 			this.authorizationServerSettings = authorizationServerSettings;
 		}
 
 		@Override
 		public String getIssuer() {
-			return this.issuerSupplier.get();
+			return this.issuer;
 		}
 
 		@Override

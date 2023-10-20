@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 the original author or authors.
+ * Copyright 2020-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,7 +57,7 @@ public final class OidcProviderConfigurationEndpointFilter extends OncePerReques
 	/**
 	 * The default endpoint {@code URI} for OpenID Provider Configuration requests.
 	 */
-	private static final String DEFAULT_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI = "/.well-known/openid-configuration";
+	private static final String DEFAULT_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI = "/**/.well-known/openid-configuration";
 
 	private final RequestMatcher requestMatcher = new AntPathRequestMatcher(
 			DEFAULT_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI,

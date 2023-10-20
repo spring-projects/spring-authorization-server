@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,9 +28,22 @@ import org.springframework.security.oauth2.server.authorization.settings.Authori
 public interface AuthorizationServerContext {
 
 	/**
-	 * Returns the {@code URL} of the Authorization Server's issuer identifier.
+	 * Returns {@link AuthorizationServerSettings#getIssuer()} if available, otherwise,
+	 * resolves the issuer identifier from the <i>"current"</i> request.
 	 *
-	 * @return the {@code URL} of the Authorization Server's issuer identifier
+	 * <p>
+	 * The issuer identifier may contain a path component to support multiple issuers per host in a multi-tenant hosting configuration.
+	 *
+	 * <p>
+	 * For example:
+	 * <ul>
+	 * <li>{@code https://example.com/issuer1/oauth2/token} &mdash; resolves the issuer to {@code https://example.com/issuer1}</li>
+	 * <li>{@code https://example.com/issuer2/oauth2/token} &mdash; resolves the issuer to {@code https://example.com/issuer2}</li>
+	 * <li>{@code https://example.com/authz/issuer1/oauth2/token} &mdash; resolves the issuer to {@code https://example.com/authz/issuer1}</li>
+	 * <li>{@code https://example.com/authz/issuer2/oauth2/token} &mdash; resolves the issuer to {@code https://example.com/authz/issuer2}</li>
+	 * </ul>
+	 *
+	 * @return {@link AuthorizationServerSettings#getIssuer()} if available, otherwise, resolves the issuer identifier from the <i>"current"</i> request
 	 */
 	String getIssuer();
 

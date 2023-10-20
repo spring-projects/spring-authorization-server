@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 the original author or authors.
+ * Copyright 2020-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,8 +43,6 @@ import org.springframework.security.oauth2.core.oidc.OidcScopes;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.server.authorization.JdbcOAuth2AuthorizationConsentService;
 import org.springframework.security.oauth2.server.authorization.JdbcOAuth2AuthorizationService;
-import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsentService;
-import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.client.JdbcRegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
@@ -94,7 +92,7 @@ public class AuthorizationServerConfig {
 		 */
 		DeviceClientAuthenticationConverter deviceClientAuthenticationConverter =
 				new DeviceClientAuthenticationConverter(
-						authorizationServerSettings.getDeviceAuthorizationEndpoint());
+						"/**" + authorizationServerSettings.getDeviceAuthorizationEndpoint());
 		DeviceClientAuthenticationProvider deviceClientAuthenticationProvider =
 				new DeviceClientAuthenticationProvider(registeredClientRepository);
 

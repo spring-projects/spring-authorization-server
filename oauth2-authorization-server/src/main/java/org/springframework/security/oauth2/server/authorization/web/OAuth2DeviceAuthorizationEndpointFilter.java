@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 the original author or authors.
+ * Copyright 2020-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,13 +40,13 @@ import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.http.converter.OAuth2DeviceAuthorizationResponseHttpMessageConverter;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2DeviceAuthorizationRequestAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2DeviceAuthorizationRequestAuthenticationToken;
-import org.springframework.security.oauth2.server.authorization.context.AuthorizationServerContextHolder;
 import org.springframework.security.oauth2.server.authorization.web.authentication.OAuth2DeviceAuthorizationRequestAuthenticationConverter;
 import org.springframework.security.oauth2.server.authorization.web.authentication.OAuth2ErrorAuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+import org.springframework.security.web.util.UrlUtils;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
@@ -199,9 +199,8 @@ public final class OAuth2DeviceAuthorizationEndpointFilter extends OncePerReques
 		OAuth2UserCode userCode = deviceAuthorizationRequestAuthentication.getUserCode();
 
 		// Generate the fully-qualified verification URI
-		String issuerUri = AuthorizationServerContextHolder.getContext().getIssuer();
-		UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromHttpUrl(issuerUri)
-				.path(this.verificationUri);
+		UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromHttpUrl(UrlUtils.buildFullRequestUrl(request))
+				.replacePath(this.verificationUri);
 		String verificationUri = uriComponentsBuilder.build().toUriString();
 		// @formatter:off
 		String verificationUriComplete = uriComponentsBuilder

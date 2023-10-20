@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 the original author or authors.
+ * Copyright 2020-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -355,6 +355,30 @@ public class OAuth2ClientCredentialsGrantTests {
 						provider instanceof PublicClientAuthenticationProvider);
 
 		verify(authenticationSuccessHandler).onAuthenticationSuccess(any(), any(), eq(clientPrincipal));
+	}
+
+	@Test
+	public void requestWhenTokenRequestIncludesIssuerPathThenIssuerResolvedWithPath() throws Exception {
+		this.spring.register(AuthorizationServerConfiguration.class).autowire();
+
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient2().build();
+		this.registeredClientRepository.save(registeredClient);
+
+		String issuer = "https://example.com:8443/issuer1";
+
+		this.mvc.perform(post(issuer.concat(DEFAULT_TOKEN_ENDPOINT_URI))
+						.param(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
+						.param(OAuth2ParameterNames.SCOPE, "scope1 scope2")
+						.header(HttpHeaders.AUTHORIZATION, "Basic " + encodeBasicAuth(
+								registeredClient.getClientId(), registeredClient.getClientSecret())))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.access_token").isNotEmpty())
+				.andExpect(jsonPath("$.scope").value("scope1 scope2"));
+
+		ArgumentCaptor<JwtEncodingContext> jwtEncodingContextCaptor = ArgumentCaptor.forClass(JwtEncodingContext.class);
+		verify(jwtCustomizer).customize(jwtEncodingContextCaptor.capture());
+		JwtEncodingContext jwtEncodingContext = jwtEncodingContextCaptor.getValue();
+		assertThat(jwtEncodingContext.getAuthorizationServerContext().getIssuer()).isEqualTo(issuer);
 	}
 
 	private static String encodeBasicAuth(String clientId, String secret) throws Exception {

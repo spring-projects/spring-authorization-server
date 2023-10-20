@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 the original author or authors.
+ * Copyright 2020-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +45,8 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.OrRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
+
+import static org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2ConfigurerUtils.withMultipleIssuerPattern;
 
 /**
  * Configurer for OpenID Connect 1.0 Dynamic Client Registration Endpoint.
@@ -160,7 +162,7 @@ public final class OidcClientRegistrationEndpointConfigurer extends AbstractOAut
 	@Override
 	void init(HttpSecurity httpSecurity) {
 		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils.getAuthorizationServerSettings(httpSecurity);
-		String clientRegistrationEndpointUri = authorizationServerSettings.getOidcClientRegistrationEndpoint();
+		String clientRegistrationEndpointUri = withMultipleIssuerPattern(authorizationServerSettings.getOidcClientRegistrationEndpoint());
 		this.requestMatcher = new OrRequestMatcher(
 				new AntPathRequestMatcher(clientRegistrationEndpointUri, HttpMethod.POST.name()),
 				new AntPathRequestMatcher(clientRegistrationEndpointUri, HttpMethod.GET.name())
@@ -183,7 +185,7 @@ public final class OidcClientRegistrationEndpointConfigurer extends AbstractOAut
 		OidcClientRegistrationEndpointFilter oidcClientRegistrationEndpointFilter =
 				new OidcClientRegistrationEndpointFilter(
 						authenticationManager,
-						authorizationServerSettings.getOidcClientRegistrationEndpoint());
+						withMultipleIssuerPattern(authorizationServerSettings.getOidcClientRegistrationEndpoint()));
 		List<AuthenticationConverter> authenticationConverters = createDefaultAuthenticationConverters();
 		if (!this.clientRegistrationRequestConverters.isEmpty()) {
 			authenticationConverters.addAll(0, this.clientRegistrationRequestConverters);

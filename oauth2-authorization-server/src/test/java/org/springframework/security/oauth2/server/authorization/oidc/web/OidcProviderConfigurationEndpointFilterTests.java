@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,7 +87,7 @@ public class OidcProviderConfigurationEndpointFilterTests {
 
 	@Test
 	public void doFilterWhenConfigurationRequestThenConfigurationResponse() throws Exception {
-		String issuer = "https://example.com/issuer1";
+		String issuer = "https://example.com";
 		String authorizationEndpoint = "/oauth2/v1/authorize";
 		String tokenEndpoint = "/oauth2/v1/token";
 		String jwkSetEndpoint = "/oauth2/v1/jwks";
@@ -118,20 +118,20 @@ public class OidcProviderConfigurationEndpointFilterTests {
 
 		assertThat(response.getContentType()).isEqualTo(MediaType.APPLICATION_JSON_VALUE);
 		String providerConfigurationResponse = response.getContentAsString();
-		assertThat(providerConfigurationResponse).contains("\"issuer\":\"https://example.com/issuer1\"");
-		assertThat(providerConfigurationResponse).contains("\"authorization_endpoint\":\"https://example.com/issuer1/oauth2/v1/authorize\"");
-		assertThat(providerConfigurationResponse).contains("\"token_endpoint\":\"https://example.com/issuer1/oauth2/v1/token\"");
-		assertThat(providerConfigurationResponse).contains("\"jwks_uri\":\"https://example.com/issuer1/oauth2/v1/jwks\"");
+		assertThat(providerConfigurationResponse).contains("\"issuer\":\"https://example.com\"");
+		assertThat(providerConfigurationResponse).contains("\"authorization_endpoint\":\"https://example.com/oauth2/v1/authorize\"");
+		assertThat(providerConfigurationResponse).contains("\"token_endpoint\":\"https://example.com/oauth2/v1/token\"");
+		assertThat(providerConfigurationResponse).contains("\"jwks_uri\":\"https://example.com/oauth2/v1/jwks\"");
 		assertThat(providerConfigurationResponse).contains("\"scopes_supported\":[\"openid\"]");
 		assertThat(providerConfigurationResponse).contains("\"response_types_supported\":[\"code\"]");
 		assertThat(providerConfigurationResponse).contains("\"grant_types_supported\":[\"authorization_code\",\"client_credentials\",\"refresh_token\"]");
-		assertThat(providerConfigurationResponse).contains("\"revocation_endpoint\":\"https://example.com/issuer1/oauth2/v1/revoke\"");
+		assertThat(providerConfigurationResponse).contains("\"revocation_endpoint\":\"https://example.com/oauth2/v1/revoke\"");
 		assertThat(providerConfigurationResponse).contains("\"revocation_endpoint_auth_methods_supported\":[\"client_secret_basic\",\"client_secret_post\",\"client_secret_jwt\",\"private_key_jwt\"]");
-		assertThat(providerConfigurationResponse).contains("\"introspection_endpoint\":\"https://example.com/issuer1/oauth2/v1/introspect\"");
+		assertThat(providerConfigurationResponse).contains("\"introspection_endpoint\":\"https://example.com/oauth2/v1/introspect\"");
 		assertThat(providerConfigurationResponse).contains("\"introspection_endpoint_auth_methods_supported\":[\"client_secret_basic\",\"client_secret_post\",\"client_secret_jwt\",\"private_key_jwt\"]");
 		assertThat(providerConfigurationResponse).contains("\"subject_types_supported\":[\"public\"]");
 		assertThat(providerConfigurationResponse).contains("\"id_token_signing_alg_values_supported\":[\"RS256\"]");
-		assertThat(providerConfigurationResponse).contains("\"userinfo_endpoint\":\"https://example.com/issuer1/userinfo\"");
+		assertThat(providerConfigurationResponse).contains("\"userinfo_endpoint\":\"https://example.com/userinfo\"");
 		assertThat(providerConfigurationResponse).contains("\"token_endpoint_auth_methods_supported\":[\"client_secret_basic\",\"client_secret_post\",\"client_secret_jwt\",\"private_key_jwt\"]");
 	}
 

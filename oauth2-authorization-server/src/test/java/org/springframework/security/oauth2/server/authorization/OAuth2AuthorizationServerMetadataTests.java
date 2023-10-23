@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,43 +38,43 @@ public class OAuth2AuthorizationServerMetadataTests {
 	// @formatter:off
 	private final Builder minimalBuilder =
 			OAuth2AuthorizationServerMetadata.builder()
-					.issuer("https://example.com/issuer1")
-					.authorizationEndpoint("https://example.com/issuer1/oauth2/authorize")
-					.tokenEndpoint("https://example.com/issuer1/oauth2/token")
+					.issuer("https://example.com")
+					.authorizationEndpoint("https://example.com/oauth2/authorize")
+					.tokenEndpoint("https://example.com/oauth2/token")
 					.responseType("code");
 	// @formatter:on
 
 	@Test
 	public void buildWhenAllClaimsProvidedThenCreated() {
 		OAuth2AuthorizationServerMetadata authorizationServerMetadata = OAuth2AuthorizationServerMetadata.builder()
-				.issuer("https://example.com/issuer1")
-				.authorizationEndpoint("https://example.com/issuer1/oauth2/authorize")
-				.tokenEndpoint("https://example.com/issuer1/oauth2/token")
+				.issuer("https://example.com")
+				.authorizationEndpoint("https://example.com/oauth2/authorize")
+				.tokenEndpoint("https://example.com/oauth2/token")
 				.tokenEndpointAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue())
-				.jwkSetUrl("https://example.com/issuer1/oauth2/jwks")
+				.jwkSetUrl("https://example.com/oauth2/jwks")
 				.scope("openid")
 				.responseType("code")
 				.grantType("authorization_code")
 				.grantType("client_credentials")
-				.tokenRevocationEndpoint("https://example.com/issuer1/oauth2/revoke")
+				.tokenRevocationEndpoint("https://example.com/oauth2/revoke")
 				.tokenRevocationEndpointAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue())
-				.tokenIntrospectionEndpoint("https://example.com/issuer1/oauth2/introspect")
+				.tokenIntrospectionEndpoint("https://example.com/oauth2/introspect")
 				.tokenIntrospectionEndpointAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue())
 				.codeChallengeMethod("S256")
 				.claim("a-claim", "a-value")
 				.build();
 
-		assertThat(authorizationServerMetadata.getIssuer()).isEqualTo(url("https://example.com/issuer1"));
-		assertThat(authorizationServerMetadata.getAuthorizationEndpoint()).isEqualTo(url("https://example.com/issuer1/oauth2/authorize"));
-		assertThat(authorizationServerMetadata.getTokenEndpoint()).isEqualTo(url("https://example.com/issuer1/oauth2/token"));
+		assertThat(authorizationServerMetadata.getIssuer()).isEqualTo(url("https://example.com"));
+		assertThat(authorizationServerMetadata.getAuthorizationEndpoint()).isEqualTo(url("https://example.com/oauth2/authorize"));
+		assertThat(authorizationServerMetadata.getTokenEndpoint()).isEqualTo(url("https://example.com/oauth2/token"));
 		assertThat(authorizationServerMetadata.getTokenEndpointAuthenticationMethods()).containsExactly(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue());
-		assertThat(authorizationServerMetadata.getJwkSetUrl()).isEqualTo(url("https://example.com/issuer1/oauth2/jwks"));
+		assertThat(authorizationServerMetadata.getJwkSetUrl()).isEqualTo(url("https://example.com/oauth2/jwks"));
 		assertThat(authorizationServerMetadata.getScopes()).containsExactly("openid");
 		assertThat(authorizationServerMetadata.getResponseTypes()).containsExactly("code");
 		assertThat(authorizationServerMetadata.getGrantTypes()).containsExactlyInAnyOrder("authorization_code", "client_credentials");
-		assertThat(authorizationServerMetadata.getTokenRevocationEndpoint()).isEqualTo(url("https://example.com/issuer1/oauth2/revoke"));
+		assertThat(authorizationServerMetadata.getTokenRevocationEndpoint()).isEqualTo(url("https://example.com/oauth2/revoke"));
 		assertThat(authorizationServerMetadata.getTokenRevocationEndpointAuthenticationMethods()).containsExactly(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue());
-		assertThat(authorizationServerMetadata.getTokenIntrospectionEndpoint()).isEqualTo(url("https://example.com/issuer1/oauth2/introspect"));
+		assertThat(authorizationServerMetadata.getTokenIntrospectionEndpoint()).isEqualTo(url("https://example.com/oauth2/introspect"));
 		assertThat(authorizationServerMetadata.getTokenIntrospectionEndpointAuthenticationMethods()).containsExactly(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue());
 		assertThat(authorizationServerMetadata.getCodeChallengeMethods()).containsExactly("S256");
 		assertThat(authorizationServerMetadata.getClaimAsString("a-claim")).isEqualTo("a-value");
@@ -83,15 +83,15 @@ public class OAuth2AuthorizationServerMetadataTests {
 	@Test
 	public void buildWhenOnlyRequiredClaimsProvidedThenCreated() {
 		OAuth2AuthorizationServerMetadata authorizationServerMetadata = OAuth2AuthorizationServerMetadata.builder()
-				.issuer("https://example.com/issuer1")
-				.authorizationEndpoint("https://example.com/issuer1/oauth2/authorize")
-				.tokenEndpoint("https://example.com/issuer1/oauth2/token")
+				.issuer("https://example.com")
+				.authorizationEndpoint("https://example.com/oauth2/authorize")
+				.tokenEndpoint("https://example.com/oauth2/token")
 				.responseType("code")
 				.build();
 
-		assertThat(authorizationServerMetadata.getIssuer()).isEqualTo(url("https://example.com/issuer1"));
-		assertThat(authorizationServerMetadata.getAuthorizationEndpoint()).isEqualTo(url("https://example.com/issuer1/oauth2/authorize"));
-		assertThat(authorizationServerMetadata.getTokenEndpoint()).isEqualTo(url("https://example.com/issuer1/oauth2/token"));
+		assertThat(authorizationServerMetadata.getIssuer()).isEqualTo(url("https://example.com"));
+		assertThat(authorizationServerMetadata.getAuthorizationEndpoint()).isEqualTo(url("https://example.com/oauth2/authorize"));
+		assertThat(authorizationServerMetadata.getTokenEndpoint()).isEqualTo(url("https://example.com/oauth2/token"));
 		assertThat(authorizationServerMetadata.getTokenEndpointAuthenticationMethods()).isNull();
 		assertThat(authorizationServerMetadata.getJwkSetUrl()).isNull();
 		assertThat(authorizationServerMetadata.getScopes()).isNull();
@@ -107,29 +107,29 @@ public class OAuth2AuthorizationServerMetadataTests {
 	@Test
 	public void withClaimsWhenClaimsProvidedThenCreated() {
 		HashMap<String, Object> claims = new HashMap<>();
-		claims.put(OAuth2AuthorizationServerMetadataClaimNames.ISSUER, "https://example.com/issuer1");
-		claims.put(OAuth2AuthorizationServerMetadataClaimNames.AUTHORIZATION_ENDPOINT, "https://example.com/issuer1/oauth2/authorize");
-		claims.put(OAuth2AuthorizationServerMetadataClaimNames.TOKEN_ENDPOINT, "https://example.com/issuer1/oauth2/token");
-		claims.put(OAuth2AuthorizationServerMetadataClaimNames.JWKS_URI, "https://example.com/issuer1/oauth2/jwks");
+		claims.put(OAuth2AuthorizationServerMetadataClaimNames.ISSUER, "https://example.com");
+		claims.put(OAuth2AuthorizationServerMetadataClaimNames.AUTHORIZATION_ENDPOINT, "https://example.com/oauth2/authorize");
+		claims.put(OAuth2AuthorizationServerMetadataClaimNames.TOKEN_ENDPOINT, "https://example.com/oauth2/token");
+		claims.put(OAuth2AuthorizationServerMetadataClaimNames.JWKS_URI, "https://example.com/oauth2/jwks");
 		claims.put(OAuth2AuthorizationServerMetadataClaimNames.SCOPES_SUPPORTED, Collections.singletonList("openid"));
 		claims.put(OAuth2AuthorizationServerMetadataClaimNames.RESPONSE_TYPES_SUPPORTED, Collections.singletonList("code"));
-		claims.put(OAuth2AuthorizationServerMetadataClaimNames.REVOCATION_ENDPOINT, "https://example.com/issuer1/oauth2/revoke");
-		claims.put(OAuth2AuthorizationServerMetadataClaimNames.INTROSPECTION_ENDPOINT, "https://example.com/issuer1/oauth2/introspect");
+		claims.put(OAuth2AuthorizationServerMetadataClaimNames.REVOCATION_ENDPOINT, "https://example.com/oauth2/revoke");
+		claims.put(OAuth2AuthorizationServerMetadataClaimNames.INTROSPECTION_ENDPOINT, "https://example.com/oauth2/introspect");
 		claims.put("some-claim", "some-value");
 
 		OAuth2AuthorizationServerMetadata authorizationServerMetadata = OAuth2AuthorizationServerMetadata.withClaims(claims).build();
 
-		assertThat(authorizationServerMetadata.getIssuer()).isEqualTo(url("https://example.com/issuer1"));
-		assertThat(authorizationServerMetadata.getAuthorizationEndpoint()).isEqualTo(url("https://example.com/issuer1/oauth2/authorize"));
-		assertThat(authorizationServerMetadata.getTokenEndpoint()).isEqualTo(url("https://example.com/issuer1/oauth2/token"));
+		assertThat(authorizationServerMetadata.getIssuer()).isEqualTo(url("https://example.com"));
+		assertThat(authorizationServerMetadata.getAuthorizationEndpoint()).isEqualTo(url("https://example.com/oauth2/authorize"));
+		assertThat(authorizationServerMetadata.getTokenEndpoint()).isEqualTo(url("https://example.com/oauth2/token"));
 		assertThat(authorizationServerMetadata.getTokenEndpointAuthenticationMethods()).isNull();
-		assertThat(authorizationServerMetadata.getJwkSetUrl()).isEqualTo(url("https://example.com/issuer1/oauth2/jwks"));
+		assertThat(authorizationServerMetadata.getJwkSetUrl()).isEqualTo(url("https://example.com/oauth2/jwks"));
 		assertThat(authorizationServerMetadata.getScopes()).containsExactly("openid");
 		assertThat(authorizationServerMetadata.getResponseTypes()).containsExactly("code");
 		assertThat(authorizationServerMetadata.getGrantTypes()).isNull();
-		assertThat(authorizationServerMetadata.getTokenRevocationEndpoint()).isEqualTo(url("https://example.com/issuer1/oauth2/revoke"));
+		assertThat(authorizationServerMetadata.getTokenRevocationEndpoint()).isEqualTo(url("https://example.com/oauth2/revoke"));
 		assertThat(authorizationServerMetadata.getTokenRevocationEndpointAuthenticationMethods()).isNull();
-		assertThat(authorizationServerMetadata.getTokenIntrospectionEndpoint()).isEqualTo(url("https://example.com/issuer1/oauth2/introspect"));
+		assertThat(authorizationServerMetadata.getTokenIntrospectionEndpoint()).isEqualTo(url("https://example.com/oauth2/introspect"));
 		assertThat(authorizationServerMetadata.getTokenIntrospectionEndpointAuthenticationMethods()).isNull();
 		assertThat(authorizationServerMetadata.getCodeChallengeMethods()).isNull();
 		assertThat(authorizationServerMetadata.getClaimAsString("some-claim")).isEqualTo("some-value");
@@ -138,28 +138,28 @@ public class OAuth2AuthorizationServerMetadataTests {
 	@Test
 	public void withClaimsWhenClaimsWithUrlsProvidedThenCreated() {
 		HashMap<String, Object> claims = new HashMap<>();
-		claims.put(OAuth2AuthorizationServerMetadataClaimNames.ISSUER, url("https://example.com/issuer1"));
-		claims.put(OAuth2AuthorizationServerMetadataClaimNames.AUTHORIZATION_ENDPOINT, url("https://example.com/issuer1/oauth2/authorize"));
-		claims.put(OAuth2AuthorizationServerMetadataClaimNames.TOKEN_ENDPOINT, url("https://example.com/issuer1/oauth2/token"));
-		claims.put(OAuth2AuthorizationServerMetadataClaimNames.JWKS_URI, url("https://example.com/issuer1/oauth2/jwks"));
+		claims.put(OAuth2AuthorizationServerMetadataClaimNames.ISSUER, url("https://example.com"));
+		claims.put(OAuth2AuthorizationServerMetadataClaimNames.AUTHORIZATION_ENDPOINT, url("https://example.com/oauth2/authorize"));
+		claims.put(OAuth2AuthorizationServerMetadataClaimNames.TOKEN_ENDPOINT, url("https://example.com/oauth2/token"));
+		claims.put(OAuth2AuthorizationServerMetadataClaimNames.JWKS_URI, url("https://example.com/oauth2/jwks"));
 		claims.put(OAuth2AuthorizationServerMetadataClaimNames.RESPONSE_TYPES_SUPPORTED, Collections.singletonList("code"));
-		claims.put(OAuth2AuthorizationServerMetadataClaimNames.REVOCATION_ENDPOINT, url("https://example.com/issuer1/oauth2/revoke"));
-		claims.put(OAuth2AuthorizationServerMetadataClaimNames.INTROSPECTION_ENDPOINT, url("https://example.com/issuer1/oauth2/introspect"));
+		claims.put(OAuth2AuthorizationServerMetadataClaimNames.REVOCATION_ENDPOINT, url("https://example.com/oauth2/revoke"));
+		claims.put(OAuth2AuthorizationServerMetadataClaimNames.INTROSPECTION_ENDPOINT, url("https://example.com/oauth2/introspect"));
 		claims.put("some-claim", "some-value");
 
 		OAuth2AuthorizationServerMetadata authorizationServerMetadata = OAuth2AuthorizationServerMetadata.withClaims(claims).build();
 
-		assertThat(authorizationServerMetadata.getIssuer()).isEqualTo(url("https://example.com/issuer1"));
-		assertThat(authorizationServerMetadata.getAuthorizationEndpoint()).isEqualTo(url("https://example.com/issuer1/oauth2/authorize"));
-		assertThat(authorizationServerMetadata.getTokenEndpoint()).isEqualTo(url("https://example.com/issuer1/oauth2/token"));
+		assertThat(authorizationServerMetadata.getIssuer()).isEqualTo(url("https://example.com"));
+		assertThat(authorizationServerMetadata.getAuthorizationEndpoint()).isEqualTo(url("https://example.com/oauth2/authorize"));
+		assertThat(authorizationServerMetadata.getTokenEndpoint()).isEqualTo(url("https://example.com/oauth2/token"));
 		assertThat(authorizationServerMetadata.getTokenEndpointAuthenticationMethods()).isNull();
-		assertThat(authorizationServerMetadata.getJwkSetUrl()).isEqualTo(url("https://example.com/issuer1/oauth2/jwks"));
+		assertThat(authorizationServerMetadata.getJwkSetUrl()).isEqualTo(url("https://example.com/oauth2/jwks"));
 		assertThat(authorizationServerMetadata.getScopes()).isNull();
 		assertThat(authorizationServerMetadata.getResponseTypes()).containsExactly("code");
 		assertThat(authorizationServerMetadata.getGrantTypes()).isNull();
-		assertThat(authorizationServerMetadata.getTokenRevocationEndpoint()).isEqualTo(url("https://example.com/issuer1/oauth2/revoke"));
+		assertThat(authorizationServerMetadata.getTokenRevocationEndpoint()).isEqualTo(url("https://example.com/oauth2/revoke"));
 		assertThat(authorizationServerMetadata.getTokenRevocationEndpointAuthenticationMethods()).isNull();
-		assertThat(authorizationServerMetadata.getTokenIntrospectionEndpoint()).isEqualTo(url("https://example.com/issuer1/oauth2/introspect"));
+		assertThat(authorizationServerMetadata.getTokenIntrospectionEndpoint()).isEqualTo(url("https://example.com/oauth2/introspect"));
 		assertThat(authorizationServerMetadata.getTokenIntrospectionEndpointAuthenticationMethods()).isNull();
 		assertThat(authorizationServerMetadata.getCodeChallengeMethods()).isNull();
 		assertThat(authorizationServerMetadata.getClaimAsString("some-claim")).isEqualTo("some-value");

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,7 +65,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ExtendWith(SpringTestContextExtension.class)
 public class OAuth2AuthorizationServerMetadataTests {
 	private static final String DEFAULT_OAUTH2_AUTHORIZATION_SERVER_METADATA_ENDPOINT_URI = "/.well-known/oauth-authorization-server";
-	private static final String issuerUrl = "https://example.com/issuer1";
+	private static final String ISSUER_URL = "https://example.com";
 	private static EmbeddedDatabase db;
 	private static JWKSource<SecurityContext> jwkSource;
 
@@ -105,9 +105,9 @@ public class OAuth2AuthorizationServerMetadataTests {
 	public void requestWhenAuthorizationServerMetadataRequestAndIssuerSetThenUsed() throws Exception {
 		this.spring.register(AuthorizationServerConfiguration.class).autowire();
 
-		this.mvc.perform(get(DEFAULT_OAUTH2_AUTHORIZATION_SERVER_METADATA_ENDPOINT_URI))
+		this.mvc.perform(get(ISSUER_URL.concat(DEFAULT_OAUTH2_AUTHORIZATION_SERVER_METADATA_ENDPOINT_URI)))
 				.andExpect(status().is2xxSuccessful())
-				.andExpect(jsonPath("issuer").value(issuerUrl))
+				.andExpect(jsonPath("issuer").value(ISSUER_URL))
 				.andReturn();
 	}
 
@@ -115,7 +115,7 @@ public class OAuth2AuthorizationServerMetadataTests {
 	public void requestWhenAuthorizationServerMetadataRequestAndIssuerNotSetThenResolveFromRequest() throws Exception {
 		this.spring.register(AuthorizationServerConfigurationWithIssuerNotSet.class).autowire();
 
-		this.mvc.perform(get(DEFAULT_OAUTH2_AUTHORIZATION_SERVER_METADATA_ENDPOINT_URI))
+		this.mvc.perform(get("http://localhost".concat(DEFAULT_OAUTH2_AUTHORIZATION_SERVER_METADATA_ENDPOINT_URI)))
 				.andExpect(status().is2xxSuccessful())
 				.andExpect(jsonPath("issuer").value("http://localhost"))
 				.andReturn();
@@ -126,7 +126,7 @@ public class OAuth2AuthorizationServerMetadataTests {
 	public void requestWhenAuthorizationServerMetadataRequestAndMetadataCustomizerSetThenReturnCustomMetadataResponse() throws Exception {
 		this.spring.register(AuthorizationServerConfigurationWithMetadataCustomizer.class).autowire();
 
-		this.mvc.perform(get(DEFAULT_OAUTH2_AUTHORIZATION_SERVER_METADATA_ENDPOINT_URI))
+		this.mvc.perform(get(ISSUER_URL.concat(DEFAULT_OAUTH2_AUTHORIZATION_SERVER_METADATA_ENDPOINT_URI)))
 				.andExpect(status().is2xxSuccessful())
 				.andExpect(jsonPath(OAuth2AuthorizationServerMetadataClaimNames.SCOPES_SUPPORTED,
 						hasItems("scope1", "scope2")));
@@ -156,7 +156,7 @@ public class OAuth2AuthorizationServerMetadataTests {
 
 		@Bean
 		AuthorizationServerSettings authorizationServerSettings() {
-			return AuthorizationServerSettings.builder().issuer(issuerUrl).build();
+			return AuthorizationServerSettings.builder().issuer(ISSUER_URL).build();
 		}
 	}
 

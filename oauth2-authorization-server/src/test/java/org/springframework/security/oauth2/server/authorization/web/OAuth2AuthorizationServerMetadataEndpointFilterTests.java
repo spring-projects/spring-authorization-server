@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,7 +87,7 @@ public class OAuth2AuthorizationServerMetadataEndpointFilterTests {
 
 	@Test
 	public void doFilterWhenAuthorizationServerMetadataRequestThenMetadataResponse() throws Exception {
-		String issuer = "https://example.com/issuer1";
+		String issuer = "https://example.com";
 		String authorizationEndpoint = "/oauth2/v1/authorize";
 		String tokenEndpoint = "/oauth2/v1/token";
 		String jwkSetEndpoint = "/oauth2/v1/jwks";
@@ -116,16 +116,16 @@ public class OAuth2AuthorizationServerMetadataEndpointFilterTests {
 
 		assertThat(response.getContentType()).isEqualTo(MediaType.APPLICATION_JSON_VALUE);
 		String authorizationServerMetadataResponse = response.getContentAsString();
-		assertThat(authorizationServerMetadataResponse).contains("\"issuer\":\"https://example.com/issuer1\"");
-		assertThat(authorizationServerMetadataResponse).contains("\"authorization_endpoint\":\"https://example.com/issuer1/oauth2/v1/authorize\"");
-		assertThat(authorizationServerMetadataResponse).contains("\"token_endpoint\":\"https://example.com/issuer1/oauth2/v1/token\"");
+		assertThat(authorizationServerMetadataResponse).contains("\"issuer\":\"https://example.com\"");
+		assertThat(authorizationServerMetadataResponse).contains("\"authorization_endpoint\":\"https://example.com/oauth2/v1/authorize\"");
+		assertThat(authorizationServerMetadataResponse).contains("\"token_endpoint\":\"https://example.com/oauth2/v1/token\"");
 		assertThat(authorizationServerMetadataResponse).contains("\"token_endpoint_auth_methods_supported\":[\"client_secret_basic\",\"client_secret_post\",\"client_secret_jwt\",\"private_key_jwt\"]");
-		assertThat(authorizationServerMetadataResponse).contains("\"jwks_uri\":\"https://example.com/issuer1/oauth2/v1/jwks\"");
+		assertThat(authorizationServerMetadataResponse).contains("\"jwks_uri\":\"https://example.com/oauth2/v1/jwks\"");
 		assertThat(authorizationServerMetadataResponse).contains("\"response_types_supported\":[\"code\"]");
 		assertThat(authorizationServerMetadataResponse).contains("\"grant_types_supported\":[\"authorization_code\",\"client_credentials\",\"refresh_token\",\"urn:ietf:params:oauth:grant-type:device_code\"]");
-		assertThat(authorizationServerMetadataResponse).contains("\"revocation_endpoint\":\"https://example.com/issuer1/oauth2/v1/revoke\"");
+		assertThat(authorizationServerMetadataResponse).contains("\"revocation_endpoint\":\"https://example.com/oauth2/v1/revoke\"");
 		assertThat(authorizationServerMetadataResponse).contains("\"revocation_endpoint_auth_methods_supported\":[\"client_secret_basic\",\"client_secret_post\",\"client_secret_jwt\",\"private_key_jwt\"]");
-		assertThat(authorizationServerMetadataResponse).contains("\"introspection_endpoint\":\"https://example.com/issuer1/oauth2/v1/introspect\"");
+		assertThat(authorizationServerMetadataResponse).contains("\"introspection_endpoint\":\"https://example.com/oauth2/v1/introspect\"");
 		assertThat(authorizationServerMetadataResponse).contains("\"introspection_endpoint_auth_methods_supported\":[\"client_secret_basic\",\"client_secret_post\",\"client_secret_jwt\",\"private_key_jwt\"]");
 		assertThat(authorizationServerMetadataResponse).contains("\"code_challenge_methods_supported\":[\"S256\"]");
 	}

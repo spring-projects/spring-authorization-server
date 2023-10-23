@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,7 +63,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ExtendWith(SpringTestContextExtension.class)
 public class OidcProviderConfigurationTests {
 	private static final String DEFAULT_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI = "/.well-known/openid-configuration";
-	private static final String ISSUER_URL = "https://example.com/issuer1";
+	private static final String ISSUER_URL = "https://example.com";
 
 	public final SpringTestContext spring = new SpringTestContext();
 
@@ -77,7 +77,7 @@ public class OidcProviderConfigurationTests {
 	public void requestWhenConfigurationRequestAndIssuerSetThenReturnDefaultConfigurationResponse() throws Exception {
 		this.spring.register(AuthorizationServerConfiguration.class).autowire();
 
-		this.mvc.perform(get(DEFAULT_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI))
+		this.mvc.perform(get(ISSUER_URL.concat(DEFAULT_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI)))
 				.andExpect(status().is2xxSuccessful())
 				.andExpectAll(defaultConfigurationMatchers());
 	}
@@ -87,7 +87,7 @@ public class OidcProviderConfigurationTests {
 	public void requestWhenConfigurationRequestAndUserAuthenticatedThenReturnConfigurationResponse() throws Exception {
 		this.spring.register(AuthorizationServerConfiguration.class).autowire();
 
-		this.mvc.perform(get(DEFAULT_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI)
+		this.mvc.perform(get(ISSUER_URL.concat(DEFAULT_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI))
 				.with(user("user")))
 				.andExpect(status().is2xxSuccessful())
 				.andExpectAll(defaultConfigurationMatchers());
@@ -98,7 +98,7 @@ public class OidcProviderConfigurationTests {
 	public void requestWhenConfigurationRequestAndConfigurationCustomizerSetThenReturnCustomConfigurationResponse() throws Exception {
 		this.spring.register(AuthorizationServerConfigurationWithProviderConfigurationCustomizer.class).autowire();
 
-		this.mvc.perform(get(DEFAULT_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI))
+		this.mvc.perform(get(ISSUER_URL.concat(DEFAULT_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI)))
 				.andExpect(status().is2xxSuccessful())
 				.andExpect(jsonPath(OAuth2AuthorizationServerMetadataClaimNames.SCOPES_SUPPORTED,
 						hasItems(OidcScopes.OPENID, OidcScopes.PROFILE, OidcScopes.EMAIL)));
@@ -108,7 +108,7 @@ public class OidcProviderConfigurationTests {
 	public void requestWhenConfigurationRequestAndClientRegistrationEnabledThenConfigurationResponseIncludesRegistrationEndpoint() throws Exception {
 		this.spring.register(AuthorizationServerConfigurationWithClientRegistrationEnabled.class).autowire();
 
-		this.mvc.perform(get(DEFAULT_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI))
+		this.mvc.perform(get(ISSUER_URL.concat(DEFAULT_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI)))
 				.andExpect(status().is2xxSuccessful())
 				.andExpectAll(defaultConfigurationMatchers())
 				.andExpect(jsonPath("$.registration_endpoint").value(ISSUER_URL.concat(this.authorizationServerSettings.getOidcClientRegistrationEndpoint())));

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,10 +61,10 @@ public class OidcProviderConfigurationHttpMessageConverterTests {
 	public void readInternalWhenRequiredParametersThenSuccess() throws Exception {
 		// @formatter:off
 		String providerConfigurationResponse = "{\n"
-				+ "		\"issuer\": \"https://example.com/issuer1\",\n"
-				+ "		\"authorization_endpoint\": \"https://example.com/issuer1/oauth2/authorize\",\n"
-				+ "		\"token_endpoint\": \"https://example.com/issuer1/oauth2/token\",\n"
-				+ "		\"jwks_uri\": \"https://example.com/issuer1/oauth2/jwks\",\n"
+				+ "		\"issuer\": \"https://example.com\",\n"
+				+ "		\"authorization_endpoint\": \"https://example.com/oauth2/authorize\",\n"
+				+ "		\"token_endpoint\": \"https://example.com/oauth2/token\",\n"
+				+ "		\"jwks_uri\": \"https://example.com/oauth2/jwks\",\n"
 				+ "		\"response_types_supported\": [\"code\"],\n"
 				+ "		\"subject_types_supported\": [\"public\"],\n"
 				+ "		\"id_token_signing_alg_values_supported\": [\"RS256\"]\n"
@@ -74,10 +74,10 @@ public class OidcProviderConfigurationHttpMessageConverterTests {
 		OidcProviderConfiguration providerConfiguration = this.messageConverter
 				.readInternal(OidcProviderConfiguration.class, response);
 
-		assertThat(providerConfiguration.getIssuer()).isEqualTo(new URL("https://example.com/issuer1"));
-		assertThat(providerConfiguration.getAuthorizationEndpoint()).isEqualTo(new URL("https://example.com/issuer1/oauth2/authorize"));
-		assertThat(providerConfiguration.getTokenEndpoint()).isEqualTo(new URL("https://example.com/issuer1/oauth2/token"));
-		assertThat(providerConfiguration.getJwkSetUrl()).isEqualTo(new URL("https://example.com/issuer1/oauth2/jwks"));
+		assertThat(providerConfiguration.getIssuer()).isEqualTo(new URL("https://example.com"));
+		assertThat(providerConfiguration.getAuthorizationEndpoint()).isEqualTo(new URL("https://example.com/oauth2/authorize"));
+		assertThat(providerConfiguration.getTokenEndpoint()).isEqualTo(new URL("https://example.com/oauth2/token"));
+		assertThat(providerConfiguration.getJwkSetUrl()).isEqualTo(new URL("https://example.com/oauth2/jwks"));
 		assertThat(providerConfiguration.getResponseTypes()).containsExactly("code");
 		assertThat(providerConfiguration.getSubjectTypes()).containsExactly("public");
 		assertThat(providerConfiguration.getIdTokenSigningAlgorithms()).containsExactly("RS256");
@@ -90,11 +90,11 @@ public class OidcProviderConfigurationHttpMessageConverterTests {
 	public void readInternalWhenValidParametersThenSuccess() throws Exception {
 		// @formatter:off
 		String providerConfigurationResponse = "{\n"
-				+ "		\"issuer\": \"https://example.com/issuer1\",\n"
-				+ "		\"authorization_endpoint\": \"https://example.com/issuer1/oauth2/authorize\",\n"
-				+ "		\"token_endpoint\": \"https://example.com/issuer1/oauth2/token\",\n"
-				+ "		\"jwks_uri\": \"https://example.com/issuer1/oauth2/jwks\",\n"
-				+ "		\"userinfo_endpoint\": \"https://example.com/issuer1/userinfo\",\n"
+				+ "		\"issuer\": \"https://example.com\",\n"
+				+ "		\"authorization_endpoint\": \"https://example.com/oauth2/authorize\",\n"
+				+ "		\"token_endpoint\": \"https://example.com/oauth2/token\",\n"
+				+ "		\"jwks_uri\": \"https://example.com/oauth2/jwks\",\n"
+				+ "		\"userinfo_endpoint\": \"https://example.com/userinfo\",\n"
 				+ "		\"scopes_supported\": [\"openid\"],\n"
 				+ "		\"response_types_supported\": [\"code\"],\n"
 				+ "		\"grant_types_supported\": [\"authorization_code\", \"client_credentials\"],\n"
@@ -109,11 +109,11 @@ public class OidcProviderConfigurationHttpMessageConverterTests {
 		OidcProviderConfiguration providerConfiguration = this.messageConverter
 				.readInternal(OidcProviderConfiguration.class, response);
 
-		assertThat(providerConfiguration.getIssuer()).isEqualTo(new URL("https://example.com/issuer1"));
-		assertThat(providerConfiguration.getAuthorizationEndpoint()).isEqualTo(new URL("https://example.com/issuer1/oauth2/authorize"));
-		assertThat(providerConfiguration.getTokenEndpoint()).isEqualTo(new URL("https://example.com/issuer1/oauth2/token"));
-		assertThat(providerConfiguration.getJwkSetUrl()).isEqualTo(new URL("https://example.com/issuer1/oauth2/jwks"));
-		assertThat(providerConfiguration.getUserInfoEndpoint()).isEqualTo(new URL("https://example.com/issuer1/userinfo"));
+		assertThat(providerConfiguration.getIssuer()).isEqualTo(new URL("https://example.com"));
+		assertThat(providerConfiguration.getAuthorizationEndpoint()).isEqualTo(new URL("https://example.com/oauth2/authorize"));
+		assertThat(providerConfiguration.getTokenEndpoint()).isEqualTo(new URL("https://example.com/oauth2/token"));
+		assertThat(providerConfiguration.getJwkSetUrl()).isEqualTo(new URL("https://example.com/oauth2/jwks"));
+		assertThat(providerConfiguration.getUserInfoEndpoint()).isEqualTo(new URL("https://example.com/userinfo"));
 		assertThat(providerConfiguration.getScopes()).containsExactly("openid");
 		assertThat(providerConfiguration.getResponseTypes()).containsExactly("code");
 		assertThat(providerConfiguration.getGrantTypes()).containsExactlyInAnyOrder("authorization_code", "client_credentials");
@@ -153,11 +153,11 @@ public class OidcProviderConfigurationHttpMessageConverterTests {
 	public void writeInternalWhenProviderConfigurationThenSuccess() {
 		OidcProviderConfiguration providerConfiguration =
 				OidcProviderConfiguration.builder()
-						.issuer("https://example.com/issuer1")
-						.authorizationEndpoint("https://example.com/issuer1/oauth2/authorize")
-						.tokenEndpoint("https://example.com/issuer1/oauth2/token")
-						.jwkSetUrl("https://example.com/issuer1/oauth2/jwks")
-						.userInfoEndpoint("https://example.com/issuer1/userinfo")
+						.issuer("https://example.com")
+						.authorizationEndpoint("https://example.com/oauth2/authorize")
+						.tokenEndpoint("https://example.com/oauth2/token")
+						.jwkSetUrl("https://example.com/oauth2/jwks")
+						.userInfoEndpoint("https://example.com/userinfo")
 						.scope("openid")
 						.responseType("code")
 						.grantType("authorization_code")
@@ -173,11 +173,11 @@ public class OidcProviderConfigurationHttpMessageConverterTests {
 		this.messageConverter.writeInternal(providerConfiguration, outputMessage);
 
 		String providerConfigurationResponse = outputMessage.getBodyAsString();
-		assertThat(providerConfigurationResponse).contains("\"issuer\":\"https://example.com/issuer1\"");
-		assertThat(providerConfigurationResponse).contains("\"authorization_endpoint\":\"https://example.com/issuer1/oauth2/authorize\"");
-		assertThat(providerConfigurationResponse).contains("\"token_endpoint\":\"https://example.com/issuer1/oauth2/token\"");
-		assertThat(providerConfigurationResponse).contains("\"jwks_uri\":\"https://example.com/issuer1/oauth2/jwks\"");
-		assertThat(providerConfigurationResponse).contains("\"userinfo_endpoint\":\"https://example.com/issuer1/userinfo\"");
+		assertThat(providerConfigurationResponse).contains("\"issuer\":\"https://example.com\"");
+		assertThat(providerConfigurationResponse).contains("\"authorization_endpoint\":\"https://example.com/oauth2/authorize\"");
+		assertThat(providerConfigurationResponse).contains("\"token_endpoint\":\"https://example.com/oauth2/token\"");
+		assertThat(providerConfigurationResponse).contains("\"jwks_uri\":\"https://example.com/oauth2/jwks\"");
+		assertThat(providerConfigurationResponse).contains("\"userinfo_endpoint\":\"https://example.com/userinfo\"");
 		assertThat(providerConfigurationResponse).contains("\"scopes_supported\":[\"openid\"]");
 		assertThat(providerConfigurationResponse).contains("\"response_types_supported\":[\"code\"]");
 		assertThat(providerConfigurationResponse).contains("\"grant_types_supported\":[\"authorization_code\",\"client_credentials\"]");
@@ -199,10 +199,10 @@ public class OidcProviderConfigurationHttpMessageConverterTests {
 
 		OidcProviderConfiguration providerConfiguration =
 				OidcProviderConfiguration.builder()
-						.issuer("https://example.com/issuer1")
-						.authorizationEndpoint("https://example.com/issuer1/oauth2/authorize")
-						.tokenEndpoint("https://example.com/issuer1/oauth2/token")
-						.jwkSetUrl("https://example.com/issuer1/oauth2/jwks")
+						.issuer("https://example.com")
+						.authorizationEndpoint("https://example.com/oauth2/authorize")
+						.tokenEndpoint("https://example.com/oauth2/token")
+						.jwkSetUrl("https://example.com/oauth2/jwks")
 						.responseType("code")
 						.subjectType("public")
 						.idTokenSigningAlgorithm("RS256")

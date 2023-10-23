@@ -37,10 +37,10 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 public class OidcProviderConfigurationTests {
 	private final OidcProviderConfiguration.Builder minimalConfigurationBuilder =
 			OidcProviderConfiguration.builder()
-					.issuer("https://example.com/issuer1")
-					.authorizationEndpoint("https://example.com/issuer1/oauth2/authorize")
-					.tokenEndpoint("https://example.com/issuer1/oauth2/token")
-					.jwkSetUrl("https://example.com/issuer1/oauth2/jwks")
+					.issuer("https://example.com")
+					.authorizationEndpoint("https://example.com/oauth2/authorize")
+					.tokenEndpoint("https://example.com/oauth2/token")
+					.jwkSetUrl("https://example.com/oauth2/jwks")
 					.scope("openid")
 					.responseType("code")
 					.subjectType("public")
@@ -49,56 +49,56 @@ public class OidcProviderConfigurationTests {
 	@Test
 	public void buildWhenAllRequiredClaimsAndAdditionalClaimsThenCreated() {
 		OidcProviderConfiguration providerConfiguration = OidcProviderConfiguration.builder()
-				.issuer("https://example.com/issuer1")
-				.authorizationEndpoint("https://example.com/issuer1/oauth2/authorize")
-				.tokenEndpoint("https://example.com/issuer1/oauth2/token")
-				.jwkSetUrl("https://example.com/issuer1/oauth2/jwks")
+				.issuer("https://example.com")
+				.authorizationEndpoint("https://example.com/oauth2/authorize")
+				.tokenEndpoint("https://example.com/oauth2/token")
+				.jwkSetUrl("https://example.com/oauth2/jwks")
 				.scope("openid")
 				.responseType("code")
 				.grantType("authorization_code")
 				.grantType("client_credentials")
 				.subjectType("public")
 				.idTokenSigningAlgorithm("RS256")
-				.userInfoEndpoint("https://example.com/issuer1/userinfo")
+				.userInfoEndpoint("https://example.com/userinfo")
 				.tokenEndpointAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue())
-				.clientRegistrationEndpoint("https://example.com/issuer1/connect/register")
-				.endSessionEndpoint("https://example.com/issuer1/connect/logout")
+				.clientRegistrationEndpoint("https://example.com/connect/register")
+				.endSessionEndpoint("https://example.com/connect/logout")
 				.claim("a-claim", "a-value")
 				.build();
 
-		assertThat(providerConfiguration.getIssuer()).isEqualTo(url("https://example.com/issuer1"));
-		assertThat(providerConfiguration.getAuthorizationEndpoint()).isEqualTo(url("https://example.com/issuer1/oauth2/authorize"));
-		assertThat(providerConfiguration.getTokenEndpoint()).isEqualTo(url("https://example.com/issuer1/oauth2/token"));
-		assertThat(providerConfiguration.getJwkSetUrl()).isEqualTo(url("https://example.com/issuer1/oauth2/jwks"));
+		assertThat(providerConfiguration.getIssuer()).isEqualTo(url("https://example.com"));
+		assertThat(providerConfiguration.getAuthorizationEndpoint()).isEqualTo(url("https://example.com/oauth2/authorize"));
+		assertThat(providerConfiguration.getTokenEndpoint()).isEqualTo(url("https://example.com/oauth2/token"));
+		assertThat(providerConfiguration.getJwkSetUrl()).isEqualTo(url("https://example.com/oauth2/jwks"));
 		assertThat(providerConfiguration.getScopes()).containsExactly("openid");
 		assertThat(providerConfiguration.getResponseTypes()).containsExactly("code");
 		assertThat(providerConfiguration.getGrantTypes()).containsExactlyInAnyOrder("authorization_code", "client_credentials");
 		assertThat(providerConfiguration.getSubjectTypes()).containsExactly("public");
 		assertThat(providerConfiguration.getIdTokenSigningAlgorithms()).containsExactly("RS256");
-		assertThat(providerConfiguration.getUserInfoEndpoint()).isEqualTo(url("https://example.com/issuer1/userinfo"));
+		assertThat(providerConfiguration.getUserInfoEndpoint()).isEqualTo(url("https://example.com/userinfo"));
 		assertThat(providerConfiguration.getTokenEndpointAuthenticationMethods()).containsExactly(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue());
-		assertThat(providerConfiguration.getClientRegistrationEndpoint()).isEqualTo(url("https://example.com/issuer1/connect/register"));
-		assertThat(providerConfiguration.getEndSessionEndpoint()).isEqualTo(url("https://example.com/issuer1/connect/logout"));
+		assertThat(providerConfiguration.getClientRegistrationEndpoint()).isEqualTo(url("https://example.com/connect/register"));
+		assertThat(providerConfiguration.getEndSessionEndpoint()).isEqualTo(url("https://example.com/connect/logout"));
 		assertThat(providerConfiguration.<String>getClaim("a-claim")).isEqualTo("a-value");
 	}
 
 	@Test
 	public void buildWhenOnlyRequiredClaimsThenCreated() {
 		OidcProviderConfiguration providerConfiguration = OidcProviderConfiguration.builder()
-				.issuer("https://example.com/issuer1")
-				.authorizationEndpoint("https://example.com/issuer1/oauth2/authorize")
-				.tokenEndpoint("https://example.com/issuer1/oauth2/token")
-				.jwkSetUrl("https://example.com/issuer1/oauth2/jwks")
+				.issuer("https://example.com")
+				.authorizationEndpoint("https://example.com/oauth2/authorize")
+				.tokenEndpoint("https://example.com/oauth2/token")
+				.jwkSetUrl("https://example.com/oauth2/jwks")
 				.scope("openid")
 				.responseType("code")
 				.subjectType("public")
 				.idTokenSigningAlgorithm("RS256")
 				.build();
 
-		assertThat(providerConfiguration.getIssuer()).isEqualTo(url("https://example.com/issuer1"));
-		assertThat(providerConfiguration.getAuthorizationEndpoint()).isEqualTo(url("https://example.com/issuer1/oauth2/authorize"));
-		assertThat(providerConfiguration.getTokenEndpoint()).isEqualTo(url("https://example.com/issuer1/oauth2/token"));
-		assertThat(providerConfiguration.getJwkSetUrl()).isEqualTo(url("https://example.com/issuer1/oauth2/jwks"));
+		assertThat(providerConfiguration.getIssuer()).isEqualTo(url("https://example.com"));
+		assertThat(providerConfiguration.getAuthorizationEndpoint()).isEqualTo(url("https://example.com/oauth2/authorize"));
+		assertThat(providerConfiguration.getTokenEndpoint()).isEqualTo(url("https://example.com/oauth2/token"));
+		assertThat(providerConfiguration.getJwkSetUrl()).isEqualTo(url("https://example.com/oauth2/jwks"));
 		assertThat(providerConfiguration.getScopes()).containsExactly("openid");
 		assertThat(providerConfiguration.getResponseTypes()).containsExactly("code");
 		assertThat(providerConfiguration.getGrantTypes()).isNull();
@@ -110,68 +110,68 @@ public class OidcProviderConfigurationTests {
 	@Test
 	public void buildWhenClaimsProvidedThenCreated() {
 		Map<String, Object> claims = new HashMap<>();
-		claims.put(OidcProviderMetadataClaimNames.ISSUER, "https://example.com/issuer1");
-		claims.put(OidcProviderMetadataClaimNames.AUTHORIZATION_ENDPOINT, "https://example.com/issuer1/oauth2/authorize");
-		claims.put(OidcProviderMetadataClaimNames.TOKEN_ENDPOINT, "https://example.com/issuer1/oauth2/token");
-		claims.put(OidcProviderMetadataClaimNames.JWKS_URI, "https://example.com/issuer1/oauth2/jwks");
+		claims.put(OidcProviderMetadataClaimNames.ISSUER, "https://example.com");
+		claims.put(OidcProviderMetadataClaimNames.AUTHORIZATION_ENDPOINT, "https://example.com/oauth2/authorize");
+		claims.put(OidcProviderMetadataClaimNames.TOKEN_ENDPOINT, "https://example.com/oauth2/token");
+		claims.put(OidcProviderMetadataClaimNames.JWKS_URI, "https://example.com/oauth2/jwks");
 		claims.put(OidcProviderMetadataClaimNames.SCOPES_SUPPORTED, Collections.singletonList("openid"));
 		claims.put(OidcProviderMetadataClaimNames.RESPONSE_TYPES_SUPPORTED, Collections.singletonList("code"));
 		claims.put(OidcProviderMetadataClaimNames.SUBJECT_TYPES_SUPPORTED, Collections.singletonList("public"));
 		claims.put(OidcProviderMetadataClaimNames.ID_TOKEN_SIGNING_ALG_VALUES_SUPPORTED, Collections.singletonList("RS256"));
-		claims.put(OidcProviderMetadataClaimNames.USER_INFO_ENDPOINT, "https://example.com/issuer1/userinfo");
-		claims.put(OidcProviderMetadataClaimNames.REGISTRATION_ENDPOINT, "https://example.com/issuer1/connect/register");
-		claims.put(OidcProviderMetadataClaimNames.END_SESSION_ENDPOINT, "https://example.com/issuer1/connect/logout");
+		claims.put(OidcProviderMetadataClaimNames.USER_INFO_ENDPOINT, "https://example.com/userinfo");
+		claims.put(OidcProviderMetadataClaimNames.REGISTRATION_ENDPOINT, "https://example.com/connect/register");
+		claims.put(OidcProviderMetadataClaimNames.END_SESSION_ENDPOINT, "https://example.com/connect/logout");
 		claims.put("some-claim", "some-value");
 
 		OidcProviderConfiguration providerConfiguration = OidcProviderConfiguration.withClaims(claims).build();
 
-		assertThat(providerConfiguration.getIssuer()).isEqualTo(url("https://example.com/issuer1"));
-		assertThat(providerConfiguration.getAuthorizationEndpoint()).isEqualTo(url("https://example.com/issuer1/oauth2/authorize"));
-		assertThat(providerConfiguration.getTokenEndpoint()).isEqualTo(url("https://example.com/issuer1/oauth2/token"));
-		assertThat(providerConfiguration.getJwkSetUrl()).isEqualTo(url("https://example.com/issuer1/oauth2/jwks"));
+		assertThat(providerConfiguration.getIssuer()).isEqualTo(url("https://example.com"));
+		assertThat(providerConfiguration.getAuthorizationEndpoint()).isEqualTo(url("https://example.com/oauth2/authorize"));
+		assertThat(providerConfiguration.getTokenEndpoint()).isEqualTo(url("https://example.com/oauth2/token"));
+		assertThat(providerConfiguration.getJwkSetUrl()).isEqualTo(url("https://example.com/oauth2/jwks"));
 		assertThat(providerConfiguration.getScopes()).containsExactly("openid");
 		assertThat(providerConfiguration.getResponseTypes()).containsExactly("code");
 		assertThat(providerConfiguration.getGrantTypes()).isNull();
 		assertThat(providerConfiguration.getSubjectTypes()).containsExactly("public");
 		assertThat(providerConfiguration.getIdTokenSigningAlgorithms()).containsExactly("RS256");
-		assertThat(providerConfiguration.getUserInfoEndpoint()).isEqualTo(url("https://example.com/issuer1/userinfo"));
+		assertThat(providerConfiguration.getUserInfoEndpoint()).isEqualTo(url("https://example.com/userinfo"));
 		assertThat(providerConfiguration.getTokenEndpointAuthenticationMethods()).isNull();
-		assertThat(providerConfiguration.getClientRegistrationEndpoint()).isEqualTo(url("https://example.com/issuer1/connect/register"));
-		assertThat(providerConfiguration.getEndSessionEndpoint()).isEqualTo(url("https://example.com/issuer1/connect/logout"));
+		assertThat(providerConfiguration.getClientRegistrationEndpoint()).isEqualTo(url("https://example.com/connect/register"));
+		assertThat(providerConfiguration.getEndSessionEndpoint()).isEqualTo(url("https://example.com/connect/logout"));
 		assertThat(providerConfiguration.<String>getClaim("some-claim")).isEqualTo("some-value");
 	}
 
 	@Test
 	public void buildWhenClaimsProvidedWithUrlsThenCreated() {
 		Map<String, Object> claims = new HashMap<>();
-		claims.put(OidcProviderMetadataClaimNames.ISSUER, url("https://example.com/issuer1"));
-		claims.put(OidcProviderMetadataClaimNames.AUTHORIZATION_ENDPOINT, url("https://example.com/issuer1/oauth2/authorize"));
-		claims.put(OidcProviderMetadataClaimNames.TOKEN_ENDPOINT, url("https://example.com/issuer1/oauth2/token"));
-		claims.put(OidcProviderMetadataClaimNames.JWKS_URI, url("https://example.com/issuer1/oauth2/jwks"));
+		claims.put(OidcProviderMetadataClaimNames.ISSUER, url("https://example.com"));
+		claims.put(OidcProviderMetadataClaimNames.AUTHORIZATION_ENDPOINT, url("https://example.com/oauth2/authorize"));
+		claims.put(OidcProviderMetadataClaimNames.TOKEN_ENDPOINT, url("https://example.com/oauth2/token"));
+		claims.put(OidcProviderMetadataClaimNames.JWKS_URI, url("https://example.com/oauth2/jwks"));
 		claims.put(OidcProviderMetadataClaimNames.SCOPES_SUPPORTED, Collections.singletonList("openid"));
 		claims.put(OidcProviderMetadataClaimNames.RESPONSE_TYPES_SUPPORTED, Collections.singletonList("code"));
 		claims.put(OidcProviderMetadataClaimNames.SUBJECT_TYPES_SUPPORTED, Collections.singletonList("public"));
 		claims.put(OidcProviderMetadataClaimNames.ID_TOKEN_SIGNING_ALG_VALUES_SUPPORTED, Collections.singletonList("RS256"));
-		claims.put(OidcProviderMetadataClaimNames.USER_INFO_ENDPOINT, url("https://example.com/issuer1/userinfo"));
-		claims.put(OidcProviderMetadataClaimNames.REGISTRATION_ENDPOINT, url("https://example.com/issuer1/connect/register"));
-		claims.put(OidcProviderMetadataClaimNames.END_SESSION_ENDPOINT, url("https://example.com/issuer1/connect/logout"));
+		claims.put(OidcProviderMetadataClaimNames.USER_INFO_ENDPOINT, url("https://example.com/userinfo"));
+		claims.put(OidcProviderMetadataClaimNames.REGISTRATION_ENDPOINT, url("https://example.com/connect/register"));
+		claims.put(OidcProviderMetadataClaimNames.END_SESSION_ENDPOINT, url("https://example.com/connect/logout"));
 		claims.put("some-claim", "some-value");
 
 		OidcProviderConfiguration providerConfiguration = OidcProviderConfiguration.withClaims(claims).build();
 
-		assertThat(providerConfiguration.getIssuer()).isEqualTo(url("https://example.com/issuer1"));
-		assertThat(providerConfiguration.getAuthorizationEndpoint()).isEqualTo(url("https://example.com/issuer1/oauth2/authorize"));
-		assertThat(providerConfiguration.getTokenEndpoint()).isEqualTo(url("https://example.com/issuer1/oauth2/token"));
-		assertThat(providerConfiguration.getJwkSetUrl()).isEqualTo(url("https://example.com/issuer1/oauth2/jwks"));
+		assertThat(providerConfiguration.getIssuer()).isEqualTo(url("https://example.com"));
+		assertThat(providerConfiguration.getAuthorizationEndpoint()).isEqualTo(url("https://example.com/oauth2/authorize"));
+		assertThat(providerConfiguration.getTokenEndpoint()).isEqualTo(url("https://example.com/oauth2/token"));
+		assertThat(providerConfiguration.getJwkSetUrl()).isEqualTo(url("https://example.com/oauth2/jwks"));
 		assertThat(providerConfiguration.getScopes()).containsExactly("openid");
 		assertThat(providerConfiguration.getResponseTypes()).containsExactly("code");
 		assertThat(providerConfiguration.getGrantTypes()).isNull();
 		assertThat(providerConfiguration.getSubjectTypes()).containsExactly("public");
 		assertThat(providerConfiguration.getIdTokenSigningAlgorithms()).containsExactly("RS256");
-		assertThat(providerConfiguration.getUserInfoEndpoint()).isEqualTo(url("https://example.com/issuer1/userinfo"));
+		assertThat(providerConfiguration.getUserInfoEndpoint()).isEqualTo(url("https://example.com/userinfo"));
 		assertThat(providerConfiguration.getTokenEndpointAuthenticationMethods()).isNull();
-		assertThat(providerConfiguration.getClientRegistrationEndpoint()).isEqualTo(url("https://example.com/issuer1/connect/register"));
-		assertThat(providerConfiguration.getEndSessionEndpoint()).isEqualTo(url("https://example.com/issuer1/connect/logout"));
+		assertThat(providerConfiguration.getClientRegistrationEndpoint()).isEqualTo(url("https://example.com/connect/register"));
+		assertThat(providerConfiguration.getEndSessionEndpoint()).isEqualTo(url("https://example.com/connect/logout"));
 		assertThat(providerConfiguration.<String>getClaim("some-claim")).isEqualTo("some-value");
 	}
 

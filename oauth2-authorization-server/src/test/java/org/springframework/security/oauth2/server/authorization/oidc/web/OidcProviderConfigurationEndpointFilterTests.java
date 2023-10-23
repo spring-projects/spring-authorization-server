@@ -87,7 +87,7 @@ public class OidcProviderConfigurationEndpointFilterTests {
 
 	@Test
 	public void doFilterWhenConfigurationRequestThenConfigurationResponse() throws Exception {
-		String issuer = "https://example.com/issuer1";
+		String issuer = "https://example.com";
 		String authorizationEndpoint = "/oauth2/v1/authorize";
 		String tokenEndpoint = "/oauth2/v1/token";
 		String jwkSetEndpoint = "/oauth2/v1/jwks";
@@ -120,22 +120,22 @@ public class OidcProviderConfigurationEndpointFilterTests {
 
 		assertThat(response.getContentType()).isEqualTo(MediaType.APPLICATION_JSON_VALUE);
 		String providerConfigurationResponse = response.getContentAsString();
-		assertThat(providerConfigurationResponse).contains("\"issuer\":\"https://example.com/issuer1\"");
-		assertThat(providerConfigurationResponse).contains("\"authorization_endpoint\":\"https://example.com/issuer1/oauth2/v1/authorize\"");
-		assertThat(providerConfigurationResponse).contains("\"token_endpoint\":\"https://example.com/issuer1/oauth2/v1/token\"");
-		assertThat(providerConfigurationResponse).contains("\"jwks_uri\":\"https://example.com/issuer1/oauth2/v1/jwks\"");
+		assertThat(providerConfigurationResponse).contains("\"issuer\":\"https://example.com\"");
+		assertThat(providerConfigurationResponse).contains("\"authorization_endpoint\":\"https://example.com/oauth2/v1/authorize\"");
+		assertThat(providerConfigurationResponse).contains("\"token_endpoint\":\"https://example.com/oauth2/v1/token\"");
+		assertThat(providerConfigurationResponse).contains("\"jwks_uri\":\"https://example.com/oauth2/v1/jwks\"");
 		assertThat(providerConfigurationResponse).contains("\"scopes_supported\":[\"openid\"]");
 		assertThat(providerConfigurationResponse).contains("\"response_types_supported\":[\"code\"]");
 		assertThat(providerConfigurationResponse).contains("\"grant_types_supported\":[\"authorization_code\",\"client_credentials\",\"refresh_token\",\"urn:ietf:params:oauth:grant-type:device_code\"]");
-		assertThat(providerConfigurationResponse).contains("\"revocation_endpoint\":\"https://example.com/issuer1/oauth2/v1/revoke\"");
+		assertThat(providerConfigurationResponse).contains("\"revocation_endpoint\":\"https://example.com/oauth2/v1/revoke\"");
 		assertThat(providerConfigurationResponse).contains("\"revocation_endpoint_auth_methods_supported\":[\"client_secret_basic\",\"client_secret_post\",\"client_secret_jwt\",\"private_key_jwt\"]");
-		assertThat(providerConfigurationResponse).contains("\"introspection_endpoint\":\"https://example.com/issuer1/oauth2/v1/introspect\"");
+		assertThat(providerConfigurationResponse).contains("\"introspection_endpoint\":\"https://example.com/oauth2/v1/introspect\"");
 		assertThat(providerConfigurationResponse).contains("\"introspection_endpoint_auth_methods_supported\":[\"client_secret_basic\",\"client_secret_post\",\"client_secret_jwt\",\"private_key_jwt\"]");
 		assertThat(providerConfigurationResponse).contains("\"code_challenge_methods_supported\":[\"S256\"]");
 		assertThat(providerConfigurationResponse).contains("\"subject_types_supported\":[\"public\"]");
 		assertThat(providerConfigurationResponse).contains("\"id_token_signing_alg_values_supported\":[\"RS256\"]");
-		assertThat(providerConfigurationResponse).contains("\"userinfo_endpoint\":\"https://example.com/issuer1/userinfo\"");
-		assertThat(providerConfigurationResponse).contains("\"end_session_endpoint\":\"https://example.com/issuer1/connect/logout\"");
+		assertThat(providerConfigurationResponse).contains("\"userinfo_endpoint\":\"https://example.com/userinfo\"");
+		assertThat(providerConfigurationResponse).contains("\"end_session_endpoint\":\"https://example.com/connect/logout\"");
 		assertThat(providerConfigurationResponse).contains("\"token_endpoint_auth_methods_supported\":[\"client_secret_basic\",\"client_secret_post\",\"client_secret_jwt\",\"private_key_jwt\"]");
 	}
 

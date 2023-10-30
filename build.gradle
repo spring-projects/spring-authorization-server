@@ -10,9 +10,9 @@ springRelease {
 	repositoryOwner = "spring-projects"
 	weekOfMonth = 2
 	dayOfWeek = 4
-	referenceDocUrl = "https://docs.spring.io/spring-authorization-server/docs/{version}/reference/html/"
+	referenceDocUrl = "https://docs.spring.io/spring-authorization-server/reference/{version}/index.html"
 	apiDocUrl = "https://docs.spring.io/spring-authorization-server/docs/{version}/api/"
-	replaceSnapshotVersionInReferenceDocUrl = false
+	replaceSnapshotVersionInReferenceDocUrl = true
 }
 
 if (hasProperty("buildScan")) {

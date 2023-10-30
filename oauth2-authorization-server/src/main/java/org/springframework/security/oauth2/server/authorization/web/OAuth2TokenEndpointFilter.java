@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 the original author or authors.
+ * Copyright 2020-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,32 +16,24 @@
 package org.springframework.security.oauth2.server.authorization.web;
 
 import java.io.IOException;
-import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
-import java.util.Map;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-
 import org.springframework.core.log.LogMessage;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.converter.HttpMessageConverter;
-import org.springframework.http.server.ServletServerHttpResponse;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.authentication.AuthenticationDetailsSource;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
-import org.springframework.security.oauth2.core.OAuth2RefreshToken;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AccessTokenResponse;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
-import org.springframework.security.oauth2.core.http.converter.OAuth2AccessTokenResponseHttpMessageConverter;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AccessTokenAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationGrantAuthenticationToken;
@@ -54,6 +46,7 @@ import org.springframework.security.oauth2.server.authorization.web.authenticati
 import org.springframework.security.oauth2.server.authorization.web.authentication.OAuth2DeviceCodeAuthenticationConverter;
 import org.springframework.security.oauth2.server.authorization.web.authentication.OAuth2ErrorAuthenticationFailureHandler;
 import org.springframework.security.oauth2.server.authorization.web.authentication.OAuth2RefreshTokenAuthenticationConverter;
+import org.springframework.security.oauth2.server.authorization.web.authentication.OAuth2AccessTokenResponseAuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
@@ -61,7 +54,6 @@ import org.springframework.security.web.authentication.WebAuthenticationDetailsS
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
-import org.springframework.util.CollectionUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 /**
@@ -86,6 +78,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
  * @author Joe Grandja
  * @author Madhu Bhat
  * @author Daniel Garnier-Moiroux
+ * @author Dmitriy Dubson
  * @since 0.0.1
  * @see AuthenticationManager
  * @see OAuth2AuthorizationCodeAuthenticationProvider
@@ -103,12 +96,10 @@ public final class OAuth2TokenEndpointFilter extends OncePerRequestFilter {
 	private static final String DEFAULT_ERROR_URI = "https://datatracker.ietf.org/doc/html/rfc6749#section-5.2";
 	private final AuthenticationManager authenticationManager;
 	private final RequestMatcher tokenEndpointMatcher;
-	private final HttpMessageConverter<OAuth2AccessTokenResponse> accessTokenHttpResponseConverter =
-			new OAuth2AccessTokenResponseHttpMessageConverter();
 	private AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource =
 			new WebAuthenticationDetailsSource();
 	private AuthenticationConverter authenticationConverter;
-	private AuthenticationSuccessHandler authenticationSuccessHandler = this::sendAccessTokenResponse;
+	private AuthenticationSuccessHandler authenticationSuccessHandler = new OAuth2AccessTokenResponseAuthenticationSuccessHandler();
 	private AuthenticationFailureHandler authenticationFailureHandler = new OAuth2ErrorAuthenticationFailureHandler();
 
 	/**
@@ -216,34 +207,6 @@ public final class OAuth2TokenEndpointFilter extends OncePerRequestFilter {
 	public void setAuthenticationFailureHandler(AuthenticationFailureHandler authenticationFailureHandler) {
 		Assert.notNull(authenticationFailureHandler, "authenticationFailureHandler cannot be null");
 		this.authenticationFailureHandler = authenticationFailureHandler;
-	}
-
-	private void sendAccessTokenResponse(HttpServletRequest request, HttpServletResponse response,
-			Authentication authentication) throws IOException {
-
-		OAuth2AccessTokenAuthenticationToken accessTokenAuthentication =
-				(OAuth2AccessTokenAuthenticationToken) authentication;
-
-		OAuth2AccessToken accessToken = accessTokenAuthentication.getAccessToken();
-		OAuth2RefreshToken refreshToken = accessTokenAuthentication.getRefreshToken();
-		Map<String, Object> additionalParameters = accessTokenAuthentication.getAdditionalParameters();
-
-		OAuth2AccessTokenResponse.Builder builder =
-				OAuth2AccessTokenResponse.withToken(accessToken.getTokenValue())
-						.tokenType(accessToken.getTokenType())
-						.scopes(accessToken.getScopes());
-		if (accessToken.getIssuedAt() != null && accessToken.getExpiresAt() != null) {
-			builder.expiresIn(ChronoUnit.SECONDS.between(accessToken.getIssuedAt(), accessToken.getExpiresAt()));
-		}
-		if (refreshToken != null) {
-			builder.refreshToken(refreshToken.getTokenValue());
-		}
-		if (!CollectionUtils.isEmpty(additionalParameters)) {
-			builder.additionalParameters(additionalParameters);
-		}
-		OAuth2AccessTokenResponse accessTokenResponse = builder.build();
-		ServletServerHttpResponse httpResponse = new ServletServerHttpResponse(response);
-		this.accessTokenHttpResponseConverter.write(accessTokenResponse, null, httpResponse);
 	}
 
 	private static void throwError(String errorCode, String parameterName) {

@@ -1,9 +1,19 @@
 plugins {
 	id "io.spring.convention.root"
+	id "io.spring.security.release" version "1.0.0-SNAPSHOT"
 }
 
 group = "org.springframework.security"
 description = "Spring Authorization Server"
+
+springRelease {
+	repositoryOwner = "spring-projects"
+	weekOfMonth = 2
+	dayOfWeek = 4
+	referenceDocUrl = "https://docs.spring.io/spring-authorization-server/docs/{version}/reference/html/"
+	apiDocUrl = "https://docs.spring.io/spring-authorization-server/docs/{version}/api/"
+	replaceSnapshotVersionInReferenceDocUrl = false
+}
 
 if (hasProperty("buildScan")) {
 	buildScan {

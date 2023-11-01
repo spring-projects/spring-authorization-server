@@ -1,14 +1,25 @@
-releasenotes:
+changelog:
+  repository: spring-projects/spring-authorization-server
   sections:
-    - title: "New Features"
-      emoji: ":star:"
-      labels: ["enhancement"]
-    - title: "Bug Fixes"
-      emoji: ":beetle:"
-      labels: ["bug", "regression"]
-    - title: "Dependency Upgrades"
-      emoji: ":hammer:"
-      labels: ["dependency-upgrade"]
-    - title: "Non-passive"
-      emoji: ":rewind:"
-      labels: ["breaks-passivity"]
+    - title: ":star: New Features"
+      labels: ["type: enhancement"]
+      sort: "title"
+    - title: ":beetle: Bug Fixes"
+      labels: ["type: bug", "type: regression"]
+      sort: "title"
+    - title: ":hammer: Dependency Upgrades"
+      labels: ["type: dependency-upgrade"]
+      sort: "title"
+    - title: ":rewind: Non-passive"
+      labels: ["type: breaks-passivity"]
+      sort: "title"
+  issues:
+    exclude:
+      labels: [ "status: duplicate" ]
+    ports:
+      - label: "status: forward-port"
+        bodyExpression: 'Forward port of issue #(\d+).*'
+  contributors:
+    title: ":heart: Contributors"
+    exclude:
+      names: ["jgrandja", "sjohnr"]

@@ -38,7 +38,6 @@ import org.springframework.security.core.session.SessionInformation;
 import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClaimAccessor;
-import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
@@ -213,24 +212,23 @@ public final class OAuth2AuthorizationCodeAuthenticationProvider implements Auth
 
 		// ----- Refresh token -----
 		OAuth2RefreshToken refreshToken = null;
-		if (registeredClient.getAuthorizationGrantTypes().contains(AuthorizationGrantType.REFRESH_TOKEN) &&
-				// Do not issue refresh token to public client
-				!clientPrincipal.getClientAuthenticationMethod().equals(ClientAuthenticationMethod.NONE)) {
-
+		if (registeredClient.getAuthorizationGrantTypes().contains(AuthorizationGrantType.REFRESH_TOKEN)) {
 			tokenContext = tokenContextBuilder.tokenType(OAuth2TokenType.REFRESH_TOKEN).build();
 			OAuth2Token generatedRefreshToken = this.tokenGenerator.generate(tokenContext);
-			if (!(generatedRefreshToken instanceof OAuth2RefreshToken)) {
-				OAuth2Error error = new OAuth2Error(OAuth2ErrorCodes.SERVER_ERROR,
-						"The token generator failed to generate the refresh token.", ERROR_URI);
-				throw new OAuth2AuthenticationException(error);
-			}
+			if (generatedRefreshToken != null) {
+				if (!(generatedRefreshToken instanceof OAuth2RefreshToken)) {
+					OAuth2Error error = new OAuth2Error(OAuth2ErrorCodes.SERVER_ERROR,
+							"The token generator failed to generate a valid refresh token.", ERROR_URI);
+					throw new OAuth2AuthenticationException(error);
+				}
 
-			if (this.logger.isTraceEnabled()) {
-				this.logger.trace("Generated refresh token");
-			}
+				if (this.logger.isTraceEnabled()) {
+					this.logger.trace("Generated refresh token");
+				}
 
-			refreshToken = (OAuth2RefreshToken) generatedRefreshToken;
-			authorizationBuilder.refreshToken(refreshToken);
+				refreshToken = (OAuth2RefreshToken) generatedRefreshToken;
+				authorizationBuilder.refreshToken(refreshToken);
+			}
 		}
 
 		// ----- ID token -----

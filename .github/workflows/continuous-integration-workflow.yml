@@ -6,113 +6,50 @@ on:
       - '**'
   schedule:
     - cron: '0 10 * * *' # Once per day at 10am UTC
-
-env:
-  RUN_JOBS: ${{ github.repository == 'spring-projects/spring-authorization-server' }}
+  workflow_dispatch:
 
 jobs:
-  prerequisites:
-    name: Pre-requisites for building
-    runs-on: ubuntu-latest
-    outputs:
-      runjobs: ${{ steps.continue.outputs.runjobs }}
-      project_version: ${{ steps.continue.outputs.project_version }}
-    steps:
-      - uses: actions/checkout@v3
-      - id: continue
-        name: Determine if should continue
-        if: env.RUN_JOBS == 'true'
-        run: |
-          # Run jobs if in upstream repository
-          echo "runjobs=true" >> $GITHUB_OUTPUT
-          # Extract version from gradle.properties
-          version=$(cat gradle.properties | grep "version=" | awk -F'=' '{print $2}')
-          echo "project_version=$version" >> $GITHUB_OUTPUT
   build:
     name: Build
-    needs: [prerequisites]
+    uses: spring-io/spring-security-release-tools/.github/workflows/build.yml@v1
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest]
         jdk: [17]
-      fail-fast: false
-    runs-on: ${{ matrix.os }}
-    if: needs.prerequisites.outputs.runjobs
-    steps:
-      - uses: actions/checkout@v3
-      - name: Set up JDK ${{ matrix.jdk }}
-        uses: spring-io/spring-gradle-build-action@v2
-        with:
-          java-version: ${{ matrix.jdk }}
-          distribution: temurin
-      - name: Build with Gradle
-        env:
-          GRADLE_ENTERPRISE_CACHE_USERNAME: ${{ secrets.GRADLE_ENTERPRISE_CACHE_USER }}
-          GRADLE_ENTERPRISE_CACHE_PASSWORD: ${{ secrets.GRADLE_ENTERPRISE_CACHE_PASSWORD }}
-          GRADLE_ENTERPRISE_ACCESS_KEY: ${{ secrets.GRADLE_ENTERPRISE_SECRET_ACCESS_KEY }}
-          ARTIFACTORY_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
-          ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
-        run: ./gradlew clean build --continue -PartifactoryUsername="$ARTIFACTORY_USERNAME" -PartifactoryPassword="$ARTIFACTORY_PASSWORD"
-  snapshot_tests:
-    name: Test against snapshots
-    needs: [prerequisites]
-    runs-on: ubuntu-latest
-    if: needs.prerequisites.outputs.runjobs
-    steps:
-      - uses: actions/checkout@v3
-      - name: Set up JDK
-        uses: spring-io/spring-gradle-build-action@v2
-        with:
-          java-version: 17
-          distribution: temurin
-      - name: Snapshot Tests
-        env:
-          GRADLE_ENTERPRISE_CACHE_USERNAME: ${{ secrets.GRADLE_ENTERPRISE_CACHE_USER }}
-          GRADLE_ENTERPRISE_CACHE_PASSWORD: ${{ secrets.GRADLE_ENTERPRISE_CACHE_PASSWORD }}
-          GRADLE_ENTERPRISE_ACCESS_KEY: ${{ secrets.GRADLE_ENTERPRISE_SECRET_ACCESS_KEY }}
-          ARTIFACTORY_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
-          ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
-        run: ./gradlew test --refresh-dependencies -Duser.name=spring-builds+github -PartifactoryUsername="$ARTIFACTORY_USERNAME" -PartifactoryPassword="$ARTIFACTORY_PASSWORD" -PforceMavenRepositories=snapshot -PspringFrameworkVersion='6.0.+' -PspringSecurityVersion='6.1.+' -PlocksDisabled --stacktrace
-  deploy_artifacts:
+    with:
+      runs-on: ${{ matrix.os }}
+      java-version: ${{ matrix.jdk }}
+      distribution: temurin
+    secrets: inherit
+  test:
+    name: Test Against Snapshots
+    uses: spring-io/spring-security-release-tools/.github/workflows/test.yml@v1
+    with:
+      test-args: --refresh-dependencies --stacktrace -PforceMavenRepositories=snapshot -PspringFrameworkVersion=6.0.+ -PspringSecurityVersion=6.1.+
+    secrets: inherit
+  deploy-artifacts:
     name: Deploy Artifacts
-    needs: [build, snapshot_tests]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Set up JDK
-        uses: spring-io/spring-gradle-build-action@v2
-        with:
-          java-version: 17
-          distribution: temurin
-      - name: Deploy Artifacts
-        env:
-          GRADLE_ENTERPRISE_CACHE_USERNAME: ${{ secrets.GRADLE_ENTERPRISE_CACHE_USER }}
-          GRADLE_ENTERPRISE_CACHE_PASSWORD: ${{ secrets.GRADLE_ENTERPRISE_CACHE_PASSWORD }}
-          GRADLE_ENTERPRISE_ACCESS_KEY: ${{ secrets.GRADLE_ENTERPRISE_SECRET_ACCESS_KEY }}
-          ORG_GRADLE_PROJECT_signingKey: ${{ secrets.GPG_PRIVATE_KEY }}
-          ORG_GRADLE_PROJECT_signingPassword: ${{ secrets.GPG_PASSPHRASE }}
-          OSSRH_TOKEN_USERNAME: ${{ secrets.OSSRH_S01_TOKEN_USERNAME }}
-          OSSRH_TOKEN_PASSWORD: ${{ secrets.OSSRH_S01_TOKEN_PASSWORD }}
-          ARTIFACTORY_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
-          ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
-        run: ./gradlew publishArtifacts finalizeDeployArtifacts -Duser.name=spring-builds+github -PossrhUsername="$OSSRH_TOKEN_USERNAME" -PossrhPassword="$OSSRH_TOKEN_PASSWORD" -PartifactoryUsername="$ARTIFACTORY_USERNAME" -PartifactoryPassword="$ARTIFACTORY_PASSWORD" --stacktrace
-  deploy_docs:
+    needs: [build, test]
+    uses: spring-io/spring-security-release-tools/.github/workflows/deploy-artifacts.yml@v1
+    with:
+      should-deploy-artifacts: ${{ needs.build.outputs.should-deploy-artifacts }}
+    secrets: inherit
+  deploy-docs:
     name: Deploy Docs
-    needs: [build, snapshot_tests]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Set up JDK
-        uses: spring-io/spring-gradle-build-action@v2
-        with:
-          java-version: 17
-          distribution: temurin
-      - name: Deploy Docs
-        env:
-          GRADLE_ENTERPRISE_CACHE_USERNAME: ${{ secrets.GRADLE_ENTERPRISE_CACHE_USER }}
-          GRADLE_ENTERPRISE_CACHE_PASSWORD: ${{ secrets.GRADLE_ENTERPRISE_CACHE_PASSWORD }}
-          GRADLE_ENTERPRISE_ACCESS_KEY: ${{ secrets.GRADLE_ENTERPRISE_SECRET_ACCESS_KEY }}
-          DOCS_USERNAME: ${{ secrets.DOCS_USERNAME }}
-          DOCS_SSH_KEY: ${{ secrets.DOCS_SSH_KEY }}
-          DOCS_HOST: ${{ secrets.DOCS_HOST }}
-        run: ./gradlew deployDocs -Duser.name=spring-builds+github -PdeployDocsSshKey="$DOCS_SSH_KEY" -PdeployDocsSshUsername="$DOCS_USERNAME" -PdeployDocsHost="$DOCS_HOST" --stacktrace
+    needs: [build, test]
+    uses: spring-io/spring-security-release-tools/.github/workflows/deploy-docs.yml@v1
+    with:
+      should-deploy-docs: ${{ needs.build.outputs.should-deploy-artifacts }}
+    secrets: inherit
+  perform-release:
+    name: Perform Release
+    needs: [deploy-artifacts, deploy-docs]
+    uses: spring-io/spring-security-release-tools/.github/workflows/perform-release.yml@v1
+    with:
+      should-perform-release: ${{ needs.deploy-artifacts.outputs.artifacts-deployed }}
+      project-version: ${{ needs.deploy-artifacts.outputs.project-version }}
+      milestone-repo-url: https://repo.spring.io/artifactory/milestone
+      release-repo-url: https://repo1.maven.org/maven2
+      artifact-path: org/springframework/security/spring-security-oauth2-authorization-server
+      slack-announcing-id: spring-authorization-server-announcing
+    secrets: inherit

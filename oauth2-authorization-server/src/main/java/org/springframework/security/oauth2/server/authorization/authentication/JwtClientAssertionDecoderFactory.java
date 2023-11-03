@@ -88,13 +88,16 @@ public final class JwtClientAssertionDecoderFactory implements JwtDecoderFactory
 		mappings.put(MacAlgorithm.HS512, "HmacSHA512");
 		JCA_ALGORITHM_MAPPINGS = Collections.unmodifiableMap(mappings);
 	}
+
 	private static final RestTemplate rest = new RestTemplate();
+
 	static {
 		SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
 		requestFactory.setConnectTimeout(15_000);
 		requestFactory.setReadTimeout(15_000);
 		rest.setRequestFactory(requestFactory);
 	}
+
 	private final Map<String, JwtDecoder> jwtDecoders = new ConcurrentHashMap<>();
 	private Function<RegisteredClient, OAuth2TokenValidator<Jwt>> jwtValidatorFactory = DEFAULT_JWT_VALIDATOR_FACTORY;
 
@@ -132,7 +135,8 @@ public final class JwtClientAssertionDecoderFactory implements JwtDecoderFactory
 						JWT_CLIENT_AUTHENTICATION_ERROR_URI);
 				throw new OAuth2AuthenticationException(oauth2Error);
 			}
-			return NimbusJwtDecoder.withJwkSetUri(jwkSetUrl).jwsAlgorithm((SignatureAlgorithm) jwsAlgorithm).restOperations(rest).build();
+			return NimbusJwtDecoder.withJwkSetUri(jwkSetUrl).jwsAlgorithm((SignatureAlgorithm) jwsAlgorithm)
+					.restOperations(rest).build();
 		}
 		if (jwsAlgorithm instanceof MacAlgorithm) {
 			String clientSecret = registeredClient.getClientSecret();

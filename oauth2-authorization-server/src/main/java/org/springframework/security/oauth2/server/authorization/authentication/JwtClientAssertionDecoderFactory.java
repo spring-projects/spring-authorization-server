@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import java.util.function.Predicate;
 
 import javax.crypto.spec.SecretKeySpec;
 
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
@@ -51,6 +52,7 @@ import org.springframework.security.oauth2.server.authorization.settings.Authori
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 /**
@@ -85,6 +87,15 @@ public final class JwtClientAssertionDecoderFactory implements JwtDecoderFactory
 		mappings.put(MacAlgorithm.HS384, "HmacSHA384");
 		mappings.put(MacAlgorithm.HS512, "HmacSHA512");
 		JCA_ALGORITHM_MAPPINGS = Collections.unmodifiableMap(mappings);
+	}
+
+	private static final RestTemplate restTemplate = new RestTemplate();
+
+	static {
+		SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
+		requestFactory.setConnectTimeout(15_000);
+		requestFactory.setReadTimeout(15_000);
+		restTemplate.setRequestFactory(requestFactory);
 	}
 
 	private final Map<String, JwtDecoder> jwtDecoders = new ConcurrentHashMap<>();
@@ -124,7 +135,8 @@ public final class JwtClientAssertionDecoderFactory implements JwtDecoderFactory
 						JWT_CLIENT_AUTHENTICATION_ERROR_URI);
 				throw new OAuth2AuthenticationException(oauth2Error);
 			}
-			return NimbusJwtDecoder.withJwkSetUri(jwkSetUrl).jwsAlgorithm((SignatureAlgorithm) jwsAlgorithm).build();
+			return NimbusJwtDecoder.withJwkSetUri(jwkSetUrl).jwsAlgorithm((SignatureAlgorithm) jwsAlgorithm)
+					.restOperations(restTemplate).build();
 		}
 		if (jwsAlgorithm instanceof MacAlgorithm) {
 			String clientSecret = registeredClient.getClientSecret();

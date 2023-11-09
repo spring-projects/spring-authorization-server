@@ -39,6 +39,8 @@ public class ClientRegistrar {
 			@JsonProperty("client_name") String clientName,
 			@JsonProperty("grant_types") List<String> grantTypes,
 			@JsonProperty("redirect_uris") List<String> redirectUris,
+			@JsonProperty("logo_uri") String logoUri,
+			List<String> contacts,
 			String scope) {
 	}
 
@@ -50,6 +52,8 @@ public class ClientRegistrar {
 			@JsonProperty("client_secret") String clientSecret,
 			@JsonProperty("grant_types") List<String> grantTypes,
 			@JsonProperty("redirect_uris") List<String> redirectUris,
+		 	@JsonProperty("logo_uri") String logoUri,
+		 	List<String> contacts,
 			String scope) {
 	}
 
@@ -58,6 +62,8 @@ public class ClientRegistrar {
 				"client-1",
 				List.of(AuthorizationGrantType.AUTHORIZATION_CODE.getValue()),
 				List.of("https://client.example.org/callback", "https://client.example.org/callback2"),
+				"https://client.example.org/logo",
+				List.of("contact-1", "contact-2"),
 				"openid email profile"
 		);
 
@@ -72,6 +78,10 @@ public class ClientRegistrar {
 		assert (clientRegistrationResponse.redirectUris().contains("https://client.example.org/callback2"));
 		assert (!clientRegistrationResponse.registrationAccessToken().isEmpty());
 		assert (!clientRegistrationResponse.registrationClientUri().isEmpty());
+		assert (clientRegistrationResponse.logoUri().contentEquals("https://client.example.org/logo")); // <6>
+		assert (clientRegistrationResponse.contacts().size() == 2);
+		assert (clientRegistrationResponse.contacts().contains("contact-1"));
+		assert (clientRegistrationResponse.contacts().contains("contact-2"));
 
 		String registrationAccessToken = clientRegistrationResponse.registrationAccessToken();	// <7>
 		String registrationClientUri = clientRegistrationResponse.registrationClientUri();
@@ -85,6 +95,10 @@ public class ClientRegistrar {
 		assert (retrievedClient.grantTypes().contains(AuthorizationGrantType.AUTHORIZATION_CODE.getValue()));
 		assert (retrievedClient.redirectUris().contains("https://client.example.org/callback"));
 		assert (retrievedClient.redirectUris().contains("https://client.example.org/callback2"));
+		assert (retrievedClient.logoUri().contentEquals("https://client.example.org/logo"));
+		assert (retrievedClient.contacts().size() == 2);
+		assert (retrievedClient.contacts().contains("contact-1"));
+		assert (retrievedClient.contacts().contains("contact-2"));
 		assert (Objects.isNull(retrievedClient.registrationAccessToken()));
 		assert (!retrievedClient.registrationClientUri().isEmpty());
 	}

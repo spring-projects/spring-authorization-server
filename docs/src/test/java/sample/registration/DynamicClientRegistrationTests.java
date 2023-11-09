@@ -56,7 +56,7 @@ public class DynamicClientRegistrationTests {
 	private String port;
 
 	@Test
-	public void dynamicallyRegisterClient() throws Exception {
+	public void dynamicallyRegisterClientWithCustomMetadata() throws Exception {
 		MockHttpServletResponse tokenResponse = this.mvc.perform(post("/oauth2/token")
 						.with(httpBasic("registrar-client", "secret"))
 						.param(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())

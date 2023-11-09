@@ -17,7 +17,6 @@ dependencies {
 	implementation "org.springframework.boot:spring-boot-starter-web"
 	implementation "org.springframework.boot:spring-boot-starter-security"
 	implementation project(":spring-security-oauth2-authorization-server")
-	runtimeOnly "com.h2database:h2"
 
 	testImplementation "org.springframework.boot:spring-boot-starter-test"
 	testImplementation "org.springframework.security:spring-security-test"

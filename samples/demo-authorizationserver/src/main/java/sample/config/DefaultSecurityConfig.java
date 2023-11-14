@@ -46,7 +46,7 @@ public class DefaultSecurityConfig {
 		http
 			.authorizeHttpRequests(authorize ->
 				authorize
-					.requestMatchers("/assets/**", "/webjars/**", "/login").permitAll()
+					.requestMatchers("/assets/**", "/login").permitAll()
 					.anyRequest().authenticated()
 			)
 			.formLogin(formLogin ->

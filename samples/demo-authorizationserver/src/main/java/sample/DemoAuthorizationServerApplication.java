@@ -15,13 +15,17 @@
  */
 package sample;
 
+import org.springframework.aot.hint.annotation.RegisterReflectionForBinding;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import sample.web.AuthorizationConsentController;
 
 /**
  * @author Joe Grandja
+ * @author Josh Long
  * @since 1.1
  */
+@RegisterReflectionForBinding(AuthorizationConsentController.ScopeWithDescription.class)
 @SpringBootApplication
 public class DemoAuthorizationServerApplication {
 

@@ -1,0 +1,2 @@
+org.springframework.aot.hint.RuntimeHintsRegistrar=\
+ org.springframework.security.oauth2.server.authorization.AuthorizationServerRuntimeHintsRegistrar

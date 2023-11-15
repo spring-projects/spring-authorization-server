@@ -8,9 +8,9 @@ description = "Spring Authorization Server"
 
 springRelease {
 	repositoryOwner = "spring-projects"
-	weekOfMonth = 2
-	dayOfWeek = 4
-	referenceDocUrl = "https://docs.spring.io/spring-authorization-server/reference/{version}/index.html"
+	weekOfMonth = 3
+	dayOfWeek = 2
+	referenceDocUrl = "https://docs.spring.io/spring-authorization-server/docs/{version}/reference/html/"
 	apiDocUrl = "https://docs.spring.io/spring-authorization-server/docs/{version}/api/"
 	replaceSnapshotVersionInReferenceDocUrl = true
 }

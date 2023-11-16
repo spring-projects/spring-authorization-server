@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,10 +47,10 @@ import org.springframework.util.StringUtils;
  * {@link JdbcOperations} for {@link OAuth2AuthorizationConsent} persistence.
  *
  * <p>
- * <b>NOTE:</b> This {@code OAuth2AuthorizationConsentService} depends on the table
- * definition described in
- * "classpath:org/springframework/security/oauth2/server/authorization/oauth2-authorization-consent-schema.sql"
- * and therefore MUST be defined in the database schema.
+ * <b>NOTE:</b> This {@code OAuth2AuthorizationConsentService} depends on the table definition
+ * described in
+ * "classpath:org/springframework/security/oauth2/server/authorization/oauth2-authorization-consent-schema.sql" and
+ * therefore MUST be defined in the database schema.
  *
  * @author Ovidiu Popa
  * @author Josh Long
@@ -103,15 +103,13 @@ public class JdbcOAuth2AuthorizationConsentService implements OAuth2Authorizatio
 	private static final String REMOVE_AUTHORIZATION_CONSENT_SQL = "DELETE FROM " + TABLE_NAME + " WHERE " + PK_FILTER;
 
 	private final JdbcOperations jdbcOperations;
-
 	private RowMapper<OAuth2AuthorizationConsent> authorizationConsentRowMapper;
-
 	private Function<OAuth2AuthorizationConsent, List<SqlParameterValue>> authorizationConsentParametersMapper;
 
 	/**
-	 * Constructs a {@code JdbcOAuth2AuthorizationConsentService} using the provided
-	 * parameters.
-	 * @param jdbcOperations the JDBC operations
+	 * Constructs a {@code JdbcOAuth2AuthorizationConsentService} using the provided parameters.
+	 *
+	 * @param jdbcOperations             the JDBC operations
 	 * @param registeredClientRepository the registered client repository
 	 */
 	public JdbcOAuth2AuthorizationConsentService(JdbcOperations jdbcOperations,
@@ -126,12 +124,11 @@ public class JdbcOAuth2AuthorizationConsentService implements OAuth2Authorizatio
 	@Override
 	public void save(OAuth2AuthorizationConsent authorizationConsent) {
 		Assert.notNull(authorizationConsent, "authorizationConsent cannot be null");
-		OAuth2AuthorizationConsent existingAuthorizationConsent = findById(authorizationConsent.getRegisteredClientId(),
-				authorizationConsent.getPrincipalName());
+		OAuth2AuthorizationConsent existingAuthorizationConsent = findById(
+				authorizationConsent.getRegisteredClientId(), authorizationConsent.getPrincipalName());
 		if (existingAuthorizationConsent == null) {
 			insertAuthorizationConsent(authorizationConsent);
-		}
-		else {
+		} else {
 			updateAuthorizationConsent(authorizationConsent);
 		}
 	}
@@ -157,7 +154,8 @@ public class JdbcOAuth2AuthorizationConsentService implements OAuth2Authorizatio
 		Assert.notNull(authorizationConsent, "authorizationConsent cannot be null");
 		SqlParameterValue[] parameters = new SqlParameterValue[] {
 				new SqlParameterValue(Types.VARCHAR, authorizationConsent.getRegisteredClientId()),
-				new SqlParameterValue(Types.VARCHAR, authorizationConsent.getPrincipalName()) };
+				new SqlParameterValue(Types.VARCHAR, authorizationConsent.getPrincipalName())
+		};
 		PreparedStatementSetter pss = new ArgumentPreparedStatementSetter(parameters);
 		this.jdbcOperations.update(REMOVE_AUTHORIZATION_CONSENT_SQL, pss);
 	}
@@ -169,7 +167,7 @@ public class JdbcOAuth2AuthorizationConsentService implements OAuth2Authorizatio
 		Assert.hasText(principalName, "principalName cannot be empty");
 		SqlParameterValue[] parameters = new SqlParameterValue[] {
 				new SqlParameterValue(Types.VARCHAR, registeredClientId),
-				new SqlParameterValue(Types.VARCHAR, principalName) };
+				new SqlParameterValue(Types.VARCHAR, principalName)};
 		PreparedStatementSetter pss = new ArgumentPreparedStatementSetter(parameters);
 		List<OAuth2AuthorizationConsent> result = this.jdbcOperations.query(LOAD_AUTHORIZATION_CONSENT_SQL, pss,
 				this.authorizationConsentRowMapper);
@@ -180,21 +178,22 @@ public class JdbcOAuth2AuthorizationConsentService implements OAuth2Authorizatio
 	 * Sets the {@link RowMapper} used for mapping the current row in
 	 * {@code java.sql.ResultSet} to {@link OAuth2AuthorizationConsent}. The default is
 	 * {@link OAuth2AuthorizationConsentRowMapper}.
-	 * @param authorizationConsentRowMapper the {@link RowMapper} used for mapping the
-	 * current row in {@code ResultSet} to {@link OAuth2AuthorizationConsent}
+	 *
+	 * @param authorizationConsentRowMapper the {@link RowMapper} used for mapping the current
+	 *                                      row in {@code ResultSet} to {@link OAuth2AuthorizationConsent}
 	 */
-	public final void setAuthorizationConsentRowMapper(
-			RowMapper<OAuth2AuthorizationConsent> authorizationConsentRowMapper) {
+	public final void setAuthorizationConsentRowMapper(RowMapper<OAuth2AuthorizationConsent> authorizationConsentRowMapper) {
 		Assert.notNull(authorizationConsentRowMapper, "authorizationConsentRowMapper cannot be null");
 		this.authorizationConsentRowMapper = authorizationConsentRowMapper;
 	}
 
 	/**
-	 * Sets the {@code Function} used for mapping {@link OAuth2AuthorizationConsent} to a
-	 * {@code List} of {@link SqlParameterValue}. The default is
+	 * Sets the {@code Function} used for mapping {@link OAuth2AuthorizationConsent} to
+	 * a {@code List} of {@link SqlParameterValue}. The default is
 	 * {@link OAuth2AuthorizationConsentParametersMapper}.
+	 *
 	 * @param authorizationConsentParametersMapper the {@code Function} used for mapping
-	 * {@link OAuth2AuthorizationConsent} to a {@code List} of {@link SqlParameterValue}
+	 *                                             {@link OAuth2AuthorizationConsent} to a {@code List} of {@link SqlParameterValue}
 	 */
 	public final void setAuthorizationConsentParametersMapper(
 			Function<OAuth2AuthorizationConsent, List<SqlParameterValue>> authorizationConsentParametersMapper) {
@@ -215,11 +214,10 @@ public class JdbcOAuth2AuthorizationConsentService implements OAuth2Authorizatio
 	}
 
 	/**
-	 * The default {@link RowMapper} that maps the current row in {@code ResultSet} to
-	 * {@link OAuth2AuthorizationConsent}.
+	 * The default {@link RowMapper} that maps the current row in
+	 * {@code ResultSet} to {@link OAuth2AuthorizationConsent}.
 	 */
 	public static class OAuth2AuthorizationConsentRowMapper implements RowMapper<OAuth2AuthorizationConsent> {
-
 		private final RegisteredClientRepository registeredClientRepository;
 
 		public OAuth2AuthorizationConsentRowMapper(RegisteredClientRepository registeredClientRepository) {
@@ -232,14 +230,13 @@ public class JdbcOAuth2AuthorizationConsentService implements OAuth2Authorizatio
 			String registeredClientId = rs.getString("registered_client_id");
 			RegisteredClient registeredClient = this.registeredClientRepository.findById(registeredClientId);
 			if (registeredClient == null) {
-				throw new DataRetrievalFailureException("The RegisteredClient with id '" + registeredClientId
-						+ "' was not found in the RegisteredClientRepository.");
+				throw new DataRetrievalFailureException(
+						"The RegisteredClient with id '" + registeredClientId + "' was not found in the RegisteredClientRepository.");
 			}
 
 			String principalName = rs.getString("principal_name");
 
-			OAuth2AuthorizationConsent.Builder builder = OAuth2AuthorizationConsent.withId(registeredClientId,
-					principalName);
+			OAuth2AuthorizationConsent.Builder builder = OAuth2AuthorizationConsent.withId(registeredClientId, principalName);
 			String authorizationConsentAuthorities = rs.getString("authorities");
 			if (authorizationConsentAuthorities != null) {
 				for (String authority : StringUtils.commaDelimitedListToSet(authorizationConsentAuthorities)) {
@@ -259,8 +256,7 @@ public class JdbcOAuth2AuthorizationConsentService implements OAuth2Authorizatio
 	 * The default {@code Function} that maps {@link OAuth2AuthorizationConsent} to a
 	 * {@code List} of {@link SqlParameterValue}.
 	 */
-	public static class OAuth2AuthorizationConsentParametersMapper
-			implements Function<OAuth2AuthorizationConsent, List<SqlParameterValue>> {
+	public static class OAuth2AuthorizationConsentParametersMapper implements Function<OAuth2AuthorizationConsent, List<SqlParameterValue>> {
 
 		@Override
 		public List<SqlParameterValue> apply(OAuth2AuthorizationConsent authorizationConsent) {
@@ -272,8 +268,7 @@ public class JdbcOAuth2AuthorizationConsentService implements OAuth2Authorizatio
 			for (GrantedAuthority authority : authorizationConsent.getAuthorities()) {
 				authorities.add(authority.getAuthority());
 			}
-			parameters.add(
-					new SqlParameterValue(Types.VARCHAR, StringUtils.collectionToDelimitedString(authorities, ",")));
+			parameters.add(new SqlParameterValue(Types.VARCHAR, StringUtils.collectionToDelimitedString(authorities, ",")));
 			return parameters;
 		}
 

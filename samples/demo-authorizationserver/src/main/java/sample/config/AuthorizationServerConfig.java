@@ -132,7 +132,7 @@ public class AuthorizationServerConfig {
 
 	// @formatter:off
 	@Bean
-	public RegisteredClientRepository registeredClientRepository(JdbcTemplate jdbcTemplate) {
+	public JdbcRegisteredClientRepository registeredClientRepository(JdbcTemplate jdbcTemplate) {
 		RegisteredClient registeredClient = RegisteredClient.withId(UUID.randomUUID().toString())
 				.clientId("messaging-client")
 				.clientSecret("{noop}secret")
@@ -169,13 +169,13 @@ public class AuthorizationServerConfig {
 	// @formatter:on
 
 	@Bean
-	public OAuth2AuthorizationService authorizationService(JdbcTemplate jdbcTemplate,
+	public JdbcOAuth2AuthorizationService authorizationService(JdbcTemplate jdbcTemplate,
 			RegisteredClientRepository registeredClientRepository) {
 		return new JdbcOAuth2AuthorizationService(jdbcTemplate, registeredClientRepository);
 	}
 
 	@Bean
-	public OAuth2AuthorizationConsentService authorizationConsentService(JdbcTemplate jdbcTemplate,
+	public JdbcOAuth2AuthorizationConsentService authorizationConsentService(JdbcTemplate jdbcTemplate,
 			RegisteredClientRepository registeredClientRepository) {
 		// Will be used by the ConsentController
 		return new JdbcOAuth2AuthorizationConsentService(jdbcTemplate, registeredClientRepository);

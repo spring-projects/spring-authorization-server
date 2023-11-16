@@ -24,7 +24,7 @@ import org.springframework.security.oauth2.server.authorization.config.annotatio
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
 
-import static sample.registration.CustomMetadataConfig.registeredClientConverters;
+import static sample.registration.CustomClientMetadataConfig.configureCustomClientMetadataConverters;
 
 @Configuration
 @EnableWebSecurity
@@ -33,13 +33,13 @@ public class SecurityConfig {
 	@Bean
 	public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
 		OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http);
-
 		http.getConfigurer(OAuth2AuthorizationServerConfigurer.class)
-				.oidc(oidc -> oidc.clientRegistrationEndpoint(endpoint -> {
-					endpoint.authenticationProviders(registeredClientConverters());	// <1>
+				.oidc(oidc -> oidc.clientRegistrationEndpoint(clientRegistrationEndpoint -> {	// <1>
+					clientRegistrationEndpoint
+							.authenticationProviders(configureCustomClientMetadataConverters());	// <2>
 				}));
-
-		http.oauth2ResourceServer(oauth2ResourceServer -> oauth2ResourceServer.jwt(Customizer.withDefaults()));
+		http.oauth2ResourceServer(oauth2ResourceServer ->
+				oauth2ResourceServer.jwt(Customizer.withDefaults()));
 
 		return http.build();
 	}

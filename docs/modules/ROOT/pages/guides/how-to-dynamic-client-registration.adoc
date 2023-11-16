@@ -23,32 +23,24 @@ To enable, add the following configuration:
 include::{examples-dir}/main/java/sample/registration/SecurityConfig.java[]
 ----
 
-<1> Enable the xref:protocol-endpoints.adoc#oidc-client-registration-endpoint[OpenID Connect 1.0 Client Registration Endpoint] with client registration endpoint authentication providers for providing custom metadata. Providing custom metadata is optional.
+<1> Enable the xref:protocol-endpoints.adoc#oidc-client-registration-endpoint[OpenID Connect 1.0 Client Registration Endpoint] with the default configuration.
+<2> Optionally, customize the default ``AuthenticationProvider``'s to support custom client metadata parameters.
 
-In order to accept custom client metadata when registering a client, a few additional implementation details
-are necessary.
+In order to support custom client metadata parameters when registering a client, a few additional implementation details are required.
 
-[NOTE]
-====
-The following example depicts custom metadata `logo_uri` (string type) and `contacts` (string array type)
-====
+The following example shows a sample implementation of ``Converter``'s that support custom client metadata parameters (`logo_uri` and `contacts`) and are configured in `OidcClientRegistrationAuthenticationProvider` and `OidcClientConfigurationAuthenticationProvider`.
 
-Create a set of custom `Converter` classes in order to retain custom client claims.
-
-[[sample.CustomMetadataConfig]]
+[[sample.CustomClientMetadataConfig]]
 [source,java]
 ----
-include::{examples-dir}/main/java/sample/registration/CustomMetadataConfig.java[]
+include::{examples-dir}/main/java/sample/registration/CustomClientMetadataConfig.java[]
 ----
 
-<1> Create a `Consumer<List<AuthenticationProvider>>` implementation.
-<2> Identify custom fields that should be accepted during client registration.
-<3> Filter for `OidcClientRegistrationAuthenticationProvider` and `OidcClientConfigurationAuthenticationProvider` instances.
-<4> Add a custom registered client `Converter` (implementation in #7)
-<5> Add a custom client registration `Converter` to `OidcClientRegistrationAuthenticationProvider` (implementation in #8)
-<6> Add a custom client registration `Converter` to `OidcClientConfigurationAuthenticationProvider` (implementation in #8)
-<7> Custom registered client `Converter` implementation that adds custom claims to registered client settings.
-<8> Custom client registration `Converter` implementation that modifies client registration claims with custom metadata.
+<1> Define a `Consumer<List<AuthenticationProvider>>` providing the ability to customize the default ``AuthenticationProvider``'s.
+<2> Define custom client metadata parameters that are supported for client registration.
+<3> Configure `OidcClientRegistrationAuthenticationProvider.setRegisteredClientConverter()` with a `CustomRegisteredClientConverter`.
+<4> Configure `OidcClientRegistrationAuthenticationProvider.setClientRegistrationConverter()` with a `CustomClientRegistrationConverter`.
+<5> Configure `OidcClientConfigurationAuthenticationProvider.setClientRegistrationConverter()` with a `CustomClientRegistrationConverter`.
 
 [[configure-client-registrar]]
 == Configure client registrar
@@ -114,8 +106,8 @@ After the client is registered, the access token is invalidated.
 include::{examples-dir}/main/java/sample/registration/ClientRegistrar.java[]
 ----
 
-<1> A minimal representation of a client registration request. You may add additional client metadata parameters as per https://openid.net/specs/openid-connect-registration-1_0.html#RegistrationRequest[Client Registration Request]. This example request contains custom metadata fields `logo_uri` and `contacts`.
-<2> A minimal representation of a client registration response. You may add additional client metadata parameters as per https://openid.net/specs/openid-connect-registration-1_0.html#RegistrationResponse[Client Registration Response]. This example response contains custom metadata fields `logo_uri` and `contacts`.
+<1> A minimal representation of a client registration request. You may add additional client metadata parameters as per https://openid.net/specs/openid-connect-registration-1_0.html#RegistrationRequest[Client Registration Request]. This example request contains custom client metadata parameters `logo_uri` and `contacts`.
+<2> A minimal representation of a client registration response. You may add additional client metadata parameters as per https://openid.net/specs/openid-connect-registration-1_0.html#RegistrationResponse[Client Registration Response]. This example response contains custom client metadata parameters `logo_uri` and `contacts`.
 <3> Example demonstrating client registration and client retrieval.
 <4> A sample client registration request object.
 <5> Register the client using the "initial" access token and client registration request object.

@@ -78,7 +78,7 @@ public class ClientRegistrar {
 		assert (clientRegistrationResponse.redirectUris().contains("https://client.example.org/callback2"));
 		assert (!clientRegistrationResponse.registrationAccessToken().isEmpty());
 		assert (!clientRegistrationResponse.registrationClientUri().isEmpty());
-		assert (clientRegistrationResponse.logoUri().contentEquals("https://client.example.org/logo")); // <6>
+		assert (clientRegistrationResponse.logoUri().contentEquals("https://client.example.org/logo"));
 		assert (clientRegistrationResponse.contacts().size() == 2);
 		assert (clientRegistrationResponse.contacts().contains("contact-1"));
 		assert (clientRegistrationResponse.contacts().contains("contact-2"));

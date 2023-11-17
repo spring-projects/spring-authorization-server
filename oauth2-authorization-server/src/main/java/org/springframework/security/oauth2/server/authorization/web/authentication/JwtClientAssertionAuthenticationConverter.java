@@ -23,6 +23,7 @@ import org.springframework.lang.Nullable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
+import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientAuthenticationToken;
@@ -58,7 +59,7 @@ public final class JwtClientAssertionAuthenticationConverter implements Authenti
 		// client_assertion_type (REQUIRED)
 		String clientAssertionType = parameters.getFirst(OAuth2ParameterNames.CLIENT_ASSERTION_TYPE);
 		if (parameters.get(OAuth2ParameterNames.CLIENT_ASSERTION_TYPE).size() != 1) {
-			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_REQUEST);
+			throwException(OAuth2ParameterNames.CLIENT_ASSERTION_TYPE);
 		}
 		if (!JWT_CLIENT_ASSERTION_AUTHENTICATION_METHOD.getValue().equals(clientAssertionType)) {
 			return null;
@@ -67,14 +68,14 @@ public final class JwtClientAssertionAuthenticationConverter implements Authenti
 		// client_assertion (REQUIRED)
 		String jwtAssertion = parameters.getFirst(OAuth2ParameterNames.CLIENT_ASSERTION);
 		if (parameters.get(OAuth2ParameterNames.CLIENT_ASSERTION).size() != 1) {
-			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_REQUEST);
+			throwException(OAuth2ParameterNames.CLIENT_ASSERTION);
 		}
 
 		// client_id (OPTIONAL as per specification but REQUIRED by this implementation)
 		String clientId = parameters.getFirst(OAuth2ParameterNames.CLIENT_ID);
 		if (!StringUtils.hasText(clientId) ||
 				parameters.get(OAuth2ParameterNames.CLIENT_ID).size() != 1) {
-			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_REQUEST);
+			throwException(OAuth2ParameterNames.CLIENT_ID);
 		}
 
 		Map<String, Object> additionalParameters = OAuth2EndpointUtils.getParametersIfMatchesAuthorizationCodeGrantRequest(request,
@@ -84,6 +85,10 @@ public final class JwtClientAssertionAuthenticationConverter implements Authenti
 
 		return new OAuth2ClientAuthenticationToken(clientId, JWT_CLIENT_ASSERTION_AUTHENTICATION_METHOD,
 				jwtAssertion, additionalParameters);
+	}
+
+	public void throwException(String parameterName) {
+		throw new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_REQUEST), "Required parameter %s is missing or invalid".formatted(parameterName));
 	}
 
 }

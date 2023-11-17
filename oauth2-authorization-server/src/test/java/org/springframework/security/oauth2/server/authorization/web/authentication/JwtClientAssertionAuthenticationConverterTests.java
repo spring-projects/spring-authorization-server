@@ -60,7 +60,7 @@ public class JwtClientAssertionAuthenticationConverterTests {
 		request.addParameter(OAuth2ParameterNames.CLIENT_ASSERTION_TYPE, JWT_BEARER_TYPE);
 		request.addParameter(OAuth2ParameterNames.CLIENT_ASSERTION_TYPE, "other-client-assertion-type");
 		request.addParameter(OAuth2ParameterNames.CLIENT_ASSERTION, "jwt-assertion");
-		assertThrown(request, OAuth2ErrorCodes.INVALID_REQUEST);
+		assertThrown(request, OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.CLIENT_ASSERTION_TYPE);
 	}
 
 	@Test
@@ -78,7 +78,7 @@ public class JwtClientAssertionAuthenticationConverterTests {
 		request.addParameter(OAuth2ParameterNames.CLIENT_ASSERTION_TYPE, JWT_BEARER_TYPE);
 		request.addParameter(OAuth2ParameterNames.CLIENT_ASSERTION, "jwt-assertion");
 		request.addParameter(OAuth2ParameterNames.CLIENT_ASSERTION, "other-jwt-assertion");
-		assertThrown(request, OAuth2ErrorCodes.INVALID_REQUEST);
+		assertThrown(request, OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.CLIENT_ASSERTION);
 	}
 
 	@Test
@@ -86,7 +86,7 @@ public class JwtClientAssertionAuthenticationConverterTests {
 		MockHttpServletRequest request = new MockHttpServletRequest();
 		request.addParameter(OAuth2ParameterNames.CLIENT_ASSERTION_TYPE, JWT_BEARER_TYPE);
 		request.addParameter(OAuth2ParameterNames.CLIENT_ASSERTION, "jwt-assertion");
-		assertThrown(request, OAuth2ErrorCodes.INVALID_REQUEST);
+		assertThrown(request, OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.CLIENT_ID);
 	}
 
 	@Test
@@ -96,7 +96,7 @@ public class JwtClientAssertionAuthenticationConverterTests {
 		request.addParameter(OAuth2ParameterNames.CLIENT_ASSERTION, "jwt-assertion");
 		request.addParameter(OAuth2ParameterNames.CLIENT_ID, "client-1");
 		request.addParameter(OAuth2ParameterNames.CLIENT_ID, "client-2");
-		assertThrown(request, OAuth2ErrorCodes.INVALID_REQUEST);
+		assertThrown(request, OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.CLIENT_ID);
 	}
 
 	@Test
@@ -121,9 +121,10 @@ public class JwtClientAssertionAuthenticationConverterTests {
 						entry("custom-param-2", new String[] {"custom-value-1", "custom-value-2"}));
 	}
 
-	private void assertThrown(MockHttpServletRequest request, String errorCode) {
+	private void assertThrown(MockHttpServletRequest request, String errorCode, String parameter) {
 		assertThatThrownBy(() -> this.converter.convert(request))
 				.isInstanceOf(OAuth2AuthenticationException.class)
+				.hasMessageContaining(parameter)
 				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
 				.extracting("errorCode")
 				.isEqualTo(errorCode);

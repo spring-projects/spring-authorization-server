@@ -3,7 +3,7 @@
 = Spring Authorization Server Reference
 
 [horizontal]
-xref:overview.adoc[Overview] :: Introduction and feature list
+xref:overview.adoc[Overview] :: Introduction, use cases and feature list
 xref:getting-help.adoc[Getting Help] :: Links to samples, questions and issues
 xref:getting-started.adoc[Getting Started] :: System requirements, dependencies and developing your first application
 xref:configuration-model.adoc[Configuration Model] :: Default configuration and customizing the configuration

@@ -68,10 +68,16 @@ import org.springframework.util.StringUtils;
  * {@link JdbcOperations} for {@link OAuth2Authorization} persistence.
  *
  * <p>
- * <b>NOTE:</b> This {@code OAuth2AuthorizationService} depends on the table definition
+ * <b>IMPORTANT:</b> This {@code OAuth2AuthorizationService} depends on the table definition
  * described in
  * "classpath:org/springframework/security/oauth2/server/authorization/oauth2-authorization-schema.sql" and
  * therefore MUST be defined in the database schema.
+ *
+ * <p>
+ * <b>NOTE:</b> This {@code OAuth2AuthorizationService} is a simplified JDBC implementation that MAY be used in a production environment.
+ * However, it does have limitations as it likely won't perform well in an environment requiring high throughput.
+ * The expectation is that the consuming application will provide their own implementation of {@code OAuth2AuthorizationService}
+ * that meets the performance requirements for its deployment environment.
  *
  * @author Ovidiu Popa
  * @author Joe Grandja

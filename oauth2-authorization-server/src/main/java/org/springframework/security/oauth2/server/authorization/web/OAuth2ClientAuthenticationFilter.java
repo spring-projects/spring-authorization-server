@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,17 +15,13 @@
  */
 package org.springframework.security.oauth2.server.authorization.web;
 
-import java.io.IOException;
-import java.util.Arrays;
-
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-
+import org.springframework.core.convert.converter.Converter;
 import org.springframework.core.log.LogMessage;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.server.ServletServerHttpResponse;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.authentication.AuthenticationDetailsSource;
@@ -37,6 +33,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
+import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.http.converter.OAuth2ErrorHttpMessageConverter;
 import org.springframework.security.oauth2.server.authorization.authentication.ClientSecretAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.authentication.JwtClientAssertionAuthenticationProvider;
@@ -46,6 +43,7 @@ import org.springframework.security.oauth2.server.authorization.web.authenticati
 import org.springframework.security.oauth2.server.authorization.web.authentication.ClientSecretPostAuthenticationConverter;
 import org.springframework.security.oauth2.server.authorization.web.authentication.DelegatingAuthenticationConverter;
 import org.springframework.security.oauth2.server.authorization.web.authentication.JwtClientAssertionAuthenticationConverter;
+import org.springframework.security.oauth2.server.authorization.web.authentication.OAuth2ErrorAuthenticationFailureHandler;
 import org.springframework.security.oauth2.server.authorization.web.authentication.PublicClientAuthenticationConverter;
 import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
@@ -55,11 +53,17 @@ import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.function.BiConsumer;
+
 /**
  * A {@code Filter} that processes an authentication request for an OAuth 2.0 Client.
  *
  * @author Joe Grandja
  * @author Patryk Kostrzewa
+ * @author Dmitriy Dubson
  * @since 0.0.1
  * @see AuthenticationManager
  * @see JwtClientAssertionAuthenticationConverter
@@ -75,12 +79,28 @@ import org.springframework.web.filter.OncePerRequestFilter;
 public final class OAuth2ClientAuthenticationFilter extends OncePerRequestFilter {
 	private final AuthenticationManager authenticationManager;
 	private final RequestMatcher requestMatcher;
-	private final HttpMessageConverter<OAuth2Error> errorHttpResponseConverter = new OAuth2ErrorHttpMessageConverter();
 	private final AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource =
 			new WebAuthenticationDetailsSource();
 	private AuthenticationConverter authenticationConverter;
 	private AuthenticationSuccessHandler authenticationSuccessHandler = this::onAuthenticationSuccess;
 	private AuthenticationFailureHandler authenticationFailureHandler = this::onAuthenticationFailure;
+
+	private final OAuth2ErrorAuthenticationFailureHandler failureHandler = new OAuth2ErrorAuthenticationFailureHandler();
+
+	BiConsumer<OAuth2AuthenticationException, ServletServerHttpResponse> authenticationFailureHttpResponseCustomizer = (e, httpResponse) -> {
+		// TODO
+		// The authorization server MAY return an HTTP 401 (Unauthorized) status code
+		// to indicate which HTTP authentication schemes are supported.
+		// If the client attempted to authenticate via the "Authorization" request header field,
+		// the authorization server MUST respond with an HTTP 401 (Unauthorized) status code and
+		// include the "WWW-Authenticate" response header field
+		// matching the authentication scheme used by the client.
+		if (OAuth2ErrorCodes.INVALID_CLIENT.equals(e.getError().getErrorCode())) {
+			httpResponse.setStatusCode(HttpStatus.UNAUTHORIZED);
+		} else {
+			httpResponse.setStatusCode(HttpStatus.BAD_REQUEST);
+		}
+	};
 
 	/**
 	 * Constructs an {@code OAuth2ClientAuthenticationFilter} using the provided parameters.
@@ -100,6 +120,13 @@ public final class OAuth2ClientAuthenticationFilter extends OncePerRequestFilter
 						new ClientSecretBasicAuthenticationConverter(),
 						new ClientSecretPostAuthenticationConverter(),
 						new PublicClientAuthenticationConverter()));
+
+		// We don't want to reveal too much information to the caller so just return the error code
+		Converter<OAuth2Error, Map<String, String>> errorParametersConverter = (OAuth2Error error) -> Map.of(OAuth2ParameterNames.ERROR, error.getErrorCode());
+		OAuth2ErrorHttpMessageConverter errorHttpMessageConverter = new OAuth2ErrorHttpMessageConverter();
+		errorHttpMessageConverter.setErrorParametersConverter(errorParametersConverter);
+
+		failureHandler.setHttpResponseCustomizer(authenticationFailureHttpResponseCustomizer);
 	}
 
 	@Override
@@ -178,28 +205,9 @@ public final class OAuth2ClientAuthenticationFilter extends OncePerRequestFilter
 	}
 
 	private void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response,
-			AuthenticationException exception) throws IOException {
-
+			AuthenticationException exception) throws IOException, ServletException {
 		SecurityContextHolder.clearContext();
-
-		// TODO
-		// The authorization server MAY return an HTTP 401 (Unauthorized) status code
-		// to indicate which HTTP authentication schemes are supported.
-		// If the client attempted to authenticate via the "Authorization" request header field,
-		// the authorization server MUST respond with an HTTP 401 (Unauthorized) status code and
-		// include the "WWW-Authenticate" response header field
-		// matching the authentication scheme used by the client.
-
-		OAuth2Error error = ((OAuth2AuthenticationException) exception).getError();
-		ServletServerHttpResponse httpResponse = new ServletServerHttpResponse(response);
-		if (OAuth2ErrorCodes.INVALID_CLIENT.equals(error.getErrorCode())) {
-			httpResponse.setStatusCode(HttpStatus.UNAUTHORIZED);
-		} else {
-			httpResponse.setStatusCode(HttpStatus.BAD_REQUEST);
-		}
-		// We don't want to reveal too much information to the caller so just return the error code
-		OAuth2Error errorResponse = new OAuth2Error(error.getErrorCode());
-		this.errorHttpResponseConverter.write(errorResponse, null, httpResponse);
+		failureHandler.onAuthenticationFailure(request, response, exception);
 	}
 
 	private static void validateClientIdentifier(Authentication authentication) {

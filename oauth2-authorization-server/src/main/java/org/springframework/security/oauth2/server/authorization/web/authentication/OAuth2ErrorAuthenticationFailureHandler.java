@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 the original author or authors.
+ * Copyright 2020-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,9 @@
 package org.springframework.security.oauth2.server.authorization.web.authentication;
 
 import java.io.IOException;
+import java.util.Map;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -24,6 +27,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.springframework.core.convert.converter.Converter;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.server.ServletServerHttpResponse;
@@ -46,14 +50,15 @@ import org.springframework.util.Assert;
 public final class OAuth2ErrorAuthenticationFailureHandler implements AuthenticationFailureHandler {
 	private final Log logger = LogFactory.getLog(getClass());
 	private HttpMessageConverter<OAuth2Error> errorResponseConverter = new OAuth2ErrorHttpMessageConverter();
+	private BiConsumer<OAuth2AuthenticationException, ServletServerHttpResponse> httpResponseCustomizer = (exception, httpResponse) -> httpResponse.setStatusCode(HttpStatus.BAD_REQUEST);
 
 	@Override
 	public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response,
 			AuthenticationException authenticationException) throws IOException, ServletException {
-		ServletServerHttpResponse httpResponse = new ServletServerHttpResponse(response);
-		httpResponse.setStatusCode(HttpStatus.BAD_REQUEST);
+		if (authenticationException instanceof OAuth2AuthenticationException exception) {
+			ServletServerHttpResponse httpResponse = new ServletServerHttpResponse(response);
+			httpResponseCustomizer.accept(exception, httpResponse);
 
-		if (authenticationException instanceof OAuth2AuthenticationException) {
 			OAuth2Error error = ((OAuth2AuthenticationException) authenticationException).getError();
 			this.errorResponseConverter.write(error, null, httpResponse);
 		} else {
@@ -75,4 +80,7 @@ public final class OAuth2ErrorAuthenticationFailureHandler implements Authentica
 		this.errorResponseConverter = errorResponseConverter;
 	}
 
+	public void setHttpResponseCustomizer(BiConsumer<OAuth2AuthenticationException, ServletServerHttpResponse> httpResponseCustomizer) {
+		this.httpResponseCustomizer = httpResponseCustomizer;
+	}
 }

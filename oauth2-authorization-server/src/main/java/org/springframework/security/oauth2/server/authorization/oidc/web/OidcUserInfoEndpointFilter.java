@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.springframework.security.oauth2.server.authorization.oidc.web;
 
 import java.io.IOException;
+import java.util.function.BiConsumer;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -29,7 +30,6 @@ import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.server.ServletServerHttpResponse;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
@@ -39,6 +39,7 @@ import org.springframework.security.oauth2.core.oidc.OidcUserInfo;
 import org.springframework.security.oauth2.server.authorization.oidc.authentication.OidcUserInfoAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.oidc.authentication.OidcUserInfoAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.oidc.http.converter.OidcUserInfoHttpMessageConverter;
+import org.springframework.security.oauth2.server.authorization.web.authentication.OAuth2ErrorAuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
@@ -54,6 +55,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
  * @author Ido Salomon
  * @author Steve Riesenberg
  * @author Daniel Garnier-Moiroux
+ * @author Dmitriy Dubson
  * @since 0.2.1
  * @see OidcUserInfo
  * @see OidcUserInfoAuthenticationProvider
@@ -70,11 +72,20 @@ public final class OidcUserInfoEndpointFilter extends OncePerRequestFilter {
 	private final RequestMatcher userInfoEndpointMatcher;
 	private final HttpMessageConverter<OidcUserInfo> userInfoHttpMessageConverter =
 			new OidcUserInfoHttpMessageConverter();
-	private final HttpMessageConverter<OAuth2Error> errorHttpResponseConverter =
-			new OAuth2ErrorHttpMessageConverter();
 	private AuthenticationConverter authenticationConverter = this::createAuthentication;
 	private AuthenticationSuccessHandler authenticationSuccessHandler = this::sendUserInfoResponse;
-	private AuthenticationFailureHandler authenticationFailureHandler = this::sendErrorResponse;
+
+	BiConsumer<OAuth2AuthenticationException, ServletServerHttpResponse> authenticationFailureHttpResponseCustomizer = (e, httpResponse) -> {
+		HttpStatus httpStatus = HttpStatus.BAD_REQUEST;
+		if (e.getError().getErrorCode().equals(OAuth2ErrorCodes.INVALID_TOKEN)) {
+			httpStatus = HttpStatus.UNAUTHORIZED;
+		} else if (e.getError().getErrorCode().equals(OAuth2ErrorCodes.INSUFFICIENT_SCOPE)) {
+			httpStatus = HttpStatus.FORBIDDEN;
+		}
+		httpResponse.setStatusCode(httpStatus);
+	};
+
+	private AuthenticationFailureHandler authenticationFailureHandler = new OAuth2ErrorAuthenticationFailureHandler();
 
 	/**
 	 * Constructs an {@code OidcUserInfoEndpointFilter} using the provided parameters.
@@ -83,6 +94,7 @@ public final class OidcUserInfoEndpointFilter extends OncePerRequestFilter {
 	 */
 	public OidcUserInfoEndpointFilter(AuthenticationManager authenticationManager) {
 		this(authenticationManager, DEFAULT_OIDC_USER_INFO_ENDPOINT_URI);
+		((OAuth2ErrorAuthenticationFailureHandler) authenticationFailureHandler).setHttpResponseCustomizer(authenticationFailureHttpResponseCustomizer);
 	}
 
 	/**
@@ -182,20 +194,6 @@ public final class OidcUserInfoEndpointFilter extends OncePerRequestFilter {
 		OidcUserInfoAuthenticationToken userInfoAuthenticationToken = (OidcUserInfoAuthenticationToken) authentication;
 		ServletServerHttpResponse httpResponse = new ServletServerHttpResponse(response);
 		this.userInfoHttpMessageConverter.write(userInfoAuthenticationToken.getUserInfo(), null, httpResponse);
-	}
-
-	private void sendErrorResponse(HttpServletRequest request, HttpServletResponse response,
-			AuthenticationException authenticationException) throws IOException {
-		OAuth2Error error = ((OAuth2AuthenticationException) authenticationException).getError();
-		HttpStatus httpStatus = HttpStatus.BAD_REQUEST;
-		if (error.getErrorCode().equals(OAuth2ErrorCodes.INVALID_TOKEN)) {
-			httpStatus = HttpStatus.UNAUTHORIZED;
-		} else if (error.getErrorCode().equals(OAuth2ErrorCodes.INSUFFICIENT_SCOPE)) {
-			httpStatus = HttpStatus.FORBIDDEN;
-		}
-		ServletServerHttpResponse httpResponse = new ServletServerHttpResponse(response);
-		httpResponse.setStatusCode(httpStatus);
-		this.errorHttpResponseConverter.write(error, null, httpResponse);
 	}
 
 }

@@ -24,6 +24,7 @@ import java.util.Set;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.springframework.core.log.LogMessage;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -103,6 +104,9 @@ public final class OAuth2RefreshTokenAuthenticationProvider implements Authentic
 		OAuth2Authorization authorization = this.authorizationService.findByToken(
 				refreshTokenAuthentication.getRefreshToken(), OAuth2TokenType.REFRESH_TOKEN);
 		if (authorization == null) {
+			if (this.logger.isTraceEnabled()) {
+				this.logger.trace("The refresh token is invalid.");
+			}
 			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_GRANT);
 		}
 
@@ -115,6 +119,9 @@ public final class OAuth2RefreshTokenAuthenticationProvider implements Authentic
 		}
 
 		if (!registeredClient.getAuthorizationGrantTypes().contains(AuthorizationGrantType.REFRESH_TOKEN)) {
+			if (this.logger.isTraceEnabled()) {
+				this.logger.warn(LogMessage.format("Invalid request: requested grant_type is not allowed for registered client '%s'", registeredClient.getId()));
+			}
 			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.UNAUTHORIZED_CLIENT);
 		}
 
@@ -123,6 +130,9 @@ public final class OAuth2RefreshTokenAuthenticationProvider implements Authentic
 			// As per https://tools.ietf.org/html/rfc6749#section-5.2
 			// invalid_grant: The provided authorization grant (e.g., authorization code,
 			// resource owner credentials) or refresh token is invalid, expired, revoked [...].
+			if (this.logger.isTraceEnabled()) {
+				this.logger.trace("The refresh token is expired.");
+			}
 			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_GRANT);
 		}
 

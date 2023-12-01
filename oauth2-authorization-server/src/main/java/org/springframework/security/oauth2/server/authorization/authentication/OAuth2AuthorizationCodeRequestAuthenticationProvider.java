@@ -23,6 +23,7 @@ import java.util.function.Consumer;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.springframework.core.log.LogMessage;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
@@ -120,6 +121,9 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 		this.authenticationValidator.accept(authenticationContext);
 
 		if (!registeredClient.getAuthorizationGrantTypes().contains(AuthorizationGrantType.AUTHORIZATION_CODE)) {
+			if (this.logger.isTraceEnabled()) {
+				this.logger.warn(LogMessage.format("Invalid request: requested grant_type is not allowed for registered client '%s'", registeredClient.getId()));
+			}
 			throwError(OAuth2ErrorCodes.UNAUTHORIZED_CLIENT, OAuth2ParameterNames.CLIENT_ID,
 					authorizationCodeRequestAuthentication, registeredClient);
 		}

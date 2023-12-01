@@ -148,6 +148,9 @@ public final class OAuth2AuthorizationCodeAuthenticationProvider implements Auth
 
 		if (StringUtils.hasText(authorizationRequest.getRedirectUri()) &&
 				!authorizationRequest.getRedirectUri().equals(authorizationCodeAuthentication.getRedirectUri())) {
+			if (this.logger.isWarnEnabled()) {
+				this.logger.warn(LogMessage.format("Invalidated redirect_uri used by registered client '%s'", registeredClient.getId()));
+			}
 			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_GRANT);
 		}
 

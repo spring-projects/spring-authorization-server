@@ -153,7 +153,7 @@ public final class OAuth2AuthorizationCodeAuthenticationProvider implements Auth
 				this.logger.warn(LogMessage.format("Invalidated redirect_uri used by registered client '%s'", registeredClient.getId()));
 			}
 			OAuth2Error error = new OAuth2Error(OAuth2ErrorCodes.INVALID_GRANT,"The redirect_uri does not match the redirection URI used in the authorization request.",ERROR_URI);
-			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_GRANT);
+			throw new OAuth2AuthenticationException(error);
 		}
 
 		if (!authorizationCode.isActive()) {

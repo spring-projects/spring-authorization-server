@@ -15,12 +15,10 @@
  */
 package org.springframework.security.oauth2.server.authorization.web.authentication;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-
-import javax.servlet.http.HttpServletRequest;
-
+import org.springframework.http.MediaType;
+import org.springframework.http.converter.FormHttpMessageConverter;
+import org.springframework.http.converter.HttpMessageConverter;
+import org.springframework.http.server.ServletServerHttpRequest;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
@@ -28,6 +26,12 @@ import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.endpoint.PkceParameterNames;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.util.StringUtils;
+
+import javax.servlet.http.HttpServletRequest;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Utility methods for the OAuth 2.0 Protocol Endpoints.
@@ -37,7 +41,6 @@ import org.springframework.util.MultiValueMap;
  */
 final class OAuth2EndpointUtils {
 	static final String ACCESS_TOKEN_REQUEST_ERROR_URI = "https://datatracker.ietf.org/doc/html/rfc6749#section-5.2";
-
 	private OAuth2EndpointUtils() {
 	}
 
@@ -52,6 +55,49 @@ final class OAuth2EndpointUtils {
 			}
 		});
 		return parameters;
+	}
+
+	static MultiValueMap<String, String> getFormParameters(HttpServletRequest request) {
+		MultiValueMap<String, String> ret = new LinkedMultiValueMap<>();
+		try {
+			HttpMessageConverter converter = new FormHttpMessageConverter();
+			String contentType = request.getContentType();
+			MediaType type = StringUtils.hasText(contentType) ? MediaType.valueOf(contentType) : null;
+			ServletServerHttpRequest serverHttpRequest = new ServletServerHttpRequest(request);
+
+			if (converter.canRead(MultiValueMap.class, type)) {
+				ret = (MultiValueMap<String, String>) converter.read(null, serverHttpRequest);
+			}
+		} catch (Exception e) {
+		}
+
+		return ret;
+	}
+
+	static MultiValueMap<String, String> getQueryParameters(HttpServletRequest request) {
+		String queryParameters = request.getQueryString();
+		return parseQueryString(queryParameters);
+	}
+
+	static MultiValueMap<String, String> parseQueryString(String queryString) {
+		MultiValueMap<String, String> queryParameters = new LinkedMultiValueMap<>();
+		if (!StringUtils.hasText(queryString)) {
+			return queryParameters;
+		}
+
+		String[] parameters = queryString.split("&");
+		for (String parameter : parameters) {
+			String[] keyValuePair = parameter.split("=");
+			String value = keyValuePair.length < 2 ? null : keyValuePair[1];
+			if (value != null) {
+				try {
+					value = java.net.URLDecoder.decode(value, "UTF-8");
+				} catch (Exception e) {
+				}
+			}
+			queryParameters.add(keyValuePair[0], value);
+		}
+		return queryParameters;
 	}
 
 	static Map<String, Object> getParametersIfMatchesAuthorizationCodeGrantRequest(HttpServletRequest request, String... exclusions) {

@@ -38,6 +38,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -198,7 +199,8 @@ public class OidcTests {
 		mvcResult = this.mvc.perform(post(DEFAULT_TOKEN_ENDPOINT_URI)
 				.params(getTokenRequestParameters(registeredClient, authorization))
 				.header(HttpHeaders.AUTHORIZATION, "Basic " + encodeBasicAuth(
-						registeredClient.getClientId(), registeredClient.getClientSecret())))
+						registeredClient.getClientId(), registeredClient.getClientSecret()))
+						.contentType(MediaType.APPLICATION_FORM_URLENCODED_VALUE))
 				.andExpect(status().isOk())
 				.andExpect(header().string(HttpHeaders.CACHE_CONTROL, containsString("no-store")))
 				.andExpect(header().string(HttpHeaders.PRAGMA, containsString("no-cache")))
@@ -239,7 +241,8 @@ public class OidcTests {
 		this.mvc.perform(post(DEFAULT_TOKEN_ENDPOINT_URI)
 				.params(getTokenRequestParameters(registeredClient, authorization))
 				.header(HttpHeaders.AUTHORIZATION, "Basic " + encodeBasicAuth(
-						registeredClient.getClientId(), registeredClient.getClientSecret())))
+						registeredClient.getClientId(), registeredClient.getClientSecret()))
+				.contentType(MediaType.APPLICATION_FORM_URLENCODED_VALUE))
 				.andExpect(status().isOk());
 
 		verify(this.tokenGenerator, times(3)).generate(any());

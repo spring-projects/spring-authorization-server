@@ -48,6 +48,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -355,7 +356,8 @@ public class OAuth2AuthorizationCodeGrantTests {
 			OAuth2Authorization authorization, String tokenEndpointUri) throws Exception {
 		MvcResult mvcResult = this.mvc.perform(post(tokenEndpointUri)
 				.params(getTokenRequestParameters(registeredClient, authorization))
-				.header(HttpHeaders.AUTHORIZATION, getAuthorizationHeader(registeredClient)))
+				.header(HttpHeaders.AUTHORIZATION, getAuthorizationHeader(registeredClient))
+						.contentType(MediaType.APPLICATION_FORM_URLENCODED_VALUE))
 				.andExpect(status().isOk())
 				.andExpect(header().string(HttpHeaders.CACHE_CONTROL, containsString("no-store")))
 				.andExpect(header().string(HttpHeaders.PRAGMA, containsString("no-cache")))
@@ -406,7 +408,8 @@ public class OAuth2AuthorizationCodeGrantTests {
 		this.mvc.perform(post(DEFAULT_TOKEN_ENDPOINT_URI)
 				.params(getTokenRequestParameters(registeredClient, authorizationCodeAuthorization))
 				.param(OAuth2ParameterNames.CLIENT_ID, registeredClient.getClientId())
-				.param(PkceParameterNames.CODE_VERIFIER, S256_CODE_VERIFIER))
+				.param(PkceParameterNames.CODE_VERIFIER, S256_CODE_VERIFIER)
+						.contentType(MediaType.APPLICATION_FORM_URLENCODED_VALUE))
 				.andExpect(header().string(HttpHeaders.CACHE_CONTROL, containsString("no-store")))
 				.andExpect(header().string(HttpHeaders.PRAGMA, containsString("no-cache")))
 				.andExpect(status().isOk())
@@ -498,7 +501,8 @@ public class OAuth2AuthorizationCodeGrantTests {
 
 		this.mvc.perform(post(DEFAULT_TOKEN_ENDPOINT_URI)
 				.params(getTokenRequestParameters(registeredClient, authorization))
-				.header(HttpHeaders.AUTHORIZATION, getAuthorizationHeader(registeredClient)))
+				.header(HttpHeaders.AUTHORIZATION, getAuthorizationHeader(registeredClient))
+				.contentType(MediaType.APPLICATION_FORM_URLENCODED))
 				.andExpect(status().isOk());
 
 		verify(this.tokenGenerator, times(2)).generate(any());
@@ -575,7 +579,8 @@ public class OAuth2AuthorizationCodeGrantTests {
 
 		this.mvc.perform(post(DEFAULT_TOKEN_ENDPOINT_URI)
 				.params(getTokenRequestParameters(registeredClient, authorizationCodeAuthorization))
-				.header(HttpHeaders.AUTHORIZATION, getAuthorizationHeader(registeredClient)))
+				.header(HttpHeaders.AUTHORIZATION, getAuthorizationHeader(registeredClient))
+						.contentType(MediaType.APPLICATION_FORM_URLENCODED_VALUE))
 				.andExpect(status().isOk())
 				.andExpect(header().string(HttpHeaders.CACHE_CONTROL, containsString("no-store")))
 				.andExpect(header().string(HttpHeaders.PRAGMA, containsString("no-cache")))
@@ -662,7 +667,8 @@ public class OAuth2AuthorizationCodeGrantTests {
 
 		mvcResult = this.mvc.perform(post(DEFAULT_TOKEN_ENDPOINT_URI)
 				.params(getTokenRequestParameters(registeredClient, authorizationCodeAuthorization))
-				.header(HttpHeaders.AUTHORIZATION, getAuthorizationHeader(registeredClient)))
+				.header(HttpHeaders.AUTHORIZATION, getAuthorizationHeader(registeredClient))
+						.contentType(MediaType.APPLICATION_FORM_URLENCODED_VALUE))
 				.andExpect(status().isOk())
 				.andExpect(header().string(HttpHeaders.CACHE_CONTROL, containsString("no-store")))
 				.andExpect(header().string(HttpHeaders.PRAGMA, containsString("no-cache")))
@@ -757,7 +763,8 @@ public class OAuth2AuthorizationCodeGrantTests {
 		mvcResult = this.mvc.perform(post(DEFAULT_TOKEN_ENDPOINT_URI)
 				.params(getTokenRequestParameters(registeredClient, authorizationCodeAuthorization))
 				.param(OAuth2ParameterNames.CLIENT_ID, registeredClient.getClientId())
-				.param(PkceParameterNames.CODE_VERIFIER, S256_CODE_VERIFIER))
+				.param(PkceParameterNames.CODE_VERIFIER, S256_CODE_VERIFIER)
+						.contentType(MediaType.APPLICATION_FORM_URLENCODED_VALUE))
 				.andExpect(header().string(HttpHeaders.CACHE_CONTROL, containsString("no-store")))
 				.andExpect(header().string(HttpHeaders.PRAGMA, containsString("no-cache")))
 				.andExpect(status().isOk())

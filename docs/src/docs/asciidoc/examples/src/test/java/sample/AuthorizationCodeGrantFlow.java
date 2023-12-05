@@ -150,6 +150,7 @@ public class AuthorizationCodeGrantFlow {
 
 		HttpHeaders basicAuth = new HttpHeaders();
 		basicAuth.setBasicAuth(registeredClient.getClientId(), "secret");
+		basicAuth.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
 		MvcResult mvcResult = this.mockMvc.perform(post("/oauth2/token")
 				.params(parameters)

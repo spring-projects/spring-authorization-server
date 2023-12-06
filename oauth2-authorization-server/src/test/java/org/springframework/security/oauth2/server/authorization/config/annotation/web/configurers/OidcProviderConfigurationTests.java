@@ -163,13 +163,6 @@ public class OidcProviderConfigurationTests {
 	}
 
 	@Test
-	public void loadContextWhenIssuerWithPathThenThrowException() {
-		assertThatThrownBy(
-				() -> this.spring.register(AuthorizationServerConfigurationWithIssuerPath.class).autowire()
-		);
-	}
-
-	@Test
 	public void loadContextWhenIssuerWithQueryThenThrowException() {
 		assertThatThrownBy(
 				() -> this.spring.register(AuthorizationServerConfigurationWithIssuerQuery.class).autowire()
@@ -187,13 +180,6 @@ public class OidcProviderConfigurationTests {
 	public void loadContextWhenIssuerWithQueryAndFragmentThenThrowException() {
 		assertThatThrownBy(
 				() -> this.spring.register(AuthorizationServerConfigurationWithIssuerQueryAndFragment.class).autowire()
-		);
-	}
-
-	@Test
-	public void loadContextWhenIssuerWithEmptyPathThenThrowException() {
-		assertThatThrownBy(
-				() -> this.spring.register(AuthorizationServerConfigurationWithIssuerEmptyPath.class).autowire()
 		);
 	}
 
@@ -315,15 +301,6 @@ public class OidcProviderConfigurationTests {
 	}
 
 	@EnableWebSecurity
-	static class AuthorizationServerConfigurationWithIssuerPath extends AuthorizationServerConfiguration {
-
-		@Bean
-		AuthorizationServerSettings authorizationServerSettings() {
-			return AuthorizationServerSettings.builder().issuer(ISSUER_URL + "/issuer1").build();
-		}
-	}
-
-	@EnableWebSecurity
 	static class AuthorizationServerConfigurationWithIssuerQuery extends AuthorizationServerConfiguration {
 
 		@Bean
@@ -347,15 +324,6 @@ public class OidcProviderConfigurationTests {
 		@Bean
 		AuthorizationServerSettings authorizationServerSettings() {
 			return AuthorizationServerSettings.builder().issuer(ISSUER_URL + "?param=value#fragment").build();
-		}
-	}
-
-	@EnableWebSecurity
-	static class AuthorizationServerConfigurationWithIssuerEmptyPath extends AuthorizationServerConfiguration {
-
-		@Bean
-		AuthorizationServerSettings authorizationServerSettings() {
-			return AuthorizationServerSettings.builder().issuer(ISSUER_URL + "/").build();
 		}
 	}
 

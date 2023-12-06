@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 the original author or authors.
+ * Copyright 2020-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,6 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.OrRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
-import org.springframework.util.StringUtils;
 
 /**
  * An {@link AbstractHttpConfigurer} for OAuth 2.0 Authorization Server support.
@@ -331,9 +330,6 @@ public final class OAuth2AuthorizationServerConfigurer
 				issuerUri.toURL();
 			} catch (Exception ex) {
 				throw new IllegalArgumentException("issuer must be a valid URL", ex);
-			}
-			if (StringUtils.hasText(issuerUri.getPath())) {
-				throw new IllegalArgumentException("Path component for issuer ('" + issuerUri.getPath() + "') is currently not supported");
 			}
 			// rfc8414 https://datatracker.ietf.org/doc/html/rfc8414#section-2
 			if (issuerUri.getQuery() != null || issuerUri.getFragment() != null) {

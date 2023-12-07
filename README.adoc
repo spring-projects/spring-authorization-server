@@ -31,7 +31,7 @@ The goal is to leverage all the knowledge learned thus far and apply the same to
 Submitted work via pull requests should follow the same coding style/conventions and adopt the same or similar design patterns that have been established in Spring Security's OAuth 2.0 support.
 
 == Documentation
-Be sure to read the https://docs.spring.io/spring-authorization-server/docs/current/reference/html/[Spring Authorization Server Reference] and https://docs.spring.io/spring-security/reference[Spring Security Reference], as well as the https://docs.spring.io/spring-security/reference/servlet/oauth2/index.html[OAuth 2.0 Reference], which describes the Client and Resource Server features available.
+Be sure to read the https://docs.spring.io/spring-authorization-server/reference/[Spring Authorization Server Reference] and https://docs.spring.io/spring-security/reference[Spring Security Reference], as well as the https://docs.spring.io/spring-security/reference/servlet/oauth2/index.html[OAuth 2.0 Reference], which describes the Client and Resource Server features available.
 
 JavaDoc is also available for the https://docs.spring.io/spring-authorization-server/docs/current/api/[Spring Authorization Server API] and https://docs.spring.io/spring-security/site/docs/current/api/[Spring Security API].
 

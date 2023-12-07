@@ -8,7 +8,7 @@ This project replaces the Authorization Server support provided by https://sprin
 This project uses https://docs.github.com/en/issues/planning-and-tracking-with-projects/learning-about-projects/about-projects[GitHub Projects] to prioritize the feature roadmap and help organize the project plan.
 The project board can be accessed https://github.com/orgs/spring-projects/projects/8[here].
 
-The feature list can be viewed in the https://docs.spring.io/spring-authorization-server/docs/current/reference/html/overview.html#feature-list[reference documentation].
+The feature list can be viewed in the https://docs.spring.io/spring-authorization-server/reference/overview.html#feature-list[reference documentation].
 
 == Support Policy
 The Spring Authorization Server project provides software support through the https://tanzu.vmware.com/support/oss[VMware Tanzu OSS support policy].
@@ -31,7 +31,7 @@ The goal is to leverage all the knowledge learned thus far and apply the same to
 Submitted work via pull requests should follow the same coding style/conventions and adopt the same or similar design patterns that have been established in Spring Security's OAuth 2.0 support.
 
 == Documentation
-Be sure to read the https://docs.spring.io/spring-authorization-server/docs/current/reference/html/[Spring Authorization Server Reference] and https://docs.spring.io/spring-security/reference[Spring Security Reference], as well as the https://docs.spring.io/spring-security/reference/servlet/oauth2/index.html[OAuth 2.0 Reference], which describes the Client and Resource Server features available.
+Be sure to read the https://docs.spring.io/spring-authorization-server/reference/[Spring Authorization Server Reference] and https://docs.spring.io/spring-security/reference[Spring Security Reference], as well as the https://docs.spring.io/spring-security/reference/servlet/oauth2/index.html[OAuth 2.0 Reference], which describes the Client and Resource Server features available.
 
 JavaDoc is also available for the https://docs.spring.io/spring-authorization-server/docs/current/api/[Spring Authorization Server API] and https://docs.spring.io/spring-security/site/docs/current/api/[Spring Security API].
 

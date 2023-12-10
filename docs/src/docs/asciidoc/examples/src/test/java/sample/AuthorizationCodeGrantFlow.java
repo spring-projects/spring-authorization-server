@@ -94,7 +94,7 @@ public class AuthorizationCodeGrantFlow {
 		parameters.set(OAuth2ParameterNames.STATE, "state");
 
 		MvcResult mvcResult = this.mockMvc.perform(get("/oauth2/authorize")
-				.params(parameters)
+				.queryParams(parameters)
 				.with(user(this.username).roles("USER")))
 				.andExpect(status().isOk())
 				.andExpect(header().string("content-type", containsString(MediaType.TEXT_HTML_VALUE)))
@@ -150,7 +150,6 @@ public class AuthorizationCodeGrantFlow {
 
 		HttpHeaders basicAuth = new HttpHeaders();
 		basicAuth.setBasicAuth(registeredClient.getClientId(), "secret");
-		basicAuth.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
 		MvcResult mvcResult = this.mockMvc.perform(post("/oauth2/token")
 				.params(parameters)

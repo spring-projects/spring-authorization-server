@@ -39,7 +39,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -295,8 +294,7 @@ public class OAuth2TokenIntrospectionTests {
 		// @formatter:off
 		MvcResult mvcResult = this.mvc.perform(post(authorizationServerSettings.getTokenEndpoint())
 				.params(getAuthorizationCodeTokenRequestParameters(authorizedRegisteredClient, authorization))
-				.header(HttpHeaders.AUTHORIZATION, getAuthorizationHeader(authorizedRegisteredClient))
-				.contentType(MediaType.APPLICATION_FORM_URLENCODED_VALUE))
+				.header(HttpHeaders.AUTHORIZATION, getAuthorizationHeader(authorizedRegisteredClient)))
 				.andExpect(status().isOk())
 				.andReturn();
 		// @formatter:on

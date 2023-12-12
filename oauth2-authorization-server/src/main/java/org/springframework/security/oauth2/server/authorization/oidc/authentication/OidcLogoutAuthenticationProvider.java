@@ -97,7 +97,8 @@ public final class OidcLogoutAuthenticationProvider implements AuthenticationPro
 		}
 
 		OAuth2Authorization.Token<OidcIdToken> authorizedIdToken = authorization.getToken(OidcIdToken.class);
-		if (!authorizedIdToken.isActive()) {
+		if (authorizedIdToken.isInvalidated() ||
+				authorizedIdToken.isBeforeUse()) {	// Expired ID Token should be accepted
 			throwError(OAuth2ErrorCodes.INVALID_TOKEN, "id_token_hint");
 		}
 

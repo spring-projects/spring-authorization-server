@@ -30,6 +30,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.security.authentication.TestingAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.session.SessionInformation;
 import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
@@ -134,7 +135,7 @@ public class OidcLogoutAuthenticationProviderTests {
 	}
 
 	@Test
-	public void authenticateWhenIdTokenNotActiveThenThrowOAuth2AuthenticationException() {
+	public void authenticateWhenIdTokenInvalidatedThenThrowOAuth2AuthenticationException() {
 		TestingAuthenticationToken principal = new TestingAuthenticationToken("principal", "credentials");
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 		OidcIdToken idToken =  OidcIdToken.withTokenValue("id-token")
@@ -501,6 +502,28 @@ public class OidcLogoutAuthenticationProviderTests {
 				.expiresAt(Instant.now().plusSeconds(60).truncatedTo(ChronoUnit.MILLIS))
 				.claim("sid", createHash(sessionId))
 				.build();
+		authenticateValidIdToken(principal, registeredClient, sessionId, idToken);
+	}
+
+	// gh-1440
+	@Test
+	public void authenticateWhenValidExpiredIdTokenThenAuthenticated() throws Exception {
+		TestingAuthenticationToken principal = new TestingAuthenticationToken("principal", "credentials");
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+		String sessionId = "session-1";
+		OidcIdToken idToken =  OidcIdToken.withTokenValue("id-token")
+				.issuer("https://provider.com")
+				.subject(principal.getName())
+				.audience(Collections.singleton(registeredClient.getClientId()))
+				.issuedAt(Instant.now().minusSeconds(60).truncatedTo(ChronoUnit.MILLIS))
+				.expiresAt(Instant.now().minusSeconds(30).truncatedTo(ChronoUnit.MILLIS))	// Expired
+				.claim("sid", createHash(sessionId))
+				.build();
+		authenticateValidIdToken(principal, registeredClient, sessionId, idToken);
+	}
+
+	private void authenticateValidIdToken(Authentication principal, RegisteredClient registeredClient,
+			String sessionId, OidcIdToken idToken) {
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient)
 				.principalName(principal.getName())
 				.token(idToken,

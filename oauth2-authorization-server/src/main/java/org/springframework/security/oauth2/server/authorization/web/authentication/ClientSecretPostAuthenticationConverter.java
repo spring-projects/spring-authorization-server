@@ -48,7 +48,18 @@ public final class ClientSecretPostAuthenticationConverter implements Authentica
 	@Nullable
 	@Override
 	public Authentication convert(HttpServletRequest request) {
-		MultiValueMap<String, String> parameters = OAuth2EndpointUtils.getParameters(request);
+		String queryString = request.getQueryString();
+		if (StringUtils.hasText(queryString) &&
+				(queryString.contains(OAuth2ParameterNames.CLIENT_ID) ||
+						queryString.contains(OAuth2ParameterNames.CLIENT_SECRET))) {
+			OAuth2Error error = new OAuth2Error(
+					OAuth2ErrorCodes.INVALID_REQUEST,
+					"Client credentials MUST NOT be included in the request URI.",
+					null);
+			throw new OAuth2AuthenticationException(error);
+		}
+
+		MultiValueMap<String, String> parameters = OAuth2EndpointUtils.getFormParameters(request);
 
 		// client_id (REQUIRED)
 		String clientId = parameters.getFirst(OAuth2ParameterNames.CLIENT_ID);
@@ -68,17 +79,6 @@ public final class ClientSecretPostAuthenticationConverter implements Authentica
 
 		if (parameters.get(OAuth2ParameterNames.CLIENT_SECRET).size() != 1) {
 			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_REQUEST);
-		}
-
-		String queryString = request.getQueryString();
-		if (StringUtils.hasText(queryString) &&
-				(queryString.contains(OAuth2ParameterNames.CLIENT_ID) ||
-						queryString.contains(OAuth2ParameterNames.CLIENT_SECRET))) {
-			OAuth2Error error = new OAuth2Error(
-					OAuth2ErrorCodes.INVALID_REQUEST,
-					"Client credentials MUST NOT be included in the request URI.",
-					null);
-			throw new OAuth2AuthenticationException(error);
 		}
 
 		Map<String, Object> additionalParameters = OAuth2EndpointUtils.getParametersIfMatchesAuthorizationCodeGrantRequest(request,

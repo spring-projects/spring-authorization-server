@@ -103,7 +103,7 @@ public final class OAuth2DeviceAuthorizationRequestAuthenticationProvider implem
 
 		if (!registeredClient.getAuthorizationGrantTypes().contains(AuthorizationGrantType.DEVICE_CODE)) {
 			if (this.logger.isTraceEnabled()) {
-				this.logger.warn(LogMessage.format("Invalidated grant_type used by registered client '%s'", registeredClient.getId()));
+				this.logger.warn(LogMessage.format("Invalid request: requested grant_type is not allowed for registered client '%s'", registeredClient.getId()));
 			}
 			throwError(OAuth2ErrorCodes.UNAUTHORIZED_CLIENT, OAuth2ParameterNames.CLIENT_ID);
 		}

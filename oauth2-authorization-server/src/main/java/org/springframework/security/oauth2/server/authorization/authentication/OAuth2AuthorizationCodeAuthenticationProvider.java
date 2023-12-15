@@ -143,8 +143,7 @@ public final class OAuth2AuthorizationCodeAuthenticationProvider implements Auth
 					this.logger.warn(LogMessage.format("Invalidated authorization code used by registered client '%s'", registeredClient.getId()));
 				}
 			}
-			OAuth2Error error = new OAuth2Error(OAuth2ErrorCodes.INVALID_GRANT,"The authorization code is invalid or has expired.",ERROR_URI);
-			throw new OAuth2AuthenticationException(error);
+			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_GRANT);
 		}
 
 		if (StringUtils.hasText(authorizationRequest.getRedirectUri()) &&
@@ -152,8 +151,7 @@ public final class OAuth2AuthorizationCodeAuthenticationProvider implements Auth
 			if (this.logger.isWarnEnabled()) {
 				this.logger.warn(LogMessage.format("Invalidated redirect_uri used by registered client '%s'", registeredClient.getId()));
 			}
-			OAuth2Error error = new OAuth2Error(OAuth2ErrorCodes.INVALID_GRANT,"The redirect_uri does not match the redirection URI used in the authorization request.",ERROR_URI);
-			throw new OAuth2AuthenticationException(error);
+			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_GRANT);
 		}
 
 		if (!authorizationCode.isActive()) {
@@ -170,8 +168,7 @@ public final class OAuth2AuthorizationCodeAuthenticationProvider implements Auth
 					}
 				}
 			}
-			OAuth2Error error = new OAuth2Error(OAuth2ErrorCodes.INVALID_GRANT,"The authorization code is invalid or has expired.",ERROR_URI);
-			throw new OAuth2AuthenticationException(error);
+			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_GRANT);
 		}
 
 		if (this.logger.isTraceEnabled()) {

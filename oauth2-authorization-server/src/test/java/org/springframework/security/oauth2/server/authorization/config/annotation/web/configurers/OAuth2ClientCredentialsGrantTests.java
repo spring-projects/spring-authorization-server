@@ -59,7 +59,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
-import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.jose.TestJwks;
 import org.springframework.security.oauth2.server.authorization.JdbcOAuth2AuthorizationService;
@@ -98,7 +97,6 @@ import org.springframework.security.web.authentication.AuthenticationSuccessHand
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-import org.springframework.web.util.UriComponentsBuilder;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -230,37 +228,6 @@ public class OAuth2ClientCredentialsGrantTests {
 				.andExpect(jsonPath("$.scope").value("scope1 scope2"));
 
 		verify(jwtCustomizer).customize(any());
-	}
-
-	// gh-1378
-	@Test
-	public void requestWhenTokenRequestWithClientCredentialsInQueryParamThenInvalidRequest() throws Exception {
-		this.spring.register(AuthorizationServerConfiguration.class).autowire();
-
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient2().build();
-		this.registeredClientRepository.save(registeredClient);
-
-		String tokenEndpointUri = UriComponentsBuilder.fromUriString(DEFAULT_TOKEN_ENDPOINT_URI)
-				.queryParam(OAuth2ParameterNames.CLIENT_ID, registeredClient.getClientId())
-				.toUriString();
-
-		this.mvc.perform(post(tokenEndpointUri)
-						.param(OAuth2ParameterNames.CLIENT_SECRET, registeredClient.getClientSecret())
-						.param(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
-						.param(OAuth2ParameterNames.SCOPE, "scope1 scope2"))
-				.andExpect(status().isBadRequest())
-				.andExpect(jsonPath("$.error").value(OAuth2ErrorCodes.INVALID_REQUEST));
-
-		tokenEndpointUri = UriComponentsBuilder.fromUriString(DEFAULT_TOKEN_ENDPOINT_URI)
-				.queryParam(OAuth2ParameterNames.CLIENT_SECRET, registeredClient.getClientSecret())
-				.toUriString();
-
-		this.mvc.perform(post(tokenEndpointUri)
-						.param(OAuth2ParameterNames.CLIENT_ID, registeredClient.getClientId())
-						.param(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
-						.param(OAuth2ParameterNames.SCOPE, "scope1 scope2"))
-				.andExpect(status().isBadRequest())
-				.andExpect(jsonPath("$.error").value(OAuth2ErrorCodes.INVALID_REQUEST));
 	}
 
 	@Test

@@ -39,6 +39,7 @@ import org.springframework.util.StringUtils;
  */
 final class OAuth2EndpointUtils {
 	static final String ACCESS_TOKEN_REQUEST_ERROR_URI = "https://datatracker.ietf.org/doc/html/rfc6749#section-5.2";
+
 	private OAuth2EndpointUtils() {
 	}
 
@@ -46,9 +47,9 @@ final class OAuth2EndpointUtils {
 		Map<String, String[]> parameterMap = request.getParameterMap();
 		MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
 		parameterMap.forEach((key, values) -> {
+			String queryString = StringUtils.hasText(request.getQueryString()) ? request.getQueryString() : "";
 			// If not query parameter then it's a form parameter
-			if ((!StringUtils.hasText(request.getQueryString()) && values.length > 0)
-					|| (!request.getQueryString().contains(key) && values.length > 0)) {
+			if (!queryString.contains(key) && values.length > 0) {
 				for (String value : values) {
 					parameters.add(key, value);
 				}
@@ -61,8 +62,8 @@ final class OAuth2EndpointUtils {
 		Map<String, String[]> parameterMap = request.getParameterMap();
 		MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
 		parameterMap.forEach((key, values) -> {
-			if (StringUtils.hasText(request.getQueryString())
-					&& request.getQueryString().contains(key) && values.length > 0) {
+			String queryString = StringUtils.hasText(request.getQueryString()) ? request.getQueryString() : "";
+			if (queryString.contains(key) && values.length > 0) {
 				for (String value : values) {
 					parameters.add(key, value);
 				}
@@ -75,7 +76,10 @@ final class OAuth2EndpointUtils {
 		if (!matchesAuthorizationCodeGrantRequest(request)) {
 			return Collections.emptyMap();
 		}
-		MultiValueMap<String, String> multiValueParameters = getFormParameters(request);
+		MultiValueMap<String, String> multiValueParameters =
+				"GET".equals(request.getMethod()) ?
+						getQueryParameters(request) :
+						getFormParameters(request);
 		for (String exclusion : exclusions) {
 			multiValueParameters.remove(exclusion);
 		}
@@ -88,16 +92,14 @@ final class OAuth2EndpointUtils {
 	}
 
 	static boolean matchesAuthorizationCodeGrantRequest(HttpServletRequest request) {
-		MultiValueMap<String, String> parameters = getFormParameters(request);
 		return AuthorizationGrantType.AUTHORIZATION_CODE.getValue().equals(
-				parameters.getFirst(OAuth2ParameterNames.GRANT_TYPE)) &&
-				parameters.getFirst(OAuth2ParameterNames.CODE) != null;
+				request.getParameter(OAuth2ParameterNames.GRANT_TYPE)) &&
+				request.getParameter(OAuth2ParameterNames.CODE) != null;
 	}
 
 	static boolean matchesPkceTokenRequest(HttpServletRequest request) {
-		MultiValueMap<String, String> parameters = getFormParameters(request);
 		return matchesAuthorizationCodeGrantRequest(request) &&
-				parameters.getFirst(PkceParameterNames.CODE_VERIFIER) != null;
+				request.getParameter(PkceParameterNames.CODE_VERIFIER) != null;
 	}
 
 	static void throwError(String errorCode, String parameterName, String errorUri) {

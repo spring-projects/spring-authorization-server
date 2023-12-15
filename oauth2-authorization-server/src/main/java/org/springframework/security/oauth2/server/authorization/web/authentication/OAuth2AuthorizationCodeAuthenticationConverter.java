@@ -48,6 +48,7 @@ public final class OAuth2AuthorizationCodeAuthenticationConverter implements Aut
 	@Override
 	public Authentication convert(HttpServletRequest request) {
 		MultiValueMap<String, String> parameters = OAuth2EndpointUtils.getFormParameters(request);
+
 		// grant_type (REQUIRED)
 		String grantType = parameters.getFirst(OAuth2ParameterNames.GRANT_TYPE);
 		if (!AuthorizationGrantType.AUTHORIZATION_CODE.getValue().equals(grantType)) {

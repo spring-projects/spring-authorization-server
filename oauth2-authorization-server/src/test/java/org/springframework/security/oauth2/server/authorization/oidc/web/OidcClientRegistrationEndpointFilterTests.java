@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,6 +61,7 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
@@ -327,6 +328,7 @@ public class OidcClientRegistrationEndpointFilterTests {
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestUri);
 		request.setServletPath(requestUri);
 		request.addParameter(OAuth2ParameterNames.CLIENT_ID, "");
+		updateQueryString(request);
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		FilterChain filterChain = mock(FilterChain.class);
 
@@ -342,6 +344,7 @@ public class OidcClientRegistrationEndpointFilterTests {
 		request.setServletPath(requestUri);
 		request.addParameter(OAuth2ParameterNames.CLIENT_ID, "client-id");
 		request.addParameter(OAuth2ParameterNames.CLIENT_ID, "client-id2");
+		updateQueryString(request);
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		FilterChain filterChain = mock(FilterChain.class);
 
@@ -388,6 +391,7 @@ public class OidcClientRegistrationEndpointFilterTests {
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestUri);
 		request.setServletPath(requestUri);
 		request.setParameter(OAuth2ParameterNames.CLIENT_ID, "client1");
+		updateQueryString(request);
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		FilterChain filterChain = mock(FilterChain.class);
 
@@ -421,6 +425,7 @@ public class OidcClientRegistrationEndpointFilterTests {
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestUri);
 		request.setServletPath(requestUri);
 		request.setParameter(OAuth2ParameterNames.CLIENT_ID, expectedClientRegistrationResponse.getClientId());
+		updateQueryString(request);
 
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		FilterChain filterChain = mock(FilterChain.class);
@@ -463,6 +468,7 @@ public class OidcClientRegistrationEndpointFilterTests {
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestUri);
 		request.setServletPath(requestUri);
 		request.setParameter(OAuth2ParameterNames.CLIENT_ID, "client-id");
+		updateQueryString(request);
 
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		FilterChain filterChain = mock(FilterChain.class);
@@ -492,6 +498,7 @@ public class OidcClientRegistrationEndpointFilterTests {
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestUri);
 		request.setServletPath(requestUri);
 		request.setParameter(OAuth2ParameterNames.CLIENT_ID, expectedClientRegistrationResponse.getClientId());
+		updateQueryString(request);
 
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		FilterChain filterChain = mock(FilterChain.class);
@@ -513,6 +520,7 @@ public class OidcClientRegistrationEndpointFilterTests {
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestUri);
 		request.setServletPath(requestUri);
 		request.setParameter(OAuth2ParameterNames.CLIENT_ID, "client1");
+		updateQueryString(request);
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		FilterChain filterChain = mock(FilterChain.class);
 
@@ -520,6 +528,18 @@ public class OidcClientRegistrationEndpointFilterTests {
 
 		verify(authenticationFailureHandler).onAuthenticationFailure(eq(request), eq(response),
 				any(OAuth2AuthenticationException.class));
+	}
+
+	private static void updateQueryString(MockHttpServletRequest request) {
+		UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUriString(request.getRequestURI());
+		request.getParameterMap().forEach((key, values) -> {
+			if (values.length > 0) {
+				for (String value : values) {
+					uriBuilder.queryParam(key, value);
+				}
+			}
+		});
+		request.setQueryString(uriBuilder.build().getQuery());
 	}
 
 	private OAuth2Error readError(MockHttpServletResponse response) throws Exception {

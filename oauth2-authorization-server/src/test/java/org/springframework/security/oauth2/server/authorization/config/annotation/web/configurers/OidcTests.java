@@ -185,7 +185,7 @@ public class OidcTests {
 
 		MultiValueMap<String, String> authorizationRequestParameters = getAuthorizationRequestParameters(registeredClient);
 		MvcResult mvcResult = this.mvc.perform(get(DEFAULT_AUTHORIZATION_ENDPOINT_URI)
-				.params(authorizationRequestParameters)
+				.queryParams(authorizationRequestParameters)
 				.with(user("user").roles("A", "B")))
 				.andExpect(status().is3xxRedirection())
 				.andReturn();

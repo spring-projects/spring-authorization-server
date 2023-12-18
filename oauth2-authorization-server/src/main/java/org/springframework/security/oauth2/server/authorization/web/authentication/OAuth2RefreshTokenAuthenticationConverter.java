@@ -50,15 +50,15 @@ public final class OAuth2RefreshTokenAuthenticationConverter implements Authenti
 	@Nullable
 	@Override
 	public Authentication convert(HttpServletRequest request) {
+		MultiValueMap<String, String> parameters = OAuth2EndpointUtils.getFormParameters(request);
+
 		// grant_type (REQUIRED)
-		String grantType = request.getParameter(OAuth2ParameterNames.GRANT_TYPE);
+		String grantType = parameters.getFirst(OAuth2ParameterNames.GRANT_TYPE);
 		if (!AuthorizationGrantType.REFRESH_TOKEN.getValue().equals(grantType)) {
 			return null;
 		}
 
 		Authentication clientPrincipal = SecurityContextHolder.getContext().getAuthentication();
-
-		MultiValueMap<String, String> parameters = OAuth2EndpointUtils.getParameters(request);
 
 		// refresh_token (REQUIRED)
 		String refreshToken = parameters.getFirst(OAuth2ParameterNames.REFRESH_TOKEN);

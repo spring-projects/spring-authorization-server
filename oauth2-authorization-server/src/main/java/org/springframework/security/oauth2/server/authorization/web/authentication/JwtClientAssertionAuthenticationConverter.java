@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,12 +48,12 @@ public final class JwtClientAssertionAuthenticationConverter implements Authenti
 	@Nullable
 	@Override
 	public Authentication convert(HttpServletRequest request) {
-		if (request.getParameter(OAuth2ParameterNames.CLIENT_ASSERTION_TYPE) == null ||
-				request.getParameter(OAuth2ParameterNames.CLIENT_ASSERTION) == null) {
+		MultiValueMap<String, String> parameters = OAuth2EndpointUtils.getFormParameters(request);
+
+		if (parameters.getFirst(OAuth2ParameterNames.CLIENT_ASSERTION_TYPE) == null ||
+				parameters.getFirst(OAuth2ParameterNames.CLIENT_ASSERTION) == null) {
 			return null;
 		}
-
-		MultiValueMap<String, String> parameters = OAuth2EndpointUtils.getParameters(request);
 
 		// client_assertion_type (REQUIRED)
 		String clientAssertionType = parameters.getFirst(OAuth2ParameterNames.CLIENT_ASSERTION_TYPE);

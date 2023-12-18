@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 package org.springframework.security.oauth2.server.authorization.oidc.web.authentication;
+
+import java.util.Map;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -30,6 +32,8 @@ import org.springframework.security.oauth2.server.authorization.oidc.authenticat
 import org.springframework.security.oauth2.server.authorization.oidc.http.converter.OidcClientRegistrationHttpMessageConverter;
 import org.springframework.security.oauth2.server.authorization.oidc.web.OidcClientRegistrationEndpointFilter;
 import org.springframework.security.web.authentication.AuthenticationConverter;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
 
 /**
@@ -65,14 +69,30 @@ public final class OidcClientRegistrationAuthenticationConverter implements Auth
 			return new OidcClientRegistrationAuthenticationToken(principal, clientRegistration);
 		}
 
+		MultiValueMap<String, String> parameters = getQueryParameters(request);
+
 		// client_id (REQUIRED)
-		String clientId = request.getParameter(OAuth2ParameterNames.CLIENT_ID);
+		String clientId = parameters.getFirst(OAuth2ParameterNames.CLIENT_ID);
 		if (!StringUtils.hasText(clientId) ||
-				request.getParameterValues(OAuth2ParameterNames.CLIENT_ID).length != 1) {
+				parameters.get(OAuth2ParameterNames.CLIENT_ID).size() != 1) {
 			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_REQUEST);
 		}
 
 		return new OidcClientRegistrationAuthenticationToken(principal, clientId);
+	}
+
+	private static MultiValueMap<String, String> getQueryParameters(HttpServletRequest request) {
+		Map<String, String[]> parameterMap = request.getParameterMap();
+		MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+		parameterMap.forEach((key, values) -> {
+			String queryString = StringUtils.hasText(request.getQueryString()) ? request.getQueryString() : "";
+			if (queryString.contains(key) && values.length > 0) {
+				for (String value : values) {
+					parameters.add(key, value);
+				}
+			}
+		});
+		return parameters;
 	}
 
 }

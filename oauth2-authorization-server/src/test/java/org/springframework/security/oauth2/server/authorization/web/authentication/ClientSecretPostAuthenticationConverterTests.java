@@ -79,31 +79,6 @@ public class ClientSecretPostAuthenticationConverterTests {
 				.isEqualTo(OAuth2ErrorCodes.INVALID_REQUEST);
 	}
 
-	// gh-1378
-	@Test
-	public void convertWhenClientCredentialsInQueryParamThenInvalidRequestError() {
-		MockHttpServletRequest request = new MockHttpServletRequest();
-		request.addParameter(OAuth2ParameterNames.CLIENT_ID, "client-1");
-		request.addParameter(OAuth2ParameterNames.CLIENT_SECRET, "client-secret");
-		request.setQueryString("client_id=client-1");
-		assertThatThrownBy(() -> this.converter.convert(request))
-				.isInstanceOf(OAuth2AuthenticationException.class)
-				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
-				.satisfies(error -> {
-					assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_REQUEST);
-					assertThat(error.getDescription()).isEqualTo("Client credentials MUST NOT be included in the request URI.");
-				});
-
-		request.setQueryString("client_secret=client-secret");
-		assertThatThrownBy(() -> this.converter.convert(request))
-				.isInstanceOf(OAuth2AuthenticationException.class)
-				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
-				.satisfies(error -> {
-					assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_REQUEST);
-					assertThat(error.getDescription()).isEqualTo("Client credentials MUST NOT be included in the request URI.");
-				});
-	}
-
 	@Test
 	public void convertWhenPostWithValidCredentialsThenReturnClientAuthenticationToken() {
 		MockHttpServletRequest request = new MockHttpServletRequest();

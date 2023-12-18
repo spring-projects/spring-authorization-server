@@ -53,7 +53,7 @@ public final class OAuth2DeviceAuthorizationRequestAuthenticationConverter imple
 	public Authentication convert(HttpServletRequest request) {
 		Authentication clientPrincipal = SecurityContextHolder.getContext().getAuthentication();
 
-		MultiValueMap<String, String> parameters = OAuth2EndpointUtils.getParameters(request);
+		MultiValueMap<String, String> parameters = OAuth2EndpointUtils.getFormParameters(request);
 
 		String authorizationUri = request.getRequestURL().toString();
 

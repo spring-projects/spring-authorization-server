@@ -117,7 +117,7 @@ public class DeviceAuthorizationGrantFlow {
 		parameters.set(OAuth2ParameterNames.USER_CODE, userCode);
 
 		MvcResult mvcResult = this.mockMvc.perform(get("/oauth2/device_verification")
-				.params(parameters)
+				.queryParams(parameters)
 				.with(user(this.username).roles("USER")))
 				.andExpect(status().isOk())
 				.andExpect(header().string(HttpHeaders.CONTENT_TYPE, containsString(MediaType.TEXT_HTML_VALUE)))

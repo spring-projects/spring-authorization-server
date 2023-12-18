@@ -59,7 +59,7 @@ public final class OAuth2DeviceAuthorizationConsentAuthenticationConverter imple
 			return null;
 		}
 
-		MultiValueMap<String, String> parameters = OAuth2EndpointUtils.getParameters(request);
+		MultiValueMap<String, String> parameters = OAuth2EndpointUtils.getFormParameters(request);
 
 		String authorizationUri = request.getRequestURL().toString();
 

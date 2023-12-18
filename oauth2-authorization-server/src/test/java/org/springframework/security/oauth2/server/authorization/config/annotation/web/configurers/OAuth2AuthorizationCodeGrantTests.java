@@ -442,9 +442,9 @@ public class OAuth2AuthorizationCodeGrantTests {
 		this.registeredClientRepository.save(registeredClient);
 
 		MvcResult mvcResult = this.mvc.perform(get(DEFAULT_AUTHORIZATION_ENDPOINT_URI)
-				.params(getAuthorizationRequestParameters(registeredClient))
-				.param(PkceParameterNames.CODE_CHALLENGE, S256_CODE_CHALLENGE)
-				.param(PkceParameterNames.CODE_CHALLENGE_METHOD, "S256")
+				.queryParams(getAuthorizationRequestParameters(registeredClient))
+				.queryParam(PkceParameterNames.CODE_CHALLENGE, S256_CODE_CHALLENGE)
+				.queryParam(PkceParameterNames.CODE_CHALLENGE_METHOD, "S256")
 				.with(user("user")))
 				.andExpect(status().is3xxRedirection())
 				.andReturn();

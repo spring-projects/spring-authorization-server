@@ -110,7 +110,7 @@ public class AuthorizationCodeGrantFlow {
 
 		// @formatter:off
 		MvcResult mvcResult = this.mockMvc.perform(get("/oauth2/authorize")
-				.params(parameters)
+				.queryParams(parameters)
 				.with(user(this.username).roles("USER")))
 				.andExpect(status().isOk())
 				.andExpect(header().string("content-type", containsString(MediaType.TEXT_HTML_VALUE)))

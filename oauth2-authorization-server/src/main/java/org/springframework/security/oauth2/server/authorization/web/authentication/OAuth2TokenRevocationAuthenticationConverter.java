@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ public final class OAuth2TokenRevocationAuthenticationConverter implements Authe
 	public Authentication convert(HttpServletRequest request) {
 		Authentication clientPrincipal = SecurityContextHolder.getContext().getAuthentication();
 
-		MultiValueMap<String, String> parameters = OAuth2EndpointUtils.getParameters(request);
+		MultiValueMap<String, String> parameters = OAuth2EndpointUtils.getFormParameters(request);
 
 		// token (REQUIRED)
 		String token = parameters.getFirst(OAuth2ParameterNames.TOKEN);

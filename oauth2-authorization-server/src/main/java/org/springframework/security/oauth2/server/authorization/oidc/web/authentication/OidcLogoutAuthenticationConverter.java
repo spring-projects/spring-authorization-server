@@ -15,8 +15,6 @@
  */
 package org.springframework.security.oauth2.server.authorization.oidc.web.authentication;
 
-import java.util.Map;
-
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 
@@ -31,7 +29,6 @@ import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.server.authorization.oidc.authentication.OidcLogoutAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.oidc.web.OidcLogoutEndpointFilter;
 import org.springframework.security.web.authentication.AuthenticationConverter;
-import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
 
@@ -51,12 +48,15 @@ public final class OidcLogoutAuthenticationConverter implements AuthenticationCo
 
 	@Override
 	public Authentication convert(HttpServletRequest request) {
-		MultiValueMap<String, String> parameters = getParameters(request);
+		MultiValueMap<String, String> parameters =
+				"GET".equals(request.getMethod()) ?
+						OAuth2EndpointUtils.getQueryParameters(request) :
+						OAuth2EndpointUtils.getFormParameters(request);
 
 		// id_token_hint (REQUIRED)		// RECOMMENDED as per spec
-		String idTokenHint = request.getParameter("id_token_hint");
+		String idTokenHint = parameters.getFirst("id_token_hint");
 		if (!StringUtils.hasText(idTokenHint) ||
-				request.getParameterValues("id_token_hint").length != 1) {
+				parameters.get("id_token_hint").size() != 1) {
 			throwError(OAuth2ErrorCodes.INVALID_REQUEST, "id_token_hint");
 		}
 
@@ -94,19 +94,6 @@ public final class OidcLogoutAuthenticationConverter implements AuthenticationCo
 
 		return new OidcLogoutAuthenticationToken(idTokenHint, principal,
 				sessionId, clientId, postLogoutRedirectUri, state);
-	}
-
-	private static MultiValueMap<String, String> getParameters(HttpServletRequest request) {
-		Map<String, String[]> parameterMap = request.getParameterMap();
-		MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>(parameterMap.size());
-		parameterMap.forEach((key, values) -> {
-			if (values.length > 0) {
-				for (String value : values) {
-					parameters.add(key, value);
-				}
-			}
-		});
-		return parameters;
 	}
 
 	private static void throwError(String errorCode, String parameterName) {

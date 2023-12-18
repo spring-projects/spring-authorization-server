@@ -29,11 +29,13 @@ import org.springframework.security.oauth2.core.endpoint.PkceParameterNames;
 import org.springframework.util.Assert;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.util.StringUtils;
 
 /**
  * Utility methods for the OAuth 2.0 Protocol Endpoints.
  *
  * @author Joe Grandja
+ * @author Greg Li
  * @since 0.1.2
  */
 final class OAuth2EndpointUtils {
@@ -42,11 +44,27 @@ final class OAuth2EndpointUtils {
 	private OAuth2EndpointUtils() {
 	}
 
-	static MultiValueMap<String, String> getParameters(HttpServletRequest request) {
+	static MultiValueMap<String, String> getFormParameters(HttpServletRequest request) {
 		Map<String, String[]> parameterMap = request.getParameterMap();
-		MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>(parameterMap.size());
+		MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
 		parameterMap.forEach((key, values) -> {
-			if (values.length > 0) {
+			String queryString = StringUtils.hasText(request.getQueryString()) ? request.getQueryString() : "";
+			// If not query parameter then it's a form parameter
+			if (!queryString.contains(key) && values.length > 0) {
+				for (String value : values) {
+					parameters.add(key, value);
+				}
+			}
+		});
+		return parameters;
+	}
+
+	static MultiValueMap<String, String> getQueryParameters(HttpServletRequest request) {
+		Map<String, String[]> parameterMap = request.getParameterMap();
+		MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+		parameterMap.forEach((key, values) -> {
+			String queryString = StringUtils.hasText(request.getQueryString()) ? request.getQueryString() : "";
+			if (queryString.contains(key) && values.length > 0) {
 				for (String value : values) {
 					parameters.add(key, value);
 				}
@@ -59,7 +77,10 @@ final class OAuth2EndpointUtils {
 		if (!matchesAuthorizationCodeGrantRequest(request)) {
 			return Collections.emptyMap();
 		}
-		MultiValueMap<String, String> multiValueParameters = getParameters(request);
+		MultiValueMap<String, String> multiValueParameters =
+				"GET".equals(request.getMethod()) ?
+						getQueryParameters(request) :
+						getFormParameters(request);
 		for (String exclusion : exclusions) {
 			multiValueParameters.remove(exclusion);
 		}

@@ -23,6 +23,7 @@ import java.util.Set;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -164,6 +165,7 @@ public class OAuth2DeviceVerificationEndpointFilterTests {
 
 		MockHttpServletRequest request = createRequest();
 		request.addParameter(OAuth2ParameterNames.USER_CODE, USER_CODE);
+		updateQueryString(request);
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		FilterChain filterChain = mock(FilterChain.class);
 		this.filter.doFilter(request, response, filterChain);
@@ -223,6 +225,7 @@ public class OAuth2DeviceVerificationEndpointFilterTests {
 		MockHttpServletRequest request = createRequest();
 		request.addParameter(OAuth2ParameterNames.USER_CODE, USER_CODE);
 		request.addParameter("custom-param-1", "custom-value-1");
+		updateQueryString(request);
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		FilterChain filterChain = mock(FilterChain.class);
 		this.filter.doFilter(request, response, filterChain);
@@ -248,6 +251,7 @@ public class OAuth2DeviceVerificationEndpointFilterTests {
 
 		MockHttpServletRequest request = createRequest();
 		request.addParameter(OAuth2ParameterNames.USER_CODE, USER_CODE);
+		updateQueryString(request);
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		FilterChain filterChain = mock(FilterChain.class);
 		this.filter.doFilter(request, response, filterChain);
@@ -268,6 +272,7 @@ public class OAuth2DeviceVerificationEndpointFilterTests {
 
 		MockHttpServletRequest request = createRequest();
 		request.addParameter(OAuth2ParameterNames.USER_CODE, USER_CODE);
+		updateQueryString(request);
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		FilterChain filterChain = mock(FilterChain.class);
 		this.filter.doFilter(request, response, filterChain);
@@ -291,6 +296,7 @@ public class OAuth2DeviceVerificationEndpointFilterTests {
 		request.setServerPort(443);
 		request.setServerName("provider.com");
 		request.addParameter(OAuth2ParameterNames.USER_CODE, USER_CODE);
+		updateQueryString(request);
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		FilterChain filterChain = mock(FilterChain.class);
 		this.filter.setConsentPage("/consent");
@@ -322,6 +328,7 @@ public class OAuth2DeviceVerificationEndpointFilterTests {
 
 		MockHttpServletRequest request = createRequest();
 		request.addParameter(OAuth2ParameterNames.USER_CODE, USER_CODE);
+		updateQueryString(request);
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		FilterChain filterChain = mock(FilterChain.class);
 		this.filter.doFilter(request, response, filterChain);
@@ -340,6 +347,7 @@ public class OAuth2DeviceVerificationEndpointFilterTests {
 
 		MockHttpServletRequest request = createRequest();
 		request.addParameter(OAuth2ParameterNames.USER_CODE, USER_CODE);
+		updateQueryString(request);
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		FilterChain filterChain = mock(FilterChain.class);
 
@@ -367,6 +375,7 @@ public class OAuth2DeviceVerificationEndpointFilterTests {
 
 		MockHttpServletRequest request = createRequest();
 		request.addParameter(OAuth2ParameterNames.USER_CODE, USER_CODE);
+		updateQueryString(request);
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		FilterChain filterChain = mock(FilterChain.class);
 		this.filter.doFilter(request, response, filterChain);
@@ -388,6 +397,7 @@ public class OAuth2DeviceVerificationEndpointFilterTests {
 
 		MockHttpServletRequest request = createRequest();
 		request.addParameter(OAuth2ParameterNames.USER_CODE, USER_CODE);
+		updateQueryString(request);
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		FilterChain filterChain = mock(FilterChain.class);
 		this.filter.doFilter(request, response, filterChain);
@@ -443,6 +453,18 @@ public class OAuth2DeviceVerificationEndpointFilterTests {
 		request.setServletPath(VERIFICATION_URI);
 		request.setRemoteAddr(REMOTE_ADDRESS);
 		return request;
+	}
+
+	private static void updateQueryString(MockHttpServletRequest request) {
+		UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUriString(request.getRequestURI());
+		request.getParameterMap().forEach((key, values) -> {
+			if (values.length > 0) {
+				for (String value : values) {
+					uriBuilder.queryParam(key, value);
+				}
+			}
+		});
+		request.setQueryString(uriBuilder.build().getQuery());
 	}
 
 	private static String scopeCheckbox(String scope) {

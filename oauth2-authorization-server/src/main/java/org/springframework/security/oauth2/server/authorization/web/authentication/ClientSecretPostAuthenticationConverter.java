@@ -23,7 +23,6 @@ import org.springframework.lang.Nullable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
-import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientAuthenticationToken;
@@ -48,7 +47,7 @@ public final class ClientSecretPostAuthenticationConverter implements Authentica
 	@Nullable
 	@Override
 	public Authentication convert(HttpServletRequest request) {
-		MultiValueMap<String, String> parameters = OAuth2EndpointUtils.getParameters(request);
+		MultiValueMap<String, String> parameters = OAuth2EndpointUtils.getFormParameters(request);
 
 		// client_id (REQUIRED)
 		String clientId = parameters.getFirst(OAuth2ParameterNames.CLIENT_ID);
@@ -68,17 +67,6 @@ public final class ClientSecretPostAuthenticationConverter implements Authentica
 
 		if (parameters.get(OAuth2ParameterNames.CLIENT_SECRET).size() != 1) {
 			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_REQUEST);
-		}
-
-		String queryString = request.getQueryString();
-		if (StringUtils.hasText(queryString) &&
-				(queryString.contains(OAuth2ParameterNames.CLIENT_ID) ||
-						queryString.contains(OAuth2ParameterNames.CLIENT_SECRET))) {
-			OAuth2Error error = new OAuth2Error(
-					OAuth2ErrorCodes.INVALID_REQUEST,
-					"Client credentials MUST NOT be included in the request URI.",
-					null);
-			throw new OAuth2AuthenticationException(error);
 		}
 
 		Map<String, Object> additionalParameters = OAuth2EndpointUtils.getParametersIfMatchesAuthorizationCodeGrantRequest(request,

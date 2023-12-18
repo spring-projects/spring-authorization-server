@@ -54,12 +54,12 @@ public final class OAuth2AuthorizationConsentAuthenticationConverter implements 
 
 	@Override
 	public Authentication convert(HttpServletRequest request) {
+		MultiValueMap<String, String> parameters = OAuth2EndpointUtils.getFormParameters(request);
+
 		if (!"POST".equals(request.getMethod()) ||
-				request.getParameter(OAuth2ParameterNames.RESPONSE_TYPE) != null) {
+				parameters.getFirst(OAuth2ParameterNames.RESPONSE_TYPE) != null) {
 			return null;
 		}
-
-		MultiValueMap<String, String> parameters = OAuth2EndpointUtils.getParameters(request);
 
 		String authorizationUri = request.getRequestURL().toString();
 

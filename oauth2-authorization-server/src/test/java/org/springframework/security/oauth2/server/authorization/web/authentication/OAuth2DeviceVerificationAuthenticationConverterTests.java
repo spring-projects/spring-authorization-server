@@ -31,6 +31,7 @@ import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2DeviceVerificationAuthenticationToken;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import static java.util.Map.entry;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -69,6 +70,7 @@ public class OAuth2DeviceVerificationAuthenticationConverterTests {
 	public void convertWhenStateThenReturnNull() {
 		MockHttpServletRequest request = createRequest();
 		request.addParameter(OAuth2ParameterNames.STATE, "abc123");
+		updateQueryString(request);
 		Authentication authentication = this.converter.convert(request);
 		assertThat(authentication).isNull();
 	}
@@ -84,6 +86,7 @@ public class OAuth2DeviceVerificationAuthenticationConverterTests {
 	public void convertWhenEmptyUserCodeParameterThenInvalidRequestError() {
 		MockHttpServletRequest request = createRequest();
 		request.addParameter(OAuth2ParameterNames.USER_CODE, "");
+		updateQueryString(request);
 		// @formatter:off
 		assertThatExceptionOfType(OAuth2AuthenticationException.class)
 				.isThrownBy(() -> this.converter.convert(request))
@@ -98,6 +101,7 @@ public class OAuth2DeviceVerificationAuthenticationConverterTests {
 	public void convertWhenInvalidUserCodeParameterThenInvalidRequestError() {
 		MockHttpServletRequest request = createRequest();
 		request.addParameter(OAuth2ParameterNames.USER_CODE, "LONG-USER-CODE");
+		updateQueryString(request);
 		// @formatter:off
 		assertThatExceptionOfType(OAuth2AuthenticationException.class)
 				.isThrownBy(() -> this.converter.convert(request))
@@ -113,6 +117,7 @@ public class OAuth2DeviceVerificationAuthenticationConverterTests {
 		MockHttpServletRequest request = createRequest();
 		request.addParameter(OAuth2ParameterNames.USER_CODE, USER_CODE);
 		request.addParameter(OAuth2ParameterNames.USER_CODE, "another");
+		updateQueryString(request);
 		// @formatter:off
 		assertThatExceptionOfType(OAuth2AuthenticationException.class)
 				.isThrownBy(() -> this.converter.convert(request))
@@ -127,6 +132,7 @@ public class OAuth2DeviceVerificationAuthenticationConverterTests {
 	public void convertWhenMissingPrincipalThenReturnDeviceVerificationAuthentication() {
 		MockHttpServletRequest request = createRequest();
 		request.addParameter(OAuth2ParameterNames.USER_CODE, USER_CODE.toLowerCase().replace("-", " . "));
+		updateQueryString(request);
 
 		OAuth2DeviceVerificationAuthenticationToken authentication =
 				(OAuth2DeviceVerificationAuthenticationToken) this.converter.convert(request);
@@ -140,6 +146,7 @@ public class OAuth2DeviceVerificationAuthenticationConverterTests {
 	public void convertWhenNonNormalizedUserCodeThenReturnDeviceVerificationAuthentication() {
 		MockHttpServletRequest request = createRequest();
 		request.addParameter(OAuth2ParameterNames.USER_CODE, USER_CODE.toLowerCase().replace("-", " . "));
+		updateQueryString(request);
 
 		SecurityContextImpl securityContext = new SecurityContextImpl();
 		securityContext.setAuthentication(new TestingAuthenticationToken("user", null));
@@ -159,6 +166,7 @@ public class OAuth2DeviceVerificationAuthenticationConverterTests {
 		request.addParameter(OAuth2ParameterNames.USER_CODE, USER_CODE);
 		request.addParameter("param-1", "value-1");
 		request.addParameter("param-2", "value-1", "value-2");
+		updateQueryString(request);
 
 		SecurityContextImpl securityContext = new SecurityContextImpl();
 		securityContext.setAuthentication(new TestingAuthenticationToken("user", null));
@@ -180,4 +188,17 @@ public class OAuth2DeviceVerificationAuthenticationConverterTests {
 		request.setRequestURI(VERIFICATION_URI);
 		return request;
 	}
+
+	private static void updateQueryString(MockHttpServletRequest request) {
+		UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUriString(request.getRequestURI());
+		request.getParameterMap().forEach((key, values) -> {
+			if (values.length > 0) {
+				for (String value : values) {
+					uriBuilder.queryParam(key, value);
+				}
+			}
+		});
+		request.setQueryString(uriBuilder.build().getQuery());
+	}
+
 }

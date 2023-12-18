@@ -49,15 +49,15 @@ public final class OAuth2DeviceCodeAuthenticationConverter implements Authentica
 	@Nullable
 	@Override
 	public Authentication convert(HttpServletRequest request) {
+		MultiValueMap<String, String> parameters = OAuth2EndpointUtils.getFormParameters(request);
+
 		// grant_type (REQUIRED)
-		String grantType = request.getParameter(OAuth2ParameterNames.GRANT_TYPE);
+		String grantType = parameters.getFirst(OAuth2ParameterNames.GRANT_TYPE);
 		if (!AuthorizationGrantType.DEVICE_CODE.getValue().equals(grantType)) {
 			return null;
 		}
 
 		Authentication clientPrincipal = SecurityContextHolder.getContext().getAuthentication();
-
-		MultiValueMap<String, String> parameters = OAuth2EndpointUtils.getParameters(request);
 
 		// device_code (REQUIRED)
 		String deviceCode = parameters.getFirst(OAuth2ParameterNames.DEVICE_CODE);

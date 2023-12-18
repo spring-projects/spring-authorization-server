@@ -279,7 +279,7 @@ public class OAuth2DeviceCodeGrantTests {
 
 		// @formatter:off
 		this.mvc.perform(get(DEFAULT_DEVICE_VERIFICATION_ENDPOINT_URI)
-				.params(parameters))
+				.queryParams(parameters))
 				.andExpect(status().isUnauthorized());
 		// @formatter:on
 	}
@@ -313,7 +313,7 @@ public class OAuth2DeviceCodeGrantTests {
 
 		// @formatter:off
 		MvcResult mvcResult = this.mvc.perform(get(DEFAULT_DEVICE_VERIFICATION_ENDPOINT_URI)
-				.params(parameters)
+				.queryParams(parameters)
 				.with(user("user")))
 				.andExpect(status().isOk())
 				.andExpect(content().contentTypeCompatibleWith(MediaType.TEXT_HTML))

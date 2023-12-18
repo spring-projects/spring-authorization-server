@@ -49,7 +49,7 @@ public final class OAuth2TokenIntrospectionAuthenticationConverter implements Au
 	public Authentication convert(HttpServletRequest request) {
 		Authentication clientPrincipal = SecurityContextHolder.getContext().getAuthentication();
 
-		MultiValueMap<String, String> parameters = OAuth2EndpointUtils.getParameters(request);
+		MultiValueMap<String, String> parameters = OAuth2EndpointUtils.getFormParameters(request);
 
 		// token (REQUIRED)
 		String token = parameters.getFirst(OAuth2ParameterNames.TOKEN);

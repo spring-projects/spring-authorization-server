@@ -158,6 +158,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * @author Daniel Garnier-Moiroux
  * @author Dmitriy Dubson
  * @author Steve Riesenberg
+ * @author Greg Li
  */
 @ExtendWith(SpringTestContextExtension.class)
 public class OAuth2AuthorizationCodeGrantTests {
@@ -260,7 +261,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 		this.registeredClientRepository.save(registeredClient);
 
 		this.mvc.perform(get(DEFAULT_AUTHORIZATION_ENDPOINT_URI)
-				.params(getAuthorizationRequestParameters(registeredClient)))
+				.queryParams(getAuthorizationRequestParameters(registeredClient)))
 				.andExpect(status().isUnauthorized())
 				.andReturn();
 	}
@@ -302,7 +303,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 
 		MultiValueMap<String, String> authorizationRequestParameters = getAuthorizationRequestParameters(registeredClient);
 		MvcResult mvcResult = this.mvc.perform(get(authorizationEndpointUri)
-				.params(authorizationRequestParameters)
+				.queryParams(authorizationRequestParameters)
 				.with(user("user")))
 				.andExpect(status().is3xxRedirection())
 				.andReturn();
@@ -394,9 +395,9 @@ public class OAuth2AuthorizationCodeGrantTests {
 		this.registeredClientRepository.save(registeredClient);
 
 		MvcResult mvcResult = this.mvc.perform(get(DEFAULT_AUTHORIZATION_ENDPOINT_URI)
-				.params(getAuthorizationRequestParameters(registeredClient))
-				.param(PkceParameterNames.CODE_CHALLENGE, S256_CODE_CHALLENGE)
-				.param(PkceParameterNames.CODE_CHALLENGE_METHOD, "S256")
+				.queryParams(getAuthorizationRequestParameters(registeredClient))
+				.queryParam(PkceParameterNames.CODE_CHALLENGE, S256_CODE_CHALLENGE)
+				.queryParam(PkceParameterNames.CODE_CHALLENGE_METHOD, "S256")
 				.with(user("user")))
 				.andExpect(status().is3xxRedirection())
 				.andReturn();
@@ -487,9 +488,9 @@ public class OAuth2AuthorizationCodeGrantTests {
 
 		MultiValueMap<String, String> authorizationRequestParameters = getAuthorizationRequestParameters(registeredClient);
 		MvcResult mvcResult = this.mvc.perform(get(DEFAULT_AUTHORIZATION_ENDPOINT_URI)
-				.params(authorizationRequestParameters)
-				.param(PkceParameterNames.CODE_CHALLENGE, S256_CODE_CHALLENGE)
-				.param(PkceParameterNames.CODE_CHALLENGE_METHOD, "S256")
+				.queryParams(authorizationRequestParameters)
+				.queryParam(PkceParameterNames.CODE_CHALLENGE, S256_CODE_CHALLENGE)
+				.queryParam(PkceParameterNames.CODE_CHALLENGE_METHOD, "S256")
 				.with(user("user")))
 				.andExpect(status().is3xxRedirection())
 				.andReturn();
@@ -526,7 +527,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 
 		MultiValueMap<String, String> authorizationRequestParameters = getAuthorizationRequestParameters(registeredClient);
 		MvcResult mvcResult = this.mvc.perform(get(DEFAULT_AUTHORIZATION_ENDPOINT_URI)
-				.params(authorizationRequestParameters)
+				.queryParams(authorizationRequestParameters)
 				.with(user("user")))
 				.andExpect(status().is3xxRedirection())
 				.andReturn();
@@ -572,7 +573,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 		this.registeredClientRepository.save(registeredClient);
 
 		String consentPage = this.mvc.perform(get(DEFAULT_AUTHORIZATION_ENDPOINT_URI)
-				.params(getAuthorizationRequestParameters(registeredClient))
+				.queryParams(getAuthorizationRequestParameters(registeredClient))
 				.with(user("user")))
 				.andExpect(status().is2xxSuccessful())
 				.andReturn()
@@ -655,7 +656,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 		this.registeredClientRepository.save(registeredClient);
 
 		MvcResult mvcResult = this.mvc.perform(get(DEFAULT_AUTHORIZATION_ENDPOINT_URI)
-				.params(getAuthorizationRequestParameters(registeredClient))
+				.queryParams(getAuthorizationRequestParameters(registeredClient))
 				.with(user("user")))
 				.andExpect(status().is3xxRedirection())
 				.andReturn();
@@ -790,9 +791,9 @@ public class OAuth2AuthorizationCodeGrantTests {
 		this.registeredClientRepository.save(registeredClient);
 
 		MvcResult mvcResult = this.mvc.perform(get(DEFAULT_AUTHORIZATION_ENDPOINT_URI)
-				.params(getAuthorizationRequestParameters(registeredClient))
-				.param(PkceParameterNames.CODE_CHALLENGE, S256_CODE_CHALLENGE)
-				.param(PkceParameterNames.CODE_CHALLENGE_METHOD, "S256")
+				.queryParams(getAuthorizationRequestParameters(registeredClient))
+				.queryParam(PkceParameterNames.CODE_CHALLENGE, S256_CODE_CHALLENGE)
+				.queryParam(PkceParameterNames.CODE_CHALLENGE_METHOD, "S256")
 				.with(user("user")))
 				.andExpect(status().is3xxRedirection())
 				.andReturn();

@@ -193,8 +193,8 @@ public class OidcTests {
 
 		MultiValueMap<String, String> authorizationRequestParameters = getAuthorizationRequestParameters(registeredClient);
 		MvcResult mvcResult = this.mvc.perform(get(DEFAULT_AUTHORIZATION_ENDPOINT_URI)
-						.params(authorizationRequestParameters)
-						.with(user("user").roles("A", "B")))
+				.queryParams(authorizationRequestParameters)
+				.with(user("user").roles("A", "B")))
 				.andExpect(status().is3xxRedirection())
 				.andReturn();
 		String redirectedUrl = mvcResult.getResponse().getRedirectedUrl();
@@ -249,7 +249,7 @@ public class OidcTests {
 
 		MultiValueMap<String, String> authorizationRequestParameters = getAuthorizationRequestParameters(registeredClient);
 		MvcResult mvcResult = this.mvc.perform(get(DEFAULT_AUTHORIZATION_ENDPOINT_URI)
-						.params(authorizationRequestParameters)
+						.queryParams(authorizationRequestParameters)
 						.with(user("user").roles("A", "B")))
 				.andExpect(status().is3xxRedirection())
 				.andReturn();
@@ -306,7 +306,7 @@ public class OidcTests {
 		// Login
 		MultiValueMap<String, String> authorizationRequestParameters = getAuthorizationRequestParameters(registeredClient);
 		MvcResult mvcResult = this.mvc.perform(get(DEFAULT_AUTHORIZATION_ENDPOINT_URI)
-						.params(authorizationRequestParameters)
+						.queryParams(authorizationRequestParameters)
 						.with(user("user")))
 				.andExpect(status().is3xxRedirection())
 				.andReturn();
@@ -355,7 +355,7 @@ public class OidcTests {
 
 		MultiValueMap<String, String> authorizationRequestParameters = getAuthorizationRequestParameters(registeredClient1);
 		MvcResult mvcResult = this.mvc.perform(get(DEFAULT_AUTHORIZATION_ENDPOINT_URI)
-						.params(authorizationRequestParameters)
+						.queryParams(authorizationRequestParameters)
 						.with(user("user1")))
 				.andExpect(status().is3xxRedirection())
 				.andReturn();
@@ -387,7 +387,7 @@ public class OidcTests {
 
 		authorizationRequestParameters = getAuthorizationRequestParameters(registeredClient2);
 		mvcResult = this.mvc.perform(get(DEFAULT_AUTHORIZATION_ENDPOINT_URI)
-						.params(authorizationRequestParameters)
+						.queryParams(authorizationRequestParameters)
 						.with(user("user2")))
 				.andExpect(status().is3xxRedirection())
 				.andReturn();

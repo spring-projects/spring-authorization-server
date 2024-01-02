@@ -36,6 +36,6 @@ public class SpringNoHttpPlugin implements Plugin<Project> {
 		NoHttpExtension nohttp = project.getExtensions().getByType(NoHttpExtension.class);
 		File allowlistFile = project.getRootProject().file("etc/nohttp/allowlist.lines");
 		nohttp.setAllowlistFile(allowlistFile);
-		nohttp.getSource().exclude("buildSrc/build/**");
+		nohttp.getSource().exclude("**/build/**");
 	}
 }

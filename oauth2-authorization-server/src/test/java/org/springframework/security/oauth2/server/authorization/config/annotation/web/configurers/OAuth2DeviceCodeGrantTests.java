@@ -33,6 +33,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -45,6 +47,8 @@ import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType;
 import org.springframework.mock.http.client.MockClientHttpResponse;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -72,6 +76,7 @@ import org.springframework.security.oauth2.server.authorization.client.TestRegis
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
 import org.springframework.security.oauth2.server.authorization.test.SpringTestContext;
 import org.springframework.security.oauth2.server.authorization.test.SpringTestContextExtension;
+import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.util.LinkedMultiValueMap;
@@ -90,6 +95,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * Integration tests for OAuth 2.0 Device Grant.
  *
  * @author Steve Riesenberg
+ * @author Greg Li
  */
 @ExtendWith(SpringTestContextExtension.class)
 public class OAuth2DeviceCodeGrantTests {
@@ -158,7 +164,7 @@ public class OAuth2DeviceCodeGrantTests {
 
 	@Test
 	public void requestWhenDeviceAuthorizationRequestNotAuthenticatedThenUnauthorized() throws Exception {
-		this.spring.register(AuthorizationServerConfiguration.class).autowire();
+		this.spring.register(AuthorizationServerConfigurationDeviceAuthorize.class).autowire();
 
 		// @formatter:off
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
@@ -180,8 +186,31 @@ public class OAuth2DeviceCodeGrantTests {
 	}
 
 	@Test
+	public void requestWhenDeviceAuthorizationRequestDisabledThenUnauthorized() throws Exception {
+		this.spring.register(AuthorizationServerConfigurationDeviceAuthorize.class).autowire();
+
+		// @formatter:off
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
+				.authorizationGrantType(AuthorizationGrantType.DEVICE_CODE)
+				.build();
+		// @formatter:on
+		this.registeredClientRepository.save(registeredClient);
+
+		MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+		parameters.set(OAuth2ParameterNames.CLIENT_ID, registeredClient.getClientId());
+		parameters.set(OAuth2ParameterNames.SCOPE,
+				StringUtils.collectionToDelimitedString(registeredClient.getScopes(), " "));
+
+		// @formatter:off
+		this.mvc.perform(post(DEFAULT_DEVICE_AUTHORIZATION_ENDPOINT_URI)
+						.params(parameters))
+				.andExpect(status().isUnauthorized());
+		// @formatter:on
+	}
+
+	@Test
 	public void requestWhenRegisteredClientMissingThenUnauthorized() throws Exception {
-		this.spring.register(AuthorizationServerConfiguration.class).autowire();
+		this.spring.register(AuthorizationServerConfigurationDeviceAuthorize.class).autowire();
 
 		// @formatter:off
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
@@ -204,7 +233,7 @@ public class OAuth2DeviceCodeGrantTests {
 
 	@Test
 	public void requestWhenDeviceAuthorizationRequestValidThenReturnDeviceAuthorizationResponse() throws Exception {
-		this.spring.register(AuthorizationServerConfiguration.class).autowire();
+		this.spring.register(AuthorizationServerConfigurationDeviceAuthorize.class).autowire();
 
 		// @formatter:off
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
@@ -252,7 +281,7 @@ public class OAuth2DeviceCodeGrantTests {
 
 	@Test
 	public void requestWhenDeviceVerificationRequestUnauthenticatedThenUnauthorized() throws Exception {
-		this.spring.register(AuthorizationServerConfiguration.class).autowire();
+		this.spring.register(AuthorizationServerConfigurationDeviceAuthorize.class).autowire();
 
 		// @formatter:off
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
@@ -286,7 +315,7 @@ public class OAuth2DeviceCodeGrantTests {
 
 	@Test
 	public void requestWhenDeviceVerificationRequestValidThenDisplaysConsentPage() throws Exception {
-		this.spring.register(AuthorizationServerConfiguration.class).autowire();
+		this.spring.register(AuthorizationServerConfigurationDeviceAuthorize.class).autowire();
 
 		// @formatter:off
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
@@ -335,7 +364,7 @@ public class OAuth2DeviceCodeGrantTests {
 
 	@Test
 	public void requestWhenDeviceAuthorizationConsentRequestUnauthenticatedThenBadRequest() throws Exception {
-		this.spring.register(AuthorizationServerConfiguration.class).autowire();
+		this.spring.register(AuthorizationServerConfigurationDeviceAuthorize.class).autowire();
 
 		// @formatter:off
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
@@ -373,7 +402,7 @@ public class OAuth2DeviceCodeGrantTests {
 
 	@Test
 	public void requestWhenDeviceAuthorizationConsentRequestValidThenRedirectsToSuccessPage() throws Exception {
-		this.spring.register(AuthorizationServerConfiguration.class).autowire();
+		this.spring.register(AuthorizationServerConfigurationDeviceAuthorize.class).autowire();
 
 		// @formatter:off
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
@@ -423,7 +452,7 @@ public class OAuth2DeviceCodeGrantTests {
 
 	@Test
 	public void requestWhenAccessTokenRequestUnauthenticatedThenUnauthorized() throws Exception {
-		this.spring.register(AuthorizationServerConfiguration.class).autowire();
+		this.spring.register(AuthorizationServerConfigurationDeviceAuthorize.class).autowire();
 
 		// @formatter:off
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
@@ -459,7 +488,7 @@ public class OAuth2DeviceCodeGrantTests {
 
 	@Test
 	public void requestWhenAccessTokenRequestValidThenReturnAccessTokenResponse() throws Exception {
-		this.spring.register(AuthorizationServerConfiguration.class).autowire();
+		this.spring.register(AuthorizationServerConfigurationDeviceAuthorize.class).autowire();
 
 		// @formatter:off
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
@@ -545,7 +574,17 @@ public class OAuth2DeviceCodeGrantTests {
 
 	@EnableWebSecurity
 	@Import(OAuth2AuthorizationServerConfiguration.class)
-	static class AuthorizationServerConfiguration {
+	static class AuthorizationServerConfigurationDeviceAuthorize {
+
+		@Bean
+		@Order(Ordered.HIGHEST_PRECEDENCE)
+		public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
+			OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http);
+			http.getConfigurer(OAuth2AuthorizationServerConfigurer.class)
+					.deviceAuthorizationEndpoint(Customizer.withDefaults()) // Enable deviceAuthorizationEndpoint
+					.deviceVerificationEndpoint(Customizer.withDefaults()); // Enable deviceVerificationEndpoint
+			return http.build();
+		}
 
 		@Bean
 		RegisteredClientRepository registeredClientRepository(JdbcOperations jdbcOperations) {

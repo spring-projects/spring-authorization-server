@@ -45,6 +45,8 @@ import org.springframework.security.oauth2.server.authorization.OAuth2Authorizat
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeRequestAuthenticationException;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeRequestAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
+import org.springframework.security.oauth2.server.authorization.context.AuthorizationServerContext;
+import org.springframework.security.oauth2.server.authorization.context.AuthorizationServerContextHolder;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenGenerator;
 import org.springframework.security.oauth2.server.authorization.web.NimbusJwkSetEndpointFilter;
@@ -55,6 +57,7 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.OrRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
+import org.springframework.web.util.UriComponentsBuilder;
 
 /**
  * An {@link AbstractHttpConfigurer} for OAuth 2.0 Authorization Server support.
@@ -64,6 +67,7 @@ import org.springframework.util.Assert;
  * @author Gerardo Roza
  * @author Ovidiu Popa
  * @author Gaurav Tiwari
+ * @author Greg Li
  * @since 0.0.1
  * @see AbstractHttpConfigurer
  * @see OAuth2ClientAuthenticationConfigurer
@@ -218,26 +222,40 @@ public final class OAuth2AuthorizationServerConfigurer
 	}
 
 	/**
-	 * Configures the OAuth 2.0 Device Authorization Endpoint.
+	 * Configures the OAuth 2.0 Device Authorization Endpoint (disabled by default).
 	 *
 	 * @param deviceAuthorizationEndpointCustomizer the {@link Customizer} providing access to the {@link OAuth2DeviceAuthorizationEndpointConfigurer}
 	 * @return the {@link OAuth2AuthorizationServerConfigurer} for further configuration
 	 * @since 1.1
 	 */
 	public OAuth2AuthorizationServerConfigurer deviceAuthorizationEndpoint(Customizer<OAuth2DeviceAuthorizationEndpointConfigurer> deviceAuthorizationEndpointCustomizer) {
-		deviceAuthorizationEndpointCustomizer.customize(getConfigurer(OAuth2DeviceAuthorizationEndpointConfigurer.class));
+		OAuth2DeviceAuthorizationEndpointConfigurer deviceAuthorizationEndpointConfigurer =
+				getConfigurer(OAuth2DeviceAuthorizationEndpointConfigurer.class);
+		if (deviceAuthorizationEndpointConfigurer == null) {
+			addConfigurer(OAuth2DeviceAuthorizationEndpointConfigurer.class,
+					new OAuth2DeviceAuthorizationEndpointConfigurer(this::postProcess));
+			deviceAuthorizationEndpointConfigurer = getConfigurer(OAuth2DeviceAuthorizationEndpointConfigurer.class);
+		}
+		deviceAuthorizationEndpointCustomizer.customize(deviceAuthorizationEndpointConfigurer);
 		return this;
 	}
 
 	/**
-	 * Configures the OAuth 2.0 Device Verification Endpoint.
+	 * Configures the OAuth 2.0 Device Verification Endpoint (disabled by default).
 	 *
 	 * @param deviceVerificationEndpointCustomizer the {@link Customizer} providing access to the {@link OAuth2DeviceVerificationEndpointConfigurer}
 	 * @return the {@link OAuth2AuthorizationServerConfigurer} for further configuration
 	 * @since 1.1
 	 */
 	public OAuth2AuthorizationServerConfigurer deviceVerificationEndpoint(Customizer<OAuth2DeviceVerificationEndpointConfigurer> deviceVerificationEndpointCustomizer) {
-		deviceVerificationEndpointCustomizer.customize(getConfigurer(OAuth2DeviceVerificationEndpointConfigurer.class));
+		OAuth2DeviceVerificationEndpointConfigurer deviceVerificationEndpointConfigurer =
+				getConfigurer(OAuth2DeviceVerificationEndpointConfigurer.class);
+		if (deviceVerificationEndpointConfigurer == null) {
+			addConfigurer(OAuth2DeviceVerificationEndpointConfigurer.class,
+					new OAuth2DeviceVerificationEndpointConfigurer(this::postProcess));
+			deviceVerificationEndpointConfigurer = getConfigurer(OAuth2DeviceVerificationEndpointConfigurer.class);
+		}
+		deviceVerificationEndpointCustomizer.customize(deviceVerificationEndpointConfigurer);
 		return this;
 	}
 
@@ -319,19 +337,45 @@ public final class OAuth2AuthorizationServerConfigurer
 
 		ExceptionHandlingConfigurer<HttpSecurity> exceptionHandling = httpSecurity.getConfigurer(ExceptionHandlingConfigurer.class);
 		if (exceptionHandling != null) {
+			OrRequestMatcher preferredRequestMatcher = null;
+			if (getRequestMatcher(OAuth2DeviceAuthorizationEndpointConfigurer.class) != null) {
+				preferredRequestMatcher = new OrRequestMatcher(
+						getRequestMatcher(OAuth2TokenEndpointConfigurer.class),
+						getRequestMatcher(OAuth2TokenIntrospectionEndpointConfigurer.class),
+						getRequestMatcher(OAuth2TokenRevocationEndpointConfigurer.class),
+						getRequestMatcher(OAuth2DeviceAuthorizationEndpointConfigurer.class));
+			} else {
+				preferredRequestMatcher = new OrRequestMatcher(
+						getRequestMatcher(OAuth2TokenEndpointConfigurer.class),
+						getRequestMatcher(OAuth2TokenIntrospectionEndpointConfigurer.class),
+						getRequestMatcher(OAuth2TokenRevocationEndpointConfigurer.class));
+			}
 			exceptionHandling.defaultAuthenticationEntryPointFor(
 					new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED),
-					new OrRequestMatcher(
-							getRequestMatcher(OAuth2TokenEndpointConfigurer.class),
-							getRequestMatcher(OAuth2TokenIntrospectionEndpointConfigurer.class),
-							getRequestMatcher(OAuth2TokenRevocationEndpointConfigurer.class),
-							getRequestMatcher(OAuth2DeviceAuthorizationEndpointConfigurer.class))
+					preferredRequestMatcher
 			);
 		}
 	}
 
 	@Override
 	public void configure(HttpSecurity httpSecurity) {
+		OAuth2DeviceAuthorizationEndpointConfigurer deviceAuthorizationEndpointConfigurer =
+				getConfigurer(OAuth2DeviceAuthorizationEndpointConfigurer.class);
+		if (deviceAuthorizationEndpointConfigurer != null) {
+			OAuth2AuthorizationServerMetadataEndpointConfigurer auth2AuthorizationServerMetadataEndpointConfigurer =
+					getConfigurer(OAuth2AuthorizationServerMetadataEndpointConfigurer.class);
+
+			auth2AuthorizationServerMetadataEndpointConfigurer
+					.addDefaultAuthorizationServerMetadataCustomizer((builder) -> {
+						AuthorizationServerContext authorizationServerContext = AuthorizationServerContextHolder.getContext();
+						String issuer = authorizationServerContext.getIssuer();
+						AuthorizationServerSettings authorizationServerSettings = authorizationServerContext.getAuthorizationServerSettings();
+						String deviceAuthorizationEndpoint = UriComponentsBuilder.fromUriString(issuer)
+								.path(authorizationServerSettings.getDeviceAuthorizationEndpoint()).build().toUriString();
+
+						builder.deviceAuthorizationEndpoint(deviceAuthorizationEndpoint);
+					});
+		}
 		this.configurers.values().forEach(configurer -> configurer.configure(httpSecurity));
 
 		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils.getAuthorizationServerSettings(httpSecurity);
@@ -359,8 +403,7 @@ public final class OAuth2AuthorizationServerConfigurer
 		configurers.put(OAuth2TokenEndpointConfigurer.class, new OAuth2TokenEndpointConfigurer(this::postProcess));
 		configurers.put(OAuth2TokenIntrospectionEndpointConfigurer.class, new OAuth2TokenIntrospectionEndpointConfigurer(this::postProcess));
 		configurers.put(OAuth2TokenRevocationEndpointConfigurer.class, new OAuth2TokenRevocationEndpointConfigurer(this::postProcess));
-		configurers.put(OAuth2DeviceAuthorizationEndpointConfigurer.class, new OAuth2DeviceAuthorizationEndpointConfigurer(this::postProcess));
-		configurers.put(OAuth2DeviceVerificationEndpointConfigurer.class, new OAuth2DeviceVerificationEndpointConfigurer(this::postProcess));
+		//configurers.put(OAuth2DeviceVerificationEndpointConfigurer.class, new OAuth2DeviceVerificationEndpointConfigurer(this::postProcess));
 		return configurers;
 	}
 

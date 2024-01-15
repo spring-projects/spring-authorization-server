@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,19 +15,21 @@
  */
 package org.springframework.security.oauth2.server.authorization.authentication;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Consumer;
+
 import org.springframework.lang.Nullable;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.util.Assert;
 
-import java.util.Map;
-import java.util.function.Consumer;
-
 /**
  * An {@link OAuth2AuthenticationContext} that holds an {@link OAuth2ClientCredentialsAuthenticationToken} and additional information
- * and is used when validating the OAuth 2.0 Authorization Request used in the Client Credentials Grant.
+ * and is used when validating the OAuth 2.0 Client Credentials Grant Request.
  *
  * @author Adam Pilling
- * @since 1.3.0
+ * @since 1.3
  * @see OAuth2AuthenticationContext
  * @see OAuth2ClientCredentialsAuthenticationToken
  * @see OAuth2ClientCredentialsAuthenticationProvider#setAuthenticationValidator(Consumer)
@@ -36,7 +38,7 @@ public final class OAuth2ClientCredentialsAuthenticationContext implements OAuth
 	private final Map<Object, Object> context;
 
 	private OAuth2ClientCredentialsAuthenticationContext(Map<Object, Object> context) {
-		this.context = Map.copyOf(context);
+		this.context = Collections.unmodifiableMap(new HashMap<>(context));
 	}
 
 	@SuppressWarnings("unchecked")

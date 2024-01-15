@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,17 @@
  */
 package org.springframework.security.oauth2.server.authorization.authentication;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Collections;
+import java.util.Set;
+import java.util.function.Consumer;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
@@ -49,12 +56,6 @@ import org.springframework.security.oauth2.server.authorization.token.OAuth2Toke
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenContext;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenGenerator;
-
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.Collections;
-import java.util.Set;
-import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -130,6 +131,13 @@ public class OAuth2ClientCredentialsAuthenticationProviderTests {
 	@Test
 	public void supportsWhenUnsupportedAuthenticationThenFalse() {
 		assertThat(this.authenticationProvider.supports(OAuth2AuthorizationCodeAuthenticationToken.class)).isFalse();
+	}
+
+	@Test
+	public void setAuthenticationValidatorWhenNullThenThrowIllegalArgumentException() {
+		assertThatThrownBy(() -> this.authenticationProvider.setAuthenticationValidator(null))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("authenticationValidator cannot be null");
 	}
 
 	@Test
@@ -209,16 +217,6 @@ public class OAuth2ClientCredentialsAuthenticationProviderTests {
 		OAuth2AccessTokenAuthenticationToken accessTokenAuthentication =
 				(OAuth2AccessTokenAuthenticationToken) this.authenticationProvider.authenticate(authentication);
 		assertThat(accessTokenAuthentication.getAccessToken().getScopes()).isEqualTo(requestedScope);
-	}
-
-	@Test
-	public void authenticateWhenCustomAuthenticationValidatorThenInvokeValidator() {
-		Consumer<OAuth2ClientCredentialsAuthenticationContext> validator = mock(Consumer.class);
-		this.authenticationProvider.setAuthenticationValidator(validator);
-
-		authenticateWhenScopeRequestedThenAccessTokenContainsScope();
-
-		verify(validator).accept(any(OAuth2ClientCredentialsAuthenticationContext.class));
 	}
 
 	@Test
@@ -312,6 +310,25 @@ public class OAuth2ClientCredentialsAuthenticationProviderTests {
 		this.authenticationProvider.authenticate(authentication);
 
 		verify(this.accessTokenCustomizer).customize(any());
+	}
+
+	@Test
+	public void authenticateWhenCustomAuthenticationValidatorThenUsed() {
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient2().build();
+		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(
+				registeredClient, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
+		OAuth2ClientCredentialsAuthenticationToken authentication =
+				new OAuth2ClientCredentialsAuthenticationToken(clientPrincipal, registeredClient.getScopes(), null);
+
+		@SuppressWarnings("unchecked")
+		Consumer<OAuth2ClientCredentialsAuthenticationContext> authenticationValidator = mock(Consumer.class);
+		this.authenticationProvider.setAuthenticationValidator(authenticationValidator);
+
+		when(this.jwtEncoder.encode(any())).thenReturn(createJwt(registeredClient.getScopes()));
+
+		this.authenticationProvider.authenticate(authentication);
+
+		verify(authenticationValidator).accept(any(OAuth2ClientCredentialsAuthenticationContext.class));
 	}
 
 	private static Jwt createJwt(Set<String> scope) {

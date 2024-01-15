@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,13 @@
  */
 package org.springframework.security.oauth2.server.authorization.authentication;
 
+import java.util.LinkedHashSet;
+import java.util.Set;
+import java.util.function.Consumer;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -36,9 +41,6 @@ import org.springframework.security.oauth2.server.authorization.token.DefaultOAu
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenContext;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenGenerator;
 import org.springframework.util.Assert;
-
-import java.util.Set;
-import java.util.function.Consumer;
 
 import static org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthenticationProviderUtils.getAuthenticatedClientElseThrowInvalidClient;
 
@@ -99,13 +101,13 @@ public final class OAuth2ClientCredentialsAuthenticationProvider implements Auth
 				OAuth2ClientCredentialsAuthenticationContext.with(clientCredentialsAuthentication)
 						.registeredClient(registeredClient)
 						.build();
-		authenticationValidator.accept(authenticationContext);
+		this.authenticationValidator.accept(authenticationContext);
+
+		Set<String> authorizedScopes = new LinkedHashSet<>(clientCredentialsAuthentication.getScopes());
 
 		if (this.logger.isTraceEnabled()) {
 			this.logger.trace("Validated token request parameters");
 		}
-
-		Set<String> authorizedScopes = Set.copyOf(clientCredentialsAuthentication.getScopes());
 
 		// @formatter:off
 		OAuth2TokenContext tokenContext = DefaultOAuth2TokenContext.builder()
@@ -167,16 +169,15 @@ public final class OAuth2ClientCredentialsAuthenticationProvider implements Auth
 
 	/**
 	 * Sets the {@code Consumer} providing access to the {@link OAuth2ClientCredentialsAuthenticationContext}
-	 * and is responsible for validating specific OAuth 2.0 Client Credentials parameters
+	 * and is responsible for validating specific OAuth 2.0 Client Credentials Grant Request parameters
 	 * associated in the {@link OAuth2ClientCredentialsAuthenticationToken}.
 	 * The default authentication validator is {@link OAuth2ClientCredentialsAuthenticationValidator}.
 	 *
 	 * <p>
-	 * <b>NOTE:</b> The authentication validator MUST throw {@link OAuth2ClientCredentialsAuthenticationException} if validation fails.
+	 * <b>NOTE:</b> The authentication validator MUST throw {@link OAuth2AuthenticationException} if validation fails.
 	 *
-	 * @param authenticationValidator the {@code Consumer} providing access to the {@link OAuth2ClientCredentialsAuthenticationContext}
-	 *                                   and is responsible for validating specific OAuth 2.0 Authorization Request parameters
-	 * @since 1.3.0
+	 * @param authenticationValidator the {@code Consumer} providing access to the {@link OAuth2ClientCredentialsAuthenticationContext} and is responsible for validating specific OAuth 2.0 Client Credentials Grant Request parameters
+	 * @since 1.3
 	 */
 	public void setAuthenticationValidator(Consumer<OAuth2ClientCredentialsAuthenticationContext> authenticationValidator) {
 		Assert.notNull(authenticationValidator, "authenticationValidator cannot be null");

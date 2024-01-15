@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 the original author or authors.
+ * Copyright 2020-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -121,8 +121,9 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 		this.authenticationValidator.accept(authenticationContext);
 
 		if (!registeredClient.getAuthorizationGrantTypes().contains(AuthorizationGrantType.AUTHORIZATION_CODE)) {
-			if (this.logger.isTraceEnabled()) {
-				this.logger.warn(LogMessage.format("Invalid request: requested grant_type is not allowed for registered client '%s'", registeredClient.getId()));
+			if (this.logger.isDebugEnabled()) {
+				this.logger.debug(LogMessage.format("Invalid request: requested grant_type is not allowed" +
+						" for registered client '%s'", registeredClient.getId()));
 			}
 			throwError(OAuth2ErrorCodes.UNAUTHORIZED_CLIENT, OAuth2ParameterNames.CLIENT_ID,
 					authorizationCodeRequestAuthentication, registeredClient);

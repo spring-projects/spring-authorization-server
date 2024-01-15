@@ -95,8 +95,9 @@ public final class OAuth2ClientCredentialsAuthenticationProvider implements Auth
 		}
 
 		if (!registeredClient.getAuthorizationGrantTypes().contains(AuthorizationGrantType.CLIENT_CREDENTIALS)) {
-			if (this.logger.isTraceEnabled()) {
-				this.logger.warn(LogMessage.format("Invalid request: requested grant_type is not allowed for registered client '%s'", registeredClient.getId()));
+			if (this.logger.isDebugEnabled()) {
+				this.logger.debug(LogMessage.format("Invalid request: requested grant_type is not allowed" +
+						" for registered client '%s'", registeredClient.getId()));
 			}
 			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.UNAUTHORIZED_CLIENT);
 		}

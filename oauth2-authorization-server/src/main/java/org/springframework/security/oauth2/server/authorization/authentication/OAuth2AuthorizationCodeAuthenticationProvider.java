@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 the original author or authors.
+ * Copyright 2020-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -148,8 +148,9 @@ public final class OAuth2AuthorizationCodeAuthenticationProvider implements Auth
 
 		if (StringUtils.hasText(authorizationRequest.getRedirectUri()) &&
 				!authorizationRequest.getRedirectUri().equals(authorizationCodeAuthentication.getRedirectUri())) {
-			if (this.logger.isWarnEnabled()) {
-				this.logger.warn(LogMessage.format("Invalidated redirect_uri used by registered client '%s'", registeredClient.getId()));
+			if (this.logger.isDebugEnabled()) {
+				this.logger.debug(LogMessage.format("Invalid request: redirect_uri does not match" +
+						" for registered client '%s'", registeredClient.getId()));
 			}
 			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_GRANT);
 		}

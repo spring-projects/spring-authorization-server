@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 the original author or authors.
+ * Copyright 2020-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -104,8 +104,8 @@ public final class OAuth2RefreshTokenAuthenticationProvider implements Authentic
 		OAuth2Authorization authorization = this.authorizationService.findByToken(
 				refreshTokenAuthentication.getRefreshToken(), OAuth2TokenType.REFRESH_TOKEN);
 		if (authorization == null) {
-			if (this.logger.isTraceEnabled()) {
-				this.logger.trace("The refresh token is invalid.");
+			if (this.logger.isDebugEnabled()) {
+				this.logger.debug("Invalid request: refresh_token is invalid");
 			}
 			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_GRANT);
 		}
@@ -119,8 +119,9 @@ public final class OAuth2RefreshTokenAuthenticationProvider implements Authentic
 		}
 
 		if (!registeredClient.getAuthorizationGrantTypes().contains(AuthorizationGrantType.REFRESH_TOKEN)) {
-			if (this.logger.isTraceEnabled()) {
-				this.logger.warn(LogMessage.format("Invalid request: requested grant_type is not allowed for registered client '%s'", registeredClient.getId()));
+			if (this.logger.isDebugEnabled()) {
+				this.logger.debug(LogMessage.format("Invalid request: requested grant_type is not allowed" +
+						" for registered client '%s'", registeredClient.getId()));
 			}
 			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.UNAUTHORIZED_CLIENT);
 		}
@@ -130,8 +131,9 @@ public final class OAuth2RefreshTokenAuthenticationProvider implements Authentic
 			// As per https://tools.ietf.org/html/rfc6749#section-5.2
 			// invalid_grant: The provided authorization grant (e.g., authorization code,
 			// resource owner credentials) or refresh token is invalid, expired, revoked [...].
-			if (this.logger.isTraceEnabled()) {
-				this.logger.trace("The refresh token is expired.");
+			if (this.logger.isDebugEnabled()) {
+				this.logger.debug(LogMessage.format("Invalid request: refresh_token is not active" +
+						" for registered client '%s'", registeredClient.getId()));
 			}
 			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_GRANT);
 		}

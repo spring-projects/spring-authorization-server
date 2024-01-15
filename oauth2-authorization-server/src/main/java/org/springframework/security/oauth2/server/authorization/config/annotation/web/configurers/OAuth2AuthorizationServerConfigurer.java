@@ -222,40 +222,26 @@ public final class OAuth2AuthorizationServerConfigurer
 	}
 
 	/**
-	 * Configures the OAuth 2.0 Device Authorization Endpoint (disabled by default).
+	 * Configures the OAuth 2.0 Device Authorization Endpoint.
 	 *
 	 * @param deviceAuthorizationEndpointCustomizer the {@link Customizer} providing access to the {@link OAuth2DeviceAuthorizationEndpointConfigurer}
 	 * @return the {@link OAuth2AuthorizationServerConfigurer} for further configuration
 	 * @since 1.1
 	 */
 	public OAuth2AuthorizationServerConfigurer deviceAuthorizationEndpoint(Customizer<OAuth2DeviceAuthorizationEndpointConfigurer> deviceAuthorizationEndpointCustomizer) {
-		OAuth2DeviceAuthorizationEndpointConfigurer deviceAuthorizationEndpointConfigurer =
-				getConfigurer(OAuth2DeviceAuthorizationEndpointConfigurer.class);
-		if (deviceAuthorizationEndpointConfigurer == null) {
-			addConfigurer(OAuth2DeviceAuthorizationEndpointConfigurer.class,
-					new OAuth2DeviceAuthorizationEndpointConfigurer(this::postProcess));
-			deviceAuthorizationEndpointConfigurer = getConfigurer(OAuth2DeviceAuthorizationEndpointConfigurer.class);
-		}
-		deviceAuthorizationEndpointCustomizer.customize(deviceAuthorizationEndpointConfigurer);
+		deviceAuthorizationEndpointCustomizer.customize(getConfigurer(OAuth2DeviceAuthorizationEndpointConfigurer.class));
 		return this;
 	}
 
 	/**
-	 * Configures the OAuth 2.0 Device Verification Endpoint (disabled by default).
+	 * Configures the OAuth 2.0 Device Verification Endpoint.
 	 *
 	 * @param deviceVerificationEndpointCustomizer the {@link Customizer} providing access to the {@link OAuth2DeviceVerificationEndpointConfigurer}
 	 * @return the {@link OAuth2AuthorizationServerConfigurer} for further configuration
 	 * @since 1.1
 	 */
 	public OAuth2AuthorizationServerConfigurer deviceVerificationEndpoint(Customizer<OAuth2DeviceVerificationEndpointConfigurer> deviceVerificationEndpointCustomizer) {
-		OAuth2DeviceVerificationEndpointConfigurer deviceVerificationEndpointConfigurer =
-				getConfigurer(OAuth2DeviceVerificationEndpointConfigurer.class);
-		if (deviceVerificationEndpointConfigurer == null) {
-			addConfigurer(OAuth2DeviceVerificationEndpointConfigurer.class,
-					new OAuth2DeviceVerificationEndpointConfigurer(this::postProcess));
-			deviceVerificationEndpointConfigurer = getConfigurer(OAuth2DeviceVerificationEndpointConfigurer.class);
-		}
-		deviceVerificationEndpointCustomizer.customize(deviceVerificationEndpointConfigurer);
+		deviceVerificationEndpointCustomizer.customize(getConfigurer(OAuth2DeviceVerificationEndpointConfigurer.class));
 		return this;
 	}
 
@@ -325,6 +311,10 @@ public final class OAuth2AuthorizationServerConfigurer
 				}
 			});
 		}
+		if (!isDeviceAuthorizationEnabled()) {
+			this.configurers.remove(OAuth2DeviceAuthorizationEndpointConfigurer.class);
+			this.configurers.remove(OAuth2DeviceVerificationEndpointConfigurer.class);
+		}
 
 		List<RequestMatcher> requestMatchers = new ArrayList<>();
 		this.configurers.values().forEach(configurer -> {
@@ -338,7 +328,7 @@ public final class OAuth2AuthorizationServerConfigurer
 		ExceptionHandlingConfigurer<HttpSecurity> exceptionHandling = httpSecurity.getConfigurer(ExceptionHandlingConfigurer.class);
 		if (exceptionHandling != null) {
 			OrRequestMatcher preferredRequestMatcher = null;
-			if (getRequestMatcher(OAuth2DeviceAuthorizationEndpointConfigurer.class) != null) {
+			if (isDeviceAuthorizationEnabled()) {
 				preferredRequestMatcher = new OrRequestMatcher(
 						getRequestMatcher(OAuth2TokenEndpointConfigurer.class),
 						getRequestMatcher(OAuth2TokenIntrospectionEndpointConfigurer.class),
@@ -359,9 +349,7 @@ public final class OAuth2AuthorizationServerConfigurer
 
 	@Override
 	public void configure(HttpSecurity httpSecurity) {
-		OAuth2DeviceAuthorizationEndpointConfigurer deviceAuthorizationEndpointConfigurer =
-				getConfigurer(OAuth2DeviceAuthorizationEndpointConfigurer.class);
-		if (deviceAuthorizationEndpointConfigurer != null) {
+		if (isDeviceAuthorizationEnabled()) {
 			OAuth2AuthorizationServerMetadataEndpointConfigurer auth2AuthorizationServerMetadataEndpointConfigurer =
 					getConfigurer(OAuth2AuthorizationServerMetadataEndpointConfigurer.class);
 
@@ -395,6 +383,11 @@ public final class OAuth2AuthorizationServerConfigurer
 		return getConfigurer(OidcConfigurer.class) != null;
 	}
 
+	private boolean isDeviceAuthorizationEnabled() {
+		OAuth2DeviceAuthorizationEndpointConfigurer deviceAuthorizationEndpointConfigurer = getConfigurer(OAuth2DeviceAuthorizationEndpointConfigurer.class);
+		return deviceAuthorizationEndpointConfigurer != null && deviceAuthorizationEndpointConfigurer.isEnableDeviceAuthorizationEndpoint();
+	}
+
 	private Map<Class<? extends AbstractOAuth2Configurer>, AbstractOAuth2Configurer> createConfigurers() {
 		Map<Class<? extends AbstractOAuth2Configurer>, AbstractOAuth2Configurer> configurers = new LinkedHashMap<>();
 		configurers.put(OAuth2ClientAuthenticationConfigurer.class, new OAuth2ClientAuthenticationConfigurer(this::postProcess));
@@ -403,6 +396,8 @@ public final class OAuth2AuthorizationServerConfigurer
 		configurers.put(OAuth2TokenEndpointConfigurer.class, new OAuth2TokenEndpointConfigurer(this::postProcess));
 		configurers.put(OAuth2TokenIntrospectionEndpointConfigurer.class, new OAuth2TokenIntrospectionEndpointConfigurer(this::postProcess));
 		configurers.put(OAuth2TokenRevocationEndpointConfigurer.class, new OAuth2TokenRevocationEndpointConfigurer(this::postProcess));
+		configurers.put(OAuth2DeviceAuthorizationEndpointConfigurer.class, new OAuth2DeviceAuthorizationEndpointConfigurer(this::postProcess));
+		configurers.put(OAuth2DeviceVerificationEndpointConfigurer.class, new OAuth2DeviceVerificationEndpointConfigurer(this::postProcess));
 		return configurers;
 	}
 

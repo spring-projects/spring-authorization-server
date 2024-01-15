@@ -62,7 +62,13 @@ public final class OAuth2DeviceAuthorizationEndpointConfigurer extends AbstractO
 	private Consumer<List<AuthenticationProvider>> authenticationProvidersConsumer = (authenticationProviders) -> {};
 	private AuthenticationSuccessHandler deviceAuthorizationResponseHandler;
 	private AuthenticationFailureHandler errorResponseHandler;
+
+	public boolean isEnableDeviceAuthorizationEndpoint() {
+		return enableDeviceAuthorizationEndpoint;
+	}
+
 	private String verificationUri;
+	private boolean enableDeviceAuthorizationEndpoint = true;
 
 	/**
 	 * Restrict for internal use only.
@@ -158,6 +164,11 @@ public final class OAuth2DeviceAuthorizationEndpointConfigurer extends AbstractO
 	 */
 	public OAuth2DeviceAuthorizationEndpointConfigurer verificationUri(String verificationUri) {
 		this.verificationUri = verificationUri;
+		return this;
+	}
+
+	public OAuth2DeviceAuthorizationEndpointConfigurer enableDeviceAuthorizationEndpoint(boolean enableDeviceAuthorizationEndpoint) {
+		this.enableDeviceAuthorizationEndpoint = enableDeviceAuthorizationEndpoint;
 		return this;
 	}
 

@@ -391,7 +391,7 @@ public class OAuth2Authorization implements Serializable {
 		private Map<Class<? extends OAuth2Token>, Token<?>> tokens = new HashMap<>();
 		private final Map<String, Object> attributes = new HashMap<>();
 
-		protected Builder(String registeredClientId) {
+		public Builder(String registeredClientId) {
 			this.registeredClientId = registeredClientId;
 		}
 

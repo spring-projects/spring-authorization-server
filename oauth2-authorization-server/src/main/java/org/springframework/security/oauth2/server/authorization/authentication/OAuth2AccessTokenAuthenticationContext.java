@@ -15,25 +15,26 @@
  */
 package org.springframework.security.oauth2.server.authorization.authentication;
 
-import org.springframework.lang.Nullable;
-import org.springframework.security.oauth2.core.endpoint.OAuth2AccessTokenResponse;
-import org.springframework.security.oauth2.server.authorization.web.authentication.OAuth2AccessTokenResponseAuthenticationSuccessHandler;
-import org.springframework.util.Assert;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 
+import org.springframework.lang.Nullable;
+import org.springframework.security.oauth2.core.endpoint.OAuth2AccessTokenResponse;
+import org.springframework.security.oauth2.server.authorization.web.authentication.OAuth2AccessTokenResponseAuthenticationSuccessHandler;
+import org.springframework.util.Assert;
+
 /**
- * An {@link OAuth2AuthenticationContext} that holds an {@link OAuth2AccessTokenResponse.Builder}
- * and is used when customizing the building of the {@link OAuth2AccessTokenResponse}.
+ * An {@link OAuth2AuthenticationContext} that holds an {@link OAuth2AccessTokenAuthenticationToken} and additional information
+ * and is used when customizing the {@link OAuth2AccessTokenResponse}.
  *
  * @author Dmitriy Dubson
+ * @since 1.3
  * @see OAuth2AuthenticationContext
+ * @see OAuth2AccessTokenAuthenticationToken
  * @see OAuth2AccessTokenResponse
  * @see OAuth2AccessTokenResponseAuthenticationSuccessHandler#setAccessTokenResponseCustomizer(Consumer)
- * @since 1.3
  */
 public final class OAuth2AccessTokenAuthenticationContext implements OAuth2AuthenticationContext {
 	private final Map<Object, Object> context;
@@ -56,7 +57,8 @@ public final class OAuth2AccessTokenAuthenticationContext implements OAuth2Authe
 	}
 
 	/**
-	 * Returns the {@link OAuth2AccessTokenResponse.Builder} access token response builder
+	 * Returns the {@link OAuth2AccessTokenResponse.Builder access token response builder}.
+	 *
 	 * @return the {@link OAuth2AccessTokenResponse.Builder}
 	 */
 	public OAuth2AccessTokenResponse.Builder getAccessTokenResponse() {
@@ -69,20 +71,22 @@ public final class OAuth2AccessTokenAuthenticationContext implements OAuth2Authe
 	 * @param authentication the {@link OAuth2AccessTokenAuthenticationToken}
 	 * @return the {@link Builder}
 	 */
-	public static OAuth2AccessTokenAuthenticationContext.Builder with(OAuth2AccessTokenAuthenticationToken authentication) {
-		return new OAuth2AccessTokenAuthenticationContext.Builder(authentication);
+	public static Builder with(OAuth2AccessTokenAuthenticationToken authentication) {
+		return new Builder(authentication);
 	}
 
 	/**
-	 * A builder for {@link OAuth2AccessTokenAuthenticationContext}
+	 * A builder for {@link OAuth2AccessTokenAuthenticationContext}.
 	 */
 	public static final class Builder extends AbstractBuilder<OAuth2AccessTokenAuthenticationContext, Builder> {
+
 		private Builder(OAuth2AccessTokenAuthenticationToken authentication) {
 			super(authentication);
 		}
 
 		/**
-		 * Sets the {@link OAuth2AccessTokenResponse.Builder} access token response builder
+		 * Sets the {@link OAuth2AccessTokenResponse.Builder access token response builder}.
+		 *
 		 * @param accessTokenResponse the {@link OAuth2AccessTokenResponse.Builder}
 		 * @return the {@link Builder} for further configuration
 		 */
@@ -97,8 +101,9 @@ public final class OAuth2AccessTokenAuthenticationContext implements OAuth2Authe
 		 */
 		public OAuth2AccessTokenAuthenticationContext build() {
 			Assert.notNull(get(OAuth2AccessTokenResponse.Builder.class), "accessTokenResponse cannot be null");
-
 			return new OAuth2AccessTokenAuthenticationContext(getContext());
 		}
+
 	}
+
 }

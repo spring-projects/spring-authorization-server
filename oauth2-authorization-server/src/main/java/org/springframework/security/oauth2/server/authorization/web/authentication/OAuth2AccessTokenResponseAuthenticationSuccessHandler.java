@@ -23,12 +23,18 @@ import java.util.function.Consumer;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.server.ServletServerHttpResponse;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.oauth2.core.*;
+import org.springframework.security.oauth2.core.OAuth2AccessToken;
+import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
+import org.springframework.security.oauth2.core.OAuth2Error;
+import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
+import org.springframework.security.oauth2.core.OAuth2RefreshToken;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AccessTokenResponse;
 import org.springframework.security.oauth2.core.http.converter.OAuth2AccessTokenResponseHttpMessageConverter;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AccessTokenAuthenticationContext;
@@ -42,20 +48,19 @@ import org.springframework.util.CollectionUtils;
  * and returning the {@link OAuth2AccessTokenResponse Access Token Response}.
  *
  * @author Dmitriy Dubson
+ * @since 1.3
  * @see AuthenticationSuccessHandler
  * @see OAuth2AccessTokenResponseHttpMessageConverter
- * @since 1.3
  */
 public final class OAuth2AccessTokenResponseAuthenticationSuccessHandler implements AuthenticationSuccessHandler {
 	private final Log logger = LogFactory.getLog(getClass());
-
 	private final HttpMessageConverter<OAuth2AccessTokenResponse> accessTokenResponseConverter =
 			new OAuth2AccessTokenResponseHttpMessageConverter();
-
 	private Consumer<OAuth2AccessTokenAuthenticationContext> accessTokenResponseCustomizer;
 
 	@Override
-	public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
+	public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
+			Authentication authentication) throws IOException, ServletException {
 		if (!(authentication instanceof OAuth2AccessTokenAuthenticationToken accessTokenAuthentication)) {
 			if (this.logger.isErrorEnabled()) {
 				this.logger.error(Authentication.class.getSimpleName() + " must be of type " +
@@ -112,4 +117,5 @@ public final class OAuth2AccessTokenResponseAuthenticationSuccessHandler impleme
 		Assert.notNull(accessTokenResponseCustomizer, "accessTokenResponseCustomizer cannot be null");
 		this.accessTokenResponseCustomizer = accessTokenResponseCustomizer;
 	}
+
 }

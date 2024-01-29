@@ -15,16 +15,15 @@
  */
 package org.springframework.security.oauth2.server.authorization.authentication;
 
-
 import org.junit.jupiter.api.Test;
+
 import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AccessTokenResponse;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.TestOAuth2Authorizations;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
-
-import java.security.Principal;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -34,12 +33,14 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  *
  * @author Dmitriy Dubson
  */
-public class OAuth2AccessTokenAuthenticationContextTest {
+public class OAuth2AccessTokenAuthenticationContextTests {
 	private final RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 	private final OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(this.registeredClient).build();
-	private final Authentication principal = this.authorization.getAttribute(Principal.class.getName());
-	private final OAuth2AccessTokenAuthenticationToken accessTokenAuthenticationToken = new OAuth2AccessTokenAuthenticationToken(registeredClient, principal,
-			authorization.getAccessToken().getToken(), authorization.getRefreshToken().getToken());
+	private OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(
+			this.registeredClient, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, this.registeredClient.getClientSecret());
+	private final OAuth2AccessTokenAuthenticationToken accessTokenAuthenticationToken =
+			new OAuth2AccessTokenAuthenticationToken(this.registeredClient, this.clientPrincipal,
+					this.authorization.getAccessToken().getToken(), this.authorization.getRefreshToken().getToken());
 
 	@Test
 	public void withWhenAuthenticationNullThenThrowIllegalArgumentException() {
@@ -54,12 +55,14 @@ public class OAuth2AccessTokenAuthenticationContextTest {
 				OAuth2AccessTokenAuthenticationContext.with(this.accessTokenAuthenticationToken);
 
 		assertThatThrownBy(() -> builder.accessTokenResponse(null))
-				.isInstanceOf(IllegalArgumentException.class).hasMessage("value cannot be null");
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("value cannot be null");
 	}
 
 	@Test
 	public void buildWhenAllValuesProvidedThenAllValuesAreSet() {
-		OAuth2AccessTokenResponse.Builder accessTokenResponseBuilder = OAuth2AccessTokenResponse.withToken(this.accessTokenAuthenticationToken.getAccessToken().getTokenValue());
+		OAuth2AccessTokenResponse.Builder accessTokenResponseBuilder =
+				OAuth2AccessTokenResponse.withToken(this.accessTokenAuthenticationToken.getAccessToken().getTokenValue());
 		OAuth2AccessTokenAuthenticationContext context =
 				OAuth2AccessTokenAuthenticationContext.with(this.accessTokenAuthenticationToken)
 						.accessTokenResponse(accessTokenResponseBuilder)
@@ -68,4 +71,5 @@ public class OAuth2AccessTokenAuthenticationContextTest {
 		assertThat(context.<Authentication>getAuthentication()).isEqualTo(this.accessTokenAuthenticationToken);
 		assertThat(context.getAccessTokenResponse()).isEqualTo(accessTokenResponseBuilder);
 	}
+
 }

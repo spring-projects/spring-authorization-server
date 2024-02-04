@@ -109,6 +109,11 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 					authorizationCodeRequestAuthentication, null);
 		}
 
+		if (registeredClient.getClientSecretExpiresAt() != null &&
+				Instant.now().isAfter(registeredClient.getClientSecretExpiresAt())) {
+			throwInvalidClient("client_secret_expires_at");
+		}
+
 		if (this.logger.isTraceEnabled()) {
 			this.logger.trace("Retrieved registered client");
 		}
@@ -365,5 +370,12 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 		}
 		return null;
 	}
-
+	private static void throwInvalidClient(String parameterName) {
+		OAuth2Error error = new OAuth2Error(
+				OAuth2ErrorCodes.INVALID_CLIENT,
+				"Client authentication failed: " + parameterName,
+				ERROR_URI
+		);
+		throw new OAuth2AuthenticationException(error);
+	}
 }

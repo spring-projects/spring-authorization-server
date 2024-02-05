@@ -15,14 +15,8 @@
  */
 package org.springframework.security.oauth2.server.authorization.authentication;
 
-import java.security.Principal;
-import java.util.Base64;
-import java.util.Set;
-import java.util.function.Consumer;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
@@ -50,6 +44,12 @@ import org.springframework.security.oauth2.server.authorization.token.OAuth2Toke
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenGenerator;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
+
+import java.security.Principal;
+import java.time.Instant;
+import java.util.Base64;
+import java.util.Set;
+import java.util.function.Consumer;
 
 /**
  * An {@link AuthenticationProvider} implementation for the OAuth 2.0 Authorization Request
@@ -79,6 +79,8 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 	private OAuth2TokenGenerator<OAuth2AuthorizationCode> authorizationCodeGenerator = new OAuth2AuthorizationCodeGenerator();
 	private Consumer<OAuth2AuthorizationCodeRequestAuthenticationContext> authenticationValidator =
 			new OAuth2AuthorizationCodeRequestAuthenticationValidator();
+	private static final String EXPIRED_CLIENT = "expired_client";
+	private static final String EXPIRED_CLIENT_DESC = "Client is expired";
 
 	/**
 	 * Constructs an {@code OAuth2AuthorizationCodeRequestAuthenticationProvider} using the provided parameters.
@@ -111,7 +113,8 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 
 		if (registeredClient.getClientSecretExpiresAt() != null &&
 				Instant.now().isAfter(registeredClient.getClientSecretExpiresAt())) {
-			throwInvalidClient("client_secret_expires_at");
+			OAuth2Error error = new OAuth2Error(EXPIRED_CLIENT, EXPIRED_CLIENT_DESC, null);
+			throwError(error, OAuth2ParameterNames.CLIENT_ID, authorizationCodeRequestAuthentication, registeredClient, null);
 		}
 
 		if (this.logger.isTraceEnabled()) {
@@ -369,13 +372,5 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 			return registeredClient.getRedirectUris().iterator().next();
 		}
 		return null;
-	}
-	private static void throwInvalidClient(String parameterName) {
-		OAuth2Error error = new OAuth2Error(
-				OAuth2ErrorCodes.INVALID_CLIENT,
-				"Client authentication failed: " + parameterName,
-				ERROR_URI
-		);
-		throw new OAuth2AuthenticationException(error);
 	}
 }

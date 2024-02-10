@@ -33,7 +33,7 @@ public class SpringPublishLocalPlugin implements Plugin<Project> {
 			PublishingExtension publishing = project.getExtensions().getByType(PublishingExtension.class);
 			publishing.getRepositories().maven((maven) -> {
 				maven.setName("local");
-				maven.setUrl(new File(project.getRootProject().getBuildDir(), "publications/repos"));
+				maven.setUrl(new File(project.getRootProject().getLayout().getBuildDirectory().getAsFile().get(), "publications/repos"));
 			});
 		});
 	}

@@ -37,9 +37,9 @@ import org.gradle.api.plugins.quality.CheckstylePlugin;
 public class SpringJavaCheckstylePlugin implements Plugin<Project> {
 	private static final String CHECKSTYLE_DIR = "etc/checkstyle";
 	private static final String SPRING_JAVAFORMAT_VERSION_PROPERTY = "springJavaformatVersion";
-	private static final String DEFAULT_SPRING_JAVAFORMAT_VERSION = "0.0.31";
+	private static final String DEFAULT_SPRING_JAVAFORMAT_VERSION = "0.0.41";
 	private static final String NOHTTP_CHECKSTYLE_VERSION_PROPERTY = "nohttpCheckstyleVersion";
-	private static final String DEFAULT_NOHTTP_CHECKSTYLE_VERSION = "0.0.10";
+	private static final String DEFAULT_NOHTTP_CHECKSTYLE_VERSION = "0.0.11";
 	private static final String CHECKSTYLE_TOOL_VERSION_PROPERTY = "checkstyleToolVersion";
 	private static final String DEFAULT_CHECKSTYLE_TOOL_VERSION = "8.34";
 	private static final String SPRING_JAVAFORMAT_EXCLUDE_PACKAGES_PROPERTY = "springJavaformatExcludePackages";

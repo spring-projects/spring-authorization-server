@@ -7,7 +7,10 @@ plugins {
 
 group = project.rootProject.group
 version = project.rootProject.version
-sourceCompatibility = "17"
+
+java {
+	sourceCompatibility = JavaVersion.VERSION_17
+}
 
 antora {
 	playbook = "cached-antora-playbook.yml"

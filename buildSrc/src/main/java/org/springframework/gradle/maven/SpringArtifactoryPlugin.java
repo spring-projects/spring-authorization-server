@@ -36,25 +36,22 @@ public class SpringArtifactoryPlugin implements Plugin<Project> {
 		// Apply artifactory repository configuration
 		boolean isSnapshot = ProjectUtils.isSnapshot(project);
 		boolean isMilestone = ProjectUtils.isMilestone(project);
+		String artifactoryUsername = (String) project.findProperty("artifactoryUsername");
+		String artifactoryPassword = (String) project.findProperty("artifactoryPassword");
 
-		@SuppressWarnings("deprecation")
-		ArtifactoryPluginConvention artifactoryExtension = project.getConvention().getPlugin(ArtifactoryPluginConvention.class);
-		artifactoryExtension.artifactory((artifactory) -> {
-			artifactory.setContextUrl("https://repo.spring.io");
-			artifactory.publish((publish) -> {
-				publish.repository((repository) -> {
-					String repoKey = isSnapshot ? "libs-snapshot-local" : isMilestone ? "libs-milestone-local" : "libs-release-local";
-					repository.setRepoKey(repoKey);
-					if (project.hasProperty("artifactoryUsername")) {
-						repository.setUsername(project.findProperty("artifactoryUsername"));
-						repository.setPassword(project.findProperty("artifactoryPassword"));
-					}
-				});
-				// Would fail if maven publish is not applied, i.e. in root project (SpringRootProjectPlugin)
-				project.getPlugins().withType(MavenPublishPlugin.class, mavenPublish -> {
-					publish.defaults((defaults) -> defaults.publications("mavenJava"));
-				});
+		ArtifactoryPluginConvention artifactoryExtension = project.getExtensions().getByType(ArtifactoryPluginConvention.class);
+		artifactoryExtension.publish((publish) -> {
+			publish.setContextUrl("https://repo.spring.io");
+			publish.repository((repository) -> {
+				String repoKey = isSnapshot ? "libs-snapshot-local" : isMilestone ? "libs-milestone-local" : "libs-release-local";
+				repository.setRepoKey(repoKey);
+				if (project.hasProperty("artifactoryUsername")) {
+					repository.setUsername(artifactoryUsername);
+					repository.setPassword(artifactoryPassword);
+				}
 			});
+			// Would fail if maven publish is not applied, i.e. in root project (SpringRootProjectPlugin)
+			project.getPlugins().withType(MavenPublishPlugin.class, mavenPublish -> publish.defaults((defaults) -> defaults.publications("mavenJava")));
 		});
 	}
 }

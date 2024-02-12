@@ -24,13 +24,12 @@ import java.util.Base64;
 import java.util.List;
 import java.util.function.Consumer;
 
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -74,6 +73,7 @@ import org.springframework.security.oauth2.server.authorization.authentication.O
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientCredentialsAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2DeviceCodeAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2RefreshTokenAuthenticationProvider;
+import org.springframework.security.oauth2.server.authorization.authentication.OAuth2TokenExchangeAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.authentication.PublicClientAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.client.JdbcRegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.JdbcRegisteredClientRepository.RegisteredClientParametersMapper;
@@ -93,6 +93,7 @@ import org.springframework.security.oauth2.server.authorization.web.authenticati
 import org.springframework.security.oauth2.server.authorization.web.authentication.OAuth2ClientCredentialsAuthenticationConverter;
 import org.springframework.security.oauth2.server.authorization.web.authentication.OAuth2DeviceCodeAuthenticationConverter;
 import org.springframework.security.oauth2.server.authorization.web.authentication.OAuth2RefreshTokenAuthenticationConverter;
+import org.springframework.security.oauth2.server.authorization.web.authentication.OAuth2TokenExchangeAuthenticationConverter;
 import org.springframework.security.oauth2.server.authorization.web.authentication.PublicClientAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationConverter;
@@ -294,7 +295,8 @@ public class OAuth2ClientCredentialsGrantTests {
 						converter instanceof OAuth2AuthorizationCodeAuthenticationConverter ||
 						converter instanceof OAuth2RefreshTokenAuthenticationConverter ||
 						converter instanceof OAuth2ClientCredentialsAuthenticationConverter ||
-						converter instanceof OAuth2DeviceCodeAuthenticationConverter);
+						converter instanceof OAuth2DeviceCodeAuthenticationConverter ||
+						converter instanceof OAuth2TokenExchangeAuthenticationConverter);
 
 		verify(authenticationProvider).authenticate(eq(clientCredentialsAuthentication));
 
@@ -307,7 +309,8 @@ public class OAuth2ClientCredentialsGrantTests {
 						provider instanceof OAuth2AuthorizationCodeAuthenticationProvider ||
 						provider instanceof OAuth2RefreshTokenAuthenticationProvider ||
 						provider instanceof OAuth2ClientCredentialsAuthenticationProvider ||
-						provider instanceof OAuth2DeviceCodeAuthenticationProvider);
+						provider instanceof OAuth2DeviceCodeAuthenticationProvider ||
+						provider instanceof OAuth2TokenExchangeAuthenticationProvider);
 
 		verify(authenticationSuccessHandler).onAuthenticationSuccess(any(), any(), eq(accessTokenAuthentication));
 	}

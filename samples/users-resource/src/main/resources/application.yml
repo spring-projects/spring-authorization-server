@@ -1,0 +1,34 @@
+server:
+  port: 8091
+
+logging:
+  level:
+    org.springframework.security: INFO
+
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:9000
+      client:
+        registration:
+          messaging-client-client-credentials:
+            provider: spring
+            client-id: messaging-client
+            client-secret: secret
+            authorization-grant-type: client_credentials
+            client-name: messaging-client-client-credentials
+          messaging-client-token-exchange:
+            provider: spring
+            client-id: token-client
+            client-secret: token
+            authorization-grant-type: urn:ietf:params:oauth:grant-type:token-exchange
+            scope: message.read
+            client-name: messaging-client-token-exchange
+        provider:
+          spring:
+            issuer-uri: http://localhost:9000
+
+messages:
+  base-uri: http://127.0.0.1:8090

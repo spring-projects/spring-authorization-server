@@ -38,6 +38,14 @@ spring:
             authorization-grant-type: client_credentials
             scope: message.read,message.write
             client-name: messaging-client-client-credentials
+          user-client-authorization-code:
+            provider: spring
+            client-id: messaging-client
+            client-secret: secret
+            authorization-grant-type: authorization_code
+            redirect-uri: "http://127.0.0.1:8080/authorized"
+            scope: user.read
+            client-name: user-client-authorization-code
           messaging-client-device-code:
             provider: spring
             client-id: device-messaging-client
@@ -51,3 +59,6 @@ spring:
 
 messages:
   base-uri: http://127.0.0.1:8090/messages
+
+user-messages:
+  base-uri: http://127.0.0.1:8091/user/messages

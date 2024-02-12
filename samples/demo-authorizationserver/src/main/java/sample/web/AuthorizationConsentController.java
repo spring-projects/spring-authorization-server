@@ -119,6 +119,10 @@ public class AuthorizationConsentController {
 					"This application will be able to add new messages. It will also be able to edit and delete existing messages."
 			);
 			scopeDescriptions.put(
+					"user.read",
+					"This application will be able to read your user information."
+			);
+			scopeDescriptions.put(
 					"other.scope",
 					"This is another scope example of a scope description."
 			);

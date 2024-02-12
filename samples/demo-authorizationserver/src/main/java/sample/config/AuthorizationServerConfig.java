@@ -145,6 +145,7 @@ public class AuthorizationServerConfig {
 				.scope(OidcScopes.PROFILE)
 				.scope("message.read")
 				.scope("message.write")
+				.scope("user.read")
 				.clientSettings(ClientSettings.builder().requireAuthorizationConsent(true).build())
 				.build();
 
@@ -157,10 +158,19 @@ public class AuthorizationServerConfig {
 				.scope("message.write")
 				.build();
 
+		RegisteredClient tokenExchangeClient = RegisteredClient.withId(UUID.randomUUID().toString())
+				.clientId("token-client")
+				.clientSecret("{noop}token")
+				.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
+				.authorizationGrantType(new AuthorizationGrantType("urn:ietf:params:oauth:grant-type:token-exchange"))
+				.scope("message.read")
+				.build();
+
 		// Save registered client's in db as if in-memory
 		JdbcRegisteredClientRepository registeredClientRepository = new JdbcRegisteredClientRepository(jdbcTemplate);
 		registeredClientRepository.save(registeredClient);
 		registeredClientRepository.save(deviceClient);
+		registeredClientRepository.save(tokenExchangeClient);
 
 		return registeredClientRepository;
 	}

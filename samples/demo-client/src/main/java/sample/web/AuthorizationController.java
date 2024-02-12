@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 the original author or authors.
+ * Copyright 2020-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,11 +41,14 @@ import static org.springframework.security.oauth2.client.web.reactive.function.c
 public class AuthorizationController {
 	private final WebClient webClient;
 	private final String messagesBaseUri;
+	private final String userMessagesBaseUri;
 
 	public AuthorizationController(WebClient webClient,
-			@Value("${messages.base-uri}") String messagesBaseUri) {
+			@Value("${messages.base-uri}") String messagesBaseUri,
+			@Value("${user-messages.base-uri}") String userMessagesBaseUri) {
 		this.webClient = webClient;
 		this.messagesBaseUri = messagesBaseUri;
+		this.userMessagesBaseUri = userMessagesBaseUri;
 	}
 
 	@GetMapping(value = "/authorize", params = "grant_type=authorization_code")
@@ -88,6 +91,21 @@ public class AuthorizationController {
 				.get()
 				.uri(this.messagesBaseUri)
 				.attributes(clientRegistrationId("messaging-client-client-credentials"))
+				.retrieve()
+				.bodyToMono(String[].class)
+				.block();
+		model.addAttribute("messages", messages);
+
+		return "index";
+	}
+
+	@GetMapping(value = "/authorize", params = "grant_type=token_exchange")
+	public String tokenExchangeGrant(Model model) {
+
+		String[] messages = this.webClient
+				.get()
+				.uri(this.userMessagesBaseUri)
+				.attributes(clientRegistrationId("user-client-authorization-code"))
 				.retrieve()
 				.bodyToMono(String[].class)
 				.block();

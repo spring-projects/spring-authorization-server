@@ -43,6 +43,8 @@ import org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser;
 import org.springframework.security.oauth2.core.oidc.user.OidcUserAuthority;
 import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 import org.springframework.security.oauth2.core.user.OAuth2UserAuthority;
+import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ActorAuthenticationToken;
+import org.springframework.security.oauth2.server.authorization.authentication.OAuth2CompositeAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.jackson2.OAuth2AuthorizationServerJackson2Module;
 import org.springframework.security.oauth2.server.authorization.settings.OAuth2TokenFormat;
 import org.springframework.security.web.authentication.WebAuthenticationDetails;
@@ -109,7 +111,9 @@ class OAuth2AuthorizationServerBeanRegistrationAotProcessor implements BeanRegis
 							TypeReference.of(OidcIdToken.class),
 							TypeReference.of(AbstractOAuth2Token.class),
 							TypeReference.of(OidcUserInfo.class),
+							TypeReference.of(OAuth2ActorAuthenticationToken.class),
 							TypeReference.of(OAuth2AuthorizationRequest.class),
+							TypeReference.of(OAuth2CompositeAuthenticationToken.class),
 							TypeReference.of(AuthorizationGrantType.class),
 							TypeReference.of(OAuth2AuthorizationResponseType.class),
 							TypeReference.of(OAuth2TokenFormat.class)
@@ -151,7 +155,11 @@ class OAuth2AuthorizationServerBeanRegistrationAotProcessor implements BeanRegis
 			this.reflectionHintsRegistrar.registerReflectionHints(hints.reflection(),
 					loadClass("org.springframework.security.jackson2.SimpleGrantedAuthorityMixin"));
 			this.reflectionHintsRegistrar.registerReflectionHints(hints.reflection(),
+					loadClass("org.springframework.security.oauth2.server.authorization.jackson2.OAuth2ActorAuthenticationTokenMixin"));
+			this.reflectionHintsRegistrar.registerReflectionHints(hints.reflection(),
 					loadClass("org.springframework.security.oauth2.server.authorization.jackson2.OAuth2AuthorizationRequestMixin"));
+			this.reflectionHintsRegistrar.registerReflectionHints(hints.reflection(),
+					loadClass("org.springframework.security.oauth2.server.authorization.jackson2.OAuth2CompositeAuthenticationTokenMixin"));
 			this.reflectionHintsRegistrar.registerReflectionHints(hints.reflection(),
 					loadClass("org.springframework.security.oauth2.server.authorization.jackson2.OAuth2TokenFormatMixin"));
 

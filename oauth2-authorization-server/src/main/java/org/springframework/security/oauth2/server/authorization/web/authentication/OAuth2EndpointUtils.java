@@ -38,13 +38,13 @@ import org.springframework.util.StringUtils;
  * @author Greg Li
  * @since 0.1.2
  */
-final class OAuth2EndpointUtils {
+public final class OAuth2EndpointUtils {
 	static final String ACCESS_TOKEN_REQUEST_ERROR_URI = "https://datatracker.ietf.org/doc/html/rfc6749#section-5.2";
 
 	private OAuth2EndpointUtils() {
 	}
 
-	static MultiValueMap<String, String> getFormParameters(HttpServletRequest request) {
+	public static MultiValueMap<String, String> getFormParameters(HttpServletRequest request) {
 		Map<String, String[]> parameterMap = request.getParameterMap();
 		MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
 		parameterMap.forEach((key, values) -> {
@@ -59,7 +59,7 @@ final class OAuth2EndpointUtils {
 		return parameters;
 	}
 
-	static MultiValueMap<String, String> getQueryParameters(HttpServletRequest request) {
+	public static MultiValueMap<String, String> getQueryParameters(HttpServletRequest request) {
 		Map<String, String[]> parameterMap = request.getParameterMap();
 		MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
 		parameterMap.forEach((key, values) -> {
@@ -103,7 +103,7 @@ final class OAuth2EndpointUtils {
 				request.getParameter(PkceParameterNames.CODE_VERIFIER) != null;
 	}
 
-	static void throwError(String errorCode, String parameterName, String errorUri) {
+	public static void throwError(String errorCode, String parameterName, String errorUri) {
 		OAuth2Error error = new OAuth2Error(errorCode, "OAuth 2.0 Parameter: " + parameterName, errorUri);
 		throw new OAuth2AuthenticationException(error);
 	}

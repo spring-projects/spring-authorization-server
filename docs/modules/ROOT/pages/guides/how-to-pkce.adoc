@@ -58,7 +58,7 @@ include::{examples-dir}/main/java/sample/pkce/ClientConfig.java[tag=client,inden
 ----
 ======
 
-NOTE: The `requireProofKey` setting is helpful in situations where you forget to include the `code_challenge` and `code_challenge_method` query parameters because you will receive an error indicating PKCE is required during the xref:protocol-endpoints.adoc#oauth2-authorization-endpoint[Authorization Request] instead of a general client authentication error during the xref:protocol-endpoints.adoc#oauth2-token-endpoint[Token Request].
+IMPORTANT: The `requireProofKey` setting is important to prevent the https://datatracker.ietf.org/doc/html/draft-ietf-oauth-security-topics-25#name-pkce-downgrade-attack[PKCE Downgrade Attack].
 
 [[authenticate-with-client]]
 == Authenticate with the Client

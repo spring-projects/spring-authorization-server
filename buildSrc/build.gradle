@@ -16,8 +16,8 @@ repositories {
 
 dependencies {
 	implementation "com.github.ben-manes:gradle-versions-plugin:0.38.0"
-	implementation "io.github.gradle-nexus:publish-plugin:2.0.0-rc-2"
-	implementation "io.spring.javaformat:spring-javaformat-gradle-plugin:0.0.41"
+	implementation "io.github.gradle-nexus:publish-plugin:1.1.0"
+	implementation "io.spring.javaformat:spring-javaformat-gradle-plugin:0.0.31"
 	implementation "io.spring.nohttp:nohttp-gradle:0.0.11"
 	implementation "org.asciidoctor:asciidoctor-gradle-jvm:3.3.2"
 	implementation "org.asciidoctor:asciidoctor-gradle-jvm-pdf:3.3.2"

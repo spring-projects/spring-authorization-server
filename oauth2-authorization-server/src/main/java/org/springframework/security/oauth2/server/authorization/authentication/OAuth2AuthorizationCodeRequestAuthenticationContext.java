@@ -21,6 +21,8 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 import org.springframework.lang.Nullable;
+import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
+import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsent;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.util.Assert;
 
@@ -64,6 +66,27 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationContext implement
 	}
 
 	/**
+	 * Returns the {@link OAuth2AuthorizationRequest oauth2 authorization request}.
+	 *
+	 * @return the {@link OAuth2AuthorizationRequest}
+	 */
+	@Nullable
+	public OAuth2AuthorizationRequest getOAuth2AuthorizationRequest() {
+		return get(OAuth2AuthorizationRequest.class);
+	}
+
+	/**
+	 * Returns the {@link OAuth2AuthorizationConsent oauth2 authorization consent}.
+	 *
+	 * @return the {@link OAuth2AuthorizationConsent}
+	 */
+	@Nullable
+	public OAuth2AuthorizationConsent getOAuth2AuthorizationConsent() {
+		return get(OAuth2AuthorizationConsent.class);
+	}
+
+
+	/**
 	 * Constructs a new {@link Builder} with the provided {@link OAuth2AuthorizationCodeRequestAuthenticationToken}.
 	 *
 	 * @param authentication the {@link OAuth2AuthorizationCodeRequestAuthenticationToken}
@@ -90,6 +113,28 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationContext implement
 		 */
 		public Builder registeredClient(RegisteredClient registeredClient) {
 			return put(RegisteredClient.class, registeredClient);
+		}
+
+		/**
+		 * Sets the {@link OAuth2AuthorizationRequest oauth2 authorization request}.
+		 *
+		 * @param authorizationRequest the {@link OAuth2AuthorizationRequest}
+		 * @return the {@link Builder} for further configuration
+		 * @since 1.3.0
+		 */
+		public Builder authorizationRequest(OAuth2AuthorizationRequest authorizationRequest) {
+			return put(OAuth2AuthorizationRequest.class, authorizationRequest);
+		}
+
+		/**
+		 * Sets the {@link OAuth2AuthorizationConsent oauth2 authorization consent}.
+		 *
+		 * @param authorizationConsent the {@link OAuth2AuthorizationConsent}
+		 * @return the {@link Builder} for further configuration
+		 * @since 1.3.0
+		 */
+		public Builder authorizationConsent(OAuth2AuthorizationConsent authorizationConsent) {
+			return put(OAuth2AuthorizationConsent.class, authorizationConsent);
 		}
 
 		/**

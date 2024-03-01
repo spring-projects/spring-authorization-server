@@ -121,9 +121,7 @@ public class AuthorizationServerConfig {
 					new LoginUrlAuthenticationEntryPoint("/login"),
 					new MediaTypeRequestMatcher(MediaType.TEXT_HTML)
 				)
-			)
-			.oauth2ResourceServer(oauth2ResourceServer ->
-				oauth2ResourceServer.jwt(Customizer.withDefaults()));
+			);
 		// @formatter:on
 		return http.build();
 	}

@@ -18,6 +18,7 @@ package sample.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.oauth2.server.resource.OAuth2ResourceServerConfigurer;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -40,6 +41,7 @@ public class DefaultSecurityConfig {
 				authorizeRequests.anyRequest().authenticated()
 			)
 			.formLogin(withDefaults());
+		http.oauth2ResourceServer(OAuth2ResourceServerConfigurer::jwt);
 		return http.build();
 	}
 	// @formatter:on

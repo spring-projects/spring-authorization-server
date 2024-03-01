@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -94,8 +94,10 @@ final class CodeVerifierAuthenticator {
 
 		String codeChallenge = (String) authorizationRequest.getAdditionalParameters()
 				.get(PkceParameterNames.CODE_CHALLENGE);
+		String codeVerifier = (String) parameters.get(PkceParameterNames.CODE_VERIFIER);
 		if (!StringUtils.hasText(codeChallenge)) {
-			if (registeredClient.getClientSettings().isRequireProofKey()) {
+			if (registeredClient.getClientSettings().isRequireProofKey() ||
+					StringUtils.hasText(codeVerifier)) {
 				throwInvalidGrant(PkceParameterNames.CODE_CHALLENGE);
 			} else {
 				if (this.logger.isTraceEnabled()) {
@@ -111,7 +113,6 @@ final class CodeVerifierAuthenticator {
 
 		String codeChallengeMethod = (String) authorizationRequest.getAdditionalParameters()
 				.get(PkceParameterNames.CODE_CHALLENGE_METHOD);
-		String codeVerifier = (String) parameters.get(PkceParameterNames.CODE_VERIFIER);
 		if (!codeVerifierValid(codeVerifier, codeChallenge, codeChallengeMethod)) {
 			throwInvalidGrant(PkceParameterNames.CODE_VERIFIER);
 		}

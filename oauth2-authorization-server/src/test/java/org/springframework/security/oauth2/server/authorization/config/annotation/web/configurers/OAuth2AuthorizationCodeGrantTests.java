@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 the original author or authors.
+ * Copyright 2020-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -486,6 +486,35 @@ public class OAuth2AuthorizationCodeGrantTests {
 				"error_uri=" + UriUtils.encode("https://datatracker.ietf.org/doc/html/rfc7636#section-4.4.1", StandardCharsets.UTF_8) + "&" +
 				"state=" + STATE_URL_ENCODED;
 		assertThat(redirectedUrl).isEqualTo(expectedRedirectUri);
+	}
+
+	@Test
+	public void requestWhenConfidentialClientWithPkceAndMissingCodeChallengeButCodeVerifierProvidedThenBadRequest() throws Exception {
+		this.spring.register(AuthorizationServerConfiguration.class).autowire();
+
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+		this.registeredClientRepository.save(registeredClient);
+
+		MultiValueMap<String, String> authorizationRequestParameters = getAuthorizationRequestParameters(registeredClient);
+		MvcResult mvcResult = this.mvc.perform(get(DEFAULT_AUTHORIZATION_ENDPOINT_URI)
+						.queryParams(authorizationRequestParameters)
+						.with(user("user")))
+				.andExpect(status().is3xxRedirection())
+				.andReturn();
+		String redirectedUrl = mvcResult.getResponse().getRedirectedUrl();
+		String expectedRedirectUri = authorizationRequestParameters.getFirst(OAuth2ParameterNames.REDIRECT_URI);
+		assertThat(redirectedUrl).matches(expectedRedirectUri + "\\?code=.{15,}&state=" + STATE_URL_ENCODED);
+
+		String authorizationCode = extractParameterFromRedirectUri(redirectedUrl, "code");
+		OAuth2Authorization authorizationCodeAuthorization = this.authorizationService.findByToken(authorizationCode, AUTHORIZATION_CODE_TOKEN_TYPE);
+		assertThat(authorizationCodeAuthorization).isNotNull();
+		assertThat(authorizationCodeAuthorization.getAuthorizationGrantType()).isEqualTo(AuthorizationGrantType.AUTHORIZATION_CODE);
+
+		this.mvc.perform(post(DEFAULT_TOKEN_ENDPOINT_URI)
+				.params(getTokenRequestParameters(registeredClient, authorizationCodeAuthorization))
+				.param(PkceParameterNames.CODE_VERIFIER, S256_CODE_VERIFIER)
+				.header(HttpHeaders.AUTHORIZATION, getAuthorizationHeader(registeredClient)))
+				.andExpect(status().isBadRequest());
 	}
 
 	@Test

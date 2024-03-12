@@ -122,6 +122,7 @@ public final class OAuth2AuthorizationServerMetadataEndpointFilter extends OnceP
 			authenticationMethods.add(ClientAuthenticationMethod.CLIENT_SECRET_POST.getValue());
 			authenticationMethods.add(ClientAuthenticationMethod.CLIENT_SECRET_JWT.getValue());
 			authenticationMethods.add(ClientAuthenticationMethod.PRIVATE_KEY_JWT.getValue());
+			authenticationMethods.add("tls_client_auth");
 		};
 	}
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,6 +66,14 @@ public class ClientSettingsTests {
 				.jwkSetUrl("https://client.example.com/jwks")
 				.build();
 		assertThat(clientSettings.getJwkSetUrl()).isEqualTo("https://client.example.com/jwks");
+	}
+
+	@Test
+	public void x509CertificateSubjectDNWhenProvidedThenSet() {
+		ClientSettings clientSettings = ClientSettings.builder()
+				.x509CertificateSubjectDN("CN=demo-client-sample, OU=Spring Samples, O=Spring, C=US")
+				.build();
+		assertThat(clientSettings.getX509CertificateSubjectDN()).isEqualTo("CN=demo-client-sample, OU=Spring Samples, O=Spring, C=US");
 	}
 
 	@Test

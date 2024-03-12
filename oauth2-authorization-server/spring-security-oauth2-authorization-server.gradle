@@ -21,6 +21,8 @@ dependencies {
 
 	testImplementation "org.springframework.security:spring-security-test"
 	testImplementation "org.springframework:spring-webmvc"
+	testImplementation "org.bouncycastle:bcpkix-jdk18on"
+	testImplementation "org.bouncycastle:bcprov-jdk18on"
 	testImplementation "org.junit.jupiter:junit-jupiter"
 	testImplementation "org.assertj:assertj-core"
 	testImplementation "org.mockito:mockito-core"

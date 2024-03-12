@@ -34,6 +34,7 @@ import org.springframework.security.oauth2.server.authorization.authentication.C
 import org.springframework.security.oauth2.server.authorization.authentication.JwtClientAssertionAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.authentication.PublicClientAuthenticationProvider;
+import org.springframework.security.oauth2.server.authorization.authentication.X509ClientCertificateAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.web.OAuth2ClientAuthenticationFilter;
@@ -42,6 +43,7 @@ import org.springframework.security.oauth2.server.authorization.web.authenticati
 import org.springframework.security.oauth2.server.authorization.web.authentication.DelegatingAuthenticationConverter;
 import org.springframework.security.oauth2.server.authorization.web.authentication.JwtClientAssertionAuthenticationConverter;
 import org.springframework.security.oauth2.server.authorization.web.authentication.PublicClientAuthenticationConverter;
+import org.springframework.security.oauth2.server.authorization.web.authentication.X509ClientCertificateAuthenticationConverter;
 import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
@@ -214,6 +216,7 @@ public final class OAuth2ClientAuthenticationConfigurer extends AbstractOAuth2Co
 		List<AuthenticationConverter> authenticationConverters = new ArrayList<>();
 
 		authenticationConverters.add(new JwtClientAssertionAuthenticationConverter());
+		authenticationConverters.add(new X509ClientCertificateAuthenticationConverter());
 		authenticationConverters.add(new ClientSecretBasicAuthenticationConverter());
 		authenticationConverters.add(new ClientSecretPostAuthenticationConverter());
 		authenticationConverters.add(new PublicClientAuthenticationConverter());
@@ -230,6 +233,10 @@ public final class OAuth2ClientAuthenticationConfigurer extends AbstractOAuth2Co
 		JwtClientAssertionAuthenticationProvider jwtClientAssertionAuthenticationProvider =
 				new JwtClientAssertionAuthenticationProvider(registeredClientRepository, authorizationService);
 		authenticationProviders.add(jwtClientAssertionAuthenticationProvider);
+
+		X509ClientCertificateAuthenticationProvider x509ClientCertificateAuthenticationProvider =
+				new X509ClientCertificateAuthenticationProvider(registeredClientRepository, authorizationService);
+		authenticationProviders.add(x509ClientCertificateAuthenticationProvider);
 
 		ClientSecretAuthenticationProvider clientSecretAuthenticationProvider =
 				new ClientSecretAuthenticationProvider(registeredClientRepository, authorizationService);

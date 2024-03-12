@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 the original author or authors.
+ * Copyright 2020-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,6 +64,13 @@ public final class ConfigurationSettingNames {
 		 * @since 0.2.2
 		 */
 		public static final String TOKEN_ENDPOINT_AUTHENTICATION_SIGNING_ALGORITHM = CLIENT_SETTINGS_NAMESPACE.concat("token-endpoint-authentication-signing-algorithm");
+
+		/**
+		 * Set the expected subject distinguished name associated to the client {@code X509Certificate}
+		 * received during client authentication when using the {@code tls_client_auth} method.
+		 * @since 1.3
+		 */
+		public static final String X509_CERTIFICATE_SUBJECT_DN = CLIENT_SETTINGS_NAMESPACE.concat("x509-certificate-subject-dn");
 
 		private Client() {
 		}

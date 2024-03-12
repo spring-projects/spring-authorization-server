@@ -24,12 +24,13 @@ import java.util.Base64;
 import java.util.List;
 import java.util.function.Consumer;
 
-import com.nimbusds.jose.jwk.JWKSet;
-import com.nimbusds.jose.jwk.source.JWKSource;
-import com.nimbusds.jose.proc.SecurityContext;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+
+import com.nimbusds.jose.jwk.JWKSet;
+import com.nimbusds.jose.jwk.source.JWKSource;
+import com.nimbusds.jose.proc.SecurityContext;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -75,6 +76,7 @@ import org.springframework.security.oauth2.server.authorization.authentication.O
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2RefreshTokenAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2TokenExchangeAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.authentication.PublicClientAuthenticationProvider;
+import org.springframework.security.oauth2.server.authorization.authentication.X509ClientCertificateAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.client.JdbcRegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.JdbcRegisteredClientRepository.RegisteredClientParametersMapper;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
@@ -82,10 +84,12 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
 import org.springframework.security.oauth2.server.authorization.jackson2.TestingAuthenticationTokenMixin;
+import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
 import org.springframework.security.oauth2.server.authorization.test.SpringTestContext;
 import org.springframework.security.oauth2.server.authorization.test.SpringTestContextExtension;
 import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer;
+import org.springframework.security.oauth2.server.authorization.util.TestX509Certificates;
 import org.springframework.security.oauth2.server.authorization.web.authentication.ClientSecretBasicAuthenticationConverter;
 import org.springframework.security.oauth2.server.authorization.web.authentication.ClientSecretPostAuthenticationConverter;
 import org.springframework.security.oauth2.server.authorization.web.authentication.JwtClientAssertionAuthenticationConverter;
@@ -95,6 +99,7 @@ import org.springframework.security.oauth2.server.authorization.web.authenticati
 import org.springframework.security.oauth2.server.authorization.web.authentication.OAuth2RefreshTokenAuthenticationConverter;
 import org.springframework.security.oauth2.server.authorization.web.authentication.OAuth2TokenExchangeAuthenticationConverter;
 import org.springframework.security.oauth2.server.authorization.web.authentication.PublicClientAuthenticationConverter;
+import org.springframework.security.oauth2.server.authorization.web.authentication.X509ClientCertificateAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
@@ -111,6 +116,7 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.x509;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -258,6 +264,34 @@ public class OAuth2ClientCredentialsGrantTests {
 	}
 
 	@Test
+	public void requestWhenTokenRequestWithX509ClientCertificateThenTokenResponse() throws Exception {
+		this.spring.register(AuthorizationServerConfiguration.class).autowire();
+
+		// @formatter:off
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient2()
+				.clientAuthenticationMethod(new ClientAuthenticationMethod("tls_client_auth"))
+				.clientSettings(
+						ClientSettings.builder()
+								.x509CertificateSubjectDN(TestX509Certificates.DEMO_CLIENT_PKI_CERTIFICATE[0].getSubjectX500Principal().getName())
+								.build()
+				)
+				.build();
+		// @formatter:on
+		this.registeredClientRepository.save(registeredClient);
+
+		this.mvc.perform(post(DEFAULT_TOKEN_ENDPOINT_URI)
+						.with(x509(TestX509Certificates.DEMO_CLIENT_PKI_CERTIFICATE))
+						.param(OAuth2ParameterNames.CLIENT_ID, registeredClient.getClientId())
+						.param(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
+						.param(OAuth2ParameterNames.SCOPE, "scope1 scope2"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.access_token").isNotEmpty())
+				.andExpect(jsonPath("$.scope").value("scope1 scope2"));
+
+		verify(jwtCustomizer).customize(any());
+	}
+
+	@Test
 	public void requestWhenTokenEndpointCustomizedThenUsed() throws Exception {
 		this.spring.register(AuthorizationServerConfigurationCustomTokenEndpoint.class).autowire();
 
@@ -341,6 +375,7 @@ public class OAuth2ClientCredentialsGrantTests {
 		assertThat(authenticationConverters).allMatch((converter) ->
 				converter == authenticationConverter ||
 						converter instanceof JwtClientAssertionAuthenticationConverter ||
+						converter instanceof X509ClientCertificateAuthenticationConverter ||
 						converter instanceof ClientSecretBasicAuthenticationConverter ||
 						converter instanceof ClientSecretPostAuthenticationConverter ||
 						converter instanceof PublicClientAuthenticationConverter);
@@ -354,6 +389,7 @@ public class OAuth2ClientCredentialsGrantTests {
 		assertThat(authenticationProviders).allMatch((provider) ->
 				provider == authenticationProvider ||
 						provider instanceof JwtClientAssertionAuthenticationProvider ||
+						provider instanceof X509ClientCertificateAuthenticationProvider ||
 						provider instanceof ClientSecretAuthenticationProvider ||
 						provider instanceof PublicClientAuthenticationProvider);
 

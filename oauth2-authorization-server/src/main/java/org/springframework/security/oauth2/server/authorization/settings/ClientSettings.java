@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,6 +79,17 @@ public final class ClientSettings extends AbstractSettings {
 	}
 
 	/**
+	 * Returns the expected subject distinguished name associated to the client {@code X509Certificate}
+	 * received during client authentication when using the {@code tls_client_auth} method.
+	 *
+	 * @return the expected subject distinguished name associated to the client {@code X509Certificate} received during client authentication
+	 * @since 1.3
+	 */
+	public String getX509CertificateSubjectDN() {
+		return getSetting(ConfigurationSettingNames.Client.X509_CERTIFICATE_SUBJECT_DN);
+	}
+
+	/**
 	 * Constructs a new {@link Builder} with the default settings.
 	 *
 	 * @return the {@link Builder}
@@ -154,6 +165,18 @@ public final class ClientSettings extends AbstractSettings {
 		 */
 		public Builder tokenEndpointAuthenticationSigningAlgorithm(JwsAlgorithm authenticationSigningAlgorithm) {
 			return setting(ConfigurationSettingNames.Client.TOKEN_ENDPOINT_AUTHENTICATION_SIGNING_ALGORITHM, authenticationSigningAlgorithm);
+		}
+
+		/**
+		 * Sets the expected subject distinguished name associated to the client {@code X509Certificate}
+		 * received during client authentication when using the {@code tls_client_auth} method.
+		 *
+		 * @param x509CertificateSubjectDN the expected subject distinguished name associated to the client {@code X509Certificate} received during client authentication		 * @return the {@link Builder} for further configuration
+		 * @return the {@link Builder} for further configuration
+		 * @since 1.3
+		 */
+		public Builder x509CertificateSubjectDN(String x509CertificateSubjectDN) {
+			return setting(ConfigurationSettingNames.Client.X509_CERTIFICATE_SUBJECT_DN, x509CertificateSubjectDN);
 		}
 
 		/**

@@ -38,9 +38,6 @@ import org.springframework.util.CollectionUtils;
  */
 final class OAuth2TokenExchangeTokenCustomizers {
 
-	private static final AuthorizationGrantType TOKEN_EXCHANGE = new AuthorizationGrantType(
-			"urn:ietf:params:oauth:grant-type:token-exchange");
-
 	private OAuth2TokenExchangeTokenCustomizers() {
 	}
 
@@ -53,7 +50,7 @@ final class OAuth2TokenExchangeTokenCustomizers {
 	}
 
 	private static void customize(OAuth2TokenContext context, Map<String, Object> claims) {
-		if (!TOKEN_EXCHANGE.equals(context.getAuthorizationGrantType())) {
+		if (!AuthorizationGrantType.TOKEN_EXCHANGE.equals(context.getAuthorizationGrantType())) {
 			return;
 		}
 

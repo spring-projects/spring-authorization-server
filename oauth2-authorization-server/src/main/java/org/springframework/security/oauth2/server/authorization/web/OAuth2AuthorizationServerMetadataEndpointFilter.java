@@ -101,8 +101,7 @@ public final class OAuth2AuthorizationServerMetadataEndpointFilter extends OnceP
 				.grantType(AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
 				.grantType(AuthorizationGrantType.REFRESH_TOKEN.getValue())
 				.grantType(AuthorizationGrantType.DEVICE_CODE.getValue())
-				// TODO: Replace with constant from spring-security:
-				.grantType(new AuthorizationGrantType("urn:ietf:params:oauth:grant-type:token-exchange").getValue())
+				.grantType(AuthorizationGrantType.TOKEN_EXCHANGE.getValue())
 				.tokenRevocationEndpoint(asUrl(issuer, authorizationServerSettings.getTokenRevocationEndpoint()))
 				.tokenRevocationEndpointAuthenticationMethods(clientAuthenticationMethods())
 				.tokenIntrospectionEndpoint(asUrl(issuer, authorizationServerSettings.getTokenIntrospectionEndpoint()))

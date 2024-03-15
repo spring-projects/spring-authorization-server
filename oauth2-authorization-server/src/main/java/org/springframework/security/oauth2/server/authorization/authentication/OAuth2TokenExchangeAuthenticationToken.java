@@ -36,9 +36,6 @@ import org.springframework.util.Assert;
  */
 public class OAuth2TokenExchangeAuthenticationToken extends OAuth2AuthorizationGrantAuthenticationToken {
 
-	private static final AuthorizationGrantType TOKEN_EXCHANGE = new AuthorizationGrantType(
-			"urn:ietf:params:oauth:grant-type:token-exchange");
-
 	private final List<String> resources;
 
 	private final List<String> audiences;
@@ -73,7 +70,7 @@ public class OAuth2TokenExchangeAuthenticationToken extends OAuth2AuthorizationG
 			@Nullable Set<String> scopes, @Nullable String requestedTokenType, String subjectToken,
 			String subjectTokenType, @Nullable String actorToken, @Nullable String actorTokenType,
 			Authentication clientPrincipal, @Nullable Map<String, Object> additionalParameters) {
-		super(TOKEN_EXCHANGE, clientPrincipal, additionalParameters);
+		super(AuthorizationGrantType.TOKEN_EXCHANGE, clientPrincipal, additionalParameters);
 		Assert.notNull(resources, "resources cannot be null");
 		Assert.notNull(audiences, "audiences cannot be null");
 		Assert.hasText(requestedTokenType, "requestedTokenType cannot be empty");

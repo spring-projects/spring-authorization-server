@@ -56,23 +56,6 @@ public final class OAuth2TokenExchangeAuthenticationConverter implements Authent
 
 	private static final String TOKEN_TYPE_IDENTIFIERS_URI = "https://datatracker.ietf.org/doc/html/rfc8693#section-3";
 
-	private static final AuthorizationGrantType TOKEN_EXCHANGE = new AuthorizationGrantType(
-			"urn:ietf:params:oauth:grant-type:token-exchange");
-
-	private static final String AUDIENCE = "audience";
-
-	private static final String RESOURCE = "resource";
-
-	private static final String REQUESTED_TOKEN_TYPE = "requested_token_type";
-
-	private static final String SUBJECT_TOKEN = "subject_token";
-
-	private static final String SUBJECT_TOKEN_TYPE = "subject_token_type";
-
-	private static final String ACTOR_TOKEN = "actor_token";
-
-	private static final String ACTOR_TOKEN_TYPE = "actor_token_type";
-
 	private static final String ACCESS_TOKEN_TYPE_VALUE = "urn:ietf:params:oauth:token-type:access_token";
 
 	private static final String JWT_TOKEN_TYPE_VALUE = "urn:ietf:params:oauth:token-type:jwt";
@@ -86,27 +69,27 @@ public final class OAuth2TokenExchangeAuthenticationConverter implements Authent
 
 		// grant_type (REQUIRED)
 		String grantType = parameters.getFirst(OAuth2ParameterNames.GRANT_TYPE);
-		if (!TOKEN_EXCHANGE.getValue().equals(grantType)) {
+		if (!AuthorizationGrantType.TOKEN_EXCHANGE.getValue().equals(grantType)) {
 			return null;
 		}
 
 		Authentication clientPrincipal = SecurityContextHolder.getContext().getAuthentication();
 
 		// resource (OPTIONAL)
-		List<String> resources = parameters.getOrDefault(RESOURCE, Collections.emptyList());
+		List<String> resources = parameters.getOrDefault(OAuth2ParameterNames.RESOURCE, Collections.emptyList());
 		if (!CollectionUtils.isEmpty(resources)) {
 			for (String resource : resources) {
 				if (!isValidUri(resource)) {
 					OAuth2EndpointUtils.throwError(
 							OAuth2ErrorCodes.INVALID_REQUEST,
-							RESOURCE,
+							OAuth2ParameterNames.RESOURCE,
 							OAuth2EndpointUtils.ACCESS_TOKEN_REQUEST_ERROR_URI);
 				}
 			}
 		}
 
 		// audience (OPTIONAL)
-		List<String> audiences = parameters.getOrDefault(AUDIENCE, Collections.emptyList());
+		List<String> audiences = parameters.getOrDefault(OAuth2ParameterNames.AUDIENCE, Collections.emptyList());
 
 		// scope (OPTIONAL)
 		String scope = parameters.getFirst(OAuth2ParameterNames.SCOPE);
@@ -125,87 +108,87 @@ public final class OAuth2TokenExchangeAuthenticationConverter implements Authent
 		}
 
 		// requested_token_type (OPTIONAL)
-		String requestedTokenType = parameters.getFirst(REQUESTED_TOKEN_TYPE);
+		String requestedTokenType = parameters.getFirst(OAuth2ParameterNames.REQUESTED_TOKEN_TYPE);
 		if (StringUtils.hasText(requestedTokenType)) {
-			if (parameters.get(REQUESTED_TOKEN_TYPE).size() != 1) {
+			if (parameters.get(OAuth2ParameterNames.REQUESTED_TOKEN_TYPE).size() != 1) {
 				OAuth2EndpointUtils.throwError(
 						OAuth2ErrorCodes.INVALID_REQUEST,
-						REQUESTED_TOKEN_TYPE,
+						OAuth2ParameterNames.REQUESTED_TOKEN_TYPE,
 						OAuth2EndpointUtils.ACCESS_TOKEN_REQUEST_ERROR_URI);
 			}
 
-			validateTokenType(REQUESTED_TOKEN_TYPE, requestedTokenType);
+			validateTokenType(OAuth2ParameterNames.REQUESTED_TOKEN_TYPE, requestedTokenType);
 		} else {
 			requestedTokenType = ACCESS_TOKEN_TYPE_VALUE;
 		}
 
 		// subject_token (REQUIRED)
-		String subjectToken = parameters.getFirst(SUBJECT_TOKEN);
+		String subjectToken = parameters.getFirst(OAuth2ParameterNames.SUBJECT_TOKEN);
 		if (!StringUtils.hasText(subjectToken) ||
-				parameters.get(SUBJECT_TOKEN).size() != 1) {
+				parameters.get(OAuth2ParameterNames.SUBJECT_TOKEN).size() != 1) {
 			OAuth2EndpointUtils.throwError(
 					OAuth2ErrorCodes.INVALID_REQUEST,
-					SUBJECT_TOKEN,
+					OAuth2ParameterNames.SUBJECT_TOKEN,
 					OAuth2EndpointUtils.ACCESS_TOKEN_REQUEST_ERROR_URI);
 		}
 
 		// subject_token_type (REQUIRED)
-		String subjectTokenType = parameters.getFirst(SUBJECT_TOKEN_TYPE);
+		String subjectTokenType = parameters.getFirst(OAuth2ParameterNames.SUBJECT_TOKEN_TYPE);
 		if (!StringUtils.hasText(subjectTokenType) ||
-				parameters.get(SUBJECT_TOKEN_TYPE).size() != 1) {
+				parameters.get(OAuth2ParameterNames.SUBJECT_TOKEN_TYPE).size() != 1) {
 			OAuth2EndpointUtils.throwError(
 					OAuth2ErrorCodes.INVALID_REQUEST,
-					SUBJECT_TOKEN_TYPE,
+					OAuth2ParameterNames.SUBJECT_TOKEN_TYPE,
 					OAuth2EndpointUtils.ACCESS_TOKEN_REQUEST_ERROR_URI);
 		} else {
-			validateTokenType(SUBJECT_TOKEN_TYPE, subjectTokenType);
+			validateTokenType(OAuth2ParameterNames.SUBJECT_TOKEN_TYPE, subjectTokenType);
 		}
 
 		// actor_token (OPTIONAL, REQUIRED if actor_token_type is provided)
-		String actorToken = parameters.getFirst(ACTOR_TOKEN);
+		String actorToken = parameters.getFirst(OAuth2ParameterNames.ACTOR_TOKEN);
 		if (StringUtils.hasText(actorToken) &&
-				parameters.get(ACTOR_TOKEN).size() != 1) {
+				parameters.get(OAuth2ParameterNames.ACTOR_TOKEN).size() != 1) {
 			OAuth2EndpointUtils.throwError(
 					OAuth2ErrorCodes.INVALID_REQUEST,
-					ACTOR_TOKEN,
+					OAuth2ParameterNames.ACTOR_TOKEN,
 					OAuth2EndpointUtils.ACCESS_TOKEN_REQUEST_ERROR_URI);
 		}
 
 		// actor_token_type (OPTIONAL, REQUIRED if actor_token is provided)
-		String actorTokenType = parameters.getFirst(ACTOR_TOKEN_TYPE);
+		String actorTokenType = parameters.getFirst(OAuth2ParameterNames.ACTOR_TOKEN_TYPE);
 		if (StringUtils.hasText(actorTokenType)) {
-			if (parameters.get(ACTOR_TOKEN_TYPE).size() != 1) {
+			if (parameters.get(OAuth2ParameterNames.ACTOR_TOKEN_TYPE).size() != 1) {
 				OAuth2EndpointUtils.throwError(
 						OAuth2ErrorCodes.INVALID_REQUEST,
-						ACTOR_TOKEN_TYPE,
+						OAuth2ParameterNames.ACTOR_TOKEN_TYPE,
 						OAuth2EndpointUtils.ACCESS_TOKEN_REQUEST_ERROR_URI);
 			}
 
-			validateTokenType(ACTOR_TOKEN_TYPE, actorTokenType);
+			validateTokenType(OAuth2ParameterNames.ACTOR_TOKEN_TYPE, actorTokenType);
 		}
 
 		if (!StringUtils.hasText(actorToken) && StringUtils.hasText(actorTokenType)) {
 			OAuth2EndpointUtils.throwError(
 					OAuth2ErrorCodes.INVALID_REQUEST,
-					ACTOR_TOKEN,
+					OAuth2ParameterNames.ACTOR_TOKEN,
 					OAuth2EndpointUtils.ACCESS_TOKEN_REQUEST_ERROR_URI);
 		} else if (StringUtils.hasText(actorToken) && !StringUtils.hasText(actorTokenType)) {
 			OAuth2EndpointUtils.throwError(
 					OAuth2ErrorCodes.INVALID_REQUEST,
-					ACTOR_TOKEN_TYPE,
+					OAuth2ParameterNames.ACTOR_TOKEN_TYPE,
 					OAuth2EndpointUtils.ACCESS_TOKEN_REQUEST_ERROR_URI);
 		}
 
 		Map<String, Object> additionalParameters = new HashMap<>();
 		parameters.forEach((key, value) -> {
 			if (!key.equals(OAuth2ParameterNames.GRANT_TYPE) &&
-					!key.equals(RESOURCE) &&
-					!key.equals(AUDIENCE) &&
-					!key.equals(REQUESTED_TOKEN_TYPE) &&
-					!key.equals(SUBJECT_TOKEN) &&
-					!key.equals(SUBJECT_TOKEN_TYPE) &&
-					!key.equals(ACTOR_TOKEN) &&
-					!key.equals(ACTOR_TOKEN_TYPE) &&
+					!key.equals(OAuth2ParameterNames.RESOURCE) &&
+					!key.equals(OAuth2ParameterNames.AUDIENCE) &&
+					!key.equals(OAuth2ParameterNames.REQUESTED_TOKEN_TYPE) &&
+					!key.equals(OAuth2ParameterNames.SUBJECT_TOKEN) &&
+					!key.equals(OAuth2ParameterNames.SUBJECT_TOKEN_TYPE) &&
+					!key.equals(OAuth2ParameterNames.ACTOR_TOKEN) &&
+					!key.equals(OAuth2ParameterNames.ACTOR_TOKEN_TYPE) &&
 					!key.equals(OAuth2ParameterNames.SCOPE)) {
 				additionalParameters.put(key, (value.size() == 1) ? value.get(0) : value.toArray(new String[0]));
 			}

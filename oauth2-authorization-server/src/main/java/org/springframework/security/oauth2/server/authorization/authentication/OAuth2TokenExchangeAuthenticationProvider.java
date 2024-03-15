@@ -37,6 +37,7 @@ import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.OAuth2Token;
+import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.oidc.StandardClaimNames;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
@@ -70,14 +71,9 @@ public final class OAuth2TokenExchangeAuthenticationProvider implements Authenti
 
 	private static final String ERROR_URI = "https://datatracker.ietf.org/doc/html/rfc6749#section-5.2";
 
-	private static final AuthorizationGrantType TOKEN_EXCHANGE = new AuthorizationGrantType(
-			"urn:ietf:params:oauth:grant-type:token-exchange");
-
 	private static final String JWT_TOKEN_TYPE_VALUE = "urn:ietf:params:oauth:token-type:jwt";
 
 	private static final String MAY_ACT = "may_act";
-
-	private static final String ISSUED_TOKEN_TYPE = "issued_token_type";
 
 	private final Log logger = LogFactory.getLog(getClass());
 
@@ -112,7 +108,7 @@ public final class OAuth2TokenExchangeAuthenticationProvider implements Authenti
 			this.logger.trace("Retrieved registered client");
 		}
 
-		if (!registeredClient.getAuthorizationGrantTypes().contains(TOKEN_EXCHANGE)) {
+		if (!registeredClient.getAuthorizationGrantTypes().contains(AuthorizationGrantType.TOKEN_EXCHANGE)) {
 			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.UNAUTHORIZED_CLIENT);
 		}
 
@@ -218,7 +214,7 @@ public final class OAuth2TokenExchangeAuthenticationProvider implements Authenti
 				.authorizationServerContext(AuthorizationServerContextHolder.getContext())
 				.authorizedScopes(authorizedScopes)
 				.tokenType(OAuth2TokenType.ACCESS_TOKEN)
-				.authorizationGrantType(TOKEN_EXCHANGE)
+				.authorizationGrantType(AuthorizationGrantType.TOKEN_EXCHANGE)
 				.authorizationGrant(tokenExchangeAuthentication);
 		// @formatter:on
 
@@ -242,7 +238,7 @@ public final class OAuth2TokenExchangeAuthenticationProvider implements Authenti
 		// @formatter:off
 		OAuth2Authorization.Builder authorizationBuilder = OAuth2Authorization.withRegisteredClient(registeredClient)
 				.principalName(subjectAuthorization.getPrincipalName())
-				.authorizationGrantType(TOKEN_EXCHANGE)
+				.authorizationGrantType(AuthorizationGrantType.TOKEN_EXCHANGE)
 				.authorizedScopes(authorizedScopes)
 				.attribute(Principal.class.getName(), principal);
 		// @formatter:on
@@ -264,7 +260,7 @@ public final class OAuth2TokenExchangeAuthenticationProvider implements Authenti
 		}
 
 		Map<String, Object> additionalParameters = new HashMap<>();
-		additionalParameters.put(ISSUED_TOKEN_TYPE, tokenExchangeAuthentication.getRequestedTokenType());
+		additionalParameters.put(OAuth2ParameterNames.ISSUED_TOKEN_TYPE, tokenExchangeAuthentication.getRequestedTokenType());
 
 		if (this.logger.isTraceEnabled()) {
 			this.logger.trace("Authenticated token request");

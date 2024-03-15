@@ -1,0 +1,22 @@
+plugins {
+	id "org.springframework.boot" version "3.2.2"
+	id "io.spring.dependency-management" version "1.1.0"
+	id "java"
+}
+
+group = project.rootProject.group
+version = project.rootProject.version
+
+java {
+	sourceCompatibility = JavaVersion.VERSION_17
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	implementation "org.springframework.boot:spring-boot-starter"
+	implementation "org.bouncycastle:bcpkix-jdk18on:1.77"
+	implementation "org.bouncycastle:bcprov-jdk18on:1.77"
+}

@@ -138,7 +138,9 @@ public final class OAuth2TokenExchangeAuthenticationProvider implements Authenti
 
 		if (JWT_TOKEN_TYPE_VALUE.equals(tokenExchangeAuthentication.getSubjectTokenType()) &&
 				!Jwt.class.isAssignableFrom(subjectToken.getToken().getClass())) {
-			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_REQUEST);
+			// TODO: Need a way to validate subject_token_type, since access tokens
+			//  are always stored as OAuth2AccessToken instead of Jwt.
+			//throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_REQUEST);
 		}
 
 		if (subjectAuthorization.getAttribute(Principal.class.getName()) == null) {
@@ -181,7 +183,9 @@ public final class OAuth2TokenExchangeAuthenticationProvider implements Authenti
 
 			if (JWT_TOKEN_TYPE_VALUE.equals(tokenExchangeAuthentication.getActorTokenType()) &&
 					!Jwt.class.isAssignableFrom(actorToken.getToken().getClass())) {
-				throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_REQUEST);
+				// TODO: Need a way to validate actor_token_type, since access tokens
+				//  are always stored as OAuth2AccessToken instead of Jwt.
+				//throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_REQUEST);
 			}
 
 			if (StringUtils.hasText(authorizedActorSubject) &&

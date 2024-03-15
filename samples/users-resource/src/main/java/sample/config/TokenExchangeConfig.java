@@ -17,8 +17,6 @@ package sample.config;
 
 import java.util.function.Function;
 
-import sample.authorization.TokenExchangeOAuth2AuthorizedClientProvider;
-
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.oauth2.client.AuthorizedClientServiceOAuth2AuthorizedClientManager;
@@ -29,7 +27,9 @@ import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientProvider;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientProviderBuilder;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
+import org.springframework.security.oauth2.client.TokenExchangeOAuth2AuthorizedClientProvider;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import org.springframework.security.oauth2.core.OAuth2Token;
 import org.springframework.util.Assert;
 
 /**
@@ -48,8 +48,8 @@ public class TokenExchangeConfig {
 
 		OAuth2AuthorizedClientManager authorizedClientManager = tokenExchangeAuthorizedClientManager(
 				clientRegistrationRepository, authorizedClientService);
-		Function<OAuth2AuthorizationContext, String> actorTokenResolver = createTokenResolver(authorizedClientManager,
-				ACTOR_TOKEN_CLIENT_REGISTRATION_ID);
+		Function<OAuth2AuthorizationContext, OAuth2Token> actorTokenResolver = createTokenResolver(
+				authorizedClientManager, ACTOR_TOKEN_CLIENT_REGISTRATION_ID);
 
 		TokenExchangeOAuth2AuthorizedClientProvider tokenExchangeAuthorizedClientProvider =
 				new TokenExchangeOAuth2AuthorizedClientProvider();
@@ -83,7 +83,7 @@ public class TokenExchangeConfig {
 	/**
 	 * Create a {@code Function} to resolve a token from the current principal.
 	 */
-	private static Function<OAuth2AuthorizationContext, String> createTokenResolver(
+	private static Function<OAuth2AuthorizationContext, OAuth2Token> createTokenResolver(
 			OAuth2AuthorizedClientManager authorizedClientManager, String clientRegistrationId) {
 
 		return (context) -> {
@@ -97,7 +97,7 @@ public class TokenExchangeConfig {
 			OAuth2AuthorizedClient authorizedClient = authorizedClientManager.authorize(authorizeRequest);
 			Assert.notNull(authorizedClient, "authorizedClient cannot be null");
 
-			return authorizedClient.getAccessToken().getTokenValue();
+			return authorizedClient.getAccessToken();
 		};
 	}
 

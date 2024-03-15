@@ -15,34 +15,32 @@
  */
 package sample.config;
 
+import org.apache.catalina.connector.Connector;
+
+import org.springframework.boot.web.embedded.tomcat.TomcatServletWebServerFactory;
+import org.springframework.boot.web.server.WebServerFactoryCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.Customizer;
-import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.web.SecurityFilterChain;
 
 /**
  * @author Joe Grandja
- * @since 0.0.1
+ * @since 1.3
  */
-@EnableWebSecurity
 @Configuration(proxyBeanMethods = false)
-public class ResourceServerConfig {
+public class TomcatServerConfig {
 
-	// @formatter:off
 	@Bean
-	SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-		http
-			.securityMatcher("/messages/**")
-				.authorizeHttpRequests(authorize ->
-						authorize.requestMatchers("/messages/**").hasAuthority("SCOPE_message.read")
-				)
-				.oauth2ResourceServer(oauth2ResourceServer ->
-						oauth2ResourceServer.jwt(Customizer.withDefaults())
-				);
-		return http.build();
+	public WebServerFactoryCustomizer<TomcatServletWebServerFactory> connectorCustomizer() {
+		return (tomcat) -> tomcat.addAdditionalTomcatConnectors(createHttpConnector());
 	}
-	// @formatter:on
+
+	private Connector createHttpConnector() {
+		Connector connector = new Connector(TomcatServletWebServerFactory.DEFAULT_PROTOCOL);
+		connector.setScheme("http");
+		connector.setPort(9000);
+		connector.setSecure(false);
+		connector.setRedirectPort(9443);
+		return connector;
+	}
 
 }

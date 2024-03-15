@@ -131,7 +131,7 @@ public class AuthorizationServerConfig {
 	// @formatter:off
 	@Bean
 	public JdbcRegisteredClientRepository registeredClientRepository(JdbcTemplate jdbcTemplate) {
-		RegisteredClient registeredClient = RegisteredClient.withId(UUID.randomUUID().toString())
+		RegisteredClient messagingClient = RegisteredClient.withId(UUID.randomUUID().toString())
 				.clientId("messaging-client")
 				.clientSecret("{noop}secret")
 				.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
@@ -166,11 +166,25 @@ public class AuthorizationServerConfig {
 				.scope("message.read")
 				.build();
 
+		RegisteredClient mtlsDemoClient = RegisteredClient.withId(UUID.randomUUID().toString())
+				.clientId("mtls-demo-client")
+				.clientAuthenticationMethod(new ClientAuthenticationMethod("tls_client_auth"))
+				.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
+				.scope("message.read")
+				.scope("message.write")
+				.clientSettings(
+						ClientSettings.builder()
+								.x509CertificateSubjectDN("CN=demo-client-sample,OU=Spring Samples,O=Spring,C=US")
+								.build()
+				)
+				.build();
+
 		// Save registered client's in db as if in-memory
 		JdbcRegisteredClientRepository registeredClientRepository = new JdbcRegisteredClientRepository(jdbcTemplate);
-		registeredClientRepository.save(registeredClient);
+		registeredClientRepository.save(messagingClient);
 		registeredClientRepository.save(deviceClient);
 		registeredClientRepository.save(tokenExchangeClient);
+		registeredClientRepository.save(mtlsDemoClient);
 
 		return registeredClientRepository;
 	}

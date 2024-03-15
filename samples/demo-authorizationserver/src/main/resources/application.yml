@@ -1,7 +1,25 @@
 server:
-  port: 9000
+  port: 9443
+  ssl:
+    bundle: demo-authorizationserver
+    client-auth: want
 
 spring:
+  ssl:
+    bundle:
+      jks:
+        demo-authorizationserver:
+          key:
+            alias: demo-authorizationserver-sample
+            password: password
+          keystore:
+            location: classpath:keystore.p12
+            password: password
+            type: PKCS12
+          truststore:
+            location: classpath:keystore.p12
+            password: password
+            type: PKCS12
   security:
     oauth2:
       client:

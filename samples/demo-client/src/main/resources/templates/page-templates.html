@@ -24,7 +24,8 @@
                     <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Authorize</a>
                     <ul class="dropdown-menu">
                         <li><a class="dropdown-item" href="/authorize?grant_type=authorization_code" th:href="@{/authorize?grant_type=authorization_code}">Authorization Code</a></li>
-                        <li><a class="dropdown-item" href="/authorize?grant_type=client_credentials" th:href="@{/authorize?grant_type=client_credentials}">Client Credentials</a></li>
+                        <li><a class="dropdown-item" href="/authorize?grant_type=client_credentials&client_auth=client_secret" th:href="@{/authorize?grant_type=client_credentials&client_auth=client_secret}">Client Credentials (client_secret_basic)</a></li>
+                        <li><a class="dropdown-item" href="/authorize?grant_type=client_credentials&client_auth=mtls" th:href="@{/authorize?grant_type=client_credentials&client_auth=mtls}">Client Credentials (tls_client_auth)</a></li>
                         <li><a class="dropdown-item" href="/authorize?grant_type=token_exchange" th:href="@{/authorize?grant_type=token_exchange}">Token Exchange</a></li>
                         <li><a class="dropdown-item" href="/authorize?grant_type=device_code" th:href="@{/authorize?grant_type=device_code}">Device Code</a></li>
                     </ul>

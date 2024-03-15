@@ -9,6 +9,21 @@ logging:
     org.springframework.security.oauth2: INFO
 
 spring:
+  ssl:
+    bundle:
+      jks:
+        demo-client:
+          key:
+            alias: demo-client-sample
+            password: password
+          keystore:
+            location: classpath:keystore.p12
+            password: password
+            type: PKCS12
+          truststore:
+            location: classpath:keystore.p12
+            password: password
+            type: PKCS12
   thymeleaf:
     cache: false
   security:
@@ -53,9 +68,18 @@ spring:
             authorization-grant-type: urn:ietf:params:oauth:grant-type:device_code
             scope: message.read,message.write
             client-name: messaging-client-device-code
+          mtls-demo-client-client-credentials:
+            provider: spring-tls
+            client-id: mtls-demo-client
+            client-authentication-method: tls_client_auth
+            authorization-grant-type: client_credentials
+            scope: message.read,message.write
+            client-name: mtls-demo-client-client-credentials
         provider:
           spring:
             issuer-uri: http://localhost:9000
+          spring-tls:
+            token-uri: https://localhost:9443/oauth2/token
 
 messages:
   base-uri: http://127.0.0.1:8090/messages

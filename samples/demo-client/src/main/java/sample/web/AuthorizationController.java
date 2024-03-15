@@ -84,13 +84,28 @@ public class AuthorizationController {
 		return "index";
 	}
 
-	@GetMapping(value = "/authorize", params = "grant_type=client_credentials")
-	public String clientCredentialsGrant(Model model) {
+	@GetMapping(value = "/authorize", params = {"grant_type=client_credentials", "client_auth=client_secret"})
+	public String clientCredentialsGrantUsingClientSecret(Model model) {
 
 		String[] messages = this.webClient
 				.get()
 				.uri(this.messagesBaseUri)
 				.attributes(clientRegistrationId("messaging-client-client-credentials"))
+				.retrieve()
+				.bodyToMono(String[].class)
+				.block();
+		model.addAttribute("messages", messages);
+
+		return "index";
+	}
+
+	@GetMapping(value = "/authorize", params = {"grant_type=client_credentials", "client_auth=mtls"})
+	public String clientCredentialsGrantUsingMutualTLS(Model model) {
+
+		String[] messages = this.webClient
+				.get()
+				.uri(this.messagesBaseUri)
+				.attributes(clientRegistrationId("mtls-demo-client-client-credentials"))
 				.retrieve()
 				.bodyToMono(String[].class)
 				.block();

@@ -18,7 +18,6 @@ package org.springframework.security.oauth2.server.authorization.web;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
@@ -122,7 +121,7 @@ public class OAuth2AuthorizationServerMetadataEndpointFilterTests {
 		assertThat(authorizationServerMetadataResponse).contains("\"token_endpoint_auth_methods_supported\":[\"client_secret_basic\",\"client_secret_post\",\"client_secret_jwt\",\"private_key_jwt\"]");
 		assertThat(authorizationServerMetadataResponse).contains("\"jwks_uri\":\"https://example.com/oauth2/v1/jwks\"");
 		assertThat(authorizationServerMetadataResponse).contains("\"response_types_supported\":[\"code\"]");
-		assertThat(authorizationServerMetadataResponse).contains("\"grant_types_supported\":[\"authorization_code\",\"client_credentials\",\"refresh_token\",\"urn:ietf:params:oauth:grant-type:device_code\"]");
+		assertThat(authorizationServerMetadataResponse).contains("\"grant_types_supported\":[\"authorization_code\",\"client_credentials\",\"refresh_token\",\"urn:ietf:params:oauth:grant-type:device_code\",\"urn:ietf:params:oauth:grant-type:token-exchange\"]");
 		assertThat(authorizationServerMetadataResponse).contains("\"revocation_endpoint\":\"https://example.com/oauth2/v1/revoke\"");
 		assertThat(authorizationServerMetadataResponse).contains("\"revocation_endpoint_auth_methods_supported\":[\"client_secret_basic\",\"client_secret_post\",\"client_secret_jwt\",\"private_key_jwt\"]");
 		assertThat(authorizationServerMetadataResponse).contains("\"introspection_endpoint\":\"https://example.com/oauth2/v1/introspect\"");

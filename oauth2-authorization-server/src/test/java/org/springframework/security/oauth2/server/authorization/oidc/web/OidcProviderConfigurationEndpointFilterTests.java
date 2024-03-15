@@ -18,7 +18,6 @@ package org.springframework.security.oauth2.server.authorization.oidc.web;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
@@ -126,7 +125,7 @@ public class OidcProviderConfigurationEndpointFilterTests {
 		assertThat(providerConfigurationResponse).contains("\"jwks_uri\":\"https://example.com/oauth2/v1/jwks\"");
 		assertThat(providerConfigurationResponse).contains("\"scopes_supported\":[\"openid\"]");
 		assertThat(providerConfigurationResponse).contains("\"response_types_supported\":[\"code\"]");
-		assertThat(providerConfigurationResponse).contains("\"grant_types_supported\":[\"authorization_code\",\"client_credentials\",\"refresh_token\",\"urn:ietf:params:oauth:grant-type:device_code\"]");
+		assertThat(providerConfigurationResponse).contains("\"grant_types_supported\":[\"authorization_code\",\"client_credentials\",\"refresh_token\",\"urn:ietf:params:oauth:grant-type:device_code\",\"urn:ietf:params:oauth:grant-type:token-exchange\"]");
 		assertThat(providerConfigurationResponse).contains("\"revocation_endpoint\":\"https://example.com/oauth2/v1/revoke\"");
 		assertThat(providerConfigurationResponse).contains("\"revocation_endpoint_auth_methods_supported\":[\"client_secret_basic\",\"client_secret_post\",\"client_secret_jwt\",\"private_key_jwt\"]");
 		assertThat(providerConfigurationResponse).contains("\"introspection_endpoint\":\"https://example.com/oauth2/v1/introspect\"");

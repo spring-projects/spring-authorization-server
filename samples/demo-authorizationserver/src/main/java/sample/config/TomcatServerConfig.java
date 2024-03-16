@@ -21,11 +21,13 @@ import org.springframework.boot.web.embedded.tomcat.TomcatServletWebServerFactor
 import org.springframework.boot.web.server.WebServerFactoryCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 
 /**
  * @author Joe Grandja
  * @since 1.3
  */
+@Profile("!test")	// Exclude this from DemoAuthorizationServerApplicationTests and DemoAuthorizationServerConsentTests
 @Configuration(proxyBeanMethods = false)
 public class TomcatServerConfig {
 

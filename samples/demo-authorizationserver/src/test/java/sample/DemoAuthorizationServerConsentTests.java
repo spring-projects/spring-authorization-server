@@ -77,7 +77,7 @@ public class DemoAuthorizationServerConsentTests {
 		when(this.authorizationConsentService.findById(any(), any())).thenReturn(null);
 	}
 
-//	@Test
+	@Test
 	@WithMockUser("user1")
 	public void whenUserConsentsToAllScopesThenReturnAuthorizationCode() throws IOException {
 		final HtmlPage consentPage = this.webClient.getPage(this.authorizationRequestUri);
@@ -107,7 +107,7 @@ public class DemoAuthorizationServerConsentTests {
 		assertThat(location).contains("code=");
 	}
 
-//	@Test
+	@Test
 	@WithMockUser("user1")
 	public void whenUserCancelsConsentThenReturnAccessDeniedError() throws IOException {
 		final HtmlPage consentPage = this.webClient.getPage(this.authorizationRequestUri);

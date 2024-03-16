@@ -67,7 +67,7 @@ public class DemoAuthorizationServerApplicationTests {
 		this.webClient.getCookieManager().clearCookies();	// log out
 	}
 
-//	@Test
+	@Test
 	public void whenLoginSuccessfulThenDisplayBadRequestError() throws IOException {
 		HtmlPage page = this.webClient.getPage("/");
 
@@ -79,7 +79,7 @@ public class DemoAuthorizationServerApplicationTests {
 		assertThat(signInResponse.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST.value());	// there is no "default" index page
 	}
 
-//	@Test
+	@Test
 	public void whenLoginFailsThenDisplayBadCredentials() throws IOException {
 		HtmlPage page = this.webClient.getPage("/");
 
@@ -90,14 +90,14 @@ public class DemoAuthorizationServerApplicationTests {
 		assertThat(alert.asNormalizedText()).isEqualTo("Invalid username or password.");
 	}
 
-//	@Test
+	@Test
 	public void whenNotLoggedInAndRequestingTokenThenRedirectsToLogin() throws IOException {
 		HtmlPage page = this.webClient.getPage(AUTHORIZATION_REQUEST);
 
 		assertLoginPage(page);
 	}
 
-//	@Test
+	@Test
 	public void whenLoggingInAndRequestingTokenThenRedirectsToClientApplication() throws IOException {
 		// Log in
 		this.webClient.getOptions().setThrowExceptionOnFailingStatusCode(false);

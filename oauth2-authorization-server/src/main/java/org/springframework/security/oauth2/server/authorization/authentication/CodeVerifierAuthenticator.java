@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 the original author or authors.
+ * Copyright 2020-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -95,8 +95,10 @@ final class CodeVerifierAuthenticator {
 
 		String codeChallenge = (String) authorizationRequest.getAdditionalParameters()
 				.get(PkceParameterNames.CODE_CHALLENGE);
+		String codeVerifier = (String) parameters.get(PkceParameterNames.CODE_VERIFIER);
 		if (!StringUtils.hasText(codeChallenge)) {
-			if (registeredClient.getClientSettings().isRequireProofKey()) {
+			if (registeredClient.getClientSettings().isRequireProofKey() ||
+					StringUtils.hasText(codeVerifier)) {
 				if (this.logger.isDebugEnabled()) {
 					this.logger.debug(LogMessage.format("Invalid request: code_challenge is required" +
 							" for registered client '%s'", registeredClient.getId()));
@@ -116,7 +118,6 @@ final class CodeVerifierAuthenticator {
 
 		String codeChallengeMethod = (String) authorizationRequest.getAdditionalParameters()
 				.get(PkceParameterNames.CODE_CHALLENGE_METHOD);
-		String codeVerifier = (String) parameters.get(PkceParameterNames.CODE_VERIFIER);
 		if (!codeVerifierValid(codeVerifier, codeChallenge, codeChallengeMethod)) {
 			if (this.logger.isDebugEnabled()) {
 				this.logger.debug(LogMessage.format("Invalid request: code_verifier is missing or invalid" +

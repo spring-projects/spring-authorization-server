@@ -20,7 +20,7 @@ dependencies {
 		api "org.mockito:mockito-core:4.11.0"
 		api "com.squareup.okhttp3:mockwebserver:4.12.0"
 		api "com.squareup.okhttp3:okhttp:4.12.0"
-		api "com.jayway.jsonpath:json-path:2.8.0"
+		api "com.jayway.jsonpath:json-path:2.9.0"
 		api "org.hsqldb:hsqldb:2.7.2"
 	}
 }

@@ -129,4 +129,21 @@ public class OAuth2ClientAuthenticationToken extends AbstractAuthenticationToken
 		return this.additionalParameters;
 	}
 
+	/**
+	 * Indicates if the client secret is needed for client authentication.
+	 * Checks if the authentication method is either 'client_secret_basic' or 'client_secret_post',
+	 * both requiring the client secret for authentication.
+	 * @return {@code true} if the client secret is required, {@code false} otherwise
+	 */
+	public boolean isClientSecretRequired() {
+		return getClientAuthenticationMethod() == ClientAuthenticationMethod.CLIENT_SECRET_BASIC ||
+				getClientAuthenticationMethod() == ClientAuthenticationMethod.CLIENT_SECRET_POST;}
+
+	/**
+	 * Returns the client secret.
+	 *
+	 * @return the client secret
+	 */
+	public Object getClientSecret() {
+		return getCredentials();}
 }

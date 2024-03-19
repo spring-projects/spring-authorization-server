@@ -119,6 +119,7 @@ public final class OAuth2ClientAuthenticationFilter extends OncePerRequestFilter
 			}
 			if (authenticationRequest != null) {
 				validateClientIdentifier(authenticationRequest);
+				validateClientAuthenticationMethod(authenticationRequest);
 				Authentication authenticationResult = this.authenticationManager.authenticate(authenticationRequest);
 				this.authenticationSuccessHandler.onAuthenticationSuccess(request, response, authenticationResult);
 			}
@@ -222,5 +223,13 @@ public final class OAuth2ClientAuthenticationFilter extends OncePerRequestFilter
 			}
 		}
 	}
+	private static void validateClientAuthenticationMethod(Authentication authentication) {
+		if (!(authentication instanceof OAuth2ClientAuthenticationToken clientAuthentication)) {
+			return;
+		}
 
+		if (clientAuthentication.isClientSecretRequired() && clientAuthentication.getClientSecret() == null) {
+			throw new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_REQUEST));
+		}
+	}
 }

@@ -10,7 +10,7 @@ springRelease {
 	repositoryOwner = "spring-projects"
 	weekOfMonth = 3
 	dayOfWeek = 2
-	referenceDocUrl = "https://docs.spring.io/spring-authorization-server/docs/{version}/reference/html/"
+	referenceDocUrl = "https://docs.spring.io/spring-authorization-server/reference/{version}/index.html"
 	apiDocUrl = "https://docs.spring.io/spring-authorization-server/docs/{version}/api/"
 	replaceSnapshotVersionInReferenceDocUrl = true
 }

@@ -1,18 +1,3 @@
-/*
- * Copyright 2020-2024 the original author or authors.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      https://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package org.springframework.security.oauth2.server.authorization.authentication;
 
 import java.nio.charset.StandardCharsets;
@@ -86,48 +71,53 @@ final class CodeVerifierAuthenticator {
 			throwInvalidGrant(OAuth2ParameterNames.CODE);
 		}
 
-		if (this.logger.isTraceEnabled()) {
-			this.logger.trace("Retrieved authorization with authorization code");
+		if (logger.isTraceEnabled()) {
+			logger.trace("Retrieved authorization with authorization code");
 		}
 
-		OAuth2AuthorizationRequest authorizationRequest = authorization.getAttribute(
+        assert authorization != null;
+        OAuth2AuthorizationRequest authorizationRequest = authorization.getAttribute(
 				OAuth2AuthorizationRequest.class.getName());
+		if (authorizationRequest == null) {
+			throwInvalidGrant("Invalid authorization request");
+		}
 
-		String codeChallenge = (String) authorizationRequest.getAdditionalParameters()
+        assert authorizationRequest != null;
+        String codeChallenge = (String) authorizationRequest.getAdditionalParameters()
 				.get(PkceParameterNames.CODE_CHALLENGE);
 		String codeVerifier = (String) parameters.get(PkceParameterNames.CODE_VERIFIER);
 		if (!StringUtils.hasText(codeChallenge)) {
 			if (registeredClient.getClientSettings().isRequireProofKey() ||
 					StringUtils.hasText(codeVerifier)) {
-				if (this.logger.isDebugEnabled()) {
-					this.logger.debug(LogMessage.format("Invalid request: code_challenge is required" +
+				if (logger.isDebugEnabled()) {
+					logger.debug(LogMessage.format("Invalid request: code_challenge is required" +
 							" for registered client '%s'", registeredClient.getId()));
 				}
 				throwInvalidGrant(PkceParameterNames.CODE_CHALLENGE);
 			} else {
-				if (this.logger.isTraceEnabled()) {
-					this.logger.trace("Did not authenticate code verifier since requireProofKey=false");
+				if (logger.isTraceEnabled()) {
+					logger.trace("Did not authenticate code verifier since requireProofKey=false");
 				}
 				return false;
 			}
 		}
 
-		if (this.logger.isTraceEnabled()) {
-			this.logger.trace("Validated code verifier parameters");
+		if (logger.isTraceEnabled()) {
+			logger.trace("Validated code verifier parameters");
 		}
 
 		String codeChallengeMethod = (String) authorizationRequest.getAdditionalParameters()
 				.get(PkceParameterNames.CODE_CHALLENGE_METHOD);
 		if (!codeVerifierValid(codeVerifier, codeChallenge, codeChallengeMethod)) {
-			if (this.logger.isDebugEnabled()) {
-				this.logger.debug(LogMessage.format("Invalid request: code_verifier is missing or invalid" +
+			if (logger.isDebugEnabled()) {
+				logger.debug(LogMessage.format("Invalid request: code_verifier is missing or invalid" +
 						" for registered client '%s'", registeredClient.getId()));
 			}
 			throwInvalidGrant(PkceParameterNames.CODE_VERIFIER);
 		}
 
-		if (this.logger.isTraceEnabled()) {
-			this.logger.trace("Authenticated code verifier");
+		if (logger.isTraceEnabled()) {
+			logger.trace("Authenticated code verifier");
 		}
 
 		return true;
@@ -149,9 +139,9 @@ final class CodeVerifierAuthenticator {
 				String encodedVerifier = Base64.getUrlEncoder().withoutPadding().encodeToString(digest);
 				return encodedVerifier.equals(codeChallenge);
 			} catch (NoSuchAlgorithmException ex) {
-				// It is unlikely that SHA-256 is not available on the server. If it is not available,
-				// there will likely be bigger issues as well. We default to SERVER_ERROR.
-				throw new OAuth2AuthenticationException(OAuth2ErrorCodes.SERVER_ERROR);
+				throw new OAuth2AuthenticationException(
+						new OAuth2Error(OAuth2ErrorCodes.SERVER_ERROR,
+								"Failed to verify code verifier: SHA-256 algorithm not available", null));
 			}
 		}
 		return false;
@@ -165,5 +155,4 @@ final class CodeVerifierAuthenticator {
 		);
 		throw new OAuth2AuthenticationException(error);
 	}
-
 }

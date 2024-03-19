@@ -69,6 +69,7 @@ import static sample.util.RegisteredClients.messagingClient;
  * Tests for the guide How-to: Implement core services with JPA.
  *
  * @author Steve Riesenberg
+ * @author Greg Li
  */
 @ExtendWith(SpringTestContextExtension.class)
 public class JpaTests {
@@ -88,7 +89,7 @@ public class JpaTests {
 
 	@Test
 	public void oidcLoginWhenJpaCoreServicesAutowiredThenUsed() throws Exception {
-		this.spring.register(AuthorizationServerConfig.class).autowire();
+		this.spring.register(AuthorizationServerConfigDeviceAuthorize.class).autowire();
 		assertThat(this.registeredClientRepository).isInstanceOf(JpaRegisteredClientRepository.class);
 		assertThat(this.authorizationService).isInstanceOf(JpaOAuth2AuthorizationService.class);
 		assertThat(this.authorizationConsentService).isInstanceOf(JpaOAuth2AuthorizationConsentService.class);
@@ -135,7 +136,7 @@ public class JpaTests {
 
 	@Test
 	public void deviceAuthorizationWhenJpaCoreServicesAutowiredThenSuccess() throws Exception {
-		this.spring.register(AuthorizationServerConfig.class).autowire();
+		this.spring.register(AuthorizationServerConfigDeviceAuthorize.class).autowire();
 		assertThat(this.registeredClientRepository).isInstanceOf(JpaRegisteredClientRepository.class);
 		assertThat(this.authorizationService).isInstanceOf(JpaOAuth2AuthorizationService.class);
 		assertThat(this.authorizationConsentService).isInstanceOf(JpaOAuth2AuthorizationConsentService.class);
@@ -191,13 +192,15 @@ public class JpaTests {
 	@EnableWebSecurity
 	@EnableAutoConfiguration
 	@ComponentScan
-	static class AuthorizationServerConfig {
+	static class AuthorizationServerConfigDeviceAuthorize {
 
 		@Bean
 		@Order(Ordered.HIGHEST_PRECEDENCE)
 		public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
 			OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http);
 			http.getConfigurer(OAuth2AuthorizationServerConfigurer.class)
+					.deviceAuthorizationEndpoint(Customizer.withDefaults())
+					.deviceVerificationEndpoint(Customizer.withDefaults())
 					.oidc(Customizer.withDefaults());	// Enable OpenID Connect 1.0
 
 			// @formatter:off

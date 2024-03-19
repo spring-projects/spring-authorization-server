@@ -98,8 +98,10 @@ public class AuthorizationServerConfig {
 
 		// @formatter:off
 		http.getConfigurer(OAuth2AuthorizationServerConfigurer.class)
-			.deviceAuthorizationEndpoint(deviceAuthorizationEndpoint ->
-				deviceAuthorizationEndpoint.verificationUri("/activate")
+			.deviceAuthorizationEndpoint(deviceAuthorizationEndpoint -> {
+						deviceAuthorizationEndpoint.verificationUri("/activate");
+						deviceAuthorizationEndpoint.enableDeviceAuthorizationEndpoint(true);
+					}
 			)
 			.deviceVerificationEndpoint(deviceVerificationEndpoint ->
 				deviceVerificationEndpoint.consentPage(CUSTOM_CONSENT_PAGE_URI)

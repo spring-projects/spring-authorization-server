@@ -46,6 +46,7 @@ import org.springframework.web.util.UriComponentsBuilder;
  *
  * @author Daniel Garnier-Moiroux
  * @author Joe Grandja
+ * @author Greg Li
  * @since 0.1.1
  * @see OAuth2AuthorizationServerMetadata
  * @see AuthorizationServerSettings
@@ -92,7 +93,6 @@ public final class OAuth2AuthorizationServerMetadataEndpointFilter extends OnceP
 		OAuth2AuthorizationServerMetadata.Builder authorizationServerMetadata = OAuth2AuthorizationServerMetadata.builder()
 				.issuer(issuer)
 				.authorizationEndpoint(asUrl(issuer, authorizationServerSettings.getAuthorizationEndpoint()))
-				.deviceAuthorizationEndpoint(asUrl(issuer, authorizationServerSettings.getDeviceAuthorizationEndpoint()))
 				.tokenEndpoint(asUrl(issuer, authorizationServerSettings.getTokenEndpoint()))
 				.tokenEndpointAuthenticationMethods(clientAuthenticationMethods())
 				.jwkSetUrl(asUrl(issuer, authorizationServerSettings.getJwkSetEndpoint()))

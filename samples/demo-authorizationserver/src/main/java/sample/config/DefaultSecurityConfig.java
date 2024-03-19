@@ -41,6 +41,14 @@ import org.springframework.security.web.session.HttpSessionEventPublisher;
 public class DefaultSecurityConfig {
 
 	// @formatter:off
+    @Bean
+    public BCryptPasswordEncoder bCryptPasswordEncoder() {
+
+        return new BCryptPasswordEncoder();
+    }
+	// @formatter:on
+	
+	// @formatter:off
 	@Bean
 	public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
 		http
@@ -70,9 +78,9 @@ public class DefaultSecurityConfig {
 	// @formatter:off
 	@Bean
 	public UserDetailsService users() {
-		UserDetails user = User.withDefaultPasswordEncoder()
-				.username("user1")
-				.password("password")
+        UserDetails user = User.builder()
+                .username("user1")
+                .password(bCryptPasswordEncoder().encode("password"))
 				.roles("USER")
 				.build();
 		return new InMemoryUserDetailsManager(user);

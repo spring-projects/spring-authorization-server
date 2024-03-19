@@ -16,6 +16,7 @@
 package org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -250,7 +251,7 @@ public final class OAuth2AuthorizationServerConfigurer
 	public OAuth2AuthorizationServerConfigurer oidc(Customizer<OidcConfigurer> oidcCustomizer) {
 		OidcConfigurer oidcConfigurer = getConfigurer(OidcConfigurer.class);
 		if (oidcConfigurer == null) {
-			addConfigurer(OidcConfigurer.class, new OidcConfigurer(this::postProcess));
+			addConfigurer(new OidcConfigurer(this::postProcess));
 			oidcConfigurer = getConfigurer(OidcConfigurer.class);
 		}
 		oidcCustomizer.customize(oidcConfigurer);
@@ -369,8 +370,8 @@ public final class OAuth2AuthorizationServerConfigurer
 		return (T) this.configurers.get(type);
 	}
 
-	private <T extends AbstractOAuth2Configurer> void addConfigurer(Class<T> configurerType, T configurer) {
-		this.configurers.put(configurerType, configurer);
+	private <T extends AbstractOAuth2Configurer> void addConfigurer(T configurer) {
+		this.configurers.put(OidcConfigurer.class, configurer);
 	}
 
 	private <T extends AbstractOAuth2Configurer> RequestMatcher getRequestMatcher(Class<T> configurerType) {
@@ -378,18 +379,18 @@ public final class OAuth2AuthorizationServerConfigurer
 		return configurer != null ? configurer.getRequestMatcher() : null;
 	}
 
+
 	private static void validateAuthorizationServerSettings(AuthorizationServerSettings authorizationServerSettings) {
 		if (authorizationServerSettings.getIssuer() != null) {
 			URI issuerUri;
 			try {
 				issuerUri = new URI(authorizationServerSettings.getIssuer());
-				issuerUri.toURL();
-			} catch (Exception ex) {
+				// rfc8414 https://datatracker.ietf.org/doc/html/rfc8414#section-2
+				if (issuerUri.getRawQuery() != null || issuerUri.getRawFragment() != null) {
+					throw new IllegalArgumentException("issuer URL cannot contain query or fragment component");
+				}
+			} catch (URISyntaxException ex) {
 				throw new IllegalArgumentException("issuer must be a valid URL", ex);
-			}
-			// rfc8414 https://datatracker.ietf.org/doc/html/rfc8414#section-2
-			if (issuerUri.getQuery() != null || issuerUri.getFragment() != null) {
-				throw new IllegalArgumentException("issuer cannot contain query or fragment component");
 			}
 		}
 	}

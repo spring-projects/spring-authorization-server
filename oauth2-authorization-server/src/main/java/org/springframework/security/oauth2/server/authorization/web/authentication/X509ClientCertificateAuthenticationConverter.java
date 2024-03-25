@@ -35,7 +35,7 @@ import org.springframework.util.StringUtils;
 /**
  * Attempts to extract a client {@code X509Certificate} chain from {@link HttpServletRequest}
  * and then converts to an {@link OAuth2ClientAuthenticationToken} used for authenticating the client
- * using the {@code tls_client_auth} method.
+ * using the {@code tls_client_auth} or {@code self_signed_tls_client_auth} method.
  *
  * @author Joe Grandja
  * @since 1.3
@@ -46,13 +46,15 @@ import org.springframework.util.StringUtils;
 public final class X509ClientCertificateAuthenticationConverter implements AuthenticationConverter {
 	private static final ClientAuthenticationMethod TLS_CLIENT_AUTH_AUTHENTICATION_METHOD =
 			new ClientAuthenticationMethod("tls_client_auth");
+	private static final ClientAuthenticationMethod SELF_SIGNED_TLS_CLIENT_AUTH_AUTHENTICATION_METHOD =
+			new ClientAuthenticationMethod("self_signed_tls_client_auth");
 
 	@Nullable
 	@Override
 	public Authentication convert(HttpServletRequest request) {
 		X509Certificate[] clientCertificateChain =
 				(X509Certificate[]) request.getAttribute("jakarta.servlet.request.X509Certificate");
-		if (clientCertificateChain == null || clientCertificateChain.length <= 1) {
+		if (clientCertificateChain == null || clientCertificateChain.length == 0) {
 			return null;
 		}
 
@@ -68,7 +70,12 @@ public final class X509ClientCertificateAuthenticationConverter implements Authe
 		Map<String, Object> additionalParameters = OAuth2EndpointUtils.getParametersIfMatchesAuthorizationCodeGrantRequest(
 				request, OAuth2ParameterNames.CLIENT_ID);
 
-		return new OAuth2ClientAuthenticationToken(clientId, TLS_CLIENT_AUTH_AUTHENTICATION_METHOD,
+		ClientAuthenticationMethod clientAuthenticationMethod =
+				clientCertificateChain.length == 1 ?
+						SELF_SIGNED_TLS_CLIENT_AUTH_AUTHENTICATION_METHOD :
+						TLS_CLIENT_AUTH_AUTHENTICATION_METHOD;
+
+		return new OAuth2ClientAuthenticationToken(clientId, clientAuthenticationMethod,
 				clientCertificateChain, additionalParameters);
 	}
 

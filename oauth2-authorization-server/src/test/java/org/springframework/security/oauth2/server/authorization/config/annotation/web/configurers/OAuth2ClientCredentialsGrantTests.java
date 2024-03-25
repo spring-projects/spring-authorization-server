@@ -264,7 +264,7 @@ public class OAuth2ClientCredentialsGrantTests {
 	}
 
 	@Test
-	public void requestWhenTokenRequestWithX509ClientCertificateThenTokenResponse() throws Exception {
+	public void requestWhenTokenRequestWithPKIX509ClientCertificateThenTokenResponse() throws Exception {
 		this.spring.register(AuthorizationServerConfiguration.class).autowire();
 
 		// @formatter:off

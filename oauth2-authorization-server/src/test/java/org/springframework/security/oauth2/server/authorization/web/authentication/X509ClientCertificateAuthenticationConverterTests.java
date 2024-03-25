@@ -15,6 +15,8 @@
  */
 package org.springframework.security.oauth2.server.authorization.web.authentication;
 
+import java.security.cert.X509Certificate;
+
 import org.junit.jupiter.api.Test;
 
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -46,10 +48,10 @@ public class X509ClientCertificateAuthenticationConverterTests {
 	}
 
 	@Test
-	public void convertWhenSelfSignedX509CertificateThenReturnNull() {
+	public void convertWhenEmptyX509CertificateThenReturnNull() {
 		MockHttpServletRequest request = new MockHttpServletRequest();
 		request.setAttribute("jakarta.servlet.request.X509Certificate",
-				TestX509Certificates.DEMO_CLIENT_SELF_SIGNED_CERTIFICATE);
+				new X509Certificate[0]);
 		Authentication authentication = this.converter.convert(request);
 		assertThat(authentication).isNull();
 	}
@@ -94,6 +96,28 @@ public class X509ClientCertificateAuthenticationConverterTests {
 		assertThat(authentication.getPrincipal()).isEqualTo("client-1");
 		assertThat(authentication.getCredentials()).isEqualTo(TestX509Certificates.DEMO_CLIENT_PKI_CERTIFICATE);
 		assertThat(authentication.getClientAuthenticationMethod().getValue()).isEqualTo("tls_client_auth");
+		assertThat(authentication.getAdditionalParameters())
+				.containsOnly(
+						entry(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.AUTHORIZATION_CODE.getValue()),
+						entry(OAuth2ParameterNames.CODE, "code"),
+						entry("custom-param-1", "custom-value-1"),
+						entry("custom-param-2", new String[] {"custom-value-1", "custom-value-2"}));
+	}
+
+	@Test
+	public void convertWhenSelfSignedX509CertificateThenReturnClientAuthenticationToken() {
+		MockHttpServletRequest request = new MockHttpServletRequest();
+		request.setAttribute("jakarta.servlet.request.X509Certificate",
+				TestX509Certificates.DEMO_CLIENT_SELF_SIGNED_CERTIFICATE);
+		request.addParameter(OAuth2ParameterNames.CLIENT_ID, "client-1");
+		request.addParameter(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.AUTHORIZATION_CODE.getValue());
+		request.addParameter(OAuth2ParameterNames.CODE, "code");
+		request.addParameter("custom-param-1", "custom-value-1");
+		request.addParameter("custom-param-2", "custom-value-1", "custom-value-2");
+		OAuth2ClientAuthenticationToken authentication = (OAuth2ClientAuthenticationToken) this.converter.convert(request);
+		assertThat(authentication.getPrincipal()).isEqualTo("client-1");
+		assertThat(authentication.getCredentials()).isEqualTo(TestX509Certificates.DEMO_CLIENT_SELF_SIGNED_CERTIFICATE);
+		assertThat(authentication.getClientAuthenticationMethod().getValue()).isEqualTo("self_signed_tls_client_auth");
 		assertThat(authentication.getAdditionalParameters())
 				.containsOnly(
 						entry(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.AUTHORIZATION_CODE.getValue()),

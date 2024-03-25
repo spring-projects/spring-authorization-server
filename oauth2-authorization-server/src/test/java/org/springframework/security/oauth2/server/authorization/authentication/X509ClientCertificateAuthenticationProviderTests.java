@@ -15,12 +15,27 @@
  */
 package org.springframework.security.oauth2.server.authorization.authentication;
 
+import java.security.cert.X509Certificate;
+import java.security.interfaces.RSAPublicKey;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
+import com.nimbusds.jose.jwk.JWKSet;
+import com.nimbusds.jose.jwk.KeyUse;
+import com.nimbusds.jose.jwk.RSAKey;
+import com.nimbusds.jose.util.Base64;
+import okhttp3.mockwebserver.Dispatcher;
+import okhttp3.mockwebserver.MockResponse;
+import okhttp3.mockwebserver.MockWebServer;
+import okhttp3.mockwebserver.RecordedRequest;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
@@ -59,16 +74,45 @@ public class X509ClientCertificateAuthenticationProviderTests {
 	private static final OAuth2TokenType AUTHORIZATION_CODE_TOKEN_TYPE = new OAuth2TokenType(OAuth2ParameterNames.CODE);
 	private static final ClientAuthenticationMethod TLS_CLIENT_AUTH_AUTHENTICATION_METHOD =
 			new ClientAuthenticationMethod("tls_client_auth");
+	private static final ClientAuthenticationMethod SELF_SIGNED_TLS_CLIENT_AUTH_AUTHENTICATION_METHOD =
+			new ClientAuthenticationMethod("self_signed_tls_client_auth");
+	private JWKSet selfSignedCertificateJwkSet;
+	private MockWebServer server;
+	private String clientJwkSetUrl;
 	private RegisteredClientRepository registeredClientRepository;
 	private OAuth2AuthorizationService authorizationService;
 	private X509ClientCertificateAuthenticationProvider authenticationProvider;
 
 	@BeforeEach
-	public void setUp() {
+	public void setUp() throws Exception {
+		// @formatter:off
+		X509Certificate selfSignedCertificate = TestX509Certificates.DEMO_CLIENT_SELF_SIGNED_CERTIFICATE[0];
+		RSAKey selfSignedRSAKey = new RSAKey.Builder((RSAPublicKey) selfSignedCertificate.getPublicKey())
+				.keyUse(KeyUse.SIGNATURE)
+				.keyID(UUID.randomUUID().toString())
+				.x509CertChain(Collections.singletonList(Base64.encode(selfSignedCertificate.getEncoded())))
+				.build();
+		// @formatter:on
+		this.selfSignedCertificateJwkSet = new JWKSet(selfSignedRSAKey);
+		this.server = new MockWebServer();
+		this.server.start();
+		this.clientJwkSetUrl = this.server.url("/jwks").toString();
+		// @formatter:off
+		MockResponse response = new MockResponse()
+				.setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+				.setBody(this.selfSignedCertificateJwkSet.toString());
+		// @formatter:on
+		this.server.enqueue(response);
+
 		this.registeredClientRepository = mock(RegisteredClientRepository.class);
 		this.authorizationService = mock(OAuth2AuthorizationService.class);
 		this.authenticationProvider = new X509ClientCertificateAuthenticationProvider(
 				this.registeredClientRepository, this.authorizationService);
+	}
+
+	@AfterEach
+	public void tearDown() throws Exception {
+		this.server.shutdown();
 	}
 
 	@Test
@@ -159,7 +203,7 @@ public class X509ClientCertificateAuthenticationProviderTests {
 	}
 
 	@Test
-	public void authenticateWhenInvalidX509CertificateSubjectDNThenThrowOAuth2AuthenticationException() {
+	public void authenticateWhenPKIX509CertificateInvalidSubjectDNThenThrowOAuth2AuthenticationException() {
 		// @formatter:off
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
 				.clientAuthenticationMethod(TLS_CLIENT_AUTH_AUTHENTICATION_METHOD)
@@ -186,7 +230,7 @@ public class X509ClientCertificateAuthenticationProviderTests {
 	}
 
 	@Test
-	public void authenticateWhenValidX509CertificateThenAuthenticated() {
+	public void authenticateWhenPKIX509CertificateValidThenAuthenticated() {
 		// @formatter:off
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
 				.clientAuthenticationMethod(TLS_CLIENT_AUTH_AUTHENTICATION_METHOD)
@@ -212,6 +256,191 @@ public class X509ClientCertificateAuthenticationProviderTests {
 		assertThat(authenticationResult.getCredentials()).isEqualTo(TestX509Certificates.DEMO_CLIENT_PKI_CERTIFICATE);
 		assertThat(authenticationResult.getRegisteredClient()).isEqualTo(registeredClient);
 		assertThat(authenticationResult.getClientAuthenticationMethod()).isEqualTo(TLS_CLIENT_AUTH_AUTHENTICATION_METHOD);
+	}
+
+	@Test
+	public void authenticateWhenSelfSignedX509CertificateInvalidIssuerThenThrowOAuth2AuthenticationException() {
+		// @formatter:off
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
+				.clientAuthenticationMethod(SELF_SIGNED_TLS_CLIENT_AUTH_AUTHENTICATION_METHOD)
+				.clientSettings(
+						ClientSettings.builder()
+								.jwkSetUrl(this.clientJwkSetUrl)
+								.build()
+				)
+				.build();
+		// @formatter:on
+		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
+				.thenReturn(registeredClient);
+
+		OAuth2ClientAuthenticationToken authentication = new OAuth2ClientAuthenticationToken(
+				registeredClient.getClientId(), SELF_SIGNED_TLS_CLIENT_AUTH_AUTHENTICATION_METHOD,
+				TestX509Certificates.DEMO_CLIENT_PKI_CERTIFICATE, null);	// PKI Certificate will have different issuer
+		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
+				.isInstanceOf(OAuth2AuthenticationException.class)
+				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+				.satisfies(error -> {
+					assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_CLIENT);
+					assertThat(error.getDescription()).contains("x509_certificate_issuer");
+				});
+	}
+
+	@Test
+	public void authenticateWhenSelfSignedX509CertificateMissingClientJwkSetUrlThenThrowOAuth2AuthenticationException() {
+		// @formatter:off
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
+				.clientAuthenticationMethod(SELF_SIGNED_TLS_CLIENT_AUTH_AUTHENTICATION_METHOD)
+				.build();
+		// @formatter:on
+		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
+				.thenReturn(registeredClient);
+
+		OAuth2ClientAuthenticationToken authentication = new OAuth2ClientAuthenticationToken(
+				registeredClient.getClientId(), SELF_SIGNED_TLS_CLIENT_AUTH_AUTHENTICATION_METHOD,
+				TestX509Certificates.DEMO_CLIENT_SELF_SIGNED_CERTIFICATE, null);
+		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
+				.isInstanceOf(OAuth2AuthenticationException.class)
+				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+				.satisfies(error -> {
+					assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_CLIENT);
+					assertThat(error.getDescription()).contains("client_jwk_set_url");
+				});
+	}
+
+	@Test
+	public void authenticateWhenSelfSignedX509CertificateInvalidClientJwkSetUrlThenThrowOAuth2AuthenticationException() {
+		// @formatter:off
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
+				.clientAuthenticationMethod(SELF_SIGNED_TLS_CLIENT_AUTH_AUTHENTICATION_METHOD)
+				.clientSettings(
+						ClientSettings.builder()
+								.jwkSetUrl("https://this is an invalid URL")
+								.build()
+				)
+				.build();
+		// @formatter:on
+		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
+				.thenReturn(registeredClient);
+
+		OAuth2ClientAuthenticationToken authentication = new OAuth2ClientAuthenticationToken(
+				registeredClient.getClientId(), SELF_SIGNED_TLS_CLIENT_AUTH_AUTHENTICATION_METHOD,
+				TestX509Certificates.DEMO_CLIENT_SELF_SIGNED_CERTIFICATE, null);
+		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
+				.isInstanceOf(OAuth2AuthenticationException.class)
+				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+				.satisfies(error -> {
+					assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_CLIENT);
+					assertThat(error.getDescription()).contains("jwk_set_uri");
+				});
+	}
+
+	@Test
+	public void authenticateWhenSelfSignedX509CertificateJwkSetResponseErrorStatusThenThrowOAuth2AuthenticationException() {
+		MockResponse jwkSetResponse = new MockResponse().setResponseCode(400);
+		authenticateWhenSelfSignedX509CertificateJwkSetResponseInvalidThenThrowOAuth2AuthenticationException(
+				jwkSetResponse, "jwk_set_response_error");
+	}
+
+	@Test
+	public void authenticateWhenSelfSignedX509CertificateJwkSetResponseInvalidStatusThenThrowOAuth2AuthenticationException() {
+		MockResponse jwkSetResponse = new MockResponse().setResponseCode(204);
+		authenticateWhenSelfSignedX509CertificateJwkSetResponseInvalidThenThrowOAuth2AuthenticationException(
+				jwkSetResponse, "jwk_set_response_status");
+	}
+
+	@Test
+	public void authenticateWhenSelfSignedX509CertificateJwkSetResponseInvalidContentThenThrowOAuth2AuthenticationException() {
+		MockResponse jwkSetResponse = new MockResponse().setResponseCode(200).setBody("invalid-content");
+		authenticateWhenSelfSignedX509CertificateJwkSetResponseInvalidThenThrowOAuth2AuthenticationException(
+				jwkSetResponse, "jwk_set_response_body");
+	}
+
+	@Test
+	public void authenticateWhenSelfSignedX509CertificateJwkSetResponseNoMatchingKeysThenThrowOAuth2AuthenticationException() throws Exception {
+		// @formatter:off
+		X509Certificate pkiCertificate = TestX509Certificates.DEMO_CLIENT_PKI_CERTIFICATE[0];
+		RSAKey pkiRSAKey = new RSAKey.Builder((RSAPublicKey) pkiCertificate.getPublicKey())
+				.keyUse(KeyUse.SIGNATURE)
+				.keyID(UUID.randomUUID().toString())
+				.x509CertChain(Collections.singletonList(Base64.encode(pkiCertificate.getEncoded())))
+				.build();
+		// @formatter:on
+
+		// @formatter:off
+		MockResponse jwkSetResponse = new MockResponse()
+				.setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+				.setBody(new JWKSet(pkiRSAKey).toString());
+		// @formatter:on
+
+		authenticateWhenSelfSignedX509CertificateJwkSetResponseInvalidThenThrowOAuth2AuthenticationException(
+				jwkSetResponse, "x509_certificate");
+	}
+
+	private void authenticateWhenSelfSignedX509CertificateJwkSetResponseInvalidThenThrowOAuth2AuthenticationException(
+			final MockResponse jwkSetResponse, String expectedErrorDescription) {
+
+		// @formatter:off
+		final Dispatcher dispatcher = new Dispatcher() {
+			@Override
+			public MockResponse dispatch(RecordedRequest request) {
+				return jwkSetResponse;
+			}
+		};
+		this.server.setDispatcher(dispatcher);
+		// @formatter:on
+
+		// @formatter:off
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
+				.clientAuthenticationMethod(SELF_SIGNED_TLS_CLIENT_AUTH_AUTHENTICATION_METHOD)
+				.clientSettings(
+						ClientSettings.builder()
+								.jwkSetUrl(this.clientJwkSetUrl)
+								.build()
+				)
+				.build();
+		// @formatter:on
+		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
+				.thenReturn(registeredClient);
+
+		OAuth2ClientAuthenticationToken authentication = new OAuth2ClientAuthenticationToken(
+				registeredClient.getClientId(), SELF_SIGNED_TLS_CLIENT_AUTH_AUTHENTICATION_METHOD,
+				TestX509Certificates.DEMO_CLIENT_SELF_SIGNED_CERTIFICATE, null);
+		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
+				.isInstanceOf(OAuth2AuthenticationException.class)
+				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+				.satisfies(error -> {
+					assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_CLIENT);
+					assertThat(error.getDescription()).contains(expectedErrorDescription);
+				});
+	}
+
+	@Test
+	public void authenticateWhenSelfSignedX509CertificateValidThenAuthenticated() {
+		// @formatter:off
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
+				.clientAuthenticationMethod(SELF_SIGNED_TLS_CLIENT_AUTH_AUTHENTICATION_METHOD)
+				.clientSettings(
+						ClientSettings.builder()
+								.jwkSetUrl(this.clientJwkSetUrl)
+								.build()
+				)
+				.build();
+		// @formatter:on
+		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
+				.thenReturn(registeredClient);
+
+		OAuth2ClientAuthenticationToken authentication = new OAuth2ClientAuthenticationToken(
+				registeredClient.getClientId(), SELF_SIGNED_TLS_CLIENT_AUTH_AUTHENTICATION_METHOD,
+				TestX509Certificates.DEMO_CLIENT_SELF_SIGNED_CERTIFICATE, null);
+
+		OAuth2ClientAuthenticationToken authenticationResult =
+				(OAuth2ClientAuthenticationToken) this.authenticationProvider.authenticate(authentication);
+
+		assertThat(authenticationResult.isAuthenticated()).isTrue();
+		assertThat(authenticationResult.getPrincipal().toString()).isEqualTo(registeredClient.getClientId());
+		assertThat(authenticationResult.getCredentials()).isEqualTo(TestX509Certificates.DEMO_CLIENT_SELF_SIGNED_CERTIFICATE);
+		assertThat(authenticationResult.getRegisteredClient()).isEqualTo(registeredClient);
+		assertThat(authenticationResult.getClientAuthenticationMethod()).isEqualTo(SELF_SIGNED_TLS_CLIENT_AUTH_AUTHENTICATION_METHOD);
 	}
 
 	@Test

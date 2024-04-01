@@ -26,6 +26,7 @@ import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.OAuth2Token;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
+import org.springframework.security.oauth2.server.authorization.OAuth2TokenType;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.util.Assert;
 
@@ -64,8 +65,17 @@ public final class OAuth2TokenRevocationAuthenticationProvider implements Authen
 				getAuthenticatedClientElseThrowInvalidClient(tokenRevocationAuthentication);
 		RegisteredClient registeredClient = clientPrincipal.getRegisteredClient();
 
+		OAuth2TokenType tokenType = null;
+		if (tokenRevocationAuthentication.getTokenTypeHint() != null) {
+			if (tokenRevocationAuthentication.getTokenTypeHint().equals("access_token")) {
+				tokenType = OAuth2TokenType.ACCESS_TOKEN;
+			} else if (tokenRevocationAuthentication.getTokenTypeHint().equals("refresh_token")) {
+				tokenType = OAuth2TokenType.REFRESH_TOKEN;
+			}
+		}
+
 		OAuth2Authorization authorization = this.authorizationService.findByToken(
-				tokenRevocationAuthentication.getToken(), null);
+				tokenRevocationAuthentication.getToken(), tokenType);
 		if (authorization == null) {
 			if (this.logger.isTraceEnabled()) {
 				this.logger.trace("Did not authenticate token revocation request since token was not found");

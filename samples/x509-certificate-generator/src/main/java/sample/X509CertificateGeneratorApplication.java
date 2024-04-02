@@ -15,6 +15,7 @@
  */
 package sample;
 
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.StringWriter;
 import java.nio.file.Files;
@@ -54,7 +55,7 @@ public class X509CertificateGeneratorApplication implements CommandLineRunner {
 		KeyPair rootKeyPair = BouncyCastleUtils.generateRSAKeyPair();
 		X509Certificate rootCertificate = BouncyCastleUtils.createTrustAnchorCertificate(rootKeyPair, distinguishedName);
 		writeCertificatePEMEncoded(rootCertificate, "./samples/x509-certificate-generator/generated/" + commonName + ".pem");
-		createKeystoreFile(rootKeyPair, new Certificate[] {rootCertificate}, commonName,
+		writeKeystore(rootKeyPair, new Certificate[] {rootCertificate}, commonName,
 				null, "./samples/x509-certificate-generator/generated/" + commonName + "-keystore.p12");
 		TrustedCertificateHolder[] rootTrustedCertificate = { new TrustedCertificateHolder(rootCertificate, rootCommonName) };
 
@@ -66,7 +67,7 @@ public class X509CertificateGeneratorApplication implements CommandLineRunner {
 		X509Certificate caCertificate = BouncyCastleUtils.createCACertificate(
 				rootCertificate, rootKeyPair.getPrivate(), caKeyPair.getPublic(), distinguishedName);
 		writeCertificatePEMEncoded(caCertificate, "./samples/x509-certificate-generator/generated/" + commonName + ".pem");
-		createKeystoreFile(caKeyPair, new Certificate[] {caCertificate, rootCertificate}, commonName,
+		writeKeystore(caKeyPair, new Certificate[] {caCertificate, rootCertificate}, commonName,
 				rootTrustedCertificate, "./samples/x509-certificate-generator/generated/" + commonName + "-keystore.p12");
 		TrustedCertificateHolder[] caTrustedCertificate = { new TrustedCertificateHolder(caCertificate, caCommonName) };
 
@@ -77,8 +78,21 @@ public class X509CertificateGeneratorApplication implements CommandLineRunner {
 		X509Certificate demoClientCertificate = BouncyCastleUtils.createEndEntityCertificate(
 				caCertificate, caKeyPair.getPrivate(), demoClientKeyPair.getPublic(), distinguishedName);
 		demoClientCertificate.verify(caCertificate.getPublicKey(), BC_PROVIDER);
-		createKeystoreFile(demoClientKeyPair, new Certificate[] {demoClientCertificate, caCertificate, rootCertificate}, commonName,
+		writeKeystore(demoClientKeyPair, new Certificate[] {demoClientCertificate, caCertificate, rootCertificate}, commonName,
 				caTrustedCertificate, "./samples/demo-client/src/main/resources/keystore.p12");
+
+		// Generate a self-signed certificate and keystore file for the demo-client sample
+		commonName = "demo-client-sample";
+		distinguishedName = "CN=" + commonName + ", " + baseDistinguishedName;
+		String alias = "self-signed-" + commonName;
+		KeyPair selfSignedDemoClientKeyPair = BouncyCastleUtils.generateRSAKeyPair();
+		X509Certificate selfSignedDemoClientCertificate = BouncyCastleUtils.createTrustAnchorCertificate(selfSignedDemoClientKeyPair, distinguishedName);
+		writeKeystore(selfSignedDemoClientKeyPair, new Certificate[] {selfSignedDemoClientCertificate}, alias,
+				caTrustedCertificate, "./samples/demo-client/src/main/resources/keystore-self-signed.p12");
+		TrustedCertificateHolder[] trustedCertificates = {
+				caTrustedCertificate[0],
+				new TrustedCertificateHolder(selfSignedDemoClientCertificate, alias)
+		};
 
 		// Generate the certificate and keystore file for the messages-resource sample
 		commonName = "messages-resource-sample";
@@ -87,8 +101,8 @@ public class X509CertificateGeneratorApplication implements CommandLineRunner {
 		X509Certificate messagesResourceCertificate = BouncyCastleUtils.createEndEntityCertificate(
 				caCertificate, caKeyPair.getPrivate(), messagesResourceKeyPair.getPublic(), distinguishedName);
 		messagesResourceCertificate.verify(caCertificate.getPublicKey(), BC_PROVIDER);
-		createKeystoreFile(messagesResourceKeyPair, new Certificate[] {messagesResourceCertificate, caCertificate, rootCertificate}, commonName,
-				caTrustedCertificate, "./samples/messages-resource/src/main/resources/keystore.p12");
+		writeKeystore(messagesResourceKeyPair, new Certificate[] {messagesResourceCertificate, caCertificate, rootCertificate}, commonName,
+				trustedCertificates, "./samples/messages-resource/src/main/resources/keystore.p12");
 
 		// Generate the certificate and keystore file for the demo-authorizationserver sample
 		commonName = "demo-authorizationserver-sample";
@@ -97,28 +111,38 @@ public class X509CertificateGeneratorApplication implements CommandLineRunner {
 		X509Certificate demoAuthorizationServerCertificate = BouncyCastleUtils.createEndEntityCertificate(
 				caCertificate, caKeyPair.getPrivate(), demoAuthorizationServerKeyPair.getPublic(), distinguishedName);
 		demoAuthorizationServerCertificate.verify(caCertificate.getPublicKey(), BC_PROVIDER);
-		createKeystoreFile(demoAuthorizationServerKeyPair, new Certificate[] {demoAuthorizationServerCertificate, caCertificate, rootCertificate}, commonName,
-				caTrustedCertificate, "./samples/demo-authorizationserver/src/main/resources/keystore.p12");
+		writeKeystore(demoAuthorizationServerKeyPair, new Certificate[] {demoAuthorizationServerCertificate, caCertificate, rootCertificate}, commonName,
+				trustedCertificates, "./samples/demo-authorizationserver/src/main/resources/keystore.p12");
 	}
 
-	private static void createKeystoreFile(KeyPair keyPair, Certificate[] certificateChain, String alias,
+	private static void writeKeystore(KeyPair keyPair, Certificate[] certificateChain, String alias,
 			TrustedCertificateHolder[] trustedCertificates, String fileName) throws Exception {
 
+		Path path = Paths.get(fileName);
+		Path parent = path.getParent();
+		if (parent != null && Files.notExists(parent)) {
+			Files.createDirectories(parent);
+		}
+
 		KeyStore keyStore = KeyStore.getInstance("PKCS12", BC_PROVIDER);
-		keyStore.load(null, null);
+		if (Files.exists(path)) {
+			FileInputStream fis = new FileInputStream(fileName);
+			keyStore.load(fis, "password".toCharArray());
+			fis.close();
+		} else {
+			keyStore.load(null, null);
+		}
+
 		keyStore.setKeyEntry(alias, keyPair.getPrivate(), "password".toCharArray(), certificateChain);
 		if (trustedCertificates != null && trustedCertificates.length > 0) {
 			for (TrustedCertificateHolder trustedCertificate : trustedCertificates) {
 				keyStore.setCertificateEntry(trustedCertificate.alias, trustedCertificate.certificate);
 			}
 		}
-		Path path = Paths.get(fileName);
-		Path parent = path.getParent();
-		if (parent != null && Files.notExists(parent)) {
-			Files.createDirectories(parent);
-		}
+
 		FileOutputStream fos = new FileOutputStream(fileName);
 		keyStore.store(fos, "password".toCharArray());
+		fos.close();
 	}
 
 	private static void writeCertificatePEMEncoded(Certificate certificate, String fileName) throws Exception {

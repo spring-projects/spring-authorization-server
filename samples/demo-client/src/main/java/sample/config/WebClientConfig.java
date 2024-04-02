@@ -20,6 +20,7 @@ import java.util.function.Supplier;
 
 import sample.authorization.DeviceCodeOAuth2AuthorizedClientProvider;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -52,8 +53,47 @@ import org.springframework.web.reactive.function.client.WebClient;
 @Configuration(proxyBeanMethods = false)
 public class WebClientConfig {
 
-	@Bean
-	public WebClient webClient(OAuth2AuthorizedClientManager authorizedClientManager) {
+	@Bean("default-client-web-client")
+	public WebClient defaultClientWebClient(OAuth2AuthorizedClientManager authorizedClientManager) {
+		ServletOAuth2AuthorizedClientExchangeFilterFunction oauth2Client =
+				new ServletOAuth2AuthorizedClientExchangeFilterFunction(authorizedClientManager);
+		// @formatter:off
+		return WebClient.builder()
+				.apply(oauth2Client.oauth2Configuration())
+				.build();
+		// @formatter:on
+	}
+
+	@Bean("self-signed-demo-client-web-client")
+	public WebClient selfSignedDemoClientWebClient(
+			ClientRegistrationRepository clientRegistrationRepository,
+			OAuth2AuthorizedClientRepository authorizedClientRepository,
+			RestTemplateBuilder restTemplateBuilder,
+			@Qualifier("self-signed-demo-client-http-request-factory") Supplier<ClientHttpRequestFactory> clientHttpRequestFactory) {
+
+		// @formatter:off
+		RestTemplate restTemplate = restTemplateBuilder
+				.requestFactory(clientHttpRequestFactory)
+				.messageConverters(Arrays.asList(
+						new FormHttpMessageConverter(),
+						new OAuth2AccessTokenResponseHttpMessageConverter()))
+				.errorHandler(new OAuth2ErrorResponseErrorHandler())
+				.build();
+		// @formatter:on
+
+		// @formatter:off
+		OAuth2AuthorizedClientProvider authorizedClientProvider =
+				OAuth2AuthorizedClientProviderBuilder.builder()
+						.clientCredentials(clientCredentials ->
+								clientCredentials.accessTokenResponseClient(
+										createClientCredentialsTokenResponseClient(restTemplate)))
+						.build();
+		// @formatter:on
+
+		DefaultOAuth2AuthorizedClientManager authorizedClientManager = new DefaultOAuth2AuthorizedClientManager(
+				clientRegistrationRepository, authorizedClientRepository);
+		authorizedClientManager.setAuthorizedClientProvider(authorizedClientProvider);
+
 		ServletOAuth2AuthorizedClientExchangeFilterFunction oauth2Client =
 				new ServletOAuth2AuthorizedClientExchangeFilterFunction(authorizedClientManager);
 		// @formatter:off
@@ -68,7 +108,7 @@ public class WebClientConfig {
 			ClientRegistrationRepository clientRegistrationRepository,
 			OAuth2AuthorizedClientRepository authorizedClientRepository,
 			RestTemplateBuilder restTemplateBuilder,
-			Supplier<ClientHttpRequestFactory> clientHttpRequestFactory) {
+			@Qualifier("default-client-http-request-factory") Supplier<ClientHttpRequestFactory> clientHttpRequestFactory) {
 
 		// @formatter:off
 		RestTemplate restTemplate = restTemplateBuilder

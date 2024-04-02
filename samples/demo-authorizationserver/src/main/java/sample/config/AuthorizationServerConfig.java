@@ -169,12 +169,14 @@ public class AuthorizationServerConfig {
 		RegisteredClient mtlsDemoClient = RegisteredClient.withId(UUID.randomUUID().toString())
 				.clientId("mtls-demo-client")
 				.clientAuthenticationMethod(new ClientAuthenticationMethod("tls_client_auth"))
+				.clientAuthenticationMethod(new ClientAuthenticationMethod("self_signed_tls_client_auth"))
 				.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
 				.scope("message.read")
 				.scope("message.write")
 				.clientSettings(
 						ClientSettings.builder()
 								.x509CertificateSubjectDN("CN=demo-client-sample,OU=Spring Samples,O=Spring,C=US")
+								.jwkSetUrl("http://127.0.0.1:8080/jwks")
 								.build()
 				)
 				.build();

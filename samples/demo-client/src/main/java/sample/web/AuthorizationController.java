@@ -17,6 +17,7 @@ package sample.web;
 
 import jakarta.servlet.http.HttpServletRequest;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.annotation.RegisteredOAuth2AuthorizedClient;
@@ -39,14 +40,18 @@ import static org.springframework.security.oauth2.client.web.reactive.function.c
  */
 @Controller
 public class AuthorizationController {
-	private final WebClient webClient;
+	private final WebClient defaultClientWebClient;
+	private final WebClient selfSignedDemoClientWebClient;
 	private final String messagesBaseUri;
 	private final String userMessagesBaseUri;
 
-	public AuthorizationController(WebClient webClient,
+	public AuthorizationController(
+			@Qualifier("default-client-web-client") WebClient defaultClientWebClient,
+			@Qualifier("self-signed-demo-client-web-client") WebClient selfSignedDemoClientWebClient,
 			@Value("${messages.base-uri}") String messagesBaseUri,
 			@Value("${user-messages.base-uri}") String userMessagesBaseUri) {
-		this.webClient = webClient;
+		this.defaultClientWebClient = defaultClientWebClient;
+		this.selfSignedDemoClientWebClient = selfSignedDemoClientWebClient;
 		this.messagesBaseUri = messagesBaseUri;
 		this.userMessagesBaseUri = userMessagesBaseUri;
 	}
@@ -56,7 +61,7 @@ public class AuthorizationController {
 			@RegisteredOAuth2AuthorizedClient("messaging-client-authorization-code")
 					OAuth2AuthorizedClient authorizedClient) {
 
-		String[] messages = this.webClient
+		String[] messages = this.defaultClientWebClient
 				.get()
 				.uri(this.messagesBaseUri)
 				.attributes(oauth2AuthorizedClient(authorizedClient))
@@ -87,7 +92,7 @@ public class AuthorizationController {
 	@GetMapping(value = "/authorize", params = {"grant_type=client_credentials", "client_auth=client_secret"})
 	public String clientCredentialsGrantUsingClientSecret(Model model) {
 
-		String[] messages = this.webClient
+		String[] messages = this.defaultClientWebClient
 				.get()
 				.uri(this.messagesBaseUri)
 				.attributes(clientRegistrationId("messaging-client-client-credentials"))
@@ -102,7 +107,7 @@ public class AuthorizationController {
 	@GetMapping(value = "/authorize", params = {"grant_type=client_credentials", "client_auth=mtls"})
 	public String clientCredentialsGrantUsingMutualTLS(Model model) {
 
-		String[] messages = this.webClient
+		String[] messages = this.defaultClientWebClient
 				.get()
 				.uri(this.messagesBaseUri)
 				.attributes(clientRegistrationId("mtls-demo-client-client-credentials"))
@@ -114,10 +119,25 @@ public class AuthorizationController {
 		return "index";
 	}
 
+	@GetMapping(value = "/authorize", params = {"grant_type=client_credentials", "client_auth=self_signed_mtls"})
+	public String clientCredentialsGrantUsingSelfSignedMutualTLS(Model model) {
+
+		String[] messages = this.selfSignedDemoClientWebClient
+				.get()
+				.uri(this.messagesBaseUri)
+				.attributes(clientRegistrationId("mtls-self-signed-demo-client-client-credentials"))
+				.retrieve()
+				.bodyToMono(String[].class)
+				.block();
+		model.addAttribute("messages", messages);
+
+		return "index";
+	}
+
 	@GetMapping(value = "/authorize", params = "grant_type=token_exchange")
 	public String tokenExchangeGrant(Model model) {
 
-		String[] messages = this.webClient
+		String[] messages = this.defaultClientWebClient
 				.get()
 				.uri(this.userMessagesBaseUri)
 				.attributes(clientRegistrationId("user-client-authorization-code"))

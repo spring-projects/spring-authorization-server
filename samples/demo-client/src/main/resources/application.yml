@@ -24,6 +24,18 @@ spring:
             location: classpath:keystore.p12
             password: password
             type: PKCS12
+        self-signed-demo-client:
+          key:
+            alias: self-signed-demo-client-sample
+            password: password
+          keystore:
+            location: classpath:keystore-self-signed.p12
+            password: password
+            type: PKCS12
+          truststore:
+            location: classpath:keystore-self-signed.p12
+            password: password
+            type: PKCS12
   thymeleaf:
     cache: false
   security:
@@ -75,6 +87,13 @@ spring:
             authorization-grant-type: client_credentials
             scope: message.read,message.write
             client-name: mtls-demo-client-client-credentials
+          mtls-self-signed-demo-client-client-credentials:
+            provider: spring-tls
+            client-id: mtls-demo-client
+            client-authentication-method: self_signed_tls_client_auth
+            authorization-grant-type: client_credentials
+            scope: message.read,message.write
+            client-name: mtls-self-signed-demo-client-client-credentials
         provider:
           spring:
             issuer-uri: http://localhost:9000

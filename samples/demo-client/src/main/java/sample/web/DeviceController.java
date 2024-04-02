@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 the original author or authors.
+ * Copyright 2020-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatus;
@@ -72,7 +73,9 @@ public class DeviceController {
 
 	private final String messagesBaseUri;
 
-	public DeviceController(ClientRegistrationRepository clientRegistrationRepository, WebClient webClient,
+	public DeviceController(
+			ClientRegistrationRepository clientRegistrationRepository,
+			@Qualifier("default-client-web-client") WebClient webClient,
 			@Value("${messages.base-uri}") String messagesBaseUri) {
 
 		this.clientRegistrationRepository = clientRegistrationRepository;

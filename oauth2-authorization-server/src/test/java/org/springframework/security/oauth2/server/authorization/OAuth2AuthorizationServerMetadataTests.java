@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 the original author or authors.
+ * Copyright 2020-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,6 +61,7 @@ public class OAuth2AuthorizationServerMetadataTests {
 				.tokenIntrospectionEndpoint("https://example.com/oauth2/introspect")
 				.tokenIntrospectionEndpointAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue())
 				.codeChallengeMethod("S256")
+				.tlsClientCertificateBoundAccessTokens(true)
 				.claim("a-claim", "a-value")
 				.build();
 
@@ -77,6 +78,7 @@ public class OAuth2AuthorizationServerMetadataTests {
 		assertThat(authorizationServerMetadata.getTokenIntrospectionEndpoint()).isEqualTo(url("https://example.com/oauth2/introspect"));
 		assertThat(authorizationServerMetadata.getTokenIntrospectionEndpointAuthenticationMethods()).containsExactly(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue());
 		assertThat(authorizationServerMetadata.getCodeChallengeMethods()).containsExactly("S256");
+		assertThat(authorizationServerMetadata.isTlsClientCertificateBoundAccessTokens()).isTrue();
 		assertThat(authorizationServerMetadata.getClaimAsString("a-claim")).isEqualTo("a-value");
 	}
 

@@ -106,7 +106,8 @@ public final class OAuth2AuthorizationServerMetadataEndpointFilter extends OnceP
 				.tokenRevocationEndpointAuthenticationMethods(clientAuthenticationMethods())
 				.tokenIntrospectionEndpoint(asUrl(issuer, authorizationServerSettings.getTokenIntrospectionEndpoint()))
 				.tokenIntrospectionEndpointAuthenticationMethods(clientAuthenticationMethods())
-				.codeChallengeMethod("S256");
+				.codeChallengeMethod("S256")
+				.tlsClientCertificateBoundAccessTokens(true);
 
 		this.authorizationServerMetadataCustomizer.accept(authorizationServerMetadata);
 

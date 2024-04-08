@@ -189,6 +189,13 @@ public final class ConfigurationSettingNames {
 		 */
 		public static final String ID_TOKEN_SIGNATURE_ALGORITHM = TOKEN_SETTINGS_NAMESPACE.concat("id-token-signature-algorithm");
 
+		/**
+		 * Set to {@code true} if access tokens must be bound to the client {@code X509Certificate}
+		 * received during client authentication when using the {@code tls_client_auth} or {@code self_signed_tls_client_auth} method.
+		 * @since 1.3
+		 */
+		public static final String X509_CERTIFICATE_BOUND_ACCESS_TOKENS = TOKEN_SETTINGS_NAMESPACE.concat("x509-certificate-bound-access-tokens");
+
 		private Token() {
 		}
 

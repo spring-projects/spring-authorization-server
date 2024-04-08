@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 the original author or authors.
+ * Copyright 2020-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,11 +34,13 @@ import org.springframework.util.Assert;
  * The metadata endpoint returns a set of claims an Authorization Server describes about its configuration.
  *
  * @author Daniel Garnier-Moiroux
+ * @author Joe Grandja
  * @see OAuth2AuthorizationServerMetadataClaimAccessor
  * @since 0.1.1
  * @see <a target="_blank" href="https://tools.ietf.org/html/rfc8414#section-3.2">3.2. Authorization Server Metadata Response</a>
  * @see <a target="_blank" href="https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderConfigurationResponse">4.2. OpenID Provider Configuration Response</a>
  * @see <a target="_blank" href="https://www.rfc-editor.org/rfc/rfc8628.html#section-4">4. Device Authorization Grant Metadata</a>
+ * @see <a target="_blank" href="https://datatracker.ietf.org/doc/html/rfc8705#section-3.3">3.3 Mutual-TLS Client Certificate-Bound Access Tokens Metadata</a>
  */
 public abstract class AbstractOAuth2AuthorizationServerMetadata implements OAuth2AuthorizationServerMetadataClaimAccessor, Serializable {
 	private static final long serialVersionUID = SpringAuthorizationServerVersion.SERIAL_VERSION_UID;
@@ -318,6 +320,17 @@ public abstract class AbstractOAuth2AuthorizationServerMetadata implements OAuth
 		public B codeChallengeMethods(Consumer<List<String>> codeChallengeMethodsConsumer) {
 			acceptClaimValues(OAuth2AuthorizationServerMetadataClaimNames.CODE_CHALLENGE_METHODS_SUPPORTED, codeChallengeMethodsConsumer);
 			return getThis();
+		}
+
+		/**
+		 * Use this {@code tls_client_certificate_bound_access_tokens} in the resulting {@link AbstractOAuth2AuthorizationServerMetadata}, OPTIONAL.
+		 *
+		 * @param tlsClientCertificateBoundAccessTokens {@code true} to indicate support for mutual-TLS client certificate-bound access tokens
+		 * @return the {@link AbstractBuilder} for further configuration
+		 * @since 1.3
+		 */
+		public B tlsClientCertificateBoundAccessTokens(boolean tlsClientCertificateBoundAccessTokens) {
+			return claim(OAuth2AuthorizationServerMetadataClaimNames.TLS_CLIENT_CERTIFICATE_BOUND_ACCESS_TOKENS, tlsClientCertificateBoundAccessTokens);
 		}
 
 		/**

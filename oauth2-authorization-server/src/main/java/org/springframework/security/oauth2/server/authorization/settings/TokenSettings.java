@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 the original author or authors.
+ * Copyright 2020-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -104,6 +104,18 @@ public final class TokenSettings extends AbstractSettings {
 	}
 
 	/**
+	 * Returns {@code true} if access tokens must be bound to the client {@code X509Certificate}
+	 * received during client authentication when using the {@code tls_client_auth} or {@code self_signed_tls_client_auth} method.
+	 * The default is {@code false}.
+	 *
+	 * @return {@code true} if access tokens must be bound to the client {@code X509Certificate}, {@code false} otherwise
+	 * @since 1.3
+	 */
+	public boolean isX509CertificateBoundAccessTokens() {
+		return getSetting(ConfigurationSettingNames.Token.X509_CERTIFICATE_BOUND_ACCESS_TOKENS);
+	}
+
+	/**
 	 * Constructs a new {@link Builder} with the default settings.
 	 *
 	 * @return the {@link Builder}
@@ -116,7 +128,8 @@ public final class TokenSettings extends AbstractSettings {
 				.deviceCodeTimeToLive(Duration.ofMinutes(5))
 				.reuseRefreshTokens(true)
 				.refreshTokenTimeToLive(Duration.ofMinutes(60))
-				.idTokenSignatureAlgorithm(SignatureAlgorithm.RS256);
+				.idTokenSignatureAlgorithm(SignatureAlgorithm.RS256)
+				.x509CertificateBoundAccessTokens(false);
 	}
 
 	/**
@@ -222,6 +235,18 @@ public final class TokenSettings extends AbstractSettings {
 		public Builder idTokenSignatureAlgorithm(SignatureAlgorithm idTokenSignatureAlgorithm) {
 			Assert.notNull(idTokenSignatureAlgorithm, "idTokenSignatureAlgorithm cannot be null");
 			return setting(ConfigurationSettingNames.Token.ID_TOKEN_SIGNATURE_ALGORITHM, idTokenSignatureAlgorithm);
+		}
+
+		/**
+		 * Set to {@code true} if access tokens must be bound to the client {@code X509Certificate}
+		 * received during client authentication when using the {@code tls_client_auth} or {@code self_signed_tls_client_auth} method.
+		 *
+		 * @param x509CertificateBoundAccessTokens {@code true} if access tokens must be bound to the client {@code X509Certificate}, {@code false} otherwise
+		 * @return the {@link Builder} for further configuration
+		 * @since 1.3
+		 */
+		public Builder x509CertificateBoundAccessTokens(boolean x509CertificateBoundAccessTokens) {
+			return setting(ConfigurationSettingNames.Token.X509_CERTIFICATE_BOUND_ACCESS_TOKENS, x509CertificateBoundAccessTokens);
 		}
 
 		/**

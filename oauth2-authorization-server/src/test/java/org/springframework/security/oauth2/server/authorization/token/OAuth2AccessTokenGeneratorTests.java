@@ -58,8 +58,6 @@ import static org.mockito.Mockito.verify;
  * @author Joe Grandja
  */
 public class OAuth2AccessTokenGeneratorTests {
-	private static final ClientAuthenticationMethod TLS_CLIENT_AUTH_AUTHENTICATION_METHOD =
-			new ClientAuthenticationMethod("tls_client_auth");
 	private OAuth2TokenCustomizer<OAuth2TokenClaimsContext> accessTokenCustomizer;
 	private OAuth2AccessTokenGenerator accessTokenGenerator;
 	private AuthorizationServerContext authorizationServerContext;
@@ -127,7 +125,7 @@ public class OAuth2AccessTokenGeneratorTests {
 				.x509CertificateBoundAccessTokens(true)
 				.build();
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
-				.clientAuthenticationMethod(TLS_CLIENT_AUTH_AUTHENTICATION_METHOD)
+				.clientAuthenticationMethod(ClientAuthenticationMethod.TLS_CLIENT_AUTH)
 				.clientSettings(clientSettings)
 				.tokenSettings(tokenSettings)
 				.build();
@@ -136,7 +134,7 @@ public class OAuth2AccessTokenGeneratorTests {
 		Authentication principal = authorization.getAttribute(Principal.class.getName());
 
 		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(
-				registeredClient, TLS_CLIENT_AUTH_AUTHENTICATION_METHOD,
+				registeredClient, ClientAuthenticationMethod.TLS_CLIENT_AUTH,
 				TestX509Certificates.DEMO_CLIENT_PKI_CERTIFICATE);
 		OAuth2AuthorizationRequest authorizationRequest = authorization.getAttribute(
 				OAuth2AuthorizationRequest.class.getName());

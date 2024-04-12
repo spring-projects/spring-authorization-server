@@ -168,8 +168,8 @@ public class AuthorizationServerConfig {
 
 		RegisteredClient mtlsDemoClient = RegisteredClient.withId(UUID.randomUUID().toString())
 				.clientId("mtls-demo-client")
-				.clientAuthenticationMethod(new ClientAuthenticationMethod("tls_client_auth"))
-				.clientAuthenticationMethod(new ClientAuthenticationMethod("self_signed_tls_client_auth"))
+				.clientAuthenticationMethod(ClientAuthenticationMethod.TLS_CLIENT_AUTH)
+				.clientAuthenticationMethod(ClientAuthenticationMethod.SELF_SIGNED_TLS_CLIENT_AUTH)
 				.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
 				.scope("message.read")
 				.scope("message.write")

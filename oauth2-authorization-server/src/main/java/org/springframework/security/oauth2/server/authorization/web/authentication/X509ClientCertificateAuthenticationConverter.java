@@ -44,10 +44,6 @@ import org.springframework.util.StringUtils;
  * @see OAuth2ClientAuthenticationFilter
  */
 public final class X509ClientCertificateAuthenticationConverter implements AuthenticationConverter {
-	private static final ClientAuthenticationMethod TLS_CLIENT_AUTH_AUTHENTICATION_METHOD =
-			new ClientAuthenticationMethod("tls_client_auth");
-	private static final ClientAuthenticationMethod SELF_SIGNED_TLS_CLIENT_AUTH_AUTHENTICATION_METHOD =
-			new ClientAuthenticationMethod("self_signed_tls_client_auth");
 
 	@Nullable
 	@Override
@@ -72,8 +68,8 @@ public final class X509ClientCertificateAuthenticationConverter implements Authe
 
 		ClientAuthenticationMethod clientAuthenticationMethod =
 				clientCertificateChain.length == 1 ?
-						SELF_SIGNED_TLS_CLIENT_AUTH_AUTHENTICATION_METHOD :
-						TLS_CLIENT_AUTH_AUTHENTICATION_METHOD;
+						ClientAuthenticationMethod.SELF_SIGNED_TLS_CLIENT_AUTH :
+						ClientAuthenticationMethod.TLS_CLIENT_AUTH;
 
 		return new OAuth2ClientAuthenticationToken(clientId, clientAuthenticationMethod,
 				clientCertificateChain, additionalParameters);

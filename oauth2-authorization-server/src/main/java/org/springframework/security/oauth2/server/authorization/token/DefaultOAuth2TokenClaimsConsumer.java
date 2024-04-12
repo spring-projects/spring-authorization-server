@@ -34,10 +34,6 @@ import org.springframework.security.oauth2.server.authorization.authentication.O
  * @since 1.3
  */
 final class DefaultOAuth2TokenClaimsConsumer implements Consumer<Map<String, Object>> {
-	private static final ClientAuthenticationMethod TLS_CLIENT_AUTH_AUTHENTICATION_METHOD =
-			new ClientAuthenticationMethod("tls_client_auth");
-	private static final ClientAuthenticationMethod SELF_SIGNED_TLS_CLIENT_AUTH_AUTHENTICATION_METHOD =
-			new ClientAuthenticationMethod("self_signed_tls_client_auth");
 	private final OAuth2TokenContext context;
 
 	DefaultOAuth2TokenClaimsConsumer(OAuth2TokenContext context) {
@@ -51,8 +47,8 @@ final class DefaultOAuth2TokenClaimsConsumer implements Consumer<Map<String, Obj
 				this.context.getAuthorizationGrant() != null &&
 				this.context.getAuthorizationGrant().getPrincipal() instanceof OAuth2ClientAuthenticationToken clientAuthentication) {
 
-			if ((TLS_CLIENT_AUTH_AUTHENTICATION_METHOD.equals(clientAuthentication.getClientAuthenticationMethod()) ||
-					SELF_SIGNED_TLS_CLIENT_AUTH_AUTHENTICATION_METHOD.equals(clientAuthentication.getClientAuthenticationMethod())) &&
+			if ((ClientAuthenticationMethod.TLS_CLIENT_AUTH.equals(clientAuthentication.getClientAuthenticationMethod()) ||
+					ClientAuthenticationMethod.SELF_SIGNED_TLS_CLIENT_AUTH.equals(clientAuthentication.getClientAuthenticationMethod())) &&
 					this.context.getRegisteredClient().getTokenSettings().isX509CertificateBoundAccessTokens()) {
 
 				X509Certificate[] clientCertificateChain = (X509Certificate[]) clientAuthentication.getCredentials();

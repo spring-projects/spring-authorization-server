@@ -69,8 +69,6 @@ import static org.mockito.Mockito.verify;
  * @author Joe Grandja
  */
 public class JwtGeneratorTests {
-	private static final ClientAuthenticationMethod TLS_CLIENT_AUTH_AUTHENTICATION_METHOD =
-			new ClientAuthenticationMethod("tls_client_auth");
 	private static final OAuth2TokenType ID_TOKEN_TOKEN_TYPE = new OAuth2TokenType(OidcParameterNames.ID_TOKEN);
 	private JwtEncoder jwtEncoder;
 	private OAuth2TokenCustomizer<JwtEncodingContext> jwtCustomizer;
@@ -134,7 +132,7 @@ public class JwtGeneratorTests {
 	public void generateWhenAccessTokenTypeThenReturnJwt() {
 		// @formatter:off
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
-				.clientAuthenticationMethod(TLS_CLIENT_AUTH_AUTHENTICATION_METHOD)
+				.clientAuthenticationMethod(ClientAuthenticationMethod.TLS_CLIENT_AUTH)
 				.clientSettings(
 						ClientSettings.builder()
 								.x509CertificateSubjectDN(TestX509Certificates.DEMO_CLIENT_PKI_CERTIFICATE[0].getSubjectX500Principal().getName())
@@ -150,7 +148,7 @@ public class JwtGeneratorTests {
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();
 
 		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(
-				registeredClient, TLS_CLIENT_AUTH_AUTHENTICATION_METHOD,
+				registeredClient, ClientAuthenticationMethod.TLS_CLIENT_AUTH,
 				TestX509Certificates.DEMO_CLIENT_PKI_CERTIFICATE);
 		OAuth2AuthorizationRequest authorizationRequest = authorization.getAttribute(
 				OAuth2AuthorizationRequest.class.getName());
@@ -346,7 +344,7 @@ public class JwtGeneratorTests {
 			assertThat(scopes).isEqualTo(tokenContext.getAuthorizedScopes());
 
 			OAuth2ClientAuthenticationToken clientAuthentication = (OAuth2ClientAuthenticationToken) tokenContext.getAuthorizationGrant().getPrincipal();
-			if (TLS_CLIENT_AUTH_AUTHENTICATION_METHOD.equals(clientAuthentication.getClientAuthenticationMethod()) &&
+			if (ClientAuthenticationMethod.TLS_CLIENT_AUTH.equals(clientAuthentication.getClientAuthenticationMethod()) &&
 					tokenContext.getRegisteredClient().getTokenSettings().isX509CertificateBoundAccessTokens()) {
 				Map<String, Object> cnf = jwtClaimsSet.getClaim("cnf");
 				assertThat(cnf).isNotEmpty();

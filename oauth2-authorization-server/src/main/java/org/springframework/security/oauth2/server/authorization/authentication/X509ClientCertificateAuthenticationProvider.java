@@ -50,10 +50,6 @@ import org.springframework.util.StringUtils;
  */
 public final class X509ClientCertificateAuthenticationProvider implements AuthenticationProvider {
 	private static final String ERROR_URI = "https://datatracker.ietf.org/doc/html/rfc6749#section-3.2.1";
-	private static final ClientAuthenticationMethod TLS_CLIENT_AUTH_AUTHENTICATION_METHOD =
-			new ClientAuthenticationMethod("tls_client_auth");
-	private static final ClientAuthenticationMethod SELF_SIGNED_TLS_CLIENT_AUTH_AUTHENTICATION_METHOD =
-			new ClientAuthenticationMethod("self_signed_tls_client_auth");
 	private final Log logger = LogFactory.getLog(getClass());
 	private final RegisteredClientRepository registeredClientRepository;
 	private final CodeVerifierAuthenticator codeVerifierAuthenticator;
@@ -80,8 +76,8 @@ public final class X509ClientCertificateAuthenticationProvider implements Authen
 		OAuth2ClientAuthenticationToken clientAuthentication =
 				(OAuth2ClientAuthenticationToken) authentication;
 
-		if (!TLS_CLIENT_AUTH_AUTHENTICATION_METHOD.equals(clientAuthentication.getClientAuthenticationMethod()) &&
-				!SELF_SIGNED_TLS_CLIENT_AUTH_AUTHENTICATION_METHOD.equals(clientAuthentication.getClientAuthenticationMethod())) {
+		if (!ClientAuthenticationMethod.TLS_CLIENT_AUTH.equals(clientAuthentication.getClientAuthenticationMethod()) &&
+				!ClientAuthenticationMethod.SELF_SIGNED_TLS_CLIENT_AUTH.equals(clientAuthentication.getClientAuthenticationMethod())) {
 			return null;
 		}
 
@@ -148,7 +144,7 @@ public final class X509ClientCertificateAuthenticationProvider implements Authen
 
 	private void verifyX509Certificate(OAuth2ClientAuthenticationContext clientAuthenticationContext) {
 		OAuth2ClientAuthenticationToken clientAuthentication = clientAuthenticationContext.getAuthentication();
-		if (SELF_SIGNED_TLS_CLIENT_AUTH_AUTHENTICATION_METHOD.equals(clientAuthentication.getClientAuthenticationMethod())) {
+		if (ClientAuthenticationMethod.SELF_SIGNED_TLS_CLIENT_AUTH.equals(clientAuthentication.getClientAuthenticationMethod())) {
 			this.selfSignedCertificateVerifier.accept(clientAuthenticationContext);
 		} else {
 			verifyX509CertificateSubjectDN(clientAuthenticationContext);

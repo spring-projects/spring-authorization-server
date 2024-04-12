@@ -269,7 +269,7 @@ public class OAuth2ClientCredentialsGrantTests {
 
 		// @formatter:off
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient2()
-				.clientAuthenticationMethod(new ClientAuthenticationMethod("tls_client_auth"))
+				.clientAuthenticationMethod(ClientAuthenticationMethod.TLS_CLIENT_AUTH)
 				.clientSettings(
 						ClientSettings.builder()
 								.x509CertificateSubjectDN(TestX509Certificates.DEMO_CLIENT_PKI_CERTIFICATE[0].getSubjectX500Principal().getName())

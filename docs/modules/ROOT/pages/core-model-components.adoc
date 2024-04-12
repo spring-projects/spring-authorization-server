@@ -85,7 +85,7 @@ public class RegisteredClient implements Serializable {
 <5> `clientSecretExpiresAt`: The time at which the client secret expires.
 <6> `clientName`: A descriptive name used for the client. The name may be used in certain scenarios, such as when displaying the client name in the consent page.
 <7> `clientAuthenticationMethods`: The authentication method(s) that the client may use. The supported values are `client_secret_basic`, `client_secret_post`, https://datatracker.ietf.org/doc/html/rfc7523[`private_key_jwt`], `client_secret_jwt`, and `none` https://datatracker.ietf.org/doc/html/rfc7636[(public clients)].
-<8> `authorizationGrantTypes`: The https://datatracker.ietf.org/doc/html/rfc6749#section-1.3[authorization grant type(s)] that the client can use. The supported values are `authorization_code`, `client_credentials`, `refresh_token`, and `urn:ietf:params:oauth:grant-type:device_code`.
+<8> `authorizationGrantTypes`: The https://datatracker.ietf.org/doc/html/rfc6749#section-1.3[authorization grant type(s)] that the client can use. The supported values are `authorization_code`, `client_credentials`, `refresh_token`, `urn:ietf:params:oauth:grant-type:device_code`, and `urn:ietf:params:oauth:grant-type:token-exchange`.
 <9> `redirectUris`: The registered https://datatracker.ietf.org/doc/html/rfc6749#section-3.1.2[redirect URI(s)] that the client may use in redirect-based flows – for example, `authorization_code` grant.
 <10> `postLogoutRedirectUris`: The post logout redirect URI(s) that the client may use for logout.
 <11> `scopes`: The scope(s) that the client is allowed to request.

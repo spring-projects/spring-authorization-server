@@ -36,6 +36,7 @@ Spring Authorization Server supports the following features:
 * Refresh Token
 * Device Code
 ** xref:protocol-endpoints.adoc#oauth2-device-verification-endpoint[User Consent]
+* Token Exchange
 |
 * The OAuth 2.1 Authorization Framework (https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-07[draft])
 ** https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-07#section-4.1[Authorization Code Grant]
@@ -46,6 +47,8 @@ Spring Authorization Server supports the following features:
 * OAuth 2.0 Device Authorization Grant
 (https://tools.ietf.org/html/rfc8628[spec])
 ** https://tools.ietf.org/html/rfc8628#section-3[Device Flow]
+* OAuth 2.0 Token Exchange (https://datatracker.ietf.org/doc/html/rfc8693[spec])
+** https://datatracker.ietf.org/doc/html/rfc8693#section-2[Token Exchange Flow]
 
 |xref:core-model-components.adoc#oauth2-token-generator[Token Formats]
 |

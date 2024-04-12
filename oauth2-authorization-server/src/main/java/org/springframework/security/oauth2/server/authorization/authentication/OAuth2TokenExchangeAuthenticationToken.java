@@ -17,7 +17,7 @@ package org.springframework.security.oauth2.server.authorization.authentication;
 
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -36,10 +36,6 @@ import org.springframework.util.Assert;
  */
 public class OAuth2TokenExchangeAuthenticationToken extends OAuth2AuthorizationGrantAuthenticationToken {
 
-	private final List<String> resources;
-
-	private final List<String> audiences;
-
 	private final String requestedTokenType;
 
 	private final String subjectToken;
@@ -50,68 +46,45 @@ public class OAuth2TokenExchangeAuthenticationToken extends OAuth2AuthorizationG
 
 	private final String actorTokenType;
 
+	private final Set<String> resources;
+
+	private final Set<String> audiences;
+
 	private final Set<String> scopes;
 
 	/**
 	 * Constructs an {@code OAuth2TokenExchangeAuthenticationToken} using the provided parameters.
 	 *
-	 * @param resources a list of resource URIs
-	 * @param audiences a list audience values
-	 * @param scopes the requested scope(s)
 	 * @param requestedTokenType the requested token type
 	 * @param subjectToken the subject token
 	 * @param subjectTokenType the subject token type
+	 * @param clientPrincipal the authenticated client principal
 	 * @param actorToken the actor token
 	 * @param actorTokenType the actor token type
-	 * @param clientPrincipal the authenticated client principal
+	 * @param resources the requested resource URI(s)
+	 * @param audiences the requested audience value(s)
+	 * @param scopes the requested scope(s)
 	 * @param additionalParameters the additional parameters
 	 */
-	public OAuth2TokenExchangeAuthenticationToken(List<String> resources, List<String> audiences,
-			@Nullable Set<String> scopes, @Nullable String requestedTokenType, String subjectToken,
-			String subjectTokenType, @Nullable String actorToken, @Nullable String actorTokenType,
-			Authentication clientPrincipal, @Nullable Map<String, Object> additionalParameters) {
+	public OAuth2TokenExchangeAuthenticationToken(String requestedTokenType, String subjectToken,
+			String subjectTokenType, Authentication clientPrincipal, @Nullable String actorToken,
+			@Nullable String actorTokenType, @Nullable Set<String> resources, @Nullable Set<String> audiences,
+			@Nullable Set<String> scopes, @Nullable Map<String, Object> additionalParameters) {
 		super(AuthorizationGrantType.TOKEN_EXCHANGE, clientPrincipal, additionalParameters);
-		Assert.notNull(resources, "resources cannot be null");
-		Assert.notNull(audiences, "audiences cannot be null");
 		Assert.hasText(requestedTokenType, "requestedTokenType cannot be empty");
 		Assert.hasText(subjectToken, "subjectToken cannot be empty");
 		Assert.hasText(subjectTokenType, "subjectTokenType cannot be empty");
-		this.resources = resources;
-		this.audiences = audiences;
 		this.requestedTokenType = requestedTokenType;
 		this.subjectToken = subjectToken;
 		this.subjectTokenType = subjectTokenType;
 		this.actorToken = actorToken;
 		this.actorTokenType = actorTokenType;
+		this.resources = Collections.unmodifiableSet(
+				resources != null ? new LinkedHashSet<>(resources) : Collections.emptySet());
+		this.audiences = Collections.unmodifiableSet(
+				audiences != null ? new LinkedHashSet<>(audiences) : Collections.emptySet());
 		this.scopes = Collections.unmodifiableSet(
 				scopes != null ? new HashSet<>(scopes) : Collections.emptySet());
-	}
-
-	/**
-	 * Returns the list of resource URIs.
-	 *
-	 * @return the list of resource URIs
-	 */
-	public List<String> getResources() {
-		return this.resources;
-	}
-
-	/**
-	 * Returns the list of audience values.
-	 *
-	 * @return the list of audience values
-	 */
-	public List<String> getAudiences() {
-		return this.audiences;
-	}
-
-	/**
-	 * Returns the requested scope(s).
-	 *
-	 * @return the requested scope(s), or an empty {@code Set} if not available
-	 */
-	public Set<String> getScopes() {
-		return this.scopes;
 	}
 
 	/**
@@ -158,4 +131,32 @@ public class OAuth2TokenExchangeAuthenticationToken extends OAuth2AuthorizationG
 	public String getActorTokenType() {
 		return this.actorTokenType;
 	}
+
+	/**
+	 * Returns the requested resource URI(s).
+	 *
+	 * @return the requested resource URI(s), or an empty {@code Set} if not available
+	 */
+	public Set<String> getResources() {
+		return this.resources;
+	}
+
+	/**
+	 * Returns the requested audience value(s).
+	 *
+	 * @return the requested audience value(s), or an empty {@code Set} if not available
+	 */
+	public Set<String> getAudiences() {
+		return this.audiences;
+	}
+
+	/**
+	 * Returns the requested scope(s).
+	 *
+	 * @return the requested scope(s), or an empty {@code Set} if not available
+	 */
+	public Set<String> getScopes() {
+		return this.scopes;
+	}
+
 }

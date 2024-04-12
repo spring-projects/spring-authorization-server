@@ -27,8 +27,8 @@ import org.springframework.security.jackson2.SecurityJackson2Modules;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
-import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ActorAuthenticationToken;
-import org.springframework.security.oauth2.server.authorization.authentication.OAuth2CompositeAuthenticationToken;
+import org.springframework.security.oauth2.server.authorization.authentication.OAuth2TokenExchangeActor;
+import org.springframework.security.oauth2.server.authorization.authentication.OAuth2TokenExchangeCompositeAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.settings.OAuth2TokenFormat;
 
 /**
@@ -39,7 +39,7 @@ import org.springframework.security.oauth2.server.authorization.settings.OAuth2T
  * <li>{@link UnmodifiableMapMixin}</li>
  * <li>{@link HashSetMixin}</li>
  * <li>{@link OAuth2AuthorizationRequestMixin}</li>
- * <li>{@link OAuth2CompositeAuthenticationTokenMixin}</li>
+ * <li>{@link OAuth2TokenExchangeCompositeAuthenticationTokenMixin}</li>
  * <li>{@link DurationMixin}</li>
  * <li>{@link JwsAlgorithmMixin}</li>
  * <li>{@link OAuth2TokenFormatMixin}</li>
@@ -80,9 +80,10 @@ public class OAuth2AuthorizationServerJackson2Module extends SimpleModule {
 				UnmodifiableMapMixin.class);
 		context.setMixInAnnotations(HashSet.class, HashSetMixin.class);
 		context.setMixInAnnotations(LinkedHashSet.class, HashSetMixin.class);
-		context.setMixInAnnotations(OAuth2ActorAuthenticationToken.class, OAuth2ActorAuthenticationTokenMixin.class);
+		context.setMixInAnnotations(OAuth2TokenExchangeActor.class, OAuth2TokenExchangeActorMixin.class);
 		context.setMixInAnnotations(OAuth2AuthorizationRequest.class, OAuth2AuthorizationRequestMixin.class);
-		context.setMixInAnnotations(OAuth2CompositeAuthenticationToken.class, OAuth2CompositeAuthenticationTokenMixin.class);
+		context.setMixInAnnotations(OAuth2TokenExchangeCompositeAuthenticationToken.class,
+				OAuth2TokenExchangeCompositeAuthenticationTokenMixin.class);
 		context.setMixInAnnotations(Duration.class, DurationMixin.class);
 		context.setMixInAnnotations(SignatureAlgorithm.class, JwsAlgorithmMixin.class);
 		context.setMixInAnnotations(MacAlgorithm.class, JwsAlgorithmMixin.class);

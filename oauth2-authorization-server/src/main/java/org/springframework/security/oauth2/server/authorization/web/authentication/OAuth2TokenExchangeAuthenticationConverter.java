@@ -21,6 +21,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -194,8 +195,9 @@ public final class OAuth2TokenExchangeAuthenticationConverter implements Authent
 			}
 		});
 
-		return new OAuth2TokenExchangeAuthenticationToken(resources, audiences, requestedScopes, requestedTokenType,
-			subjectToken, subjectTokenType, actorToken, actorTokenType, clientPrincipal, additionalParameters);
+		return new OAuth2TokenExchangeAuthenticationToken(requestedTokenType, subjectToken, subjectTokenType,
+				clientPrincipal, actorToken, actorTokenType, new LinkedHashSet<>(resources),
+				new LinkedHashSet<>(audiences), requestedScopes, additionalParameters);
 	}
 
 	private static void validateTokenType(String parameterName, String tokenTypeValue) {
@@ -221,4 +223,5 @@ public final class OAuth2TokenExchangeAuthenticationConverter implements Authent
 			return false;
 		}
 	}
+
 }

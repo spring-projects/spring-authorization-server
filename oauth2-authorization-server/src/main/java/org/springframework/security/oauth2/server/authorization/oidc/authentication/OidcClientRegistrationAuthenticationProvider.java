@@ -34,7 +34,6 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
-import org.springframework.security.oauth2.core.ClaimAccessor;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
@@ -285,22 +284,14 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 			this.logger.trace("Generated registration access token");
 		}
 
-		OAuth2AccessToken accessToken = new OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER,
-				registrationAccessToken.getTokenValue(), registrationAccessToken.getIssuedAt(),
-				registrationAccessToken.getExpiresAt(), tokenContext.getAuthorizedScopes());
-
 		// @formatter:off
 		OAuth2Authorization.Builder authorizationBuilder = OAuth2Authorization.withRegisteredClient(registeredClient)
 				.principalName(registeredClient.getClientId())
 				.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
 				.authorizedScopes(authorizedScopes);
 		// @formatter:on
-		if (registrationAccessToken instanceof ClaimAccessor) {
-			authorizationBuilder.token(accessToken, (metadata) ->
-					metadata.put(OAuth2Authorization.Token.CLAIMS_METADATA_NAME, ((ClaimAccessor) registrationAccessToken).getClaims()));
-		} else {
-			authorizationBuilder.accessToken(accessToken);
-		}
+
+		OidcAuthenticationProviderUtils.accessToken(authorizationBuilder, registrationAccessToken, tokenContext);
 
 		OAuth2Authorization authorization = authorizationBuilder.build();
 

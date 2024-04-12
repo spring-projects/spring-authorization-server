@@ -27,7 +27,6 @@ import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
-import org.springframework.security.oauth2.core.ClaimAccessor;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
@@ -137,22 +136,15 @@ public final class OAuth2ClientCredentialsAuthenticationProvider implements Auth
 			this.logger.trace("Generated access token");
 		}
 
-		OAuth2AccessToken accessToken = new OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER,
-				generatedAccessToken.getTokenValue(), generatedAccessToken.getIssuedAt(),
-				generatedAccessToken.getExpiresAt(), tokenContext.getAuthorizedScopes());
-
 		// @formatter:off
 		OAuth2Authorization.Builder authorizationBuilder = OAuth2Authorization.withRegisteredClient(registeredClient)
 				.principalName(clientPrincipal.getName())
 				.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
 				.authorizedScopes(authorizedScopes);
 		// @formatter:on
-		if (generatedAccessToken instanceof ClaimAccessor) {
-			authorizationBuilder.token(accessToken, (metadata) ->
-					metadata.put(OAuth2Authorization.Token.CLAIMS_METADATA_NAME, ((ClaimAccessor) generatedAccessToken).getClaims()));
-		} else {
-			authorizationBuilder.accessToken(accessToken);
-		}
+
+		OAuth2AccessToken accessToken = OAuth2AuthenticationProviderUtils.accessToken(authorizationBuilder,
+				generatedAccessToken, tokenContext);
 
 		OAuth2Authorization authorization = authorizationBuilder.build();
 

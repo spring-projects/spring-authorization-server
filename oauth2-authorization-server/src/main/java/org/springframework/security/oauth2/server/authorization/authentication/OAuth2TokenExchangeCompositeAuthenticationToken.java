@@ -16,10 +16,10 @@
 
 package org.springframework.security.oauth2.server.authorization.authentication;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -33,13 +33,13 @@ import org.springframework.util.Assert;
  * @since 1.3
  * @see OAuth2TokenExchangeAuthenticationToken
  */
-public class OAuth2CompositeAuthenticationToken extends AbstractAuthenticationToken implements Serializable {
+public class OAuth2TokenExchangeCompositeAuthenticationToken extends AbstractAuthenticationToken {
 
 	private final Authentication subject;
 
-	private final List<Authentication> actors;
+	private final List<OAuth2TokenExchangeActor> actors;
 
-	public OAuth2CompositeAuthenticationToken(Authentication subject, List<Authentication> actors) {
+	public OAuth2TokenExchangeCompositeAuthenticationToken(Authentication subject, List<OAuth2TokenExchangeActor> actors) {
 		super(subject != null ? subject.getAuthorities() : null);
 		Assert.notNull(subject, "subject cannot be null");
 		Assert.notNull(actors, "actors cannot be null");
@@ -63,7 +63,22 @@ public class OAuth2CompositeAuthenticationToken extends AbstractAuthenticationTo
 		return this.subject;
 	}
 
-	public List<Authentication> getActors() {
+	public List<OAuth2TokenExchangeActor> getActors() {
 		return this.actors;
 	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (!(obj instanceof OAuth2TokenExchangeCompositeAuthenticationToken other)) {
+			return false;
+		}
+		return super.equals(obj) && Objects.equals(this.subject, other.subject) &&
+				Objects.equals(this.actors, other.actors);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(super.hashCode(), this.subject, this.actors);
+	}
+
 }

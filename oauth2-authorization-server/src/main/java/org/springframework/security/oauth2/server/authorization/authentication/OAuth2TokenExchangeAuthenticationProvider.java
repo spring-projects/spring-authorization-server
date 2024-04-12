@@ -22,6 +22,7 @@ import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
@@ -31,15 +32,12 @@ import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
-import org.springframework.security.oauth2.core.ClaimAccessor;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.OAuth2Token;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
-import org.springframework.security.oauth2.core.oidc.StandardClaimNames;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenType;
@@ -47,6 +45,7 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 import org.springframework.security.oauth2.server.authorization.context.AuthorizationServerContextHolder;
 import org.springframework.security.oauth2.server.authorization.settings.OAuth2TokenFormat;
 import org.springframework.security.oauth2.server.authorization.token.DefaultOAuth2TokenContext;
+import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenClaimNames;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenContext;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenGenerator;
 import org.springframework.util.Assert;
@@ -72,6 +71,8 @@ public final class OAuth2TokenExchangeAuthenticationProvider implements Authenti
 	private static final String ERROR_URI = "https://datatracker.ietf.org/doc/html/rfc6749#section-5.2";
 
 	private static final String JWT_TOKEN_TYPE_VALUE = "urn:ietf:params:oauth:token-type:jwt";
+
+	private static final String ACCESS_TOKEN_TYPE_VALUE = "urn:ietf:params:oauth:token-type:access_token";
 
 	private static final String MAY_ACT = "may_act";
 
@@ -136,11 +137,8 @@ public final class OAuth2TokenExchangeAuthenticationProvider implements Authenti
 			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_GRANT);
 		}
 
-		if (JWT_TOKEN_TYPE_VALUE.equals(tokenExchangeAuthentication.getSubjectTokenType()) &&
-				!Jwt.class.isAssignableFrom(subjectToken.getToken().getClass())) {
-			// TODO: Need a way to validate subject_token_type, since access tokens
-			//  are always stored as OAuth2AccessToken instead of Jwt.
-			//throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_REQUEST);
+		if (!isValidTokenType(tokenExchangeAuthentication.getSubjectTokenType(), subjectToken)) {
+			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_REQUEST);
 		}
 
 		if (subjectAuthorization.getAttribute(Principal.class.getName()) == null) {
@@ -153,11 +151,11 @@ public final class OAuth2TokenExchangeAuthenticationProvider implements Authenti
 		// As per https://datatracker.ietf.org/doc/html/rfc8693#section-4.4,
 		// The may_act claim makes a statement that one party is authorized to
 		// become the actor and act on behalf of another party.
-		String authorizedActorSubject = null;
+		Map<String, Object> authorizedActorClaims = null;
 		if (subjectToken.getClaims() != null &&
 				subjectToken.getClaims().containsKey(MAY_ACT) &&
 				subjectToken.getClaims().get(MAY_ACT) instanceof Map<?, ?> mayAct) {
-			authorizedActorSubject = (String) mayAct.get(StandardClaimNames.SUB);
+			authorizedActorClaims = (Map<String, Object>) mayAct;
 		}
 
 		OAuth2Authorization actorAuthorization = null;
@@ -181,19 +179,15 @@ public final class OAuth2TokenExchangeAuthenticationProvider implements Authenti
 				throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_GRANT);
 			}
 
-			if (JWT_TOKEN_TYPE_VALUE.equals(tokenExchangeAuthentication.getActorTokenType()) &&
-					!Jwt.class.isAssignableFrom(actorToken.getToken().getClass())) {
-				// TODO: Need a way to validate actor_token_type, since access tokens
-				//  are always stored as OAuth2AccessToken instead of Jwt.
-				//throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_REQUEST);
+			if (!isValidTokenType(tokenExchangeAuthentication.getActorTokenType(), actorToken)) {
+				throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_REQUEST);
 			}
 
-			if (StringUtils.hasText(authorizedActorSubject) &&
-					!authorizedActorSubject.equals(actorAuthorization.getPrincipalName())) {
-				throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_GRANT);
+			if (authorizedActorClaims != null) {
+				validateClaims(authorizedActorClaims, actorToken.getClaims(), OAuth2TokenClaimNames.ISS,
+						OAuth2TokenClaimNames.SUB);
 			}
-		} else if (StringUtils.hasText(authorizedActorSubject) &&
-				!authorizedActorSubject.equals(clientPrincipal.getName())) {
+		} else if (authorizedActorClaims != null) {
 			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_GRANT);
 		}
 
@@ -235,10 +229,6 @@ public final class OAuth2TokenExchangeAuthenticationProvider implements Authenti
 			this.logger.trace("Generated access token");
 		}
 
-		OAuth2AccessToken accessToken = new OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER,
-				generatedAccessToken.getTokenValue(), generatedAccessToken.getIssuedAt(),
-				generatedAccessToken.getExpiresAt(), tokenContext.getAuthorizedScopes());
-
 		// @formatter:off
 		OAuth2Authorization.Builder authorizationBuilder = OAuth2Authorization.withRegisteredClient(registeredClient)
 				.principalName(subjectAuthorization.getPrincipalName())
@@ -247,14 +237,8 @@ public final class OAuth2TokenExchangeAuthenticationProvider implements Authenti
 				.attribute(Principal.class.getName(), principal);
 		// @formatter:on
 
-		if (generatedAccessToken instanceof ClaimAccessor) {
-			authorizationBuilder.token(accessToken, (metadata) -> {
-				metadata.put(OAuth2Authorization.Token.CLAIMS_METADATA_NAME, ((ClaimAccessor) generatedAccessToken).getClaims());
-				metadata.put(OAuth2Authorization.Token.INVALIDATED_METADATA_NAME, false);
-			});
-		} else {
-			authorizationBuilder.accessToken(accessToken);
-		}
+		OAuth2AccessToken accessToken = OAuth2AuthenticationProviderUtils.accessToken(authorizationBuilder,
+				generatedAccessToken, tokenContext);
 
 		OAuth2Authorization authorization = authorizationBuilder.build();
 		this.authorizationService.save(authorization);
@@ -274,6 +258,13 @@ public final class OAuth2TokenExchangeAuthenticationProvider implements Authenti
 				registeredClient, clientPrincipal, accessToken, null, additionalParameters);
 	}
 
+	private static boolean isValidTokenType(String tokenType, OAuth2Authorization.Token<OAuth2Token> token) {
+		String tokenFormat = token.getMetadata(OAuth2TokenFormat.class.getName());
+		return ACCESS_TOKEN_TYPE_VALUE.equals(tokenType) ||
+				JWT_TOKEN_TYPE_VALUE.equals(tokenType) &&
+				OAuth2TokenFormat.SELF_CONTAINED.getValue().equals(tokenFormat);
+	}
+
 	private static Set<String> validateRequestedScopes(RegisteredClient registeredClient, Set<String> requestedScopes) {
 		for (String requestedScope : requestedScopes) {
 			if (!registeredClient.getScopes().contains(requestedScope)) {
@@ -284,26 +275,40 @@ public final class OAuth2TokenExchangeAuthenticationProvider implements Authenti
 		return new LinkedHashSet<>(requestedScopes);
 	}
 
+	private static void validateClaims(Map<String, Object> expectedClaims, Map<String, Object> actualClaims, String... claimNames) {
+		if (actualClaims == null) {
+			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_GRANT);
+		}
+
+		for (String claimName : claimNames) {
+			if (!Objects.equals(expectedClaims.get(claimName), actualClaims.get(claimName))) {
+				throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_GRANT);
+			}
+		}
+	}
+
 	private static Authentication getPrincipal(OAuth2Authorization subjectAuthorization, OAuth2Authorization actorAuthorization) {
 		Authentication subjectPrincipal = subjectAuthorization.getAttribute(Principal.class.getName());
-
-		List<Authentication> actorPrincipals = new LinkedList<>();
-		if (actorAuthorization != null) {
-			actorPrincipals.add(new OAuth2ActorAuthenticationToken(actorAuthorization.getPrincipalName()));
+		if (actorAuthorization == null) {
+			if (subjectPrincipal instanceof OAuth2TokenExchangeCompositeAuthenticationToken compositeAuthenticationToken) {
+				return compositeAuthenticationToken.getSubject();
+			}
+			return subjectPrincipal;
 		}
 
-		if (subjectPrincipal instanceof OAuth2CompositeAuthenticationToken compositeAuthenticationToken) {
-			// As per https://datatracker.ietf.org/doc/html/rfc8693#section-4.1,
-			// the act claim can be used to represent a chain of delegation,
-			// so we unwrap the original subject and any previous actor(s).
+		// Capture claims for current actor's access token
+		OAuth2TokenExchangeActor currentActor = new OAuth2TokenExchangeActor(
+				actorAuthorization.getAccessToken().getClaims());
+		List<OAuth2TokenExchangeActor> actorPrincipals = new LinkedList<>();
+		actorPrincipals.add(currentActor);
+
+		// Add chain of delegation for previous actor(s) if any
+		if (subjectPrincipal instanceof OAuth2TokenExchangeCompositeAuthenticationToken compositeAuthenticationToken) {
 			subjectPrincipal = compositeAuthenticationToken.getSubject();
 			actorPrincipals.addAll(compositeAuthenticationToken.getActors());
-			// TODO: Should we allow delegation-to-impersonation where previous
-			//  actors exist but no actor_token exists on this request?
 		}
 
-		return CollectionUtils.isEmpty(actorPrincipals) ? subjectPrincipal :
-				new OAuth2CompositeAuthenticationToken(subjectPrincipal, actorPrincipals);
+		return new OAuth2TokenExchangeCompositeAuthenticationToken(subjectPrincipal, actorPrincipals);
 	}
 
 	@Override

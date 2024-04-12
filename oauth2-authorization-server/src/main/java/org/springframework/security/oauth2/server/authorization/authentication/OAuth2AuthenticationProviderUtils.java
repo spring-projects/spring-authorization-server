@@ -17,12 +17,16 @@ package org.springframework.security.oauth2.server.authorization.authentication;
 
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.core.ClaimAccessor;
+import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.OAuth2RefreshToken;
 import org.springframework.security.oauth2.core.OAuth2Token;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationCode;
+import org.springframework.security.oauth2.server.authorization.settings.OAuth2TokenFormat;
+import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenContext;
 
 /**
  * Utility methods for the OAuth 2.0 {@link AuthenticationProvider}'s.
@@ -74,4 +78,24 @@ final class OAuth2AuthenticationProviderUtils {
 
 		return authorizationBuilder.build();
 	}
+
+	static <T extends OAuth2Token> OAuth2AccessToken accessToken(OAuth2Authorization.Builder builder, T token,
+			OAuth2TokenContext accessTokenContext) {
+
+		OAuth2AccessToken accessToken = new OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER,
+				token.getTokenValue(), token.getIssuedAt(), token.getExpiresAt(),
+				accessTokenContext.getAuthorizedScopes());
+		OAuth2TokenFormat accessTokenFormat = accessTokenContext.getRegisteredClient().getTokenSettings()
+				.getAccessTokenFormat();
+		builder.token(accessToken, (metadata) -> {
+			if (token instanceof ClaimAccessor claimAccessor) {
+				metadata.put(OAuth2Authorization.Token.CLAIMS_METADATA_NAME, claimAccessor.getClaims());
+			}
+			metadata.put(OAuth2Authorization.Token.INVALIDATED_METADATA_NAME, false);
+			metadata.put(OAuth2TokenFormat.class.getName(), accessTokenFormat.getValue());
+		});
+
+		return accessToken;
+	}
+
 }

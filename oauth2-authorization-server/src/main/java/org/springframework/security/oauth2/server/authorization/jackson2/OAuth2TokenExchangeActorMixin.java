@@ -16,29 +16,31 @@
 
 package org.springframework.security.oauth2.server.authorization.jackson2;
 
+import java.util.Map;
+
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
-import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ActorAuthenticationToken;
+import org.springframework.security.oauth2.server.authorization.authentication.OAuth2TokenExchangeActor;
 
 /**
- * This mixin class is used to serialize/deserialize {@link OAuth2ActorAuthenticationToken}.
+ * This mixin class is used to serialize/deserialize {@link OAuth2TokenExchangeActor}.
  *
  * @author Steve Riesenberg
  * @since 1.3
- * @see OAuth2ActorAuthenticationToken
+ * @see OAuth2TokenExchangeActor
  */
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS)
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY, getterVisibility = JsonAutoDetect.Visibility.NONE,
 		isGetterVisibility = JsonAutoDetect.Visibility.NONE, creatorVisibility = JsonAutoDetect.Visibility.NONE)
 @JsonIgnoreProperties(ignoreUnknown = true)
-abstract class OAuth2ActorAuthenticationTokenMixin {
+abstract class OAuth2TokenExchangeActorMixin {
 
 	@JsonCreator
-	OAuth2ActorAuthenticationTokenMixin(@JsonProperty("name") String name) {
+	OAuth2TokenExchangeActorMixin(@JsonProperty("claims") Map<String, Object> claims) {
 	}
 
 }

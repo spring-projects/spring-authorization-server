@@ -18,7 +18,9 @@ package org.springframework.security.oauth2.server.authorization.token;
 import java.security.MessageDigest;
 import java.security.cert.X509Certificate;
 import java.util.Base64;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 
@@ -28,6 +30,8 @@ import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenType;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientAuthenticationToken;
+import org.springframework.security.oauth2.server.authorization.authentication.OAuth2TokenExchangeActor;
+import org.springframework.security.oauth2.server.authorization.authentication.OAuth2TokenExchangeCompositeAuthenticationToken;
 
 /**
  * @author Joe Grandja
@@ -62,6 +66,20 @@ final class DefaultOAuth2TokenClaimsConsumer implements Consumer<Map<String, Obj
 							"Failed to compute SHA-256 Thumbprint for client X509Certificate.", null);
 					throw new OAuth2AuthenticationException(error, ex);
 				}
+			}
+		}
+
+		// Add 'act' claim for delegation use case of Token Exchange Grant.
+		// If more than one actor is present, we create a chain of delegation by nesting "act" claims.
+		if (this.context.getPrincipal() instanceof OAuth2TokenExchangeCompositeAuthenticationToken compositeAuthenticationToken) {
+			Map<String, Object> currentClaims = claims;
+			for (OAuth2TokenExchangeActor actor : compositeAuthenticationToken.getActors()) {
+				Map<String, Object> actorClaims = actor.getClaims();
+				Map<String, Object> actClaim = new LinkedHashMap<>();
+				actClaim.put(OAuth2TokenClaimNames.ISS, actorClaims.get(OAuth2TokenClaimNames.ISS));
+				actClaim.put(OAuth2TokenClaimNames.SUB, actorClaims.get(OAuth2TokenClaimNames.SUB));
+				currentClaims.put("act", Collections.unmodifiableMap(actClaim));
+				currentClaims = actClaim;
 			}
 		}
 	}

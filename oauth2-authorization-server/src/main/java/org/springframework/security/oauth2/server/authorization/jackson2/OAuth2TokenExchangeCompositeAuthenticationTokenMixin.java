@@ -25,23 +25,23 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 import org.springframework.security.core.Authentication;
-import org.springframework.security.oauth2.server.authorization.authentication.OAuth2CompositeAuthenticationToken;
+import org.springframework.security.oauth2.server.authorization.authentication.OAuth2TokenExchangeCompositeAuthenticationToken;
 
 /**
- * This mixin class is used to serialize/deserialize {@link OAuth2CompositeAuthenticationToken}.
+ * This mixin class is used to serialize/deserialize {@link OAuth2TokenExchangeCompositeAuthenticationToken}.
  *
  * @author Steve Riesenberg
  * @since 1.3
- * @see OAuth2CompositeAuthenticationToken
+ * @see OAuth2TokenExchangeCompositeAuthenticationToken
  */
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS)
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY, getterVisibility = JsonAutoDetect.Visibility.NONE,
 		isGetterVisibility = JsonAutoDetect.Visibility.NONE, creatorVisibility = JsonAutoDetect.Visibility.NONE)
 @JsonIgnoreProperties(ignoreUnknown = true)
-abstract class OAuth2CompositeAuthenticationTokenMixin {
+abstract class OAuth2TokenExchangeCompositeAuthenticationTokenMixin {
 
 	@JsonCreator
-	OAuth2CompositeAuthenticationTokenMixin(@JsonProperty("subject") Authentication subject,
+	OAuth2TokenExchangeCompositeAuthenticationTokenMixin(@JsonProperty("subject") Authentication subject,
 			@JsonProperty("actors") List<Authentication> actors) {
 	}
 

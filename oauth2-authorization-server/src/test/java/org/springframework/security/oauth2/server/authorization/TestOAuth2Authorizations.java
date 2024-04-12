@@ -30,6 +30,7 @@ import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequ
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
+import org.springframework.security.oauth2.server.authorization.settings.OAuth2TokenFormat;
 import org.springframework.util.CollectionUtils;
 
 /**
@@ -92,15 +93,17 @@ public class TestOAuth2Authorizations {
 			OAuth2RefreshToken refreshToken = new OAuth2RefreshToken(
 					"refresh-token", Instant.now(), Instant.now().plus(1, ChronoUnit.HOURS));
 			builder
-				.token(accessToken, (metadata) -> metadata.putAll(tokenMetadata(accessTokenClaims)))
+				.token(accessToken, (metadata) -> metadata.putAll(tokenMetadata(registeredClient, accessTokenClaims)))
 				.refreshToken(refreshToken);
 		}
 
 		return builder;
 	}
 
-	private static Map<String, Object> tokenMetadata(Map<String, Object> tokenClaims) {
+	private static Map<String, Object> tokenMetadata(RegisteredClient registeredClient, Map<String, Object> tokenClaims) {
 		Map<String, Object> tokenMetadata = new HashMap<>();
+		OAuth2TokenFormat accessTokenFormat = registeredClient.getTokenSettings().getAccessTokenFormat();
+		tokenMetadata.put(OAuth2TokenFormat.class.getName(), accessTokenFormat.getValue());
 		tokenMetadata.put(OAuth2Authorization.Token.INVALIDATED_METADATA_NAME, false);
 		if (CollectionUtils.isEmpty(tokenClaims)) {
 			tokenClaims = defaultTokenClaims();

@@ -21,11 +21,10 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -56,6 +55,7 @@ import org.springframework.security.oauth2.server.authorization.authentication.O
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientCredentialsAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2RefreshTokenAuthenticationToken;
+import org.springframework.security.oauth2.server.authorization.authentication.OAuth2TokenExchangeAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
 import org.springframework.security.web.authentication.AuthenticationConverter;
@@ -84,6 +84,7 @@ import static org.mockito.Mockito.when;
 public class OAuth2TokenEndpointFilterTests {
 	private static final String DEFAULT_TOKEN_ENDPOINT_URI = "/oauth2/token";
 	private static final String REMOTE_ADDRESS = "remote-address";
+	private static final String ACCESS_TOKEN_TYPE = "urn:ietf:params:oauth:token-type:access_token";
 	private AuthenticationManager authenticationManager;
 	private OAuth2TokenEndpointFilter filter;
 	private final HttpMessageConverter<OAuth2Error> errorHttpResponseConverter =
@@ -454,6 +455,70 @@ public class OAuth2TokenEndpointFilterTests {
 	}
 
 	@Test
+	public void doFilterWhenTokenExchangeRequestThenAccessTokenResponse() throws Exception {
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
+				.authorizationGrantType(AuthorizationGrantType.TOKEN_EXCHANGE).build();
+		Authentication clientPrincipal = new OAuth2ClientAuthenticationToken(
+				registeredClient, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
+		OAuth2AccessToken accessToken = new OAuth2AccessToken(
+				OAuth2AccessToken.TokenType.BEARER, "token",
+				Instant.now(), Instant.now().plus(Duration.ofHours(1)),
+				new HashSet<>(Arrays.asList("scope1", "scope2")));
+		OAuth2RefreshToken refreshToken = new OAuth2RefreshToken("refresh-token", Instant.now());
+		OAuth2AccessTokenAuthenticationToken accessTokenAuthentication =
+				new OAuth2AccessTokenAuthenticationToken(
+						registeredClient, clientPrincipal, accessToken, refreshToken);
+
+		when(this.authenticationManager.authenticate(any())).thenReturn(accessTokenAuthentication);
+
+		SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
+		securityContext.setAuthentication(clientPrincipal);
+		SecurityContextHolder.setContext(securityContext);
+
+		MockHttpServletRequest request = createTokenExchangeTokenRequest(registeredClient);
+		MockHttpServletResponse response = new MockHttpServletResponse();
+		FilterChain filterChain = mock(FilterChain.class);
+
+		this.filter.doFilter(request, response, filterChain);
+
+		verifyNoInteractions(filterChain);
+
+		ArgumentCaptor<OAuth2TokenExchangeAuthenticationToken> tokenExchangeAuthenticationCaptor =
+				ArgumentCaptor.forClass(OAuth2TokenExchangeAuthenticationToken.class);
+		verify(this.authenticationManager).authenticate(tokenExchangeAuthenticationCaptor.capture());
+
+		OAuth2TokenExchangeAuthenticationToken tokenExchangeAuthenticationToken =
+				tokenExchangeAuthenticationCaptor.getValue();
+		assertThat(tokenExchangeAuthenticationToken.getSubjectToken()).isEqualTo("subject-token");
+		assertThat(tokenExchangeAuthenticationToken.getSubjectTokenType()).isEqualTo(ACCESS_TOKEN_TYPE);
+		assertThat(tokenExchangeAuthenticationToken.getPrincipal()).isEqualTo(clientPrincipal);
+		assertThat(tokenExchangeAuthenticationToken.getScopes()).isEqualTo(registeredClient.getScopes());
+		assertThat(tokenExchangeAuthenticationToken.getAdditionalParameters())
+				.containsExactly(entry("custom-param-1", "custom-value-1"),
+					entry("custom-param-2", new String[] { "custom-value-1", "custom-value-2" }));
+		assertThat(tokenExchangeAuthenticationToken.getDetails())
+				.asInstanceOf(type(WebAuthenticationDetails.class))
+				.extracting(WebAuthenticationDetails::getRemoteAddress)
+				.isEqualTo(REMOTE_ADDRESS);
+
+
+		assertThat(response.getStatus()).isEqualTo(HttpStatus.OK.value());
+		OAuth2AccessTokenResponse accessTokenResponse = readAccessTokenResponse(response);
+
+		OAuth2AccessToken accessTokenResult = accessTokenResponse.getAccessToken();
+		assertThat(accessTokenResult.getTokenType()).isEqualTo(accessToken.getTokenType());
+		assertThat(accessTokenResult.getTokenValue()).isEqualTo(accessToken.getTokenValue());
+		assertThat(accessTokenResult.getIssuedAt()).isBetween(
+				accessToken.getIssuedAt().minusSeconds(1), accessToken.getIssuedAt().plusSeconds(1));
+		assertThat(accessTokenResult.getExpiresAt()).isBetween(
+				accessToken.getExpiresAt().minusSeconds(1), accessToken.getExpiresAt().plusSeconds(1));
+		assertThat(accessTokenResult.getScopes()).isEqualTo(accessToken.getScopes());
+
+		OAuth2RefreshToken refreshTokenResult = accessTokenResponse.getRefreshToken();
+		assertThat(refreshTokenResult.getTokenValue()).isEqualTo(refreshToken.getTokenValue());
+	}
+
+	@Test
 	public void doFilterWhenCustomAuthenticationDetailsSourceThenUsed() throws Exception {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 		Authentication clientPrincipal = new OAuth2ClientAuthenticationToken(
@@ -641,6 +706,23 @@ public class OAuth2TokenEndpointFilterTests {
 
 		request.addParameter(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.REFRESH_TOKEN.getValue());
 		request.addParameter(OAuth2ParameterNames.REFRESH_TOKEN, "refresh-token");
+		request.addParameter(OAuth2ParameterNames.SCOPE,
+				StringUtils.collectionToDelimitedString(registeredClient.getScopes(), " "));
+		request.addParameter("custom-param-1", "custom-value-1");
+		request.addParameter("custom-param-2", "custom-value-1", "custom-value-2");
+
+		return request;
+	}
+
+	private static MockHttpServletRequest createTokenExchangeTokenRequest(RegisteredClient registeredClient) {
+		String requestUri = DEFAULT_TOKEN_ENDPOINT_URI;
+		MockHttpServletRequest request = new MockHttpServletRequest("POST", requestUri);
+		request.setServletPath(requestUri);
+		request.setRemoteAddr(REMOTE_ADDRESS);
+
+		request.addParameter(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.TOKEN_EXCHANGE.getValue());
+		request.addParameter(OAuth2ParameterNames.SUBJECT_TOKEN, "subject-token");
+		request.addParameter(OAuth2ParameterNames.SUBJECT_TOKEN_TYPE, ACCESS_TOKEN_TYPE);
 		request.addParameter(OAuth2ParameterNames.SCOPE,
 				StringUtils.collectionToDelimitedString(registeredClient.getScopes(), " "));
 		request.addParameter("custom-param-1", "custom-value-1");

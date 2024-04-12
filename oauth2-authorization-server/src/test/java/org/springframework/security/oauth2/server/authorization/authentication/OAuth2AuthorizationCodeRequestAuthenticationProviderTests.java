@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 the original author or authors.
+ * Copyright 2020-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,7 +73,6 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 	private OAuth2AuthorizationConsentService authorizationConsentService;
 	private OAuth2AuthorizationCodeRequestAuthenticationProvider authenticationProvider;
 	private TestingAuthenticationToken principal;
-	private Predicate<OAuth2AuthorizationCodeRequestAuthenticationContext> requiresAuthorizationConsent;
 
 	@BeforeEach
 	public void setUp() {
@@ -132,10 +131,10 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 	}
 
 	@Test
-	public void setRequiresAuthorizationConsentWhenNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> this.authenticationProvider.setRequiresAuthorizationConsent(null))
+	public void setAuthorizationConsentRequiredWhenNullThenThrowIllegalArgumentException() {
+		assertThatThrownBy(() -> this.authenticationProvider.setAuthorizationConsentRequired(null))
 				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("requiresAuthorizationConsent cannot be null");
+				.hasMessage("authorizationConsentRequired cannot be null");
 	}
 
 	@Test
@@ -453,82 +452,6 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 	}
 
 	@Test
-	public void authenticateWhenRequireAuthorizationConsentAndRequiresAuthorizationConsentPredicateTrueThenReturnAuthorizationConsent() {
-		this.authenticationProvider.setRequiresAuthorizationConsent((authenticationContext) -> true);
-
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
-				.clientSettings(ClientSettings.builder().requireAuthorizationConsent(true).build())
-				.build();
-		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
-				.thenReturn(registeredClient);
-
-		String redirectUri = registeredClient.getRedirectUris().toArray(new String[0])[0];
-		OAuth2AuthorizationCodeRequestAuthenticationToken authentication =
-				new OAuth2AuthorizationCodeRequestAuthenticationToken(
-						AUTHORIZATION_URI, registeredClient.getClientId(), principal,
-						redirectUri, STATE, registeredClient.getScopes(), null);
-
-		OAuth2AuthorizationConsentAuthenticationToken authenticationResult =
-				(OAuth2AuthorizationConsentAuthenticationToken) this.authenticationProvider.authenticate(authentication);
-
-		ArgumentCaptor<OAuth2Authorization> authorizationCaptor = ArgumentCaptor.forClass(OAuth2Authorization.class);
-		verify(this.authorizationService).save(authorizationCaptor.capture());
-		OAuth2Authorization authorization = authorizationCaptor.getValue();
-
-		OAuth2AuthorizationRequest authorizationRequest = authorization.getAttribute(OAuth2AuthorizationRequest.class.getName());
-		assertThat(authorizationRequest.getGrantType()).isEqualTo(AuthorizationGrantType.AUTHORIZATION_CODE);
-		assertThat(authorizationRequest.getResponseType()).isEqualTo(OAuth2AuthorizationResponseType.CODE);
-		assertThat(authorizationRequest.getAuthorizationUri()).isEqualTo(authentication.getAuthorizationUri());
-		assertThat(authorizationRequest.getClientId()).isEqualTo(registeredClient.getClientId());
-		assertThat(authorizationRequest.getRedirectUri()).isEqualTo(authentication.getRedirectUri());
-		assertThat(authorizationRequest.getScopes()).isEqualTo(authentication.getScopes());
-		assertThat(authorizationRequest.getState()).isEqualTo(authentication.getState());
-		assertThat(authorizationRequest.getAdditionalParameters()).isEqualTo(authentication.getAdditionalParameters());
-
-		assertThat(authorization.getRegisteredClientId()).isEqualTo(registeredClient.getId());
-		assertThat(authorization.getPrincipalName()).isEqualTo(this.principal.getName());
-		assertThat(authorization.getAuthorizationGrantType()).isEqualTo(AuthorizationGrantType.AUTHORIZATION_CODE);
-		assertThat(authorization.<Authentication>getAttribute(Principal.class.getName())).isEqualTo(this.principal);
-		String state = authorization.getAttribute(OAuth2ParameterNames.STATE);
-		assertThat(state).isNotNull();
-		assertThat(state).isNotEqualTo(authentication.getState());
-
-		assertThat(authenticationResult.getClientId()).isEqualTo(registeredClient.getClientId());
-		assertThat(authenticationResult.getPrincipal()).isEqualTo(this.principal);
-		assertThat(authenticationResult.getAuthorizationUri()).isEqualTo(authorizationRequest.getAuthorizationUri());
-		assertThat(authenticationResult.getScopes()).isEmpty();
-		assertThat(authenticationResult.getState()).isEqualTo(state);
-		assertThat(authenticationResult.isAuthenticated()).isTrue();
-	}
-
-	@Test
-	public void authenticateWhenRequireAuthorizationConsentAndRequiresAuthorizationConsentPredicateFalseThenAuthorizationConsentNotRequired() {
-		this.authenticationProvider.setRequiresAuthorizationConsent((authenticationContext) -> false);
-
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
-				.clientSettings(ClientSettings.builder().requireAuthorizationConsent(true).build())
-				.scopes(scopes -> {
-					scopes.clear();
-					scopes.add(OidcScopes.OPENID);
-					scopes.add(OidcScopes.EMAIL);
-				})
-				.build();
-		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
-				.thenReturn(registeredClient);
-
-		String redirectUri = registeredClient.getRedirectUris().toArray(new String[0])[1];
-		OAuth2AuthorizationCodeRequestAuthenticationToken authentication =
-				new OAuth2AuthorizationCodeRequestAuthenticationToken(
-						AUTHORIZATION_URI, registeredClient.getClientId(), principal,
-						redirectUri, STATE, registeredClient.getScopes(), null);
-
-		OAuth2AuthorizationCodeRequestAuthenticationToken authenticationResult =
-				(OAuth2AuthorizationCodeRequestAuthenticationToken) this.authenticationProvider.authenticate(authentication);
-
-		assertAuthorizationCodeRequestWithAuthorizationCodeResult(registeredClient, authentication, authenticationResult);
-	}
-
-	@Test
 	public void authenticateWhenRequireAuthorizationConsentAndOnlyOpenidScopeRequestedThenAuthorizationConsentNotRequired() {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
 				.clientSettings(ClientSettings.builder().requireAuthorizationConsent(true).build())
@@ -577,6 +500,30 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 				(OAuth2AuthorizationCodeRequestAuthenticationToken) this.authenticationProvider.authenticate(authentication);
 
 		assertAuthorizationCodeRequestWithAuthorizationCodeResult(registeredClient, authentication, authenticationResult);
+	}
+
+	@Test
+	public void authenticateWhenCustomAuthorizationConsentRequiredThenUsed() {
+		@SuppressWarnings("unchecked")
+		Predicate<OAuth2AuthorizationCodeRequestAuthenticationContext> authorizationConsentRequired = mock(Predicate.class);
+		this.authenticationProvider.setAuthorizationConsentRequired(authorizationConsentRequired);
+
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
+				.thenReturn(registeredClient);
+
+		String redirectUri = registeredClient.getRedirectUris().toArray(new String[0])[1];
+		OAuth2AuthorizationCodeRequestAuthenticationToken authentication =
+				new OAuth2AuthorizationCodeRequestAuthenticationToken(
+						AUTHORIZATION_URI, registeredClient.getClientId(), principal,
+						redirectUri, STATE, registeredClient.getScopes(), null);
+
+		OAuth2AuthorizationCodeRequestAuthenticationToken authenticationResult =
+				(OAuth2AuthorizationCodeRequestAuthenticationToken) this.authenticationProvider.authenticate(authentication);
+
+		assertAuthorizationCodeRequestWithAuthorizationCodeResult(registeredClient, authentication, authenticationResult);
+
+		verify(authorizationConsentRequired).test(any());
 	}
 
 	@Test

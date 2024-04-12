@@ -81,7 +81,8 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 	private OAuth2TokenGenerator<OAuth2AuthorizationCode> authorizationCodeGenerator = new OAuth2AuthorizationCodeGenerator();
 	private Consumer<OAuth2AuthorizationCodeRequestAuthenticationContext> authenticationValidator =
 			new OAuth2AuthorizationCodeRequestAuthenticationValidator();
-	private Predicate<OAuth2AuthorizationCodeRequestAuthenticationContext> requiresAuthorizationConsent;
+	private Predicate<OAuth2AuthorizationCodeRequestAuthenticationContext> authorizationConsentRequired =
+			OAuth2AuthorizationCodeRequestAuthenticationProvider::isAuthorizationConsentRequired;
 
 	/**
 	 * Constructs an {@code OAuth2AuthorizationCodeRequestAuthenticationProvider} using the provided parameters.
@@ -98,7 +99,6 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 		this.registeredClientRepository = registeredClientRepository;
 		this.authorizationService = authorizationService;
 		this.authorizationConsentService = authorizationConsentService;
-		this.requiresAuthorizationConsent = this::requireAuthorizationConsent;
 	}
 
 	@Override
@@ -117,11 +117,10 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 			this.logger.trace("Retrieved registered client");
 		}
 
-		OAuth2AuthorizationCodeRequestAuthenticationContext authenticationContext =
+		OAuth2AuthorizationCodeRequestAuthenticationContext.Builder authenticationContextBuilder =
 				OAuth2AuthorizationCodeRequestAuthenticationContext.with(authorizationCodeRequestAuthentication)
-						.registeredClient(registeredClient)
-						.build();
-		this.authenticationValidator.accept(authenticationContext);
+						.registeredClient(registeredClient);
+		this.authenticationValidator.accept(authenticationContextBuilder.build());
 
 		if (!registeredClient.getAuthorizationGrantTypes().contains(AuthorizationGrantType.AUTHORIZATION_CODE)) {
 			if (this.logger.isDebugEnabled()) {
@@ -170,23 +169,15 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 				.state(authorizationCodeRequestAuthentication.getState())
 				.additionalParameters(authorizationCodeRequestAuthentication.getAdditionalParameters())
 				.build();
+		authenticationContextBuilder.authorizationRequest(authorizationRequest);
 
 		OAuth2AuthorizationConsent currentAuthorizationConsent = this.authorizationConsentService.findById(
 				registeredClient.getId(), principal.getName());
-
-		OAuth2AuthorizationCodeRequestAuthenticationContext.Builder authenticationContextBuilder =
-				OAuth2AuthorizationCodeRequestAuthenticationContext.with(authorizationCodeRequestAuthentication)
-				.registeredClient(registeredClient)
-				.authorizationRequest(authorizationRequest);
-
 		if (currentAuthorizationConsent != null) {
 			authenticationContextBuilder.authorizationConsent(currentAuthorizationConsent);
 		}
 
-		OAuth2AuthorizationCodeRequestAuthenticationContext contextWithAuthorizationRequestAndAuthorizationConsent =
-				authenticationContextBuilder.build();
-
-		if (requiresAuthorizationConsent.test(contextWithAuthorizationRequestAndAuthorizationConsent)) {
+		if (this.authorizationConsentRequired.test(authenticationContextBuilder.build())) {
 			String state = DEFAULT_STATE_GENERATOR.generateKey();
 			OAuth2Authorization authorization = authorizationBuilder(registeredClient, principal, authorizationRequest)
 					.attribute(OAuth2ParameterNames.STATE, state)
@@ -280,47 +271,44 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 	}
 
 	/**
-	 * Sets the {@link Predicate} used to determine if authorization consent is required.
+	 * Sets the {@code Predicate} used to determine if authorization consent is required.
 	 *
 	 * <p>
 	 * The {@link OAuth2AuthorizationCodeRequestAuthenticationContext} gives the predicate access to the {@link OAuth2AuthorizationCodeRequestAuthenticationToken},
 	 * as well as, the following context attributes:
-	 * {@link OAuth2AuthorizationCodeRequestAuthenticationContext#getRegisteredClient()} containing {@link RegisteredClient} used to make the request.
-	 * {@link OAuth2AuthorizationCodeRequestAuthenticationContext#getOAuth2AuthorizationRequest()} containing {@link OAuth2AuthorizationRequest}.
-	 * {@link OAuth2AuthorizationCodeRequestAuthenticationContext#getOAuth2AuthorizationConsent()} containing {@link OAuth2AuthorizationConsent} granted in the request.
+	 * <ul>
+	 * <li>The {@link RegisteredClient} associated with the authorization request.</li>
+	 * <li>The {@link OAuth2AuthorizationRequest} containing the authorization request parameters.</li>
+	 * <li>The {@link OAuth2AuthorizationConsent} previously granted to the {@link RegisteredClient}, or {@code null} if not available.</li>
+	 * </ul>
 	 *
-	 * @param requiresAuthorizationConsent the {@link Predicate} that determines if authorization consent is required.
-	 * @since 1.3.0
+	 * @param authorizationConsentRequired the {@code Predicate} used to determine if authorization consent is required
+	 * @since 1.3
 	 */
-	public void setRequiresAuthorizationConsent(Predicate<OAuth2AuthorizationCodeRequestAuthenticationContext> requiresAuthorizationConsent) {
-		Assert.notNull(requiresAuthorizationConsent, "requiresAuthorizationConsent cannot be null");
-		this.requiresAuthorizationConsent = requiresAuthorizationConsent;
+	public void setAuthorizationConsentRequired(Predicate<OAuth2AuthorizationCodeRequestAuthenticationContext> authorizationConsentRequired) {
+		Assert.notNull(authorizationConsentRequired, "authorizationConsentRequired cannot be null");
+		this.authorizationConsentRequired = authorizationConsentRequired;
 	}
 
-	private boolean requireAuthorizationConsent(OAuth2AuthorizationCodeRequestAuthenticationContext context) {
-		RegisteredClient registeredClient = context.getRegisteredClient();
-		if (!registeredClient.getClientSettings().isRequireAuthorizationConsent()) {
+	private static boolean isAuthorizationConsentRequired(OAuth2AuthorizationCodeRequestAuthenticationContext authenticationContext) {
+		if (!authenticationContext.getRegisteredClient().getClientSettings().isRequireAuthorizationConsent()) {
 			return false;
 		}
-
-		OAuth2AuthorizationRequest authorizationRequest = context.getOAuth2AuthorizationRequest();
 		// 'openid' scope does not require consent
-		if (authorizationRequest.getScopes().contains(OidcScopes.OPENID) &&
-				authorizationRequest.getScopes().size() == 1) {
+		if (authenticationContext.getAuthorizationRequest().getScopes().contains(OidcScopes.OPENID) &&
+				authenticationContext.getAuthorizationRequest().getScopes().size() == 1) {
 			return false;
 		}
 
-		OAuth2AuthorizationConsent authorizationConsent = context.getOAuth2AuthorizationConsent();
-		if (authorizationConsent != null &&
-				authorizationConsent.getScopes().containsAll(authorizationRequest.getScopes())) {
+		if (authenticationContext.getAuthorizationConsent() != null &&
+				authenticationContext.getAuthorizationConsent().getScopes().containsAll(authenticationContext.getAuthorizationRequest().getScopes())) {
 			return false;
 		}
 
 		return true;
 	}
 
-	private static OAuth2Authorization.Builder authorizationBuilder(RegisteredClient registeredClient,
-			Authentication principal,
+	private static OAuth2Authorization.Builder authorizationBuilder(RegisteredClient registeredClient, Authentication principal,
 			OAuth2AuthorizationRequest authorizationRequest) {
 		return OAuth2Authorization.withRegisteredClient(registeredClient)
 				.principalName(principal.getName())

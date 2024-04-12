@@ -101,7 +101,7 @@ spring:
             token-uri: https://localhost:9443/oauth2/token
 
 messages:
-  base-uri: http://127.0.0.1:8090/messages
+  base-uri: https://127.0.0.1:8443/messages
 
 user-messages:
   base-uri: http://127.0.0.1:8091/user/messages

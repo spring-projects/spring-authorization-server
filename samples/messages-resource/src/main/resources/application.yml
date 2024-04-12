@@ -1,5 +1,8 @@
 server:
-  port: 8090
+  port: 8443
+  ssl:
+    bundle: messages-resource
+    client-auth: need
 
 logging:
   level:
@@ -10,6 +13,21 @@ logging:
 #    org.springframework.boot.autoconfigure: DEBUG
 
 spring:
+  ssl:
+    bundle:
+      jks:
+        messages-resource:
+          key:
+            alias: messages-resource-sample
+            password: password
+          keystore:
+            location: classpath:keystore.p12
+            password: password
+            type: PKCS12
+          truststore:
+            location: classpath:keystore.p12
+            password: password
+            type: PKCS12
   security:
     oauth2:
       resourceserver:

@@ -30,6 +30,14 @@ import org.springframework.security.web.SecurityFilterChain;
 @Configuration(proxyBeanMethods = false)
 public class ResourceServerConfig {
 
+	/*
+		NOTE:
+		The `NimbusJwtDecoder` `@Bean` autoconfigured by Spring Boot will contain
+		an `OAuth2TokenValidator<Jwt>` of type `X509CertificateThumbprintValidator`.
+		This is the validator responsible for validating the `x5t#S256` claim (if available)
+		in the `Jwt` against the SHA-256 Thumbprint of the supplied `X509Certificate`.
+	 */
+
 	// @formatter:off
 	@Bean
 	SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {

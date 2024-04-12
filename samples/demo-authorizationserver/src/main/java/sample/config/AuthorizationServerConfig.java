@@ -50,6 +50,7 @@ import org.springframework.security.oauth2.server.authorization.config.annotatio
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
+import org.springframework.security.oauth2.server.authorization.settings.TokenSettings;
 import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer;
 import org.springframework.security.web.SecurityFilterChain;
@@ -177,6 +178,11 @@ public class AuthorizationServerConfig {
 						ClientSettings.builder()
 								.x509CertificateSubjectDN("CN=demo-client-sample,OU=Spring Samples,O=Spring,C=US")
 								.jwkSetUrl("http://127.0.0.1:8080/jwks")
+								.build()
+				)
+				.tokenSettings(
+						TokenSettings.builder()
+								.x509CertificateBoundAccessTokens(true)
 								.build()
 				)
 				.build();

@@ -13,8 +13,8 @@ dependencies {
 	constraints {
 		api "com.nimbusds:nimbus-jose-jwt:9.37.3"
 		api "jakarta.servlet:jakarta.servlet-api:6.0.0"
-		api "org.bouncycastle:bcpkix-jdk18on:1.77"
-		api "org.bouncycastle:bcprov-jdk18on:1.77"
+		api "org.bouncycastle:bcpkix-jdk18on:1.78"
+		api "org.bouncycastle:bcprov-jdk18on:1.78"
 		api "org.junit.jupiter:junit-jupiter:5.10.2"
 		api "org.assertj:assertj-core:3.25.3"
 		api "org.mockito:mockito-core:4.11.0"

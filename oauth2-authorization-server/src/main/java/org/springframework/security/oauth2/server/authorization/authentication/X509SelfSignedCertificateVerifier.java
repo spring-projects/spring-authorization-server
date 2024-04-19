@@ -20,9 +20,13 @@ import java.net.URISyntaxException;
 import java.security.PublicKey;
 import java.security.cert.X509Certificate;
 import java.text.ParseException;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -158,8 +162,11 @@ final class X509SelfSignedCertificateVerifier implements Consumer<OAuth2ClientAu
 		}
 
 		private class JwkSetHolder implements Supplier<JWKSet> {
+			private final ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock();
+			private final Clock clock = Clock.systemUTC();
 			private final String jwkSetUrl;
 			private JWKSet jwkSet;
+			private Instant lastUpdatedAt;
 
 			private JwkSetHolder(String jwkSetUrl) {
 				this.jwkSetUrl = jwkSetUrl;
@@ -167,10 +174,32 @@ final class X509SelfSignedCertificateVerifier implements Consumer<OAuth2ClientAu
 
 			@Override
 			public JWKSet get() {
-				if (this.jwkSet == null) {
-					this.jwkSet = retrieve(this.jwkSetUrl);
+				this.rwLock.readLock().lock();
+				if (shouldRefresh()) {
+					this.rwLock.readLock().unlock();
+					this.rwLock.writeLock().lock();
+					try {
+						if (shouldRefresh()) {
+							this.jwkSet = retrieve(this.jwkSetUrl);
+							this.lastUpdatedAt = Instant.now();
+						}
+						this.rwLock.readLock().lock();
+					} finally {
+						this.rwLock.writeLock().unlock();
+					}
 				}
-				return this.jwkSet;
+
+				try {
+					return this.jwkSet;
+				} finally {
+					this.rwLock.readLock().unlock();
+				}
+			}
+
+			private boolean shouldRefresh() {
+				// Refresh every 5 minutes
+				return (this.jwkSet == null ||
+						this.clock.instant().isAfter(this.lastUpdatedAt.plus(5, ChronoUnit.MINUTES)));
 			}
 
 		}

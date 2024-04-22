@@ -260,12 +260,12 @@ public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity h
 `OAuth2ClientAuthenticationFilter` is the `Filter` that processes client authentication requests.
 
 By default, client authentication is required for the xref:protocol-endpoints.adoc#oauth2-token-endpoint[OAuth2 Token endpoint], the xref:protocol-endpoints.adoc#oauth2-token-introspection-endpoint[OAuth2 Token Introspection endpoint], and the xref:protocol-endpoints.adoc#oauth2-token-revocation-endpoint[OAuth2 Token Revocation endpoint].
-The supported client authentication methods are `client_secret_basic`, `client_secret_post`, `private_key_jwt`, `client_secret_jwt`, and `none` (public clients).
+The supported client authentication methods are `client_secret_basic`, `client_secret_post`, `private_key_jwt`, `client_secret_jwt`, `tls_client_auth`, `self_signed_tls_client_auth`, and `none` (public clients).
 
 `OAuth2ClientAuthenticationFilter` is configured with the following defaults:
 
-* `*AuthenticationConverter*` -- A `DelegatingAuthenticationConverter` composed of  `JwtClientAssertionAuthenticationConverter`, `ClientSecretBasicAuthenticationConverter`, `ClientSecretPostAuthenticationConverter`, and `PublicClientAuthenticationConverter`.
-* `*AuthenticationManager*` -- An `AuthenticationManager` composed of `JwtClientAssertionAuthenticationProvider`, `ClientSecretAuthenticationProvider`, and `PublicClientAuthenticationProvider`.
+* `*AuthenticationConverter*` -- A `DelegatingAuthenticationConverter` composed of  `JwtClientAssertionAuthenticationConverter`, `X509ClientCertificateAuthenticationConverter`, `ClientSecretBasicAuthenticationConverter`, `ClientSecretPostAuthenticationConverter`, and `PublicClientAuthenticationConverter`.
+* `*AuthenticationManager*` -- An `AuthenticationManager` composed of `JwtClientAssertionAuthenticationProvider`, `X509ClientCertificateAuthenticationProvider`, `ClientSecretAuthenticationProvider`, and `PublicClientAuthenticationProvider`.
 * `*AuthenticationSuccessHandler*` -- An internal implementation that associates the "`authenticated`" `OAuth2ClientAuthenticationToken` (current `Authentication`) to the `SecurityContext`.
 * `*AuthenticationFailureHandler*` -- An internal implementation that uses the `OAuth2Error` associated with the `OAuth2AuthenticationException` to return the OAuth2 error response.
 
@@ -319,4 +319,96 @@ private Consumer<List<AuthenticationProvider>> configureJwtClientAssertionValida
 			}
 		});
 }
+----
+
+[[configuring-client-authentication-customizing-mutual-tls-client-authentication]]
+=== Customizing Mutual-TLS Client Authentication
+
+`X509ClientCertificateAuthenticationProvider` is used for authenticating the client `X509Certificate` chain received when `ClientAuthenticationMethod.TLS_CLIENT_AUTH` or `ClientAuthenticationMethod.SELF_SIGNED_TLS_CLIENT_AUTH` method is used during OAuth2 client authentication.
+It is also composed with a _"Certificate Verifier"_, which is used to verify the contents of the client `X509Certificate` after the TLS handshake has successfully completed.
+
+[[customizing-mutual-tls-client-authentication-pki-mutual-tls-method]]
+==== PKI Mutual-TLS Method
+
+For the PKI Mutual-TLS (`ClientAuthenticationMethod.TLS_CLIENT_AUTH`) method, the default implementation of the certificate verifier verifies the subject distinguished name of the client `X509Certificate` against the setting `RegisteredClient.getClientSettings.getX509CertificateSubjectDN()`.
+
+If you need to verify another attribute of the client `X509Certificate`, for example, a Subject Alternative Name (SAN) entry, the following example shows how to configure `X509ClientCertificateAuthenticationProvider` with a custom implementation of a certificate verifier:
+
+[source,java]
+----
+@Bean
+public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
+	OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
+			new OAuth2AuthorizationServerConfigurer();
+	http.apply(authorizationServerConfigurer);
+
+	authorizationServerConfigurer
+			.clientAuthentication(clientAuthentication ->
+					clientAuthentication
+							.authenticationProviders(configureX509ClientCertificateVerifier())
+			);
+
+	return http.build();
+}
+
+private Consumer<List<AuthenticationProvider>> configureX509ClientCertificateVerifier() {
+	return (authenticationProviders) ->
+			authenticationProviders.forEach((authenticationProvider) -> {
+				if (authenticationProvider instanceof X509ClientCertificateAuthenticationProvider) {
+					Consumer<OAuth2ClientAuthenticationContext> certificateVerifier = (clientAuthenticationContext) -> {
+						OAuth2ClientAuthenticationToken clientAuthentication = clientAuthenticationContext.getAuthentication();
+						RegisteredClient registeredClient = clientAuthenticationContext.getRegisteredClient();
+						X509Certificate[] clientCertificateChain = (X509Certificate[]) clientAuthentication.getCredentials();
+						X509Certificate clientCertificate = clientCertificateChain[0];
+
+						// TODO Verify Subject Alternative Name (SAN) entry
+
+					};
+
+					((X509ClientCertificateAuthenticationProvider) authenticationProvider)
+							.setCertificateVerifier(certificateVerifier);
+				}
+			});
+}
+----
+
+[[customizing-mutual-tls-client-authentication-self-signed-certificate-mutual-tls-method]]
+==== Self-Signed Certificate Mutual-TLS Method
+
+For the Self-Signed Certificate Mutual-TLS (`ClientAuthenticationMethod.SELF_SIGNED_TLS_CLIENT_AUTH`) method, the default implementation of the certificate verifier will retrieve the client's JSON Web Key Set using the setting `RegisteredClient.getClientSettings.getJwkSetUrl()` and expect to find a match against the client `X509Certificate` received during the TLS handshake.
+
+[NOTE]
+The `RegisteredClient.getClientSettings.getJwkSetUrl()` setting is used to retrieve the client's certificates via a JSON Web Key (JWK) Set.
+A certificate is represented with the `x5c` parameter of an individual JWK within the set.
+
+[[customizing-mutual-tls-client-authentication-client-certificate-bound-access-tokens]]
+==== Client Certificate-Bound Access Tokens
+
+When Mutual-TLS client authentication is used at the token endpoint, the authorization server is able to bind the issued access token to the client's `X509Certificate`.
+The binding is accomplished by computing the SHA-256 thumbprint of the client's `X509Certificate` and associating the thumbprint with the access token.
+For example, a JWT access token would include a `x5t#S256` claim, containing the `X509Certificate` thumbprint, within the top-level `cnf` (confirmation method) claim.
+
+Binding the access token to the client's `X509Certificate` provides the ability to implement a proof-of-possession mechanism during protected resource access.
+For example, the protected resource would obtain the client's `X509Certificate` used during Mutual-TLS authentication and then verify that the certificate thumbprint matches the `x5t#S256` claim associated with the access token.
+
+The following example shows how to enable certificate-bound access tokens for a client:
+
+[source,java]
+----
+RegisteredClient mtlsClient = RegisteredClient.withId(UUID.randomUUID().toString())
+		.clientId("mtls-client")
+		.clientAuthenticationMethod(ClientAuthenticationMethod.TLS_CLIENT_AUTH)
+		.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
+		.scope("scope-a")
+		.clientSettings(
+				ClientSettings.builder()
+						.x509CertificateSubjectDN("CN=mtls-client,OU=Spring Samples,O=Spring,C=US")
+						.build()
+		)
+		.tokenSettings(
+				TokenSettings.builder()
+						.x509CertificateBoundAccessTokens(true)
+						.build()
+		)
+		.build();
 ----

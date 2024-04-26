@@ -1,0 +1,123 @@
+
+[[how-to-multitenancy]]
+= How-to: Implement Multitenancy
+:index-link: ../how-to.html
+:docs-dir: ..
+
+This guide shows how to customize Spring Authorization Server to support multiple issuers per host in a multi-tenant hosting configuration.
+
+The xref:protocol-endpoints.adoc#oidc-provider-configuration-endpoint[OpenID Connect 1.0 Provider Configuration Endpoint] and xref:protocol-endpoints.adoc#oauth2-authorization-server-metadata-endpoint[OAuth2 Authorization Server Metadata Endpoint] allow for path components in the issuer identifier value, which effectively enables supporting multiple issuers per host.
+
+For example, an https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderConfigurationRequest[OpenID Provider Configuration Request] "http://localhost:9000/issuer1/.well-known/openid-configuration" or an https://datatracker.ietf.org/doc/html/rfc8414#section-3.1[Authorization Server Metadata Request] "http://localhost:9000/.well-known/oauth-authorization-server/issuer1" would return the following configuration metadata:
+
+[source,json]
+----
+{
+  "issuer": "http://localhost:9000/issuer1",
+  "authorization_endpoint": "http://localhost:9000/issuer1/oauth2/authorize",
+  "token_endpoint": "http://localhost:9000/issuer1/oauth2/token",
+  "jwks_uri": "http://localhost:9000/issuer1/oauth2/jwks",
+  "revocation_endpoint": "http://localhost:9000/issuer1/oauth2/revoke",
+  "introspection_endpoint": "http://localhost:9000/issuer1/oauth2/introspect",
+  ...
+}
+----
+
+NOTE: The base URL of the xref:protocol-endpoints.adoc[Protocol Endpoints] is the issuer identifier value.
+
+Essentially, an issuer identifier with a path component represents the _"tenant identifier"_.
+
+The components that require multi-tenant capability are:
+
+* xref:guides/how-to-multitenancy.adoc#multi-tenant-registered-client-repository[`RegisteredClientRepository`]
+* xref:guides/how-to-multitenancy.adoc#multi-tenant-oauth2-authorization-service[`OAuth2AuthorizationService`]
+* xref:guides/how-to-multitenancy.adoc#multi-tenant-oauth2-authorization-consent-service[`OAuth2AuthorizationConsentService`]
+* xref:guides/how-to-multitenancy.adoc#multi-tenant-jwk-source[`JWKSource<SecurityContext>`]
+
+For each of these components, an implementation of a composite can be provided that delegates to the concrete component associated to the _"requested"_ issuer identifier.
+
+Let's step through a scenario of how to customize Spring Authorization Server to support 2x tenants for each multi-tenant capable component.
+
+[[multi-tenant-registered-client-repository]]
+== Multi-tenant RegisteredClientRepository
+
+The following example shows a sample implementation of a xref:core-model-components.adoc#registered-client-repository[`RegisteredClientRepository`] that is composed of 2x `JdbcRegisteredClientRepository` instances, where each instance is mapped to an issuer identifier:
+
+.RegisteredClientRepositoryConfig
+[source,java]
+----
+include::{examples-dir}/main/java/sample/multitenancy/RegisteredClientRepositoryConfig.java[]
+----
+
+TIP: Click on the "Expand folded text" icon in the code sample above to display the full example.
+
+<1> A `JdbcRegisteredClientRepository` instance mapped to issuer identifier `issuer1` and using a dedicated `DataSource`.
+<2> A `JdbcRegisteredClientRepository` instance mapped to issuer identifier `issuer2` and using a dedicated `DataSource`.
+<3> A composite implementation of a `RegisteredClientRepository` that delegates to a `JdbcRegisteredClientRepository` mapped to the _"requested"_ issuer identifier.
+<4> Obtain the `JdbcRegisteredClientRepository` that is mapped to the _"requested"_ issuer identifier indicated by `AuthorizationServerContext.getIssuer()`.
+
+IMPORTANT: Explicitly configuring the issuer identifier via `AuthorizationServerSettings.builder().issuer("http://localhost:9000")` forces to a single-tenant configuration. Avoid explicitly configuring the issuer identifier when using a multi-tenant hosting configuration.
+
+In the preceding example, each of the `JdbcRegisteredClientRepository` instances are configured with a `JdbcTemplate` and associated `DataSource`.
+This is important in a multi-tenant configuration as a primary requirement is to have the ability to isolate the data from each tenant.
+
+Configuring a dedicated `DataSource` for each component instance provides the flexibility to isolate the data in its own schema within the same database instance or alternatively isolate the data in a separate database instance altogether.
+
+The following example shows a sample configuration of 2x `DataSource` `@Bean` (one for each tenant) that are used by the multi-tenant capable components:
+
+.DataSourceConfig
+[source,java]
+----
+include::{examples-dir}/main/java/sample/multitenancy/DataSourceConfig.java[]
+----
+
+<1> Use a separate H2 database instance using `issuer1-db` as the name.
+<2> Use a separate H2 database instance using `issuer2-db` as the name.
+
+[[multi-tenant-oauth2-authorization-service]]
+== Multi-tenant OAuth2AuthorizationService
+
+The following example shows a sample implementation of an xref:core-model-components.adoc#oauth2-authorization-service[`OAuth2AuthorizationService`] that is composed of 2x `JdbcOAuth2AuthorizationService` instances, where each instance is mapped to an issuer identifier:
+
+.OAuth2AuthorizationServiceConfig
+[source,java]
+----
+include::{examples-dir}/main/java/sample/multitenancy/OAuth2AuthorizationServiceConfig.java[]
+----
+
+<1> A `JdbcOAuth2AuthorizationService` instance mapped to issuer identifier `issuer1` and using a dedicated `DataSource`.
+<2> A `JdbcOAuth2AuthorizationService` instance mapped to issuer identifier `issuer2` and using a dedicated `DataSource`.
+<3> A composite implementation of an `OAuth2AuthorizationService` that delegates to a `JdbcOAuth2AuthorizationService` mapped to the _"requested"_ issuer identifier.
+<4> Obtain the `JdbcOAuth2AuthorizationService` that is mapped to the _"requested"_ issuer identifier indicated by `AuthorizationServerContext.getIssuer()`.
+
+[[multi-tenant-oauth2-authorization-consent-service]]
+== Multi-tenant OAuth2AuthorizationConsentService
+
+The following example shows a sample implementation of an xref:core-model-components.adoc#oauth2-authorization-consent-service[`OAuth2AuthorizationConsentService`] that is composed of 2x `JdbcOAuth2AuthorizationConsentService` instances, where each instance is mapped to an issuer identifier:
+
+.OAuth2AuthorizationConsentServiceConfig
+[source,java]
+----
+include::{examples-dir}/main/java/sample/multitenancy/OAuth2AuthorizationConsentServiceConfig.java[]
+----
+
+<1> A `JdbcOAuth2AuthorizationConsentService` instance mapped to issuer identifier `issuer1` and using a dedicated `DataSource`.
+<2> A `JdbcOAuth2AuthorizationConsentService` instance mapped to issuer identifier `issuer2` and using a dedicated `DataSource`.
+<3> A composite implementation of an `OAuth2AuthorizationConsentService` that delegates to a `JdbcOAuth2AuthorizationConsentService` mapped to the _"requested"_ issuer identifier.
+<4> Obtain the `JdbcOAuth2AuthorizationConsentService` that is mapped to the _"requested"_ issuer identifier indicated by `AuthorizationServerContext.getIssuer()`.
+
+[[multi-tenant-jwk-source]]
+== Multi-tenant JWKSource
+
+And finally, the following example shows a sample implementation of a `JWKSource<SecurityContext>` that is composed of 2x `JWKSet` instances, where each instance is mapped to an issuer identifier:
+
+.JWKSourceConfig
+[source,java]
+----
+include::{examples-dir}/main/java/sample/multitenancy/JWKSourceConfig.java[]
+----
+
+<1> A `JWKSet` instance mapped to issuer identifier `issuer1`.
+<2> A `JWKSet` instance mapped to issuer identifier `issuer2`.
+<3> A composite implementation of an `JWKSource<SecurityContext>` that uses the `JWKSet` mapped to the _"requested"_ issuer identifier.
+<4> Obtain the `JWKSet` that is mapped to the _"requested"_ issuer identifier indicated by `AuthorizationServerContext.getIssuer()`.

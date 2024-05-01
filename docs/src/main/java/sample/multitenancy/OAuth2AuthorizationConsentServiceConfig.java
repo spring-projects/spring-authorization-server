@@ -15,9 +15,6 @@
  */
 package sample.multitenancy;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import javax.sql.DataSource;
 
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -28,7 +25,6 @@ import org.springframework.security.oauth2.server.authorization.JdbcOAuth2Author
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsent;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsentService;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
-import org.springframework.security.oauth2.server.authorization.context.AuthorizationServerContextHolder;
 
 @Configuration(proxyBeanMethods = false)
 public class OAuth2AuthorizationConsentServiceConfig {
@@ -37,22 +33,25 @@ public class OAuth2AuthorizationConsentServiceConfig {
 	public OAuth2AuthorizationConsentService authorizationConsentService(
 			@Qualifier("issuer1-data-source") DataSource issuer1DataSource,
 			@Qualifier("issuer2-data-source") DataSource issuer2DataSource,
+			TenantPerIssuerComponentRegistry componentRegistry,
 			RegisteredClientRepository registeredClientRepository) {
 
-		Map<String, OAuth2AuthorizationConsentService> authorizationConsentServiceMap = new HashMap<>();
-		authorizationConsentServiceMap.put("issuer1", new JdbcOAuth2AuthorizationConsentService(	// <1>
-				new JdbcTemplate(issuer1DataSource), registeredClientRepository));
-		authorizationConsentServiceMap.put("issuer2", new JdbcOAuth2AuthorizationConsentService(	// <2>
-				new JdbcTemplate(issuer2DataSource), registeredClientRepository));
+		componentRegistry.register("issuer1", OAuth2AuthorizationConsentService.class,
+				new JdbcOAuth2AuthorizationConsentService(	// <1>
+						new JdbcTemplate(issuer1DataSource), registeredClientRepository));
+		componentRegistry.register("issuer2", OAuth2AuthorizationConsentService.class,
+				new JdbcOAuth2AuthorizationConsentService(	// <2>
+						new JdbcTemplate(issuer2DataSource), registeredClientRepository));
 
-		return new DelegatingOAuth2AuthorizationConsentService(authorizationConsentServiceMap);
+		return new DelegatingOAuth2AuthorizationConsentService(componentRegistry);
 	}
 
 	private static class DelegatingOAuth2AuthorizationConsentService implements OAuth2AuthorizationConsentService {	// <3>
-		private final Map<String, OAuth2AuthorizationConsentService> authorizationConsentServiceMap;
 
-		private DelegatingOAuth2AuthorizationConsentService(Map<String, OAuth2AuthorizationConsentService> authorizationConsentServiceMap) {
-			this.authorizationConsentServiceMap = authorizationConsentServiceMap;
+		private final TenantPerIssuerComponentRegistry componentRegistry;
+
+		private DelegatingOAuth2AuthorizationConsentService(TenantPerIssuerComponentRegistry componentRegistry) {
+			this.componentRegistry = componentRegistry;
 		}
 
 		@Override
@@ -80,17 +79,7 @@ public class OAuth2AuthorizationConsentServiceConfig {
 		}
 
 		private OAuth2AuthorizationConsentService getAuthorizationConsentService() {
-			if (AuthorizationServerContextHolder.getContext() == null ||
-					AuthorizationServerContextHolder.getContext().getIssuer() == null) {
-				return null;
-			}
-			String issuer = AuthorizationServerContextHolder.getContext().getIssuer();	// <4>
-			for (Map.Entry<String, OAuth2AuthorizationConsentService> entry : this.authorizationConsentServiceMap.entrySet()) {
-				if (issuer.endsWith(entry.getKey())) {
-					return entry.getValue();
-				}
-			}
-			return null;
+			return this.componentRegistry.get(OAuth2AuthorizationConsentService.class);	// <4>
 		}
 
 	}

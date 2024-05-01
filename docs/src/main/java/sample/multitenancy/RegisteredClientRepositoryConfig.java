@@ -15,8 +15,6 @@
  */
 package sample.multitenancy;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.UUID;
 
 import javax.sql.DataSource;
@@ -30,7 +28,6 @@ import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.server.authorization.client.JdbcRegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
-import org.springframework.security.oauth2.server.authorization.context.AuthorizationServerContextHolder;
 
 @Configuration(proxyBeanMethods = false)
 public class RegisteredClientRepositoryConfig {
@@ -38,7 +35,8 @@ public class RegisteredClientRepositoryConfig {
 	@Bean
 	public RegisteredClientRepository registeredClientRepository(
 			@Qualifier("issuer1-data-source") DataSource issuer1DataSource,
-			@Qualifier("issuer2-data-source") DataSource issuer2DataSource) {
+			@Qualifier("issuer2-data-source") DataSource issuer2DataSource,
+			TenantPerIssuerComponentRegistry componentRegistry) {
 
 		JdbcRegisteredClientRepository issuer1RegisteredClientRepository =
 				new JdbcRegisteredClientRepository(new JdbcTemplate(issuer1DataSource));	// <1>
@@ -74,18 +72,18 @@ public class RegisteredClientRepositoryConfig {
 		// @formatter:on
 		// @fold:off
 
-		Map<String, RegisteredClientRepository> registeredClientRepositoryMap = new HashMap<>();
-		registeredClientRepositoryMap.put("issuer1", issuer1RegisteredClientRepository);
-		registeredClientRepositoryMap.put("issuer2", issuer2RegisteredClientRepository);
+		componentRegistry.register("issuer1", RegisteredClientRepository.class, issuer1RegisteredClientRepository);
+		componentRegistry.register("issuer2", RegisteredClientRepository.class, issuer2RegisteredClientRepository);
 
-		return new DelegatingRegisteredClientRepository(registeredClientRepositoryMap);
+		return new DelegatingRegisteredClientRepository(componentRegistry);
 	}
 
 	private static class DelegatingRegisteredClientRepository implements RegisteredClientRepository {	// <3>
-		private final Map<String, RegisteredClientRepository> registeredClientRepositoryMap;
 
-		private DelegatingRegisteredClientRepository(Map<String, RegisteredClientRepository> registeredClientRepositoryMap) {
-			this.registeredClientRepositoryMap = registeredClientRepositoryMap;
+		private final TenantPerIssuerComponentRegistry componentRegistry;
+
+		private DelegatingRegisteredClientRepository(TenantPerIssuerComponentRegistry componentRegistry) {
+			this.componentRegistry = componentRegistry;
 		}
 
 		@Override
@@ -113,17 +111,7 @@ public class RegisteredClientRepositoryConfig {
 		}
 
 		private RegisteredClientRepository getRegisteredClientRepository() {
-			if (AuthorizationServerContextHolder.getContext() == null ||
-					AuthorizationServerContextHolder.getContext().getIssuer() == null) {
-				return null;
-			}
-			String issuer = AuthorizationServerContextHolder.getContext().getIssuer();	// <4>
-			for (Map.Entry<String, RegisteredClientRepository> entry : this.registeredClientRepositoryMap.entrySet()) {
-				if (issuer.endsWith(entry.getKey())) {
-					return entry.getValue();
-				}
-			}
-			return null;
+			return this.componentRegistry.get(RegisteredClientRepository.class);	// <4>
 		}
 
 	}

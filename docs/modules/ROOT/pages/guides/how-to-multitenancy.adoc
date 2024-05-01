@@ -5,6 +5,15 @@
 :docs-dir: ..
 
 This guide shows how to customize Spring Authorization Server to support multiple issuers per host in a multi-tenant hosting configuration.
+The purpose of this guide is to demonstrate a general pattern for building multi-tenant capable components for Spring Authorization Server, which can also be applied to other components to suit your needs.
+
+* xref:guides/how-to-multitenancy.adoc#multi-tenant-define-tenant-identifier[Define the tenant identifier]
+* xref:guides/how-to-multitenancy.adoc#multi-tenant-create-component-registry[Create a component registry]
+* xref:guides/how-to-multitenancy.adoc#multi-tenant-create-components[Create multi-tenant components]
+* xref:guides/how-to-multitenancy.adoc#multi-tenant-add-tenants-dynamically[Add tenants dynamically]
+
+[[multi-tenant-define-tenant-identifier]]
+== Define the tenant identifier
 
 The xref:protocol-endpoints.adoc#oidc-provider-configuration-endpoint[OpenID Connect 1.0 Provider Configuration Endpoint] and xref:protocol-endpoints.adoc#oauth2-authorization-server-metadata-endpoint[OAuth2 Authorization Server Metadata Endpoint] allow for path components in the issuer identifier value, which effectively enables supporting multiple issuers per host.
 
@@ -27,6 +36,25 @@ NOTE: The base URL of the xref:protocol-endpoints.adoc[Protocol Endpoints] is th
 
 Essentially, an issuer identifier with a path component represents the _"tenant identifier"_.
 
+[[multi-tenant-create-component-registry]]
+== Create a component registry
+
+We start by building a simple registry for managing the concrete components for each tenant.
+The registry contains the logic for retrieving a concrete implementation of a particular class using the issuer identifier value.
+
+We will use the following class in each of the delegating implementations below:
+
+.TenantPerIssuerComponentRegistry
+[source,java]
+----
+include::{examples-dir}/main/java/sample/multitenancy/TenantPerIssuerComponentRegistry.java[]
+----
+
+TIP: This registry is designed to allow components to be easily registered at startup to support adding tenants statically, but also supports xref:guides/how-to-multitenancy.adoc#multi-tenant-add-tenants-dynamically[adding tenants dynamically] at runtime.
+
+[[multi-tenant-create-components]]
+== Create multi-tenant components
+
 The components that require multi-tenant capability are:
 
 * xref:guides/how-to-multitenancy.adoc#multi-tenant-registered-client-repository[`RegisteredClientRepository`]
@@ -39,7 +67,7 @@ For each of these components, an implementation of a composite can be provided t
 Let's step through a scenario of how to customize Spring Authorization Server to support 2x tenants for each multi-tenant capable component.
 
 [[multi-tenant-registered-client-repository]]
-== Multi-tenant RegisteredClientRepository
+=== Multi-tenant RegisteredClientRepository
 
 The following example shows a sample implementation of a xref:core-model-components.adoc#registered-client-repository[`RegisteredClientRepository`] that is composed of 2x `JdbcRegisteredClientRepository` instances, where each instance is mapped to an issuer identifier:
 
@@ -75,7 +103,7 @@ include::{examples-dir}/main/java/sample/multitenancy/DataSourceConfig.java[]
 <2> Use a separate H2 database instance using `issuer2-db` as the name.
 
 [[multi-tenant-oauth2-authorization-service]]
-== Multi-tenant OAuth2AuthorizationService
+=== Multi-tenant OAuth2AuthorizationService
 
 The following example shows a sample implementation of an xref:core-model-components.adoc#oauth2-authorization-service[`OAuth2AuthorizationService`] that is composed of 2x `JdbcOAuth2AuthorizationService` instances, where each instance is mapped to an issuer identifier:
 
@@ -91,7 +119,7 @@ include::{examples-dir}/main/java/sample/multitenancy/OAuth2AuthorizationService
 <4> Obtain the `JdbcOAuth2AuthorizationService` that is mapped to the _"requested"_ issuer identifier indicated by `AuthorizationServerContext.getIssuer()`.
 
 [[multi-tenant-oauth2-authorization-consent-service]]
-== Multi-tenant OAuth2AuthorizationConsentService
+=== Multi-tenant OAuth2AuthorizationConsentService
 
 The following example shows a sample implementation of an xref:core-model-components.adoc#oauth2-authorization-consent-service[`OAuth2AuthorizationConsentService`] that is composed of 2x `JdbcOAuth2AuthorizationConsentService` instances, where each instance is mapped to an issuer identifier:
 
@@ -107,7 +135,7 @@ include::{examples-dir}/main/java/sample/multitenancy/OAuth2AuthorizationConsent
 <4> Obtain the `JdbcOAuth2AuthorizationConsentService` that is mapped to the _"requested"_ issuer identifier indicated by `AuthorizationServerContext.getIssuer()`.
 
 [[multi-tenant-jwk-source]]
-== Multi-tenant JWKSource
+=== Multi-tenant JWKSource
 
 And finally, the following example shows a sample implementation of a `JWKSource<SecurityContext>` that is composed of 2x `JWKSet` instances, where each instance is mapped to an issuer identifier:
 
@@ -121,3 +149,17 @@ include::{examples-dir}/main/java/sample/multitenancy/JWKSourceConfig.java[]
 <2> A `JWKSet` instance mapped to issuer identifier `issuer2`.
 <3> A composite implementation of an `JWKSource<SecurityContext>` that uses the `JWKSet` mapped to the _"requested"_ issuer identifier.
 <4> Obtain the `JWKSet` that is mapped to the _"requested"_ issuer identifier indicated by `AuthorizationServerContext.getIssuer()`.
+
+[[multi-tenant-add-tenants-dynamically]]
+== Add Tenants Dynamically
+
+If the number of tenants is dynamic and can change at runtime, defining each `DataSource` as a `@Bean` may not be feasible.
+In this case, the `DataSource` and corresponding components can be registered through other means at application startup and/or runtime.
+
+The following example shows a Spring `@Service` capable of adding tenants dynamically:
+
+.TenantService
+[source,java]
+----
+include::{examples-dir}/main/java/sample/multitenancy/TenantService.java[]
+----

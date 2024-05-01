@@ -20,9 +20,7 @@ import java.security.KeyPairGenerator;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 import com.nimbusds.jose.KeySourceException;
@@ -35,18 +33,16 @@ import com.nimbusds.jose.proc.SecurityContext;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.oauth2.server.authorization.context.AuthorizationServerContextHolder;
 
 @Configuration(proxyBeanMethods = false)
 public class JWKSourceConfig {
 
 	@Bean
-	public JWKSource<SecurityContext> jwkSource() {
-		Map<String, JWKSet> jwkSetMap = new HashMap<>();
-		jwkSetMap.put("issuer1", new JWKSet(generateRSAJwk()));	// <1>
-		jwkSetMap.put("issuer2", new JWKSet(generateRSAJwk()));	// <2>
+	public JWKSource<SecurityContext> jwkSource(TenantPerIssuerComponentRegistry componentRegistry) {
+		componentRegistry.register("issuer1", JWKSet.class, new JWKSet(generateRSAJwk()));	// <1>
+		componentRegistry.register("issuer2", JWKSet.class, new JWKSet(generateRSAJwk()));	// <2>
 
-		return new DelegatingJWKSource(jwkSetMap);
+		return new DelegatingJWKSource(componentRegistry);
 	}
 
 	// @fold:on
@@ -72,10 +68,11 @@ public class JWKSourceConfig {
 	// @fold:off
 
 	private static class DelegatingJWKSource implements JWKSource<SecurityContext> {	// <3>
-		private final Map<String, JWKSet> jwkSetMap;
 
-		private DelegatingJWKSource(Map<String, JWKSet> jwkSetMap) {
-			this.jwkSetMap = jwkSetMap;
+		private final TenantPerIssuerComponentRegistry componentRegistry;
+
+		private DelegatingJWKSource(TenantPerIssuerComponentRegistry componentRegistry) {
+			this.componentRegistry = componentRegistry;
 		}
 
 		@Override
@@ -85,17 +82,7 @@ public class JWKSourceConfig {
 		}
 
 		private JWKSet getJwkSet() {
-			if (AuthorizationServerContextHolder.getContext() == null ||
-					AuthorizationServerContextHolder.getContext().getIssuer() == null) {
-				return null;
-			}
-			String issuer = AuthorizationServerContextHolder.getContext().getIssuer();	// <4>
-			for (Map.Entry<String, JWKSet> entry : this.jwkSetMap.entrySet()) {
-				if (issuer.endsWith(entry.getKey())) {
-					return entry.getValue();
-				}
-			}
-			return null;
+			return this.componentRegistry.get(JWKSet.class);	// <4>
 		}
 
 	}

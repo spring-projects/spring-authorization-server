@@ -27,7 +27,8 @@
                         <li><a class="dropdown-item" href="/authorize?grant_type=client_credentials&client_auth=client_secret" th:href="@{/authorize?grant_type=client_credentials&client_auth=client_secret}">Client Credentials (client_secret_basic)</a></li>
                         <li><a class="dropdown-item" href="/authorize?grant_type=client_credentials&client_auth=mtls" th:href="@{/authorize?grant_type=client_credentials&client_auth=mtls}">Client Credentials (tls_client_auth)</a></li>
                         <li><a class="dropdown-item" href="/authorize?grant_type=client_credentials&client_auth=self_signed_mtls" th:href="@{/authorize?grant_type=client_credentials&client_auth=self_signed_mtls}">Client Credentials (self_signed_tls_client_auth)</a></li>
-                        <li><a class="dropdown-item" href="/authorize?grant_type=token_exchange" th:href="@{/authorize?grant_type=token_exchange}">Token Exchange</a></li>
+                        <li><a class="dropdown-item" href="/authorize?grant_type=token_exchange" th:href="@{/authorize?grant_type=token_exchange&use_case=delegation}">Token Exchange (delegation)</a></li>
+                        <li><a class="dropdown-item" href="/authorize?grant_type=token_exchange" th:href="@{/authorize?grant_type=token_exchange&use_case=impersonation}">Token Exchange (impersonation)</a></li>
                         <li><a class="dropdown-item" href="/authorize?grant_type=device_code" th:href="@{/authorize?grant_type=device_code}">Device Code</a></li>
                     </ul>
                 </li>

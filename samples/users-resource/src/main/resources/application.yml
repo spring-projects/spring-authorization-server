@@ -19,13 +19,20 @@ spring:
             client-secret: secret
             authorization-grant-type: client_credentials
             client-name: messaging-client-client-credentials
-          messaging-client-token-exchange:
+          messaging-client-token-exchange-with-delegation:
+            provider: spring
+            client-id: token-client
+            client-secret: token
+            authorization-grant-type: urn:ietf:params:oauth:grant-type:token-exchange
+            scope: message.read,message.write
+            client-name: messaging-client-token-exchange-with-delegation
+          messaging-client-token-exchange-with-impersonation:
             provider: spring
             client-id: token-client
             client-secret: token
             authorization-grant-type: urn:ietf:params:oauth:grant-type:token-exchange
             scope: message.read
-            client-name: messaging-client-token-exchange
+            client-name: messaging-client-token-exchange-with-impersonation
         provider:
           spring:
             issuer-uri: http://localhost:9000

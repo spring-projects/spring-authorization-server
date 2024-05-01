@@ -21,10 +21,8 @@ import java.util.List;
 import java.util.Objects;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.annotation.RegisteredOAuth2AuthorizedClient;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestClient;
@@ -44,11 +42,21 @@ public class UserController {
 				.build();
 	}
 
-	@GetMapping("/user/messages")
-	public List<String> getMessages(@AuthenticationPrincipal Jwt jwt,
-			@RegisteredOAuth2AuthorizedClient("messaging-client-token-exchange")
+	@GetMapping(value = "/user/messages", params = "use_case=delegation")
+	public List<String> getMessagesWithDelegation(
+			@RegisteredOAuth2AuthorizedClient("messaging-client-token-exchange-with-delegation")
 					OAuth2AuthorizedClient authorizedClient) {
+		return getUserMessages(authorizedClient);
+	}
 
+	@GetMapping(value = "/user/messages", params = "use_case=impersonation")
+	public List<String> getMessagesWithImpersonation(
+			@RegisteredOAuth2AuthorizedClient("messaging-client-token-exchange-with-impersonation")
+					OAuth2AuthorizedClient authorizedClient) {
+		return getUserMessages(authorizedClient);
+	}
+
+	private List<String> getUserMessages(OAuth2AuthorizedClient authorizedClient) {
 		// @formatter:off
 		String[] messages = Objects.requireNonNull(
 				this.restClient.get()
@@ -60,7 +68,7 @@ public class UserController {
 		// @formatter:on
 
 		List<String> userMessages = new ArrayList<>(Arrays.asList(messages));
-		userMessages.add("%s has %d unread messages".formatted(jwt.getSubject(), messages.length));
+		userMessages.add("%s has %d unread messages".formatted(authorizedClient.getPrincipalName(), messages.length));
 
 		return userMessages;
 	}

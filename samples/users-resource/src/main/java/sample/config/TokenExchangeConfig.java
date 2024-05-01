@@ -41,6 +41,8 @@ public class TokenExchangeConfig {
 
 	private static final String ACTOR_TOKEN_CLIENT_REGISTRATION_ID = "messaging-client-client-credentials";
 
+	private static final String IMPERSONATION_CLIENT_REGISTRATION_ID = "messaging-client-token-exchange-with-impersonation";
+
 	@Bean
 	public OAuth2AuthorizedClientProvider tokenExchange(
 			ClientRegistrationRepository clientRegistrationRepository,
@@ -87,6 +89,11 @@ public class TokenExchangeConfig {
 			OAuth2AuthorizedClientManager authorizedClientManager, String clientRegistrationId) {
 
 		return (context) -> {
+			// Do not provide an actor token for impersonation use case
+			if (IMPERSONATION_CLIENT_REGISTRATION_ID.equals(context.getClientRegistration().getRegistrationId())) {
+				return null;
+			}
+
 			// @formatter:off
 			OAuth2AuthorizeRequest authorizeRequest =
 					OAuth2AuthorizeRequest.withClientRegistrationId(clientRegistrationId)

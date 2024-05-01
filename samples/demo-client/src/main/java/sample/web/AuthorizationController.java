@@ -134,12 +134,27 @@ public class AuthorizationController {
 		return "index";
 	}
 
-	@GetMapping(value = "/authorize", params = "grant_type=token_exchange")
-	public String tokenExchangeGrant(Model model) {
+	@GetMapping(value = "/authorize", params = {"grant_type=token_exchange", "use_case=delegation"})
+	public String tokenExchangeGrantUsingDelegation(Model model) {
 
 		String[] messages = this.defaultClientWebClient
 				.get()
-				.uri(this.userMessagesBaseUri)
+				.uri(this.userMessagesBaseUri + "?use_case=delegation")
+				.attributes(clientRegistrationId("user-client-authorization-code"))
+				.retrieve()
+				.bodyToMono(String[].class)
+				.block();
+		model.addAttribute("messages", messages);
+
+		return "index";
+	}
+
+	@GetMapping(value = "/authorize", params = {"grant_type=token_exchange", "use_case=impersonation"})
+	public String tokenExchangeGrantUsingImpersonation(Model model) {
+
+		String[] messages = this.defaultClientWebClient
+				.get()
+				.uri(this.userMessagesBaseUri + "?use_case=impersonation")
 				.attributes(clientRegistrationId("user-client-authorization-code"))
 				.retrieve()
 				.bodyToMono(String[].class)

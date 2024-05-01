@@ -165,6 +165,7 @@ public class AuthorizationServerConfig {
 				.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
 				.authorizationGrantType(new AuthorizationGrantType("urn:ietf:params:oauth:grant-type:token-exchange"))
 				.scope("message.read")
+				.scope("message.write")
 				.build();
 
 		RegisteredClient mtlsDemoClient = RegisteredClient.withId(UUID.randomUUID().toString())

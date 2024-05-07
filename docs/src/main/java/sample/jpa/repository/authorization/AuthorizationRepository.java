@@ -15,17 +15,19 @@
  */
 package sample.jpa.repository.authorization;
 
-import java.util.Optional;
-
-import sample.jpa.entity.authorization.Authorization;
-
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
+import sample.jpa.entity.authorization.Authorization;
+
+import java.util.Optional;
 
 @Repository
 public interface AuthorizationRepository extends JpaRepository<Authorization, String> {
+
 	Optional<Authorization> findByState(String state);
 	Optional<Authorization> findByAuthorizationCodeValue(String authorizationCode);
 	Optional<Authorization> findByAccessTokenValue(String accessToken);
@@ -42,4 +44,38 @@ public interface AuthorizationRepository extends JpaRepository<Authorization, St
 			" or a.deviceCodeValue = :token"
 	)
 	Optional<Authorization> findByStateOrAuthorizationCodeValueOrAccessTokenValueOrRefreshTokenValueOrOidcIdTokenValueOrUserCodeValueOrDeviceCodeValue(@Param("token") String token);
+
+
+	@Transactional
+	@Modifying
+	void deleteAllByState(String state);
+	@Transactional
+	@Modifying
+	void deleteAllByAuthorizationCodeValue(String authorizationCode);
+	@Transactional
+	@Modifying
+	void deleteAllByAccessTokenValue(String accessToken);
+	@Transactional
+	@Modifying
+	void deleteAllByRefreshTokenValue(String refreshToken);
+	@Transactional
+	@Modifying
+	void deleteAllByOidcIdTokenValue(String idToken);
+	@Transactional
+	@Modifying
+	void deleteAllByUserCodeValue(String userCode);
+	@Transactional
+	@Modifying
+	void deleteAllByDeviceCodeValue(String deviceCode);
+
+	@Transactional
+	@Query("DELETE FROM Authorization a WHERE a.state = :token OR " +
+			"a.authorizationCodeValue = :token OR " +
+			"a.accessTokenValue = :token OR " +
+			"a.refreshTokenValue = :token OR " +
+			"a.oidcIdTokenValue = :token OR " +
+			"a.userCodeValue = :token OR " +
+			"a.deviceCodeValue = :token")
+	@Modifying
+	void deleteAllByStateOrAuthorizationCodeValueOrAccessTokenValueOrRefreshTokenValueOrOidcIdTokenValueOrUserCodeValueOrDeviceCodeValue(@Param("token") String token);
 }

@@ -15,26 +15,15 @@
  */
 package sample.jpa.service.authorization;
 
-import java.time.Instant;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.function.Consumer;
-
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import sample.jpa.entity.authorization.Authorization;
-import sample.jpa.repository.authorization.AuthorizationRepository;
-
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.springframework.core.log.LogMessage;
 import org.springframework.dao.DataRetrievalFailureException;
 import org.springframework.security.jackson2.SecurityJackson2Modules;
-import org.springframework.security.oauth2.core.AuthorizationGrantType;
-import org.springframework.security.oauth2.core.OAuth2AccessToken;
-import org.springframework.security.oauth2.core.OAuth2DeviceCode;
-import org.springframework.security.oauth2.core.OAuth2RefreshToken;
-import org.springframework.security.oauth2.core.OAuth2Token;
-import org.springframework.security.oauth2.core.OAuth2UserCode;
+import org.springframework.security.oauth2.core.*;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.security.oauth2.core.oidc.endpoint.OidcParameterNames;
@@ -48,9 +37,20 @@ import org.springframework.security.oauth2.server.authorization.jackson2.OAuth2A
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
+import sample.jpa.entity.authorization.Authorization;
+import sample.jpa.repository.authorization.AuthorizationRepository;
+
+import java.time.Instant;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.function.Consumer;
 
 @Component
 public class JpaOAuth2AuthorizationService implements OAuth2AuthorizationService {
+
+	private final Log logger = LogFactory.getLog(getClass());
+
 	private final AuthorizationRepository authorizationRepository;
 	private final RegisteredClientRepository registeredClientRepository;
 	private final ObjectMapper objectMapper = new ObjectMapper();
@@ -90,28 +90,63 @@ public class JpaOAuth2AuthorizationService implements OAuth2AuthorizationService
 		Assert.hasText(token, "token cannot be empty");
 
 		Optional<Authorization> result;
-		if (tokenType == null) {
-			result = this.authorizationRepository.findByStateOrAuthorizationCodeValueOrAccessTokenValueOrRefreshTokenValueOrOidcIdTokenValueOrUserCodeValueOrDeviceCodeValue(token);
-		} else if (OAuth2ParameterNames.STATE.equals(tokenType.getValue())) {
-			result = this.authorizationRepository.findByState(token);
-		} else if (OAuth2ParameterNames.CODE.equals(tokenType.getValue())) {
-			result = this.authorizationRepository.findByAuthorizationCodeValue(token);
-		} else if (OAuth2ParameterNames.ACCESS_TOKEN.equals(tokenType.getValue())) {
-			result = this.authorizationRepository.findByAccessTokenValue(token);
-		} else if (OAuth2ParameterNames.REFRESH_TOKEN.equals(tokenType.getValue())) {
-			result = this.authorizationRepository.findByRefreshTokenValue(token);
-		} else if (OidcParameterNames.ID_TOKEN.equals(tokenType.getValue())) {
-			result = this.authorizationRepository.findByOidcIdTokenValue(token);
-		} else if (OAuth2ParameterNames.USER_CODE.equals(tokenType.getValue())) {
-			result = this.authorizationRepository.findByUserCodeValue(token);
-		} else if (OAuth2ParameterNames.DEVICE_CODE.equals(tokenType.getValue())) {
-			result = this.authorizationRepository.findByDeviceCodeValue(token);
-		} else {
-			result = Optional.empty();
+
+		try {
+			if (tokenType == null) {
+				result = this.authorizationRepository.findByStateOrAuthorizationCodeValueOrAccessTokenValueOrRefreshTokenValueOrOidcIdTokenValueOrUserCodeValueOrDeviceCodeValue(token);
+			} else if (OAuth2ParameterNames.STATE.equals(tokenType.getValue())) {
+				result = this.authorizationRepository.findByState(token);
+			} else if (OAuth2ParameterNames.CODE.equals(tokenType.getValue())) {
+				result = this.authorizationRepository.findByAuthorizationCodeValue(token);
+			} else if (OAuth2ParameterNames.ACCESS_TOKEN.equals(tokenType.getValue())) {
+				result = this.authorizationRepository.findByAccessTokenValue(token);
+			} else if (OAuth2ParameterNames.REFRESH_TOKEN.equals(tokenType.getValue())) {
+				result = this.authorizationRepository.findByRefreshTokenValue(token);
+			} else if (OidcParameterNames.ID_TOKEN.equals(tokenType.getValue())) {
+				result = this.authorizationRepository.findByOidcIdTokenValue(token);
+			} else if (OAuth2ParameterNames.USER_CODE.equals(tokenType.getValue())) {
+				result = this.authorizationRepository.findByUserCodeValue(token);
+			} else if (OAuth2ParameterNames.DEVICE_CODE.equals(tokenType.getValue())) {
+				result = this.authorizationRepository.findByDeviceCodeValue(token);
+			} else {
+				result = Optional.empty();
+			}
+		}catch (Exception e){
+			handleException(token, tokenType, e);
+			return null;
 		}
 
 		return result.map(this::toObject).orElse(null);
 	}
+
+	private void handleException(String token, OAuth2TokenType tokenType, Exception e) {
+
+		if (this.logger.isWarnEnabled()) {
+			this.logger.warn(LogMessage.format("Failed in running findByToken (token: '%s', error details: '%s')", token, e.getMessage()));
+		}
+
+		String value = tokenType != null ? tokenType.getValue() : null;
+
+		if (OAuth2ParameterNames.STATE.equals(value)) {
+			this.authorizationRepository.deleteAllByState(token);
+		} else if (OAuth2ParameterNames.CODE.equals(value)) {
+			this.authorizationRepository.deleteAllByAuthorizationCodeValue(token);
+		} else if (OAuth2ParameterNames.ACCESS_TOKEN.equals(value)) {
+			this.authorizationRepository.deleteAllByAccessTokenValue(token);
+		} else if (OAuth2ParameterNames.REFRESH_TOKEN.equals(value)) {
+			this.authorizationRepository.deleteAllByRefreshTokenValue(token);
+		} else if (OidcParameterNames.ID_TOKEN.equals(value)) {
+			this.authorizationRepository.deleteAllByOidcIdTokenValue(token);
+		} else if (OAuth2ParameterNames.USER_CODE.equals(value)) {
+			this.authorizationRepository.deleteAllByUserCodeValue(token);
+		} else if (OAuth2ParameterNames.DEVICE_CODE.equals(value)) {
+			this.authorizationRepository.deleteAllByDeviceCodeValue(token);
+		} else {
+			this.authorizationRepository.deleteAllByStateOrAuthorizationCodeValueOrAccessTokenValueOrRefreshTokenValueOrOidcIdTokenValueOrUserCodeValueOrDeviceCodeValue(token);
+		}
+
+	}
+
 
 	private OAuth2Authorization toObject(Authorization entity) {
 		RegisteredClient registeredClient = this.registeredClientRepository.findById(entity.getRegisteredClientId());

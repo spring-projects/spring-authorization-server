@@ -57,11 +57,9 @@ public final class OidcProviderConfigurationEndpointFilter extends OncePerReques
 	/**
 	 * The default endpoint {@code URI} for OpenID Provider Configuration requests.
 	 */
-	private static final String DEFAULT_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI = "/**/.well-known/openid-configuration";
+	private static final String DEFAULT_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI = "/.well-known/openid-configuration";
 
-	private final RequestMatcher requestMatcher = new AntPathRequestMatcher(
-			DEFAULT_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI,
-			HttpMethod.GET.name());
+	private final RequestMatcher requestMatcher = createRequestMatcher();
 	private final OidcProviderConfigurationHttpMessageConverter providerConfigurationHttpMessageConverter =
 			new OidcProviderConfigurationHttpMessageConverter();
 	private Consumer<OidcProviderConfiguration.Builder> providerConfigurationCustomizer = (providerConfiguration) -> {};
@@ -121,6 +119,17 @@ public final class OidcProviderConfigurationEndpointFilter extends OncePerReques
 		ServletServerHttpResponse httpResponse = new ServletServerHttpResponse(response);
 		this.providerConfigurationHttpMessageConverter.write(
 				providerConfiguration.build(), MediaType.APPLICATION_JSON, httpResponse);
+	}
+
+	private static RequestMatcher createRequestMatcher() {
+		final RequestMatcher defaultRequestMatcher = new AntPathRequestMatcher(
+				DEFAULT_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI, HttpMethod.GET.name());
+		final RequestMatcher multipleIssuersRequestMatcher = new AntPathRequestMatcher(
+				"/**" + DEFAULT_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI, HttpMethod.GET.name());
+		return (request) ->
+				AuthorizationServerContextHolder.getContext().getAuthorizationServerSettings().isMultipleIssuersAllowed() ?
+						multipleIssuersRequestMatcher.matches(request) :
+						defaultRequestMatcher.matches(request);
 	}
 
 	private static Consumer<List<String>> clientAuthenticationMethods() {

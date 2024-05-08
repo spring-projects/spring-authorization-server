@@ -55,11 +55,9 @@ public final class OAuth2AuthorizationServerMetadataEndpointFilter extends OnceP
 	/**
 	 * The default endpoint {@code URI} for OAuth 2.0 Authorization Server Metadata requests.
 	 */
-	private static final String DEFAULT_OAUTH2_AUTHORIZATION_SERVER_METADATA_ENDPOINT_URI = "/.well-known/oauth-authorization-server/**";
+	private static final String DEFAULT_OAUTH2_AUTHORIZATION_SERVER_METADATA_ENDPOINT_URI = "/.well-known/oauth-authorization-server";
 
-	private final RequestMatcher requestMatcher = new AntPathRequestMatcher(
-			DEFAULT_OAUTH2_AUTHORIZATION_SERVER_METADATA_ENDPOINT_URI,
-			HttpMethod.GET.name());
+	private final RequestMatcher requestMatcher = createRequestMatcher();
 	private final OAuth2AuthorizationServerMetadataHttpMessageConverter authorizationServerMetadataHttpMessageConverter =
 			new OAuth2AuthorizationServerMetadataHttpMessageConverter();
 	private Consumer<OAuth2AuthorizationServerMetadata.Builder> authorizationServerMetadataCustomizer = (authorizationServerMetadata) -> {};
@@ -114,6 +112,17 @@ public final class OAuth2AuthorizationServerMetadataEndpointFilter extends OnceP
 		ServletServerHttpResponse httpResponse = new ServletServerHttpResponse(response);
 		this.authorizationServerMetadataHttpMessageConverter.write(
 				authorizationServerMetadata.build(), MediaType.APPLICATION_JSON, httpResponse);
+	}
+
+	private static RequestMatcher createRequestMatcher() {
+		final RequestMatcher defaultRequestMatcher = new AntPathRequestMatcher(
+				DEFAULT_OAUTH2_AUTHORIZATION_SERVER_METADATA_ENDPOINT_URI, HttpMethod.GET.name());
+		final RequestMatcher multipleIssuersRequestMatcher = new AntPathRequestMatcher(
+				DEFAULT_OAUTH2_AUTHORIZATION_SERVER_METADATA_ENDPOINT_URI + "/**", HttpMethod.GET.name());
+		return (request) ->
+				AuthorizationServerContextHolder.getContext().getAuthorizationServerSettings().isMultipleIssuersAllowed() ?
+						multipleIssuersRequestMatcher.matches(request) :
+						defaultRequestMatcher.matches(request);
 	}
 
 	private static Consumer<List<String>> clientAuthenticationMethods() {

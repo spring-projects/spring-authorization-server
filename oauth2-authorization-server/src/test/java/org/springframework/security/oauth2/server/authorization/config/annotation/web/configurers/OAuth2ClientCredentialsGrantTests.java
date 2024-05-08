@@ -84,6 +84,7 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
 import org.springframework.security.oauth2.server.authorization.jackson2.TestingAuthenticationTokenMixin;
+import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
 import org.springframework.security.oauth2.server.authorization.test.SpringTestContext;
 import org.springframework.security.oauth2.server.authorization.test.SpringTestContextExtension;
@@ -398,7 +399,7 @@ public class OAuth2ClientCredentialsGrantTests {
 
 	@Test
 	public void requestWhenTokenRequestIncludesIssuerPathThenIssuerResolvedWithPath() throws Exception {
-		this.spring.register(AuthorizationServerConfiguration.class).autowire();
+		this.spring.register(AuthorizationServerConfigurationWithMultipleIssuersAllowed.class).autowire();
 
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient2().build();
 		this.registeredClientRepository.save(registeredClient);
@@ -569,6 +570,17 @@ public class OAuth2ClientCredentialsGrantTests {
 					SecurityContextHolder.setContext(securityContext);
 				}
 			};
+		}
+
+	}
+
+	@EnableWebSecurity
+	@Import(OAuth2AuthorizationServerConfiguration.class)
+	static class AuthorizationServerConfigurationWithMultipleIssuersAllowed extends AuthorizationServerConfiguration {
+
+		@Bean
+		AuthorizationServerSettings authorizationServerSettings() {
+			return AuthorizationServerSettings.builder().multipleIssuersAllowed(true).build();
 		}
 
 	}

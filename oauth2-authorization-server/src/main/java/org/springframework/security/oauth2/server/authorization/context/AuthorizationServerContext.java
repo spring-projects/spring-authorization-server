@@ -32,7 +32,7 @@ public interface AuthorizationServerContext {
 	 * resolves the issuer identifier from the <i>"current"</i> request.
 	 *
 	 * <p>
-	 * The issuer identifier may contain a path component to support multiple issuers per host in a multi-tenant hosting configuration.
+	 * The issuer identifier may contain a path component to support {@link AuthorizationServerSettings#isMultipleIssuersAllowed() multiple issuers per host} in a multi-tenant hosting configuration.
 	 *
 	 * <p>
 	 * For example:

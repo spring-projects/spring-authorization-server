@@ -49,7 +49,7 @@ import org.springframework.security.web.util.matcher.OrRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
 
-import static org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2ConfigurerUtils.withMultipleIssuerPattern;
+import static org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2ConfigurerUtils.withMultipleIssuersPattern;
 
 /**
  * Configurer for OpenID Connect 1.0 UserInfo Endpoint.
@@ -187,7 +187,9 @@ public final class OidcUserInfoEndpointConfigurer extends AbstractOAuth2Configur
 	@Override
 	void init(HttpSecurity httpSecurity) {
 		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils.getAuthorizationServerSettings(httpSecurity);
-		String userInfoEndpointUri = withMultipleIssuerPattern(authorizationServerSettings.getOidcUserInfoEndpoint());
+		String userInfoEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed() ?
+				withMultipleIssuersPattern(authorizationServerSettings.getOidcUserInfoEndpoint()) :
+				authorizationServerSettings.getOidcUserInfoEndpoint();
 		this.requestMatcher = new OrRequestMatcher(
 				new AntPathRequestMatcher(userInfoEndpointUri, HttpMethod.GET.name()),
 				new AntPathRequestMatcher(userInfoEndpointUri, HttpMethod.POST.name()));
@@ -206,10 +208,11 @@ public final class OidcUserInfoEndpointConfigurer extends AbstractOAuth2Configur
 		AuthenticationManager authenticationManager = httpSecurity.getSharedObject(AuthenticationManager.class);
 		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils.getAuthorizationServerSettings(httpSecurity);
 
+		String userInfoEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed() ?
+				withMultipleIssuersPattern(authorizationServerSettings.getOidcUserInfoEndpoint()) :
+				authorizationServerSettings.getOidcUserInfoEndpoint();
 		OidcUserInfoEndpointFilter oidcUserInfoEndpointFilter =
-				new OidcUserInfoEndpointFilter(
-						authenticationManager,
-						withMultipleIssuerPattern(authorizationServerSettings.getOidcUserInfoEndpoint()));
+				new OidcUserInfoEndpointFilter(authenticationManager, userInfoEndpointUri);
 		List<AuthenticationConverter> authenticationConverters = createDefaultAuthenticationConverters();
 		if (!this.userInfoRequestConverters.isEmpty()) {
 			authenticationConverters.addAll(0, this.userInfoRequestConverters);

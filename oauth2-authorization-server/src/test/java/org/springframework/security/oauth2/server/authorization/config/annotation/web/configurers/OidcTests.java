@@ -617,7 +617,7 @@ public class OidcTests {
 
 		@Bean
 		AuthorizationServerSettings authorizationServerSettings() {
-			return AuthorizationServerSettings.builder().build();
+			return AuthorizationServerSettings.builder().multipleIssuersAllowed(true).build();
 		}
 
 		@Bean

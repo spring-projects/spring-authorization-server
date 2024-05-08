@@ -857,7 +857,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 
 	@Test
 	public void requestWhenAuthorizationAndTokenRequestIncludesIssuerPathThenIssuerResolvedWithPath() throws Exception {
-		this.spring.register(AuthorizationServerConfigurationWithTokenGenerator.class).autowire();
+		this.spring.register(AuthorizationServerConfigurationWithMultipleIssuersAllowed.class).autowire();
 
 		RegisteredClient registeredClient = TestRegisteredClients.registeredPublicClient().build();
 		this.registeredClientRepository.save(registeredClient);
@@ -1258,6 +1258,17 @@ public class OAuth2AuthorizationCodeGrantTests {
 			return http.build();
 		}
 		// @formatter:on
+	}
+
+	@EnableWebSecurity
+	@Import(OAuth2AuthorizationServerConfiguration.class)
+	static class AuthorizationServerConfigurationWithMultipleIssuersAllowed extends AuthorizationServerConfigurationWithTokenGenerator {
+
+		@Bean
+		AuthorizationServerSettings authorizationServerSettings() {
+			return AuthorizationServerSettings.builder().multipleIssuersAllowed(true).build();
+		}
+
 	}
 
 }

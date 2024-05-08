@@ -56,7 +56,7 @@ import org.springframework.security.web.util.matcher.OrRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
 
-import static org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2ConfigurerUtils.withMultipleIssuerPattern;
+import static org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2ConfigurerUtils.withMultipleIssuersPattern;
 
 /**
  * An {@link AbstractHttpConfigurer} for OAuth 2.0 Authorization Server support.
@@ -315,8 +315,10 @@ public final class OAuth2AuthorizationServerConfigurer
 			configurer.init(httpSecurity);
 			requestMatchers.add(configurer.getRequestMatcher());
 		});
-		requestMatchers.add(new AntPathRequestMatcher(
-				withMultipleIssuerPattern(authorizationServerSettings.getJwkSetEndpoint()), HttpMethod.GET.name()));
+		String jwkSetEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed() ?
+				withMultipleIssuersPattern(authorizationServerSettings.getJwkSetEndpoint()) :
+				authorizationServerSettings.getJwkSetEndpoint();
+		requestMatchers.add(new AntPathRequestMatcher(jwkSetEndpointUri, HttpMethod.GET.name()));
 		this.endpointsMatcher = new OrRequestMatcher(requestMatchers);
 
 		ExceptionHandlingConfigurer<HttpSecurity> exceptionHandling = httpSecurity.getConfigurer(ExceptionHandlingConfigurer.class);
@@ -343,8 +345,11 @@ public final class OAuth2AuthorizationServerConfigurer
 
 		JWKSource<com.nimbusds.jose.proc.SecurityContext> jwkSource = OAuth2ConfigurerUtils.getJwkSource(httpSecurity);
 		if (jwkSource != null) {
-			NimbusJwkSetEndpointFilter jwkSetEndpointFilter = new NimbusJwkSetEndpointFilter(
-					jwkSource, withMultipleIssuerPattern(authorizationServerSettings.getJwkSetEndpoint()));
+			String jwkSetEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed() ?
+					withMultipleIssuersPattern(authorizationServerSettings.getJwkSetEndpoint()) :
+					authorizationServerSettings.getJwkSetEndpoint();
+			NimbusJwkSetEndpointFilter jwkSetEndpointFilter =
+					new NimbusJwkSetEndpointFilter(jwkSource, jwkSetEndpointUri);
 			httpSecurity.addFilterBefore(postProcess(jwkSetEndpointFilter), AbstractPreAuthenticatedProcessingFilter.class);
 		}
 	}

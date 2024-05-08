@@ -63,7 +63,6 @@ public class JwkSetTests {
 	private static final String DEFAULT_JWK_SET_ENDPOINT_URI = "/oauth2/jwks";
 	private static EmbeddedDatabase db;
 	private static JWKSource<SecurityContext> jwkSource;
-	private static AuthorizationServerSettings authorizationServerSettings;
 
 	public final SpringTestContext spring = new SpringTestContext();
 
@@ -73,11 +72,13 @@ public class JwkSetTests {
 	@Autowired
 	private JdbcOperations jdbcOperations;
 
+	@Autowired
+	private AuthorizationServerSettings authorizationServerSettings;
+
 	@BeforeAll
 	public static void init() {
 		JWKSet jwkSet = new JWKSet(TestJwks.DEFAULT_RSA_JWK);
 		jwkSource = (jwkSelector, securityContext) -> jwkSelector.select(jwkSet);
-		authorizationServerSettings = AuthorizationServerSettings.builder().jwkSetEndpoint("/test/jwks").build();
 		db = new EmbeddedDatabaseBuilder()
 				.generateUniqueName(true)
 				.setType(EmbeddedDatabaseType.HSQL)
@@ -181,7 +182,7 @@ public class JwkSetTests {
 
 		@Bean
 		AuthorizationServerSettings authorizationServerSettings() {
-			return authorizationServerSettings;
+			return AuthorizationServerSettings.builder().jwkSetEndpoint("/test/jwks").multipleIssuersAllowed(true).build();
 		}
 	}
 

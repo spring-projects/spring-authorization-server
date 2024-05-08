@@ -70,6 +70,7 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
+import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.test.SpringTestContext;
 import org.springframework.security.oauth2.server.authorization.test.SpringTestContextExtension;
 import org.springframework.test.web.servlet.MockMvc;
@@ -204,7 +205,7 @@ public class OAuth2DeviceCodeGrantTests {
 
 	@Test
 	public void requestWhenDeviceAuthorizationRequestValidThenReturnDeviceAuthorizationResponse() throws Exception {
-		this.spring.register(AuthorizationServerConfiguration.class).autowire();
+		this.spring.register(AuthorizationServerConfigurationWithMultipleIssuersAllowed.class).autowire();
 
 		// @formatter:off
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
@@ -288,7 +289,7 @@ public class OAuth2DeviceCodeGrantTests {
 
 	@Test
 	public void requestWhenDeviceVerificationRequestValidThenDisplaysConsentPage() throws Exception {
-		this.spring.register(AuthorizationServerConfiguration.class).autowire();
+		this.spring.register(AuthorizationServerConfigurationWithMultipleIssuersAllowed.class).autowire();
 
 		// @formatter:off
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
@@ -581,6 +582,17 @@ public class OAuth2DeviceCodeGrantTests {
 		@Bean
 		PasswordEncoder passwordEncoder() {
 			return NoOpPasswordEncoder.getInstance();
+		}
+
+	}
+
+	@EnableWebSecurity
+	@Import(OAuth2AuthorizationServerConfiguration.class)
+	static class AuthorizationServerConfigurationWithMultipleIssuersAllowed extends AuthorizationServerConfiguration {
+
+		@Bean
+		AuthorizationServerSettings authorizationServerSettings() {
+			return AuthorizationServerSettings.builder().multipleIssuersAllowed(true).build();
 		}
 
 	}

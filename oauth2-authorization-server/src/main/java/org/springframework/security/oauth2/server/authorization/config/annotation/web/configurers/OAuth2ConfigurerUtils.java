@@ -57,7 +57,7 @@ final class OAuth2ConfigurerUtils {
 	private OAuth2ConfigurerUtils() {
 	}
 
-	static String withMultipleIssuerPattern(String endpointUri) {
+	static String withMultipleIssuersPattern(String endpointUri) {
 		Assert.hasText(endpointUri, "endpointUri cannot be empty");
 		return endpointUri.startsWith("/") ?
 				"/**" + endpointUri :

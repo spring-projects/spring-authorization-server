@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 the original author or authors.
+ * Copyright 2020-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.springframework.security.oauth2.server.authorization.settings;
 
 import java.util.Map;
 
+import org.springframework.security.oauth2.server.authorization.context.AuthorizationServerContext;
 import org.springframework.util.Assert;
 
 /**
@@ -41,6 +42,25 @@ public final class AuthorizationServerSettings extends AbstractSettings {
 	 */
 	public String getIssuer() {
 		return getSetting(ConfigurationSettingNames.AuthorizationServer.ISSUER);
+	}
+
+	/**
+	 * Returns {@code true} if multiple issuers are allowed per host. The default is {@code false}.
+	 * Using path components in the URL of the issuer identifier enables supporting multiple issuers per host in a multi-tenant hosting configuration.
+	 *
+	 * <p>
+	 * For example:
+	 * <ul>
+	 * <li>{@code https://example.com/issuer1}</li>
+	 * <li>{@code https://example.com/authz/issuer2}</li>
+	 * </ul>
+	 *
+	 * @return {@code true} if multiple issuers are allowed per host, {@code false} otherwise
+	 * @since 1.3
+	 * @see AuthorizationServerContext#getIssuer()
+	 */
+	public boolean isMultipleIssuersAllowed() {
+		return getSetting(ConfigurationSettingNames.AuthorizationServer.MULTIPLE_ISSUERS_ALLOWED);
 	}
 
 	/**
@@ -143,6 +163,7 @@ public final class AuthorizationServerSettings extends AbstractSettings {
 	 */
 	public static Builder builder() {
 		return new Builder()
+				.multipleIssuersAllowed(false)
 				.authorizationEndpoint("/oauth2/authorize")
 				.deviceAuthorizationEndpoint("/oauth2/device_authorization")
 				.deviceVerificationEndpoint("/oauth2/device_verification")
@@ -183,6 +204,31 @@ public final class AuthorizationServerSettings extends AbstractSettings {
 		 */
 		public Builder issuer(String issuer) {
 			return setting(ConfigurationSettingNames.AuthorizationServer.ISSUER, issuer);
+		}
+
+		/**
+		 * Set to {@code true} if multiple issuers are allowed per host.
+		 * Using path components in the URL of the issuer identifier enables supporting multiple issuers per host in a multi-tenant hosting configuration.
+		 *
+		 * <p>
+		 * For example:
+		 * <ul>
+		 * <li>{@code https://example.com/issuer1}</li>
+		 * <li>{@code https://example.com/authz/issuer2}</li>
+		 * </ul>
+		 *
+		 * <p>
+		 * <b>NOTE:</b> Explicitly configuring the issuer identifier via {@link #issuer(String)} forces to a single-tenant configuration.
+		 * Avoid configuring the issuer identifier when using a multi-tenant hosting configuration,
+		 * allowing the issuer identifier to be resolved from the <i>"current"</i> request.
+		 *
+		 * @param multipleIssuersAllowed {@code true} if multiple issuers are allowed per host, {@code false} otherwise
+		 * @return the {@link Builder} for further configuration
+		 * @since 1.3
+		 * @see AuthorizationServerContext#getIssuer()
+		 */
+		public Builder multipleIssuersAllowed(boolean multipleIssuersAllowed) {
+			return setting(ConfigurationSettingNames.AuthorizationServer.MULTIPLE_ISSUERS_ALLOWED, multipleIssuersAllowed);
 		}
 
 		/**
@@ -295,7 +341,12 @@ public final class AuthorizationServerSettings extends AbstractSettings {
 		 */
 		@Override
 		public AuthorizationServerSettings build() {
-			return new AuthorizationServerSettings(getSettings());
+			AuthorizationServerSettings authorizationServerSettings = new AuthorizationServerSettings(getSettings());
+			if (authorizationServerSettings.getIssuer() != null && authorizationServerSettings.isMultipleIssuersAllowed()) {
+				throw new IllegalArgumentException("The issuer identifier (" + authorizationServerSettings.getIssuer() +
+						") cannot be set when isMultipleIssuersAllowed() is true.");
+			}
+			return authorizationServerSettings;
 		}
 
 	}

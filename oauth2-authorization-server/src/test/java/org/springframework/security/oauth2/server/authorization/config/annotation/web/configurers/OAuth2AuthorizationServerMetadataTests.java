@@ -113,7 +113,7 @@ public class OAuth2AuthorizationServerMetadataTests {
 
 	@Test
 	public void requestWhenAuthorizationServerMetadataRequestIncludesIssuerPathThenMetadataResponseHasIssuerPath() throws Exception {
-		this.spring.register(AuthorizationServerConfigurationWithIssuerNotSet.class).autowire();
+		this.spring.register(AuthorizationServerConfigurationWithMultipleIssuersAllowed.class).autowire();
 
 		String host = "https://example.com:8443";
 
@@ -216,11 +216,11 @@ public class OAuth2AuthorizationServerMetadataTests {
 
 	@EnableWebSecurity
 	@Import(OAuth2AuthorizationServerConfiguration.class)
-	static class AuthorizationServerConfigurationWithIssuerNotSet extends AuthorizationServerConfiguration {
+	static class AuthorizationServerConfigurationWithMultipleIssuersAllowed extends AuthorizationServerConfiguration {
 
 		@Bean
 		AuthorizationServerSettings authorizationServerSettings() {
-			return AuthorizationServerSettings.builder().build();
+			return AuthorizationServerSettings.builder().multipleIssuersAllowed(true).build();
 		}
 	}
 

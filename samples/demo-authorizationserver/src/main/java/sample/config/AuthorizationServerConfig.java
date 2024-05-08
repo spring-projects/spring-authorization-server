@@ -93,7 +93,7 @@ public class AuthorizationServerConfig {
 		 */
 		DeviceClientAuthenticationConverter deviceClientAuthenticationConverter =
 				new DeviceClientAuthenticationConverter(
-						"/**" + authorizationServerSettings.getDeviceAuthorizationEndpoint());
+						authorizationServerSettings.getDeviceAuthorizationEndpoint());
 		DeviceClientAuthenticationProvider deviceClientAuthenticationProvider =
 				new DeviceClientAuthenticationProvider(registeredClientRepository);
 

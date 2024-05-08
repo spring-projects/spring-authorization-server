@@ -45,7 +45,7 @@ import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
-import static org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2ConfigurerUtils.withMultipleIssuerPattern;
+import static org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2ConfigurerUtils.withMultipleIssuersPattern;
 
 /**
  * Configurer for the OAuth 2.0 Device Authorization Endpoint.
@@ -167,8 +167,10 @@ public final class OAuth2DeviceAuthorizationEndpointConfigurer extends AbstractO
 	public void init(HttpSecurity builder) {
 		AuthorizationServerSettings authorizationServerSettings =
 				OAuth2ConfigurerUtils.getAuthorizationServerSettings(builder);
-		this.requestMatcher = new AntPathRequestMatcher(
-				withMultipleIssuerPattern(authorizationServerSettings.getDeviceAuthorizationEndpoint()), HttpMethod.POST.name());
+		String deviceAuthorizationEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed() ?
+				withMultipleIssuersPattern(authorizationServerSettings.getDeviceAuthorizationEndpoint()) :
+				authorizationServerSettings.getDeviceAuthorizationEndpoint();
+		this.requestMatcher = new AntPathRequestMatcher(deviceAuthorizationEndpointUri, HttpMethod.POST.name());
 
 		List<AuthenticationProvider> authenticationProviders = createDefaultAuthenticationProviders(builder);
 		if (!this.authenticationProviders.isEmpty()) {
@@ -184,9 +186,11 @@ public final class OAuth2DeviceAuthorizationEndpointConfigurer extends AbstractO
 		AuthenticationManager authenticationManager = builder.getSharedObject(AuthenticationManager.class);
 		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils.getAuthorizationServerSettings(builder);
 
+		String deviceAuthorizationEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed() ?
+				withMultipleIssuersPattern(authorizationServerSettings.getDeviceAuthorizationEndpoint()) :
+				authorizationServerSettings.getDeviceAuthorizationEndpoint();
 		OAuth2DeviceAuthorizationEndpointFilter deviceAuthorizationEndpointFilter =
-				new OAuth2DeviceAuthorizationEndpointFilter(
-						authenticationManager, withMultipleIssuerPattern(authorizationServerSettings.getDeviceAuthorizationEndpoint()));
+				new OAuth2DeviceAuthorizationEndpointFilter(authenticationManager, deviceAuthorizationEndpointUri);
 
 		List<AuthenticationConverter> authenticationConverters = createDefaultAuthenticationConverters();
 		if (!this.deviceAuthorizationRequestConverters.isEmpty()) {

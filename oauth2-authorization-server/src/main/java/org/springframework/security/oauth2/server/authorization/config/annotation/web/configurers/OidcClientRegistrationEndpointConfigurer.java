@@ -46,7 +46,7 @@ import org.springframework.security.web.util.matcher.OrRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
 
-import static org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2ConfigurerUtils.withMultipleIssuerPattern;
+import static org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2ConfigurerUtils.withMultipleIssuersPattern;
 
 /**
  * Configurer for OpenID Connect 1.0 Dynamic Client Registration Endpoint.
@@ -162,7 +162,9 @@ public final class OidcClientRegistrationEndpointConfigurer extends AbstractOAut
 	@Override
 	void init(HttpSecurity httpSecurity) {
 		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils.getAuthorizationServerSettings(httpSecurity);
-		String clientRegistrationEndpointUri = withMultipleIssuerPattern(authorizationServerSettings.getOidcClientRegistrationEndpoint());
+		String clientRegistrationEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed() ?
+				withMultipleIssuersPattern(authorizationServerSettings.getOidcClientRegistrationEndpoint()) :
+				authorizationServerSettings.getOidcClientRegistrationEndpoint();
 		this.requestMatcher = new OrRequestMatcher(
 				new AntPathRequestMatcher(clientRegistrationEndpointUri, HttpMethod.POST.name()),
 				new AntPathRequestMatcher(clientRegistrationEndpointUri, HttpMethod.GET.name())
@@ -182,10 +184,11 @@ public final class OidcClientRegistrationEndpointConfigurer extends AbstractOAut
 		AuthenticationManager authenticationManager = httpSecurity.getSharedObject(AuthenticationManager.class);
 		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils.getAuthorizationServerSettings(httpSecurity);
 
+		String clientRegistrationEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed() ?
+				withMultipleIssuersPattern(authorizationServerSettings.getOidcClientRegistrationEndpoint()) :
+				authorizationServerSettings.getOidcClientRegistrationEndpoint();
 		OidcClientRegistrationEndpointFilter oidcClientRegistrationEndpointFilter =
-				new OidcClientRegistrationEndpointFilter(
-						authenticationManager,
-						withMultipleIssuerPattern(authorizationServerSettings.getOidcClientRegistrationEndpoint()));
+				new OidcClientRegistrationEndpointFilter(authenticationManager, clientRegistrationEndpointUri);
 		List<AuthenticationConverter> authenticationConverters = createDefaultAuthenticationConverters();
 		if (!this.clientRegistrationRequestConverters.isEmpty()) {
 			authenticationConverters.addAll(0, this.clientRegistrationRequestConverters);

@@ -123,7 +123,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ExtendWith(SpringTestContextExtension.class)
 public class OAuth2TokenIntrospectionTests {
 	private static EmbeddedDatabase db;
-	private static AuthorizationServerSettings authorizationServerSettings;
 	private static OAuth2TokenCustomizer<OAuth2TokenClaimsContext> accessTokenCustomizer;
 	private static AuthenticationConverter authenticationConverter;
 	private static Consumer<List<AuthenticationConverter>> authenticationConvertersConsumer;
@@ -150,9 +149,11 @@ public class OAuth2TokenIntrospectionTests {
 	@Autowired
 	private OAuth2AuthorizationService authorizationService;
 
+	@Autowired
+	private AuthorizationServerSettings authorizationServerSettings;
+
 	@BeforeAll
 	public static void init() {
-		authorizationServerSettings = AuthorizationServerSettings.builder().tokenIntrospectionEndpoint("/test/introspect").build();
 		authenticationConverter = mock(AuthenticationConverter.class);
 		authenticationConvertersConsumer = mock(Consumer.class);
 		authenticationProvider = mock(AuthenticationProvider.class);
@@ -225,7 +226,7 @@ public class OAuth2TokenIntrospectionTests {
 		this.authorizationService.save(authorization);
 
 		// @formatter:off
-		MvcResult mvcResult = this.mvc.perform(post(authorizationServerSettings.getTokenIntrospectionEndpoint())
+		MvcResult mvcResult = this.mvc.perform(post(this.authorizationServerSettings.getTokenIntrospectionEndpoint())
 				.params(getTokenIntrospectionRequestParameters(accessToken, OAuth2TokenType.ACCESS_TOKEN))
 				.header(HttpHeaders.AUTHORIZATION, getAuthorizationHeader(introspectRegisteredClient)))
 				.andExpect(status().isOk())
@@ -265,7 +266,7 @@ public class OAuth2TokenIntrospectionTests {
 		this.authorizationService.save(authorization);
 
 		// @formatter:off
-		MvcResult mvcResult = this.mvc.perform(post(authorizationServerSettings.getTokenIntrospectionEndpoint())
+		MvcResult mvcResult = this.mvc.perform(post(this.authorizationServerSettings.getTokenIntrospectionEndpoint())
 				.params(getTokenIntrospectionRequestParameters(refreshToken, OAuth2TokenType.REFRESH_TOKEN))
 				.header(HttpHeaders.AUTHORIZATION, getAuthorizationHeader(introspectRegisteredClient)))
 				.andExpect(status().isOk())
@@ -307,7 +308,7 @@ public class OAuth2TokenIntrospectionTests {
 		this.authorizationService.save(authorization);
 
 		// @formatter:off
-		MvcResult mvcResult = this.mvc.perform(post(authorizationServerSettings.getTokenEndpoint())
+		MvcResult mvcResult = this.mvc.perform(post(this.authorizationServerSettings.getTokenEndpoint())
 				.params(getAuthorizationCodeTokenRequestParameters(authorizedRegisteredClient, authorization))
 				.header(HttpHeaders.AUTHORIZATION, getAuthorizationHeader(authorizedRegisteredClient)))
 				.andExpect(status().isOk())
@@ -321,7 +322,7 @@ public class OAuth2TokenIntrospectionTests {
 		this.registeredClientRepository.save(introspectRegisteredClient);
 
 		// @formatter:off
-		mvcResult = this.mvc.perform(post(authorizationServerSettings.getTokenIntrospectionEndpoint())
+		mvcResult = this.mvc.perform(post(this.authorizationServerSettings.getTokenIntrospectionEndpoint())
 				.params(getTokenIntrospectionRequestParameters(accessToken, OAuth2TokenType.ACCESS_TOKEN))
 				.header(HttpHeaders.AUTHORIZATION, getAuthorizationHeader(introspectRegisteredClient)))
 				.andExpect(status().isOk())
@@ -380,7 +381,7 @@ public class OAuth2TokenIntrospectionTests {
 		when(authenticationProvider.authenticate(any())).thenReturn(tokenIntrospectionAuthentication);
 
 		// @formatter:off
-		this.mvc.perform(post(authorizationServerSettings.getTokenIntrospectionEndpoint())
+		this.mvc.perform(post(this.authorizationServerSettings.getTokenIntrospectionEndpoint())
 				.params(getTokenIntrospectionRequestParameters(accessToken, OAuth2TokenType.ACCESS_TOKEN))
 				.header(HttpHeaders.AUTHORIZATION, getAuthorizationHeader(introspectRegisteredClient)))
 				.andExpect(status().isOk());
@@ -437,7 +438,7 @@ public class OAuth2TokenIntrospectionTests {
 		String issuer = "https://example.com:8443/issuer1";
 
 		// @formatter:off
-		this.mvc.perform(post(issuer.concat(authorizationServerSettings.getTokenIntrospectionEndpoint()))
+		this.mvc.perform(post(issuer.concat(this.authorizationServerSettings.getTokenIntrospectionEndpoint()))
 						.params(getTokenIntrospectionRequestParameters(accessToken, OAuth2TokenType.ACCESS_TOKEN))
 						.header(HttpHeaders.AUTHORIZATION, getAuthorizationHeader(introspectRegisteredClient)))
 				.andExpect(status().isOk());
@@ -517,7 +518,7 @@ public class OAuth2TokenIntrospectionTests {
 
 		@Bean
 		AuthorizationServerSettings authorizationServerSettings() {
-			return authorizationServerSettings;
+			return AuthorizationServerSettings.builder().tokenIntrospectionEndpoint("/test/introspect").build();
 		}
 
 		@Bean
@@ -580,6 +581,12 @@ public class OAuth2TokenIntrospectionTests {
 			return http.build();
 		}
 		// @formatter:on
+
+
+		@Override
+		AuthorizationServerSettings authorizationServerSettings() {
+			return AuthorizationServerSettings.builder().multipleIssuersAllowed(true).tokenIntrospectionEndpoint("/test/introspect").build();
+		}
 
 	}
 

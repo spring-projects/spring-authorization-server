@@ -735,6 +735,7 @@ public class OidcClientRegistrationTests {
 		@Bean
 		AuthorizationServerSettings authorizationServerSettings() {
 			return AuthorizationServerSettings.builder()
+					.multipleIssuersAllowed(true)
 					.build();
 		}
 

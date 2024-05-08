@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 the original author or authors.
+ * Copyright 2020-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ public class AuthorizationServerSettingsTests {
 		AuthorizationServerSettings authorizationServerSettings = AuthorizationServerSettings.builder().build();
 
 		assertThat(authorizationServerSettings.getIssuer()).isNull();
+		assertThat(authorizationServerSettings.isMultipleIssuersAllowed()).isFalse();
 		assertThat(authorizationServerSettings.getAuthorizationEndpoint()).isEqualTo("/oauth2/authorize");
 		assertThat(authorizationServerSettings.getTokenEndpoint()).isEqualTo("/oauth2/token");
 		assertThat(authorizationServerSettings.getJwkSetEndpoint()).isEqualTo("/oauth2/jwks");
@@ -69,6 +70,7 @@ public class AuthorizationServerSettingsTests {
 				.build();
 
 		assertThat(authorizationServerSettings.getIssuer()).isEqualTo(issuer);
+		assertThat(authorizationServerSettings.isMultipleIssuersAllowed()).isFalse();
 		assertThat(authorizationServerSettings.getAuthorizationEndpoint()).isEqualTo(authorizationEndpoint);
 		assertThat(authorizationServerSettings.getTokenEndpoint()).isEqualTo(tokenEndpoint);
 		assertThat(authorizationServerSettings.getJwkSetEndpoint()).isEqualTo(jwkSetEndpoint);
@@ -80,13 +82,37 @@ public class AuthorizationServerSettingsTests {
 	}
 
 	@Test
+	public void buildWhenIssuerSetAndMultipleIssuersAllowedTrueThenThrowIllegalArgumentException() {
+		String issuer = "https://example.com:9000";
+		assertThatIllegalArgumentException()
+				.isThrownBy(() -> AuthorizationServerSettings.builder().issuer(issuer).multipleIssuersAllowed(true).build())
+				.withMessage("The issuer identifier (" + issuer + ") cannot be set when isMultipleIssuersAllowed() is true.");
+	}
+
+	@Test
+	public void buildWhenIssuerNotSetAndMultipleIssuersAllowedTrueThenDefaultsAreSet() {
+		AuthorizationServerSettings authorizationServerSettings = AuthorizationServerSettings.builder().multipleIssuersAllowed(true).build();
+
+		assertThat(authorizationServerSettings.getIssuer()).isNull();
+		assertThat(authorizationServerSettings.isMultipleIssuersAllowed()).isTrue();
+		assertThat(authorizationServerSettings.getAuthorizationEndpoint()).isEqualTo("/oauth2/authorize");
+		assertThat(authorizationServerSettings.getTokenEndpoint()).isEqualTo("/oauth2/token");
+		assertThat(authorizationServerSettings.getJwkSetEndpoint()).isEqualTo("/oauth2/jwks");
+		assertThat(authorizationServerSettings.getTokenRevocationEndpoint()).isEqualTo("/oauth2/revoke");
+		assertThat(authorizationServerSettings.getTokenIntrospectionEndpoint()).isEqualTo("/oauth2/introspect");
+		assertThat(authorizationServerSettings.getOidcClientRegistrationEndpoint()).isEqualTo("/connect/register");
+		assertThat(authorizationServerSettings.getOidcUserInfoEndpoint()).isEqualTo("/userinfo");
+		assertThat(authorizationServerSettings.getOidcLogoutEndpoint()).isEqualTo("/connect/logout");
+	}
+
+	@Test
 	public void settingWhenCustomThenSet() {
 		AuthorizationServerSettings authorizationServerSettings = AuthorizationServerSettings.builder()
 				.setting("name1", "value1")
 				.settings(settings -> settings.put("name2", "value2"))
 				.build();
 
-		assertThat(authorizationServerSettings.getSettings()).hasSize(12);
+		assertThat(authorizationServerSettings.getSettings()).hasSize(13);
 		assertThat(authorizationServerSettings.<String>getSetting("name1")).isEqualTo("value1");
 		assertThat(authorizationServerSettings.<String>getSetting("name2")).isEqualTo("value2");
 	}

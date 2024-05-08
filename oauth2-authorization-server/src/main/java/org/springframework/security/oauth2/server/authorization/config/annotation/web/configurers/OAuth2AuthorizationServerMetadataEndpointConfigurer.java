@@ -21,6 +21,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.ObjectPostProcessor;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationServerMetadata;
+import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.web.OAuth2AuthorizationServerMetadataEndpointFilter;
 import org.springframework.security.web.authentication.preauth.AbstractPreAuthenticatedProcessingFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
@@ -69,8 +70,11 @@ public final class OAuth2AuthorizationServerMetadataEndpointConfigurer extends A
 
 	@Override
 	void init(HttpSecurity httpSecurity) {
-		this.requestMatcher = new AntPathRequestMatcher(
-				"/.well-known/oauth-authorization-server/**", HttpMethod.GET.name());
+		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils.getAuthorizationServerSettings(httpSecurity);
+		String authorizationServerMetadataEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed() ?
+				"/.well-known/oauth-authorization-server/**" :
+				"/.well-known/oauth-authorization-server";
+		this.requestMatcher = new AntPathRequestMatcher(authorizationServerMetadataEndpointUri, HttpMethod.GET.name());
 	}
 
 	@Override

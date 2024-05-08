@@ -531,6 +531,7 @@ public class OidcUserInfoTests {
 		@Bean
 		AuthorizationServerSettings authorizationServerSettings() {
 			return AuthorizationServerSettings.builder()
+					.multipleIssuersAllowed(true)
 					.build();
 		}
 

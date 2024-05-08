@@ -89,6 +89,12 @@ public final class ConfigurationSettingNames {
 		public static final String ISSUER = AUTHORIZATION_SERVER_SETTINGS_NAMESPACE.concat("issuer");
 
 		/**
+		 * Set to {@code true} if multiple issuers are allowed per host.
+		 * @since 1.3
+		 */
+		public static final String MULTIPLE_ISSUERS_ALLOWED = AUTHORIZATION_SERVER_SETTINGS_NAMESPACE.concat("multiple-issuers-allowed");
+
+		/**
 		 * Set the OAuth 2.0 Authorization endpoint.
 		 */
 		public static final String AUTHORIZATION_ENDPOINT = AUTHORIZATION_SERVER_SETTINGS_NAMESPACE.concat("authorization-endpoint");

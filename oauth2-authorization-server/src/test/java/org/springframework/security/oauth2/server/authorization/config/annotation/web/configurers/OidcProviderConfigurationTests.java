@@ -84,7 +84,7 @@ public class OidcProviderConfigurationTests {
 
 	@Test
 	public void requestWhenConfigurationRequestIncludesIssuerPathThenConfigurationResponseHasIssuerPath() throws Exception {
-		this.spring.register(AuthorizationServerConfigurationWithIssuerNotSet.class).autowire();
+		this.spring.register(AuthorizationServerConfigurationWithMultipleIssuersAllowed.class).autowire();
 
 		String issuer = "https://example.com:8443/issuer1";
 		this.mvc.perform(get(issuer.concat(DEFAULT_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI)))
@@ -219,6 +219,7 @@ public class OidcProviderConfigurationTests {
 	}
 
 	@EnableWebSecurity
+	@Configuration(proxyBeanMethods = false)
 	static class AuthorizationServerConfiguration {
 
 		@Bean
@@ -245,11 +246,13 @@ public class OidcProviderConfigurationTests {
 	}
 
 	@EnableWebSecurity
-	static class AuthorizationServerConfigurationWithIssuerNotSet extends AuthorizationServerConfiguration {
+	@Configuration(proxyBeanMethods = false)
+	static class AuthorizationServerConfigurationWithMultipleIssuersAllowed extends AuthorizationServerConfiguration {
 
 		@Bean
 		AuthorizationServerSettings authorizationServerSettings() {
 			return AuthorizationServerSettings.builder()
+					.multipleIssuersAllowed(true)
 					.build();
 		}
 
@@ -315,6 +318,7 @@ public class OidcProviderConfigurationTests {
 	}
 
 	@EnableWebSecurity
+	@Configuration(proxyBeanMethods = false)
 	static class AuthorizationServerConfigurationWithInvalidIssuerUrl extends AuthorizationServerConfiguration {
 
 		@Bean
@@ -324,6 +328,7 @@ public class OidcProviderConfigurationTests {
 	}
 
 	@EnableWebSecurity
+	@Configuration(proxyBeanMethods = false)
 	static class AuthorizationServerConfigurationWithInvalidIssuerUri extends AuthorizationServerConfiguration {
 
 		@Bean
@@ -333,6 +338,7 @@ public class OidcProviderConfigurationTests {
 	}
 
 	@EnableWebSecurity
+	@Configuration(proxyBeanMethods = false)
 	static class AuthorizationServerConfigurationWithIssuerQuery extends AuthorizationServerConfiguration {
 
 		@Bean
@@ -342,6 +348,7 @@ public class OidcProviderConfigurationTests {
 	}
 
 	@EnableWebSecurity
+	@Configuration(proxyBeanMethods = false)
 	static class AuthorizationServerConfigurationWithIssuerFragment extends AuthorizationServerConfiguration {
 
 		@Bean
@@ -351,6 +358,7 @@ public class OidcProviderConfigurationTests {
 	}
 
 	@EnableWebSecurity
+	@Configuration(proxyBeanMethods = false)
 	static class AuthorizationServerConfigurationWithIssuerQueryAndFragment extends AuthorizationServerConfiguration {
 
 		@Bean
@@ -360,6 +368,7 @@ public class OidcProviderConfigurationTests {
 	}
 
 	@EnableWebSecurity
+	@Configuration(proxyBeanMethods = false)
 	static class AuthorizationServerConfigurationWithIssuerEmptyQuery extends AuthorizationServerConfiguration {
 
 		@Bean
@@ -369,6 +378,7 @@ public class OidcProviderConfigurationTests {
 	}
 
 	@EnableWebSecurity
+	@Configuration(proxyBeanMethods = false)
 	static class AuthorizationServerConfigurationWithIssuerEmptyFragment extends AuthorizationServerConfiguration {
 
 		@Bean

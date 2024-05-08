@@ -50,7 +50,7 @@ import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
-import static org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2ConfigurerUtils.withMultipleIssuerPattern;
+import static org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2ConfigurerUtils.withMultipleIssuersPattern;
 
 /**
  * Configurer for the OAuth 2.0 Device Verification Endpoint.
@@ -197,7 +197,9 @@ public final class OAuth2DeviceVerificationEndpointConfigurer extends AbstractOA
 	public void init(HttpSecurity builder) {
 		AuthorizationServerSettings authorizationServerSettings =
 				OAuth2ConfigurerUtils.getAuthorizationServerSettings(builder);
-		String deviceVerificationEndpointUri = withMultipleIssuerPattern(authorizationServerSettings.getDeviceVerificationEndpoint());
+		String deviceVerificationEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed() ?
+				withMultipleIssuersPattern(authorizationServerSettings.getDeviceVerificationEndpoint()) :
+				authorizationServerSettings.getDeviceVerificationEndpoint();
 		this.requestMatcher = new OrRequestMatcher(
 				new AntPathRequestMatcher(deviceVerificationEndpointUri, HttpMethod.GET.name()),
 				new AntPathRequestMatcher(deviceVerificationEndpointUri, HttpMethod.POST.name()));
@@ -217,10 +219,11 @@ public final class OAuth2DeviceVerificationEndpointConfigurer extends AbstractOA
 		AuthorizationServerSettings authorizationServerSettings =
 				OAuth2ConfigurerUtils.getAuthorizationServerSettings(builder);
 
+		String deviceVerificationEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed() ?
+				withMultipleIssuersPattern(authorizationServerSettings.getDeviceVerificationEndpoint()) :
+				authorizationServerSettings.getDeviceVerificationEndpoint();
 		OAuth2DeviceVerificationEndpointFilter deviceVerificationEndpointFilter =
-				new OAuth2DeviceVerificationEndpointFilter(
-						authenticationManager,
-						withMultipleIssuerPattern(authorizationServerSettings.getDeviceVerificationEndpoint()));
+				new OAuth2DeviceVerificationEndpointFilter(authenticationManager, deviceVerificationEndpointUri);
 		List<AuthenticationConverter> authenticationConverters = createDefaultAuthenticationConverters();
 		if (!this.deviceVerificationRequestConverters.isEmpty()) {
 			authenticationConverters.addAll(0, this.deviceVerificationRequestConverters);

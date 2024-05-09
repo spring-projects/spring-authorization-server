@@ -23,8 +23,10 @@ import org.springframework.security.oauth2.server.authorization.settings.Authori
 public class AuthorizationServerSettingsConfig {
 
 	@Bean
-	AuthorizationServerSettings authorizationServerSettings() {
-		return AuthorizationServerSettings.builder().multipleIssuersAllowed(true).build();
+	public AuthorizationServerSettings authorizationServerSettings() {
+		return AuthorizationServerSettings.builder()
+				.multipleIssuersAllowed(true)	// <1>
+				.build();
 	}
 
 }

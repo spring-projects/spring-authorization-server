@@ -105,10 +105,7 @@ final class OAuth2ConfigurerUtils {
 			if (tokenGenerator == null) {
 				JwtGenerator jwtGenerator = getJwtGenerator(httpSecurity);
 				OAuth2AccessTokenGenerator accessTokenGenerator = new OAuth2AccessTokenGenerator();
-				OAuth2TokenCustomizer<OAuth2TokenClaimsContext> accessTokenCustomizer = getAccessTokenCustomizer(httpSecurity);
-				if (accessTokenCustomizer != null) {
-					accessTokenGenerator.setAccessTokenCustomizer(accessTokenCustomizer);
-				}
+				accessTokenGenerator.setAccessTokenCustomizer(getAccessTokenCustomizer(httpSecurity));
 				OAuth2RefreshTokenGenerator refreshTokenGenerator = new OAuth2RefreshTokenGenerator();
 				if (jwtGenerator != null) {
 					tokenGenerator = new DelegatingOAuth2TokenGenerator(
@@ -129,10 +126,7 @@ final class OAuth2ConfigurerUtils {
 			JwtEncoder jwtEncoder = getJwtEncoder(httpSecurity);
 			if (jwtEncoder != null) {
 				jwtGenerator = new JwtGenerator(jwtEncoder);
-				OAuth2TokenCustomizer<JwtEncodingContext> jwtCustomizer = getJwtCustomizer(httpSecurity);
-				if (jwtCustomizer != null) {
-					jwtGenerator.setJwtCustomizer(jwtCustomizer);
-				}
+				jwtGenerator.setJwtCustomizer(getJwtCustomizer(httpSecurity));
 				httpSecurity.setSharedObject(JwtGenerator.class, jwtGenerator);
 			}
 		}
@@ -170,13 +164,29 @@ final class OAuth2ConfigurerUtils {
 	}
 
 	private static OAuth2TokenCustomizer<JwtEncodingContext> getJwtCustomizer(HttpSecurity httpSecurity) {
+		final OAuth2TokenCustomizer<JwtEncodingContext> defaultJwtCustomizer = DefaultOAuth2TokenCustomizers.jwtCustomizer();
 		ResolvableType type = ResolvableType.forClassWithGenerics(OAuth2TokenCustomizer.class, JwtEncodingContext.class);
-		return getOptionalBean(httpSecurity, type);
+		final OAuth2TokenCustomizer<JwtEncodingContext> jwtCustomizer = getOptionalBean(httpSecurity, type);
+		if (jwtCustomizer == null) {
+			return defaultJwtCustomizer;
+		}
+		return (context) -> {
+			defaultJwtCustomizer.customize(context);
+			jwtCustomizer.customize(context);
+		};
 	}
 
 	private static OAuth2TokenCustomizer<OAuth2TokenClaimsContext> getAccessTokenCustomizer(HttpSecurity httpSecurity) {
+		final OAuth2TokenCustomizer<OAuth2TokenClaimsContext> defaultAccessTokenCustomizer = DefaultOAuth2TokenCustomizers.accessTokenCustomizer();
 		ResolvableType type = ResolvableType.forClassWithGenerics(OAuth2TokenCustomizer.class, OAuth2TokenClaimsContext.class);
-		return getOptionalBean(httpSecurity, type);
+		OAuth2TokenCustomizer<OAuth2TokenClaimsContext> accessTokenCustomizer = getOptionalBean(httpSecurity, type);
+		if (accessTokenCustomizer == null) {
+			return defaultAccessTokenCustomizer;
+		}
+		return (context) -> {
+			defaultAccessTokenCustomizer.customize(context);
+			accessTokenCustomizer.customize(context);
+		};
 	}
 
 	static AuthorizationServerSettings getAuthorizationServerSettings(HttpSecurity httpSecurity) {

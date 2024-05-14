@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 the original author or authors.
+ * Copyright 2020-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package org.springframework.security.oauth2.server.authorization.token;
 import java.security.Principal;
 import java.time.Instant;
 import java.util.Collections;
-import java.util.Map;
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -42,10 +41,8 @@ import org.springframework.security.oauth2.server.authorization.client.TestRegis
 import org.springframework.security.oauth2.server.authorization.context.AuthorizationServerContext;
 import org.springframework.security.oauth2.server.authorization.context.TestAuthorizationServerContext;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
-import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
 import org.springframework.security.oauth2.server.authorization.settings.OAuth2TokenFormat;
 import org.springframework.security.oauth2.server.authorization.settings.TokenSettings;
-import org.springframework.security.oauth2.server.authorization.util.TestX509Certificates;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -117,16 +114,10 @@ public class OAuth2AccessTokenGeneratorTests {
 	@Test
 	public void generateWhenReferenceAccessTokenTypeThenReturnAccessToken() {
 		// @formatter:off
-		ClientSettings clientSettings = ClientSettings.builder()
-				.x509CertificateSubjectDN(TestX509Certificates.DEMO_CLIENT_PKI_CERTIFICATE[0].getSubjectX500Principal().getName())
-				.build();
 		TokenSettings tokenSettings = TokenSettings.builder()
 				.accessTokenFormat(OAuth2TokenFormat.REFERENCE)
-				.x509CertificateBoundAccessTokens(true)
 				.build();
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
-				.clientAuthenticationMethod(ClientAuthenticationMethod.TLS_CLIENT_AUTH)
-				.clientSettings(clientSettings)
 				.tokenSettings(tokenSettings)
 				.build();
 		// @formatter:on
@@ -134,8 +125,7 @@ public class OAuth2AccessTokenGeneratorTests {
 		Authentication principal = authorization.getAttribute(Principal.class.getName());
 
 		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(
-				registeredClient, ClientAuthenticationMethod.TLS_CLIENT_AUTH,
-				TestX509Certificates.DEMO_CLIENT_PKI_CERTIFICATE);
+				registeredClient, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
 		OAuth2AuthorizationRequest authorizationRequest = authorization.getAttribute(
 				OAuth2AuthorizationRequest.class.getName());
 		OAuth2AuthorizationCodeAuthenticationToken authentication =
@@ -178,10 +168,6 @@ public class OAuth2AccessTokenGeneratorTests {
 
 		Set<String> scopes = accessTokenClaims.getClaim(OAuth2ParameterNames.SCOPE);
 		assertThat(scopes).isEqualTo(tokenContext.getAuthorizedScopes());
-
-		Map<String, Object> cnf = accessTokenClaims.getClaim("cnf");
-		assertThat(cnf).isNotEmpty();
-		assertThat(cnf.get("x5t#S256")).isNotNull();
 
 		ArgumentCaptor<OAuth2TokenClaimsContext> tokenClaimsContextCaptor = ArgumentCaptor.forClass(OAuth2TokenClaimsContext.class);
 		verify(this.accessTokenCustomizer).customize(tokenClaimsContextCaptor.capture());

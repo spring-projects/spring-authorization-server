@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,10 +53,8 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
 import org.springframework.security.oauth2.server.authorization.context.TestAuthorizationServerContext;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
-import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
 import org.springframework.security.oauth2.server.authorization.settings.OAuth2TokenFormat;
 import org.springframework.security.oauth2.server.authorization.settings.TokenSettings;
-import org.springframework.security.oauth2.server.authorization.util.TestX509Certificates;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -130,26 +128,11 @@ public class JwtGeneratorTests {
 
 	@Test
 	public void generateWhenAccessTokenTypeThenReturnJwt() {
-		// @formatter:off
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
-				.clientAuthenticationMethod(ClientAuthenticationMethod.TLS_CLIENT_AUTH)
-				.clientSettings(
-						ClientSettings.builder()
-								.x509CertificateSubjectDN(TestX509Certificates.DEMO_CLIENT_PKI_CERTIFICATE[0].getSubjectX500Principal().getName())
-								.build()
-				)
-				.tokenSettings(
-						TokenSettings.builder()
-								.x509CertificateBoundAccessTokens(true)
-								.build()
-				)
-				.build();
-		// @formatter:on
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();
 
 		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(
-				registeredClient, ClientAuthenticationMethod.TLS_CLIENT_AUTH,
-				TestX509Certificates.DEMO_CLIENT_PKI_CERTIFICATE);
+				registeredClient, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
 		OAuth2AuthorizationRequest authorizationRequest = authorization.getAttribute(
 				OAuth2AuthorizationRequest.class.getName());
 		OAuth2AuthorizationCodeAuthenticationToken authentication =
@@ -342,17 +325,6 @@ public class JwtGeneratorTests {
 
 			Set<String> scopes = jwtClaimsSet.getClaim(OAuth2ParameterNames.SCOPE);
 			assertThat(scopes).isEqualTo(tokenContext.getAuthorizedScopes());
-
-			OAuth2ClientAuthenticationToken clientAuthentication = (OAuth2ClientAuthenticationToken) tokenContext.getAuthorizationGrant().getPrincipal();
-			if (ClientAuthenticationMethod.TLS_CLIENT_AUTH.equals(clientAuthentication.getClientAuthenticationMethod()) &&
-					tokenContext.getRegisteredClient().getTokenSettings().isX509CertificateBoundAccessTokens()) {
-				Map<String, Object> cnf = jwtClaimsSet.getClaim("cnf");
-				assertThat(cnf).isNotEmpty();
-				assertThat(cnf.get("x5t#S256")).isNotNull();
-			} else {
-				Map<String, Object> cnf = jwtClaimsSet.getClaim("cnf");
-				assertThat(cnf).isEmpty();
-			}
 		} else {
 			assertThat(jwtClaimsSet.<String>getClaim(IdTokenClaimNames.AZP)).isEqualTo(tokenContext.getRegisteredClient().getClientId());
 			if (tokenContext.getAuthorizationGrantType().equals(AuthorizationGrantType.AUTHORIZATION_CODE)) {

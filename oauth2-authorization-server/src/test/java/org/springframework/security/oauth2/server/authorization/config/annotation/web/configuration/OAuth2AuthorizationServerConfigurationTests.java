@@ -35,11 +35,9 @@ public class OAuth2AuthorizationServerConfigurationTests {
 
 	@Test
 	public void assertOrderHighestPrecedence() {
-		Method authorizationServerSecurityFilterChainMethod =
-				ClassUtils.getMethod(
-						OAuth2AuthorizationServerConfiguration.class,
-						"authorizationServerSecurityFilterChain",
-						HttpSecurity.class);
+		Method authorizationServerSecurityFilterChainMethod = ClassUtils.getMethod(
+				OAuth2AuthorizationServerConfiguration.class, "authorizationServerSecurityFilterChain",
+				HttpSecurity.class);
 		Integer order = OrderUtils.getOrder(authorizationServerSecurityFilterChainMethod);
 		assertThat(order).isEqualTo(Ordered.HIGHEST_PRECEDENCE);
 	}

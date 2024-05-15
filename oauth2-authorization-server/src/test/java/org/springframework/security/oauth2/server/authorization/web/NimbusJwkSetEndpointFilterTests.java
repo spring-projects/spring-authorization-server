@@ -51,9 +51,13 @@ import static org.mockito.Mockito.verifyNoInteractions;
  * @author Joe Grandja
  */
 public class NimbusJwkSetEndpointFilterTests {
+
 	private static final String DEFAULT_JWK_SET_ENDPOINT_URI = "/oauth2/jwks";
+
 	private List<JWK> jwkList;
+
 	private JWKSource<SecurityContext> jwkSource;
+
 	private NimbusJwkSetEndpointFilter filter;
 
 	@BeforeEach
@@ -65,16 +69,15 @@ public class NimbusJwkSetEndpointFilterTests {
 
 	@Test
 	public void constructorWhenJwkSourceNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> new NimbusJwkSetEndpointFilter(null))
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("jwkSource cannot be null");
+		assertThatThrownBy(() -> new NimbusJwkSetEndpointFilter(null)).isInstanceOf(IllegalArgumentException.class)
+			.hasMessage("jwkSource cannot be null");
 	}
 
 	@Test
 	public void constructorWhenJwkSetEndpointUriNullThenThrowIllegalArgumentException() {
 		assertThatThrownBy(() -> new NimbusJwkSetEndpointFilter(this.jwkSource, null))
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("jwkSetEndpointUri cannot be empty");
+			.isInstanceOf(IllegalArgumentException.class)
+			.hasMessage("jwkSetEndpointUri cannot be empty");
 	}
 
 	@Test
@@ -158,4 +161,5 @@ public class NimbusJwkSetEndpointFilterTests {
 		JWKSet jwkSet = JWKSet.parse(response.getContentAsString());
 		assertThat(jwkSet.getKeys()).isEmpty();
 	}
+
 }

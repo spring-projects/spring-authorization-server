@@ -63,8 +63,8 @@ final class OAuth2AuthorizationRequestDeserializer extends JsonDeserializer<OAut
 		return builder.build();
 	}
 
-	private Builder getBuilder(JsonParser parser,
-			AuthorizationGrantType authorizationGrantType) throws JsonParseException {
+	private Builder getBuilder(JsonParser parser, AuthorizationGrantType authorizationGrantType)
+			throws JsonParseException {
 		if (AuthorizationGrantType.AUTHORIZATION_CODE.equals(authorizationGrantType)) {
 			return OAuth2AuthorizationRequest.authorizationCode();
 		}

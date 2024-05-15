@@ -48,35 +48,28 @@ public class JwtEncodingContextTests {
 	@Test
 	public void withWhenJwsHeaderNullThenThrowIllegalArgumentException() {
 		assertThatThrownBy(() -> JwtEncodingContext.with(null, TestJwtClaimsSets.jwtClaimsSet()))
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("jwsHeaderBuilder cannot be null");
+			.isInstanceOf(IllegalArgumentException.class)
+			.hasMessage("jwsHeaderBuilder cannot be null");
 	}
 
 	@Test
 	public void withWhenClaimsNullThenThrowIllegalArgumentException() {
 		assertThatThrownBy(() -> JwtEncodingContext.with(TestJwsHeaders.jwsHeader(), null))
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("claimsBuilder cannot be null");
+			.isInstanceOf(IllegalArgumentException.class)
+			.hasMessage("claimsBuilder cannot be null");
 	}
 
 	@Test
 	public void setWhenValueNullThenThrowIllegalArgumentException() {
-		JwtEncodingContext.Builder builder = JwtEncodingContext
-				.with(TestJwsHeaders.jwsHeader(), TestJwtClaimsSets.jwtClaimsSet());
-		assertThatThrownBy(() -> builder.registeredClient(null))
-				.isInstanceOf(IllegalArgumentException.class);
-		assertThatThrownBy(() -> builder.principal(null))
-				.isInstanceOf(IllegalArgumentException.class);
-		assertThatThrownBy(() -> builder.authorization(null))
-				.isInstanceOf(IllegalArgumentException.class);
-		assertThatThrownBy(() -> builder.tokenType(null))
-				.isInstanceOf(IllegalArgumentException.class);
-		assertThatThrownBy(() -> builder.authorizationGrantType(null))
-				.isInstanceOf(IllegalArgumentException.class);
-		assertThatThrownBy(() -> builder.authorizationGrant(null))
-				.isInstanceOf(IllegalArgumentException.class);
-		assertThatThrownBy(() -> builder.put(null, ""))
-				.isInstanceOf(IllegalArgumentException.class);
+		JwtEncodingContext.Builder builder = JwtEncodingContext.with(TestJwsHeaders.jwsHeader(),
+				TestJwtClaimsSets.jwtClaimsSet());
+		assertThatThrownBy(() -> builder.registeredClient(null)).isInstanceOf(IllegalArgumentException.class);
+		assertThatThrownBy(() -> builder.principal(null)).isInstanceOf(IllegalArgumentException.class);
+		assertThatThrownBy(() -> builder.authorization(null)).isInstanceOf(IllegalArgumentException.class);
+		assertThatThrownBy(() -> builder.tokenType(null)).isInstanceOf(IllegalArgumentException.class);
+		assertThatThrownBy(() -> builder.authorizationGrantType(null)).isInstanceOf(IllegalArgumentException.class);
+		assertThatThrownBy(() -> builder.authorizationGrant(null)).isInstanceOf(IllegalArgumentException.class);
+		assertThatThrownBy(() -> builder.put(null, "")).isInstanceOf(IllegalArgumentException.class);
 	}
 
 	@Test
@@ -86,24 +79,23 @@ public class JwtEncodingContextTests {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 		TestingAuthenticationToken principal = new TestingAuthenticationToken("principal", "password");
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization().build();
-		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(
-				registeredClient, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
-		OAuth2AuthorizationRequest authorizationRequest = authorization.getAttribute(
-				OAuth2AuthorizationRequest.class.getName());
-		OAuth2AuthorizationCodeAuthenticationToken authorizationGrant =
-				new OAuth2AuthorizationCodeAuthenticationToken(
-						"code", clientPrincipal, authorizationRequest.getRedirectUri(), null);
+		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient,
+				ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
+		OAuth2AuthorizationRequest authorizationRequest = authorization
+			.getAttribute(OAuth2AuthorizationRequest.class.getName());
+		OAuth2AuthorizationCodeAuthenticationToken authorizationGrant = new OAuth2AuthorizationCodeAuthenticationToken(
+				"code", clientPrincipal, authorizationRequest.getRedirectUri(), null);
 
 		JwtEncodingContext context = JwtEncodingContext.with(headers, claims)
-				.registeredClient(registeredClient)
-				.principal(principal)
-				.authorization(authorization)
-				.tokenType(OAuth2TokenType.ACCESS_TOKEN)
-				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-				.authorizationGrant(authorizationGrant)
-				.put("custom-key-1", "custom-value-1")
-				.context(ctx -> ctx.put("custom-key-2", "custom-value-2"))
-				.build();
+			.registeredClient(registeredClient)
+			.principal(principal)
+			.authorization(authorization)
+			.tokenType(OAuth2TokenType.ACCESS_TOKEN)
+			.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+			.authorizationGrant(authorizationGrant)
+			.put("custom-key-1", "custom-value-1")
+			.context(ctx -> ctx.put("custom-key-2", "custom-value-2"))
+			.build();
 
 		assertThat(context.getJwsHeader()).isEqualTo(headers);
 		assertThat(context.getClaims()).isEqualTo(claims);
@@ -112,7 +104,8 @@ public class JwtEncodingContextTests {
 		assertThat(context.getAuthorization()).isEqualTo(authorization);
 		assertThat(context.getTokenType()).isEqualTo(OAuth2TokenType.ACCESS_TOKEN);
 		assertThat(context.getAuthorizationGrantType()).isEqualTo(AuthorizationGrantType.AUTHORIZATION_CODE);
-		assertThat(context.<OAuth2AuthorizationGrantAuthenticationToken>getAuthorizationGrant()).isEqualTo(authorizationGrant);
+		assertThat(context.<OAuth2AuthorizationGrantAuthenticationToken>getAuthorizationGrant())
+			.isEqualTo(authorizationGrant);
 		assertThat(context.<String>get("custom-key-1")).isEqualTo("custom-value-1");
 		assertThat(context.<String>get("custom-key-2")).isEqualTo("custom-value-2");
 	}

@@ -37,46 +37,47 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * @author Joe Grandja
  */
 public class OAuth2AuthorizationCodeRequestAuthenticationTokenTests {
+
 	private static final String AUTHORIZATION_URI = "https://provider.com/oauth2/authorize";
+
 	private static final RegisteredClient REGISTERED_CLIENT = TestRegisteredClients.registeredClient().build();
-	private static final TestingAuthenticationToken PRINCIPAL = new TestingAuthenticationToken("principalName", "password");
-	private static final OAuth2AuthorizationCode AUTHORIZATION_CODE =
-			new OAuth2AuthorizationCode("code", Instant.now(), Instant.now().plus(5, ChronoUnit.MINUTES));
+
+	private static final TestingAuthenticationToken PRINCIPAL = new TestingAuthenticationToken("principalName",
+			"password");
+
+	private static final OAuth2AuthorizationCode AUTHORIZATION_CODE = new OAuth2AuthorizationCode("code", Instant.now(),
+			Instant.now().plus(5, ChronoUnit.MINUTES));
 
 	@Test
 	public void constructorWhenAuthorizationUriNotProvidedThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() ->
-				new OAuth2AuthorizationCodeRequestAuthenticationToken(null, REGISTERED_CLIENT.getClientId(), PRINCIPAL,
-						null, null, (Set<String>) null, null))
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("authorizationUri cannot be empty");
+		assertThatThrownBy(() -> new OAuth2AuthorizationCodeRequestAuthenticationToken(null,
+				REGISTERED_CLIENT.getClientId(), PRINCIPAL, null, null, (Set<String>) null, null))
+			.isInstanceOf(IllegalArgumentException.class)
+			.hasMessage("authorizationUri cannot be empty");
 	}
 
 	@Test
 	public void constructorWhenClientIdNotProvidedThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() ->
-				new OAuth2AuthorizationCodeRequestAuthenticationToken(AUTHORIZATION_URI, null, PRINCIPAL,
-						null, null, (Set<String>) null, null))
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("clientId cannot be empty");
+		assertThatThrownBy(() -> new OAuth2AuthorizationCodeRequestAuthenticationToken(AUTHORIZATION_URI, null,
+				PRINCIPAL, null, null, (Set<String>) null, null))
+			.isInstanceOf(IllegalArgumentException.class)
+			.hasMessage("clientId cannot be empty");
 	}
 
 	@Test
 	public void constructorWhenPrincipalNotProvidedThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() ->
-				new OAuth2AuthorizationCodeRequestAuthenticationToken(AUTHORIZATION_URI, REGISTERED_CLIENT.getClientId(), null,
-						null, null, (Set<String>) null, null))
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("principal cannot be null");
+		assertThatThrownBy(() -> new OAuth2AuthorizationCodeRequestAuthenticationToken(AUTHORIZATION_URI,
+				REGISTERED_CLIENT.getClientId(), null, null, null, (Set<String>) null, null))
+			.isInstanceOf(IllegalArgumentException.class)
+			.hasMessage("principal cannot be null");
 	}
 
 	@Test
 	public void constructorWhenAuthorizationCodeNotProvidedThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() ->
-				new OAuth2AuthorizationCodeRequestAuthenticationToken(AUTHORIZATION_URI, REGISTERED_CLIENT.getClientId(), PRINCIPAL,
-						null, null, null, (Set<String>) null))
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("authorizationCode cannot be null");
+		assertThatThrownBy(() -> new OAuth2AuthorizationCodeRequestAuthenticationToken(AUTHORIZATION_URI,
+				REGISTERED_CLIENT.getClientId(), PRINCIPAL, null, null, null, (Set<String>) null))
+			.isInstanceOf(IllegalArgumentException.class)
+			.hasMessage("authorizationCode cannot be null");
 	}
 
 	@Test

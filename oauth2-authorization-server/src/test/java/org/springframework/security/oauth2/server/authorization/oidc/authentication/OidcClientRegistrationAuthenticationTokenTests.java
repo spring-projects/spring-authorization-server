@@ -29,36 +29,40 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
  * @author Joe Grandja
  */
 public class OidcClientRegistrationAuthenticationTokenTests {
+
 	private TestingAuthenticationToken principal = new TestingAuthenticationToken("principal", "credentials");
+
 	private OidcClientRegistration clientRegistration = OidcClientRegistration.builder()
-			.redirectUri("https://client.example.com").build();
+		.redirectUri("https://client.example.com")
+		.build();
 
 	@Test
 	public void constructorWhenPrincipalNullThenThrowIllegalArgumentException() {
 		assertThatIllegalArgumentException()
-				.isThrownBy(() -> new OidcClientRegistrationAuthenticationToken(null, this.clientRegistration))
-				.withMessage("principal cannot be null");
+			.isThrownBy(() -> new OidcClientRegistrationAuthenticationToken(null, this.clientRegistration))
+			.withMessage("principal cannot be null");
 	}
 
 	@Test
 	public void constructorWhenClientRegistrationNullThenThrowIllegalArgumentException() {
 		assertThatIllegalArgumentException()
-				.isThrownBy(() -> new OidcClientRegistrationAuthenticationToken(this.principal, (OidcClientRegistration) null))
-				.withMessage("clientRegistration cannot be null");
+			.isThrownBy(
+					() -> new OidcClientRegistrationAuthenticationToken(this.principal, (OidcClientRegistration) null))
+			.withMessage("clientRegistration cannot be null");
 	}
 
 	@Test
 	public void constructorWhenClientIdNullThenThrowIllegalArgumentException() {
 		assertThatIllegalArgumentException()
-				.isThrownBy(() -> new OidcClientRegistrationAuthenticationToken(this.principal, (String) null))
-				.withMessage("clientId cannot be empty");
+			.isThrownBy(() -> new OidcClientRegistrationAuthenticationToken(this.principal, (String) null))
+			.withMessage("clientId cannot be empty");
 	}
 
 	@Test
 	public void constructorWhenClientIdEmptyThenThrowIllegalArgumentException() {
 		assertThatIllegalArgumentException()
-				.isThrownBy(() -> new OidcClientRegistrationAuthenticationToken(this.principal, ""))
-				.withMessage("clientId cannot be empty");
+			.isThrownBy(() -> new OidcClientRegistrationAuthenticationToken(this.principal, ""))
+			.withMessage("clientId cannot be empty");
 	}
 
 	@Test

@@ -31,7 +31,8 @@ import org.springframework.web.util.UriComponentsBuilder;
  * @author Joe Grandja
  * @since 0.4.0
  */
-final class RegisteredClientOidcClientRegistrationConverter implements Converter<RegisteredClient, OidcClientRegistration> {
+final class RegisteredClientOidcClientRegistrationConverter
+		implements Converter<RegisteredClient, OidcClientRegistration> {
 
 	@Override
 	public OidcClientRegistration convert(RegisteredClient registeredClient) {

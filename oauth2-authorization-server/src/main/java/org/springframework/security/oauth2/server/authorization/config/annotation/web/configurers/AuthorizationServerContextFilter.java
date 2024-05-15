@@ -32,7 +32,8 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.util.UriComponentsBuilder;
 
 /**
- * A {@code Filter} that associates the {@link AuthorizationServerContext} to the {@link AuthorizationServerContextHolder}.
+ * A {@code Filter} that associates the {@link AuthorizationServerContext} to the
+ * {@link AuthorizationServerContextHolder}.
  *
  * @author Joe Grandja
  * @since 0.2.2
@@ -41,6 +42,7 @@ import org.springframework.web.util.UriComponentsBuilder;
  * @see AuthorizationServerSettings
  */
 final class AuthorizationServerContextFilter extends OncePerRequestFilter {
+
 	private final AuthorizationServerSettings authorizationServerSettings;
 
 	AuthorizationServerContextFilter(AuthorizationServerSettings authorizationServerSettings) {
@@ -53,21 +55,20 @@ final class AuthorizationServerContextFilter extends OncePerRequestFilter {
 			throws ServletException, IOException {
 
 		try {
-			AuthorizationServerContext authorizationServerContext =
-					new DefaultAuthorizationServerContext(
-							() -> resolveIssuer(this.authorizationServerSettings, request),
-							this.authorizationServerSettings);
+			AuthorizationServerContext authorizationServerContext = new DefaultAuthorizationServerContext(
+					() -> resolveIssuer(this.authorizationServerSettings, request), this.authorizationServerSettings);
 			AuthorizationServerContextHolder.setContext(authorizationServerContext);
 			filterChain.doFilter(request, response);
-		} finally {
+		}
+		finally {
 			AuthorizationServerContextHolder.resetContext();
 		}
 	}
 
-	private static String resolveIssuer(AuthorizationServerSettings authorizationServerSettings, HttpServletRequest request) {
-		return authorizationServerSettings.getIssuer() != null ?
-				authorizationServerSettings.getIssuer() :
-				getContextPath(request);
+	private static String resolveIssuer(AuthorizationServerSettings authorizationServerSettings,
+			HttpServletRequest request) {
+		return authorizationServerSettings.getIssuer() != null ? authorizationServerSettings.getIssuer()
+				: getContextPath(request);
 	}
 
 	private static String getContextPath(HttpServletRequest request) {
@@ -82,10 +83,13 @@ final class AuthorizationServerContextFilter extends OncePerRequestFilter {
 	}
 
 	private static final class DefaultAuthorizationServerContext implements AuthorizationServerContext {
+
 		private final Supplier<String> issuerSupplier;
+
 		private final AuthorizationServerSettings authorizationServerSettings;
 
-		private DefaultAuthorizationServerContext(Supplier<String> issuerSupplier, AuthorizationServerSettings authorizationServerSettings) {
+		private DefaultAuthorizationServerContext(Supplier<String> issuerSupplier,
+				AuthorizationServerSettings authorizationServerSettings) {
 			this.issuerSupplier = issuerSupplier;
 			this.authorizationServerSettings = authorizationServerSettings;
 		}

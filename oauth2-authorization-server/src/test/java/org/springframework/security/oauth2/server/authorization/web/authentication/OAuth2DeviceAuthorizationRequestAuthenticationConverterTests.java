@@ -40,7 +40,9 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
  * @author Steve Riesenberg
  */
 public class OAuth2DeviceAuthorizationRequestAuthenticationConverterTests {
+
 	private static final String AUTHORIZATION_URI = "/oauth2/device_authorization";
+
 	private static final String CLIENT_ID = "client-1";
 
 	private OAuth2DeviceAuthorizationRequestAuthenticationConverter converter;
@@ -80,8 +82,8 @@ public class OAuth2DeviceAuthorizationRequestAuthenticationConverterTests {
 		securityContext.setAuthentication(new TestingAuthenticationToken(CLIENT_ID, null));
 		SecurityContextHolder.setContext(securityContext);
 
-		OAuth2DeviceAuthorizationRequestAuthenticationToken authentication =
-				(OAuth2DeviceAuthorizationRequestAuthenticationToken) this.converter.convert(request);
+		OAuth2DeviceAuthorizationRequestAuthenticationToken authentication = (OAuth2DeviceAuthorizationRequestAuthenticationToken) this.converter
+			.convert(request);
 		assertThat(authentication).isNotNull();
 		assertThat(authentication.getPrincipal()).isInstanceOf(TestingAuthenticationToken.class);
 		assertThat(authentication.getAuthorizationUri()).endsWith(AUTHORIZATION_URI);
@@ -101,15 +103,14 @@ public class OAuth2DeviceAuthorizationRequestAuthenticationConverterTests {
 		securityContext.setAuthentication(new TestingAuthenticationToken(CLIENT_ID, null));
 		SecurityContextHolder.setContext(securityContext);
 
-		OAuth2DeviceAuthorizationRequestAuthenticationToken authentication =
-				(OAuth2DeviceAuthorizationRequestAuthenticationToken) this.converter.convert(request);
+		OAuth2DeviceAuthorizationRequestAuthenticationToken authentication = (OAuth2DeviceAuthorizationRequestAuthenticationToken) this.converter
+			.convert(request);
 		assertThat(authentication).isNotNull();
 		assertThat(authentication.getPrincipal()).isInstanceOf(TestingAuthenticationToken.class);
 		assertThat(authentication.getAuthorizationUri()).endsWith(AUTHORIZATION_URI);
 		assertThat(authentication.getScopes()).containsExactly("message.read", "message.write");
-		assertThat(authentication.getAdditionalParameters())
-				.containsExactly(entry("param-1", "value-1"),
-					entry("param-2", new String[] {"value-1", "value-2"}));
+		assertThat(authentication.getAdditionalParameters()).containsExactly(entry("param-1", "value-1"),
+				entry("param-2", new String[] { "value-1", "value-2" }));
 	}
 
 	private static MockHttpServletRequest createRequest() {
@@ -118,4 +119,5 @@ public class OAuth2DeviceAuthorizationRequestAuthenticationConverterTests {
 		request.setRequestURI(AUTHORIZATION_URI);
 		return request;
 	}
+
 }

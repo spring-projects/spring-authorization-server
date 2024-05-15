@@ -26,17 +26,19 @@ import org.springframework.security.oauth2.server.authorization.AbstractOAuth2Au
 import org.springframework.util.Assert;
 
 /**
- * A representation of an OpenID Provider Configuration Response,
- * which is returned from an Issuer's Discovery Endpoint,
- * and contains a set of claims about the OpenID Provider's configuration.
- * The claims are defined by the OpenID Connect Discovery 1.0 specification.
+ * A representation of an OpenID Provider Configuration Response, which is returned from
+ * an Issuer's Discovery Endpoint, and contains a set of claims about the OpenID
+ * Provider's configuration. The claims are defined by the OpenID Connect Discovery 1.0
+ * specification.
  *
  * @author Daniel Garnier-Moiroux
  * @author Joe Grandja
  * @since 0.1.0
  * @see AbstractOAuth2AuthorizationServerMetadata
  * @see OidcProviderMetadataClaimAccessor
- * @see <a target="_blank" href="https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderConfigurationResponse">4.2. OpenID Provider Configuration Response</a>
+ * @see <a target="_blank" href=
+ * "https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderConfigurationResponse">4.2.
+ * OpenID Provider Configuration Response</a>
  */
 public final class OidcProviderConfiguration extends AbstractOAuth2AuthorizationServerMetadata
 		implements OidcProviderMetadataClaimAccessor {
@@ -47,7 +49,6 @@ public final class OidcProviderConfiguration extends AbstractOAuth2Authorization
 
 	/**
 	 * Constructs a new {@link Builder} with empty claims.
-	 *
 	 * @return the {@link Builder}
 	 */
 	public static Builder builder() {
@@ -56,13 +57,11 @@ public final class OidcProviderConfiguration extends AbstractOAuth2Authorization
 
 	/**
 	 * Constructs a new {@link Builder} with the provided claims.
-	 *
 	 * @param claims the claims to initialize the builder
 	 */
 	public static Builder withClaims(Map<String, Object> claims) {
 		Assert.notEmpty(claims, "claims cannot be empty");
-		return new Builder()
-				.claims(c -> c.putAll(claims));
+		return new Builder().claims(c -> c.putAll(claims));
 	}
 
 	/**
@@ -74,9 +73,8 @@ public final class OidcProviderConfiguration extends AbstractOAuth2Authorization
 		}
 
 		/**
-		 * Add this Subject Type to the collection of {@code subject_types_supported} in the resulting
-		 * {@link OidcProviderConfiguration}, REQUIRED.
-		 *
+		 * Add this Subject Type to the collection of {@code subject_types_supported} in
+		 * the resulting {@link OidcProviderConfiguration}, REQUIRED.
 		 * @param subjectType the Subject Type that the OpenID Provider supports
 		 * @return the {@link Builder} for further configuration
 		 */
@@ -86,8 +84,8 @@ public final class OidcProviderConfiguration extends AbstractOAuth2Authorization
 		}
 
 		/**
-		 * A {@code Consumer} of the Subject Types(s) allowing the ability to add, replace, or remove.
-		 *
+		 * A {@code Consumer} of the Subject Types(s) allowing the ability to add,
+		 * replace, or remove.
 		 * @param subjectTypesConsumer a {@code Consumer} of the Subject Types(s)
 		 * @return the {@link Builder} for further configuration
 		 */
@@ -97,10 +95,11 @@ public final class OidcProviderConfiguration extends AbstractOAuth2Authorization
 		}
 
 		/**
-		 * Add this {@link JwsAlgorithm JWS} signing algorithm to the collection of {@code id_token_signing_alg_values_supported}
-		 * in the resulting {@link OidcProviderConfiguration}, REQUIRED.
-		 *
-		 * @param signingAlgorithm the {@link JwsAlgorithm JWS} signing algorithm supported for the {@link OidcIdToken ID Token}
+		 * Add this {@link JwsAlgorithm JWS} signing algorithm to the collection of
+		 * {@code id_token_signing_alg_values_supported} in the resulting
+		 * {@link OidcProviderConfiguration}, REQUIRED.
+		 * @param signingAlgorithm the {@link JwsAlgorithm JWS} signing algorithm
+		 * supported for the {@link OidcIdToken ID Token}
 		 * @return the {@link Builder} for further configuration
 		 */
 		public Builder idTokenSigningAlgorithm(String signingAlgorithm) {
@@ -109,21 +108,23 @@ public final class OidcProviderConfiguration extends AbstractOAuth2Authorization
 		}
 
 		/**
-		 * A {@code Consumer} of the {@link JwsAlgorithm JWS} signing algorithms for the {@link OidcIdToken ID Token}
-		 * allowing the ability to add, replace, or remove.
-		 *
-		 * @param signingAlgorithmsConsumer a {@code Consumer} of the {@link JwsAlgorithm JWS} signing algorithms for the {@link OidcIdToken ID Token}
+		 * A {@code Consumer} of the {@link JwsAlgorithm JWS} signing algorithms for the
+		 * {@link OidcIdToken ID Token} allowing the ability to add, replace, or remove.
+		 * @param signingAlgorithmsConsumer a {@code Consumer} of the {@link JwsAlgorithm
+		 * JWS} signing algorithms for the {@link OidcIdToken ID Token}
 		 * @return the {@link Builder} for further configuration
 		 */
 		public Builder idTokenSigningAlgorithms(Consumer<List<String>> signingAlgorithmsConsumer) {
-			acceptClaimValues(OidcProviderMetadataClaimNames.ID_TOKEN_SIGNING_ALG_VALUES_SUPPORTED, signingAlgorithmsConsumer);
+			acceptClaimValues(OidcProviderMetadataClaimNames.ID_TOKEN_SIGNING_ALG_VALUES_SUPPORTED,
+					signingAlgorithmsConsumer);
 			return this;
 		}
 
 		/**
-		 * Use this {@code userinfo_endpoint} in the resulting {@link OidcProviderConfiguration}, OPTIONAL.
-		 *
-		 * @param userInfoEndpoint the {@code URL} of the OpenID Connect 1.0 UserInfo Endpoint
+		 * Use this {@code userinfo_endpoint} in the resulting
+		 * {@link OidcProviderConfiguration}, OPTIONAL.
+		 * @param userInfoEndpoint the {@code URL} of the OpenID Connect 1.0 UserInfo
+		 * Endpoint
 		 * @return the {@link Builder} for further configuration
 		 * @since 0.2.2
 		 */
@@ -132,9 +133,10 @@ public final class OidcProviderConfiguration extends AbstractOAuth2Authorization
 		}
 
 		/**
-		 * Use this {@code end_session_endpoint} in the resulting {@link OidcProviderConfiguration}, OPTIONAL.
-		 *
-		 * @param endSessionEndpoint the {@code URL} of the OpenID Connect 1.0 End Session Endpoint
+		 * Use this {@code end_session_endpoint} in the resulting
+		 * {@link OidcProviderConfiguration}, OPTIONAL.
+		 * @param endSessionEndpoint the {@code URL} of the OpenID Connect 1.0 End Session
+		 * Endpoint
 		 * @return the {@link Builder} for further configuration
 		 * @since 1.1
 		 */
@@ -145,11 +147,10 @@ public final class OidcProviderConfiguration extends AbstractOAuth2Authorization
 		/**
 		 * Validate the claims and build the {@link OidcProviderConfiguration}.
 		 * <p>
-		 * The following claims are REQUIRED:
-		 * {@code issuer}, {@code authorization_endpoint}, {@code token_endpoint}, {@code jwks_uri},
+		 * The following claims are REQUIRED: {@code issuer},
+		 * {@code authorization_endpoint}, {@code token_endpoint}, {@code jwks_uri},
 		 * {@code response_types_supported}, {@code subject_types_supported} and
 		 * {@code id_token_signing_alg_values_supported}.
-		 *
 		 * @return the {@link OidcProviderConfiguration}
 		 */
 		@Override
@@ -162,17 +163,27 @@ public final class OidcProviderConfiguration extends AbstractOAuth2Authorization
 		protected void validate() {
 			super.validate();
 			Assert.notNull(getClaims().get(OidcProviderMetadataClaimNames.JWKS_URI), "jwksUri cannot be null");
-			Assert.notNull(getClaims().get(OidcProviderMetadataClaimNames.SUBJECT_TYPES_SUPPORTED), "subjectTypes cannot be null");
-			Assert.isInstanceOf(List.class, getClaims().get(OidcProviderMetadataClaimNames.SUBJECT_TYPES_SUPPORTED), "subjectTypes must be of type List");
-			Assert.notEmpty((List<?>) getClaims().get(OidcProviderMetadataClaimNames.SUBJECT_TYPES_SUPPORTED), "subjectTypes cannot be empty");
-			Assert.notNull(getClaims().get(OidcProviderMetadataClaimNames.ID_TOKEN_SIGNING_ALG_VALUES_SUPPORTED), "idTokenSigningAlgorithms cannot be null");
-			Assert.isInstanceOf(List.class, getClaims().get(OidcProviderMetadataClaimNames.ID_TOKEN_SIGNING_ALG_VALUES_SUPPORTED), "idTokenSigningAlgorithms must be of type List");
-			Assert.notEmpty((List<?>) getClaims().get(OidcProviderMetadataClaimNames.ID_TOKEN_SIGNING_ALG_VALUES_SUPPORTED), "idTokenSigningAlgorithms cannot be empty");
+			Assert.notNull(getClaims().get(OidcProviderMetadataClaimNames.SUBJECT_TYPES_SUPPORTED),
+					"subjectTypes cannot be null");
+			Assert.isInstanceOf(List.class, getClaims().get(OidcProviderMetadataClaimNames.SUBJECT_TYPES_SUPPORTED),
+					"subjectTypes must be of type List");
+			Assert.notEmpty((List<?>) getClaims().get(OidcProviderMetadataClaimNames.SUBJECT_TYPES_SUPPORTED),
+					"subjectTypes cannot be empty");
+			Assert.notNull(getClaims().get(OidcProviderMetadataClaimNames.ID_TOKEN_SIGNING_ALG_VALUES_SUPPORTED),
+					"idTokenSigningAlgorithms cannot be null");
+			Assert.isInstanceOf(List.class,
+					getClaims().get(OidcProviderMetadataClaimNames.ID_TOKEN_SIGNING_ALG_VALUES_SUPPORTED),
+					"idTokenSigningAlgorithms must be of type List");
+			Assert.notEmpty(
+					(List<?>) getClaims().get(OidcProviderMetadataClaimNames.ID_TOKEN_SIGNING_ALG_VALUES_SUPPORTED),
+					"idTokenSigningAlgorithms cannot be empty");
 			if (getClaims().get(OidcProviderMetadataClaimNames.USER_INFO_ENDPOINT) != null) {
-				validateURL(getClaims().get(OidcProviderMetadataClaimNames.USER_INFO_ENDPOINT), "userInfoEndpoint must be a valid URL");
+				validateURL(getClaims().get(OidcProviderMetadataClaimNames.USER_INFO_ENDPOINT),
+						"userInfoEndpoint must be a valid URL");
 			}
 			if (getClaims().get(OidcProviderMetadataClaimNames.END_SESSION_ENDPOINT) != null) {
-				validateURL(getClaims().get(OidcProviderMetadataClaimNames.END_SESSION_ENDPOINT), "endSessionEndpoint must be a valid URL");
+				validateURL(getClaims().get(OidcProviderMetadataClaimNames.END_SESSION_ENDPOINT),
+						"endSessionEndpoint must be a valid URL");
 			}
 		}
 
@@ -194,4 +205,5 @@ public final class OidcProviderConfiguration extends AbstractOAuth2Authorization
 		}
 
 	}
+
 }

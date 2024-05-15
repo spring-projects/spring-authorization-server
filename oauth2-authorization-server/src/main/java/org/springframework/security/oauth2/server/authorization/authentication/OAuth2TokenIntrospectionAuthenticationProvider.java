@@ -50,19 +50,25 @@ import static org.springframework.security.oauth2.server.authorization.authentic
  * @see OAuth2TokenIntrospectionAuthenticationToken
  * @see RegisteredClientRepository
  * @see OAuth2AuthorizationService
- * @see <a target="_blank" href="https://tools.ietf.org/html/rfc7662#section-2.1">Section 2.1 Introspection Request</a>
+ * @see <a target="_blank" href="https://tools.ietf.org/html/rfc7662#section-2.1">Section
+ * 2.1 Introspection Request</a>
  */
 public final class OAuth2TokenIntrospectionAuthenticationProvider implements AuthenticationProvider {
+
 	private static final TypeDescriptor OBJECT_TYPE_DESCRIPTOR = TypeDescriptor.valueOf(Object.class);
-	private static final TypeDescriptor LIST_STRING_TYPE_DESCRIPTOR =
-			TypeDescriptor.collection(List.class, TypeDescriptor.valueOf(String.class));
+
+	private static final TypeDescriptor LIST_STRING_TYPE_DESCRIPTOR = TypeDescriptor.collection(List.class,
+			TypeDescriptor.valueOf(String.class));
+
 	private final Log logger = LogFactory.getLog(getClass());
+
 	private final RegisteredClientRepository registeredClientRepository;
+
 	private final OAuth2AuthorizationService authorizationService;
 
 	/**
-	 * Constructs an {@code OAuth2TokenIntrospectionAuthenticationProvider} using the provided parameters.
-	 *
+	 * Constructs an {@code OAuth2TokenIntrospectionAuthenticationProvider} using the
+	 * provided parameters.
 	 * @param registeredClientRepository the repository of registered clients
 	 * @param authorizationService the authorization service
 	 */
@@ -76,14 +82,13 @@ public final class OAuth2TokenIntrospectionAuthenticationProvider implements Aut
 
 	@Override
 	public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-		OAuth2TokenIntrospectionAuthenticationToken tokenIntrospectionAuthentication =
-				(OAuth2TokenIntrospectionAuthenticationToken) authentication;
+		OAuth2TokenIntrospectionAuthenticationToken tokenIntrospectionAuthentication = (OAuth2TokenIntrospectionAuthenticationToken) authentication;
 
-		OAuth2ClientAuthenticationToken clientPrincipal =
-				getAuthenticatedClientElseThrowInvalidClient(tokenIntrospectionAuthentication);
+		OAuth2ClientAuthenticationToken clientPrincipal = getAuthenticatedClientElseThrowInvalidClient(
+				tokenIntrospectionAuthentication);
 
-		OAuth2Authorization authorization = this.authorizationService.findByToken(
-				tokenIntrospectionAuthentication.getToken(), null);
+		OAuth2Authorization authorization = this.authorizationService
+			.findByToken(tokenIntrospectionAuthentication.getToken(), null);
 		if (authorization == null) {
 			if (this.logger.isTraceEnabled()) {
 				this.logger.trace("Did not authenticate token introspection request since token was not found");
@@ -96,8 +101,8 @@ public final class OAuth2TokenIntrospectionAuthenticationProvider implements Aut
 			this.logger.trace("Retrieved authorization with token");
 		}
 
-		OAuth2Authorization.Token<OAuth2Token> authorizedToken =
-				authorization.getToken(tokenIntrospectionAuthentication.getToken());
+		OAuth2Authorization.Token<OAuth2Token> authorizedToken = authorization
+			.getToken(tokenIntrospectionAuthentication.getToken());
 		if (!authorizedToken.isActive()) {
 			if (this.logger.isTraceEnabled()) {
 				this.logger.trace("Did not introspect token since not active");
@@ -106,7 +111,8 @@ public final class OAuth2TokenIntrospectionAuthenticationProvider implements Aut
 					clientPrincipal, OAuth2TokenIntrospection.builder().build());
 		}
 
-		RegisteredClient authorizedClient = this.registeredClientRepository.findById(authorization.getRegisteredClientId());
+		RegisteredClient authorizedClient = this.registeredClientRepository
+			.findById(authorization.getRegisteredClientId());
 		OAuth2TokenIntrospection tokenClaims = withActiveTokenClaims(authorizedToken, authorizedClient);
 
 		if (this.logger.isTraceEnabled()) {
@@ -129,7 +135,8 @@ public final class OAuth2TokenIntrospectionAuthenticationProvider implements Aut
 		if (!CollectionUtils.isEmpty(authorizedToken.getClaims())) {
 			Map<String, Object> claims = convertClaimsIfNecessary(authorizedToken.getClaims());
 			tokenClaims = OAuth2TokenIntrospection.withClaims(claims).active(true);
-		} else {
+		}
+		else {
 			tokenClaims = OAuth2TokenIntrospection.builder(true);
 		}
 
@@ -158,8 +165,7 @@ public final class OAuth2TokenIntrospectionAuthenticationProvider implements Aut
 
 		Object value = claims.get(OAuth2TokenIntrospectionClaimNames.ISS);
 		if (value != null && !(value instanceof URL)) {
-			URL convertedValue = ClaimConversionService.getSharedInstance()
-					.convert(value, URL.class);
+			URL convertedValue = ClaimConversionService.getSharedInstance().convert(value, URL.class);
 			if (convertedValue != null) {
 				convertedClaims.put(OAuth2TokenIntrospectionClaimNames.ISS, convertedValue);
 			}
@@ -168,7 +174,7 @@ public final class OAuth2TokenIntrospectionAuthenticationProvider implements Aut
 		value = claims.get(OAuth2TokenIntrospectionClaimNames.SCOPE);
 		if (value != null && !(value instanceof List)) {
 			Object convertedValue = ClaimConversionService.getSharedInstance()
-					.convert(value, OBJECT_TYPE_DESCRIPTOR, LIST_STRING_TYPE_DESCRIPTOR);
+				.convert(value, OBJECT_TYPE_DESCRIPTOR, LIST_STRING_TYPE_DESCRIPTOR);
 			if (convertedValue != null) {
 				convertedClaims.put(OAuth2TokenIntrospectionClaimNames.SCOPE, convertedValue);
 			}
@@ -177,7 +183,7 @@ public final class OAuth2TokenIntrospectionAuthenticationProvider implements Aut
 		value = claims.get(OAuth2TokenIntrospectionClaimNames.AUD);
 		if (value != null && !(value instanceof List)) {
 			Object convertedValue = ClaimConversionService.getSharedInstance()
-					.convert(value, OBJECT_TYPE_DESCRIPTOR, LIST_STRING_TYPE_DESCRIPTOR);
+				.convert(value, OBJECT_TYPE_DESCRIPTOR, LIST_STRING_TYPE_DESCRIPTOR);
 			if (convertedValue != null) {
 				convertedClaims.put(OAuth2TokenIntrospectionClaimNames.AUD, convertedValue);
 			}

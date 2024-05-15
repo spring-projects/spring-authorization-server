@@ -35,25 +35,32 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * @author Daniel Garnier-Moiroux
  */
 public class OAuth2AuthorizationCodeAuthenticationTokenTests {
+
 	private String code = "code";
+
 	private RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
-	private OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(
-			this.registeredClient, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, this.registeredClient.getClientSecret());
+
+	private OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(this.registeredClient,
+			ClientAuthenticationMethod.CLIENT_SECRET_BASIC, this.registeredClient.getClientSecret());
+
 	private String redirectUri = "redirectUri";
+
 	private Map<String, Object> additionalParameters = Collections.singletonMap("param1", "value1");
 
 	@Test
 	public void constructorWhenCodeNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> new OAuth2AuthorizationCodeAuthenticationToken(null, this.clientPrincipal, this.redirectUri, null))
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("code cannot be empty");
+		assertThatThrownBy(() -> new OAuth2AuthorizationCodeAuthenticationToken(null, this.clientPrincipal,
+				this.redirectUri, null))
+			.isInstanceOf(IllegalArgumentException.class)
+			.hasMessage("code cannot be empty");
 	}
 
 	@Test
 	public void constructorWhenClientPrincipalNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> new OAuth2AuthorizationCodeAuthenticationToken(this.code, null, this.redirectUri, null))
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("clientPrincipal cannot be null");
+		assertThatThrownBy(
+				() -> new OAuth2AuthorizationCodeAuthenticationToken(this.code, null, this.redirectUri, null))
+			.isInstanceOf(IllegalArgumentException.class)
+			.hasMessage("clientPrincipal cannot be null");
 	}
 
 	@Test
@@ -73,10 +80,11 @@ public class OAuth2AuthorizationCodeAuthenticationTokenTests {
 		OAuth2AuthorizationCodeAuthenticationToken authentication = new OAuth2AuthorizationCodeAuthenticationToken(
 				this.code, this.clientPrincipal, this.redirectUri, this.additionalParameters);
 		assertThatThrownBy(() -> authentication.getAdditionalParameters().put("another_key", 1))
-				.isInstanceOf(UnsupportedOperationException.class);
+			.isInstanceOf(UnsupportedOperationException.class);
 		assertThatThrownBy(() -> authentication.getAdditionalParameters().remove("some_key"))
-				.isInstanceOf(UnsupportedOperationException.class);
+			.isInstanceOf(UnsupportedOperationException.class);
 		assertThatThrownBy(() -> authentication.getAdditionalParameters().clear())
-				.isInstanceOf(UnsupportedOperationException.class);
+			.isInstanceOf(UnsupportedOperationException.class);
 	}
+
 }

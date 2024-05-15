@@ -15,7 +15,6 @@
  */
 package org.springframework.security.oauth2.server.authorization.http.converter;
 
-
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Map;
@@ -41,6 +40,7 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
  * @author Daniel Garnier-Moiroux
  */
 public class OAuth2AuthorizationServerMetadataHttpMessageConverterTests {
+
 	private final OAuth2AuthorizationServerMetadataHttpMessageConverter messageConverter = new OAuth2AuthorizationServerMetadataHttpMessageConverter();
 
 	@Test
@@ -50,12 +50,14 @@ public class OAuth2AuthorizationServerMetadataHttpMessageConverterTests {
 
 	@Test
 	public void setAuthorizationServerMetadataParametersConverterWhenConverterIsNullThenThrowIllegalArgumentException() {
-		assertThatIllegalArgumentException().isThrownBy(() -> this.messageConverter.setAuthorizationServerMetadataParametersConverter(null));
+		assertThatIllegalArgumentException()
+			.isThrownBy(() -> this.messageConverter.setAuthorizationServerMetadataParametersConverter(null));
 	}
 
 	@Test
 	public void setAuthorizationServerMetadataConverterWhenConverterIsNullThenThrowIllegalArgumentException() {
-		assertThatIllegalArgumentException().isThrownBy(() -> this.messageConverter.setAuthorizationServerMetadataConverter(null));
+		assertThatIllegalArgumentException()
+			.isThrownBy(() -> this.messageConverter.setAuthorizationServerMetadataConverter(null));
 	}
 
 	@Test
@@ -68,13 +70,16 @@ public class OAuth2AuthorizationServerMetadataHttpMessageConverterTests {
 				+ "		\"response_types_supported\": [\"code\"]\n"
 				+ "}\n";
 		// @formatter:on
-		MockClientHttpResponse response = new MockClientHttpResponse(authorizationServerMetadataResponse.getBytes(), HttpStatus.OK);
+		MockClientHttpResponse response = new MockClientHttpResponse(authorizationServerMetadataResponse.getBytes(),
+				HttpStatus.OK);
 		OAuth2AuthorizationServerMetadata authorizationServerMetadata = this.messageConverter
-				.readInternal(OAuth2AuthorizationServerMetadata.class, response);
+			.readInternal(OAuth2AuthorizationServerMetadata.class, response);
 
 		assertThat(authorizationServerMetadata.getIssuer()).isEqualTo(new URL("https://example.com"));
-		assertThat(authorizationServerMetadata.getAuthorizationEndpoint()).isEqualTo(new URL("https://example.com/oauth2/authorize"));
-		assertThat(authorizationServerMetadata.getTokenEndpoint()).isEqualTo(new URL("https://example.com/oauth2/token"));
+		assertThat(authorizationServerMetadata.getAuthorizationEndpoint())
+			.isEqualTo(new URL("https://example.com/oauth2/authorize"));
+		assertThat(authorizationServerMetadata.getTokenEndpoint())
+			.isEqualTo(new URL("https://example.com/oauth2/token"));
 		assertThat(authorizationServerMetadata.getTokenEndpointAuthenticationMethods()).isNull();
 		assertThat(authorizationServerMetadata.getJwkSetUrl()).isNull();
 		assertThat(authorizationServerMetadata.getResponseTypes()).containsExactly("code");
@@ -108,26 +113,36 @@ public class OAuth2AuthorizationServerMetadataHttpMessageConverterTests {
 				+ "		\"custom_collection_claim\": [\"value1\", \"value2\"]\n"
 				+ "}\n";
 		// @formatter:on
-		MockClientHttpResponse response = new MockClientHttpResponse(authorizationServerMetadataResponse.getBytes(), HttpStatus.OK);
+		MockClientHttpResponse response = new MockClientHttpResponse(authorizationServerMetadataResponse.getBytes(),
+				HttpStatus.OK);
 		OAuth2AuthorizationServerMetadata authorizationServerMetadata = this.messageConverter
-				.readInternal(OAuth2AuthorizationServerMetadata.class, response);
+			.readInternal(OAuth2AuthorizationServerMetadata.class, response);
 
 		assertThat(authorizationServerMetadata.getClaims()).hasSize(15);
 		assertThat(authorizationServerMetadata.getIssuer()).isEqualTo(new URL("https://example.com"));
-		assertThat(authorizationServerMetadata.getAuthorizationEndpoint()).isEqualTo(new URL("https://example.com/oauth2/authorize"));
-		assertThat(authorizationServerMetadata.getTokenEndpoint()).isEqualTo(new URL("https://example.com/oauth2/token"));
-		assertThat(authorizationServerMetadata.getTokenEndpointAuthenticationMethods()).containsExactly(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue());
+		assertThat(authorizationServerMetadata.getAuthorizationEndpoint())
+			.isEqualTo(new URL("https://example.com/oauth2/authorize"));
+		assertThat(authorizationServerMetadata.getTokenEndpoint())
+			.isEqualTo(new URL("https://example.com/oauth2/token"));
+		assertThat(authorizationServerMetadata.getTokenEndpointAuthenticationMethods())
+			.containsExactly(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue());
 		assertThat(authorizationServerMetadata.getJwkSetUrl()).isEqualTo(new URL("https://example.com/oauth2/jwks"));
 		assertThat(authorizationServerMetadata.getScopes()).containsExactly("openid");
 		assertThat(authorizationServerMetadata.getResponseTypes()).containsExactly("code");
-		assertThat(authorizationServerMetadata.getGrantTypes()).containsExactlyInAnyOrder("authorization_code", "client_credentials");
-		assertThat(authorizationServerMetadata.getTokenRevocationEndpoint()).isEqualTo(new URL("https://example.com/oauth2/revoke"));
-		assertThat(authorizationServerMetadata.getTokenRevocationEndpointAuthenticationMethods()).containsExactly(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue());
-		assertThat(authorizationServerMetadata.getTokenIntrospectionEndpoint()).isEqualTo(new URL("https://example.com/oauth2/introspect"));
-		assertThat(authorizationServerMetadata.getTokenIntrospectionEndpointAuthenticationMethods()).containsExactly(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue());
+		assertThat(authorizationServerMetadata.getGrantTypes()).containsExactlyInAnyOrder("authorization_code",
+				"client_credentials");
+		assertThat(authorizationServerMetadata.getTokenRevocationEndpoint())
+			.isEqualTo(new URL("https://example.com/oauth2/revoke"));
+		assertThat(authorizationServerMetadata.getTokenRevocationEndpointAuthenticationMethods())
+			.containsExactly(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue());
+		assertThat(authorizationServerMetadata.getTokenIntrospectionEndpoint())
+			.isEqualTo(new URL("https://example.com/oauth2/introspect"));
+		assertThat(authorizationServerMetadata.getTokenIntrospectionEndpointAuthenticationMethods())
+			.containsExactly(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue());
 		assertThat(authorizationServerMetadata.getCodeChallengeMethods()).containsExactly("S256");
 		assertThat(authorizationServerMetadata.getClaimAsString("custom_claim")).isEqualTo("value");
-		assertThat(authorizationServerMetadata.getClaimAsStringList("custom_collection_claim")).containsExactlyInAnyOrder("value1", "value2");
+		assertThat(authorizationServerMetadata.getClaimAsStringList("custom_collection_claim"))
+			.containsExactlyInAnyOrder("value1", "value2");
 	}
 
 	@Test
@@ -139,60 +154,68 @@ public class OAuth2AuthorizationServerMetadataHttpMessageConverterTests {
 		MockClientHttpResponse response = new MockClientHttpResponse("{}".getBytes(), HttpStatus.OK);
 
 		assertThatExceptionOfType(HttpMessageNotReadableException.class)
-				.isThrownBy(() -> this.messageConverter.readInternal(OAuth2AuthorizationServerMetadata.class, response))
-				.withMessageContaining("An error occurred reading the OAuth 2.0 Authorization Server Metadata")
-				.withMessageContaining(errorMessage);
+			.isThrownBy(() -> this.messageConverter.readInternal(OAuth2AuthorizationServerMetadata.class, response))
+			.withMessageContaining("An error occurred reading the OAuth 2.0 Authorization Server Metadata")
+			.withMessageContaining(errorMessage);
 	}
 
 	@Test
 	public void readInternalWhenInvalidOAuth2AuthorizationServerMetadataThenThrowException() {
 		String authorizationServerMetadataResponse = "{ \"issuer\": null }";
-		MockClientHttpResponse response = new MockClientHttpResponse(authorizationServerMetadataResponse.getBytes(), HttpStatus.OK);
+		MockClientHttpResponse response = new MockClientHttpResponse(authorizationServerMetadataResponse.getBytes(),
+				HttpStatus.OK);
 
 		assertThatExceptionOfType(HttpMessageNotReadableException.class)
-				.isThrownBy(() -> this.messageConverter.readInternal(OAuth2AuthorizationServerMetadata.class, response))
-				.withMessageContaining("An error occurred reading the OAuth 2.0 Authorization Server Metadata")
-				.withMessageContaining("issuer cannot be null");
+			.isThrownBy(() -> this.messageConverter.readInternal(OAuth2AuthorizationServerMetadata.class, response))
+			.withMessageContaining("An error occurred reading the OAuth 2.0 Authorization Server Metadata")
+			.withMessageContaining("issuer cannot be null");
 	}
 
 	@Test
 	public void writeInternalWhenOAuth2AuthorizationServerMetadataThenSuccess() {
-		OAuth2AuthorizationServerMetadata authorizationServerMetadata =
-				OAuth2AuthorizationServerMetadata.builder()
-						.issuer("https://example.com")
-						.authorizationEndpoint("https://example.com/oauth2/authorize")
-						.tokenEndpoint("https://example.com/oauth2/token")
-						.tokenEndpointAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue())
-						.jwkSetUrl("https://example.com/oauth2/jwks")
-						.scope("openid")
-						.responseType("code")
-						.grantType("authorization_code")
-						.grantType("client_credentials")
-						.tokenRevocationEndpoint("https://example.com/oauth2/revoke")
-						.tokenRevocationEndpointAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue())
-						.tokenIntrospectionEndpoint("https://example.com/oauth2/introspect")
-						.tokenIntrospectionEndpointAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue())
-						.codeChallengeMethod("S256")
-						.claim("custom_claim", "value")
-						.claim("custom_collection_claim", Arrays.asList("value1", "value2"))
-						.build();
+		OAuth2AuthorizationServerMetadata authorizationServerMetadata = OAuth2AuthorizationServerMetadata.builder()
+			.issuer("https://example.com")
+			.authorizationEndpoint("https://example.com/oauth2/authorize")
+			.tokenEndpoint("https://example.com/oauth2/token")
+			.tokenEndpointAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue())
+			.jwkSetUrl("https://example.com/oauth2/jwks")
+			.scope("openid")
+			.responseType("code")
+			.grantType("authorization_code")
+			.grantType("client_credentials")
+			.tokenRevocationEndpoint("https://example.com/oauth2/revoke")
+			.tokenRevocationEndpointAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue())
+			.tokenIntrospectionEndpoint("https://example.com/oauth2/introspect")
+			.tokenIntrospectionEndpointAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue())
+			.codeChallengeMethod("S256")
+			.claim("custom_claim", "value")
+			.claim("custom_collection_claim", Arrays.asList("value1", "value2"))
+			.build();
 		MockHttpOutputMessage outputMessage = new MockHttpOutputMessage();
 
 		this.messageConverter.writeInternal(authorizationServerMetadata, outputMessage);
 
 		String authorizationServerMetadataResponse = outputMessage.getBodyAsString();
 		assertThat(authorizationServerMetadataResponse).contains("\"issuer\":\"https://example.com\"");
-		assertThat(authorizationServerMetadataResponse).contains("\"authorization_endpoint\":\"https://example.com/oauth2/authorize\"");
-		assertThat(authorizationServerMetadataResponse).contains("\"token_endpoint\":\"https://example.com/oauth2/token\"");
-		assertThat(authorizationServerMetadataResponse).contains("\"token_endpoint_auth_methods_supported\":[\"client_secret_basic\"]");
+		assertThat(authorizationServerMetadataResponse)
+			.contains("\"authorization_endpoint\":\"https://example.com/oauth2/authorize\"");
+		assertThat(authorizationServerMetadataResponse)
+			.contains("\"token_endpoint\":\"https://example.com/oauth2/token\"");
+		assertThat(authorizationServerMetadataResponse)
+			.contains("\"token_endpoint_auth_methods_supported\":[\"client_secret_basic\"]");
 		assertThat(authorizationServerMetadataResponse).contains("\"jwks_uri\":\"https://example.com/oauth2/jwks\"");
 		assertThat(authorizationServerMetadataResponse).contains("\"scopes_supported\":[\"openid\"]");
 		assertThat(authorizationServerMetadataResponse).contains("\"response_types_supported\":[\"code\"]");
-		assertThat(authorizationServerMetadataResponse).contains("\"grant_types_supported\":[\"authorization_code\",\"client_credentials\"]");
-		assertThat(authorizationServerMetadataResponse).contains("\"revocation_endpoint\":\"https://example.com/oauth2/revoke\"");
-		assertThat(authorizationServerMetadataResponse).contains("\"revocation_endpoint_auth_methods_supported\":[\"client_secret_basic\"]");
-		assertThat(authorizationServerMetadataResponse).contains("\"introspection_endpoint\":\"https://example.com/oauth2/introspect\"");
-		assertThat(authorizationServerMetadataResponse).contains("\"introspection_endpoint_auth_methods_supported\":[\"client_secret_basic\"]");
+		assertThat(authorizationServerMetadataResponse)
+			.contains("\"grant_types_supported\":[\"authorization_code\",\"client_credentials\"]");
+		assertThat(authorizationServerMetadataResponse)
+			.contains("\"revocation_endpoint\":\"https://example.com/oauth2/revoke\"");
+		assertThat(authorizationServerMetadataResponse)
+			.contains("\"revocation_endpoint_auth_methods_supported\":[\"client_secret_basic\"]");
+		assertThat(authorizationServerMetadataResponse)
+			.contains("\"introspection_endpoint\":\"https://example.com/oauth2/introspect\"");
+		assertThat(authorizationServerMetadataResponse)
+			.contains("\"introspection_endpoint_auth_methods_supported\":[\"client_secret_basic\"]");
 		assertThat(authorizationServerMetadataResponse).contains("\"code_challenge_methods_supported\":[\"S256\"]");
 		assertThat(authorizationServerMetadataResponse).contains("\"custom_claim\":\"value\"");
 		assertThat(authorizationServerMetadataResponse).contains("\"custom_collection_claim\":[\"value1\",\"value2\"]");
@@ -201,24 +224,23 @@ public class OAuth2AuthorizationServerMetadataHttpMessageConverterTests {
 	@Test
 	public void writeInternalWhenWriteFailsThenThrowException() {
 		String errorMessage = "this is not a valid converter";
-		Converter<OAuth2AuthorizationServerMetadata, Map<String, Object>> failingConverter =
-				source -> {
-					throw new RuntimeException(errorMessage);
-				};
+		Converter<OAuth2AuthorizationServerMetadata, Map<String, Object>> failingConverter = source -> {
+			throw new RuntimeException(errorMessage);
+		};
 		this.messageConverter.setAuthorizationServerMetadataParametersConverter(failingConverter);
 
 		MockHttpOutputMessage outputMessage = new MockHttpOutputMessage();
-		OAuth2AuthorizationServerMetadata authorizationServerMetadata =
-				OAuth2AuthorizationServerMetadata.builder()
-						.issuer("https://example.com")
-						.authorizationEndpoint("https://example.com/oauth2/authorize")
-						.tokenEndpoint("https://example.com/oauth2/token")
-						.responseType("code")
-						.build();
+		OAuth2AuthorizationServerMetadata authorizationServerMetadata = OAuth2AuthorizationServerMetadata.builder()
+			.issuer("https://example.com")
+			.authorizationEndpoint("https://example.com/oauth2/authorize")
+			.tokenEndpoint("https://example.com/oauth2/token")
+			.responseType("code")
+			.build();
 
 		assertThatExceptionOfType(HttpMessageNotWritableException.class)
-				.isThrownBy(() -> this.messageConverter.writeInternal(authorizationServerMetadata, outputMessage))
-				.withMessageContaining("An error occurred writing the OAuth 2.0 Authorization Server Metadata")
-				.withMessageContaining(errorMessage);
+			.isThrownBy(() -> this.messageConverter.writeInternal(authorizationServerMetadata, outputMessage))
+			.withMessageContaining("An error occurred writing the OAuth 2.0 Authorization Server Metadata")
+			.withMessageContaining(errorMessage);
 	}
+
 }

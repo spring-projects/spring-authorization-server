@@ -48,11 +48,12 @@ public class TestOAuth2Authorizations {
 
 	public static OAuth2Authorization.Builder authorization(RegisteredClient registeredClient,
 			Map<String, Object> authorizationRequestAdditionalParameters) {
-		OAuth2AuthorizationCode authorizationCode = new OAuth2AuthorizationCode(
-				"code", Instant.now(), Instant.now().plusSeconds(120));
-		OAuth2AccessToken accessToken = new OAuth2AccessToken(
-				OAuth2AccessToken.TokenType.BEARER, "access-token", Instant.now(), Instant.now().plusSeconds(300));
-		return authorization(registeredClient, authorizationCode, accessToken, Collections.emptyMap(), authorizationRequestAdditionalParameters);
+		OAuth2AuthorizationCode authorizationCode = new OAuth2AuthorizationCode("code", Instant.now(),
+				Instant.now().plusSeconds(120));
+		OAuth2AccessToken accessToken = new OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER, "access-token",
+				Instant.now(), Instant.now().plusSeconds(300));
+		return authorization(registeredClient, authorizationCode, accessToken, Collections.emptyMap(),
+				authorizationRequestAdditionalParameters);
 	}
 
 	public static OAuth2Authorization.Builder authorization(RegisteredClient registeredClient,
@@ -62,37 +63,37 @@ public class TestOAuth2Authorizations {
 
 	public static OAuth2Authorization.Builder authorization(RegisteredClient registeredClient,
 			OAuth2AccessToken accessToken, Map<String, Object> accessTokenClaims) {
-		OAuth2AuthorizationCode authorizationCode = new OAuth2AuthorizationCode(
-				"code", Instant.now(), Instant.now().plusSeconds(120));
-		return authorization(registeredClient, authorizationCode, accessToken, accessTokenClaims, Collections.emptyMap());
+		OAuth2AuthorizationCode authorizationCode = new OAuth2AuthorizationCode("code", Instant.now(),
+				Instant.now().plusSeconds(120));
+		return authorization(registeredClient, authorizationCode, accessToken, accessTokenClaims,
+				Collections.emptyMap());
 	}
 
 	private static OAuth2Authorization.Builder authorization(RegisteredClient registeredClient,
 			OAuth2AuthorizationCode authorizationCode, OAuth2AccessToken accessToken,
 			Map<String, Object> accessTokenClaims, Map<String, Object> authorizationRequestAdditionalParameters) {
 		OAuth2AuthorizationRequest authorizationRequest = OAuth2AuthorizationRequest.authorizationCode()
-				.authorizationUri("https://provider.com/oauth2/authorize")
-				.clientId(registeredClient.getClientId())
-				.redirectUri(registeredClient.getRedirectUris().iterator().next())
-				.scopes(registeredClient.getScopes())
-				.additionalParameters(authorizationRequestAdditionalParameters)
-				.state("state")
-				.build();
+			.authorizationUri("https://provider.com/oauth2/authorize")
+			.clientId(registeredClient.getClientId())
+			.redirectUri(registeredClient.getRedirectUris().iterator().next())
+			.scopes(registeredClient.getScopes())
+			.additionalParameters(authorizationRequestAdditionalParameters)
+			.state("state")
+			.build();
 		OAuth2Authorization.Builder builder = OAuth2Authorization.withRegisteredClient(registeredClient)
-				.id("id")
-				.principalName("principal")
-				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-				.authorizedScopes(authorizationRequest.getScopes())
-				.token(authorizationCode)
-				.attribute(OAuth2ParameterNames.STATE, "consent-state")
-				.attribute(OAuth2AuthorizationRequest.class.getName(), authorizationRequest)
-				.attribute(Principal.class.getName(),
-						new TestingAuthenticationToken("principal", null, "ROLE_A", "ROLE_B"));
+			.id("id")
+			.principalName("principal")
+			.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+			.authorizedScopes(authorizationRequest.getScopes())
+			.token(authorizationCode)
+			.attribute(OAuth2ParameterNames.STATE, "consent-state")
+			.attribute(OAuth2AuthorizationRequest.class.getName(), authorizationRequest)
+			.attribute(Principal.class.getName(),
+					new TestingAuthenticationToken("principal", null, "ROLE_A", "ROLE_B"));
 		if (accessToken != null) {
-			OAuth2RefreshToken refreshToken = new OAuth2RefreshToken(
-					"refresh-token", Instant.now(), Instant.now().plus(1, ChronoUnit.HOURS));
-			builder
-				.token(accessToken, (metadata) -> metadata.putAll(tokenMetadata(accessTokenClaims)))
+			OAuth2RefreshToken refreshToken = new OAuth2RefreshToken("refresh-token", Instant.now(),
+					Instant.now().plus(1, ChronoUnit.HOURS));
+			builder.token(accessToken, (metadata) -> metadata.putAll(tokenMetadata(accessTokenClaims)))
 				.refreshToken(refreshToken);
 		}
 
@@ -116,4 +117,5 @@ public class TestOAuth2Authorizations {
 		claims.put("claim3", "value3");
 		return claims;
 	}
+
 }

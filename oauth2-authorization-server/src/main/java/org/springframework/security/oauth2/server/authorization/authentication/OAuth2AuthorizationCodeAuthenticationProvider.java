@@ -67,7 +67,8 @@ import org.springframework.util.StringUtils;
 import static org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthenticationProviderUtils.getAuthenticatedClientElseThrowInvalidClient;
 
 /**
- * An {@link AuthenticationProvider} implementation for the OAuth 2.0 Authorization Code Grant.
+ * An {@link AuthenticationProvider} implementation for the OAuth 2.0 Authorization Code
+ * Grant.
  *
  * @author Joe Grandja
  * @author Daniel Garnier-Moiroux
@@ -77,23 +78,32 @@ import static org.springframework.security.oauth2.server.authorization.authentic
  * @see OAuth2AuthorizationCodeRequestAuthenticationProvider
  * @see OAuth2AuthorizationService
  * @see OAuth2TokenGenerator
- * @see <a target="_blank" href="https://datatracker.ietf.org/doc/html/rfc6749#section-4.1">Section 4.1 Authorization Code Grant</a>
- * @see <a target="_blank" href="https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.3">Section 4.1.3 Access Token Request</a>
+ * @see <a target="_blank" href=
+ * "https://datatracker.ietf.org/doc/html/rfc6749#section-4.1">Section 4.1 Authorization
+ * Code Grant</a>
+ * @see <a target="_blank" href=
+ * "https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.3">Section 4.1.3 Access
+ * Token Request</a>
  */
 public final class OAuth2AuthorizationCodeAuthenticationProvider implements AuthenticationProvider {
+
 	private static final String ERROR_URI = "https://datatracker.ietf.org/doc/html/rfc6749#section-5.2";
-	private static final OAuth2TokenType AUTHORIZATION_CODE_TOKEN_TYPE =
-			new OAuth2TokenType(OAuth2ParameterNames.CODE);
-	private static final OAuth2TokenType ID_TOKEN_TOKEN_TYPE =
-			new OAuth2TokenType(OidcParameterNames.ID_TOKEN);
+
+	private static final OAuth2TokenType AUTHORIZATION_CODE_TOKEN_TYPE = new OAuth2TokenType(OAuth2ParameterNames.CODE);
+
+	private static final OAuth2TokenType ID_TOKEN_TOKEN_TYPE = new OAuth2TokenType(OidcParameterNames.ID_TOKEN);
+
 	private final Log logger = LogFactory.getLog(getClass());
+
 	private final OAuth2AuthorizationService authorizationService;
+
 	private final OAuth2TokenGenerator<? extends OAuth2Token> tokenGenerator;
+
 	private SessionRegistry sessionRegistry;
 
 	/**
-	 * Constructs an {@code OAuth2AuthorizationCodeAuthenticationProvider} using the provided parameters.
-	 *
+	 * Constructs an {@code OAuth2AuthorizationCodeAuthenticationProvider} using the
+	 * provided parameters.
 	 * @param authorizationService the authorization service
 	 * @param tokenGenerator the token generator
 	 * @since 0.2.3
@@ -108,19 +118,18 @@ public final class OAuth2AuthorizationCodeAuthenticationProvider implements Auth
 
 	@Override
 	public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-		OAuth2AuthorizationCodeAuthenticationToken authorizationCodeAuthentication =
-				(OAuth2AuthorizationCodeAuthenticationToken) authentication;
+		OAuth2AuthorizationCodeAuthenticationToken authorizationCodeAuthentication = (OAuth2AuthorizationCodeAuthenticationToken) authentication;
 
-		OAuth2ClientAuthenticationToken clientPrincipal =
-				getAuthenticatedClientElseThrowInvalidClient(authorizationCodeAuthentication);
+		OAuth2ClientAuthenticationToken clientPrincipal = getAuthenticatedClientElseThrowInvalidClient(
+				authorizationCodeAuthentication);
 		RegisteredClient registeredClient = clientPrincipal.getRegisteredClient();
 
 		if (this.logger.isTraceEnabled()) {
 			this.logger.trace("Retrieved registered client");
 		}
 
-		OAuth2Authorization authorization = this.authorizationService.findByToken(
-				authorizationCodeAuthentication.getCode(), AUTHORIZATION_CODE_TOKEN_TYPE);
+		OAuth2Authorization authorization = this.authorizationService
+			.findByToken(authorizationCodeAuthentication.getCode(), AUTHORIZATION_CODE_TOKEN_TYPE);
 		if (authorization == null) {
 			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_GRANT);
 		}
@@ -129,40 +138,45 @@ public final class OAuth2AuthorizationCodeAuthenticationProvider implements Auth
 			this.logger.trace("Retrieved authorization with authorization code");
 		}
 
-		OAuth2Authorization.Token<OAuth2AuthorizationCode> authorizationCode =
-				authorization.getToken(OAuth2AuthorizationCode.class);
+		OAuth2Authorization.Token<OAuth2AuthorizationCode> authorizationCode = authorization
+			.getToken(OAuth2AuthorizationCode.class);
 
-		OAuth2AuthorizationRequest authorizationRequest = authorization.getAttribute(
-				OAuth2AuthorizationRequest.class.getName());
+		OAuth2AuthorizationRequest authorizationRequest = authorization
+			.getAttribute(OAuth2AuthorizationRequest.class.getName());
 
 		if (!registeredClient.getClientId().equals(authorizationRequest.getClientId())) {
 			if (!authorizationCode.isInvalidated()) {
-				// Invalidate the authorization code given that a different client is attempting to use it
-				authorization = OAuth2AuthenticationProviderUtils.invalidate(authorization, authorizationCode.getToken());
+				// Invalidate the authorization code given that a different client is
+				// attempting to use it
+				authorization = OAuth2AuthenticationProviderUtils.invalidate(authorization,
+						authorizationCode.getToken());
 				this.authorizationService.save(authorization);
 				if (this.logger.isWarnEnabled()) {
-					this.logger.warn(LogMessage.format("Invalidated authorization code used by registered client '%s'", registeredClient.getId()));
+					this.logger.warn(LogMessage.format("Invalidated authorization code used by registered client '%s'",
+							registeredClient.getId()));
 				}
 			}
 			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_GRANT);
 		}
 
-		if (StringUtils.hasText(authorizationRequest.getRedirectUri()) &&
-				!authorizationRequest.getRedirectUri().equals(authorizationCodeAuthentication.getRedirectUri())) {
+		if (StringUtils.hasText(authorizationRequest.getRedirectUri())
+				&& !authorizationRequest.getRedirectUri().equals(authorizationCodeAuthentication.getRedirectUri())) {
 			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_GRANT);
 		}
 
 		if (!authorizationCode.isActive()) {
 			if (authorizationCode.isInvalidated()) {
-				OAuth2Authorization.Token<? extends OAuth2Token> token = authorization.getRefreshToken() != null ?
-						authorization.getRefreshToken() :
-						authorization.getAccessToken();
+				OAuth2Authorization.Token<? extends OAuth2Token> token = authorization.getRefreshToken() != null
+						? authorization.getRefreshToken() : authorization.getAccessToken();
 				if (token != null) {
-					// Invalidate the access (and refresh) token as the client is attempting to use the authorization code more than once
+					// Invalidate the access (and refresh) token as the client is
+					// attempting to use the authorization code more than once
 					authorization = OAuth2AuthenticationProviderUtils.invalidate(authorization, token.getToken());
 					this.authorizationService.save(authorization);
 					if (this.logger.isWarnEnabled()) {
-						this.logger.warn(LogMessage.format("Invalidated authorization token(s) previously issued to registered client '%s'", registeredClient.getId()));
+						this.logger.warn(LogMessage.format(
+								"Invalidated authorization token(s) previously issued to registered client '%s'",
+								registeredClient.getId()));
 					}
 				}
 			}
@@ -205,17 +219,19 @@ public final class OAuth2AuthorizationCodeAuthenticationProvider implements Auth
 				generatedAccessToken.getTokenValue(), generatedAccessToken.getIssuedAt(),
 				generatedAccessToken.getExpiresAt(), tokenContext.getAuthorizedScopes());
 		if (generatedAccessToken instanceof ClaimAccessor) {
-			authorizationBuilder.token(accessToken, (metadata) ->
-					metadata.put(OAuth2Authorization.Token.CLAIMS_METADATA_NAME, ((ClaimAccessor) generatedAccessToken).getClaims()));
-		} else {
+			authorizationBuilder.token(accessToken,
+					(metadata) -> metadata.put(OAuth2Authorization.Token.CLAIMS_METADATA_NAME,
+							((ClaimAccessor) generatedAccessToken).getClaims()));
+		}
+		else {
 			authorizationBuilder.accessToken(accessToken);
 		}
 
 		// ----- Refresh token -----
 		OAuth2RefreshToken refreshToken = null;
 		// Do not issue refresh token to public client
-		if (registeredClient.getAuthorizationGrantTypes().contains(AuthorizationGrantType.REFRESH_TOKEN) &&
-				!clientPrincipal.getClientAuthenticationMethod().equals(ClientAuthenticationMethod.NONE)) {
+		if (registeredClient.getAuthorizationGrantTypes().contains(AuthorizationGrantType.REFRESH_TOKEN)
+				&& !clientPrincipal.getClientAuthenticationMethod().equals(ClientAuthenticationMethod.NONE)) {
 
 			tokenContext = tokenContextBuilder.tokenType(OAuth2TokenType.REFRESH_TOKEN).build();
 			OAuth2Token generatedRefreshToken = this.tokenGenerator.generate(tokenContext);
@@ -242,7 +258,8 @@ public final class OAuth2AuthorizationCodeAuthenticationProvider implements Auth
 					// Compute (and use) hash for Session ID
 					sessionInformation = new SessionInformation(sessionInformation.getPrincipal(),
 							createHash(sessionInformation.getSessionId()), sessionInformation.getLastRequest());
-				} catch (NoSuchAlgorithmException ex) {
+				}
+				catch (NoSuchAlgorithmException ex) {
 					OAuth2Error error = new OAuth2Error(OAuth2ErrorCodes.SERVER_ERROR,
 							"Failed to compute hash for Session ID.", ERROR_URI);
 					throw new OAuth2AuthenticationException(error);
@@ -268,9 +285,10 @@ public final class OAuth2AuthorizationCodeAuthenticationProvider implements Auth
 
 			idToken = new OidcIdToken(generatedIdToken.getTokenValue(), generatedIdToken.getIssuedAt(),
 					generatedIdToken.getExpiresAt(), ((Jwt) generatedIdToken).getClaims());
-			authorizationBuilder.token(idToken, (metadata) ->
-					metadata.put(OAuth2Authorization.Token.CLAIMS_METADATA_NAME, idToken.getClaims()));
-		} else {
+			authorizationBuilder.token(idToken,
+					(metadata) -> metadata.put(OAuth2Authorization.Token.CLAIMS_METADATA_NAME, idToken.getClaims()));
+		}
+		else {
 			idToken = null;
 		}
 
@@ -295,8 +313,8 @@ public final class OAuth2AuthorizationCodeAuthenticationProvider implements Auth
 			this.logger.trace("Authenticated token request");
 		}
 
-		return new OAuth2AccessTokenAuthenticationToken(
-				registeredClient, clientPrincipal, accessToken, refreshToken, additionalParameters);
+		return new OAuth2AccessTokenAuthenticationToken(registeredClient, clientPrincipal, accessToken, refreshToken,
+				additionalParameters);
 	}
 
 	@Override
@@ -306,8 +324,8 @@ public final class OAuth2AuthorizationCodeAuthenticationProvider implements Auth
 
 	/**
 	 * Sets the {@link SessionRegistry} used to track OpenID Connect sessions.
-	 *
-	 * @param sessionRegistry the {@link SessionRegistry} used to track OpenID Connect sessions
+	 * @param sessionRegistry the {@link SessionRegistry} used to track OpenID Connect
+	 * sessions
 	 * @since 1.1
 	 */
 	public void setSessionRegistry(SessionRegistry sessionRegistry) {

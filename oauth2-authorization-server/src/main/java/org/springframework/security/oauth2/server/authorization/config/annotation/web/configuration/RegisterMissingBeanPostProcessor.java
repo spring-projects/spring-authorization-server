@@ -33,14 +33,18 @@ import org.springframework.beans.factory.support.RootBeanDefinition;
 import org.springframework.context.annotation.AnnotationBeanNameGenerator;
 
 /**
- * Post processor to register one or more bean definitions on container initialization, if not already present.
+ * Post processor to register one or more bean definitions on container initialization, if
+ * not already present.
  *
  * @author Steve Riesenberg
  * @since 0.2.0
  */
 final class RegisterMissingBeanPostProcessor implements BeanDefinitionRegistryPostProcessor, BeanFactoryAware {
+
 	private final AnnotationBeanNameGenerator beanNameGenerator = new AnnotationBeanNameGenerator();
+
 	private final List<AbstractBeanDefinition> beanDefinitions = new ArrayList<>();
+
 	private BeanFactory beanFactory;
 
 	@Override

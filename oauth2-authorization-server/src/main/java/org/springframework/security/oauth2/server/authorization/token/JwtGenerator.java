@@ -44,8 +44,8 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 /**
- * An {@link OAuth2TokenGenerator} that generates a {@link Jwt}
- * used for an {@link OAuth2AccessToken} or {@link OidcIdToken}.
+ * An {@link OAuth2TokenGenerator} that generates a {@link Jwt} used for an
+ * {@link OAuth2AccessToken} or {@link OidcIdToken}.
  *
  * @author Joe Grandja
  * @since 0.2.3
@@ -58,12 +58,13 @@ import org.springframework.util.StringUtils;
  * @see OidcIdToken
  */
 public final class JwtGenerator implements OAuth2TokenGenerator<Jwt> {
+
 	private final JwtEncoder jwtEncoder;
+
 	private OAuth2TokenCustomizer<JwtEncodingContext> jwtCustomizer;
 
 	/**
 	 * Constructs a {@code JwtGenerator} using the provided parameters.
-	 *
 	 * @param jwtEncoder the jwt encoder
 	 */
 	public JwtGenerator(JwtEncoder jwtEncoder) {
@@ -101,7 +102,8 @@ public final class JwtGenerator implements OAuth2TokenGenerator<Jwt> {
 			if (registeredClient.getTokenSettings().getIdTokenSignatureAlgorithm() != null) {
 				jwsAlgorithm = registeredClient.getTokenSettings().getIdTokenSignatureAlgorithm();
 			}
-		} else {
+		}
+		else {
 			expiresAt = issuedAt.plus(registeredClient.getTokenSettings().getAccessTokenTimeToLive());
 		}
 
@@ -187,8 +189,8 @@ public final class JwtGenerator implements OAuth2TokenGenerator<Jwt> {
 	 * Sets the {@link OAuth2TokenCustomizer} that customizes the
 	 * {@link JwtEncodingContext#getJwsHeader() JWS headers} and/or
 	 * {@link JwtEncodingContext#getClaims() claims} for the generated {@link Jwt}.
-	 *
-	 * @param jwtCustomizer the {@link OAuth2TokenCustomizer} that customizes the headers and/or claims for the generated {@code Jwt}
+	 * @param jwtCustomizer the {@link OAuth2TokenCustomizer} that customizes the headers
+	 * and/or claims for the generated {@code Jwt}
 	 */
 	public void setJwtCustomizer(OAuth2TokenCustomizer<JwtEncodingContext> jwtCustomizer) {
 		Assert.notNull(jwtCustomizer, "jwtCustomizer cannot be null");

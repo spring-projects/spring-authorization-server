@@ -32,15 +32,17 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
 
 /**
- * Attempts to extract client credentials from POST parameters of {@link HttpServletRequest}
- * and then converts to an {@link OAuth2ClientAuthenticationToken} used for authenticating the client.
+ * Attempts to extract client credentials from POST parameters of
+ * {@link HttpServletRequest} and then converts to an
+ * {@link OAuth2ClientAuthenticationToken} used for authenticating the client.
  *
  * @author Anoop Garlapati
  * @since 0.1.0
  * @see AuthenticationConverter
  * @see OAuth2ClientAuthenticationToken
  * @see OAuth2ClientAuthenticationFilter
- * @see <a target="_blank" href="https://tools.ietf.org/html/rfc6749#section-2.3.1">Section 2.3.1 Client Password</a>
+ * @see <a target="_blank" href=
+ * "https://tools.ietf.org/html/rfc6749#section-2.3.1">Section 2.3.1 Client Password</a>
  */
 public final class ClientSecretPostAuthenticationConverter implements AuthenticationConverter {
 
@@ -69,12 +71,12 @@ public final class ClientSecretPostAuthenticationConverter implements Authentica
 			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_REQUEST);
 		}
 
-		Map<String, Object> additionalParameters = OAuth2EndpointUtils.getParametersIfMatchesAuthorizationCodeGrantRequest(request,
-				OAuth2ParameterNames.CLIENT_ID,
-				OAuth2ParameterNames.CLIENT_SECRET);
+		Map<String, Object> additionalParameters = OAuth2EndpointUtils
+			.getParametersIfMatchesAuthorizationCodeGrantRequest(request, OAuth2ParameterNames.CLIENT_ID,
+					OAuth2ParameterNames.CLIENT_SECRET);
 
-		return new OAuth2ClientAuthenticationToken(clientId, ClientAuthenticationMethod.CLIENT_SECRET_POST, clientSecret,
-				additionalParameters);
+		return new OAuth2ClientAuthenticationToken(clientId, ClientAuthenticationMethod.CLIENT_SECRET_POST,
+				clientSecret, additionalParameters);
 	}
 
 }

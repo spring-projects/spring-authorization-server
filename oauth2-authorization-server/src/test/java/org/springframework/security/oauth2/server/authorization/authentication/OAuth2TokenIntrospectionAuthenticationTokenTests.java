@@ -36,45 +36,52 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * @author Joe Grandja
  */
 public class OAuth2TokenIntrospectionAuthenticationTokenTests {
+
 	private String token = "token";
+
 	private RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
-	private OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(
-			this.registeredClient, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, this.registeredClient.getClientSecret());
+
+	private OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(this.registeredClient,
+			ClientAuthenticationMethod.CLIENT_SECRET_BASIC, this.registeredClient.getClientSecret());
+
 	private OAuth2TokenIntrospection tokenClaims = OAuth2TokenIntrospection.builder(true).build();
 
 	@Test
 	public void constructorWhenTokenNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> new OAuth2TokenIntrospectionAuthenticationToken(null, this.clientPrincipal, null, null))
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("token cannot be empty");
+		assertThatThrownBy(
+				() -> new OAuth2TokenIntrospectionAuthenticationToken(null, this.clientPrincipal, null, null))
+			.isInstanceOf(IllegalArgumentException.class)
+			.hasMessage("token cannot be empty");
 	}
 
 	@Test
 	public void constructorWhenClientPrincipalNullThenThrowIllegalArgumentException() {
 		assertThatThrownBy(() -> new OAuth2TokenIntrospectionAuthenticationToken(this.token, null, null, null))
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("clientPrincipal cannot be null");
+			.isInstanceOf(IllegalArgumentException.class)
+			.hasMessage("clientPrincipal cannot be null");
 	}
 
 	@Test
 	public void constructorWhenAuthenticatedAndTokenNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> new OAuth2TokenIntrospectionAuthenticationToken(null, this.clientPrincipal, this.tokenClaims))
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("token cannot be empty");
+		assertThatThrownBy(
+				() -> new OAuth2TokenIntrospectionAuthenticationToken(null, this.clientPrincipal, this.tokenClaims))
+			.isInstanceOf(IllegalArgumentException.class)
+			.hasMessage("token cannot be empty");
 	}
 
 	@Test
 	public void constructorWhenAuthenticatedAndClientPrincipalNullThenThrowIllegalArgumentException() {
 		assertThatThrownBy(() -> new OAuth2TokenIntrospectionAuthenticationToken(this.token, null, this.tokenClaims))
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("clientPrincipal cannot be null");
+			.isInstanceOf(IllegalArgumentException.class)
+			.hasMessage("clientPrincipal cannot be null");
 	}
 
 	@Test
 	public void constructorWhenAuthenticatedAndTokenClaimsNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> new OAuth2TokenIntrospectionAuthenticationToken(this.token, this.clientPrincipal, null))
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("tokenClaims cannot be null");
+		assertThatThrownBy(
+				() -> new OAuth2TokenIntrospectionAuthenticationToken(this.token, this.clientPrincipal, null))
+			.isInstanceOf(IllegalArgumentException.class)
+			.hasMessage("tokenClaims cannot be null");
 	}
 
 	@Test

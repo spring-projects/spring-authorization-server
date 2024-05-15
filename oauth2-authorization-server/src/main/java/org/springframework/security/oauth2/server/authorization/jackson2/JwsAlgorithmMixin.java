@@ -31,4 +31,5 @@ import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY, getterVisibility = JsonAutoDetect.Visibility.NONE,
 		isGetterVisibility = JsonAutoDetect.Visibility.NONE)
 abstract class JwsAlgorithmMixin {
+
 }

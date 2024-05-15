@@ -26,7 +26,8 @@ import org.springframework.security.oauth2.server.authorization.util.SpringAutho
 import org.springframework.util.Assert;
 
 /**
- * An {@link Authentication} implementation used for OpenID Connect 1.0 RP-Initiated Logout Endpoint.
+ * An {@link Authentication} implementation used for OpenID Connect 1.0 RP-Initiated
+ * Logout Endpoint.
  *
  * @author Joe Grandja
  * @since 1.1
@@ -34,24 +35,35 @@ import org.springframework.util.Assert;
  * @see OidcLogoutAuthenticationProvider
  */
 public class OidcLogoutAuthenticationToken extends AbstractAuthenticationToken {
+
 	private static final long serialVersionUID = SpringAuthorizationServerVersion.SERIAL_VERSION_UID;
+
 	private final String idTokenHint;
+
 	private final OidcIdToken idToken;
+
 	private final Authentication principal;
+
 	private final String sessionId;
+
 	private final String clientId;
+
 	private final String postLogoutRedirectUri;
+
 	private final String state;
 
 	/**
 	 * Constructs an {@code OidcLogoutAuthenticationToken} using the provided parameters.
-	 *
-	 * @param idTokenHint the ID Token previously issued by the Provider to the Client and used as a hint about the End-User's current authenticated session with the Client
+	 * @param idTokenHint the ID Token previously issued by the Provider to the Client and
+	 * used as a hint about the End-User's current authenticated session with the Client
 	 * @param principal the authenticated principal representing the End-User
-	 * @param sessionId the End-User's current authenticated session identifier with the Provider
+	 * @param sessionId the End-User's current authenticated session identifier with the
+	 * Provider
 	 * @param clientId the client identifier the ID Token was issued to
-	 * @param postLogoutRedirectUri the URI which the Client is requesting that the End-User's User Agent be redirected to after a logout has been performed
-	 * @param state the opaque value used by the Client to maintain state between the logout request and the callback to the {@code postLogoutRedirectUri}
+	 * @param postLogoutRedirectUri the URI which the Client is requesting that the
+	 * End-User's User Agent be redirected to after a logout has been performed
+	 * @param state the opaque value used by the Client to maintain state between the
+	 * logout request and the callback to the {@code postLogoutRedirectUri}
 	 */
 	public OidcLogoutAuthenticationToken(String idTokenHint, Authentication principal, @Nullable String sessionId,
 			@Nullable String clientId, @Nullable String postLogoutRedirectUri, @Nullable String state) {
@@ -70,13 +82,15 @@ public class OidcLogoutAuthenticationToken extends AbstractAuthenticationToken {
 
 	/**
 	 * Constructs an {@code OidcLogoutAuthenticationToken} using the provided parameters.
-	 *
 	 * @param idToken the ID Token previously issued by the Provider to the Client
 	 * @param principal the authenticated principal representing the End-User
-	 * @param sessionId the End-User's current authenticated session identifier with the Provider
+	 * @param sessionId the End-User's current authenticated session identifier with the
+	 * Provider
 	 * @param clientId the client identifier the ID Token was issued to
-	 * @param postLogoutRedirectUri the URI which the Client is requesting that the End-User's User Agent be redirected to after a logout has been performed
-	 * @param state the opaque value used by the Client to maintain state between the logout request and the callback to the {@code postLogoutRedirectUri}
+	 * @param postLogoutRedirectUri the URI which the Client is requesting that the
+	 * End-User's User Agent be redirected to after a logout has been performed
+	 * @param state the opaque value used by the Client to maintain state between the
+	 * logout request and the callback to the {@code postLogoutRedirectUri}
 	 */
 	public OidcLogoutAuthenticationToken(OidcIdToken idToken, Authentication principal, @Nullable String sessionId,
 			@Nullable String clientId, @Nullable String postLogoutRedirectUri, @Nullable String state) {
@@ -95,7 +109,6 @@ public class OidcLogoutAuthenticationToken extends AbstractAuthenticationToken {
 
 	/**
 	 * Returns the authenticated principal representing the End-User.
-	 *
 	 * @return the authenticated principal representing the End-User
 	 */
 	@Override
@@ -104,13 +117,14 @@ public class OidcLogoutAuthenticationToken extends AbstractAuthenticationToken {
 	}
 
 	/**
-	 * Returns {@code true} if {@link #getPrincipal()} is authenticated, {@code false} otherwise.
-	 *
-	 * @return {@code true} if {@link #getPrincipal()} is authenticated, {@code false} otherwise
+	 * Returns {@code true} if {@link #getPrincipal()} is authenticated, {@code false}
+	 * otherwise.
+	 * @return {@code true} if {@link #getPrincipal()} is authenticated, {@code false}
+	 * otherwise
 	 */
 	public boolean isPrincipalAuthenticated() {
-		return !AnonymousAuthenticationToken.class.isAssignableFrom(this.principal.getClass()) &&
-				this.principal.isAuthenticated();
+		return !AnonymousAuthenticationToken.class.isAssignableFrom(this.principal.getClass())
+				&& this.principal.isAuthenticated();
 	}
 
 	@Override
@@ -119,9 +133,8 @@ public class OidcLogoutAuthenticationToken extends AbstractAuthenticationToken {
 	}
 
 	/**
-	 * Returns the ID Token previously issued by the Provider to the Client and used as a hint
-	 * about the End-User's current authenticated session with the Client.
-	 *
+	 * Returns the ID Token previously issued by the Provider to the Client and used as a
+	 * hint about the End-User's current authenticated session with the Client.
 	 * @return the ID Token previously issued by the Provider to the Client
 	 */
 	public String getIdTokenHint() {
@@ -130,7 +143,6 @@ public class OidcLogoutAuthenticationToken extends AbstractAuthenticationToken {
 
 	/**
 	 * Returns the ID Token previously issued by the Provider to the Client.
-	 *
 	 * @return the ID Token previously issued by the Provider to the Client
 	 */
 	@Nullable
@@ -140,7 +152,6 @@ public class OidcLogoutAuthenticationToken extends AbstractAuthenticationToken {
 
 	/**
 	 * Returns the End-User's current authenticated session identifier with the Provider.
-	 *
 	 * @return the End-User's current authenticated session identifier with the Provider
 	 */
 	@Nullable
@@ -150,7 +161,6 @@ public class OidcLogoutAuthenticationToken extends AbstractAuthenticationToken {
 
 	/**
 	 * Returns the client identifier the ID Token was issued to.
-	 *
 	 * @return the client identifier
 	 */
 	@Nullable
@@ -159,9 +169,10 @@ public class OidcLogoutAuthenticationToken extends AbstractAuthenticationToken {
 	}
 
 	/**
-	 * Returns the URI which the Client is requesting that the End-User's User Agent be redirected to after a logout has been performed.
-	 *
-	 * @return the URI which the Client is requesting that the End-User's User Agent be redirected to after a logout has been performed
+	 * Returns the URI which the Client is requesting that the End-User's User Agent be
+	 * redirected to after a logout has been performed.
+	 * @return the URI which the Client is requesting that the End-User's User Agent be
+	 * redirected to after a logout has been performed
 	 */
 	@Nullable
 	public String getPostLogoutRedirectUri() {
@@ -169,9 +180,10 @@ public class OidcLogoutAuthenticationToken extends AbstractAuthenticationToken {
 	}
 
 	/**
-	 * Returns the opaque value used by the Client to maintain state between the logout request and the callback to the {@link #getPostLogoutRedirectUri()}.
-	 *
-	 * @return the opaque value used by the Client to maintain state between the logout request and the callback to the {@link #getPostLogoutRedirectUri()}
+	 * Returns the opaque value used by the Client to maintain state between the logout
+	 * request and the callback to the {@link #getPostLogoutRedirectUri()}.
+	 * @return the opaque value used by the Client to maintain state between the logout
+	 * request and the callback to the {@link #getPostLogoutRedirectUri()}
 	 */
 	@Nullable
 	public String getState() {

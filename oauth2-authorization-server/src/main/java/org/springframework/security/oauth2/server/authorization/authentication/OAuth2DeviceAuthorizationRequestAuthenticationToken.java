@@ -30,8 +30,8 @@ import org.springframework.security.oauth2.server.authorization.util.SpringAutho
 import org.springframework.util.Assert;
 
 /**
- * An {@link Authentication} implementation for the Device Authorization Request
- * used in the OAuth 2.0 Device Authorization Grant.
+ * An {@link Authentication} implementation for the Device Authorization Request used in
+ * the OAuth 2.0 Device Authorization Grant.
  *
  * @author Steve Riesenberg
  * @since 1.1
@@ -40,17 +40,24 @@ import org.springframework.util.Assert;
  * @see OAuth2DeviceAuthorizationRequestAuthenticationProvider
  */
 public class OAuth2DeviceAuthorizationRequestAuthenticationToken extends AbstractAuthenticationToken {
+
 	private static final long serialVersionUID = SpringAuthorizationServerVersion.SERIAL_VERSION_UID;
+
 	private final Authentication clientPrincipal;
+
 	private final String authorizationUri;
+
 	private final Set<String> scopes;
+
 	private final OAuth2DeviceCode deviceCode;
+
 	private final OAuth2UserCode userCode;
+
 	private final Map<String, Object> additionalParameters;
 
 	/**
-	 * Constructs an {@code OAuth2DeviceAuthorizationRequestAuthenticationToken} using the provided parameters.
-	 *
+	 * Constructs an {@code OAuth2DeviceAuthorizationRequestAuthenticationToken} using the
+	 * provided parameters.
 	 * @param clientPrincipal the authenticated client principal
 	 * @param authorizationUri the authorization {@code URI}
 	 * @param scopes the requested scope(s)
@@ -63,37 +70,29 @@ public class OAuth2DeviceAuthorizationRequestAuthenticationToken extends Abstrac
 		Assert.hasText(authorizationUri, "authorizationUri cannot be empty");
 		this.clientPrincipal = clientPrincipal;
 		this.authorizationUri = authorizationUri;
-		this.scopes = Collections.unmodifiableSet(
-				scopes != null ?
-						new HashSet<>(scopes) :
-						Collections.emptySet());
+		this.scopes = Collections.unmodifiableSet(scopes != null ? new HashSet<>(scopes) : Collections.emptySet());
 		this.additionalParameters = Collections.unmodifiableMap(
-				additionalParameters != null ?
-						new HashMap<>(additionalParameters) :
-						Collections.emptyMap());
+				additionalParameters != null ? new HashMap<>(additionalParameters) : Collections.emptyMap());
 		this.deviceCode = null;
 		this.userCode = null;
 	}
 
 	/**
-	 * Constructs an {@code OAuth2DeviceAuthorizationRequestAuthenticationToken} using the provided parameters.
-	 *
+	 * Constructs an {@code OAuth2DeviceAuthorizationRequestAuthenticationToken} using the
+	 * provided parameters.
 	 * @param clientPrincipal the authenticated client principal
 	 * @param scopes the requested scope(s)
 	 * @param deviceCode the {@link OAuth2DeviceCode}
 	 * @param userCode the {@link OAuth2UserCode}
 	 */
-	public OAuth2DeviceAuthorizationRequestAuthenticationToken(Authentication clientPrincipal, @Nullable Set<String> scopes,
-			OAuth2DeviceCode deviceCode, OAuth2UserCode userCode) {
+	public OAuth2DeviceAuthorizationRequestAuthenticationToken(Authentication clientPrincipal,
+			@Nullable Set<String> scopes, OAuth2DeviceCode deviceCode, OAuth2UserCode userCode) {
 		super(Collections.emptyList());
 		Assert.notNull(clientPrincipal, "clientPrincipal cannot be null");
 		Assert.notNull(deviceCode, "deviceCode cannot be null");
 		Assert.notNull(userCode, "userCode cannot be null");
 		this.clientPrincipal = clientPrincipal;
-		this.scopes = Collections.unmodifiableSet(
-				scopes != null ?
-						new HashSet<>(scopes) :
-						Collections.emptySet());
+		this.scopes = Collections.unmodifiableSet(scopes != null ? new HashSet<>(scopes) : Collections.emptySet());
 		this.deviceCode = deviceCode;
 		this.userCode = userCode;
 		this.authorizationUri = null;
@@ -113,7 +112,6 @@ public class OAuth2DeviceAuthorizationRequestAuthenticationToken extends Abstrac
 
 	/**
 	 * Returns the authorization {@code URI}.
-	 *
 	 * @return the authorization {@code URI}
 	 */
 	public String getAuthorizationUri() {
@@ -122,7 +120,6 @@ public class OAuth2DeviceAuthorizationRequestAuthenticationToken extends Abstrac
 
 	/**
 	 * Returns the requested scope(s).
-	 *
 	 * @return the requested scope(s)
 	 */
 	public Set<String> getScopes() {
@@ -131,7 +128,6 @@ public class OAuth2DeviceAuthorizationRequestAuthenticationToken extends Abstrac
 
 	/**
 	 * Returns the device code.
-	 *
 	 * @return the device code
 	 */
 	public OAuth2DeviceCode getDeviceCode() {
@@ -140,7 +136,6 @@ public class OAuth2DeviceAuthorizationRequestAuthenticationToken extends Abstrac
 
 	/**
 	 * Returns the user code.
-	 *
 	 * @return the user code
 	 */
 	public OAuth2UserCode getUserCode() {
@@ -149,7 +144,6 @@ public class OAuth2DeviceAuthorizationRequestAuthenticationToken extends Abstrac
 
 	/**
 	 * Returns the additional parameters.
-	 *
 	 * @return the additional parameters
 	 */
 	public Map<String, Object> getAdditionalParameters() {

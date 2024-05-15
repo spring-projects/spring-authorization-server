@@ -26,7 +26,8 @@ import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
- * An {@link OAuth2AuthorizationConsentService} that stores {@link OAuth2AuthorizationConsent}'s in-memory.
+ * An {@link OAuth2AuthorizationConsentService} that stores
+ * {@link OAuth2AuthorizationConsent}'s in-memory.
  *
  * <p>
  * <b>NOTE:</b> This implementation should ONLY be used during development/testing.
@@ -36,6 +37,7 @@ import org.springframework.util.Assert;
  * @see OAuth2AuthorizationConsentService
  */
 public final class InMemoryOAuth2AuthorizationConsentService implements OAuth2AuthorizationConsentService {
+
 	private final Map<Integer, OAuth2AuthorizationConsent> authorizationConsents = new ConcurrentHashMap<>();
 
 	/**
@@ -46,8 +48,8 @@ public final class InMemoryOAuth2AuthorizationConsentService implements OAuth2Au
 	}
 
 	/**
-	 * Constructs an {@code InMemoryOAuth2AuthorizationConsentService} using the provided parameters.
-	 *
+	 * Constructs an {@code InMemoryOAuth2AuthorizationConsentService} using the provided
+	 * parameters.
 	 * @param authorizationConsents the authorization consent(s)
 	 */
 	public InMemoryOAuth2AuthorizationConsentService(OAuth2AuthorizationConsent... authorizationConsents) {
@@ -55,8 +57,8 @@ public final class InMemoryOAuth2AuthorizationConsentService implements OAuth2Au
 	}
 
 	/**
-	 * Constructs an {@code InMemoryOAuth2AuthorizationConsentService} using the provided parameters.
-	 *
+	 * Constructs an {@code InMemoryOAuth2AuthorizationConsentService} using the provided
+	 * parameters.
 	 * @param authorizationConsents the authorization consent(s)
 	 */
 	public InMemoryOAuth2AuthorizationConsentService(List<OAuth2AuthorizationConsent> authorizationConsents) {
@@ -66,8 +68,8 @@ public final class InMemoryOAuth2AuthorizationConsentService implements OAuth2Au
 			int id = getId(authorizationConsent);
 			Assert.isTrue(!this.authorizationConsents.containsKey(id),
 					"The authorizationConsent must be unique. Found duplicate, with registered client id: ["
-							+ authorizationConsent.getRegisteredClientId()
-							+ "] and principal name: [" + authorizationConsent.getPrincipalName() + "]");
+							+ authorizationConsent.getRegisteredClientId() + "] and principal name: ["
+							+ authorizationConsent.getPrincipalName() + "]");
 			this.authorizationConsents.put(id, authorizationConsent);
 		});
 	}

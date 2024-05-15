@@ -37,65 +37,62 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * @author Joe Grandja
  */
 public class OAuth2AuthorizationConsentAuthenticationContextTests {
+
 	private final RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
-	private final OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(this.registeredClient).build();
+
+	private final OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(this.registeredClient)
+		.build();
+
 	private final Authentication principal = this.authorization.getAttribute(Principal.class.getName());
-	private final OAuth2AuthorizationRequest authorizationRequest = this.authorization.getAttribute(
-			OAuth2AuthorizationRequest.class.getName());
-	private final OAuth2AuthorizationConsentAuthenticationToken authorizationConsentAuthentication =
-			new OAuth2AuthorizationConsentAuthenticationToken(
-					this.authorizationRequest.getAuthorizationUri(), this.registeredClient.getClientId(),
-					this.principal, "state", null, null);
-	private final OAuth2AuthorizationConsent.Builder authorizationConsentBuilder =
-			OAuth2AuthorizationConsent.withId(this.authorization.getRegisteredClientId(), this.authorization.getPrincipalName());
+
+	private final OAuth2AuthorizationRequest authorizationRequest = this.authorization
+		.getAttribute(OAuth2AuthorizationRequest.class.getName());
+
+	private final OAuth2AuthorizationConsentAuthenticationToken authorizationConsentAuthentication = new OAuth2AuthorizationConsentAuthenticationToken(
+			this.authorizationRequest.getAuthorizationUri(), this.registeredClient.getClientId(), this.principal,
+			"state", null, null);
+
+	private final OAuth2AuthorizationConsent.Builder authorizationConsentBuilder = OAuth2AuthorizationConsent
+		.withId(this.authorization.getRegisteredClientId(), this.authorization.getPrincipalName());
 
 	@Test
 	public void withWhenAuthenticationNullThenThrowIllegalArgumentException() {
 		assertThatThrownBy(() -> OAuth2AuthorizationConsentAuthenticationContext.with(null))
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("authentication cannot be null");
+			.isInstanceOf(IllegalArgumentException.class)
+			.hasMessage("authentication cannot be null");
 	}
 
 	@Test
 	public void setWhenValueNullThenThrowIllegalArgumentException() {
-		OAuth2AuthorizationConsentAuthenticationContext.Builder builder =
-				OAuth2AuthorizationConsentAuthenticationContext.with(this.authorizationConsentAuthentication);
+		OAuth2AuthorizationConsentAuthenticationContext.Builder builder = OAuth2AuthorizationConsentAuthenticationContext
+			.with(this.authorizationConsentAuthentication);
 
-		assertThatThrownBy(() -> builder.authorizationConsent(null))
-				.isInstanceOf(IllegalArgumentException.class);
-		assertThatThrownBy(() -> builder.registeredClient(null))
-				.isInstanceOf(IllegalArgumentException.class);
-		assertThatThrownBy(() -> builder.authorization(null))
-				.isInstanceOf(IllegalArgumentException.class);
-		assertThatThrownBy(() -> builder.authorizationRequest(null))
-				.isInstanceOf(IllegalArgumentException.class);
-		assertThatThrownBy(() -> builder.put(null, ""))
-				.isInstanceOf(IllegalArgumentException.class);
+		assertThatThrownBy(() -> builder.authorizationConsent(null)).isInstanceOf(IllegalArgumentException.class);
+		assertThatThrownBy(() -> builder.registeredClient(null)).isInstanceOf(IllegalArgumentException.class);
+		assertThatThrownBy(() -> builder.authorization(null)).isInstanceOf(IllegalArgumentException.class);
+		assertThatThrownBy(() -> builder.authorizationRequest(null)).isInstanceOf(IllegalArgumentException.class);
+		assertThatThrownBy(() -> builder.put(null, "")).isInstanceOf(IllegalArgumentException.class);
 	}
 
 	@Test
 	public void buildWhenRequiredValueNullThenThrowIllegalArgumentException() {
-		OAuth2AuthorizationConsentAuthenticationContext.Builder builder =
-				OAuth2AuthorizationConsentAuthenticationContext.with(this.authorizationConsentAuthentication);
+		OAuth2AuthorizationConsentAuthenticationContext.Builder builder = OAuth2AuthorizationConsentAuthenticationContext
+			.with(this.authorizationConsentAuthentication);
 
-		assertThatThrownBy(builder::build)
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("authorizationConsentBuilder cannot be null");
+		assertThatThrownBy(builder::build).isInstanceOf(IllegalArgumentException.class)
+			.hasMessage("authorizationConsentBuilder cannot be null");
 		builder.authorizationConsent(this.authorizationConsentBuilder);
 
-		assertThatThrownBy(builder::build)
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("registeredClient cannot be null");
+		assertThatThrownBy(builder::build).isInstanceOf(IllegalArgumentException.class)
+			.hasMessage("registeredClient cannot be null");
 		builder.registeredClient(this.registeredClient);
 
-		assertThatThrownBy(builder::build)
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("authorization cannot be null");
+		assertThatThrownBy(builder::build).isInstanceOf(IllegalArgumentException.class)
+			.hasMessage("authorization cannot be null");
 		builder.authorization(this.authorization);
 
-		assertThatThrownBy(builder::build)
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("authorizationRequest cannot be null");
+		assertThatThrownBy(builder::build).isInstanceOf(IllegalArgumentException.class)
+			.hasMessage("authorizationRequest cannot be null");
 		builder.authorizationRequest(this.authorizationRequest);
 
 		builder.build();
@@ -103,15 +100,15 @@ public class OAuth2AuthorizationConsentAuthenticationContextTests {
 
 	@Test
 	public void buildWhenAllValuesProvidedThenAllValuesAreSet() {
-		OAuth2AuthorizationConsentAuthenticationContext context =
-				OAuth2AuthorizationConsentAuthenticationContext.with(this.authorizationConsentAuthentication)
-						.authorizationConsent(this.authorizationConsentBuilder)
-						.registeredClient(this.registeredClient)
-						.authorization(this.authorization)
-						.authorizationRequest(this.authorizationRequest)
-						.put("custom-key-1", "custom-value-1")
-						.context(ctx -> ctx.put("custom-key-2", "custom-value-2"))
-						.build();
+		OAuth2AuthorizationConsentAuthenticationContext context = OAuth2AuthorizationConsentAuthenticationContext
+			.with(this.authorizationConsentAuthentication)
+			.authorizationConsent(this.authorizationConsentBuilder)
+			.registeredClient(this.registeredClient)
+			.authorization(this.authorization)
+			.authorizationRequest(this.authorizationRequest)
+			.put("custom-key-1", "custom-value-1")
+			.context(ctx -> ctx.put("custom-key-2", "custom-value-2"))
+			.build();
 
 		assertThat(context.<Authentication>getAuthentication()).isEqualTo(this.authorizationConsentAuthentication);
 		assertThat(context.getAuthorizationConsent()).isEqualTo(this.authorizationConsentBuilder);

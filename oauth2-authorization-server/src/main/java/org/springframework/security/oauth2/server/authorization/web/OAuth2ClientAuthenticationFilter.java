@@ -94,12 +94,14 @@ public final class OAuth2ClientAuthenticationFilter extends OncePerRequestFilter
 		Assert.notNull(requestMatcher, "requestMatcher cannot be null");
 		this.authenticationManager = authenticationManager;
 		this.requestMatcher = requestMatcher;
+		// @formatter:off
 		this.authenticationConverter = new DelegatingAuthenticationConverter(
 				Arrays.asList(
 						new JwtClientAssertionAuthenticationConverter(),
 						new ClientSecretBasicAuthenticationConverter(),
 						new ClientSecretPostAuthenticationConverter(),
 						new PublicClientAuthenticationConverter()));
+		// @formatter:on
 	}
 
 	@Override

@@ -88,10 +88,12 @@ public final class ClientSecretAuthenticationProvider implements AuthenticationP
 		OAuth2ClientAuthenticationToken clientAuthentication =
 				(OAuth2ClientAuthenticationToken) authentication;
 
+		// @formatter:off
 		if (!ClientAuthenticationMethod.CLIENT_SECRET_BASIC.equals(clientAuthentication.getClientAuthenticationMethod()) &&
 				!ClientAuthenticationMethod.CLIENT_SECRET_POST.equals(clientAuthentication.getClientAuthenticationMethod())) {
 			return null;
 		}
+		// @formatter:on
 
 		String clientId = clientAuthentication.getPrincipal().toString();
 		RegisteredClient registeredClient = this.registeredClientRepository.findByClientId(clientId);

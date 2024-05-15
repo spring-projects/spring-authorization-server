@@ -135,12 +135,14 @@ public final class OAuth2TokenEndpointFilter extends OncePerRequestFilter {
 		Assert.hasText(tokenEndpointUri, "tokenEndpointUri cannot be empty");
 		this.authenticationManager = authenticationManager;
 		this.tokenEndpointMatcher = new AntPathRequestMatcher(tokenEndpointUri, HttpMethod.POST.name());
+		// @formatter:off
 		this.authenticationConverter = new DelegatingAuthenticationConverter(
 				Arrays.asList(
 						new OAuth2AuthorizationCodeAuthenticationConverter(),
 						new OAuth2RefreshTokenAuthenticationConverter(),
 						new OAuth2ClientCredentialsAuthenticationConverter(),
 						new OAuth2DeviceCodeAuthenticationConverter()));
+		// @formatter:on
 	}
 
 	@Override

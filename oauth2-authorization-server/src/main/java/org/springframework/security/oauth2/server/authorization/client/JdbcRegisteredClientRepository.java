@@ -306,7 +306,8 @@ public class JdbcRegisteredClientRepository implements RegisteredClientRepositor
 			} else if (AuthorizationGrantType.REFRESH_TOKEN.getValue().equals(authorizationGrantType)) {
 				return AuthorizationGrantType.REFRESH_TOKEN;
 			}
-			return new AuthorizationGrantType(authorizationGrantType);		// Custom authorization grant type
+			// Custom authorization grant type
+			return new AuthorizationGrantType(authorizationGrantType);
 		}
 
 		private static ClientAuthenticationMethod resolveClientAuthenticationMethod(String clientAuthenticationMethod) {
@@ -317,7 +318,8 @@ public class JdbcRegisteredClientRepository implements RegisteredClientRepositor
 			} else if (ClientAuthenticationMethod.NONE.getValue().equals(clientAuthenticationMethod)) {
 				return ClientAuthenticationMethod.NONE;
 			}
-			return new ClientAuthenticationMethod(clientAuthenticationMethod);		// Custom client authentication method
+			// Custom client authentication method
+			return new ClientAuthenticationMethod(clientAuthenticationMethod);
 		}
 
 	}

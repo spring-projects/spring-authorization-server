@@ -150,6 +150,7 @@ public final class InMemoryOAuth2AuthorizationService implements OAuth2Authoriza
 	}
 
 	private static boolean hasToken(OAuth2Authorization authorization, String token, @Nullable OAuth2TokenType tokenType) {
+		// @formatter:off
 		if (tokenType == null) {
 			return matchesState(authorization, token) ||
 					matchesAuthorizationCode(authorization, token) ||
@@ -173,6 +174,7 @@ public final class InMemoryOAuth2AuthorizationService implements OAuth2Authoriza
 		} else if (OAuth2ParameterNames.USER_CODE.equals(tokenType.getValue())) {
 			return matchesUserCode(authorization, token);
 		}
+		// @formatter:on
 		return false;
 	}
 

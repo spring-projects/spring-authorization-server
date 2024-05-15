@@ -55,10 +55,12 @@ public final class OAuth2AccessTokenGenerator implements OAuth2TokenGenerator<OA
 	@Nullable
 	@Override
 	public OAuth2AccessToken generate(OAuth2TokenContext context) {
+		// @formatter:off
 		if (!OAuth2TokenType.ACCESS_TOKEN.equals(context.getTokenType()) ||
 				!OAuth2TokenFormat.REFERENCE.equals(context.getRegisteredClient().getTokenSettings().getAccessTokenFormat())) {
 			return null;
 		}
+		// @formatter:on
 
 		String issuer = null;
 		if (context.getAuthorizationServerContext() != null) {

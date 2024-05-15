@@ -74,6 +74,7 @@ public final class JwtGenerator implements OAuth2TokenGenerator<Jwt> {
 	@Nullable
 	@Override
 	public Jwt generate(OAuth2TokenContext context) {
+		// @formatter:off
 		if (context.getTokenType() == null ||
 				(!OAuth2TokenType.ACCESS_TOKEN.equals(context.getTokenType()) &&
 						!OidcParameterNames.ID_TOKEN.equals(context.getTokenType().getValue()))) {
@@ -83,6 +84,7 @@ public final class JwtGenerator implements OAuth2TokenGenerator<Jwt> {
 				!OAuth2TokenFormat.SELF_CONTAINED.equals(context.getRegisteredClient().getTokenSettings().getAccessTokenFormat())) {
 			return null;
 		}
+		// @formatter:on
 
 		String issuer = null;
 		if (context.getAuthorizationServerContext() != null) {

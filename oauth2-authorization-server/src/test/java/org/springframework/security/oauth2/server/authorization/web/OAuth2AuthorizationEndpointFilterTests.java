@@ -507,10 +507,11 @@ public class OAuth2AuthorizationEndpointFilterTests {
 					scopes.addAll(requestedScopes);
 				})
 				.build();
+		// No scopes previously approved
 		OAuth2AuthorizationConsentAuthenticationToken authorizationConsentAuthenticationResult =
 				new OAuth2AuthorizationConsentAuthenticationToken(
 						AUTHORIZATION_URI, registeredClient.getClientId(), principal,
-						STATE, new HashSet<>(), null);	// No scopes previously approved
+						STATE, new HashSet<>(), null);
 		authorizationConsentAuthenticationResult.setAuthenticated(true);
 		when(this.authenticationManager.authenticate(any()))
 				.thenReturn(authorizationConsentAuthenticationResult);
@@ -538,10 +539,11 @@ public class OAuth2AuthorizationEndpointFilterTests {
 					scopes.addAll(requestedScopes);
 				})
 				.build();
+		// No scopes previously approved
 		OAuth2AuthorizationConsentAuthenticationToken authorizationConsentAuthenticationResult =
 				new OAuth2AuthorizationConsentAuthenticationToken(
 						AUTHORIZATION_URI, registeredClient.getClientId(), principal,
-						STATE, new HashSet<>(), null);	// No scopes previously approved
+						STATE, new HashSet<>(), null);
 		authorizationConsentAuthenticationResult.setAuthenticated(true);
 		when(this.authenticationManager.authenticate(any()))
 				.thenReturn(authorizationConsentAuthenticationResult);

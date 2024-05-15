@@ -430,8 +430,9 @@ public class OidcUserInfoTests {
 		SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 			OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
 					new OAuth2AuthorizationServerConfigurer();
+			// Enable OpenID Connect 1.0
 			authorizationServerConfigurer
-					.oidc(Customizer.withDefaults());	// Enable OpenID Connect 1.0
+					.oidc(Customizer.withDefaults());
 			RequestMatcher endpointsMatcher = authorizationServerConfigurer
 					.getEndpointsMatcher();
 
@@ -462,8 +463,9 @@ public class OidcUserInfoTests {
 		SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 			OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
 					new OAuth2AuthorizationServerConfigurer();
+			// Enable OpenID Connect 1.0
 			authorizationServerConfigurer
-					.oidc(Customizer.withDefaults());	// Enable OpenID Connect 1.0
+					.oidc(Customizer.withDefaults());
 			RequestMatcher endpointsMatcher = authorizationServerConfigurer
 					.getEndpointsMatcher();
 

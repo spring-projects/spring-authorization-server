@@ -149,6 +149,7 @@ public final class OidcUserInfoAuthenticationProvider implements AuthenticationP
 
 	private static final class DefaultOidcUserInfoMapper implements Function<OidcUserInfoAuthenticationContext, OidcUserInfo> {
 
+		// @formatter:off
 		private static final List<String> EMAIL_CLAIMS = Arrays.asList(
 				StandardClaimNames.EMAIL,
 				StandardClaimNames.EMAIL_VERIFIED
@@ -173,6 +174,7 @@ public final class OidcUserInfoAuthenticationProvider implements AuthenticationP
 				StandardClaimNames.LOCALE,
 				StandardClaimNames.UPDATED_AT
 		);
+		// @formatter:on
 
 		@Override
 		public OidcUserInfo apply(OidcUserInfoAuthenticationContext authenticationContext) {

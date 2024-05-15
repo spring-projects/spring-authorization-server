@@ -112,10 +112,12 @@ public final class OAuth2DeviceVerificationEndpointFilter extends OncePerRequest
 		Assert.hasText(deviceVerificationEndpointUri, "deviceVerificationEndpointUri cannot be empty");
 		this.authenticationManager = authenticationManager;
 		this.deviceVerificationEndpointMatcher = createDefaultRequestMatcher(deviceVerificationEndpointUri);
+		// @formatter:off
 		this.authenticationConverter = new DelegatingAuthenticationConverter(
 				Arrays.asList(
 						new OAuth2DeviceVerificationAuthenticationConverter(),
 						new OAuth2DeviceAuthorizationConsentAuthenticationConverter()));
+		// @formatter:on
 	}
 
 	private RequestMatcher createDefaultRequestMatcher(String deviceVerificationEndpointUri) {
@@ -149,9 +151,8 @@ public final class OAuth2DeviceVerificationEndpointFilter extends OncePerRequest
 
 			Authentication authenticationResult = this.authenticationManager.authenticate(authentication);
 			if (!authenticationResult.isAuthenticated()) {
-				// If the Principal (Resource Owner) is not authenticated then
-				// pass through the chain with the expectation that the authentication process
-				// will commence via AuthenticationEntryPoint
+				// If the Principal (Resource Owner) is not authenticated then pass through the chain
+				// with the expectation that the authentication process will commence via AuthenticationEntryPoint
 				filterChain.doFilter(request, response);
 				return;
 			}

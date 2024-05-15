@@ -213,8 +213,8 @@ public final class OAuth2AuthorizationCodeAuthenticationProvider implements Auth
 
 		// ----- Refresh token -----
 		OAuth2RefreshToken refreshToken = null;
+		// Do not issue refresh token to public client
 		if (registeredClient.getAuthorizationGrantTypes().contains(AuthorizationGrantType.REFRESH_TOKEN) &&
-				// Do not issue refresh token to public client
 				!clientPrincipal.getClientAuthenticationMethod().equals(ClientAuthenticationMethod.NONE)) {
 
 			tokenContext = tokenContextBuilder.tokenType(OAuth2TokenType.REFRESH_TOKEN).build();

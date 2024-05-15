@@ -200,7 +200,8 @@ public final class OidcLogoutEndpointFilter extends OncePerRequestFilter {
 						OAuth2ParameterNames.STATE,
 						UriUtils.encode(oidcLogoutAuthentication.getState(), StandardCharsets.UTF_8));
 			}
-			redirectUri = uriBuilder.build(true).toUriString();		// build(true) -> Components are explicitly encoded
+			// build(true) -> Components are explicitly encoded
+			redirectUri = uriBuilder.build(true).toUriString();
 			this.redirectStrategy.sendRedirect(request, response, redirectUri);
 		} else {
 			// Perform default redirect

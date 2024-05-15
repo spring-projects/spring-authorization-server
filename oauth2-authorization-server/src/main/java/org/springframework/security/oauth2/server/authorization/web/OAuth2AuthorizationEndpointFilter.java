@@ -121,10 +121,12 @@ public final class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilte
 		Assert.hasText(authorizationEndpointUri, "authorizationEndpointUri cannot be empty");
 		this.authenticationManager = authenticationManager;
 		this.authorizationEndpointMatcher = createDefaultRequestMatcher(authorizationEndpointUri);
+		// @formatter:off
 		this.authenticationConverter = new DelegatingAuthenticationConverter(
 				Arrays.asList(
 						new OAuth2AuthorizationCodeRequestAuthenticationConverter(),
 						new OAuth2AuthorizationConsentAuthenticationConverter()));
+		// @formatter:on
 	}
 
 	private static RequestMatcher createDefaultRequestMatcher(String authorizationEndpointUri) {
@@ -167,9 +169,8 @@ public final class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilte
 			Authentication authenticationResult = this.authenticationManager.authenticate(authentication);
 
 			if (!authenticationResult.isAuthenticated()) {
-				// If the Principal (Resource Owner) is not authenticated then
-				// pass through the chain with the expectation that the authentication process
-				// will commence via AuthenticationEntryPoint
+				// If the Principal (Resource Owner) is not authenticated then pass through the chain
+				// with the expectation that the authentication process will commence via AuthenticationEntryPoint
 				filterChain.doFilter(request, response);
 				return;
 			}
@@ -321,7 +322,8 @@ public final class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilte
 					OAuth2ParameterNames.STATE,
 					UriUtils.encode(authorizationCodeRequestAuthentication.getState(), StandardCharsets.UTF_8));
 		}
-		String redirectUri = uriBuilder.build(true).toUriString();		// build(true) -> Components are explicitly encoded
+		// build(true) -> Components are explicitly encoded
+		String redirectUri = uriBuilder.build(true).toUriString();
 		this.redirectStrategy.sendRedirect(request, response, redirectUri);
 	}
 
@@ -362,7 +364,8 @@ public final class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilte
 					OAuth2ParameterNames.STATE,
 					UriUtils.encode(authorizationCodeRequestAuthentication.getState(), StandardCharsets.UTF_8));
 		}
-		String redirectUri = uriBuilder.build(true).toUriString();		// build(true) -> Components are explicitly encoded
+		// build(true) -> Components are explicitly encoded
+		String redirectUri = uriBuilder.build(true).toUriString();
 		this.redirectStrategy.sendRedirect(request, response, redirectUri);
 	}
 

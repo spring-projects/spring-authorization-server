@@ -56,7 +56,8 @@ class DefaultConsentPage {
 		for (String scope : requestedScopes) {
 			if (authorizedScopes.contains(scope)) {
 				scopesPreviouslyAuthorized.add(scope);
-			} else if (!scope.equals(OidcScopes.OPENID)) { // openid scope does not require consent
+			} else if (!scope.equals(OidcScopes.OPENID)) {
+				// openid scope does not require consent
 				scopesToAuthorize.add(scope);
 			}
 		}
@@ -68,8 +69,8 @@ class DefaultConsentPage {
 		// authorizing the correct device.
 		String userCode = additionalParameters.get(OAuth2ParameterNames.USER_CODE);
 
+		// @formatter:off
 		StringBuilder builder = new StringBuilder();
-
 		builder.append("<!DOCTYPE html>");
 		builder.append("<html lang=\"en\">");
 		builder.append("<head>");
@@ -149,6 +150,7 @@ class DefaultConsentPage {
 		builder.append("</div>");
 		builder.append("</body>");
 		builder.append("</html>");
+		// @formatter:on
 
 		return builder.toString();
 	}

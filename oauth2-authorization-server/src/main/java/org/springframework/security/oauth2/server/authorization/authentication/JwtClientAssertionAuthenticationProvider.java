@@ -92,10 +92,12 @@ public final class JwtClientAssertionAuthenticationProvider implements Authentic
 			this.logger.trace("Retrieved registered client");
 		}
 
+		// @formatter:off
 		if (!registeredClient.getClientAuthenticationMethods().contains(ClientAuthenticationMethod.PRIVATE_KEY_JWT) &&
 				!registeredClient.getClientAuthenticationMethods().contains(ClientAuthenticationMethod.CLIENT_SECRET_JWT)) {
 			throwInvalidClient("authentication_method");
 		}
+		// @formatter:on
 
 		if (clientAuthentication.getCredentials() == null) {
 			throwInvalidClient("credentials");
@@ -116,10 +118,12 @@ public final class JwtClientAssertionAuthenticationProvider implements Authentic
 		// Validate the "code_verifier" parameter for the confidential client, if available
 		this.codeVerifierAuthenticator.authenticateIfAvailable(clientAuthentication, registeredClient);
 
+		// @formatter:off
 		ClientAuthenticationMethod clientAuthenticationMethod =
 				registeredClient.getClientSettings().getTokenEndpointAuthenticationSigningAlgorithm() instanceof SignatureAlgorithm ?
 						ClientAuthenticationMethod.PRIVATE_KEY_JWT :
 						ClientAuthenticationMethod.CLIENT_SECRET_JWT;
+		// @formatter:on
 
 		if (this.logger.isTraceEnabled()) {
 			this.logger.trace("Authenticated client assertion");

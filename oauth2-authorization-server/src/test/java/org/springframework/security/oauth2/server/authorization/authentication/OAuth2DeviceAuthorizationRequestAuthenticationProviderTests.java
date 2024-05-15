@@ -218,7 +218,8 @@ public class OAuth2DeviceAuthorizationRequestAuthenticationProviderTests {
 		assertThat(authenticationResult.getPrincipal()).isEqualTo(authentication.getPrincipal());
 		assertThat(authenticationResult.getScopes()).hasSameElementsAs(registeredClient.getScopes());
 		assertThat(authenticationResult.getDeviceCode().getTokenValue()).hasSize(128);
-		assertThat(authenticationResult.getUserCode().getTokenValue()).hasSize(9); // 8 chars + 1 dash
+		// 8 chars + 1 dash
+		assertThat(authenticationResult.getUserCode().getTokenValue()).hasSize(9);
 
 		ArgumentCaptor<OAuth2Authorization> authorizationCaptor = ArgumentCaptor.forClass(OAuth2Authorization.class);
 		verify(this.authorizationService).save(authorizationCaptor.capture());
@@ -244,7 +245,8 @@ public class OAuth2DeviceAuthorizationRequestAuthenticationProviderTests {
 		assertThat(authenticationResult.getPrincipal()).isEqualTo(authentication.getPrincipal());
 		assertThat(authenticationResult.getScopes()).hasSameElementsAs(registeredClient.getScopes());
 		assertThat(authenticationResult.getDeviceCode().getTokenValue()).hasSize(128);
-		assertThat(authenticationResult.getUserCode().getTokenValue()).hasSize(9); // 8 chars + 1 dash
+		// 8 chars + 1 dash
+		assertThat(authenticationResult.getUserCode().getTokenValue()).hasSize(9);
 
 		ArgumentCaptor<OAuth2Authorization> authorizationCaptor = ArgumentCaptor.forClass(OAuth2Authorization.class);
 		verify(this.authorizationService).save(authorizationCaptor.capture());
@@ -275,7 +277,8 @@ public class OAuth2DeviceAuthorizationRequestAuthenticationProviderTests {
 		assertThat(authenticationResult.getPrincipal()).isEqualTo(authentication.getPrincipal());
 		assertThat(authenticationResult.getScopes()).hasSameElementsAs(registeredClient.getScopes());
 		assertThat(authenticationResult.getDeviceCode().getTokenValue()).isEqualTo(DEVICE_CODE);
-		assertThat(authenticationResult.getUserCode().getTokenValue()).hasSize(9); // 8 chars + 1 dash
+		// 8 chars + 1 dash
+		assertThat(authenticationResult.getUserCode().getTokenValue()).hasSize(9);
 
 		ArgumentCaptor<OAuth2TokenContext> tokenContextCaptor = ArgumentCaptor.forClass(OAuth2TokenContext.class);
 		verify(deviceCodeGenerator).generate(tokenContextCaptor.capture());

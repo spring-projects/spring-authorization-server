@@ -203,8 +203,9 @@ public class OidcProviderConfigurationTests {
 		@Bean
 		SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
 			OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http);
+			// Enable OpenID Connect 1.0
 			http.getConfigurer(OAuth2AuthorizationServerConfigurer.class)
-					.oidc(Customizer.withDefaults());	// Enable OpenID Connect 1.0
+					.oidc(Customizer.withDefaults());
 			return http.build();
 		}
 

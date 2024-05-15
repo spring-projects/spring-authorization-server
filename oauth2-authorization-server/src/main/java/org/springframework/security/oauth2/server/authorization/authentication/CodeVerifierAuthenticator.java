@@ -125,9 +125,11 @@ final class CodeVerifierAuthenticator {
 	}
 
 	private static boolean authorizationCodeGrant(Map<String, Object> parameters) {
+		// @formatter:off
 		return AuthorizationGrantType.AUTHORIZATION_CODE.getValue().equals(
 				parameters.get(OAuth2ParameterNames.GRANT_TYPE)) &&
 				parameters.get(OAuth2ParameterNames.CODE) != null;
+		// @formatter:on
 	}
 
 	private static boolean codeVerifierValid(String codeVerifier, String codeChallenge, String codeChallengeMethod) {

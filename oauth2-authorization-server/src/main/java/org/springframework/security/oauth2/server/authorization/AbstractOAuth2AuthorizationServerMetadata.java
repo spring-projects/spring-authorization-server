@@ -74,7 +74,8 @@ public abstract class AbstractOAuth2AuthorizationServerMetadata implements OAuth
 
 		@SuppressWarnings("unchecked")
 		protected final B getThis() {
-			return (B) this;	// avoid unchecked casts in subclasses by using "getThis()" instead of "(B) this"
+			// avoid unchecked casts in subclasses by using "getThis()" instead of "(B) this"
+			return (B) this;
 		}
 
 		/**

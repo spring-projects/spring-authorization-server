@@ -172,8 +172,8 @@ public class OidcClientRegistrationAuthenticationProviderTests {
 	@Test
 	public void setClientRegistrationConverterWhenNullThenThrowIllegalArgumentException() {
 		assertThatIllegalArgumentException()
-				.isThrownBy(() -> this.authenticationProvider.setClientRegistrationConverter(null))
-				.withMessage("clientRegistrationConverter cannot be null");
+			.isThrownBy(() -> this.authenticationProvider.setClientRegistrationConverter(null))
+			.withMessage("clientRegistrationConverter cannot be null");
 	}
 
 	@Test

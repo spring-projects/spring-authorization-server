@@ -39,6 +39,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
  * @author Dmitriy Dubson
  */
 public class OAuth2ErrorAuthenticationFailureHandlerTests {
+
 	private final OAuth2ErrorAuthenticationFailureHandler authenticationFailureHandler = new OAuth2ErrorAuthenticationFailureHandler();
 
 	@Test

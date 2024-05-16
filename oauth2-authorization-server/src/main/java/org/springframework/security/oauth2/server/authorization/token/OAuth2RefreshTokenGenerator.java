@@ -57,10 +57,12 @@ public final class OAuth2RefreshTokenGenerator implements OAuth2TokenGenerator<O
 	}
 
 	private static boolean isPublicClientForAuthorizationCodeGrant(OAuth2TokenContext context) {
+		// @formatter:off
 		if (AuthorizationGrantType.AUTHORIZATION_CODE.equals(context.getAuthorizationGrantType()) &&
 				(context.getAuthorizationGrant().getPrincipal() instanceof OAuth2ClientAuthenticationToken clientPrincipal)) {
 			return clientPrincipal.getClientAuthenticationMethod().equals(ClientAuthenticationMethod.NONE);
 		}
+		// @formatter:on
 		return false;
 	}
 

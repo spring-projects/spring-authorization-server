@@ -86,8 +86,9 @@ public class JdbcRegisteredClientRepository implements RegisteredClientRepositor
 
 		@Override
 		public void registerHints(RuntimeHints hints, ClassLoader classLoader) {
-			hints.resources().registerResource(new ClassPathResource(
-					"org/springframework/security/oauth2/server/authorization/client/oauth2-registered-client-schema.sql"));
+			hints.resources()
+				.registerResource(new ClassPathResource(
+						"org/springframework/security/oauth2/server/authorization/client/oauth2-registered-client-schema.sql"));
 		}
 
 	}

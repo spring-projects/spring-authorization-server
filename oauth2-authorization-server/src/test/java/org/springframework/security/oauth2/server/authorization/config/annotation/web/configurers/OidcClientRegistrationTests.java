@@ -683,7 +683,7 @@ public class OidcClientRegistrationTests {
 		// @formatter:on
 
 		private Consumer<List<AuthenticationProvider>> configureClientRegistrationConverters() {
-            // @formatter:off
+			// @formatter:off
 			return (authenticationProviders) ->
 					authenticationProviders.forEach(authenticationProvider -> {
 						List<String> supportedCustomClientMetadata = List.of("custom-metadata-name-1", "custom-metadata-name-2");
@@ -769,9 +769,11 @@ public class OidcClientRegistrationTests {
 
 	}
 
-	private static class CustomRegisteredClientConverter implements Converter<OidcClientRegistration, RegisteredClient> {
-		private final OidcClientRegistrationRegisteredClientConverter delegate =
-				new OidcClientRegistrationRegisteredClientConverter();
+	private static class CustomRegisteredClientConverter
+			implements Converter<OidcClientRegistration, RegisteredClient> {
+
+		private final OidcClientRegistrationRegisteredClientConverter delegate = new OidcClientRegistrationRegisteredClientConverter();
+
 		private final List<String> supportedCustomClientMetadata;
 
 		private CustomRegisteredClientConverter(List<String> supportedCustomClientMetadata) {
@@ -783,7 +785,7 @@ public class OidcClientRegistrationTests {
 			RegisteredClient registeredClient = this.delegate.convert(clientRegistration);
 
 			ClientSettings.Builder clientSettingsBuilder = ClientSettings
-					.withSettings(registeredClient.getClientSettings().getSettings());
+				.withSettings(registeredClient.getClientSettings().getSettings());
 			if (!CollectionUtils.isEmpty(this.supportedCustomClientMetadata)) {
 				clientRegistration.getClaims().forEach((claim, value) -> {
 					if (this.supportedCustomClientMetadata.contains(claim)) {
@@ -797,9 +799,11 @@ public class OidcClientRegistrationTests {
 
 	}
 
-	private static class CustomClientRegistrationConverter implements Converter<RegisteredClient, OidcClientRegistration> {
-		private final RegisteredClientOidcClientRegistrationConverter delegate =
-				new RegisteredClientOidcClientRegistrationConverter();
+	private static class CustomClientRegistrationConverter
+			implements Converter<RegisteredClient, OidcClientRegistration> {
+
+		private final RegisteredClientOidcClientRegistrationConverter delegate = new RegisteredClientOidcClientRegistrationConverter();
+
 		private final List<String> supportedCustomClientMetadata;
 
 		private CustomClientRegistrationConverter(List<String> supportedCustomClientMetadata) {
@@ -822,6 +826,7 @@ public class OidcClientRegistrationTests {
 
 			return OidcClientRegistration.withClaims(clientMetadata).build();
 		}
+
 	}
 
 }

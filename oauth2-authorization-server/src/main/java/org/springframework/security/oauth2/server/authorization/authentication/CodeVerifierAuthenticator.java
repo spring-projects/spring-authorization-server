@@ -98,11 +98,11 @@ final class CodeVerifierAuthenticator {
 			.get(PkceParameterNames.CODE_CHALLENGE);
 		String codeVerifier = (String) parameters.get(PkceParameterNames.CODE_VERIFIER);
 		if (!StringUtils.hasText(codeChallenge)) {
-			if (registeredClient.getClientSettings().isRequireProofKey() ||
-					StringUtils.hasText(codeVerifier)) {
+			if (registeredClient.getClientSettings().isRequireProofKey() || StringUtils.hasText(codeVerifier)) {
 				if (this.logger.isDebugEnabled()) {
-					this.logger.debug(LogMessage.format("Invalid request: code_challenge is required" +
-							" for registered client '%s'", registeredClient.getId()));
+					this.logger.debug(LogMessage.format(
+							"Invalid request: code_challenge is required" + " for registered client '%s'",
+							registeredClient.getId()));
 				}
 				throwInvalidGrant(PkceParameterNames.CODE_CHALLENGE);
 			}
@@ -122,8 +122,9 @@ final class CodeVerifierAuthenticator {
 			.get(PkceParameterNames.CODE_CHALLENGE_METHOD);
 		if (!codeVerifierValid(codeVerifier, codeChallenge, codeChallengeMethod)) {
 			if (this.logger.isDebugEnabled()) {
-				this.logger.debug(LogMessage.format("Invalid request: code_verifier is missing or invalid" +
-						" for registered client '%s'", registeredClient.getId()));
+				this.logger.debug(LogMessage.format(
+						"Invalid request: code_verifier is missing or invalid" + " for registered client '%s'",
+						registeredClient.getId()));
 			}
 			throwInvalidGrant(PkceParameterNames.CODE_VERIFIER);
 		}

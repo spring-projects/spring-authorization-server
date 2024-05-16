@@ -34,15 +34,19 @@ import org.springframework.security.oauth2.server.authorization.settings.TokenSe
 import org.springframework.util.CollectionUtils;
 
 /**
- * A {@link Converter} that converts the provided {@link OidcClientRegistration} to a {@link RegisteredClient}.
+ * A {@link Converter} that converts the provided {@link OidcClientRegistration} to a
+ * {@link RegisteredClient}.
  *
  * @author Joe Grandja
  * @author Dmitriy Dubson
  * @since 1.2.0
  */
-public final class OidcClientRegistrationRegisteredClientConverter implements Converter<OidcClientRegistration, RegisteredClient> {
+public final class OidcClientRegistrationRegisteredClientConverter
+		implements Converter<OidcClientRegistration, RegisteredClient> {
+
 	private static final StringKeyGenerator CLIENT_ID_GENERATOR = new Base64StringKeyGenerator(
 			Base64.getUrlEncoder().withoutPadding(), 32);
+
 	private static final StringKeyGenerator CLIENT_SECRET_GENERATOR = new Base64StringKeyGenerator(
 			Base64.getUrlEncoder().withoutPadding(), 48);
 
@@ -125,4 +129,3 @@ public final class OidcClientRegistrationRegisteredClientConverter implements Co
 	}
 
 }
-

@@ -406,8 +406,8 @@ public class OAuth2AuthorizationCodeAuthenticationProviderTests {
 		doAnswer(answer -> {
 			OAuth2TokenContext context = answer.getArgument(0);
 			if (OAuth2TokenType.REFRESH_TOKEN.equals(context.getTokenType())) {
-				return new OAuth2AccessToken(
-						OAuth2AccessToken.TokenType.BEARER, "access-token", Instant.now(), Instant.now().plusSeconds(300));
+				return new OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER, "access-token", Instant.now(),
+						Instant.now().plusSeconds(300));
 			}
 			else {
 				return answer.callRealMethod();
@@ -415,12 +415,13 @@ public class OAuth2AuthorizationCodeAuthenticationProviderTests {
 		}).when(this.tokenGenerator).generate(any());
 
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
-				.isInstanceOf(OAuth2AuthenticationException.class)
-				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
-				.satisfies(error -> {
-					assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.SERVER_ERROR);
-					assertThat(error.getDescription()).contains("The token generator failed to generate a valid refresh token.");
-				});
+			.isInstanceOf(OAuth2AuthenticationException.class)
+			.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+			.satisfies(error -> {
+				assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.SERVER_ERROR);
+				assertThat(error.getDescription())
+					.contains("The token generator failed to generate a valid refresh token.");
+			});
 	}
 
 	@Test

@@ -86,12 +86,14 @@ public final class OidcClientConfigurationAuthenticationProvider implements Auth
 	}
 
 	/**
-	 * Sets the {@link Converter} used for converting a {@link RegisteredClient} to an {@link OidcClientRegistration}.
-	 *
-	 * @param clientRegistrationConverter the {@link Converter} used for converting a {@link RegisteredClient} to an {@link OidcClientRegistration}
+	 * Sets the {@link Converter} used for converting a {@link RegisteredClient} to an
+	 * {@link OidcClientRegistration}.
+	 * @param clientRegistrationConverter the {@link Converter} used for converting a
+	 * {@link RegisteredClient} to an {@link OidcClientRegistration}
 	 * @since 1.2.0
 	 */
-	public void setClientRegistrationConverter(Converter<RegisteredClient, OidcClientRegistration> clientRegistrationConverter) {
+	public void setClientRegistrationConverter(
+			Converter<RegisteredClient, OidcClientRegistration> clientRegistrationConverter) {
 		Assert.notNull(clientRegistrationConverter, "clientRegistrationConverter cannot be null");
 		this.clientRegistrationConverter = clientRegistrationConverter;
 	}

@@ -101,8 +101,9 @@ public class JdbcOAuth2AuthorizationService implements OAuth2AuthorizationServic
 
 		@Override
 		public void registerHints(RuntimeHints hints, ClassLoader classLoader) {
-			hints.resources().registerResource(new ClassPathResource(
-					"org/springframework/security/oauth2/server/authorization/oauth2-authorization-schema.sql"));
+			hints.resources()
+				.registerResource(new ClassPathResource(
+						"org/springframework/security/oauth2/server/authorization/oauth2-authorization-schema.sql"));
 		}
 
 	}

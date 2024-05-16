@@ -131,11 +131,16 @@ public class OidcProviderConfigurationEndpointFilterTests {
 		assertThat(providerConfigurationResponse).contains("\"jwks_uri\":\"https://example.com/oauth2/v1/jwks\"");
 		assertThat(providerConfigurationResponse).contains("\"scopes_supported\":[\"openid\"]");
 		assertThat(providerConfigurationResponse).contains("\"response_types_supported\":[\"code\"]");
-		assertThat(providerConfigurationResponse).contains("\"grant_types_supported\":[\"authorization_code\",\"client_credentials\",\"refresh_token\",\"urn:ietf:params:oauth:grant-type:device_code\"]");
-		assertThat(providerConfigurationResponse).contains("\"revocation_endpoint\":\"https://example.com/oauth2/v1/revoke\"");
-		assertThat(providerConfigurationResponse).contains("\"revocation_endpoint_auth_methods_supported\":[\"client_secret_basic\",\"client_secret_post\",\"client_secret_jwt\",\"private_key_jwt\"]");
-		assertThat(providerConfigurationResponse).contains("\"introspection_endpoint\":\"https://example.com/oauth2/v1/introspect\"");
-		assertThat(providerConfigurationResponse).contains("\"introspection_endpoint_auth_methods_supported\":[\"client_secret_basic\",\"client_secret_post\",\"client_secret_jwt\",\"private_key_jwt\"]");
+		assertThat(providerConfigurationResponse).contains(
+				"\"grant_types_supported\":[\"authorization_code\",\"client_credentials\",\"refresh_token\",\"urn:ietf:params:oauth:grant-type:device_code\"]");
+		assertThat(providerConfigurationResponse)
+			.contains("\"revocation_endpoint\":\"https://example.com/oauth2/v1/revoke\"");
+		assertThat(providerConfigurationResponse).contains(
+				"\"revocation_endpoint_auth_methods_supported\":[\"client_secret_basic\",\"client_secret_post\",\"client_secret_jwt\",\"private_key_jwt\"]");
+		assertThat(providerConfigurationResponse)
+			.contains("\"introspection_endpoint\":\"https://example.com/oauth2/v1/introspect\"");
+		assertThat(providerConfigurationResponse).contains(
+				"\"introspection_endpoint_auth_methods_supported\":[\"client_secret_basic\",\"client_secret_post\",\"client_secret_jwt\",\"private_key_jwt\"]");
 		assertThat(providerConfigurationResponse).contains("\"code_challenge_methods_supported\":[\"S256\"]");
 		assertThat(providerConfigurationResponse).contains("\"subject_types_supported\":[\"public\"]");
 		assertThat(providerConfigurationResponse).contains("\"id_token_signing_alg_values_supported\":[\"RS256\"]");

@@ -248,24 +248,24 @@ public class OAuth2RefreshTokenGrantTests {
 		this.spring.register(AuthorizationServerConfigurationWithPublicClientAuthentication.class).autowire();
 
 		RegisteredClient registeredClient = TestRegisteredClients.registeredPublicClient()
-				.authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
-				.build();
+			.authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
+			.build();
 		this.registeredClientRepository.save(registeredClient);
 
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();
 		this.authorizationService.save(authorization);
 
-		this.mvc.perform(post(DEFAULT_TOKEN_ENDPOINT_URI)
-				.params(getRefreshTokenRequestParameters(authorization))
+		this.mvc
+			.perform(post(DEFAULT_TOKEN_ENDPOINT_URI).params(getRefreshTokenRequestParameters(authorization))
 				.param(OAuth2ParameterNames.CLIENT_ID, registeredClient.getClientId()))
-				.andExpect(status().isOk())
-				.andExpect(header().string(HttpHeaders.CACHE_CONTROL, containsString("no-store")))
-				.andExpect(header().string(HttpHeaders.PRAGMA, containsString("no-cache")))
-				.andExpect(jsonPath("$.access_token").isNotEmpty())
-				.andExpect(jsonPath("$.token_type").isNotEmpty())
-				.andExpect(jsonPath("$.expires_in").isNotEmpty())
-				.andExpect(jsonPath("$.refresh_token").isNotEmpty())
-				.andExpect(jsonPath("$.scope").isNotEmpty());
+			.andExpect(status().isOk())
+			.andExpect(header().string(HttpHeaders.CACHE_CONTROL, containsString("no-store")))
+			.andExpect(header().string(HttpHeaders.PRAGMA, containsString("no-cache")))
+			.andExpect(jsonPath("$.access_token").isNotEmpty())
+			.andExpect(jsonPath("$.token_type").isNotEmpty())
+			.andExpect(jsonPath("$.expires_in").isNotEmpty())
+			.andExpect(jsonPath("$.refresh_token").isNotEmpty())
+			.andExpect(jsonPath("$.scope").isNotEmpty());
 	}
 
 	private static MultiValueMap<String, String> getRefreshTokenRequestParameters(OAuth2Authorization authorization) {
@@ -365,7 +365,9 @@ public class OAuth2RefreshTokenGrantTests {
 
 	@EnableWebSecurity
 	@Configuration(proxyBeanMethods = false)
-	static class AuthorizationServerConfigurationWithPublicClientAuthentication extends AuthorizationServerConfiguration {
+	static class AuthorizationServerConfigurationWithPublicClientAuthentication
+			extends AuthorizationServerConfiguration {
+
 		// @formatter:off
 		@Bean
 		SecurityFilterChain authorizationServerSecurityFilterChain(
@@ -393,6 +395,7 @@ public class OAuth2RefreshTokenGrantTests {
 			return http.build();
 		}
 		// @formatter:on
+
 	}
 
 	@Transient
@@ -431,6 +434,7 @@ public class OAuth2RefreshTokenGrantTests {
 	}
 
 	private static final class PublicClientRefreshTokenAuthenticationProvider implements AuthenticationProvider {
+
 		private final RegisteredClientRepository registeredClientRepository;
 
 		private PublicClientRefreshTokenAuthenticationProvider(RegisteredClientRepository registeredClientRepository) {
@@ -440,8 +444,7 @@ public class OAuth2RefreshTokenGrantTests {
 
 		@Override
 		public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-			PublicClientRefreshTokenAuthenticationToken publicClientAuthentication =
-					(PublicClientRefreshTokenAuthenticationToken) authentication;
+			PublicClientRefreshTokenAuthenticationToken publicClientAuthentication = (PublicClientRefreshTokenAuthenticationToken) authentication;
 
 			if (!ClientAuthenticationMethod.NONE.equals(publicClientAuthentication.getClientAuthenticationMethod())) {
 				return null;
@@ -453,8 +456,8 @@ public class OAuth2RefreshTokenGrantTests {
 				throwInvalidClient(OAuth2ParameterNames.CLIENT_ID);
 			}
 
-			if (!registeredClient.getClientAuthenticationMethods().contains(
-					publicClientAuthentication.getClientAuthenticationMethod())) {
+			if (!registeredClient.getClientAuthenticationMethods()
+				.contains(publicClientAuthentication.getClientAuthenticationMethod())) {
 				throwInvalidClient("authentication_method");
 			}
 
@@ -467,11 +470,8 @@ public class OAuth2RefreshTokenGrantTests {
 		}
 
 		private static void throwInvalidClient(String parameterName) {
-			OAuth2Error error = new OAuth2Error(
-					OAuth2ErrorCodes.INVALID_CLIENT,
-					"Public client authentication failed: " + parameterName,
-					null
-			);
+			OAuth2Error error = new OAuth2Error(OAuth2ErrorCodes.INVALID_CLIENT,
+					"Public client authentication failed: " + parameterName, null);
 			throw new OAuth2AuthenticationException(error);
 		}
 

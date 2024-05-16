@@ -56,6 +56,7 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationValidator
 		implements Consumer<OAuth2AuthorizationCodeRequestAuthenticationContext> {
 
 	private static final String ERROR_URI = "https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.2.1";
+
 	private static final Log LOGGER = LogFactory.getLog(OAuth2AuthorizationCodeRequestAuthenticationValidator.class);
 
 	/**
@@ -87,8 +88,9 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationValidator
 		Set<String> allowedScopes = registeredClient.getScopes();
 		if (!requestedScopes.isEmpty() && !allowedScopes.containsAll(requestedScopes)) {
 			if (LOGGER.isDebugEnabled()) {
-				LOGGER.debug(LogMessage.format("Invalid request: requested scope is not allowed" +
-						" for registered client '%s'", registeredClient.getId()));
+				LOGGER.debug(LogMessage.format(
+						"Invalid request: requested scope is not allowed" + " for registered client '%s'",
+						registeredClient.getId()));
 			}
 			throwError(OAuth2ErrorCodes.INVALID_SCOPE, OAuth2ParameterNames.SCOPE,
 					authorizationCodeRequestAuthentication, registeredClient);
@@ -113,8 +115,8 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationValidator
 			}
 			if (requestedRedirect == null || requestedRedirect.getFragment() != null) {
 				if (LOGGER.isDebugEnabled()) {
-					LOGGER.debug(LogMessage.format("Invalid request: redirect_uri is missing or contains a fragment" +
-							" for registered client '%s'", registeredClient.getId()));
+					LOGGER.debug(LogMessage.format("Invalid request: redirect_uri is missing or contains a fragment"
+							+ " for registered client '%s'", registeredClient.getId()));
 				}
 				throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.REDIRECT_URI,
 						authorizationCodeRequestAuthentication, registeredClient);
@@ -148,8 +150,9 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationValidator
 				}
 				if (!validRedirectUri) {
 					if (LOGGER.isDebugEnabled()) {
-						LOGGER.debug(LogMessage.format("Invalid request: redirect_uri does not match" +
-								" for registered client '%s'", registeredClient.getId()));
+						LOGGER.debug(LogMessage.format(
+								"Invalid request: redirect_uri does not match" + " for registered client '%s'",
+								registeredClient.getId()));
 					}
 					throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.REDIRECT_URI,
 							authorizationCodeRequestAuthentication, registeredClient);

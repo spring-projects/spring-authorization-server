@@ -472,81 +472,85 @@ public class OidcTests {
 
 	// gh-1422
 	@Test
-	public void requestWhenAuthenticationRequestWithOfflineAccessScopeThenTokenResponseIncludesRefreshToken() throws Exception {
+	public void requestWhenAuthenticationRequestWithOfflineAccessScopeThenTokenResponseIncludesRefreshToken()
+			throws Exception {
 		this.spring.register(AuthorizationServerConfigurationWithCustomRefreshTokenGenerator.class).autowire();
 
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
-				.scope(OidcScopes.OPENID)
-				.scope("offline_access")
-				.build();
+			.scope(OidcScopes.OPENID)
+			.scope("offline_access")
+			.build();
 		this.registeredClientRepository.save(registeredClient);
 
-		MultiValueMap<String, String> authorizationRequestParameters = getAuthorizationRequestParameters(registeredClient);
-		MvcResult mvcResult = this.mvc.perform(get(DEFAULT_AUTHORIZATION_ENDPOINT_URI)
-						.queryParams(authorizationRequestParameters)
-						.with(user("user")))
-				.andExpect(status().is3xxRedirection())
-				.andReturn();
+		MultiValueMap<String, String> authorizationRequestParameters = getAuthorizationRequestParameters(
+				registeredClient);
+		MvcResult mvcResult = this.mvc
+			.perform(get(DEFAULT_AUTHORIZATION_ENDPOINT_URI).queryParams(authorizationRequestParameters)
+				.with(user("user")))
+			.andExpect(status().is3xxRedirection())
+			.andReturn();
 		String redirectedUrl = mvcResult.getResponse().getRedirectedUrl();
 		String expectedRedirectUri = authorizationRequestParameters.getFirst(OAuth2ParameterNames.REDIRECT_URI);
 		assertThat(redirectedUrl).matches(expectedRedirectUri + "\\?code=.{15,}&state=state");
 
 		String authorizationCode = extractParameterFromRedirectUri(redirectedUrl, "code");
-		OAuth2Authorization authorization = this.authorizationService.findByToken(authorizationCode, AUTHORIZATION_CODE_TOKEN_TYPE);
+		OAuth2Authorization authorization = this.authorizationService.findByToken(authorizationCode,
+				AUTHORIZATION_CODE_TOKEN_TYPE);
 
-		this.mvc.perform(post(DEFAULT_TOKEN_ENDPOINT_URI)
-				.params(getTokenRequestParameters(registeredClient, authorization))
-				.header(HttpHeaders.AUTHORIZATION, "Basic " + encodeBasicAuth(
-						registeredClient.getClientId(), registeredClient.getClientSecret())))
-				.andExpect(status().isOk())
-				.andExpect(header().string(HttpHeaders.CACHE_CONTROL, containsString("no-store")))
-				.andExpect(header().string(HttpHeaders.PRAGMA, containsString("no-cache")))
-				.andExpect(jsonPath("$.access_token").isNotEmpty())
-				.andExpect(jsonPath("$.token_type").isNotEmpty())
-				.andExpect(jsonPath("$.expires_in").isNotEmpty())
-				.andExpect(jsonPath("$.refresh_token").isNotEmpty())
-				.andExpect(jsonPath("$.scope").isNotEmpty())
-				.andExpect(jsonPath("$.id_token").isNotEmpty())
-				.andReturn();
+		this.mvc
+			.perform(post(DEFAULT_TOKEN_ENDPOINT_URI).params(getTokenRequestParameters(registeredClient, authorization))
+				.header(HttpHeaders.AUTHORIZATION,
+						"Basic " + encodeBasicAuth(registeredClient.getClientId(), registeredClient.getClientSecret())))
+			.andExpect(status().isOk())
+			.andExpect(header().string(HttpHeaders.CACHE_CONTROL, containsString("no-store")))
+			.andExpect(header().string(HttpHeaders.PRAGMA, containsString("no-cache")))
+			.andExpect(jsonPath("$.access_token").isNotEmpty())
+			.andExpect(jsonPath("$.token_type").isNotEmpty())
+			.andExpect(jsonPath("$.expires_in").isNotEmpty())
+			.andExpect(jsonPath("$.refresh_token").isNotEmpty())
+			.andExpect(jsonPath("$.scope").isNotEmpty())
+			.andExpect(jsonPath("$.id_token").isNotEmpty())
+			.andReturn();
 	}
 
 	// gh-1422
 	@Test
-	public void requestWhenAuthenticationRequestWithoutOfflineAccessScopeThenTokenResponseDoesNotIncludeRefreshToken() throws Exception {
+	public void requestWhenAuthenticationRequestWithoutOfflineAccessScopeThenTokenResponseDoesNotIncludeRefreshToken()
+			throws Exception {
 		this.spring.register(AuthorizationServerConfigurationWithCustomRefreshTokenGenerator.class).autowire();
 
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
-				.scope(OidcScopes.OPENID)
-				.build();
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().scope(OidcScopes.OPENID).build();
 		this.registeredClientRepository.save(registeredClient);
 
-		MultiValueMap<String, String> authorizationRequestParameters = getAuthorizationRequestParameters(registeredClient);
-		MvcResult mvcResult = this.mvc.perform(get(DEFAULT_AUTHORIZATION_ENDPOINT_URI)
-						.queryParams(authorizationRequestParameters)
-						.with(user("user")))
-				.andExpect(status().is3xxRedirection())
-				.andReturn();
+		MultiValueMap<String, String> authorizationRequestParameters = getAuthorizationRequestParameters(
+				registeredClient);
+		MvcResult mvcResult = this.mvc
+			.perform(get(DEFAULT_AUTHORIZATION_ENDPOINT_URI).queryParams(authorizationRequestParameters)
+				.with(user("user")))
+			.andExpect(status().is3xxRedirection())
+			.andReturn();
 		String redirectedUrl = mvcResult.getResponse().getRedirectedUrl();
 		String expectedRedirectUri = authorizationRequestParameters.getFirst(OAuth2ParameterNames.REDIRECT_URI);
 		assertThat(redirectedUrl).matches(expectedRedirectUri + "\\?code=.{15,}&state=state");
 
 		String authorizationCode = extractParameterFromRedirectUri(redirectedUrl, "code");
-		OAuth2Authorization authorization = this.authorizationService.findByToken(authorizationCode, AUTHORIZATION_CODE_TOKEN_TYPE);
+		OAuth2Authorization authorization = this.authorizationService.findByToken(authorizationCode,
+				AUTHORIZATION_CODE_TOKEN_TYPE);
 
-		this.mvc.perform(post(DEFAULT_TOKEN_ENDPOINT_URI)
-						.params(getTokenRequestParameters(registeredClient, authorization))
-						.header(HttpHeaders.AUTHORIZATION, "Basic " + encodeBasicAuth(
-								registeredClient.getClientId(), registeredClient.getClientSecret())))
-				.andExpect(status().isOk())
-				.andExpect(header().string(HttpHeaders.CACHE_CONTROL, containsString("no-store")))
-				.andExpect(header().string(HttpHeaders.PRAGMA, containsString("no-cache")))
-				.andExpect(jsonPath("$.access_token").isNotEmpty())
-				.andExpect(jsonPath("$.token_type").isNotEmpty())
-				.andExpect(jsonPath("$.expires_in").isNotEmpty())
-				.andExpect(jsonPath("$.refresh_token").doesNotExist())
-				.andExpect(jsonPath("$.scope").isNotEmpty())
-				.andExpect(jsonPath("$.id_token").isNotEmpty())
-				.andReturn();
+		this.mvc
+			.perform(post(DEFAULT_TOKEN_ENDPOINT_URI).params(getTokenRequestParameters(registeredClient, authorization))
+				.header(HttpHeaders.AUTHORIZATION,
+						"Basic " + encodeBasicAuth(registeredClient.getClientId(), registeredClient.getClientSecret())))
+			.andExpect(status().isOk())
+			.andExpect(header().string(HttpHeaders.CACHE_CONTROL, containsString("no-store")))
+			.andExpect(header().string(HttpHeaders.PRAGMA, containsString("no-cache")))
+			.andExpect(jsonPath("$.access_token").isNotEmpty())
+			.andExpect(jsonPath("$.token_type").isNotEmpty())
+			.andExpect(jsonPath("$.expires_in").isNotEmpty())
+			.andExpect(jsonPath("$.refresh_token").doesNotExist())
+			.andExpect(jsonPath("$.scope").isNotEmpty())
+			.andExpect(jsonPath("$.id_token").isNotEmpty())
+			.andReturn();
 	}
 
 	private static MultiValueMap<String, String> getAuthorizationRequestParameters(RegisteredClient registeredClient) {
@@ -728,7 +732,8 @@ public class OidcTests {
 
 	@EnableWebSecurity
 	@Configuration
-	static class AuthorizationServerConfigurationWithCustomRefreshTokenGenerator extends AuthorizationServerConfiguration {
+	static class AuthorizationServerConfigurationWithCustomRefreshTokenGenerator
+			extends AuthorizationServerConfiguration {
 
 		// @formatter:off
 		@Bean
@@ -763,13 +768,14 @@ public class OidcTests {
 		}
 
 		private static final class CustomRefreshTokenGenerator implements OAuth2TokenGenerator<OAuth2RefreshToken> {
+
 			private final OAuth2RefreshTokenGenerator delegate = new OAuth2RefreshTokenGenerator();
 
 			@Nullable
 			@Override
 			public OAuth2RefreshToken generate(OAuth2TokenContext context) {
-				if (context.getAuthorizedScopes().contains(OidcScopes.OPENID) &&
-						!context.getAuthorizedScopes().contains("offline_access")) {
+				if (context.getAuthorizedScopes().contains(OidcScopes.OPENID)
+						&& !context.getAuthorizedScopes().contains("offline_access")) {
 					return null;
 				}
 				return this.delegate.generate(context);

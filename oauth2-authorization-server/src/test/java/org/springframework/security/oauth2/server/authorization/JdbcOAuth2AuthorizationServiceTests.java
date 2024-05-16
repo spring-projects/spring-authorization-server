@@ -75,24 +75,41 @@ import static org.mockito.Mockito.when;
  * @author Steve Riesenberg
  */
 public class JdbcOAuth2AuthorizationServiceTests {
+
 	private static final String OAUTH2_AUTHORIZATION_SCHEMA_SQL_RESOURCE = "org/springframework/security/oauth2/server/authorization/oauth2-authorization-schema.sql";
+
 	private static final String CUSTOM_OAUTH2_AUTHORIZATION_SCHEMA_SQL_RESOURCE = "org/springframework/security/oauth2/server/authorization/custom-oauth2-authorization-schema.sql";
+
 	private static final String OAUTH2_AUTHORIZATION_SCHEMA_CLOB_DATA_TYPE_SQL_RESOURCE = "org/springframework/security/oauth2/server/authorization/custom-oauth2-authorization-schema-clob-data-type.sql";
+
 	private static final OAuth2TokenType AUTHORIZATION_CODE_TOKEN_TYPE = new OAuth2TokenType(OAuth2ParameterNames.CODE);
+
 	private static final OAuth2TokenType STATE_TOKEN_TYPE = new OAuth2TokenType(OAuth2ParameterNames.STATE);
+
 	private static final OAuth2TokenType ID_TOKEN_TOKEN_TYPE = new OAuth2TokenType(OidcParameterNames.ID_TOKEN);
+
 	private static final OAuth2TokenType USER_CODE_TOKEN_TYPE = new OAuth2TokenType(OAuth2ParameterNames.USER_CODE);
+
 	private static final OAuth2TokenType DEVICE_CODE_TOKEN_TYPE = new OAuth2TokenType(OAuth2ParameterNames.DEVICE_CODE);
+
 	private static final String ID = "id";
+
 	private static final RegisteredClient REGISTERED_CLIENT = TestRegisteredClients.registeredClient().build();
+
 	private static final String PRINCIPAL_NAME = "principal";
+
 	private static final AuthorizationGrantType AUTHORIZATION_GRANT_TYPE = AuthorizationGrantType.AUTHORIZATION_CODE;
-	private static final OAuth2AuthorizationCode AUTHORIZATION_CODE = new OAuth2AuthorizationCode(
-			"code", Instant.now().truncatedTo(ChronoUnit.MILLIS), Instant.now().plus(5, ChronoUnit.MINUTES).truncatedTo(ChronoUnit.MILLIS));
+
+	private static final OAuth2AuthorizationCode AUTHORIZATION_CODE = new OAuth2AuthorizationCode("code",
+			Instant.now().truncatedTo(ChronoUnit.MILLIS),
+			Instant.now().plus(5, ChronoUnit.MINUTES).truncatedTo(ChronoUnit.MILLIS));
 
 	private EmbeddedDatabase db;
+
 	private JdbcOperations jdbcOperations;
+
 	private RegisteredClientRepository registeredClientRepository;
+
 	private JdbcOAuth2AuthorizationService authorizationService;
 
 	@BeforeEach
@@ -100,7 +117,8 @@ public class JdbcOAuth2AuthorizationServiceTests {
 		this.db = createDb();
 		this.jdbcOperations = new JdbcTemplate(this.db);
 		this.registeredClientRepository = mock(RegisteredClientRepository.class);
-		this.authorizationService = new JdbcOAuth2AuthorizationService(this.jdbcOperations, this.registeredClientRepository);
+		this.authorizationService = new JdbcOAuth2AuthorizationService(this.jdbcOperations,
+				this.registeredClientRepository);
 	}
 
 	@AfterEach
@@ -445,24 +463,25 @@ public class JdbcOAuth2AuthorizationServiceTests {
 
 	@Test
 	public void findByTokenWhenWrongTokenTypeThenNotFound() {
-		OAuth2RefreshToken refreshToken = new OAuth2RefreshToken("refresh-token", Instant.now().truncatedTo(ChronoUnit.MILLIS));
+		OAuth2RefreshToken refreshToken = new OAuth2RefreshToken("refresh-token",
+				Instant.now().truncatedTo(ChronoUnit.MILLIS));
 		OAuth2Authorization authorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
-				.id(ID)
-				.principalName(PRINCIPAL_NAME)
-				.authorizationGrantType(AUTHORIZATION_GRANT_TYPE)
-				.refreshToken(refreshToken)
-				.build();
+			.id(ID)
+			.principalName(PRINCIPAL_NAME)
+			.authorizationGrantType(AUTHORIZATION_GRANT_TYPE)
+			.refreshToken(refreshToken)
+			.build();
 		this.authorizationService.save(authorization);
 
-		OAuth2Authorization result = this.authorizationService.findByToken(
-				refreshToken.getTokenValue(), OAuth2TokenType.ACCESS_TOKEN);
+		OAuth2Authorization result = this.authorizationService.findByToken(refreshToken.getTokenValue(),
+				OAuth2TokenType.ACCESS_TOKEN);
 		assertThat(result).isNull();
 	}
 
 	@Test
 	public void findByTokenWhenTokenDoesNotExistThenNull() {
-		OAuth2Authorization result = this.authorizationService.findByToken(
-				"access-token", OAuth2TokenType.ACCESS_TOKEN);
+		OAuth2Authorization result = this.authorizationService.findByToken("access-token",
+				OAuth2TokenType.ACCESS_TOKEN);
 		assertThat(result).isNull();
 	}
 
@@ -578,9 +597,10 @@ public class JdbcOAuth2AuthorizationServiceTests {
 		private static final String TABLE_NAME = "oauth2Authorization";
 
 		private static final String PK_FILTER = "id = ?";
-		private static final String UNKNOWN_TOKEN_TYPE_FILTER = "state = ? OR authorizationCodeValue = ? OR " +
-				"accessTokenValue = ? OR oidcIdTokenValue = ? OR refreshTokenValue = ? OR userCodeValue = ? OR " +
-				"deviceCodeValue = ?";
+
+		private static final String UNKNOWN_TOKEN_TYPE_FILTER = "state = ? OR authorizationCodeValue = ? OR "
+				+ "accessTokenValue = ? OR oidcIdTokenValue = ? OR refreshTokenValue = ? OR userCodeValue = ? OR "
+				+ "deviceCodeValue = ?";
 
 		// @formatter:off
 		private static final String LOAD_AUTHORIZATION_SQL = "SELECT " + COLUMN_NAMES
@@ -612,8 +632,7 @@ public class JdbcOAuth2AuthorizationServiceTests {
 		@Override
 		public void remove(OAuth2Authorization authorization) {
 			SqlParameterValue[] parameters = new SqlParameterValue[] {
-					new SqlParameterValue(Types.VARCHAR, authorization.getId())
-			};
+					new SqlParameterValue(Types.VARCHAR, authorization.getId()) };
 			PreparedStatementSetter pss = new ArgumentPreparedStatementSetter(parameters);
 			getJdbcOperations().update(REMOVE_AUTHORIZATION_SQL, pss);
 		}
@@ -629,12 +648,13 @@ public class JdbcOAuth2AuthorizationServiceTests {
 		}
 
 		private OAuth2Authorization findBy(String filter, Object... args) {
-			List<OAuth2Authorization> result = getJdbcOperations()
-					.query(LOAD_AUTHORIZATION_SQL + filter, getAuthorizationRowMapper(), args);
+			List<OAuth2Authorization> result = getJdbcOperations().query(LOAD_AUTHORIZATION_SQL + filter,
+					getAuthorizationRowMapper(), args);
 			return !result.isEmpty() ? result.get(0) : null;
 		}
 
-		private static final class CustomOAuth2AuthorizationRowMapper extends JdbcOAuth2AuthorizationService.OAuth2AuthorizationRowMapper {
+		private static final class CustomOAuth2AuthorizationRowMapper
+				extends JdbcOAuth2AuthorizationService.OAuth2AuthorizationRowMapper {
 
 			private CustomOAuth2AuthorizationRowMapper(RegisteredClientRepository registeredClientRepository) {
 				super(registeredClientRepository);
@@ -646,8 +666,8 @@ public class JdbcOAuth2AuthorizationServiceTests {
 				String registeredClientId = rs.getString("registeredClientId");
 				RegisteredClient registeredClient = getRegisteredClientRepository().findById(registeredClientId);
 				if (registeredClient == null) {
-					throw new DataRetrievalFailureException(
-							"The RegisteredClient with id '" + registeredClientId + "' was not found in the RegisteredClientRepository.");
+					throw new DataRetrievalFailureException("The RegisteredClient with id '" + registeredClientId
+							+ "' was not found in the RegisteredClientRepository.");
 				}
 
 				OAuth2Authorization.Builder builder = OAuth2Authorization.withRegisteredClient(registeredClient);
@@ -662,10 +682,10 @@ public class JdbcOAuth2AuthorizationServiceTests {
 				Map<String, Object> attributes = parseMap(rs.getString("attributes"));
 
 				builder.id(id)
-						.principalName(principalName)
-						.authorizationGrantType(new AuthorizationGrantType(authorizationGrantType))
-						.authorizedScopes(authorizedScopes)
-						.attributes((attrs) -> attrs.putAll(attributes));
+					.principalName(principalName)
+					.authorizationGrantType(new AuthorizationGrantType(authorizationGrantType))
+					.authorizedScopes(authorizedScopes)
+					.attributes((attrs) -> attrs.putAll(attributes));
 
 				String state = rs.getString("state");
 				if (StringUtils.hasText(state)) {
@@ -680,8 +700,8 @@ public class JdbcOAuth2AuthorizationServiceTests {
 					tokenExpiresAt = rs.getTimestamp("authorizationCodeExpiresAt").toInstant();
 					Map<String, Object> authorizationCodeMetadata = parseMap(rs.getString("authorizationCodeMetadata"));
 
-					OAuth2AuthorizationCode authorizationCode = new OAuth2AuthorizationCode(
-							tokenValue, tokenIssuedAt, tokenExpiresAt);
+					OAuth2AuthorizationCode authorizationCode = new OAuth2AuthorizationCode(tokenValue, tokenIssuedAt,
+							tokenExpiresAt);
 					builder.token(authorizationCode, (metadata) -> metadata.putAll(authorizationCodeMetadata));
 				}
 
@@ -691,7 +711,8 @@ public class JdbcOAuth2AuthorizationServiceTests {
 					tokenExpiresAt = rs.getTimestamp("accessTokenExpiresAt").toInstant();
 					Map<String, Object> accessTokenMetadata = parseMap(rs.getString("accessTokenMetadata"));
 					OAuth2AccessToken.TokenType tokenType = null;
-					if (OAuth2AccessToken.TokenType.BEARER.getValue().equalsIgnoreCase(rs.getString("accessTokenType"))) {
+					if (OAuth2AccessToken.TokenType.BEARER.getValue()
+						.equalsIgnoreCase(rs.getString("accessTokenType"))) {
 						tokenType = OAuth2AccessToken.TokenType.BEARER;
 					}
 
@@ -700,7 +721,8 @@ public class JdbcOAuth2AuthorizationServiceTests {
 					if (accessTokenScopes != null) {
 						scopes = StringUtils.commaDelimitedListToSet(accessTokenScopes);
 					}
-					OAuth2AccessToken accessToken = new OAuth2AccessToken(tokenType, tokenValue, tokenIssuedAt, tokenExpiresAt, scopes);
+					OAuth2AccessToken accessToken = new OAuth2AccessToken(tokenType, tokenValue, tokenIssuedAt,
+							tokenExpiresAt, scopes);
 					builder.token(accessToken, (metadata) -> metadata.putAll(accessTokenMetadata));
 				}
 
@@ -710,8 +732,9 @@ public class JdbcOAuth2AuthorizationServiceTests {
 					tokenExpiresAt = rs.getTimestamp("oidcIdTokenExpiresAt").toInstant();
 					Map<String, Object> oidcTokenMetadata = parseMap(rs.getString("oidcIdTokenMetadata"));
 
-					OidcIdToken oidcToken = new OidcIdToken(
-							tokenValue, tokenIssuedAt, tokenExpiresAt, (Map<String, Object>) oidcTokenMetadata.get(OAuth2Authorization.Token.CLAIMS_METADATA_NAME));
+					OidcIdToken oidcToken = new OidcIdToken(tokenValue, tokenIssuedAt, tokenExpiresAt,
+							(Map<String, Object>) oidcTokenMetadata
+								.get(OAuth2Authorization.Token.CLAIMS_METADATA_NAME));
 					builder.token(oidcToken, (metadata) -> metadata.putAll(oidcTokenMetadata));
 				}
 
@@ -725,8 +748,7 @@ public class JdbcOAuth2AuthorizationServiceTests {
 					}
 					Map<String, Object> refreshTokenMetadata = parseMap(rs.getString("refreshTokenMetadata"));
 
-					OAuth2RefreshToken refreshToken = new OAuth2RefreshToken(
-							tokenValue, tokenIssuedAt, tokenExpiresAt);
+					OAuth2RefreshToken refreshToken = new OAuth2RefreshToken(tokenValue, tokenIssuedAt, tokenExpiresAt);
 					builder.token(refreshToken, (metadata) -> metadata.putAll(refreshTokenMetadata));
 				}
 
@@ -755,15 +777,18 @@ public class JdbcOAuth2AuthorizationServiceTests {
 
 			private Map<String, Object> parseMap(String data) {
 				try {
-					return getObjectMapper().readValue(data, new TypeReference<Map<String, Object>>() {});
-				} catch (Exception ex) {
+					return getObjectMapper().readValue(data, new TypeReference<Map<String, Object>>() {
+					});
+				}
+				catch (Exception ex) {
 					throw new IllegalArgumentException(ex.getMessage(), ex);
 				}
 			}
 
 		}
 
-		private static final class CustomOAuth2AuthorizationParametersMapper extends JdbcOAuth2AuthorizationService.OAuth2AuthorizationParametersMapper {
+		private static final class CustomOAuth2AuthorizationParametersMapper
+				extends JdbcOAuth2AuthorizationService.OAuth2AuthorizationParametersMapper {
 
 			@Override
 			public List<SqlParameterValue> apply(OAuth2Authorization authorization) {
@@ -771,11 +796,13 @@ public class JdbcOAuth2AuthorizationServiceTests {
 				parameters.add(new SqlParameterValue(Types.VARCHAR, authorization.getId()));
 				parameters.add(new SqlParameterValue(Types.VARCHAR, authorization.getRegisteredClientId()));
 				parameters.add(new SqlParameterValue(Types.VARCHAR, authorization.getPrincipalName()));
-				parameters.add(new SqlParameterValue(Types.VARCHAR, authorization.getAuthorizationGrantType().getValue()));
+				parameters
+					.add(new SqlParameterValue(Types.VARCHAR, authorization.getAuthorizationGrantType().getValue()));
 
 				String authorizedScopes = null;
 				if (!CollectionUtils.isEmpty(authorization.getAuthorizedScopes())) {
-					authorizedScopes = StringUtils.collectionToDelimitedString(authorization.getAuthorizedScopes(), ",");
+					authorizedScopes = StringUtils.collectionToDelimitedString(authorization.getAuthorizedScopes(),
+							",");
 				}
 				parameters.add(new SqlParameterValue(Types.VARCHAR, authorizedScopes));
 
@@ -789,13 +816,13 @@ public class JdbcOAuth2AuthorizationServiceTests {
 				}
 				parameters.add(new SqlParameterValue(Types.VARCHAR, state));
 
-				OAuth2Authorization.Token<OAuth2AuthorizationCode> authorizationCode =
-						authorization.getToken(OAuth2AuthorizationCode.class);
+				OAuth2Authorization.Token<OAuth2AuthorizationCode> authorizationCode = authorization
+					.getToken(OAuth2AuthorizationCode.class);
 				List<SqlParameterValue> authorizationCodeSqlParameters = toSqlParameterList(authorizationCode);
 				parameters.addAll(authorizationCodeSqlParameters);
 
-				OAuth2Authorization.Token<OAuth2AccessToken> accessToken =
-						authorization.getToken(OAuth2AccessToken.class);
+				OAuth2Authorization.Token<OAuth2AccessToken> accessToken = authorization
+					.getToken(OAuth2AccessToken.class);
 				List<SqlParameterValue> accessTokenSqlParameters = toSqlParameterList(accessToken);
 				parameters.addAll(accessTokenSqlParameters);
 				String accessTokenType = null;
@@ -803,7 +830,8 @@ public class JdbcOAuth2AuthorizationServiceTests {
 				if (accessToken != null) {
 					accessTokenType = accessToken.getToken().getTokenType().getValue();
 					if (!CollectionUtils.isEmpty(accessToken.getToken().getScopes())) {
-						accessTokenScopes = StringUtils.collectionToDelimitedString(accessToken.getToken().getScopes(), ",");
+						accessTokenScopes = StringUtils.collectionToDelimitedString(accessToken.getToken().getScopes(),
+								",");
 					}
 				}
 				parameters.add(new SqlParameterValue(Types.VARCHAR, accessTokenType));
@@ -828,7 +856,8 @@ public class JdbcOAuth2AuthorizationServiceTests {
 				return parameters;
 			}
 
-			private <T extends OAuth2Token> List<SqlParameterValue> toSqlParameterList(OAuth2Authorization.Token<T> token) {
+			private <T extends OAuth2Token> List<SqlParameterValue> toSqlParameterList(
+					OAuth2Authorization.Token<T> token) {
 				List<SqlParameterValue> parameters = new ArrayList<>();
 				String tokenValue = null;
 				Timestamp tokenIssuedAt = null;
@@ -854,7 +883,8 @@ public class JdbcOAuth2AuthorizationServiceTests {
 			private String writeMap(Map<String, Object> data) {
 				try {
 					return getObjectMapper().writeValueAsString(data);
-				} catch (Exception ex) {
+				}
+				catch (Exception ex) {
 					throw new IllegalArgumentException(ex.getMessage(), ex);
 				}
 			}

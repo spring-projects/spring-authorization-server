@@ -60,8 +60,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @ExtendWith(SpringTestContextExtension.class)
 public class JwkSetTests {
+
 	private static final String DEFAULT_JWK_SET_ENDPOINT_URI = "/oauth2/jwks";
+
 	private static EmbeddedDatabase db;
+
 	private static JWKSource<SecurityContext> jwkSource;
 
 	public final SpringTestContext spring = new SpringTestContext();
@@ -123,11 +126,11 @@ public class JwkSetTests {
 
 	private void assertJwkSetRequestThenReturnKeys(String jwkSetEndpointUri) throws Exception {
 		this.mvc.perform(get(jwkSetEndpointUri))
-				.andExpect(status().isOk())
-				.andExpect(header().string(HttpHeaders.CACHE_CONTROL, containsString("no-store")))
-				.andExpect(header().string(HttpHeaders.PRAGMA, containsString("no-cache")))
-				.andExpect(jsonPath("$.keys").isNotEmpty())
-				.andExpect(jsonPath("$.keys").isArray());
+			.andExpect(status().isOk())
+			.andExpect(header().string(HttpHeaders.CACHE_CONTROL, containsString("no-store")))
+			.andExpect(header().string(HttpHeaders.PRAGMA, containsString("no-cache")))
+			.andExpect(jsonPath("$.keys").isNotEmpty())
+			.andExpect(jsonPath("$.keys").isArray());
 	}
 
 	@EnableWebSecurity
@@ -135,8 +138,10 @@ public class JwkSetTests {
 	static class AuthorizationServerConfiguration {
 
 		@Bean
-		OAuth2AuthorizationService authorizationService(JdbcOperations jdbcOperations, RegisteredClientRepository registeredClientRepository) {
-			JdbcOAuth2AuthorizationService authorizationService = new JdbcOAuth2AuthorizationService(jdbcOperations, registeredClientRepository);
+		OAuth2AuthorizationService authorizationService(JdbcOperations jdbcOperations,
+				RegisteredClientRepository registeredClientRepository) {
+			JdbcOAuth2AuthorizationService authorizationService = new JdbcOAuth2AuthorizationService(jdbcOperations,
+					registeredClientRepository);
 			authorizationService.setAuthorizationRowMapper(new RowMapper(registeredClientRepository));
 			authorizationService.setAuthorizationParametersMapper(new ParametersMapper());
 			return authorizationService;
@@ -174,6 +179,7 @@ public class JwkSetTests {
 			}
 
 		}
+
 	}
 
 	@EnableWebSecurity
@@ -184,6 +190,7 @@ public class JwkSetTests {
 		AuthorizationServerSettings authorizationServerSettings() {
 			return AuthorizationServerSettings.builder().jwkSetEndpoint("/test/jwks").multipleIssuersAllowed(true).build();
 		}
+
 	}
 
 }

@@ -36,8 +36,8 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 /**
- * An {@link OAuth2TokenGenerator} that generates a
- * {@link OAuth2TokenFormat#REFERENCE "reference"} (opaque) {@link OAuth2AccessToken}.
+ * An {@link OAuth2TokenGenerator} that generates a {@link OAuth2TokenFormat#REFERENCE
+ * "reference"} (opaque) {@link OAuth2AccessToken}.
  *
  * @author Joe Grandja
  * @since 0.2.3
@@ -48,17 +48,21 @@ import org.springframework.util.StringUtils;
  * @see OAuth2TokenClaimsSet
  */
 public final class OAuth2AccessTokenGenerator implements OAuth2TokenGenerator<OAuth2AccessToken> {
-	private final StringKeyGenerator accessTokenGenerator =
-			new Base64StringKeyGenerator(Base64.getUrlEncoder().withoutPadding(), 96);
+
+	private final StringKeyGenerator accessTokenGenerator = new Base64StringKeyGenerator(
+			Base64.getUrlEncoder().withoutPadding(), 96);
+
 	private OAuth2TokenCustomizer<OAuth2TokenClaimsContext> accessTokenCustomizer;
 
 	@Nullable
 	@Override
 	public OAuth2AccessToken generate(OAuth2TokenContext context) {
+		// @formatter:off
 		if (!OAuth2TokenType.ACCESS_TOKEN.equals(context.getTokenType()) ||
 				!OAuth2TokenFormat.REFERENCE.equals(context.getRegisteredClient().getTokenSettings().getAccessTokenFormat())) {
 			return null;
 		}
+		// @formatter:on
 
 		String issuer = null;
 		if (context.getAuthorizationServerContext() != null) {
@@ -110,17 +114,18 @@ public final class OAuth2AccessTokenGenerator implements OAuth2TokenGenerator<OA
 		OAuth2TokenClaimsSet accessTokenClaimsSet = claimsBuilder.build();
 
 		OAuth2AccessToken accessToken = new OAuth2AccessTokenClaims(OAuth2AccessToken.TokenType.BEARER,
-				this.accessTokenGenerator.generateKey(), accessTokenClaimsSet.getIssuedAt(), accessTokenClaimsSet.getExpiresAt(),
-				context.getAuthorizedScopes(), accessTokenClaimsSet.getClaims());
+				this.accessTokenGenerator.generateKey(), accessTokenClaimsSet.getIssuedAt(),
+				accessTokenClaimsSet.getExpiresAt(), context.getAuthorizedScopes(), accessTokenClaimsSet.getClaims());
 
 		return accessToken;
 	}
 
 	/**
 	 * Sets the {@link OAuth2TokenCustomizer} that customizes the
-	 * {@link OAuth2TokenClaimsContext#getClaims() claims} for the {@link OAuth2AccessToken}.
-	 *
-	 * @param accessTokenCustomizer the {@link OAuth2TokenCustomizer} that customizes the claims for the {@code OAuth2AccessToken}
+	 * {@link OAuth2TokenClaimsContext#getClaims() claims} for the
+	 * {@link OAuth2AccessToken}.
+	 * @param accessTokenCustomizer the {@link OAuth2TokenCustomizer} that customizes the
+	 * claims for the {@code OAuth2AccessToken}
 	 */
 	public void setAccessTokenCustomizer(OAuth2TokenCustomizer<OAuth2TokenClaimsContext> accessTokenCustomizer) {
 		Assert.notNull(accessTokenCustomizer, "accessTokenCustomizer cannot be null");
@@ -128,10 +133,11 @@ public final class OAuth2AccessTokenGenerator implements OAuth2TokenGenerator<OA
 	}
 
 	private static final class OAuth2AccessTokenClaims extends OAuth2AccessToken implements ClaimAccessor {
+
 		private final Map<String, Object> claims;
 
-		private OAuth2AccessTokenClaims(TokenType tokenType, String tokenValue,
-				Instant issuedAt, Instant expiresAt, Set<String> scopes, Map<String, Object> claims) {
+		private OAuth2AccessTokenClaims(TokenType tokenType, String tokenValue, Instant issuedAt, Instant expiresAt,
+				Set<String> scopes, Map<String, Object> claims) {
 			super(tokenType, tokenValue, issuedAt, expiresAt, scopes);
 			this.claims = claims;
 		}

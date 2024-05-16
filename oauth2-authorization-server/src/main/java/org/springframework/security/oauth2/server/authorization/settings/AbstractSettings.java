@@ -32,7 +32,9 @@ import org.springframework.util.Assert;
  * @since 0.0.2
  */
 public abstract class AbstractSettings implements Serializable {
+
 	private static final long serialVersionUID = SpringAuthorizationServerVersion.SERIAL_VERSION_UID;
+
 	private final Map<String, Object> settings;
 
 	protected AbstractSettings(Map<String, Object> settings) {
@@ -42,7 +44,6 @@ public abstract class AbstractSettings implements Serializable {
 
 	/**
 	 * Returns a configuration setting.
-	 *
 	 * @param name the name of the setting
 	 * @param <T> the type of the setting
 	 * @return the value of the setting, or {@code null} if not available
@@ -55,7 +56,6 @@ public abstract class AbstractSettings implements Serializable {
 
 	/**
 	 * Returns a {@code Map} of the configuration settings.
-	 *
 	 * @return a {@code Map} of the configuration settings
 	 */
 	public Map<String, Object> getSettings() {
@@ -81,15 +81,14 @@ public abstract class AbstractSettings implements Serializable {
 
 	@Override
 	public String toString() {
-		return "AbstractSettings {" +
-				"settings=" + this.settings +
-				'}';
+		return "AbstractSettings {" + "settings=" + this.settings + '}';
 	}
 
 	/**
 	 * A builder for subclasses of {@link AbstractSettings}.
 	 */
 	protected static abstract class AbstractBuilder<T extends AbstractSettings, B extends AbstractBuilder<T, B>> {
+
 		private final Map<String, Object> settings = new HashMap<>();
 
 		protected AbstractBuilder() {
@@ -97,7 +96,6 @@ public abstract class AbstractSettings implements Serializable {
 
 		/**
 		 * Sets a configuration setting.
-		 *
 		 * @param name the name of the setting
 		 * @param value the value of the setting
 		 * @return the {@link AbstractBuilder} for further configuration
@@ -110,10 +108,10 @@ public abstract class AbstractSettings implements Serializable {
 		}
 
 		/**
-		 * A {@code Consumer} of the configuration settings {@code Map}
-		 * allowing the ability to add, replace, or remove.
-		 *
-		 * @param settingsConsumer a {@link Consumer} of the configuration settings {@code Map}
+		 * A {@code Consumer} of the configuration settings {@code Map} allowing the
+		 * ability to add, replace, or remove.
+		 * @param settingsConsumer a {@link Consumer} of the configuration settings
+		 * {@code Map}
 		 * @return the {@link AbstractBuilder} for further configuration
 		 */
 		public B settings(Consumer<Map<String, Object>> settingsConsumer) {

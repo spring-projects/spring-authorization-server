@@ -38,9 +38,10 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 /**
- * A representation of an OAuth 2.0 Authorization, which holds state related to the authorization granted
- * to a {@link #getRegisteredClientId() client}, by the {@link #getPrincipalName() resource owner}
- * or itself in the case of the {@code client_credentials} grant type.
+ * A representation of an OAuth 2.0 Authorization, which holds state related to the
+ * authorization granted to a {@link #getRegisteredClientId() client}, by the
+ * {@link #getPrincipalName() resource owner} or itself in the case of the
+ * {@code client_credentials} grant type.
  *
  * @author Joe Grandja
  * @author Krisztian Toth
@@ -52,13 +53,21 @@ import org.springframework.util.StringUtils;
  * @see OAuth2RefreshToken
  */
 public class OAuth2Authorization implements Serializable {
+
 	private static final long serialVersionUID = SpringAuthorizationServerVersion.SERIAL_VERSION_UID;
+
 	private String id;
+
 	private String registeredClientId;
+
 	private String principalName;
+
 	private AuthorizationGrantType authorizationGrantType;
+
 	private Set<String> authorizedScopes;
+
 	private Map<Class<? extends OAuth2Token>, Token<?>> tokens;
+
 	private Map<String, Object> attributes;
 
 	protected OAuth2Authorization() {
@@ -66,7 +75,6 @@ public class OAuth2Authorization implements Serializable {
 
 	/**
 	 * Returns the identifier for the authorization.
-	 *
 	 * @return the identifier for the authorization
 	 */
 	public String getId() {
@@ -75,7 +83,6 @@ public class OAuth2Authorization implements Serializable {
 
 	/**
 	 * Returns the identifier for the {@link RegisteredClient#getId() registered client}.
-	 *
 	 * @return the {@link RegisteredClient#getId()}
 	 */
 	public String getRegisteredClientId() {
@@ -84,7 +91,6 @@ public class OAuth2Authorization implements Serializable {
 
 	/**
 	 * Returns the {@code Principal} name of the resource owner (or client).
-	 *
 	 * @return the {@code Principal} name of the resource owner (or client)
 	 */
 	public String getPrincipalName() {
@@ -92,8 +98,8 @@ public class OAuth2Authorization implements Serializable {
 	}
 
 	/**
-	 * Returns the {@link AuthorizationGrantType authorization grant type} used for the authorization.
-	 *
+	 * Returns the {@link AuthorizationGrantType authorization grant type} used for the
+	 * authorization.
 	 * @return the {@link AuthorizationGrantType} used for the authorization
 	 */
 	public AuthorizationGrantType getAuthorizationGrantType() {
@@ -102,7 +108,6 @@ public class OAuth2Authorization implements Serializable {
 
 	/**
 	 * Returns the authorized scope(s).
-	 *
 	 * @return the {@code Set} of authorized scope(s)
 	 * @since 0.4.0
 	 */
@@ -112,7 +117,6 @@ public class OAuth2Authorization implements Serializable {
 
 	/**
 	 * Returns the {@link Token} of type {@link OAuth2AccessToken}.
-	 *
 	 * @return the {@link Token} of type {@link OAuth2AccessToken}
 	 */
 	public Token<OAuth2AccessToken> getAccessToken() {
@@ -121,8 +125,8 @@ public class OAuth2Authorization implements Serializable {
 
 	/**
 	 * Returns the {@link Token} of type {@link OAuth2RefreshToken}.
-	 *
-	 * @return the {@link Token} of type {@link OAuth2RefreshToken}, or {@code null} if not available
+	 * @return the {@link Token} of type {@link OAuth2RefreshToken}, or {@code null} if
+	 * not available
 	 */
 	@Nullable
 	public Token<OAuth2RefreshToken> getRefreshToken() {
@@ -131,7 +135,6 @@ public class OAuth2Authorization implements Serializable {
 
 	/**
 	 * Returns the {@link Token} of type {@code tokenType}.
-	 *
 	 * @param tokenType the token type
 	 * @param <T> the type of the token
 	 * @return the {@link Token}, or {@code null} if not available
@@ -146,7 +149,6 @@ public class OAuth2Authorization implements Serializable {
 
 	/**
 	 * Returns the {@link Token} matching the {@code tokenValue}.
-	 *
 	 * @param tokenValue the token value
 	 * @param <T> the type of the token
 	 * @return the {@link Token}, or {@code null} if not available
@@ -165,7 +167,6 @@ public class OAuth2Authorization implements Serializable {
 
 	/**
 	 * Returns the attribute(s) associated to the authorization.
-	 *
 	 * @return a {@code Map} of the attribute(s)
 	 */
 	public Map<String, Object> getAttributes() {
@@ -174,10 +175,10 @@ public class OAuth2Authorization implements Serializable {
 
 	/**
 	 * Returns the value of an attribute associated to the authorization.
-	 *
 	 * @param name the name of the attribute
 	 * @param <T> the type of the attribute
-	 * @return the value of an attribute associated to the authorization, or {@code null} if not available
+	 * @return the value of an attribute associated to the authorization, or {@code null}
+	 * if not available
 	 */
 	@Nullable
 	@SuppressWarnings("unchecked")
@@ -195,24 +196,22 @@ public class OAuth2Authorization implements Serializable {
 			return false;
 		}
 		OAuth2Authorization that = (OAuth2Authorization) obj;
-		return Objects.equals(this.id, that.id) &&
-				Objects.equals(this.registeredClientId, that.registeredClientId) &&
-				Objects.equals(this.principalName, that.principalName) &&
-				Objects.equals(this.authorizationGrantType, that.authorizationGrantType) &&
-				Objects.equals(this.authorizedScopes, that.authorizedScopes) &&
-				Objects.equals(this.tokens, that.tokens) &&
-				Objects.equals(this.attributes, that.attributes);
+		return Objects.equals(this.id, that.id) && Objects.equals(this.registeredClientId, that.registeredClientId)
+				&& Objects.equals(this.principalName, that.principalName)
+				&& Objects.equals(this.authorizationGrantType, that.authorizationGrantType)
+				&& Objects.equals(this.authorizedScopes, that.authorizedScopes)
+				&& Objects.equals(this.tokens, that.tokens) && Objects.equals(this.attributes, that.attributes);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(this.id, this.registeredClientId, this.principalName,
-				this.authorizationGrantType, this.authorizedScopes, this.tokens, this.attributes);
+		return Objects.hash(this.id, this.registeredClientId, this.principalName, this.authorizationGrantType,
+				this.authorizedScopes, this.tokens, this.attributes);
 	}
 
 	/**
-	 * Returns a new {@link Builder}, initialized with the provided {@link RegisteredClient#getId()}.
-	 *
+	 * Returns a new {@link Builder}, initialized with the provided
+	 * {@link RegisteredClient#getId()}.
 	 * @param registeredClient the {@link RegisteredClient}
 	 * @return the {@link Builder}
 	 */
@@ -222,20 +221,20 @@ public class OAuth2Authorization implements Serializable {
 	}
 
 	/**
-	 * Returns a new {@link Builder}, initialized with the values from the provided {@code OAuth2Authorization}.
-	 *
-	 * @param authorization the {@code OAuth2Authorization} used for initializing the {@link Builder}
+	 * Returns a new {@link Builder}, initialized with the values from the provided
+	 * {@code OAuth2Authorization}.
+	 * @param authorization the {@code OAuth2Authorization} used for initializing the
+	 * {@link Builder}
 	 * @return the {@link Builder}
 	 */
 	public static Builder from(OAuth2Authorization authorization) {
 		Assert.notNull(authorization, "authorization cannot be null");
-		return new Builder(authorization.getRegisteredClientId())
-				.id(authorization.getId())
-				.principalName(authorization.getPrincipalName())
-				.authorizationGrantType(authorization.getAuthorizationGrantType())
-				.authorizedScopes(authorization.getAuthorizedScopes())
-				.tokens(authorization.tokens)
-				.attributes(attrs -> attrs.putAll(authorization.getAttributes()));
+		return new Builder(authorization.getRegisteredClientId()).id(authorization.getId())
+			.principalName(authorization.getPrincipalName())
+			.authorizationGrantType(authorization.getAuthorizationGrantType())
+			.authorizedScopes(authorization.getAuthorizedScopes())
+			.tokens(authorization.tokens)
+			.attributes(attrs -> attrs.putAll(authorization.getAttributes()));
 	}
 
 	/**
@@ -245,7 +244,9 @@ public class OAuth2Authorization implements Serializable {
 	 * @since 0.1.0
 	 */
 	public static class Token<T extends OAuth2Token> implements Serializable {
+
 		private static final long serialVersionUID = SpringAuthorizationServerVersion.SERIAL_VERSION_UID;
+
 		protected static final String TOKEN_METADATA_NAMESPACE = "metadata.token.";
 
 		/**
@@ -259,6 +260,7 @@ public class OAuth2Authorization implements Serializable {
 		public static final String CLAIMS_METADATA_NAME = TOKEN_METADATA_NAMESPACE.concat("claims");
 
 		private final T token;
+
 		private final Map<String, Object> metadata;
 
 		protected Token(T token) {
@@ -272,7 +274,6 @@ public class OAuth2Authorization implements Serializable {
 
 		/**
 		 * Returns the token of type {@link OAuth2Token}.
-		 *
 		 * @return the token of type {@link OAuth2Token}
 		 */
 		public T getToken() {
@@ -280,9 +281,8 @@ public class OAuth2Authorization implements Serializable {
 		}
 
 		/**
-		 * Returns {@code true} if the token has been invalidated (e.g. revoked).
-		 * The default is {@code false}.
-		 *
+		 * Returns {@code true} if the token has been invalidated (e.g. revoked). The
+		 * default is {@code false}.
 		 * @return {@code true} if the token has been invalidated, {@code false} otherwise
 		 */
 		public boolean isInvalidated() {
@@ -291,7 +291,6 @@ public class OAuth2Authorization implements Serializable {
 
 		/**
 		 * Returns {@code true} if the token has expired.
-		 *
 		 * @return {@code true} if the token has expired, {@code false} otherwise
 		 */
 		public boolean isExpired() {
@@ -300,8 +299,8 @@ public class OAuth2Authorization implements Serializable {
 
 		/**
 		 * Returns {@code true} if the token is before the time it can be used.
-		 *
-		 * @return {@code true} if the token is before the time it can be used, {@code false} otherwise
+		 * @return {@code true} if the token is before the time it can be used,
+		 * {@code false} otherwise
 		 */
 		public boolean isBeforeUse() {
 			Instant notBefore = null;
@@ -313,7 +312,6 @@ public class OAuth2Authorization implements Serializable {
 
 		/**
 		 * Returns {@code true} if the token is currently active.
-		 *
 		 * @return {@code true} if the token is currently active, {@code false} otherwise
 		 */
 		public boolean isActive() {
@@ -322,7 +320,6 @@ public class OAuth2Authorization implements Serializable {
 
 		/**
 		 * Returns the claims associated to the token.
-		 *
 		 * @return a {@code Map} of the claims, or {@code null} if not available
 		 */
 		@Nullable
@@ -332,7 +329,6 @@ public class OAuth2Authorization implements Serializable {
 
 		/**
 		 * Returns the value of the metadata associated to the token.
-		 *
 		 * @param name the name of the metadata
 		 * @param <V> the value type of the metadata
 		 * @return the value of the metadata, or {@code null} if not available
@@ -346,7 +342,6 @@ public class OAuth2Authorization implements Serializable {
 
 		/**
 		 * Returns the metadata associated to the token.
-		 *
 		 * @return a {@code Map} of the metadata
 		 */
 		public Map<String, Object> getMetadata() {
@@ -368,27 +363,35 @@ public class OAuth2Authorization implements Serializable {
 				return false;
 			}
 			Token<?> that = (Token<?>) obj;
-			return Objects.equals(this.token, that.token) &&
-					Objects.equals(this.metadata, that.metadata);
+			return Objects.equals(this.token, that.token) && Objects.equals(this.metadata, that.metadata);
 		}
 
 		@Override
 		public int hashCode() {
 			return Objects.hash(this.token, this.metadata);
 		}
+
 	}
 
 	/**
 	 * A builder for {@link OAuth2Authorization}.
 	 */
 	public static class Builder implements Serializable {
+
 		private static final long serialVersionUID = SpringAuthorizationServerVersion.SERIAL_VERSION_UID;
+
 		private String id;
+
 		private final String registeredClientId;
+
 		private String principalName;
+
 		private AuthorizationGrantType authorizationGrantType;
+
 		private Set<String> authorizedScopes;
+
 		private Map<Class<? extends OAuth2Token>, Token<?>> tokens = new HashMap<>();
+
 		private final Map<String, Object> attributes = new HashMap<>();
 
 		protected Builder(String registeredClientId) {
@@ -397,7 +400,6 @@ public class OAuth2Authorization implements Serializable {
 
 		/**
 		 * Sets the identifier for the authorization.
-		 *
 		 * @param id the identifier for the authorization
 		 * @return the {@link Builder}
 		 */
@@ -408,8 +410,8 @@ public class OAuth2Authorization implements Serializable {
 
 		/**
 		 * Sets the {@code Principal} name of the resource owner (or client).
-		 *
-		 * @param principalName the {@code Principal} name of the resource owner (or client)
+		 * @param principalName the {@code Principal} name of the resource owner (or
+		 * client)
 		 * @return the {@link Builder}
 		 */
 		public Builder principalName(String principalName) {
@@ -418,8 +420,8 @@ public class OAuth2Authorization implements Serializable {
 		}
 
 		/**
-		 * Sets the {@link AuthorizationGrantType authorization grant type} used for the authorization.
-		 *
+		 * Sets the {@link AuthorizationGrantType authorization grant type} used for the
+		 * authorization.
 		 * @param authorizationGrantType the {@link AuthorizationGrantType}
 		 * @return the {@link Builder}
 		 */
@@ -430,7 +432,6 @@ public class OAuth2Authorization implements Serializable {
 
 		/**
 		 * Sets the authorized scope(s).
-		 *
 		 * @param authorizedScopes the {@code Set} of authorized scope(s)
 		 * @return the {@link Builder}
 		 * @since 0.4.0
@@ -442,7 +443,6 @@ public class OAuth2Authorization implements Serializable {
 
 		/**
 		 * Sets the {@link OAuth2AccessToken access token}.
-		 *
 		 * @param accessToken the {@link OAuth2AccessToken}
 		 * @return the {@link Builder}
 		 */
@@ -452,7 +452,6 @@ public class OAuth2Authorization implements Serializable {
 
 		/**
 		 * Sets the {@link OAuth2RefreshToken refresh token}.
-		 *
 		 * @param refreshToken the {@link OAuth2RefreshToken}
 		 * @return the {@link Builder}
 		 */
@@ -462,25 +461,23 @@ public class OAuth2Authorization implements Serializable {
 
 		/**
 		 * Sets the {@link OAuth2Token token}.
-		 *
 		 * @param token the token
 		 * @param <T> the type of the token
 		 * @return the {@link Builder}
 		 */
 		public <T extends OAuth2Token> Builder token(T token) {
-			return token(token, (metadata) -> {});
+			return token(token, (metadata) -> {
+			});
 		}
 
 		/**
 		 * Sets the {@link OAuth2Token token} and associated metadata.
-		 *
 		 * @param token the token
 		 * @param metadataConsumer a {@code Consumer} of the metadata {@code Map}
 		 * @param <T> the type of the token
 		 * @return the {@link Builder}
 		 */
-		public <T extends OAuth2Token> Builder token(T token,
-				Consumer<Map<String, Object>> metadataConsumer) {
+		public <T extends OAuth2Token> Builder token(T token, Consumer<Map<String, Object>> metadataConsumer) {
 
 			Assert.notNull(token, "token cannot be null");
 			Map<String, Object> metadata = Token.defaultMetadata();
@@ -501,7 +498,6 @@ public class OAuth2Authorization implements Serializable {
 
 		/**
 		 * Adds an attribute associated to the authorization.
-		 *
 		 * @param name the name of the attribute
 		 * @param value the value of the attribute
 		 * @return the {@link Builder}
@@ -514,9 +510,8 @@ public class OAuth2Authorization implements Serializable {
 		}
 
 		/**
-		 * A {@code Consumer} of the attributes {@code Map}
-		 * allowing the ability to add, replace, or remove.
-		 *
+		 * A {@code Consumer} of the attributes {@code Map} allowing the ability to add,
+		 * replace, or remove.
 		 * @param attributesConsumer a {@link Consumer} of the attributes {@code Map}
 		 * @return the {@link Builder}
 		 */
@@ -527,7 +522,6 @@ public class OAuth2Authorization implements Serializable {
 
 		/**
 		 * Builds a new {@link OAuth2Authorization}.
-		 *
 		 * @return the {@link OAuth2Authorization}
 		 */
 		public OAuth2Authorization build() {
@@ -542,12 +536,8 @@ public class OAuth2Authorization implements Serializable {
 			authorization.registeredClientId = this.registeredClientId;
 			authorization.principalName = this.principalName;
 			authorization.authorizationGrantType = this.authorizationGrantType;
-			authorization.authorizedScopes =
-					Collections.unmodifiableSet(
-							!CollectionUtils.isEmpty(this.authorizedScopes) ?
-									new HashSet<>(this.authorizedScopes) :
-									new HashSet<>()
-					);
+			authorization.authorizedScopes = Collections.unmodifiableSet(!CollectionUtils.isEmpty(this.authorizedScopes)
+					? new HashSet<>(this.authorizedScopes) : new HashSet<>());
 			authorization.tokens = Collections.unmodifiableMap(this.tokens);
 			authorization.attributes = Collections.unmodifiableMap(this.attributes);
 			return authorization;

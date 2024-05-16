@@ -56,29 +56,35 @@ import org.springframework.util.Assert;
  * @see RegisteredClientRepository
  * @see OAuth2AuthorizationService
  * @see OAuth2AuthorizationConsentService
- * @see <a target="_blank" href="https://datatracker.ietf.org/doc/html/rfc8628">OAuth 2.0 Device Authorization Grant</a>
- * @see <a target="_blank" href="https://datatracker.ietf.org/doc/html/rfc8628#section-3.3">Section 3.3 User Interaction</a>
+ * @see <a target="_blank" href="https://datatracker.ietf.org/doc/html/rfc8628">OAuth 2.0
+ * Device Authorization Grant</a>
+ * @see <a target="_blank" href=
+ * "https://datatracker.ietf.org/doc/html/rfc8628#section-3.3">Section 3.3 User
+ * Interaction</a>
  */
 public final class OAuth2DeviceVerificationAuthenticationProvider implements AuthenticationProvider {
 
 	static final OAuth2TokenType USER_CODE_TOKEN_TYPE = new OAuth2TokenType(OAuth2ParameterNames.USER_CODE);
-	private static final StringKeyGenerator DEFAULT_STATE_GENERATOR =
-			new Base64StringKeyGenerator(Base64.getUrlEncoder());
+
+	private static final StringKeyGenerator DEFAULT_STATE_GENERATOR = new Base64StringKeyGenerator(
+			Base64.getUrlEncoder());
 
 	private final Log logger = LogFactory.getLog(getClass());
+
 	private final RegisteredClientRepository registeredClientRepository;
+
 	private final OAuth2AuthorizationService authorizationService;
+
 	private final OAuth2AuthorizationConsentService authorizationConsentService;
 
 	/**
-	 * Constructs an {@code OAuth2DeviceVerificationAuthenticationProvider} using the provided parameters.
-	 *
+	 * Constructs an {@code OAuth2DeviceVerificationAuthenticationProvider} using the
+	 * provided parameters.
 	 * @param registeredClientRepository the repository of registered clients
 	 * @param authorizationService the authorization service
 	 * @param authorizationConsentService the authorization consent service
 	 */
-	public OAuth2DeviceVerificationAuthenticationProvider(
-			RegisteredClientRepository registeredClientRepository,
+	public OAuth2DeviceVerificationAuthenticationProvider(RegisteredClientRepository registeredClientRepository,
 			OAuth2AuthorizationService authorizationService,
 			OAuth2AuthorizationConsentService authorizationConsentService) {
 		Assert.notNull(registeredClientRepository, "registeredClientRepository cannot be null");
@@ -91,11 +97,10 @@ public final class OAuth2DeviceVerificationAuthenticationProvider implements Aut
 
 	@Override
 	public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-		OAuth2DeviceVerificationAuthenticationToken deviceVerificationAuthentication =
-				(OAuth2DeviceVerificationAuthenticationToken) authentication;
+		OAuth2DeviceVerificationAuthenticationToken deviceVerificationAuthentication = (OAuth2DeviceVerificationAuthenticationToken) authentication;
 
-		OAuth2Authorization authorization = this.authorizationService.findByToken(
-				deviceVerificationAuthentication.getUserCode(), USER_CODE_TOKEN_TYPE);
+		OAuth2Authorization authorization = this.authorizationService
+			.findByToken(deviceVerificationAuthentication.getUserCode(), USER_CODE_TOKEN_TYPE);
 		if (authorization == null) {
 			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_GRANT);
 		}
@@ -109,12 +114,13 @@ public final class OAuth2DeviceVerificationAuthenticationProvider implements Aut
 			if (this.logger.isTraceEnabled()) {
 				this.logger.trace("Did not authenticate device verification request since principal not authenticated");
 			}
-			// Return the device verification request as-is where isAuthenticated() is false
+			// Return the device verification request as-is where isAuthenticated() is
+			// false
 			return deviceVerificationAuthentication;
 		}
 
-		RegisteredClient registeredClient = this.registeredClientRepository.findById(
-				authorization.getRegisteredClientId());
+		RegisteredClient registeredClient = this.registeredClientRepository
+			.findById(authorization.getRegisteredClientId());
 
 		if (this.logger.isTraceEnabled()) {
 			this.logger.trace("Retrieved registered client");
@@ -122,16 +128,16 @@ public final class OAuth2DeviceVerificationAuthenticationProvider implements Aut
 
 		Set<String> requestedScopes = authorization.getAttribute(OAuth2ParameterNames.SCOPE);
 
-		OAuth2AuthorizationConsent currentAuthorizationConsent = this.authorizationConsentService.findById(
-				registeredClient.getId(), principal.getName());
+		OAuth2AuthorizationConsent currentAuthorizationConsent = this.authorizationConsentService
+			.findById(registeredClient.getId(), principal.getName());
 
 		if (requiresAuthorizationConsent(requestedScopes, currentAuthorizationConsent)) {
 			String state = DEFAULT_STATE_GENERATOR.generateKey();
 			authorization = OAuth2Authorization.from(authorization)
-					.principalName(principal.getName())
-					.attribute(Principal.class.getName(), principal)
-					.attribute(OAuth2ParameterNames.STATE, state)
-					.build();
+				.principalName(principal.getName())
+				.attribute(Principal.class.getName(), principal)
+				.attribute(OAuth2ParameterNames.STATE, state)
+				.build();
 
 			if (this.logger.isTraceEnabled()) {
 				this.logger.trace("Generated device authorization consent state");
@@ -143,11 +149,11 @@ public final class OAuth2DeviceVerificationAuthenticationProvider implements Aut
 				this.logger.trace("Saved authorization");
 			}
 
-			Set<String> currentAuthorizedScopes = currentAuthorizationConsent != null ?
-					currentAuthorizationConsent.getScopes() : null;
+			Set<String> currentAuthorizedScopes = currentAuthorizationConsent != null
+					? currentAuthorizationConsent.getScopes() : null;
 
-			AuthorizationServerSettings authorizationServerSettings =
-					AuthorizationServerContextHolder.getContext().getAuthorizationServerSettings();
+			AuthorizationServerSettings authorizationServerSettings = AuthorizationServerContextHolder.getContext()
+				.getAuthorizationServerSettings();
 			String deviceVerificationUri = authorizationServerSettings.getDeviceVerificationEndpoint();
 
 			return new OAuth2DeviceAuthorizationConsentAuthenticationToken(deviceVerificationUri,
@@ -183,11 +189,10 @@ public final class OAuth2DeviceVerificationAuthenticationProvider implements Aut
 		return OAuth2DeviceVerificationAuthenticationToken.class.isAssignableFrom(authentication);
 	}
 
-	private static boolean requiresAuthorizationConsent(
-			Set<String> requestedScopes, OAuth2AuthorizationConsent authorizationConsent) {
+	private static boolean requiresAuthorizationConsent(Set<String> requestedScopes,
+			OAuth2AuthorizationConsent authorizationConsent) {
 
-		if (authorizationConsent != null &&
-				authorizationConsent.getScopes().containsAll(requestedScopes)) {
+		if (authorizationConsent != null && authorizationConsent.getScopes().containsAll(requestedScopes)) {
 			return false;
 		}
 
@@ -195,9 +200,8 @@ public final class OAuth2DeviceVerificationAuthenticationProvider implements Aut
 	}
 
 	private static boolean isPrincipalAuthenticated(Authentication principal) {
-		return principal != null &&
-				!AnonymousAuthenticationToken.class.isAssignableFrom(principal.getClass()) &&
-				principal.isAuthenticated();
+		return principal != null && !AnonymousAuthenticationToken.class.isAssignableFrom(principal.getClass())
+				&& principal.isAuthenticated();
 	}
 
 }

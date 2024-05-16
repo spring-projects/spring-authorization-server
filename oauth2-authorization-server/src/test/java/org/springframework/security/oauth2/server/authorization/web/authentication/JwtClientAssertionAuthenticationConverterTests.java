@@ -35,7 +35,9 @@ import static org.assertj.core.api.Assertions.entry;
  * @author Rafal Lewczuk
  */
 public class JwtClientAssertionAuthenticationConverterTests {
+
 	private static final String JWT_BEARER_TYPE = "urn:ietf:params:oauth:client-assertion-type:jwt-bearer";
+
 	private final JwtClientAssertionAuthenticationConverter converter = new JwtClientAssertionAuthenticationConverter();
 
 	@Test
@@ -109,24 +111,22 @@ public class JwtClientAssertionAuthenticationConverterTests {
 		request.addParameter(OAuth2ParameterNames.CODE, "code");
 		request.addParameter("custom-param-1", "custom-value-1");
 		request.addParameter("custom-param-2", "custom-value-1", "custom-value-2");
-		OAuth2ClientAuthenticationToken authentication = (OAuth2ClientAuthenticationToken) this.converter.convert(request);
+		OAuth2ClientAuthenticationToken authentication = (OAuth2ClientAuthenticationToken) this.converter
+			.convert(request);
 		assertThat(authentication.getPrincipal()).isEqualTo("client-1");
 		assertThat(authentication.getCredentials()).isEqualTo("jwt-assertion");
 		assertThat(authentication.getClientAuthenticationMethod().getValue()).isEqualTo(JWT_BEARER_TYPE);
-		assertThat(authentication.getAdditionalParameters())
-				.containsOnly(
-						entry(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.AUTHORIZATION_CODE.getValue()),
-						entry(OAuth2ParameterNames.CODE, "code"),
-						entry("custom-param-1", "custom-value-1"),
-						entry("custom-param-2", new String[] {"custom-value-1", "custom-value-2"}));
+		assertThat(authentication.getAdditionalParameters()).containsOnly(
+				entry(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.AUTHORIZATION_CODE.getValue()),
+				entry(OAuth2ParameterNames.CODE, "code"), entry("custom-param-1", "custom-value-1"),
+				entry("custom-param-2", new String[] { "custom-value-1", "custom-value-2" }));
 	}
 
 	private void assertThrown(MockHttpServletRequest request, String errorCode) {
-		assertThatThrownBy(() -> this.converter.convert(request))
-				.isInstanceOf(OAuth2AuthenticationException.class)
-				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
-				.extracting("errorCode")
-				.isEqualTo(errorCode);
+		assertThatThrownBy(() -> this.converter.convert(request)).isInstanceOf(OAuth2AuthenticationException.class)
+			.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+			.extracting("errorCode")
+			.isEqualTo(errorCode);
 	}
 
 }

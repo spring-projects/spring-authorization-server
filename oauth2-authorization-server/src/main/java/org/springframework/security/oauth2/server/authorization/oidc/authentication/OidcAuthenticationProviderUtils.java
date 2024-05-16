@@ -36,8 +36,7 @@ final class OidcAuthenticationProviderUtils {
 	private OidcAuthenticationProviderUtils() {
 	}
 
-	static <T extends OAuth2Token> OAuth2Authorization invalidate(
-			OAuth2Authorization authorization, T token) {
+	static <T extends OAuth2Token> OAuth2Authorization invalidate(OAuth2Authorization authorization, T token) {
 
 		// @formatter:off
 		OAuth2Authorization.Builder authorizationBuilder = OAuth2Authorization.from(authorization)

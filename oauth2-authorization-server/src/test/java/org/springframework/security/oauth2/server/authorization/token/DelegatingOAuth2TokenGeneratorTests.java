@@ -40,15 +40,15 @@ public class DelegatingOAuth2TokenGeneratorTests {
 	public void constructorWhenTokenGeneratorsEmptyThenThrowIllegalArgumentException() {
 		OAuth2TokenGenerator<OAuth2Token>[] tokenGenerators = new OAuth2TokenGenerator[0];
 		assertThatThrownBy(() -> new DelegatingOAuth2TokenGenerator(tokenGenerators))
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("tokenGenerators cannot be empty");
+			.isInstanceOf(IllegalArgumentException.class)
+			.hasMessage("tokenGenerators cannot be empty");
 	}
 
 	@Test
 	public void constructorWhenTokenGeneratorsNullThenThrowIllegalArgumentException() {
 		assertThatThrownBy(() -> new DelegatingOAuth2TokenGenerator(null, null))
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("tokenGenerator cannot be null");
+			.isInstanceOf(IllegalArgumentException.class)
+			.hasMessage("tokenGenerator cannot be null");
 	}
 
 	@Test
@@ -58,12 +58,12 @@ public class DelegatingOAuth2TokenGeneratorTests {
 		OAuth2TokenGenerator<OAuth2Token> tokenGenerator2 = mock(OAuth2TokenGenerator.class);
 		OAuth2TokenGenerator<OAuth2Token> tokenGenerator3 = mock(OAuth2TokenGenerator.class);
 
-		OAuth2AccessToken accessToken = new OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER,
-				"access-token", Instant.now(), Instant.now().plusSeconds(300));
+		OAuth2AccessToken accessToken = new OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER, "access-token",
+				Instant.now(), Instant.now().plusSeconds(300));
 		when(tokenGenerator3.generate(any())).thenReturn(accessToken);
 
-		DelegatingOAuth2TokenGenerator delegatingTokenGenerator =
-				new DelegatingOAuth2TokenGenerator(tokenGenerator1, tokenGenerator2, tokenGenerator3);
+		DelegatingOAuth2TokenGenerator delegatingTokenGenerator = new DelegatingOAuth2TokenGenerator(tokenGenerator1,
+				tokenGenerator2, tokenGenerator3);
 
 		OAuth2Token token = delegatingTokenGenerator.generate(DefaultOAuth2TokenContext.builder().build());
 		assertThat(token).isEqualTo(accessToken);
@@ -76,8 +76,8 @@ public class DelegatingOAuth2TokenGeneratorTests {
 		OAuth2TokenGenerator<OAuth2Token> tokenGenerator2 = mock(OAuth2TokenGenerator.class);
 		OAuth2TokenGenerator<OAuth2Token> tokenGenerator3 = mock(OAuth2TokenGenerator.class);
 
-		DelegatingOAuth2TokenGenerator delegatingTokenGenerator =
-				new DelegatingOAuth2TokenGenerator(tokenGenerator1, tokenGenerator2, tokenGenerator3);
+		DelegatingOAuth2TokenGenerator delegatingTokenGenerator = new DelegatingOAuth2TokenGenerator(tokenGenerator1,
+				tokenGenerator2, tokenGenerator3);
 
 		OAuth2Token token = delegatingTokenGenerator.generate(DefaultOAuth2TokenContext.builder().build());
 		assertThat(token).isNull();

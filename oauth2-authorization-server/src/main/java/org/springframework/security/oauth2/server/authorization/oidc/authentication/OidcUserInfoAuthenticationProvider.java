@@ -43,21 +43,26 @@ import org.springframework.security.oauth2.server.resource.authentication.Abstra
 import org.springframework.util.Assert;
 
 /**
- * An {@link AuthenticationProvider} implementation for OpenID Connect 1.0 UserInfo Endpoint.
+ * An {@link AuthenticationProvider} implementation for OpenID Connect 1.0 UserInfo
+ * Endpoint.
  *
  * @author Steve Riesenberg
  * @since 0.2.1
  * @see OAuth2AuthorizationService
- * @see <a href="https://openid.net/specs/openid-connect-core-1_0.html#UserInfo">5.3. UserInfo Endpoint</a>
+ * @see <a href="https://openid.net/specs/openid-connect-core-1_0.html#UserInfo">5.3.
+ * UserInfo Endpoint</a>
  */
 public final class OidcUserInfoAuthenticationProvider implements AuthenticationProvider {
+
 	private final Log logger = LogFactory.getLog(getClass());
+
 	private final OAuth2AuthorizationService authorizationService;
+
 	private Function<OidcUserInfoAuthenticationContext, OidcUserInfo> userInfoMapper = new DefaultOidcUserInfoMapper();
 
 	/**
-	 * Constructs an {@code OidcUserInfoAuthenticationProvider} using the provided parameters.
-	 *
+	 * Constructs an {@code OidcUserInfoAuthenticationProvider} using the provided
+	 * parameters.
 	 * @param authorizationService the authorization service
 	 */
 	public OidcUserInfoAuthenticationProvider(OAuth2AuthorizationService authorizationService) {
@@ -67,12 +72,13 @@ public final class OidcUserInfoAuthenticationProvider implements AuthenticationP
 
 	@Override
 	public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-		OidcUserInfoAuthenticationToken userInfoAuthentication =
-				(OidcUserInfoAuthenticationToken) authentication;
+		OidcUserInfoAuthenticationToken userInfoAuthentication = (OidcUserInfoAuthenticationToken) authentication;
 
 		AbstractOAuth2TokenAuthenticationToken<?> accessTokenAuthentication = null;
-		if (AbstractOAuth2TokenAuthenticationToken.class.isAssignableFrom(userInfoAuthentication.getPrincipal().getClass())) {
-			accessTokenAuthentication = (AbstractOAuth2TokenAuthenticationToken<?>) userInfoAuthentication.getPrincipal();
+		if (AbstractOAuth2TokenAuthenticationToken.class
+			.isAssignableFrom(userInfoAuthentication.getPrincipal().getClass())) {
+			accessTokenAuthentication = (AbstractOAuth2TokenAuthenticationToken<?>) userInfoAuthentication
+				.getPrincipal();
 		}
 		if (accessTokenAuthentication == null || !accessTokenAuthentication.isAuthenticated()) {
 			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_TOKEN);
@@ -80,8 +86,8 @@ public final class OidcUserInfoAuthenticationProvider implements AuthenticationP
 
 		String accessTokenValue = accessTokenAuthentication.getToken().getTokenValue();
 
-		OAuth2Authorization authorization = this.authorizationService.findByToken(
-				accessTokenValue, OAuth2TokenType.ACCESS_TOKEN);
+		OAuth2Authorization authorization = this.authorizationService.findByToken(accessTokenValue,
+				OAuth2TokenType.ACCESS_TOKEN);
 		if (authorization == null) {
 			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_TOKEN);
 		}
@@ -108,11 +114,11 @@ public final class OidcUserInfoAuthenticationProvider implements AuthenticationP
 			this.logger.trace("Validated user info request");
 		}
 
-		OidcUserInfoAuthenticationContext authenticationContext =
-				OidcUserInfoAuthenticationContext.with(userInfoAuthentication)
-						.accessToken(authorizedAccessToken.getToken())
-						.authorization(authorization)
-						.build();
+		OidcUserInfoAuthenticationContext authenticationContext = OidcUserInfoAuthenticationContext
+			.with(userInfoAuthentication)
+			.accessToken(authorizedAccessToken.getToken())
+			.authorization(authorization)
+			.build();
 		OidcUserInfo userInfo = this.userInfoMapper.apply(authenticationContext);
 
 		if (this.logger.isTraceEnabled()) {
@@ -128,27 +134,33 @@ public final class OidcUserInfoAuthenticationProvider implements AuthenticationP
 	}
 
 	/**
-	 * Sets the {@link Function} used to extract claims from {@link OidcUserInfoAuthenticationContext}
-	 * to an instance of {@link OidcUserInfo} for the UserInfo response.
+	 * Sets the {@link Function} used to extract claims from
+	 * {@link OidcUserInfoAuthenticationContext} to an instance of {@link OidcUserInfo}
+	 * for the UserInfo response.
 	 *
 	 * <p>
-	 * The {@link OidcUserInfoAuthenticationContext} gives the mapper access to the {@link OidcUserInfoAuthenticationToken},
-	 * as well as, the following context attributes:
+	 * The {@link OidcUserInfoAuthenticationContext} gives the mapper access to the
+	 * {@link OidcUserInfoAuthenticationToken}, as well as, the following context
+	 * attributes:
 	 * <ul>
-	 * <li>{@link OidcUserInfoAuthenticationContext#getAccessToken()} containing the bearer token used to make the request.</li>
-	 * <li>{@link OidcUserInfoAuthenticationContext#getAuthorization()} containing the {@link OidcIdToken} and
-	 * {@link OAuth2AccessToken} associated with the bearer token used to make the request.</li>
+	 * <li>{@link OidcUserInfoAuthenticationContext#getAccessToken()} containing the
+	 * bearer token used to make the request.</li>
+	 * <li>{@link OidcUserInfoAuthenticationContext#getAuthorization()} containing the
+	 * {@link OidcIdToken} and {@link OAuth2AccessToken} associated with the bearer token
+	 * used to make the request.</li>
 	 * </ul>
-	 *
-	 * @param userInfoMapper the {@link Function} used to extract claims from {@link OidcUserInfoAuthenticationContext} to an instance of {@link OidcUserInfo}
+	 * @param userInfoMapper the {@link Function} used to extract claims from
+	 * {@link OidcUserInfoAuthenticationContext} to an instance of {@link OidcUserInfo}
 	 */
 	public void setUserInfoMapper(Function<OidcUserInfoAuthenticationContext, OidcUserInfo> userInfoMapper) {
 		Assert.notNull(userInfoMapper, "userInfoMapper cannot be null");
 		this.userInfoMapper = userInfoMapper;
 	}
 
-	private static final class DefaultOidcUserInfoMapper implements Function<OidcUserInfoAuthenticationContext, OidcUserInfo> {
+	private static final class DefaultOidcUserInfoMapper
+			implements Function<OidcUserInfoAuthenticationContext, OidcUserInfo> {
 
+		// @formatter:off
 		private static final List<String> EMAIL_CLAIMS = Arrays.asList(
 				StandardClaimNames.EMAIL,
 				StandardClaimNames.EMAIL_VERIFIED
@@ -173,6 +185,7 @@ public final class OidcUserInfoAuthenticationProvider implements AuthenticationP
 				StandardClaimNames.LOCALE,
 				StandardClaimNames.UPDATED_AT
 		);
+		// @formatter:on
 
 		@Override
 		public OidcUserInfo apply(OidcUserInfoAuthenticationContext authenticationContext) {
@@ -185,7 +198,8 @@ public final class OidcUserInfoAuthenticationProvider implements AuthenticationP
 			return new OidcUserInfo(scopeRequestedClaims);
 		}
 
-		private static Map<String, Object> getClaimsRequestedByScope(Map<String, Object> claims, Set<String> requestedScopes) {
+		private static Map<String, Object> getClaimsRequestedByScope(Map<String, Object> claims,
+				Set<String> requestedScopes) {
 			Set<String> scopeRequestedClaimNames = new HashSet<>(32);
 			scopeRequestedClaimNames.add(StandardClaimNames.SUB);
 

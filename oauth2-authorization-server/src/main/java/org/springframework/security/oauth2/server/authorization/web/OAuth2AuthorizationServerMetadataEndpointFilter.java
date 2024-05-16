@@ -49,11 +49,14 @@ import org.springframework.web.util.UriComponentsBuilder;
  * @since 0.1.1
  * @see OAuth2AuthorizationServerMetadata
  * @see AuthorizationServerSettings
- * @see <a target="_blank" href="https://tools.ietf.org/html/rfc8414#section-3">3. Obtaining Authorization Server Metadata</a>
+ * @see <a target="_blank" href="https://tools.ietf.org/html/rfc8414#section-3">3.
+ * Obtaining Authorization Server Metadata</a>
  */
 public final class OAuth2AuthorizationServerMetadataEndpointFilter extends OncePerRequestFilter {
+
 	/**
-	 * The default endpoint {@code URI} for OAuth 2.0 Authorization Server Metadata requests.
+	 * The default endpoint {@code URI} for OAuth 2.0 Authorization Server Metadata
+	 * requests.
 	 */
 	private static final String DEFAULT_OAUTH2_AUTHORIZATION_SERVER_METADATA_ENDPOINT_URI = "/.well-known/oauth-authorization-server";
 
@@ -63,13 +66,15 @@ public final class OAuth2AuthorizationServerMetadataEndpointFilter extends OnceP
 	private Consumer<OAuth2AuthorizationServerMetadata.Builder> authorizationServerMetadataCustomizer = (authorizationServerMetadata) -> {};
 
 	/**
-	 * Sets the {@code Consumer} providing access to the {@link OAuth2AuthorizationServerMetadata.Builder}
-	 * allowing the ability to customize the claims of the Authorization Server's configuration.
-	 *
-	 * @param authorizationServerMetadataCustomizer the {@code Consumer} providing access to the {@link OAuth2AuthorizationServerMetadata.Builder}
+	 * Sets the {@code Consumer} providing access to the
+	 * {@link OAuth2AuthorizationServerMetadata.Builder} allowing the ability to customize
+	 * the claims of the Authorization Server's configuration.
+	 * @param authorizationServerMetadataCustomizer the {@code Consumer} providing access
+	 * to the {@link OAuth2AuthorizationServerMetadata.Builder}
 	 * @since 0.4.0
 	 */
-	public void setAuthorizationServerMetadataCustomizer(Consumer<OAuth2AuthorizationServerMetadata.Builder> authorizationServerMetadataCustomizer) {
+	public void setAuthorizationServerMetadataCustomizer(
+			Consumer<OAuth2AuthorizationServerMetadata.Builder> authorizationServerMetadataCustomizer) {
 		Assert.notNull(authorizationServerMetadataCustomizer, "authorizationServerMetadataCustomizer cannot be null");
 		this.authorizationServerMetadataCustomizer = authorizationServerMetadataCustomizer;
 	}
@@ -85,7 +90,8 @@ public final class OAuth2AuthorizationServerMetadataEndpointFilter extends OnceP
 
 		AuthorizationServerContext authorizationServerContext = AuthorizationServerContextHolder.getContext();
 		String issuer = authorizationServerContext.getIssuer();
-		AuthorizationServerSettings authorizationServerSettings = authorizationServerContext.getAuthorizationServerSettings();
+		AuthorizationServerSettings authorizationServerSettings = authorizationServerContext
+			.getAuthorizationServerSettings();
 
 		OAuth2AuthorizationServerMetadata.Builder authorizationServerMetadata = OAuth2AuthorizationServerMetadata.builder()
 				.issuer(issuer)
@@ -110,8 +116,8 @@ public final class OAuth2AuthorizationServerMetadataEndpointFilter extends OnceP
 		this.authorizationServerMetadataCustomizer.accept(authorizationServerMetadata);
 
 		ServletServerHttpResponse httpResponse = new ServletServerHttpResponse(response);
-		this.authorizationServerMetadataHttpMessageConverter.write(
-				authorizationServerMetadata.build(), MediaType.APPLICATION_JSON, httpResponse);
+		this.authorizationServerMetadataHttpMessageConverter.write(authorizationServerMetadata.build(),
+				MediaType.APPLICATION_JSON, httpResponse);
 	}
 
 	private static RequestMatcher createRequestMatcher() {

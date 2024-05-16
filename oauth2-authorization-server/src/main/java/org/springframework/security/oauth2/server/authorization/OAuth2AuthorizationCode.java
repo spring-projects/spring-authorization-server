@@ -20,13 +20,14 @@ import java.time.Instant;
 import org.springframework.security.oauth2.core.AbstractOAuth2Token;
 
 /**
- * An implementation of an {@link AbstractOAuth2Token}
- * representing an OAuth 2.0 Authorization Code Grant.
+ * An implementation of an {@link AbstractOAuth2Token} representing an OAuth 2.0
+ * Authorization Code Grant.
  *
  * @author Joe Grandja
  * @since 0.0.3
  * @see AbstractOAuth2Token
- * @see <a target="_blank" href="https://tools.ietf.org/html/rfc6749#section-4.1">Section 4.1 Authorization Code Grant</a>
+ * @see <a target="_blank" href="https://tools.ietf.org/html/rfc6749#section-4.1">Section
+ * 4.1 Authorization Code Grant</a>
  */
 public class OAuth2AuthorizationCode extends AbstractOAuth2Token {
 

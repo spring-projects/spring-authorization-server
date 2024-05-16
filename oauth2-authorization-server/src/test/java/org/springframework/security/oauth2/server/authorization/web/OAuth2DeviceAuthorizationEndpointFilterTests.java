@@ -73,21 +73,28 @@ import static org.mockito.Mockito.when;
  * @author Steve Riesenberg
  */
 public class OAuth2DeviceAuthorizationEndpointFilterTests {
+
 	private static final String ISSUER_URI = "https://provider.com";
+
 	private static final String REMOTE_ADDRESS = "remote-address";
+
 	private static final String AUTHORIZATION_URI = "/oauth2/device_authorization";
+
 	private static final String VERIFICATION_URI = "/oauth2/device_verification";
+
 	private static final String CLIENT_ID = "client-1";
+
 	private static final String DEVICE_CODE = "EfYu_0jEL";
+
 	private static final String USER_CODE = "BCDF-GHJK";
 
 	private AuthenticationManager authenticationManager;
+
 	private OAuth2DeviceAuthorizationEndpointFilter filter;
 
-	private final HttpMessageConverter<OAuth2DeviceAuthorizationResponse> deviceAuthorizationHttpResponseConverter =
-			new OAuth2DeviceAuthorizationResponseHttpMessageConverter();
-	private final HttpMessageConverter<OAuth2Error> errorHttpResponseConverter =
-			new OAuth2ErrorHttpMessageConverter();
+	private final HttpMessageConverter<OAuth2DeviceAuthorizationResponse> deviceAuthorizationHttpResponseConverter = new OAuth2DeviceAuthorizationResponseHttpMessageConverter();
+
+	private final HttpMessageConverter<OAuth2Error> errorHttpResponseConverter = new OAuth2ErrorHttpMessageConverter();
 
 	@BeforeEach
 	public void setUp() {
@@ -202,19 +209,19 @@ public class OAuth2DeviceAuthorizationEndpointFilterTests {
 		this.filter.doFilter(request, response, filterChain);
 		assertThat(response.getStatus()).isEqualTo(HttpStatus.OK.value());
 
-		ArgumentCaptor<OAuth2DeviceAuthorizationRequestAuthenticationToken> deviceAuthorizationRequestAuthenticationCaptor =
-				ArgumentCaptor.forClass(OAuth2DeviceAuthorizationRequestAuthenticationToken.class);
+		ArgumentCaptor<OAuth2DeviceAuthorizationRequestAuthenticationToken> deviceAuthorizationRequestAuthenticationCaptor = ArgumentCaptor
+			.forClass(OAuth2DeviceAuthorizationRequestAuthenticationToken.class);
 		verify(this.authenticationManager).authenticate(deviceAuthorizationRequestAuthenticationCaptor.capture());
 		verifyNoInteractions(filterChain);
 
-		OAuth2DeviceAuthorizationRequestAuthenticationToken deviceAuthorizationRequestAuthentication =
-				deviceAuthorizationRequestAuthenticationCaptor.getValue();
+		OAuth2DeviceAuthorizationRequestAuthenticationToken deviceAuthorizationRequestAuthentication = deviceAuthorizationRequestAuthenticationCaptor
+			.getValue();
 		assertThat(deviceAuthorizationRequestAuthentication.getAuthorizationUri()).endsWith(AUTHORIZATION_URI);
 		assertThat(deviceAuthorizationRequestAuthentication.getPrincipal()).isEqualTo(clientPrincipal);
 		assertThat(deviceAuthorizationRequestAuthentication.getScopes()).isEmpty();
-		assertThat(deviceAuthorizationRequestAuthentication.getAdditionalParameters())
-				.containsExactly(entry("custom-param-1", "custom-value-1"),
-					entry("custom-param-2", new String[] { "custom-value-1", "custom-value-2" }));
+		assertThat(deviceAuthorizationRequestAuthentication.getAdditionalParameters()).containsExactly(
+				entry("custom-param-1", "custom-value-1"),
+				entry("custom-param-2", new String[] { "custom-value-1", "custom-value-2" }));
 		// @formatter:off
 		assertThat(deviceAuthorizationRequestAuthentication.getDetails())
 				.asInstanceOf(type(WebAuthenticationDetails.class))
@@ -226,7 +233,7 @@ public class OAuth2DeviceAuthorizationEndpointFilterTests {
 		String verificationUri = ISSUER_URI + VERIFICATION_URI;
 		assertThat(deviceAuthorizationResponse.getVerificationUri()).isEqualTo(verificationUri);
 		assertThat(deviceAuthorizationResponse.getVerificationUriComplete())
-				.isEqualTo("%s?%s=%s".formatted(verificationUri, OAuth2ParameterNames.USER_CODE, USER_CODE));
+			.isEqualTo("%s?%s=%s".formatted(verificationUri, OAuth2ParameterNames.USER_CODE, USER_CODE));
 		OAuth2DeviceCode deviceCode = deviceAuthorizationResponse.getDeviceCode();
 		assertThat(deviceCode.getTokenValue()).isEqualTo(DEVICE_CODE);
 		assertThat(deviceCode.getExpiresAt()).isAfter(deviceCode.getIssuedAt());
@@ -288,8 +295,8 @@ public class OAuth2DeviceAuthorizationEndpointFilterTests {
 		mockSecurityContext(clientPrincipal);
 
 		AuthenticationConverter authenticationConverter = mock(AuthenticationConverter.class);
-		OAuth2DeviceAuthorizationRequestAuthenticationToken authenticationRequest =
-				new OAuth2DeviceAuthorizationRequestAuthenticationToken(clientPrincipal, AUTHORIZATION_URI, null, null);
+		OAuth2DeviceAuthorizationRequestAuthenticationToken authenticationRequest = new OAuth2DeviceAuthorizationRequestAuthenticationToken(
+				clientPrincipal, AUTHORIZATION_URI, null, null);
 		when(authenticationConverter.convert(any(HttpServletRequest.class))).thenReturn(authenticationRequest);
 		this.filter.setAuthenticationConverter(authenticationConverter);
 
@@ -317,8 +324,10 @@ public class OAuth2DeviceAuthorizationEndpointFilterTests {
 		FilterChain filterChain = mock(FilterChain.class);
 
 		@SuppressWarnings("unchecked")
-		AuthenticationDetailsSource<HttpServletRequest, WebAuthenticationDetails> authenticationDetailsSource = mock(AuthenticationDetailsSource.class);
-		when(authenticationDetailsSource.buildDetails(any(HttpServletRequest.class))).thenReturn(new WebAuthenticationDetails(request));
+		AuthenticationDetailsSource<HttpServletRequest, WebAuthenticationDetails> authenticationDetailsSource = mock(
+				AuthenticationDetailsSource.class);
+		when(authenticationDetailsSource.buildDetails(any(HttpServletRequest.class)))
+			.thenReturn(new WebAuthenticationDetails(request));
 		this.filter.setAuthenticationDetailsSource(authenticationDetailsSource);
 
 		this.filter.doFilter(request, response, filterChain);
@@ -353,8 +362,8 @@ public class OAuth2DeviceAuthorizationEndpointFilterTests {
 
 	@Test
 	public void doFilterWhenAuthenticationFailureHandlerSetThenUsed() throws Exception {
-		OAuth2AuthenticationException authenticationException =
-				new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_REQUEST);
+		OAuth2AuthenticationException authenticationException = new OAuth2AuthenticationException(
+				OAuth2ErrorCodes.INVALID_REQUEST);
 		when(this.authenticationManager.authenticate(any(Authentication.class))).thenThrow(authenticationException);
 
 		Authentication clientPrincipal = (Authentication) createAuthentication().getPrincipal();
@@ -374,15 +383,17 @@ public class OAuth2DeviceAuthorizationEndpointFilterTests {
 		verifyNoInteractions(filterChain);
 	}
 
-	private OAuth2DeviceAuthorizationResponse readDeviceAuthorizationResponse(MockHttpServletResponse response) throws IOException {
-		MockClientHttpResponse httpResponse = new MockClientHttpResponse(
-				response.getContentAsByteArray(), HttpStatus.valueOf(response.getStatus()));
-		return this.deviceAuthorizationHttpResponseConverter.read(OAuth2DeviceAuthorizationResponse.class, httpResponse);
+	private OAuth2DeviceAuthorizationResponse readDeviceAuthorizationResponse(MockHttpServletResponse response)
+			throws IOException {
+		MockClientHttpResponse httpResponse = new MockClientHttpResponse(response.getContentAsByteArray(),
+				HttpStatus.valueOf(response.getStatus()));
+		return this.deviceAuthorizationHttpResponseConverter.read(OAuth2DeviceAuthorizationResponse.class,
+				httpResponse);
 	}
 
 	private OAuth2Error readError(MockHttpServletResponse response) throws IOException {
-		MockClientHttpResponse httpResponse = new MockClientHttpResponse(
-				response.getContentAsByteArray(), HttpStatus.valueOf(response.getStatus()));
+		MockClientHttpResponse httpResponse = new MockClientHttpResponse(response.getContentAsByteArray(),
+				HttpStatus.valueOf(response.getStatus()));
 		return this.errorHttpResponseConverter.read(OAuth2Error.class, httpResponse);
 	}
 
@@ -426,4 +437,5 @@ public class OAuth2DeviceAuthorizationEndpointFilterTests {
 		Instant issuedAt = Instant.now();
 		return new OAuth2UserCode(USER_CODE, issuedAt, issuedAt.plus(30, ChronoUnit.MINUTES));
 	}
+
 }

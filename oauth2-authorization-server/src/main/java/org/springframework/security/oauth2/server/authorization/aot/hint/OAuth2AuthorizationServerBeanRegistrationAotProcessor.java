@@ -53,19 +53,22 @@ import org.springframework.security.web.savedrequest.DefaultSavedRequest;
 import org.springframework.util.ClassUtils;
 
 /**
- * {@link BeanRegistrationAotProcessor} that detects specific registered beans and contributes the required {@link RuntimeHints}.
- * Statically registered via META-INF/spring/aot.factories.
+ * {@link BeanRegistrationAotProcessor} that detects specific registered beans and
+ * contributes the required {@link RuntimeHints}. Statically registered via
+ * META-INF/spring/aot.factories.
  *
  * @author Joe Grandja
  * @author Josh Long
  * @since 1.2
  */
 class OAuth2AuthorizationServerBeanRegistrationAotProcessor implements BeanRegistrationAotProcessor {
+
 	private boolean jackson2Contributed;
 
 	@Override
 	public BeanRegistrationAotContribution processAheadOfTime(RegisteredBean registeredBean) {
 		String beanClassName = registeredBean.getBeanClass().getName();
+		// @formatter:off
 		if ((beanClassName.equals("org.springframework.security.oauth2.server.authorization.JdbcOAuth2AuthorizationService") ||
 				beanClassName.equals("org.springframework.security.oauth2.server.authorization.client.JdbcRegisteredClientRepository")) &&
 				!jackson2Contributed) {
@@ -74,10 +77,13 @@ class OAuth2AuthorizationServerBeanRegistrationAotProcessor implements BeanRegis
 			jackson2Contributed = true;
 			return jackson2Contribution;
 		}
+		// @formatter:on
 		return null;
 	}
 
-	private static class Jackson2ConfigurationBeanRegistrationAotContribution implements BeanRegistrationAotContribution {
+	private static class Jackson2ConfigurationBeanRegistrationAotContribution
+			implements BeanRegistrationAotContribution {
+
 		private final BindingReflectionHintsRegistrar reflectionHintsRegistrar = new BindingReflectionHintsRegistrar();
 
 		@Override
@@ -86,52 +92,42 @@ class OAuth2AuthorizationServerBeanRegistrationAotProcessor implements BeanRegis
 		}
 
 		private void registerHints(RuntimeHints hints) {
-			// Collections -> UnmodifiableSet, UnmodifiableList, UnmodifiableMap, UnmodifiableRandomAccessList, etc.
-			hints.reflection().registerType(Collections.class,
-					MemberCategory.DECLARED_CLASSES);
+			// Collections -> UnmodifiableSet, UnmodifiableList, UnmodifiableMap,
+			// UnmodifiableRandomAccessList, etc.
+			hints.reflection().registerType(Collections.class, MemberCategory.DECLARED_CLASSES);
 
 			// HashSet
-			hints.reflection().registerType(HashSet.class,
-					MemberCategory.DECLARED_FIELDS, MemberCategory.INVOKE_DECLARED_CONSTRUCTORS,
-					MemberCategory.INVOKE_DECLARED_METHODS);
+			hints.reflection()
+				.registerType(HashSet.class, MemberCategory.DECLARED_FIELDS,
+						MemberCategory.INVOKE_DECLARED_CONSTRUCTORS, MemberCategory.INVOKE_DECLARED_METHODS);
 
 			// Spring Security and Spring Authorization Server
-			hints.reflection().registerTypes(
-					Arrays.asList(
-							TypeReference.of(AbstractAuthenticationToken.class),
-							TypeReference.of(DefaultSavedRequest.Builder.class),
-							TypeReference.of(WebAuthenticationDetails.class),
-							TypeReference.of(UsernamePasswordAuthenticationToken.class),
-							TypeReference.of(User.class),
-							TypeReference.of(DefaultOidcUser.class),
-							TypeReference.of(DefaultOAuth2User.class),
-							TypeReference.of(OidcUserAuthority.class),
-							TypeReference.of(OAuth2UserAuthority.class),
-							TypeReference.of(SimpleGrantedAuthority.class),
-							TypeReference.of(OidcIdToken.class),
-							TypeReference.of(AbstractOAuth2Token.class),
-							TypeReference.of(OidcUserInfo.class),
-							TypeReference.of(OAuth2TokenExchangeActor.class),
-							TypeReference.of(OAuth2AuthorizationRequest.class),
-							TypeReference.of(OAuth2TokenExchangeCompositeAuthenticationToken.class),
-							TypeReference.of(AuthorizationGrantType.class),
-							TypeReference.of(OAuth2AuthorizationResponseType.class),
-							TypeReference.of(OAuth2TokenFormat.class)
-					), builder ->
-							builder.withMembers(MemberCategory.DECLARED_FIELDS,
-									MemberCategory.INVOKE_DECLARED_CONSTRUCTORS, MemberCategory.INVOKE_DECLARED_METHODS)
-			);
+			hints.reflection()
+				.registerTypes(Arrays.asList(TypeReference.of(AbstractAuthenticationToken.class),
+						TypeReference.of(DefaultSavedRequest.Builder.class),
+						TypeReference.of(WebAuthenticationDetails.class),
+						TypeReference.of(UsernamePasswordAuthenticationToken.class), TypeReference.of(User.class),
+						TypeReference.of(DefaultOidcUser.class), TypeReference.of(DefaultOAuth2User.class),
+						TypeReference.of(OidcUserAuthority.class), TypeReference.of(OAuth2UserAuthority.class),
+						TypeReference.of(SimpleGrantedAuthority.class), TypeReference.of(OidcIdToken.class),
+						TypeReference.of(AbstractOAuth2Token.class), TypeReference.of(OidcUserInfo.class),
+						TypeReference.of(OAuth2TokenExchangeActor.class),
+						TypeReference.of(OAuth2AuthorizationRequest.class),
+						TypeReference.of(OAuth2TokenExchangeCompositeAuthenticationToken.class),
+						TypeReference.of(AuthorizationGrantType.class),
+						TypeReference.of(OAuth2AuthorizationResponseType.class),
+						TypeReference.of(OAuth2TokenFormat.class)),
+						builder -> builder.withMembers(MemberCategory.DECLARED_FIELDS,
+								MemberCategory.INVOKE_DECLARED_CONSTRUCTORS, MemberCategory.INVOKE_DECLARED_METHODS));
 
 			// Jackson Modules - Spring Security and Spring Authorization Server
-			hints.reflection().registerTypes(
-					Arrays.asList(
-							TypeReference.of(CoreJackson2Module.class),
-							TypeReference.of(WebServletJackson2Module.class),
-							TypeReference.of(OAuth2AuthorizationServerJackson2Module.class)
-					), builder ->
-							builder.withMembers(MemberCategory.DECLARED_FIELDS,
-									MemberCategory.INVOKE_DECLARED_CONSTRUCTORS, MemberCategory.INVOKE_DECLARED_METHODS)
-			);
+			hints.reflection()
+				.registerTypes(
+						Arrays.asList(TypeReference.of(CoreJackson2Module.class),
+								TypeReference.of(WebServletJackson2Module.class),
+								TypeReference.of(OAuth2AuthorizationServerJackson2Module.class)),
+						builder -> builder.withMembers(MemberCategory.DECLARED_FIELDS,
+								MemberCategory.INVOKE_DECLARED_CONSTRUCTORS, MemberCategory.INVOKE_DECLARED_METHODS));
 
 			// Jackson Mixins - Spring Security and Spring Authorization Server
 			this.reflectionHintsRegistrar.registerReflectionHints(hints.reflection(),
@@ -140,8 +136,8 @@ class OAuth2AuthorizationServerBeanRegistrationAotProcessor implements BeanRegis
 					loadClass("org.springframework.security.jackson2.UnmodifiableListMixin"));
 			this.reflectionHintsRegistrar.registerReflectionHints(hints.reflection(),
 					loadClass("org.springframework.security.jackson2.UnmodifiableMapMixin"));
-			this.reflectionHintsRegistrar.registerReflectionHints(hints.reflection(),
-					loadClass("org.springframework.security.oauth2.server.authorization.jackson2.UnmodifiableMapMixin"));
+			this.reflectionHintsRegistrar.registerReflectionHints(hints.reflection(), loadClass(
+					"org.springframework.security.oauth2.server.authorization.jackson2.UnmodifiableMapMixin"));
 			this.reflectionHintsRegistrar.registerReflectionHints(hints.reflection(),
 					loadClass("org.springframework.security.oauth2.server.authorization.jackson2.HashSetMixin"));
 			this.reflectionHintsRegistrar.registerReflectionHints(hints.reflection(),
@@ -168,18 +164,19 @@ class OAuth2AuthorizationServerBeanRegistrationAotProcessor implements BeanRegis
 					ClassUtils.getDefaultClassLoader())) {
 
 				// Jackson Module (and required types) - Spring Security OAuth2 Client
-				hints.reflection().registerTypes(
-						Arrays.asList(
-								TypeReference.of("org.springframework.security.oauth2.client.jackson2.OAuth2ClientJackson2Module"),
-								TypeReference.of("org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken")
-						), builder ->
-								builder.withMembers(MemberCategory.DECLARED_FIELDS,
-										MemberCategory.INVOKE_DECLARED_CONSTRUCTORS, MemberCategory.INVOKE_DECLARED_METHODS)
-				);
+				hints.reflection()
+					.registerTypes(Arrays.asList(
+							TypeReference
+								.of("org.springframework.security.oauth2.client.jackson2.OAuth2ClientJackson2Module"),
+							TypeReference
+								.of("org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken")),
+							builder -> builder.withMembers(MemberCategory.DECLARED_FIELDS,
+									MemberCategory.INVOKE_DECLARED_CONSTRUCTORS,
+									MemberCategory.INVOKE_DECLARED_METHODS));
 
 				// Jackson Mixins - Spring Security OAuth2 Client
-				this.reflectionHintsRegistrar.registerReflectionHints(hints.reflection(),
-						loadClass("org.springframework.security.oauth2.client.jackson2.OAuth2AuthenticationTokenMixin"));
+				this.reflectionHintsRegistrar.registerReflectionHints(hints.reflection(), loadClass(
+						"org.springframework.security.oauth2.client.jackson2.OAuth2AuthenticationTokenMixin"));
 				this.reflectionHintsRegistrar.registerReflectionHints(hints.reflection(),
 						loadClass("org.springframework.security.oauth2.client.jackson2.DefaultOidcUserMixin"));
 				this.reflectionHintsRegistrar.registerReflectionHints(hints.reflection(),
@@ -198,7 +195,8 @@ class OAuth2AuthorizationServerBeanRegistrationAotProcessor implements BeanRegis
 		private static Class<?> loadClass(String className) {
 			try {
 				return Class.forName(className);
-			} catch (ClassNotFoundException ex) {
+			}
+			catch (ClassNotFoundException ex) {
 				throw new RuntimeException(ex);
 			}
 		}

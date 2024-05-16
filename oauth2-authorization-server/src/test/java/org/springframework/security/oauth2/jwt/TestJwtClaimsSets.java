@@ -44,4 +44,5 @@ public final class TestJwtClaimsSets {
 				.claim("custom-claim-name", "custom-claim-value");
 		// @formatter:on
 	}
+
 }

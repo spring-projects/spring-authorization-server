@@ -69,8 +69,8 @@ import org.springframework.web.util.UriComponentsBuilder;
 import org.springframework.web.util.UriUtils;
 
 /**
- * A {@code Filter} for the OAuth 2.0 Authorization Code Grant,
- * which handles the processing of the OAuth 2.0 Authorization Request and Consent.
+ * A {@code Filter} for the OAuth 2.0 Authorization Code Grant, which handles the
+ * processing of the OAuth 2.0 Authorization Request and Consent.
  *
  * @author Joe Grandja
  * @author Paurav Munshi
@@ -81,29 +81,45 @@ import org.springframework.web.util.UriUtils;
  * @see AuthenticationManager
  * @see OAuth2AuthorizationCodeRequestAuthenticationProvider
  * @see OAuth2AuthorizationConsentAuthenticationProvider
- * @see <a target="_blank" href="https://datatracker.ietf.org/doc/html/rfc6749#section-4.1">Section 4.1 Authorization Code Grant</a>
- * @see <a target="_blank" href="https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.1">Section 4.1.1 Authorization Request</a>
- * @see <a target="_blank" href="https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.2">Section 4.1.2 Authorization Response</a>
+ * @see <a target="_blank" href=
+ * "https://datatracker.ietf.org/doc/html/rfc6749#section-4.1">Section 4.1 Authorization
+ * Code Grant</a>
+ * @see <a target="_blank" href=
+ * "https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.1">Section 4.1.1
+ * Authorization Request</a>
+ * @see <a target="_blank" href=
+ * "https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.2">Section 4.1.2
+ * Authorization Response</a>
  */
 public final class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
+
 	/**
 	 * The default endpoint {@code URI} for authorization requests.
 	 */
 	private static final String DEFAULT_AUTHORIZATION_ENDPOINT_URI = "/oauth2/authorize";
 
 	private final AuthenticationManager authenticationManager;
+
 	private final RequestMatcher authorizationEndpointMatcher;
+
 	private final RedirectStrategy redirectStrategy = new DefaultRedirectStrategy();
+
 	private AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource = new WebAuthenticationDetailsSource();
+
 	private AuthenticationConverter authenticationConverter;
+
 	private AuthenticationSuccessHandler authenticationSuccessHandler = this::sendAuthorizationResponse;
+
 	private AuthenticationFailureHandler authenticationFailureHandler = this::sendErrorResponse;
-	private SessionAuthenticationStrategy sessionAuthenticationStrategy = (authentication, request, response) -> {};
+
+	private SessionAuthenticationStrategy sessionAuthenticationStrategy = (authentication, request, response) -> {
+	};
+
 	private String consentPage;
 
 	/**
-	 * Constructs an {@code OAuth2AuthorizationEndpointFilter} using the provided parameters.
-	 *
+	 * Constructs an {@code OAuth2AuthorizationEndpointFilter} using the provided
+	 * parameters.
 	 * @param authenticationManager the authentication manager
 	 */
 	public OAuth2AuthorizationEndpointFilter(AuthenticationManager authenticationManager) {
@@ -111,40 +127,42 @@ public final class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilte
 	}
 
 	/**
-	 * Constructs an {@code OAuth2AuthorizationEndpointFilter} using the provided parameters.
-	 *
+	 * Constructs an {@code OAuth2AuthorizationEndpointFilter} using the provided
+	 * parameters.
 	 * @param authenticationManager the authentication manager
 	 * @param authorizationEndpointUri the endpoint {@code URI} for authorization requests
 	 */
-	public OAuth2AuthorizationEndpointFilter(AuthenticationManager authenticationManager, String authorizationEndpointUri) {
+	public OAuth2AuthorizationEndpointFilter(AuthenticationManager authenticationManager,
+			String authorizationEndpointUri) {
 		Assert.notNull(authenticationManager, "authenticationManager cannot be null");
 		Assert.hasText(authorizationEndpointUri, "authorizationEndpointUri cannot be empty");
 		this.authenticationManager = authenticationManager;
 		this.authorizationEndpointMatcher = createDefaultRequestMatcher(authorizationEndpointUri);
+		// @formatter:off
 		this.authenticationConverter = new DelegatingAuthenticationConverter(
 				Arrays.asList(
 						new OAuth2AuthorizationCodeRequestAuthenticationConverter(),
 						new OAuth2AuthorizationConsentAuthenticationConverter()));
+		// @formatter:on
 	}
 
 	private static RequestMatcher createDefaultRequestMatcher(String authorizationEndpointUri) {
-		RequestMatcher authorizationRequestGetMatcher = new AntPathRequestMatcher(
-				authorizationEndpointUri, HttpMethod.GET.name());
-		RequestMatcher authorizationRequestPostMatcher = new AntPathRequestMatcher(
-				authorizationEndpointUri, HttpMethod.POST.name());
+		RequestMatcher authorizationRequestGetMatcher = new AntPathRequestMatcher(authorizationEndpointUri,
+				HttpMethod.GET.name());
+		RequestMatcher authorizationRequestPostMatcher = new AntPathRequestMatcher(authorizationEndpointUri,
+				HttpMethod.POST.name());
 		RequestMatcher openidScopeMatcher = request -> {
 			String scope = request.getParameter(OAuth2ParameterNames.SCOPE);
 			return StringUtils.hasText(scope) && scope.contains(OidcScopes.OPENID);
 		};
-		RequestMatcher responseTypeParameterMatcher = request ->
-				request.getParameter(OAuth2ParameterNames.RESPONSE_TYPE) != null;
+		RequestMatcher responseTypeParameterMatcher = request -> request
+			.getParameter(OAuth2ParameterNames.RESPONSE_TYPE) != null;
 
-		RequestMatcher authorizationRequestMatcher = new OrRequestMatcher(
-				authorizationRequestGetMatcher,
-				new AndRequestMatcher(
-						authorizationRequestPostMatcher, responseTypeParameterMatcher, openidScopeMatcher));
-		RequestMatcher authorizationConsentMatcher = new AndRequestMatcher(
-				authorizationRequestPostMatcher, new NegatedRequestMatcher(responseTypeParameterMatcher));
+		RequestMatcher authorizationRequestMatcher = new OrRequestMatcher(authorizationRequestGetMatcher,
+				new AndRequestMatcher(authorizationRequestPostMatcher, responseTypeParameterMatcher,
+						openidScopeMatcher));
+		RequestMatcher authorizationConsentMatcher = new AndRequestMatcher(authorizationRequestPostMatcher,
+				new NegatedRequestMatcher(responseTypeParameterMatcher));
 
 		return new OrRequestMatcher(authorizationRequestMatcher, authorizationConsentMatcher);
 	}
@@ -162,14 +180,15 @@ public final class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilte
 			Authentication authentication = this.authenticationConverter.convert(request);
 			if (authentication instanceof AbstractAuthenticationToken) {
 				((AbstractAuthenticationToken) authentication)
-						.setDetails(this.authenticationDetailsSource.buildDetails(request));
+					.setDetails(this.authenticationDetailsSource.buildDetails(request));
 			}
 			Authentication authenticationResult = this.authenticationManager.authenticate(authentication);
 
 			if (!authenticationResult.isAuthenticated()) {
-				// If the Principal (Resource Owner) is not authenticated then
-				// pass through the chain with the expectation that the authentication process
-				// will commence via AuthenticationEntryPoint
+				// If the Principal (Resource Owner) is not authenticated then pass
+				// through the chain
+				// with the expectation that the authentication process will commence via
+				// AuthenticationEntryPoint
 				filterChain.doFilter(request, response);
 				return;
 			}
@@ -184,13 +203,12 @@ public final class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilte
 				return;
 			}
 
-			this.sessionAuthenticationStrategy.onAuthentication(
-					authenticationResult, request, response);
+			this.sessionAuthenticationStrategy.onAuthentication(authenticationResult, request, response);
 
-			this.authenticationSuccessHandler.onAuthenticationSuccess(
-					request, response, authenticationResult);
+			this.authenticationSuccessHandler.onAuthenticationSuccess(request, response, authenticationResult);
 
-		} catch (OAuth2AuthenticationException ex) {
+		}
+		catch (OAuth2AuthenticationException ex) {
 			if (this.logger.isTraceEnabled()) {
 				this.logger.trace(LogMessage.format("Authorization request failed: %s", ex.getError()), ex);
 			}
@@ -199,22 +217,27 @@ public final class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilte
 	}
 
 	/**
-	 * Sets the {@link AuthenticationDetailsSource} used for building an authentication details instance from {@link HttpServletRequest}.
-	 *
-	 * @param authenticationDetailsSource the {@link AuthenticationDetailsSource} used for building an authentication details instance from {@link HttpServletRequest}
+	 * Sets the {@link AuthenticationDetailsSource} used for building an authentication
+	 * details instance from {@link HttpServletRequest}.
+	 * @param authenticationDetailsSource the {@link AuthenticationDetailsSource} used for
+	 * building an authentication details instance from {@link HttpServletRequest}
 	 * @since 0.3.1
 	 */
-	public void setAuthenticationDetailsSource(AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource) {
+	public void setAuthenticationDetailsSource(
+			AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource) {
 		Assert.notNull(authenticationDetailsSource, "authenticationDetailsSource cannot be null");
 		this.authenticationDetailsSource = authenticationDetailsSource;
 	}
 
 	/**
-	 * Sets the {@link AuthenticationConverter} used when attempting to extract an Authorization Request (or Consent) from {@link HttpServletRequest}
-	 * to an instance of {@link OAuth2AuthorizationCodeRequestAuthenticationToken} or {@link OAuth2AuthorizationConsentAuthenticationToken}
-	 * used for authenticating the request.
-	 *
-	 * @param authenticationConverter the {@link AuthenticationConverter} used when attempting to extract an Authorization Request (or Consent) from {@link HttpServletRequest}
+	 * Sets the {@link AuthenticationConverter} used when attempting to extract an
+	 * Authorization Request (or Consent) from {@link HttpServletRequest} to an instance
+	 * of {@link OAuth2AuthorizationCodeRequestAuthenticationToken} or
+	 * {@link OAuth2AuthorizationConsentAuthenticationToken} used for authenticating the
+	 * request.
+	 * @param authenticationConverter the {@link AuthenticationConverter} used when
+	 * attempting to extract an Authorization Request (or Consent) from
+	 * {@link HttpServletRequest}
 	 */
 	public void setAuthenticationConverter(AuthenticationConverter authenticationConverter) {
 		Assert.notNull(authenticationConverter, "authenticationConverter cannot be null");
@@ -222,10 +245,11 @@ public final class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilte
 	}
 
 	/**
-	 * Sets the {@link AuthenticationSuccessHandler} used for handling an {@link OAuth2AuthorizationCodeRequestAuthenticationToken}
-	 * and returning the {@link OAuth2AuthorizationResponse Authorization Response}.
-	 *
-	 * @param authenticationSuccessHandler the {@link AuthenticationSuccessHandler} used for handling an {@link OAuth2AuthorizationCodeRequestAuthenticationToken}
+	 * Sets the {@link AuthenticationSuccessHandler} used for handling an
+	 * {@link OAuth2AuthorizationCodeRequestAuthenticationToken} and returning the
+	 * {@link OAuth2AuthorizationResponse Authorization Response}.
+	 * @param authenticationSuccessHandler the {@link AuthenticationSuccessHandler} used
+	 * for handling an {@link OAuth2AuthorizationCodeRequestAuthenticationToken}
 	 */
 	public void setAuthenticationSuccessHandler(AuthenticationSuccessHandler authenticationSuccessHandler) {
 		Assert.notNull(authenticationSuccessHandler, "authenticationSuccessHandler cannot be null");
@@ -233,10 +257,11 @@ public final class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilte
 	}
 
 	/**
-	 * Sets the {@link AuthenticationFailureHandler} used for handling an {@link OAuth2AuthorizationCodeRequestAuthenticationException}
-	 * and returning the {@link OAuth2Error Error Response}.
-	 *
-	 * @param authenticationFailureHandler the {@link AuthenticationFailureHandler} used for handling an {@link OAuth2AuthorizationCodeRequestAuthenticationException}
+	 * Sets the {@link AuthenticationFailureHandler} used for handling an
+	 * {@link OAuth2AuthorizationCodeRequestAuthenticationException} and returning the
+	 * {@link OAuth2Error Error Response}.
+	 * @param authenticationFailureHandler the {@link AuthenticationFailureHandler} used
+	 * for handling an {@link OAuth2AuthorizationCodeRequestAuthenticationException}
 	 */
 	public void setAuthenticationFailureHandler(AuthenticationFailureHandler authenticationFailureHandler) {
 		Assert.notNull(authenticationFailureHandler, "authenticationFailureHandler cannot be null");
@@ -244,11 +269,12 @@ public final class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilte
 	}
 
 	/**
-	 * Sets the {@link SessionAuthenticationStrategy} used for handling an {@link OAuth2AuthorizationCodeRequestAuthenticationToken}
-	 * before calling the {@link AuthenticationSuccessHandler}.
-	 * If OpenID Connect is enabled, the default implementation tracks OpenID Connect sessions using a {@link SessionRegistry}.
-	 *
-	 * @param sessionAuthenticationStrategy the {@link SessionAuthenticationStrategy} used for handling an {@link OAuth2AuthorizationCodeRequestAuthenticationToken}
+	 * Sets the {@link SessionAuthenticationStrategy} used for handling an
+	 * {@link OAuth2AuthorizationCodeRequestAuthenticationToken} before calling the
+	 * {@link AuthenticationSuccessHandler}. If OpenID Connect is enabled, the default
+	 * implementation tracks OpenID Connect sessions using a {@link SessionRegistry}.
+	 * @param sessionAuthenticationStrategy the {@link SessionAuthenticationStrategy} used
+	 * for handling an {@link OAuth2AuthorizationCodeRequestAuthenticationToken}
 	 * @since 1.1
 	 */
 	public void setSessionAuthenticationStrategy(SessionAuthenticationStrategy sessionAuthenticationStrategy) {
@@ -257,10 +283,10 @@ public final class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilte
 	}
 
 	/**
-	 * Specify the URI to redirect Resource Owners to if consent is required. A default consent
-	 * page will be generated when this attribute is not specified.
-	 *
-	 * @param consentPage the URI of the custom consent page to redirect to if consent is required (e.g. "/oauth2/consent")
+	 * Specify the URI to redirect Resource Owners to if consent is required. A default
+	 * consent page will be generated when this attribute is not specified.
+	 * @param consentPage the URI of the custom consent page to redirect to if consent is
+	 * required (e.g. "/oauth2/consent")
 	 */
 	public void setConsentPage(String consentPage) {
 		this.consentPage = consentPage;
@@ -278,16 +304,18 @@ public final class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilte
 
 		if (hasConsentUri()) {
 			String redirectUri = UriComponentsBuilder.fromUriString(resolveConsentUri(request))
-					.queryParam(OAuth2ParameterNames.SCOPE, String.join(" ", requestedScopes))
-					.queryParam(OAuth2ParameterNames.CLIENT_ID, clientId)
-					.queryParam(OAuth2ParameterNames.STATE, state)
-					.toUriString();
+				.queryParam(OAuth2ParameterNames.SCOPE, String.join(" ", requestedScopes))
+				.queryParam(OAuth2ParameterNames.CLIENT_ID, clientId)
+				.queryParam(OAuth2ParameterNames.STATE, state)
+				.toUriString();
 			this.redirectStrategy.sendRedirect(request, response, redirectUri);
-		} else {
+		}
+		else {
 			if (this.logger.isTraceEnabled()) {
 				this.logger.trace("Displaying generated consent screen");
 			}
-			DefaultConsentPage.displayConsent(request, response, clientId, principal, requestedScopes, authorizedScopes, state, Collections.emptyMap());
+			DefaultConsentPage.displayConsent(request, response, clientId, principal, requestedScopes, authorizedScopes,
+					state, Collections.emptyMap());
 		}
 	}
 
@@ -311,31 +339,30 @@ public final class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilte
 	private void sendAuthorizationResponse(HttpServletRequest request, HttpServletResponse response,
 			Authentication authentication) throws IOException {
 
-		OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthentication =
-				(OAuth2AuthorizationCodeRequestAuthenticationToken) authentication;
+		OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthentication = (OAuth2AuthorizationCodeRequestAuthenticationToken) authentication;
 		UriComponentsBuilder uriBuilder = UriComponentsBuilder
-				.fromUriString(authorizationCodeRequestAuthentication.getRedirectUri())
-				.queryParam(OAuth2ParameterNames.CODE, authorizationCodeRequestAuthentication.getAuthorizationCode().getTokenValue());
+			.fromUriString(authorizationCodeRequestAuthentication.getRedirectUri())
+			.queryParam(OAuth2ParameterNames.CODE,
+					authorizationCodeRequestAuthentication.getAuthorizationCode().getTokenValue());
 		if (StringUtils.hasText(authorizationCodeRequestAuthentication.getState())) {
-			uriBuilder.queryParam(
-					OAuth2ParameterNames.STATE,
+			uriBuilder.queryParam(OAuth2ParameterNames.STATE,
 					UriUtils.encode(authorizationCodeRequestAuthentication.getState(), StandardCharsets.UTF_8));
 		}
-		String redirectUri = uriBuilder.build(true).toUriString();		// build(true) -> Components are explicitly encoded
+		// build(true) -> Components are explicitly encoded
+		String redirectUri = uriBuilder.build(true).toUriString();
 		this.redirectStrategy.sendRedirect(request, response, redirectUri);
 	}
 
 	private void sendErrorResponse(HttpServletRequest request, HttpServletResponse response,
 			AuthenticationException exception) throws IOException {
 
-		OAuth2AuthorizationCodeRequestAuthenticationException authorizationCodeRequestAuthenticationException =
-				(OAuth2AuthorizationCodeRequestAuthenticationException) exception;
+		OAuth2AuthorizationCodeRequestAuthenticationException authorizationCodeRequestAuthenticationException = (OAuth2AuthorizationCodeRequestAuthenticationException) exception;
 		OAuth2Error error = authorizationCodeRequestAuthenticationException.getError();
-		OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthentication =
-				authorizationCodeRequestAuthenticationException.getAuthorizationCodeRequestAuthentication();
+		OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthentication = authorizationCodeRequestAuthenticationException
+			.getAuthorizationCodeRequestAuthentication();
 
-		if (authorizationCodeRequestAuthentication == null ||
-				!StringUtils.hasText(authorizationCodeRequestAuthentication.getRedirectUri())) {
+		if (authorizationCodeRequestAuthentication == null
+				|| !StringUtils.hasText(authorizationCodeRequestAuthentication.getRedirectUri())) {
 			response.sendError(HttpStatus.BAD_REQUEST.value(), error.toString());
 			return;
 		}
@@ -345,24 +372,22 @@ public final class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilte
 		}
 
 		UriComponentsBuilder uriBuilder = UriComponentsBuilder
-				.fromUriString(authorizationCodeRequestAuthentication.getRedirectUri())
-				.queryParam(OAuth2ParameterNames.ERROR, error.getErrorCode());
+			.fromUriString(authorizationCodeRequestAuthentication.getRedirectUri())
+			.queryParam(OAuth2ParameterNames.ERROR, error.getErrorCode());
 		if (StringUtils.hasText(error.getDescription())) {
-			uriBuilder.queryParam(
-					OAuth2ParameterNames.ERROR_DESCRIPTION,
+			uriBuilder.queryParam(OAuth2ParameterNames.ERROR_DESCRIPTION,
 					UriUtils.encode(error.getDescription(), StandardCharsets.UTF_8));
 		}
 		if (StringUtils.hasText(error.getUri())) {
-			uriBuilder.queryParam(
-					OAuth2ParameterNames.ERROR_URI,
+			uriBuilder.queryParam(OAuth2ParameterNames.ERROR_URI,
 					UriUtils.encode(error.getUri(), StandardCharsets.UTF_8));
 		}
 		if (StringUtils.hasText(authorizationCodeRequestAuthentication.getState())) {
-			uriBuilder.queryParam(
-					OAuth2ParameterNames.STATE,
+			uriBuilder.queryParam(OAuth2ParameterNames.STATE,
 					UriUtils.encode(authorizationCodeRequestAuthentication.getState(), StandardCharsets.UTF_8));
 		}
-		String redirectUri = uriBuilder.build(true).toUriString();		// build(true) -> Components are explicitly encoded
+		// build(true) -> Components are explicitly encoded
+		String redirectUri = uriBuilder.build(true).toUriString();
 		this.redirectStrategy.sendRedirect(request, response, redirectUri);
 	}
 

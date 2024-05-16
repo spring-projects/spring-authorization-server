@@ -36,7 +36,6 @@ public interface OAuth2AuthenticationContext extends Context {
 
 	/**
 	 * Returns the {@link Authentication} associated to the context.
-	 *
 	 * @param <T> the type of the {@code Authentication}
 	 * @return the {@link Authentication}
 	 */
@@ -53,6 +52,7 @@ public interface OAuth2AuthenticationContext extends Context {
 	 * @since 0.2.1
 	 */
 	abstract class AbstractBuilder<T extends OAuth2AuthenticationContext, B extends AbstractBuilder<T, B>> {
+
 		private final Map<Object, Object> context = new HashMap<>();
 
 		protected AbstractBuilder(Authentication authentication) {
@@ -62,7 +62,6 @@ public interface OAuth2AuthenticationContext extends Context {
 
 		/**
 		 * Associates an attribute.
-		 *
 		 * @param key the key for the attribute
 		 * @param value the value of the attribute
 		 * @return the {@link AbstractBuilder} for further configuration
@@ -75,9 +74,8 @@ public interface OAuth2AuthenticationContext extends Context {
 		}
 
 		/**
-		 * A {@code Consumer} of the attributes {@code Map}
-		 * allowing the ability to add, replace, or remove.
-		 *
+		 * A {@code Consumer} of the attributes {@code Map} allowing the ability to add,
+		 * replace, or remove.
 		 * @param contextConsumer a {@link Consumer} of the attributes {@code Map}
 		 * @return the {@link AbstractBuilder} for further configuration
 		 */
@@ -102,7 +100,6 @@ public interface OAuth2AuthenticationContext extends Context {
 
 		/**
 		 * Builds a new {@link OAuth2AuthenticationContext}.
-		 *
 		 * @return the {@link OAuth2AuthenticationContext}
 		 */
 		public abstract T build();

@@ -42,7 +42,9 @@ import org.springframework.web.util.UriComponentsBuilder;
  * @see OidcUserInfoEndpointConfigurer
  */
 public final class OidcConfigurer extends AbstractOAuth2Configurer {
+
 	private final Map<Class<? extends AbstractOAuth2Configurer>, AbstractOAuth2Configurer> configurers = new LinkedHashMap<>();
+
 	private RequestMatcher requestMatcher;
 
 	/**
@@ -50,27 +52,30 @@ public final class OidcConfigurer extends AbstractOAuth2Configurer {
 	 */
 	OidcConfigurer(ObjectPostProcessor<Object> objectPostProcessor) {
 		super(objectPostProcessor);
-		addConfigurer(OidcProviderConfigurationEndpointConfigurer.class, new OidcProviderConfigurationEndpointConfigurer(objectPostProcessor));
+		addConfigurer(OidcProviderConfigurationEndpointConfigurer.class,
+				new OidcProviderConfigurationEndpointConfigurer(objectPostProcessor));
 		addConfigurer(OidcLogoutEndpointConfigurer.class, new OidcLogoutEndpointConfigurer(objectPostProcessor));
 		addConfigurer(OidcUserInfoEndpointConfigurer.class, new OidcUserInfoEndpointConfigurer(objectPostProcessor));
 	}
 
 	/**
 	 * Configures the OpenID Connect 1.0 Provider Configuration Endpoint.
-	 *
-	 * @param providerConfigurationEndpointCustomizer the {@link Customizer} providing access to the {@link OidcProviderConfigurationEndpointConfigurer}
+	 * @param providerConfigurationEndpointCustomizer the {@link Customizer} providing
+	 * access to the {@link OidcProviderConfigurationEndpointConfigurer}
 	 * @return the {@link OidcConfigurer} for further configuration
 	 * @since 0.4.0
 	 */
-	public OidcConfigurer providerConfigurationEndpoint(Customizer<OidcProviderConfigurationEndpointConfigurer> providerConfigurationEndpointCustomizer) {
-		providerConfigurationEndpointCustomizer.customize(getConfigurer(OidcProviderConfigurationEndpointConfigurer.class));
+	public OidcConfigurer providerConfigurationEndpoint(
+			Customizer<OidcProviderConfigurationEndpointConfigurer> providerConfigurationEndpointCustomizer) {
+		providerConfigurationEndpointCustomizer
+			.customize(getConfigurer(OidcProviderConfigurationEndpointConfigurer.class));
 		return this;
 	}
 
 	/**
 	 * Configures the OpenID Connect 1.0 RP-Initiated Logout Endpoint.
-	 *
-	 * @param logoutEndpointCustomizer the {@link Customizer} providing access to the {@link OidcLogoutEndpointConfigurer}
+	 * @param logoutEndpointCustomizer the {@link Customizer} providing access to the
+	 * {@link OidcLogoutEndpointConfigurer}
 	 * @return the {@link OidcConfigurer} for further configuration
 	 * @since 1.1
 	 */
@@ -81,13 +86,14 @@ public final class OidcConfigurer extends AbstractOAuth2Configurer {
 
 	/**
 	 * Configures the OpenID Connect Dynamic Client Registration 1.0 Endpoint.
-	 *
-	 * @param clientRegistrationEndpointCustomizer the {@link Customizer} providing access to the {@link OidcClientRegistrationEndpointConfigurer}
+	 * @param clientRegistrationEndpointCustomizer the {@link Customizer} providing access
+	 * to the {@link OidcClientRegistrationEndpointConfigurer}
 	 * @return the {@link OidcConfigurer} for further configuration
 	 */
-	public OidcConfigurer clientRegistrationEndpoint(Customizer<OidcClientRegistrationEndpointConfigurer> clientRegistrationEndpointCustomizer) {
-		OidcClientRegistrationEndpointConfigurer clientRegistrationEndpointConfigurer =
-				getConfigurer(OidcClientRegistrationEndpointConfigurer.class);
+	public OidcConfigurer clientRegistrationEndpoint(
+			Customizer<OidcClientRegistrationEndpointConfigurer> clientRegistrationEndpointCustomizer) {
+		OidcClientRegistrationEndpointConfigurer clientRegistrationEndpointConfigurer = getConfigurer(
+				OidcClientRegistrationEndpointConfigurer.class);
 		if (clientRegistrationEndpointConfigurer == null) {
 			addConfigurer(OidcClientRegistrationEndpointConfigurer.class,
 					new OidcClientRegistrationEndpointConfigurer(getObjectPostProcessor()));
@@ -99,8 +105,8 @@ public final class OidcConfigurer extends AbstractOAuth2Configurer {
 
 	/**
 	 * Configures the OpenID Connect 1.0 UserInfo Endpoint.
-	 *
-	 * @param userInfoEndpointCustomizer the {@link Customizer} providing access to the {@link OidcUserInfoEndpointConfigurer}
+	 * @param userInfoEndpointCustomizer the {@link Customizer} providing access to the
+	 * {@link OidcUserInfoEndpointConfigurer}
 	 * @return the {@link OidcConfigurer} for further configuration
 	 */
 	public OidcConfigurer userInfoEndpoint(Customizer<OidcUserInfoEndpointConfigurer> userInfoEndpointCustomizer) {
@@ -120,23 +126,25 @@ public final class OidcConfigurer extends AbstractOAuth2Configurer {
 
 	@Override
 	void configure(HttpSecurity httpSecurity) {
-		OidcClientRegistrationEndpointConfigurer clientRegistrationEndpointConfigurer =
-				getConfigurer(OidcClientRegistrationEndpointConfigurer.class);
+		OidcClientRegistrationEndpointConfigurer clientRegistrationEndpointConfigurer = getConfigurer(
+				OidcClientRegistrationEndpointConfigurer.class);
 		if (clientRegistrationEndpointConfigurer != null) {
-			OidcProviderConfigurationEndpointConfigurer providerConfigurationEndpointConfigurer =
-					getConfigurer(OidcProviderConfigurationEndpointConfigurer.class);
+			OidcProviderConfigurationEndpointConfigurer providerConfigurationEndpointConfigurer = getConfigurer(
+					OidcProviderConfigurationEndpointConfigurer.class);
 
-			providerConfigurationEndpointConfigurer
-					.addDefaultProviderConfigurationCustomizer((builder) -> {
-						AuthorizationServerContext authorizationServerContext = AuthorizationServerContextHolder.getContext();
-						String issuer = authorizationServerContext.getIssuer();
-						AuthorizationServerSettings authorizationServerSettings = authorizationServerContext.getAuthorizationServerSettings();
+			providerConfigurationEndpointConfigurer.addDefaultProviderConfigurationCustomizer((builder) -> {
+				AuthorizationServerContext authorizationServerContext = AuthorizationServerContextHolder.getContext();
+				String issuer = authorizationServerContext.getIssuer();
+				AuthorizationServerSettings authorizationServerSettings = authorizationServerContext
+					.getAuthorizationServerSettings();
 
-						String clientRegistrationEndpoint = UriComponentsBuilder.fromUriString(issuer)
-								.path(authorizationServerSettings.getOidcClientRegistrationEndpoint()).build().toUriString();
+				String clientRegistrationEndpoint = UriComponentsBuilder.fromUriString(issuer)
+					.path(authorizationServerSettings.getOidcClientRegistrationEndpoint())
+					.build()
+					.toUriString();
 
-						builder.clientRegistrationEndpoint(clientRegistrationEndpoint);
-					});
+				builder.clientRegistrationEndpoint(clientRegistrationEndpoint);
+			});
 		}
 
 		this.configurers.values().forEach(configurer -> configurer.configure(httpSecurity));

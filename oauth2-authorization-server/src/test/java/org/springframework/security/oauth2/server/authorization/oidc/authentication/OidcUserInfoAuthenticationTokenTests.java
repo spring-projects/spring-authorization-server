@@ -35,9 +35,8 @@ public class OidcUserInfoAuthenticationTokenTests {
 
 	@Test
 	public void constructorWhenPrincipalNullThenThrowIllegalArgumentException() {
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> new OidcUserInfoAuthenticationToken(null))
-				.withMessage("principal cannot be null");
+		assertThatIllegalArgumentException().isThrownBy(() -> new OidcUserInfoAuthenticationToken(null))
+			.withMessage("principal cannot be null");
 	}
 
 	@Test
@@ -58,4 +57,5 @@ public class OidcUserInfoAuthenticationTokenTests {
 		assertThat(authentication.getUserInfo()).isEqualTo(userInfo);
 		assertThat(authentication.isAuthenticated()).isTrue();
 	}
+
 }

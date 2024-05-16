@@ -33,7 +33,8 @@ import org.springframework.security.oauth2.core.oidc.endpoint.OidcParameterNames
 import org.springframework.util.Assert;
 
 /**
- * An {@link OAuth2AuthorizationService} that stores {@link OAuth2Authorization}'s in-memory.
+ * An {@link OAuth2AuthorizationService} that stores {@link OAuth2Authorization}'s
+ * in-memory.
  *
  * <p>
  * <b>NOTE:</b> This implementation should ONLY be used during development/testing.
@@ -44,15 +45,17 @@ import org.springframework.util.Assert;
  * @see OAuth2AuthorizationService
  */
 public final class InMemoryOAuth2AuthorizationService implements OAuth2AuthorizationService {
+
 	private int maxInitializedAuthorizations = 100;
 
 	/*
-	 * Stores "initialized" (uncompleted) authorizations, where an access token has not yet been granted.
-	 * This state occurs with the authorization_code grant flow during the user consent step OR
-	 * when the code is returned in the authorization response but the access token request is not yet initiated.
+	 * Stores "initialized" (uncompleted) authorizations, where an access token has not
+	 * yet been granted. This state occurs with the authorization_code grant flow during
+	 * the user consent step OR when the code is returned in the authorization response
+	 * but the access token request is not yet initiated.
 	 */
-	private Map<String, OAuth2Authorization> initializedAuthorizations =
-			Collections.synchronizedMap(new MaxSizeHashMap<>(this.maxInitializedAuthorizations));
+	private Map<String, OAuth2Authorization> initializedAuthorizations = Collections
+		.synchronizedMap(new MaxSizeHashMap<>(this.maxInitializedAuthorizations));
 
 	/*
 	 * Stores "completed" authorizations, where an access token has been granted.
@@ -64,7 +67,8 @@ public final class InMemoryOAuth2AuthorizationService implements OAuth2Authoriza
 	 */
 	InMemoryOAuth2AuthorizationService(int maxInitializedAuthorizations) {
 		this.maxInitializedAuthorizations = maxInitializedAuthorizations;
-		this.initializedAuthorizations = Collections.synchronizedMap(new MaxSizeHashMap<>(this.maxInitializedAuthorizations));
+		this.initializedAuthorizations = Collections
+			.synchronizedMap(new MaxSizeHashMap<>(this.maxInitializedAuthorizations));
 	}
 
 	/**
@@ -75,8 +79,8 @@ public final class InMemoryOAuth2AuthorizationService implements OAuth2Authoriza
 	}
 
 	/**
-	 * Constructs an {@code InMemoryOAuth2AuthorizationService} using the provided parameters.
-	 *
+	 * Constructs an {@code InMemoryOAuth2AuthorizationService} using the provided
+	 * parameters.
 	 * @param authorizations the authorization(s)
 	 */
 	public InMemoryOAuth2AuthorizationService(OAuth2Authorization... authorizations) {
@@ -84,8 +88,8 @@ public final class InMemoryOAuth2AuthorizationService implements OAuth2Authoriza
 	}
 
 	/**
-	 * Constructs an {@code InMemoryOAuth2AuthorizationService} using the provided parameters.
-	 *
+	 * Constructs an {@code InMemoryOAuth2AuthorizationService} using the provided
+	 * parameters.
 	 * @param authorizations the authorization(s)
 	 */
 	public InMemoryOAuth2AuthorizationService(List<OAuth2Authorization> authorizations) {
@@ -103,7 +107,8 @@ public final class InMemoryOAuth2AuthorizationService implements OAuth2Authoriza
 		Assert.notNull(authorization, "authorization cannot be null");
 		if (isComplete(authorization)) {
 			this.authorizations.put(authorization.getId(), authorization);
-		} else {
+		}
+		else {
 			this.initializedAuthorizations.put(authorization.getId(), authorization);
 		}
 	}
@@ -113,7 +118,8 @@ public final class InMemoryOAuth2AuthorizationService implements OAuth2Authoriza
 		Assert.notNull(authorization, "authorization cannot be null");
 		if (isComplete(authorization)) {
 			this.authorizations.remove(authorization.getId(), authorization);
-		} else {
+		}
+		else {
 			this.initializedAuthorizations.remove(authorization.getId(), authorization);
 		}
 	}
@@ -123,9 +129,7 @@ public final class InMemoryOAuth2AuthorizationService implements OAuth2Authoriza
 	public OAuth2Authorization findById(String id) {
 		Assert.hasText(id, "id cannot be empty");
 		OAuth2Authorization authorization = this.authorizations.get(id);
-		return authorization != null ?
-				authorization :
-				this.initializedAuthorizations.get(id);
+		return authorization != null ? authorization : this.initializedAuthorizations.get(id);
 	}
 
 	@Nullable
@@ -149,7 +153,9 @@ public final class InMemoryOAuth2AuthorizationService implements OAuth2Authoriza
 		return authorization.getAccessToken() != null;
 	}
 
-	private static boolean hasToken(OAuth2Authorization authorization, String token, @Nullable OAuth2TokenType tokenType) {
+	private static boolean hasToken(OAuth2Authorization authorization, String token,
+			@Nullable OAuth2TokenType tokenType) {
+		// @formatter:off
 		if (tokenType == null) {
 			return matchesState(authorization, token) ||
 					matchesAuthorizationCode(authorization, token) ||
@@ -173,6 +179,7 @@ public final class InMemoryOAuth2AuthorizationService implements OAuth2Authoriza
 		} else if (OAuth2ParameterNames.USER_CODE.equals(tokenType.getValue())) {
 			return matchesUserCode(authorization, token);
 		}
+		// @formatter:on
 		return false;
 	}
 
@@ -181,42 +188,38 @@ public final class InMemoryOAuth2AuthorizationService implements OAuth2Authoriza
 	}
 
 	private static boolean matchesAuthorizationCode(OAuth2Authorization authorization, String token) {
-		OAuth2Authorization.Token<OAuth2AuthorizationCode> authorizationCode =
-				authorization.getToken(OAuth2AuthorizationCode.class);
+		OAuth2Authorization.Token<OAuth2AuthorizationCode> authorizationCode = authorization
+			.getToken(OAuth2AuthorizationCode.class);
 		return authorizationCode != null && authorizationCode.getToken().getTokenValue().equals(token);
 	}
 
 	private static boolean matchesAccessToken(OAuth2Authorization authorization, String token) {
-		OAuth2Authorization.Token<OAuth2AccessToken> accessToken =
-				authorization.getToken(OAuth2AccessToken.class);
+		OAuth2Authorization.Token<OAuth2AccessToken> accessToken = authorization.getToken(OAuth2AccessToken.class);
 		return accessToken != null && accessToken.getToken().getTokenValue().equals(token);
 	}
 
 	private static boolean matchesRefreshToken(OAuth2Authorization authorization, String token) {
-		OAuth2Authorization.Token<OAuth2RefreshToken> refreshToken =
-				authorization.getToken(OAuth2RefreshToken.class);
+		OAuth2Authorization.Token<OAuth2RefreshToken> refreshToken = authorization.getToken(OAuth2RefreshToken.class);
 		return refreshToken != null && refreshToken.getToken().getTokenValue().equals(token);
 	}
 
 	private static boolean matchesIdToken(OAuth2Authorization authorization, String token) {
-		OAuth2Authorization.Token<OidcIdToken> idToken =
-				authorization.getToken(OidcIdToken.class);
+		OAuth2Authorization.Token<OidcIdToken> idToken = authorization.getToken(OidcIdToken.class);
 		return idToken != null && idToken.getToken().getTokenValue().equals(token);
 	}
 
 	private static boolean matchesDeviceCode(OAuth2Authorization authorization, String token) {
-		OAuth2Authorization.Token<OAuth2DeviceCode> deviceCode =
-				authorization.getToken(OAuth2DeviceCode.class);
+		OAuth2Authorization.Token<OAuth2DeviceCode> deviceCode = authorization.getToken(OAuth2DeviceCode.class);
 		return deviceCode != null && deviceCode.getToken().getTokenValue().equals(token);
 	}
 
 	private static boolean matchesUserCode(OAuth2Authorization authorization, String token) {
-		OAuth2Authorization.Token<OAuth2UserCode> userCode =
-				authorization.getToken(OAuth2UserCode.class);
+		OAuth2Authorization.Token<OAuth2UserCode> userCode = authorization.getToken(OAuth2UserCode.class);
 		return userCode != null && userCode.getToken().getTokenValue().equals(token);
 	}
 
 	private static final class MaxSizeHashMap<K, V> extends LinkedHashMap<K, V> {
+
 		private final int maxSize;
 
 		private MaxSizeHashMap(int maxSize) {

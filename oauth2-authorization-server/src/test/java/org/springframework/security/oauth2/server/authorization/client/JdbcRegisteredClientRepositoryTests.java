@@ -67,10 +67,15 @@ import static org.mockito.Mockito.verify;
  * @author Ovidiu Popa
  */
 public class JdbcRegisteredClientRepositoryTests {
+
 	private static final String OAUTH2_REGISTERED_CLIENT_SCHEMA_SQL_RESOURCE = "/org/springframework/security/oauth2/server/authorization/client/oauth2-registered-client-schema.sql";
+
 	private static final String OAUTH2_CUSTOM_REGISTERED_CLIENT_SCHEMA_SQL_RESOURCE = "/org/springframework/security/oauth2/server/authorization/client/custom-oauth2-registered-client-schema.sql";
+
 	private EmbeddedDatabase db;
+
 	private JdbcOperations jdbcOperations;
+
 	private JdbcRegisteredClientRepository registeredClientRepository;
 
 	@BeforeEach
@@ -114,9 +119,8 @@ public class JdbcRegisteredClientRepositoryTests {
 
 	@Test
 	public void saveWhenRegisteredClientNullThenThrowIllegalArgumentException() {
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> this.registeredClientRepository.save(null))
-				.withMessageContaining("registeredClient cannot be null");
+		assertThatIllegalArgumentException().isThrownBy(() -> this.registeredClientRepository.save(null))
+			.withMessageContaining("registeredClient cannot be null");
 	}
 
 	@Test
@@ -124,19 +128,23 @@ public class JdbcRegisteredClientRepositoryTests {
 		RegisteredClient originalRegisteredClient = TestRegisteredClients.registeredClient().build();
 		this.registeredClientRepository.save(originalRegisteredClient);
 
-		RegisteredClient registeredClient = this.registeredClientRepository.findById(
-				originalRegisteredClient.getId());
+		RegisteredClient registeredClient = this.registeredClientRepository.findById(originalRegisteredClient.getId());
 		assertThat(registeredClient).isEqualTo(originalRegisteredClient);
 
 		RegisteredClient updatedRegisteredClient = RegisteredClient.from(originalRegisteredClient)
-				.clientId("test").clientIdIssuedAt(Instant.now()).clientName("clientName").scope("scope2").build();
+			.clientId("test")
+			.clientIdIssuedAt(Instant.now())
+			.clientName("clientName")
+			.scope("scope2")
+			.build();
 
 		RegisteredClient expectedUpdatedRegisteredClient = RegisteredClient.from(originalRegisteredClient)
-				.clientName("clientName").scope("scope2").build();
+			.clientName("clientName")
+			.scope("scope2")
+			.build();
 		this.registeredClientRepository.save(updatedRegisteredClient);
 
-		registeredClient = this.registeredClientRepository.findById(
-				updatedRegisteredClient.getId());
+		registeredClient = this.registeredClientRepository.findById(updatedRegisteredClient.getId());
 		assertThat(registeredClient).isEqualTo(expectedUpdatedRegisteredClient);
 		assertThat(registeredClient).isNotEqualTo(originalRegisteredClient);
 	}
@@ -144,10 +152,9 @@ public class JdbcRegisteredClientRepositoryTests {
 	@Test
 	public void saveWhenNewThenSaved() {
 		RegisteredClient expectedRegisteredClient = TestRegisteredClients.registeredClient()
-				.clientSettings(ClientSettings.builder()
-						.tokenEndpointAuthenticationSigningAlgorithm(MacAlgorithm.HS256).build()
-				)
-				.build();
+			.clientSettings(
+					ClientSettings.builder().tokenEndpointAuthenticationSigningAlgorithm(MacAlgorithm.HS256).build())
+			.build();
 		this.registeredClientRepository.save(expectedRegisteredClient);
 		RegisteredClient registeredClient = this.registeredClientRepository.findById(expectedRegisteredClient.getId());
 		assertThat(registeredClient).isEqualTo(expectedRegisteredClient);
@@ -155,8 +162,7 @@ public class JdbcRegisteredClientRepositoryTests {
 
 	@Test
 	public void saveWhenClientSecretNullThenSaved() {
-		RegisteredClient expectedRegisteredClient = TestRegisteredClients.registeredClient()
-				.clientSecret(null).build();
+		RegisteredClient expectedRegisteredClient = TestRegisteredClients.registeredClient().clientSecret(null).build();
 		this.registeredClientRepository.save(expectedRegisteredClient);
 		RegisteredClient registeredClient = this.registeredClientRepository.findById(expectedRegisteredClient.getId());
 		assertThat(registeredClient).isEqualTo(expectedRegisteredClient);
@@ -165,35 +171,35 @@ public class JdbcRegisteredClientRepositoryTests {
 	@Test
 	public void saveWhenExistingClientIdThenThrowIllegalArgumentException() {
 		RegisteredClient registeredClient1 = TestRegisteredClients.registeredClient()
-				.id("registration-1")
-				.clientId("client-1")
-				.build();
+			.id("registration-1")
+			.clientId("client-1")
+			.build();
 		this.registeredClientRepository.save(registeredClient1);
 		RegisteredClient registeredClient2 = TestRegisteredClients.registeredClient()
-				.id("registration-2")
-				.clientId("client-1")
-				.build();
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> this.registeredClientRepository.save(registeredClient2))
-				.withMessage("Registered client must be unique. Found duplicate client identifier: " + registeredClient2.getClientId());
+			.id("registration-2")
+			.clientId("client-1")
+			.build();
+		assertThatIllegalArgumentException().isThrownBy(() -> this.registeredClientRepository.save(registeredClient2))
+			.withMessage("Registered client must be unique. Found duplicate client identifier: "
+					+ registeredClient2.getClientId());
 	}
 
 	@Test
 	public void saveWhenExistingClientSecretThenThrowIllegalArgumentException() {
 		RegisteredClient registeredClient1 = TestRegisteredClients.registeredClient()
-				.id("registration-1")
-				.clientId("client-1")
-				.clientSecret("secret")
-				.build();
+			.id("registration-1")
+			.clientId("client-1")
+			.clientSecret("secret")
+			.build();
 		this.registeredClientRepository.save(registeredClient1);
 		RegisteredClient registeredClient2 = TestRegisteredClients.registeredClient()
-				.id("registration-2")
-				.clientId("client-2")
-				.clientSecret("secret")
-				.build();
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> this.registeredClientRepository.save(registeredClient2))
-				.withMessage("Registered client must be unique. Found duplicate client secret for identifier: " + registeredClient2.getId());
+			.id("registration-2")
+			.clientId("client-2")
+			.clientSecret("secret")
+			.build();
+		assertThatIllegalArgumentException().isThrownBy(() -> this.registeredClientRepository.save(registeredClient2))
+			.withMessage("Registered client must be unique. Found duplicate client secret for identifier: "
+					+ registeredClient2.getId());
 	}
 
 	@Test
@@ -201,7 +207,8 @@ public class JdbcRegisteredClientRepositoryTests {
 		RowMapper<RegisteredClient> registeredClientRowMapper = spy(new RegisteredClientRowMapper());
 		this.registeredClientRepository.setRegisteredClientRowMapper(registeredClientRowMapper);
 		RegisteredClientParametersMapper clientParametersMapper = new RegisteredClientParametersMapper();
-		Function<RegisteredClient, List<SqlParameterValue>> registeredClientParametersMapper = spy(clientParametersMapper);
+		Function<RegisteredClient, List<SqlParameterValue>> registeredClientParametersMapper = spy(
+				clientParametersMapper);
 		this.registeredClientRepository.setRegisteredClientParametersMapper(registeredClientParametersMapper);
 
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
@@ -261,12 +268,14 @@ public class JdbcRegisteredClientRepositoryTests {
 	@Test
 	public void tableDefinitionWhenCustomThenAbleToOverride() {
 		EmbeddedDatabase db = createDb(OAUTH2_CUSTOM_REGISTERED_CLIENT_SCHEMA_SQL_RESOURCE);
-		CustomJdbcRegisteredClientRepository registeredClientRepository = new CustomJdbcRegisteredClientRepository(new JdbcTemplate(db));
+		CustomJdbcRegisteredClientRepository registeredClientRepository = new CustomJdbcRegisteredClientRepository(
+				new JdbcTemplate(db));
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 		registeredClientRepository.save(registeredClient);
 		RegisteredClient foundRegisteredClient1 = registeredClientRepository.findById(registeredClient.getId());
 		assertThat(foundRegisteredClient1).isEqualTo(registeredClient);
-		RegisteredClient foundRegisteredClient2 = registeredClientRepository.findByClientId(registeredClient.getClientId());
+		RegisteredClient foundRegisteredClient2 = registeredClientRepository
+			.findByClientId(registeredClient.getClientId());
 		assertThat(foundRegisteredClient2).isEqualTo(registeredClient);
 		db.shutdown();
 	}
@@ -302,7 +311,8 @@ public class JdbcRegisteredClientRepositoryTests {
 
 		private static final String TABLE_NAME = "oauth2RegisteredClient";
 
-		private static final String LOAD_REGISTERED_CLIENT_SQL = "SELECT " + COLUMN_NAMES + " FROM " + TABLE_NAME + " WHERE ";
+		private static final String LOAD_REGISTERED_CLIENT_SQL = "SELECT " + COLUMN_NAMES + " FROM " + TABLE_NAME
+				+ " WHERE ";
 
 		// @formatter:off
 		private static final String INSERT_REGISTERED_CLIENT_SQL = "INSERT INTO " + TABLE_NAME
@@ -332,12 +342,13 @@ public class JdbcRegisteredClientRepositoryTests {
 		}
 
 		private RegisteredClient findBy(String filter, Object... args) {
-			List<RegisteredClient> result = getJdbcOperations().query(
-					LOAD_REGISTERED_CLIENT_SQL + filter, getRegisteredClientRowMapper(), args);
+			List<RegisteredClient> result = getJdbcOperations().query(LOAD_REGISTERED_CLIENT_SQL + filter,
+					getRegisteredClientRowMapper(), args);
 			return !result.isEmpty() ? result.get(0) : null;
 		}
 
 		private static final class CustomRegisteredClientRowMapper implements RowMapper<RegisteredClient> {
+
 			private final ObjectMapper objectMapper = new ObjectMapper();
 
 			private CustomRegisteredClientRowMapper() {
@@ -351,10 +362,13 @@ public class JdbcRegisteredClientRepositoryTests {
 			public RegisteredClient mapRow(ResultSet rs, int rowNum) throws SQLException {
 				Timestamp clientIdIssuedAt = rs.getTimestamp("clientIdIssuedAt");
 				Timestamp clientSecretExpiresAt = rs.getTimestamp("clientSecretExpiresAt");
-				Set<String> clientAuthenticationMethods = StringUtils.commaDelimitedListToSet(rs.getString("clientAuthenticationMethods"));
-				Set<String> authorizationGrantTypes = StringUtils.commaDelimitedListToSet(rs.getString("authorizationGrantTypes"));
+				Set<String> clientAuthenticationMethods = StringUtils
+					.commaDelimitedListToSet(rs.getString("clientAuthenticationMethods"));
+				Set<String> authorizationGrantTypes = StringUtils
+					.commaDelimitedListToSet(rs.getString("authorizationGrantTypes"));
 				Set<String> redirectUris = StringUtils.commaDelimitedListToSet(rs.getString("redirectUris"));
-				Set<String> postLogoutRedirectUris = StringUtils.commaDelimitedListToSet(rs.getString("postLogoutRedirectUris"));
+				Set<String> postLogoutRedirectUris = StringUtils
+					.commaDelimitedListToSet(rs.getString("postLogoutRedirectUris"));
 				Set<String> clientScopes = StringUtils.commaDelimitedListToSet(rs.getString("scopes"));
 
 				// @formatter:off
@@ -386,8 +400,10 @@ public class JdbcRegisteredClientRepositoryTests {
 
 			private Map<String, Object> parseMap(String data) {
 				try {
-					return this.objectMapper.readValue(data, new TypeReference<Map<String, Object>>() {});
-				} catch (Exception ex) {
+					return this.objectMapper.readValue(data, new TypeReference<Map<String, Object>>() {
+					});
+				}
+				catch (Exception ex) {
 					throw new IllegalArgumentException(ex.getMessage(), ex);
 				}
 			}
@@ -395,23 +411,30 @@ public class JdbcRegisteredClientRepositoryTests {
 			private static AuthorizationGrantType resolveAuthorizationGrantType(String authorizationGrantType) {
 				if (AuthorizationGrantType.AUTHORIZATION_CODE.getValue().equals(authorizationGrantType)) {
 					return AuthorizationGrantType.AUTHORIZATION_CODE;
-				} else if (AuthorizationGrantType.CLIENT_CREDENTIALS.getValue().equals(authorizationGrantType)) {
+				}
+				else if (AuthorizationGrantType.CLIENT_CREDENTIALS.getValue().equals(authorizationGrantType)) {
 					return AuthorizationGrantType.CLIENT_CREDENTIALS;
-				} else if (AuthorizationGrantType.REFRESH_TOKEN.getValue().equals(authorizationGrantType)) {
+				}
+				else if (AuthorizationGrantType.REFRESH_TOKEN.getValue().equals(authorizationGrantType)) {
 					return AuthorizationGrantType.REFRESH_TOKEN;
 				}
-				return new AuthorizationGrantType(authorizationGrantType);		// Custom authorization grant type
+				// Custom authorization grant type
+				return new AuthorizationGrantType(authorizationGrantType);
 			}
 
-			private static ClientAuthenticationMethod resolveClientAuthenticationMethod(String clientAuthenticationMethod) {
+			private static ClientAuthenticationMethod resolveClientAuthenticationMethod(
+					String clientAuthenticationMethod) {
 				if (ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue().equals(clientAuthenticationMethod)) {
 					return ClientAuthenticationMethod.CLIENT_SECRET_BASIC;
-				} else if (ClientAuthenticationMethod.CLIENT_SECRET_POST.getValue().equals(clientAuthenticationMethod)) {
+				}
+				else if (ClientAuthenticationMethod.CLIENT_SECRET_POST.getValue().equals(clientAuthenticationMethod)) {
 					return ClientAuthenticationMethod.CLIENT_SECRET_POST;
-				} else if (ClientAuthenticationMethod.NONE.getValue().equals(clientAuthenticationMethod)) {
+				}
+				else if (ClientAuthenticationMethod.NONE.getValue().equals(clientAuthenticationMethod)) {
 					return ClientAuthenticationMethod.NONE;
 				}
-				return new ClientAuthenticationMethod(clientAuthenticationMethod);		// Custom client authentication method
+				// Custom client authentication method
+				return new ClientAuthenticationMethod(clientAuthenticationMethod);
 			}
 
 		}

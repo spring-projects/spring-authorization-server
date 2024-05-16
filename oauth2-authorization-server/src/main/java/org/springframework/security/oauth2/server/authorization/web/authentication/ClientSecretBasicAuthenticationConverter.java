@@ -34,8 +34,9 @@ import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.util.StringUtils;
 
 /**
- * Attempts to extract HTTP Basic credentials from {@link HttpServletRequest}
- * and then converts to an {@link OAuth2ClientAuthenticationToken} used for authenticating the client.
+ * Attempts to extract HTTP Basic credentials from {@link HttpServletRequest} and then
+ * converts to an {@link OAuth2ClientAuthenticationToken} used for authenticating the
+ * client.
  *
  * @author Patryk Kostrzewa
  * @author Joe Grandja
@@ -65,17 +66,15 @@ public final class ClientSecretBasicAuthenticationConverter implements Authentic
 
 		byte[] decodedCredentials;
 		try {
-			decodedCredentials = Base64.getDecoder().decode(
-					parts[1].getBytes(StandardCharsets.UTF_8));
-		} catch (IllegalArgumentException ex) {
+			decodedCredentials = Base64.getDecoder().decode(parts[1].getBytes(StandardCharsets.UTF_8));
+		}
+		catch (IllegalArgumentException ex) {
 			throw new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_REQUEST), ex);
 		}
 
 		String credentialsString = new String(decodedCredentials, StandardCharsets.UTF_8);
 		String[] credentials = credentialsString.split(":", 2);
-		if (credentials.length != 2 ||
-				!StringUtils.hasText(credentials[0]) ||
-				!StringUtils.hasText(credentials[1])) {
+		if (credentials.length != 2 || !StringUtils.hasText(credentials[0]) || !StringUtils.hasText(credentials[1])) {
 			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_REQUEST);
 		}
 
@@ -84,12 +83,13 @@ public final class ClientSecretBasicAuthenticationConverter implements Authentic
 		try {
 			clientID = URLDecoder.decode(credentials[0], StandardCharsets.UTF_8.name());
 			clientSecret = URLDecoder.decode(credentials[1], StandardCharsets.UTF_8.name());
-		} catch (Exception ex) {
+		}
+		catch (Exception ex) {
 			throw new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_REQUEST), ex);
 		}
 
-		return new OAuth2ClientAuthenticationToken(clientID, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, clientSecret,
-				OAuth2EndpointUtils.getParametersIfMatchesAuthorizationCodeGrantRequest(request));
+		return new OAuth2ClientAuthenticationToken(clientID, ClientAuthenticationMethod.CLIENT_SECRET_BASIC,
+				clientSecret, OAuth2EndpointUtils.getParametersIfMatchesAuthorizationCodeGrantRequest(request));
 	}
 
 }

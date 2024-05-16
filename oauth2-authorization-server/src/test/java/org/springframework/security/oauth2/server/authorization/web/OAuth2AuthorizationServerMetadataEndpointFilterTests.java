@@ -44,7 +44,9 @@ import static org.mockito.Mockito.verifyNoInteractions;
  * @author Joe Grandja
  */
 public class OAuth2AuthorizationServerMetadataEndpointFilterTests {
+
 	private static final String DEFAULT_OAUTH2_AUTHORIZATION_SERVER_METADATA_ENDPOINT_URI = "/.well-known/oauth-authorization-server";
+
 	private final OAuth2AuthorizationServerMetadataEndpointFilter filter = new OAuth2AuthorizationServerMetadataEndpointFilter();
 
 	@AfterEach
@@ -55,8 +57,8 @@ public class OAuth2AuthorizationServerMetadataEndpointFilterTests {
 	@Test
 	public void setAuthorizationServerMetadataCustomizerWhenNullThenThrowIllegalArgumentException() {
 		assertThatThrownBy(() -> this.filter.setAuthorizationServerMetadataCustomizer(null))
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("authorizationServerMetadataCustomizer cannot be null");
+			.isInstanceOf(IllegalArgumentException.class)
+			.hasMessage("authorizationServerMetadataCustomizer cannot be null");
 	}
 
 	@Test
@@ -101,14 +103,15 @@ public class OAuth2AuthorizationServerMetadataEndpointFilterTests {
 		String tokenIntrospectionEndpoint = "/oauth2/v1/introspect";
 
 		AuthorizationServerSettings authorizationServerSettings = AuthorizationServerSettings.builder()
-				.issuer(issuer)
-				.authorizationEndpoint(authorizationEndpoint)
-				.tokenEndpoint(tokenEndpoint)
-				.jwkSetEndpoint(jwkSetEndpoint)
-				.tokenRevocationEndpoint(tokenRevocationEndpoint)
-				.tokenIntrospectionEndpoint(tokenIntrospectionEndpoint)
-				.build();
-		AuthorizationServerContextHolder.setContext(new TestAuthorizationServerContext(authorizationServerSettings, null));
+			.issuer(issuer)
+			.authorizationEndpoint(authorizationEndpoint)
+			.tokenEndpoint(tokenEndpoint)
+			.jwkSetEndpoint(jwkSetEndpoint)
+			.tokenRevocationEndpoint(tokenRevocationEndpoint)
+			.tokenIntrospectionEndpoint(tokenIntrospectionEndpoint)
+			.build();
+		AuthorizationServerContextHolder
+			.setContext(new TestAuthorizationServerContext(authorizationServerSettings, null));
 
 		String requestUri = DEFAULT_OAUTH2_AUTHORIZATION_SERVER_METADATA_ENDPOINT_URI;
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestUri);
@@ -140,9 +143,10 @@ public class OAuth2AuthorizationServerMetadataEndpointFilterTests {
 	@Test
 	public void doFilterWhenAuthorizationServerSettingsWithInvalidIssuerThenThrowIllegalArgumentException() {
 		AuthorizationServerSettings authorizationServerSettings = AuthorizationServerSettings.builder()
-				.issuer("https://this is an invalid URL")
-				.build();
-		AuthorizationServerContextHolder.setContext(new TestAuthorizationServerContext(authorizationServerSettings, null));
+			.issuer("https://this is an invalid URL")
+			.build();
+		AuthorizationServerContextHolder
+			.setContext(new TestAuthorizationServerContext(authorizationServerSettings, null));
 
 		String requestUri = DEFAULT_OAUTH2_AUTHORIZATION_SERVER_METADATA_ENDPOINT_URI;
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestUri);
@@ -150,10 +154,8 @@ public class OAuth2AuthorizationServerMetadataEndpointFilterTests {
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		FilterChain filterChain = mock(FilterChain.class);
 
-
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> this.filter.doFilter(request, response, filterChain))
-				.withMessage("issuer must be a valid URL");
+		assertThatIllegalArgumentException().isThrownBy(() -> this.filter.doFilter(request, response, filterChain))
+			.withMessage("issuer must be a valid URL");
 	}
 
 }

@@ -43,7 +43,9 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
  * @author Steve Riesenberg
  */
 public class OAuth2DeviceVerificationAuthenticationConverterTests {
+
 	private static final String VERIFICATION_URI = "/oauth2/device_verification";
+
 	private static final String USER_CODE = "BCDF-GHJK";
 
 	private OAuth2DeviceVerificationAuthenticationConverter converter;
@@ -134,8 +136,8 @@ public class OAuth2DeviceVerificationAuthenticationConverterTests {
 		request.addParameter(OAuth2ParameterNames.USER_CODE, USER_CODE.toLowerCase().replace("-", " . "));
 		updateQueryString(request);
 
-		OAuth2DeviceVerificationAuthenticationToken authentication =
-				(OAuth2DeviceVerificationAuthenticationToken) this.converter.convert(request);
+		OAuth2DeviceVerificationAuthenticationToken authentication = (OAuth2DeviceVerificationAuthenticationToken) this.converter
+			.convert(request);
 		assertThat(authentication).isNotNull();
 		assertThat(authentication.getPrincipal()).isInstanceOf(AnonymousAuthenticationToken.class);
 		assertThat(authentication.getUserCode()).isEqualTo(USER_CODE);
@@ -152,8 +154,8 @@ public class OAuth2DeviceVerificationAuthenticationConverterTests {
 		securityContext.setAuthentication(new TestingAuthenticationToken("user", null));
 		SecurityContextHolder.setContext(securityContext);
 
-		OAuth2DeviceVerificationAuthenticationToken authentication =
-				(OAuth2DeviceVerificationAuthenticationToken) this.converter.convert(request);
+		OAuth2DeviceVerificationAuthenticationToken authentication = (OAuth2DeviceVerificationAuthenticationToken) this.converter
+			.convert(request);
 		assertThat(authentication).isNotNull();
 		assertThat(authentication.getPrincipal()).isInstanceOf(TestingAuthenticationToken.class);
 		assertThat(authentication.getUserCode()).isEqualTo(USER_CODE);
@@ -172,14 +174,13 @@ public class OAuth2DeviceVerificationAuthenticationConverterTests {
 		securityContext.setAuthentication(new TestingAuthenticationToken("user", null));
 		SecurityContextHolder.setContext(securityContext);
 
-		OAuth2DeviceVerificationAuthenticationToken authentication =
-				(OAuth2DeviceVerificationAuthenticationToken) this.converter.convert(request);
+		OAuth2DeviceVerificationAuthenticationToken authentication = (OAuth2DeviceVerificationAuthenticationToken) this.converter
+			.convert(request);
 		assertThat(authentication).isNotNull();
 		assertThat(authentication.getPrincipal()).isInstanceOf(TestingAuthenticationToken.class);
 		assertThat(authentication.getUserCode()).isEqualTo(USER_CODE);
-		assertThat(authentication.getAdditionalParameters())
-				.containsExactly(entry("param-1", "value-1"),
-					entry("param-2", new String[] {"value-1", "value-2"}));
+		assertThat(authentication.getAdditionalParameters()).containsExactly(entry("param-1", "value-1"),
+				entry("param-2", new String[] { "value-1", "value-2" }));
 	}
 
 	private static MockHttpServletRequest createRequest() {

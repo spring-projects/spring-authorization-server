@@ -32,8 +32,8 @@ import org.springframework.security.oauth2.server.authorization.context.Context;
 import org.springframework.util.Assert;
 
 /**
- * A context that holds information (to be) associated to an OAuth 2.0 Token
- * and is used by an {@link OAuth2TokenGenerator} and {@link OAuth2TokenCustomizer}.
+ * A context that holds information (to be) associated to an OAuth 2.0 Token and is used
+ * by an {@link OAuth2TokenGenerator} and {@link OAuth2TokenCustomizer}.
  *
  * @author Joe Grandja
  * @since 0.1.0
@@ -45,7 +45,6 @@ public interface OAuth2TokenContext extends Context {
 
 	/**
 	 * Returns the {@link RegisteredClient registered client}.
-	 *
 	 * @return the {@link RegisteredClient}
 	 */
 	default RegisteredClient getRegisteredClient() {
@@ -53,10 +52,11 @@ public interface OAuth2TokenContext extends Context {
 	}
 
 	/**
-	 * Returns the {@link Authentication} representing the {@code Principal} resource owner (or client).
-	 *
+	 * Returns the {@link Authentication} representing the {@code Principal} resource
+	 * owner (or client).
 	 * @param <T> the type of the {@code Authentication}
-	 * @return the {@link Authentication} representing the {@code Principal} resource owner (or client)
+	 * @return the {@link Authentication} representing the {@code Principal} resource
+	 * owner (or client)
 	 */
 	default <T extends Authentication> T getPrincipal() {
 		return get(AbstractBuilder.PRINCIPAL_AUTHENTICATION_KEY);
@@ -64,7 +64,6 @@ public interface OAuth2TokenContext extends Context {
 
 	/**
 	 * Returns the {@link AuthorizationServerContext authorization server context}.
-	 *
 	 * @return the {@link AuthorizationServerContext}
 	 * @since 0.2.3
 	 */
@@ -74,7 +73,6 @@ public interface OAuth2TokenContext extends Context {
 
 	/**
 	 * Returns the {@link OAuth2Authorization authorization}.
-	 *
 	 * @return the {@link OAuth2Authorization}, or {@code null} if not available
 	 */
 	@Nullable
@@ -84,18 +82,15 @@ public interface OAuth2TokenContext extends Context {
 
 	/**
 	 * Returns the authorized scope(s).
-	 *
 	 * @return the authorized scope(s)
 	 */
 	default Set<String> getAuthorizedScopes() {
-		return hasKey(AbstractBuilder.AUTHORIZED_SCOPE_KEY) ?
-				get(AbstractBuilder.AUTHORIZED_SCOPE_KEY) :
-				Collections.emptySet();
+		return hasKey(AbstractBuilder.AUTHORIZED_SCOPE_KEY) ? get(AbstractBuilder.AUTHORIZED_SCOPE_KEY)
+				: Collections.emptySet();
 	}
 
 	/**
 	 * Returns the {@link OAuth2TokenType token type}.
-	 *
 	 * @return the {@link OAuth2TokenType}
 	 */
 	default OAuth2TokenType getTokenType() {
@@ -104,7 +99,6 @@ public interface OAuth2TokenContext extends Context {
 
 	/**
 	 * Returns the {@link AuthorizationGrantType authorization grant type}.
-	 *
 	 * @return the {@link AuthorizationGrantType}
 	 */
 	default AuthorizationGrantType getAuthorizationGrantType() {
@@ -113,7 +107,6 @@ public interface OAuth2TokenContext extends Context {
 
 	/**
 	 * Returns the {@link Authentication} representing the authorization grant.
-	 *
 	 * @param <T> the type of the {@code Authentication}
 	 * @return the {@link Authentication} representing the authorization grant
 	 */
@@ -128,17 +121,19 @@ public interface OAuth2TokenContext extends Context {
 	 * @param <B> the type of the builder
 	 */
 	abstract class AbstractBuilder<T extends OAuth2TokenContext, B extends AbstractBuilder<T, B>> {
-		private static final String PRINCIPAL_AUTHENTICATION_KEY =
-				Authentication.class.getName().concat(".PRINCIPAL");
-		private static final String AUTHORIZED_SCOPE_KEY =
-				OAuth2Authorization.class.getName().concat(".AUTHORIZED_SCOPE");
-		private static final String AUTHORIZATION_GRANT_AUTHENTICATION_KEY =
-				Authentication.class.getName().concat(".AUTHORIZATION_GRANT");
+
+		private static final String PRINCIPAL_AUTHENTICATION_KEY = Authentication.class.getName().concat(".PRINCIPAL");
+
+		private static final String AUTHORIZED_SCOPE_KEY = OAuth2Authorization.class.getName()
+			.concat(".AUTHORIZED_SCOPE");
+
+		private static final String AUTHORIZATION_GRANT_AUTHENTICATION_KEY = Authentication.class.getName()
+			.concat(".AUTHORIZATION_GRANT");
+
 		private final Map<Object, Object> context = new HashMap<>();
 
 		/**
 		 * Sets the {@link RegisteredClient registered client}.
-		 *
 		 * @param registeredClient the {@link RegisteredClient}
 		 * @return the {@link AbstractBuilder} for further configuration
 		 */
@@ -147,9 +142,10 @@ public interface OAuth2TokenContext extends Context {
 		}
 
 		/**
-		 * Sets the {@link Authentication} representing the {@code Principal} resource owner (or client).
-		 *
-		 * @param principal the {@link Authentication} representing the {@code Principal} resource owner (or client)
+		 * Sets the {@link Authentication} representing the {@code Principal} resource
+		 * owner (or client).
+		 * @param principal the {@link Authentication} representing the {@code Principal}
+		 * resource owner (or client)
 		 * @return the {@link AbstractBuilder} for further configuration
 		 */
 		public B principal(Authentication principal) {
@@ -158,7 +154,6 @@ public interface OAuth2TokenContext extends Context {
 
 		/**
 		 * Sets the {@link AuthorizationServerContext authorization server context}.
-		 *
 		 * @param authorizationServerContext the {@link AuthorizationServerContext}
 		 * @return the {@link AbstractBuilder} for further configuration
 		 * @since 0.2.3
@@ -169,7 +164,6 @@ public interface OAuth2TokenContext extends Context {
 
 		/**
 		 * Sets the {@link OAuth2Authorization authorization}.
-		 *
 		 * @param authorization the {@link OAuth2Authorization}
 		 * @return the {@link AbstractBuilder} for further configuration
 		 */
@@ -179,7 +173,6 @@ public interface OAuth2TokenContext extends Context {
 
 		/**
 		 * Sets the authorized scope(s).
-		 *
 		 * @param authorizedScopes the authorized scope(s)
 		 * @return the {@link AbstractBuilder} for further configuration
 		 */
@@ -189,7 +182,6 @@ public interface OAuth2TokenContext extends Context {
 
 		/**
 		 * Sets the {@link OAuth2TokenType token type}.
-		 *
 		 * @param tokenType the {@link OAuth2TokenType}
 		 * @return the {@link AbstractBuilder} for further configuration
 		 */
@@ -199,7 +191,6 @@ public interface OAuth2TokenContext extends Context {
 
 		/**
 		 * Sets the {@link AuthorizationGrantType authorization grant type}.
-		 *
 		 * @param authorizationGrantType the {@link AuthorizationGrantType}
 		 * @return the {@link AbstractBuilder} for further configuration
 		 */
@@ -209,8 +200,8 @@ public interface OAuth2TokenContext extends Context {
 
 		/**
 		 * Sets the {@link Authentication} representing the authorization grant.
-		 *
-		 * @param authorizationGrant the {@link Authentication} representing the authorization grant
+		 * @param authorizationGrant the {@link Authentication} representing the
+		 * authorization grant
 		 * @return the {@link AbstractBuilder} for further configuration
 		 */
 		public B authorizationGrant(Authentication authorizationGrant) {
@@ -219,7 +210,6 @@ public interface OAuth2TokenContext extends Context {
 
 		/**
 		 * Associates an attribute.
-		 *
 		 * @param key the key for the attribute
 		 * @param value the value of the attribute
 		 * @return the {@link AbstractBuilder} for further configuration
@@ -232,9 +222,8 @@ public interface OAuth2TokenContext extends Context {
 		}
 
 		/**
-		 * A {@code Consumer} of the attributes {@code Map}
-		 * allowing the ability to add, replace, or remove.
-		 *
+		 * A {@code Consumer} of the attributes {@code Map} allowing the ability to add,
+		 * replace, or remove.
 		 * @param contextConsumer a {@link Consumer} of the attributes {@code Map}
 		 * @return the {@link AbstractBuilder} for further configuration
 		 */
@@ -259,7 +248,6 @@ public interface OAuth2TokenContext extends Context {
 
 		/**
 		 * Builds a new {@link OAuth2TokenContext}.
-		 *
 		 * @return the {@link OAuth2TokenContext}
 		 */
 		public abstract T build();

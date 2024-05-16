@@ -35,13 +35,14 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * @author Joe Grandja
  */
 public class JwtClientAssertionDecoderFactoryTests {
+
 	private JwtClientAssertionDecoderFactory jwtDecoderFactory = new JwtClientAssertionDecoderFactory();
 
 	@Test
 	public void setJwtValidatorFactoryWhenNullThenThrowIllegalArgumentException() {
 		assertThatThrownBy(() -> this.jwtDecoderFactory.setJwtValidatorFactory(null))
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("jwtValidatorFactory cannot be null");
+			.isInstanceOf(IllegalArgumentException.class)
+			.hasMessage("jwtValidatorFactory cannot be null");
 	}
 
 	@Test
@@ -58,13 +59,13 @@ public class JwtClientAssertionDecoderFactoryTests {
 		// @formatter:on
 
 		assertThatThrownBy(() -> this.jwtDecoderFactory.createDecoder(registeredClient))
-				.isInstanceOf(OAuth2AuthenticationException.class)
-				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
-				.satisfies(error -> {
-					assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_CLIENT);
-					assertThat(error.getDescription()).isEqualTo("Failed to find a Signature Verifier for Client: '" +
-							registeredClient.getId() + "'. Check to ensure you have configured the JWK Set URL.");
-				});
+			.isInstanceOf(OAuth2AuthenticationException.class)
+			.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+			.satisfies(error -> {
+				assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_CLIENT);
+				assertThat(error.getDescription()).isEqualTo("Failed to find a Signature Verifier for Client: '"
+						+ registeredClient.getId() + "'. Check to ensure you have configured the JWK Set URL.");
+			});
 	}
 
 	@Test
@@ -82,13 +83,13 @@ public class JwtClientAssertionDecoderFactoryTests {
 		// @formatter:on
 
 		assertThatThrownBy(() -> this.jwtDecoderFactory.createDecoder(registeredClient))
-				.isInstanceOf(OAuth2AuthenticationException.class)
-				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
-				.satisfies(error -> {
-					assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_CLIENT);
-					assertThat(error.getDescription()).isEqualTo("Failed to find a Signature Verifier for Client: '" +
-							registeredClient.getId() + "'. Check to ensure you have configured the client secret.");
-				});
+			.isInstanceOf(OAuth2AuthenticationException.class)
+			.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+			.satisfies(error -> {
+				assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_CLIENT);
+				assertThat(error.getDescription()).isEqualTo("Failed to find a Signature Verifier for Client: '"
+						+ registeredClient.getId() + "'. Check to ensure you have configured the client secret.");
+			});
 	}
 
 	@Test
@@ -100,13 +101,14 @@ public class JwtClientAssertionDecoderFactoryTests {
 		// @formatter:on
 
 		assertThatThrownBy(() -> this.jwtDecoderFactory.createDecoder(registeredClient))
-				.isInstanceOf(OAuth2AuthenticationException.class)
-				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
-				.satisfies(error -> {
-					assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_CLIENT);
-					assertThat(error.getDescription()).isEqualTo("Failed to find a Signature Verifier for Client: '" +
-							registeredClient.getId() + "'. Check to ensure you have configured a valid JWS Algorithm: 'null'.");
-				});
+			.isInstanceOf(OAuth2AuthenticationException.class)
+			.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+			.satisfies(error -> {
+				assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_CLIENT);
+				assertThat(error.getDescription())
+					.isEqualTo("Failed to find a Signature Verifier for Client: '" + registeredClient.getId()
+							+ "'. Check to ensure you have configured a valid JWS Algorithm: 'null'.");
+			});
 	}
 
 }

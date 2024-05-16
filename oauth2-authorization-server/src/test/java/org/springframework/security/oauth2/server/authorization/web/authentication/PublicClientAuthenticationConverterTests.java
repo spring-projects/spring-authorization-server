@@ -37,6 +37,7 @@ import static org.assertj.core.api.Assertions.entry;
  * @author Joe Grandja
  */
 public class PublicClientAuthenticationConverterTests {
+
 	private PublicClientAuthenticationConverter converter = new PublicClientAuthenticationConverter();
 
 	@Test
@@ -50,33 +51,30 @@ public class PublicClientAuthenticationConverterTests {
 	public void convertWhenMissingClientIdThenInvalidRequestError() {
 		MockHttpServletRequest request = createPkceTokenRequest();
 		request.removeParameter(OAuth2ParameterNames.CLIENT_ID);
-		assertThatThrownBy(() -> this.converter.convert(request))
-				.isInstanceOf(OAuth2AuthenticationException.class)
-				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
-				.extracting("errorCode")
-				.isEqualTo(OAuth2ErrorCodes.INVALID_REQUEST);
+		assertThatThrownBy(() -> this.converter.convert(request)).isInstanceOf(OAuth2AuthenticationException.class)
+			.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+			.extracting("errorCode")
+			.isEqualTo(OAuth2ErrorCodes.INVALID_REQUEST);
 	}
 
 	@Test
 	public void convertWhenMultipleClientIdThenInvalidRequestError() {
 		MockHttpServletRequest request = createPkceTokenRequest();
 		request.addParameter(OAuth2ParameterNames.CLIENT_ID, "client-2");
-		assertThatThrownBy(() -> this.converter.convert(request))
-				.isInstanceOf(OAuth2AuthenticationException.class)
-				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
-				.extracting("errorCode")
-				.isEqualTo(OAuth2ErrorCodes.INVALID_REQUEST);
+		assertThatThrownBy(() -> this.converter.convert(request)).isInstanceOf(OAuth2AuthenticationException.class)
+			.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+			.extracting("errorCode")
+			.isEqualTo(OAuth2ErrorCodes.INVALID_REQUEST);
 	}
 
 	@Test
 	public void convertWhenMultipleCodeVerifierThenInvalidRequestError() {
 		MockHttpServletRequest request = createPkceTokenRequest();
 		request.addParameter(PkceParameterNames.CODE_VERIFIER, "code-verifier-2");
-		assertThatThrownBy(() -> this.converter.convert(request))
-				.isInstanceOf(OAuth2AuthenticationException.class)
-				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
-				.extracting("errorCode")
-				.isEqualTo(OAuth2ErrorCodes.INVALID_REQUEST);
+		assertThatThrownBy(() -> this.converter.convert(request)).isInstanceOf(OAuth2AuthenticationException.class)
+			.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+			.extracting("errorCode")
+			.isEqualTo(OAuth2ErrorCodes.INVALID_REQUEST);
 	}
 
 	@Test
@@ -84,16 +82,15 @@ public class PublicClientAuthenticationConverterTests {
 		MockHttpServletRequest request = createPkceTokenRequest();
 		request.addParameter("custom-param-1", "custom-value-1");
 		request.addParameter("custom-param-2", "custom-value-1", "custom-value-2");
-		OAuth2ClientAuthenticationToken authentication = (OAuth2ClientAuthenticationToken) this.converter.convert(request);
+		OAuth2ClientAuthenticationToken authentication = (OAuth2ClientAuthenticationToken) this.converter
+			.convert(request);
 		assertThat(authentication.getPrincipal()).isEqualTo("client-1");
 		assertThat(authentication.getClientAuthenticationMethod()).isEqualTo(ClientAuthenticationMethod.NONE);
-		assertThat(authentication.getAdditionalParameters())
-				.containsOnly(
-						entry(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.AUTHORIZATION_CODE.getValue()),
-						entry(OAuth2ParameterNames.CODE, "code"),
-						entry(PkceParameterNames.CODE_VERIFIER, "code-verifier-1"),
-						entry("custom-param-1", "custom-value-1"),
-						entry("custom-param-2", new String[] {"custom-value-1", "custom-value-2"}));
+		assertThat(authentication.getAdditionalParameters()).containsOnly(
+				entry(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.AUTHORIZATION_CODE.getValue()),
+				entry(OAuth2ParameterNames.CODE, "code"), entry(PkceParameterNames.CODE_VERIFIER, "code-verifier-1"),
+				entry("custom-param-1", "custom-value-1"),
+				entry("custom-param-2", new String[] { "custom-value-1", "custom-value-2" }));
 	}
 
 	private static MockHttpServletRequest createPkceTokenRequest() {
@@ -104,4 +101,5 @@ public class PublicClientAuthenticationConverterTests {
 		request.addParameter(PkceParameterNames.CODE_VERIFIER, "code-verifier-1");
 		return request;
 	}
+
 }

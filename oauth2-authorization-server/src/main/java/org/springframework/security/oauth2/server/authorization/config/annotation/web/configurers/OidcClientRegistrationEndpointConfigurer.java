@@ -58,12 +58,22 @@ import static org.springframework.security.oauth2.server.authorization.config.an
  * @see OidcClientRegistrationEndpointFilter
  */
 public final class OidcClientRegistrationEndpointConfigurer extends AbstractOAuth2Configurer {
+
 	private RequestMatcher requestMatcher;
+
 	private final List<AuthenticationConverter> clientRegistrationRequestConverters = new ArrayList<>();
-	private Consumer<List<AuthenticationConverter>> clientRegistrationRequestConvertersConsumer = (clientRegistrationRequestConverters) -> {};
+
+	private Consumer<List<AuthenticationConverter>> clientRegistrationRequestConvertersConsumer = (
+			clientRegistrationRequestConverters) -> {
+	};
+
 	private final List<AuthenticationProvider> authenticationProviders = new ArrayList<>();
-	private Consumer<List<AuthenticationProvider>> authenticationProvidersConsumer = (authenticationProviders) -> {};
+
+	private Consumer<List<AuthenticationProvider>> authenticationProvidersConsumer = (authenticationProviders) -> {
+	};
+
 	private AuthenticationSuccessHandler clientRegistrationResponseHandler;
+
 	private AuthenticationFailureHandler errorResponseHandler;
 
 	/**
@@ -74,11 +84,15 @@ public final class OidcClientRegistrationEndpointConfigurer extends AbstractOAut
 	}
 
 	/**
-	 * Adds an {@link AuthenticationConverter} used when attempting to extract a Client Registration Request from {@link HttpServletRequest}
-	 * to an instance of {@link OidcClientRegistrationAuthenticationToken} used for authenticating the request.
-	 *
-	 * @param clientRegistrationRequestConverter an {@link AuthenticationConverter} used when attempting to extract a Client Registration Request from {@link HttpServletRequest}
-	 * @return the {@link OidcClientRegistrationEndpointConfigurer} for further configuration
+	 * Adds an {@link AuthenticationConverter} used when attempting to extract a Client
+	 * Registration Request from {@link HttpServletRequest} to an instance of
+	 * {@link OidcClientRegistrationAuthenticationToken} used for authenticating the
+	 * request.
+	 * @param clientRegistrationRequestConverter an {@link AuthenticationConverter} used
+	 * when attempting to extract a Client Registration Request from
+	 * {@link HttpServletRequest}
+	 * @return the {@link OidcClientRegistrationEndpointConfigurer} for further
+	 * configuration
 	 * @since 0.4.0
 	 */
 	public OidcClientRegistrationEndpointConfigurer clientRegistrationRequestConverter(
@@ -89,41 +103,50 @@ public final class OidcClientRegistrationEndpointConfigurer extends AbstractOAut
 	}
 
 	/**
-	 * Sets the {@code Consumer} providing access to the {@code List} of default
-	 * and (optionally) added {@link #clientRegistrationRequestConverter(AuthenticationConverter) AuthenticationConverter}'s
-	 * allowing the ability to add, remove, or customize a specific {@link AuthenticationConverter}.
-	 *
-	 * @param clientRegistrationRequestConvertersConsumer the {@code Consumer} providing access to the {@code List} of default and (optionally) added {@link AuthenticationConverter}'s
+	 * Sets the {@code Consumer} providing access to the {@code List} of default and
+	 * (optionally) added
+	 * {@link #clientRegistrationRequestConverter(AuthenticationConverter)
+	 * AuthenticationConverter}'s allowing the ability to add, remove, or customize a
+	 * specific {@link AuthenticationConverter}.
+	 * @param clientRegistrationRequestConvertersConsumer the {@code Consumer} providing
+	 * access to the {@code List} of default and (optionally) added
+	 * {@link AuthenticationConverter}'s
 	 * @return the {@link OidcUserInfoEndpointConfigurer} for further configuration
 	 * @since 0.4.0
 	 */
 	public OidcClientRegistrationEndpointConfigurer clientRegistrationRequestConverters(
 			Consumer<List<AuthenticationConverter>> clientRegistrationRequestConvertersConsumer) {
-		Assert.notNull(clientRegistrationRequestConvertersConsumer, "clientRegistrationRequestConvertersConsumer cannot be null");
+		Assert.notNull(clientRegistrationRequestConvertersConsumer,
+				"clientRegistrationRequestConvertersConsumer cannot be null");
 		this.clientRegistrationRequestConvertersConsumer = clientRegistrationRequestConvertersConsumer;
 		return this;
 	}
 
 	/**
-	 * Adds an {@link AuthenticationProvider} used for authenticating an {@link OidcClientRegistrationAuthenticationToken}.
-	 *
-	 * @param authenticationProvider an {@link AuthenticationProvider} used for authenticating an {@link OidcClientRegistrationAuthenticationToken}
-	 * @return the {@link OidcClientRegistrationEndpointConfigurer} for further configuration
+	 * Adds an {@link AuthenticationProvider} used for authenticating an
+	 * {@link OidcClientRegistrationAuthenticationToken}.
+	 * @param authenticationProvider an {@link AuthenticationProvider} used for
+	 * authenticating an {@link OidcClientRegistrationAuthenticationToken}
+	 * @return the {@link OidcClientRegistrationEndpointConfigurer} for further
+	 * configuration
 	 * @since 0.4.0
 	 */
-	public OidcClientRegistrationEndpointConfigurer authenticationProvider(AuthenticationProvider authenticationProvider) {
+	public OidcClientRegistrationEndpointConfigurer authenticationProvider(
+			AuthenticationProvider authenticationProvider) {
 		Assert.notNull(authenticationProvider, "authenticationProvider cannot be null");
 		this.authenticationProviders.add(authenticationProvider);
 		return this;
 	}
 
 	/**
-	 * Sets the {@code Consumer} providing access to the {@code List} of default
-	 * and (optionally) added {@link #authenticationProvider(AuthenticationProvider) AuthenticationProvider}'s
-	 * allowing the ability to add, remove, or customize a specific {@link AuthenticationProvider}.
-	 *
-	 * @param authenticationProvidersConsumer the {@code Consumer} providing access to the {@code List} of default and (optionally) added {@link AuthenticationProvider}'s
-	 * @return the {@link OidcClientRegistrationEndpointConfigurer} for further configuration
+	 * Sets the {@code Consumer} providing access to the {@code List} of default and
+	 * (optionally) added {@link #authenticationProvider(AuthenticationProvider)
+	 * AuthenticationProvider}'s allowing the ability to add, remove, or customize a
+	 * specific {@link AuthenticationProvider}.
+	 * @param authenticationProvidersConsumer the {@code Consumer} providing access to the
+	 * {@code List} of default and (optionally) added {@link AuthenticationProvider}'s
+	 * @return the {@link OidcClientRegistrationEndpointConfigurer} for further
+	 * configuration
 	 * @since 0.4.0
 	 */
 	public OidcClientRegistrationEndpointConfigurer authenticationProviders(
@@ -134,27 +157,33 @@ public final class OidcClientRegistrationEndpointConfigurer extends AbstractOAut
 	}
 
 	/**
-	 * Sets the {@link AuthenticationSuccessHandler} used for handling an {@link OidcClientRegistrationAuthenticationToken}
-	 * and returning the {@link OidcClientRegistration Client Registration Response}.
-	 *
-	 * @param clientRegistrationResponseHandler the {@link AuthenticationSuccessHandler} used for handling an {@link OidcClientRegistrationAuthenticationToken}
-	 * @return the {@link OidcClientRegistrationEndpointConfigurer} for further configuration
+	 * Sets the {@link AuthenticationSuccessHandler} used for handling an
+	 * {@link OidcClientRegistrationAuthenticationToken} and returning the
+	 * {@link OidcClientRegistration Client Registration Response}.
+	 * @param clientRegistrationResponseHandler the {@link AuthenticationSuccessHandler}
+	 * used for handling an {@link OidcClientRegistrationAuthenticationToken}
+	 * @return the {@link OidcClientRegistrationEndpointConfigurer} for further
+	 * configuration
 	 * @since 0.4.0
 	 */
-	public OidcClientRegistrationEndpointConfigurer clientRegistrationResponseHandler(AuthenticationSuccessHandler clientRegistrationResponseHandler) {
+	public OidcClientRegistrationEndpointConfigurer clientRegistrationResponseHandler(
+			AuthenticationSuccessHandler clientRegistrationResponseHandler) {
 		this.clientRegistrationResponseHandler = clientRegistrationResponseHandler;
 		return this;
 	}
 
 	/**
-	 * Sets the {@link AuthenticationFailureHandler} used for handling an {@link OAuth2AuthenticationException}
-	 * and returning the {@link OAuth2Error Error Response}.
-	 *
-	 * @param errorResponseHandler the {@link AuthenticationFailureHandler} used for handling an {@link OAuth2AuthenticationException}
-	 * @return the {@link OidcClientRegistrationEndpointConfigurer} for further configuration
+	 * Sets the {@link AuthenticationFailureHandler} used for handling an
+	 * {@link OAuth2AuthenticationException} and returning the {@link OAuth2Error Error
+	 * Response}.
+	 * @param errorResponseHandler the {@link AuthenticationFailureHandler} used for
+	 * handling an {@link OAuth2AuthenticationException}
+	 * @return the {@link OidcClientRegistrationEndpointConfigurer} for further
+	 * configuration
 	 * @since 0.4.0
 	 */
-	public OidcClientRegistrationEndpointConfigurer errorResponseHandler(AuthenticationFailureHandler errorResponseHandler) {
+	public OidcClientRegistrationEndpointConfigurer errorResponseHandler(
+			AuthenticationFailureHandler errorResponseHandler) {
 		this.errorResponseHandler = errorResponseHandler;
 		return this;
 	}
@@ -167,22 +196,22 @@ public final class OidcClientRegistrationEndpointConfigurer extends AbstractOAut
 				authorizationServerSettings.getOidcClientRegistrationEndpoint();
 		this.requestMatcher = new OrRequestMatcher(
 				new AntPathRequestMatcher(clientRegistrationEndpointUri, HttpMethod.POST.name()),
-				new AntPathRequestMatcher(clientRegistrationEndpointUri, HttpMethod.GET.name())
-		);
+				new AntPathRequestMatcher(clientRegistrationEndpointUri, HttpMethod.GET.name()));
 
 		List<AuthenticationProvider> authenticationProviders = createDefaultAuthenticationProviders(httpSecurity);
 		if (!this.authenticationProviders.isEmpty()) {
 			authenticationProviders.addAll(0, this.authenticationProviders);
 		}
 		this.authenticationProvidersConsumer.accept(authenticationProviders);
-		authenticationProviders.forEach(authenticationProvider ->
-				httpSecurity.authenticationProvider(postProcess(authenticationProvider)));
+		authenticationProviders.forEach(
+				authenticationProvider -> httpSecurity.authenticationProvider(postProcess(authenticationProvider)));
 	}
 
 	@Override
 	void configure(HttpSecurity httpSecurity) {
 		AuthenticationManager authenticationManager = httpSecurity.getSharedObject(AuthenticationManager.class);
-		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils.getAuthorizationServerSettings(httpSecurity);
+		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils
+			.getAuthorizationServerSettings(httpSecurity);
 
 		String clientRegistrationEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed() ?
 				withMultipleIssuersPattern(authorizationServerSettings.getOidcClientRegistrationEndpoint()) :
@@ -194,11 +223,11 @@ public final class OidcClientRegistrationEndpointConfigurer extends AbstractOAut
 			authenticationConverters.addAll(0, this.clientRegistrationRequestConverters);
 		}
 		this.clientRegistrationRequestConvertersConsumer.accept(authenticationConverters);
-		oidcClientRegistrationEndpointFilter.setAuthenticationConverter(
-				new DelegatingAuthenticationConverter(authenticationConverters));
+		oidcClientRegistrationEndpointFilter
+			.setAuthenticationConverter(new DelegatingAuthenticationConverter(authenticationConverters));
 		if (this.clientRegistrationResponseHandler != null) {
 			oidcClientRegistrationEndpointFilter
-					.setAuthenticationSuccessHandler(this.clientRegistrationResponseHandler);
+				.setAuthenticationSuccessHandler(this.clientRegistrationResponseHandler);
 		}
 		if (this.errorResponseHandler != null) {
 			oidcClientRegistrationEndpointFilter.setAuthenticationFailureHandler(this.errorResponseHandler);
@@ -222,21 +251,19 @@ public final class OidcClientRegistrationEndpointConfigurer extends AbstractOAut
 	private static List<AuthenticationProvider> createDefaultAuthenticationProviders(HttpSecurity httpSecurity) {
 		List<AuthenticationProvider> authenticationProviders = new ArrayList<>();
 
-		OidcClientRegistrationAuthenticationProvider oidcClientRegistrationAuthenticationProvider =
-				new OidcClientRegistrationAuthenticationProvider(
-						OAuth2ConfigurerUtils.getRegisteredClientRepository(httpSecurity),
-						OAuth2ConfigurerUtils.getAuthorizationService(httpSecurity),
-						OAuth2ConfigurerUtils.getTokenGenerator(httpSecurity));
+		OidcClientRegistrationAuthenticationProvider oidcClientRegistrationAuthenticationProvider = new OidcClientRegistrationAuthenticationProvider(
+				OAuth2ConfigurerUtils.getRegisteredClientRepository(httpSecurity),
+				OAuth2ConfigurerUtils.getAuthorizationService(httpSecurity),
+				OAuth2ConfigurerUtils.getTokenGenerator(httpSecurity));
 		PasswordEncoder passwordEncoder = OAuth2ConfigurerUtils.getOptionalBean(httpSecurity, PasswordEncoder.class);
 		if (passwordEncoder != null) {
 			oidcClientRegistrationAuthenticationProvider.setPasswordEncoder(passwordEncoder);
 		}
 		authenticationProviders.add(oidcClientRegistrationAuthenticationProvider);
 
-		OidcClientConfigurationAuthenticationProvider oidcClientConfigurationAuthenticationProvider =
-				new OidcClientConfigurationAuthenticationProvider(
-						OAuth2ConfigurerUtils.getRegisteredClientRepository(httpSecurity),
-						OAuth2ConfigurerUtils.getAuthorizationService(httpSecurity));
+		OidcClientConfigurationAuthenticationProvider oidcClientConfigurationAuthenticationProvider = new OidcClientConfigurationAuthenticationProvider(
+				OAuth2ConfigurerUtils.getRegisteredClientRepository(httpSecurity),
+				OAuth2ConfigurerUtils.getAuthorizationService(httpSecurity));
 		authenticationProviders.add(oidcClientConfigurationAuthenticationProvider);
 
 		return authenticationProviders;

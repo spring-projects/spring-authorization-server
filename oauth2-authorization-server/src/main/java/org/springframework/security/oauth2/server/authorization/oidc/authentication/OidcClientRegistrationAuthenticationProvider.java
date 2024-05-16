@@ -63,7 +63,8 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 /**
- * An {@link AuthenticationProvider} implementation for OpenID Connect 1.0 Dynamic Client Registration Endpoint.
+ * An {@link AuthenticationProvider} implementation for OpenID Connect 1.0 Dynamic Client
+ * Registration Endpoint.
  *
  * @author Ovidiu Popa
  * @author Joe Grandja
@@ -76,29 +77,41 @@ import org.springframework.util.StringUtils;
  * @see OidcClientRegistrationAuthenticationToken
  * @see OidcClientConfigurationAuthenticationProvider
  * @see PasswordEncoder
- * @see <a href="https://openid.net/specs/openid-connect-registration-1_0.html#ClientRegistration">3. Client Registration Endpoint</a>
+ * @see <a href=
+ * "https://openid.net/specs/openid-connect-registration-1_0.html#ClientRegistration">3.
+ * Client Registration Endpoint</a>
  */
 public final class OidcClientRegistrationAuthenticationProvider implements AuthenticationProvider {
+
 	private static final String ERROR_URI = "https://openid.net/specs/openid-connect-registration-1_0.html#RegistrationError";
+
 	private static final String DEFAULT_CLIENT_REGISTRATION_AUTHORIZED_SCOPE = "client.create";
+
 	private final Log logger = LogFactory.getLog(getClass());
+
 	private final RegisteredClientRepository registeredClientRepository;
+
 	private final OAuth2AuthorizationService authorizationService;
+
 	private final OAuth2TokenGenerator<? extends OAuth2Token> tokenGenerator;
+
 	private Converter<RegisteredClient, OidcClientRegistration> clientRegistrationConverter;
+
 	private Converter<OidcClientRegistration, RegisteredClient> registeredClientConverter;
+
 	private PasswordEncoder passwordEncoder;
 
 	/**
-	 * Constructs an {@code OidcClientRegistrationAuthenticationProvider} using the provided parameters.
-	 *
+	 * Constructs an {@code OidcClientRegistrationAuthenticationProvider} using the
+	 * provided parameters.
 	 * @param registeredClientRepository the repository of registered clients
 	 * @param authorizationService the authorization service
 	 * @param tokenGenerator the token generator
 	 * @since 0.2.3
 	 */
 	public OidcClientRegistrationAuthenticationProvider(RegisteredClientRepository registeredClientRepository,
-			OAuth2AuthorizationService authorizationService, OAuth2TokenGenerator<? extends OAuth2Token> tokenGenerator) {
+			OAuth2AuthorizationService authorizationService,
+			OAuth2TokenGenerator<? extends OAuth2Token> tokenGenerator) {
 		Assert.notNull(registeredClientRepository, "registeredClientRepository cannot be null");
 		Assert.notNull(authorizationService, "authorizationService cannot be null");
 		Assert.notNull(tokenGenerator, "tokenGenerator cannot be null");
@@ -112,27 +125,29 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 
 	@Override
 	public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-		OidcClientRegistrationAuthenticationToken clientRegistrationAuthentication =
-				(OidcClientRegistrationAuthenticationToken) authentication;
+		OidcClientRegistrationAuthenticationToken clientRegistrationAuthentication = (OidcClientRegistrationAuthenticationToken) authentication;
 
 		if (clientRegistrationAuthentication.getClientRegistration() == null) {
 			// This is not a Client Registration Request.
-			// Return null to allow OidcClientConfigurationAuthenticationProvider to handle it.
+			// Return null to allow OidcClientConfigurationAuthenticationProvider to
+			// handle it.
 			return null;
 		}
 
 		// Validate the "initial" access token
 		AbstractOAuth2TokenAuthenticationToken<?> accessTokenAuthentication = null;
-		if (AbstractOAuth2TokenAuthenticationToken.class.isAssignableFrom(clientRegistrationAuthentication.getPrincipal().getClass())) {
-			accessTokenAuthentication = (AbstractOAuth2TokenAuthenticationToken<?>) clientRegistrationAuthentication.getPrincipal();
+		if (AbstractOAuth2TokenAuthenticationToken.class
+			.isAssignableFrom(clientRegistrationAuthentication.getPrincipal().getClass())) {
+			accessTokenAuthentication = (AbstractOAuth2TokenAuthenticationToken<?>) clientRegistrationAuthentication
+				.getPrincipal();
 		}
 		if (accessTokenAuthentication == null || !accessTokenAuthentication.isAuthenticated()) {
 			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_TOKEN);
 		}
 
 		String accessTokenValue = accessTokenAuthentication.getToken().getTokenValue();
-		OAuth2Authorization authorization = this.authorizationService.findByToken(
-				accessTokenValue, OAuth2TokenType.ACCESS_TOKEN);
+		OAuth2Authorization authorization = this.authorizationService.findByToken(accessTokenValue,
+				OAuth2TokenType.ACCESS_TOKEN);
 		if (authorization == null) {
 			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_TOKEN);
 		}
@@ -156,31 +171,36 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 	}
 
 	/**
-	 * Sets the {@link Converter} used for converting an {@link OidcClientRegistration} to a {@link RegisteredClient}.
-	 *
-	 * @param registeredClientConverter the {@link Converter} used for converting an {@link OidcClientRegistration} to a {@link RegisteredClient}
+	 * Sets the {@link Converter} used for converting an {@link OidcClientRegistration} to
+	 * a {@link RegisteredClient}.
+	 * @param registeredClientConverter the {@link Converter} used for converting an
+	 * {@link OidcClientRegistration} to a {@link RegisteredClient}
 	 * @since 0.4.0
 	 */
-	public void setRegisteredClientConverter(Converter<OidcClientRegistration, RegisteredClient> registeredClientConverter) {
+	public void setRegisteredClientConverter(
+			Converter<OidcClientRegistration, RegisteredClient> registeredClientConverter) {
 		Assert.notNull(registeredClientConverter, "registeredClientConverter cannot be null");
 		this.registeredClientConverter = registeredClientConverter;
 	}
 
 	/**
-	 * Sets the {@link Converter} used for converting a {@link RegisteredClient} to an {@link OidcClientRegistration}.
-	 *
-	 * @param clientRegistrationConverter the {@link Converter} used for converting a {@link RegisteredClient} to an {@link OidcClientRegistration}
+	 * Sets the {@link Converter} used for converting a {@link RegisteredClient} to an
+	 * {@link OidcClientRegistration}.
+	 * @param clientRegistrationConverter the {@link Converter} used for converting a
+	 * {@link RegisteredClient} to an {@link OidcClientRegistration}
 	 * @since 1.2.0
 	 */
-	public void setClientRegistrationConverter(Converter<RegisteredClient, OidcClientRegistration> clientRegistrationConverter) {
+	public void setClientRegistrationConverter(
+			Converter<RegisteredClient, OidcClientRegistration> clientRegistrationConverter) {
 		Assert.notNull(clientRegistrationConverter, "clientRegistrationConverter cannot be null");
 		this.clientRegistrationConverter = clientRegistrationConverter;
 	}
 
 	/**
-	 * Sets the {@link PasswordEncoder} used to encode the {@link RegisteredClient#getClientSecret() client secret}.
-	 * If not set, the client secret will be encoded using {@link PasswordEncoderFactories#createDelegatingPasswordEncoder()}.
-	 *
+	 * Sets the {@link PasswordEncoder} used to encode the
+	 * {@link RegisteredClient#getClientSecret() client secret}. If not set, the client
+	 * secret will be encoded using
+	 * {@link PasswordEncoderFactories#createDelegatingPasswordEncoder()}.
 	 * @param passwordEncoder the {@link PasswordEncoder} used to encode the client secret
 	 * @since 1.1.0
 	 */
@@ -189,38 +209,47 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 		this.passwordEncoder = passwordEncoder;
 	}
 
-	private OidcClientRegistrationAuthenticationToken registerClient(OidcClientRegistrationAuthenticationToken clientRegistrationAuthentication,
+	private OidcClientRegistrationAuthenticationToken registerClient(
+			OidcClientRegistrationAuthenticationToken clientRegistrationAuthentication,
 			OAuth2Authorization authorization) {
 
 		if (!isValidRedirectUris(clientRegistrationAuthentication.getClientRegistration().getRedirectUris())) {
-			throwInvalidClientRegistration(OAuth2ErrorCodes.INVALID_REDIRECT_URI, OidcClientMetadataClaimNames.REDIRECT_URIS);
+			throwInvalidClientRegistration(OAuth2ErrorCodes.INVALID_REDIRECT_URI,
+					OidcClientMetadataClaimNames.REDIRECT_URIS);
 		}
 
-		if (!isValidRedirectUris(clientRegistrationAuthentication.getClientRegistration().getPostLogoutRedirectUris())) {
-			throwInvalidClientRegistration("invalid_client_metadata", OidcClientMetadataClaimNames.POST_LOGOUT_REDIRECT_URIS);
+		if (!isValidRedirectUris(
+				clientRegistrationAuthentication.getClientRegistration().getPostLogoutRedirectUris())) {
+			throwInvalidClientRegistration("invalid_client_metadata",
+					OidcClientMetadataClaimNames.POST_LOGOUT_REDIRECT_URIS);
 		}
 
 		if (!isValidTokenEndpointAuthenticationMethod(clientRegistrationAuthentication.getClientRegistration())) {
-			throwInvalidClientRegistration("invalid_client_metadata", OidcClientMetadataClaimNames.TOKEN_ENDPOINT_AUTH_METHOD);
+			throwInvalidClientRegistration("invalid_client_metadata",
+					OidcClientMetadataClaimNames.TOKEN_ENDPOINT_AUTH_METHOD);
 		}
 
 		if (this.logger.isTraceEnabled()) {
 			this.logger.trace("Validated client registration request parameters");
 		}
 
-		RegisteredClient registeredClient = this.registeredClientConverter.convert(clientRegistrationAuthentication.getClientRegistration());
+		RegisteredClient registeredClient = this.registeredClientConverter
+			.convert(clientRegistrationAuthentication.getClientRegistration());
 
 		if (StringUtils.hasText(registeredClient.getClientSecret())) {
 			// Encode the client secret
 			RegisteredClient updatedRegisteredClient = RegisteredClient.from(registeredClient)
-					.clientSecret(this.passwordEncoder.encode(registeredClient.getClientSecret()))
-					.build();
+				.clientSecret(this.passwordEncoder.encode(registeredClient.getClientSecret()))
+				.build();
 			this.registeredClientRepository.save(updatedRegisteredClient);
-			if (ClientAuthenticationMethod.CLIENT_SECRET_JWT.getValue().equals(clientRegistrationAuthentication.getClientRegistration().getTokenEndpointAuthenticationMethod())) {
+			if (ClientAuthenticationMethod.CLIENT_SECRET_JWT.getValue()
+				.equals(clientRegistrationAuthentication.getClientRegistration()
+					.getTokenEndpointAuthenticationMethod())) {
 				// gh-1344 Return the hashed client_secret
 				registeredClient = updatedRegisteredClient;
 			}
-		} else {
+		}
+		else {
 			this.registeredClientRepository.save(registeredClient);
 		}
 
@@ -231,9 +260,11 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 		OAuth2Authorization registeredClientAuthorization = registerAccessToken(registeredClient);
 
 		// Invalidate the "initial" access token as it can only be used once
-		authorization = OidcAuthenticationProviderUtils.invalidate(authorization, authorization.getAccessToken().getToken());
+		authorization = OidcAuthenticationProviderUtils.invalidate(authorization,
+				authorization.getAccessToken().getToken());
 		if (authorization.getRefreshToken() != null) {
-			authorization = OidcAuthenticationProviderUtils.invalidate(authorization, authorization.getRefreshToken().getToken());
+			authorization = OidcAuthenticationProviderUtils.invalidate(authorization,
+					authorization.getRefreshToken().getToken());
 		}
 		this.authorizationService.save(authorization);
 
@@ -241,10 +272,11 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 			this.logger.trace("Saved authorization with invalidated initial access token");
 		}
 
-		Map<String, Object> clientRegistrationClaims = this.clientRegistrationConverter.convert(registeredClient).getClaims();
+		Map<String, Object> clientRegistrationClaims = this.clientRegistrationConverter.convert(registeredClient)
+			.getClaims();
 		OidcClientRegistration clientRegistration = OidcClientRegistration.withClaims(clientRegistrationClaims)
-				.registrationAccessToken(registeredClientAuthorization.getAccessToken().getToken().getTokenValue())
-				.build();
+			.registrationAccessToken(registeredClientAuthorization.getAccessToken().getToken().getTokenValue())
+			.build();
 
 		if (this.logger.isTraceEnabled()) {
 			this.logger.trace("Authenticated client registration request");
@@ -256,10 +288,12 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 
 	private OAuth2Authorization registerAccessToken(RegisteredClient registeredClient) {
 		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient,
-				registeredClient.getClientAuthenticationMethods().iterator().next(), registeredClient.getClientSecret());
+				registeredClient.getClientAuthenticationMethods().iterator().next(),
+				registeredClient.getClientSecret());
 
 		Set<String> authorizedScopes = new HashSet<>();
-		authorizedScopes.add(OidcClientConfigurationAuthenticationProvider.DEFAULT_CLIENT_CONFIGURATION_AUTHORIZED_SCOPE);
+		authorizedScopes
+			.add(OidcClientConfigurationAuthenticationProvider.DEFAULT_CLIENT_CONFIGURATION_AUTHORIZED_SCOPE);
 		authorizedScopes = Collections.unmodifiableSet(authorizedScopes);
 
 		// @formatter:off
@@ -305,14 +339,16 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 	}
 
 	@SuppressWarnings("unchecked")
-	private static void checkScope(OAuth2Authorization.Token<OAuth2AccessToken> authorizedAccessToken, Set<String> requiredScope) {
+	private static void checkScope(OAuth2Authorization.Token<OAuth2AccessToken> authorizedAccessToken,
+			Set<String> requiredScope) {
 		Collection<String> authorizedScope = Collections.emptySet();
 		if (authorizedAccessToken.getClaims().containsKey(OAuth2ParameterNames.SCOPE)) {
 			authorizedScope = (Collection<String>) authorizedAccessToken.getClaims().get(OAuth2ParameterNames.SCOPE);
 		}
 		if (!authorizedScope.containsAll(requiredScope)) {
 			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INSUFFICIENT_SCOPE);
-		} else if (authorizedScope.size() != requiredScope.size()) {
+		}
+		else if (authorizedScope.size() != requiredScope.size()) {
 			// Restrict the access token to only contain the required scope
 			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_TOKEN);
 		}
@@ -329,7 +365,8 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 				if (validRedirectUri.getFragment() != null) {
 					return false;
 				}
-			} catch (URISyntaxException ex) {
+			}
+			catch (URISyntaxException ex) {
 				return false;
 			}
 		}
@@ -341,8 +378,8 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 		String authenticationMethod = clientRegistration.getTokenEndpointAuthenticationMethod();
 		String authenticationSigningAlgorithm = clientRegistration.getTokenEndpointAuthenticationSigningAlgorithm();
 
-		if (!ClientAuthenticationMethod.PRIVATE_KEY_JWT.getValue().equals(authenticationMethod) &&
-				!ClientAuthenticationMethod.CLIENT_SECRET_JWT.getValue().equals(authenticationMethod)) {
+		if (!ClientAuthenticationMethod.PRIVATE_KEY_JWT.getValue().equals(authenticationMethod)
+				&& !ClientAuthenticationMethod.CLIENT_SECRET_JWT.getValue().equals(authenticationMethod)) {
 			return !StringUtils.hasText(authenticationSigningAlgorithm);
 		}
 
@@ -351,21 +388,18 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 		}
 
 		if (ClientAuthenticationMethod.PRIVATE_KEY_JWT.getValue().equals(authenticationMethod)) {
-			return clientRegistration.getJwkSetUrl() != null &&
-					(!StringUtils.hasText(authenticationSigningAlgorithm) ||
-							SignatureAlgorithm.from(authenticationSigningAlgorithm) != null);
-		} else {
+			return clientRegistration.getJwkSetUrl() != null && (!StringUtils.hasText(authenticationSigningAlgorithm)
+					|| SignatureAlgorithm.from(authenticationSigningAlgorithm) != null);
+		}
+		else {
 			// client_secret_jwt
-			return !StringUtils.hasText(authenticationSigningAlgorithm) ||
-					MacAlgorithm.from(authenticationSigningAlgorithm) != null;
+			return !StringUtils.hasText(authenticationSigningAlgorithm)
+					|| MacAlgorithm.from(authenticationSigningAlgorithm) != null;
 		}
 	}
 
 	private static void throwInvalidClientRegistration(String errorCode, String fieldName) {
-		OAuth2Error error = new OAuth2Error(
-				errorCode,
-				"Invalid Client Registration: " + fieldName,
-				ERROR_URI);
+		OAuth2Error error = new OAuth2Error(errorCode, "Invalid Client Registration: " + fieldName, ERROR_URI);
 		throw new OAuth2AuthenticationException(error);
 	}
 

@@ -107,7 +107,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @ExtendWith(SpringTestContextExtension.class)
 public class OidcUserInfoTests {
+
 	private static final String DEFAULT_OIDC_USER_INFO_ENDPOINT_URI = "/userinfo";
+
 	private static SecurityContextRepository securityContextRepository;
 
 	public final SpringTestContext spring = new SpringTestContext();
@@ -233,15 +235,16 @@ public class OidcUserInfoTests {
 		verify(authenticationSuccessHandler).onAuthenticationSuccess(any(), any(), any());
 		verifyNoInteractions(authenticationFailureHandler);
 
-		ArgumentCaptor<List<AuthenticationProvider>> authenticationProvidersCaptor = ArgumentCaptor.forClass(List.class);
+		ArgumentCaptor<List<AuthenticationProvider>> authenticationProvidersCaptor = ArgumentCaptor
+			.forClass(List.class);
 		verify(authenticationProvidersConsumer).accept(authenticationProvidersCaptor.capture());
 		List<AuthenticationProvider> authenticationProviders = authenticationProvidersCaptor.getValue();
-		assertThat(authenticationProviders).hasSize(2).allMatch(provider ->
-				provider == authenticationProvider ||
-						provider instanceof OidcUserInfoAuthenticationProvider
-				);
+		assertThat(authenticationProviders).hasSize(2)
+			.allMatch(provider -> provider == authenticationProvider
+					|| provider instanceof OidcUserInfoAuthenticationProvider);
 
-		ArgumentCaptor<List<AuthenticationConverter>> authenticationConvertersCaptor = ArgumentCaptor.forClass(List.class);
+		ArgumentCaptor<List<AuthenticationConverter>> authenticationConvertersCaptor = ArgumentCaptor
+			.forClass(List.class);
 		verify(authenticationConvertersConsumer).accept(authenticationConvertersCaptor.capture());
 		List<AuthenticationConverter> authenticationConverters = authenticationConvertersCaptor.getValue();
 		assertThat(authenticationConverters).hasSize(2).allMatch(AuthenticationConverter.class::isInstance);
@@ -279,14 +282,12 @@ public class OidcUserInfoTests {
 		this.spring.register(CustomUserInfoConfiguration.class).autowire();
 
 		when(userInfoMapper.apply(any())).thenReturn(createUserInfo());
-		doAnswer(
-				invocation -> {
-					HttpServletResponse response = invocation.getArgument(1);
-					response.setStatus(HttpStatus.UNAUTHORIZED.value());
-					response.getWriter().write("unauthorized");
-					return null;
-				}
-		).when(authenticationFailureHandler).onAuthenticationFailure(any(), any(), any());
+		doAnswer(invocation -> {
+			HttpServletResponse response = invocation.getArgument(1);
+			response.setStatus(HttpStatus.UNAUTHORIZED.value());
+			response.getWriter().write("unauthorized");
+			return null;
+		}).when(authenticationFailureHandler).onAuthenticationFailure(any(), any(), any());
 
 		OAuth2AccessToken accessToken = createAuthorization().getAccessToken().getToken();
 		// @formatter:off
@@ -317,8 +318,9 @@ public class OidcUserInfoTests {
 				.andReturn();
 		// @formatter:on
 
-		org.springframework.security.core.context.SecurityContext securityContext =
-				securityContextRepository.loadDeferredContext(mvcResult.getRequest()).get();
+		org.springframework.security.core.context.SecurityContext securityContext = securityContextRepository
+			.loadDeferredContext(mvcResult.getRequest())
+			.get();
 		assertThat(securityContext.getAuthentication()).isNull();
 	}
 
@@ -359,18 +361,15 @@ public class OidcUserInfoTests {
 		Jwt jwt = this.jwtEncoder.encode(JwtEncoderParameters.from(headers, claimSet));
 
 		Instant now = Instant.now();
-		Set<String> scopes = new HashSet<>(Arrays.asList(
-				OidcScopes.OPENID, OidcScopes.ADDRESS, OidcScopes.EMAIL, OidcScopes.PHONE, OidcScopes.PROFILE));
-		OAuth2AccessToken accessToken = new OAuth2AccessToken(
-				OAuth2AccessToken.TokenType.BEARER, jwt.getTokenValue(), now, now.plusSeconds(300), scopes);
+		Set<String> scopes = new HashSet<>(Arrays.asList(OidcScopes.OPENID, OidcScopes.ADDRESS, OidcScopes.EMAIL,
+				OidcScopes.PHONE, OidcScopes.PROFILE));
+		OAuth2AccessToken accessToken = new OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER, jwt.getTokenValue(),
+				now, now.plusSeconds(300), scopes);
 		OidcIdToken idToken = OidcIdToken.withTokenValue("id-token")
-				.claims(claims -> claims.putAll(createUserInfo().getClaims()))
-				.build();
+			.claims(claims -> claims.putAll(createUserInfo().getClaims()))
+			.build();
 
-		return TestOAuth2Authorizations.authorization()
-				.accessToken(accessToken)
-				.token(idToken)
-				.build();
+		return TestOAuth2Authorizations.authorization().accessToken(accessToken).token(idToken).build();
 	}
 
 	private static OidcUserInfo createUserInfo() {
@@ -407,10 +406,8 @@ public class OidcUserInfoTests {
 		@Bean
 		@Override
 		SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-			OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
-					new OAuth2AuthorizationServerConfigurer();
-			RequestMatcher endpointsMatcher = authorizationServerConfigurer
-					.getEndpointsMatcher();
+			OAuth2AuthorizationServerConfigurer authorizationServerConfigurer = new OAuth2AuthorizationServerConfigurer();
+			RequestMatcher endpointsMatcher = authorizationServerConfigurer.getEndpointsMatcher();
 
 			// @formatter:off
 			http
@@ -438,21 +435,21 @@ public class OidcUserInfoTests {
 
 			return http.build();
 		}
+
 	}
 
 	@EnableWebSecurity
 	@Configuration(proxyBeanMethods = false)
-	static class AuthorizationServerConfigurationWithSecurityContextRepository extends AuthorizationServerConfiguration {
+	static class AuthorizationServerConfigurationWithSecurityContextRepository
+			extends AuthorizationServerConfiguration {
 
 		@Bean
 		@Override
 		SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-			OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
-					new OAuth2AuthorizationServerConfigurer();
-			authorizationServerConfigurer
-					.oidc(Customizer.withDefaults());	// Enable OpenID Connect 1.0
-			RequestMatcher endpointsMatcher = authorizationServerConfigurer
-					.getEndpointsMatcher();
+			OAuth2AuthorizationServerConfigurer authorizationServerConfigurer = new OAuth2AuthorizationServerConfigurer();
+			// Enable OpenID Connect 1.0
+			authorizationServerConfigurer.oidc(Customizer.withDefaults());
+			RequestMatcher endpointsMatcher = authorizationServerConfigurer.getEndpointsMatcher();
 
 			// @formatter:off
 			http
@@ -471,6 +468,7 @@ public class OidcUserInfoTests {
 
 			return http.build();
 		}
+
 	}
 
 	@EnableWebSecurity
@@ -479,12 +477,10 @@ public class OidcUserInfoTests {
 
 		@Bean
 		SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-			OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
-					new OAuth2AuthorizationServerConfigurer();
-			authorizationServerConfigurer
-					.oidc(Customizer.withDefaults());	// Enable OpenID Connect 1.0
-			RequestMatcher endpointsMatcher = authorizationServerConfigurer
-					.getEndpointsMatcher();
+			OAuth2AuthorizationServerConfigurer authorizationServerConfigurer = new OAuth2AuthorizationServerConfigurer();
+			// Enable OpenID Connect 1.0
+			authorizationServerConfigurer.oidc(Customizer.withDefaults());
+			RequestMatcher endpointsMatcher = authorizationServerConfigurer.getEndpointsMatcher();
 
 			// @formatter:off
 			http

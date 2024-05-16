@@ -32,10 +32,10 @@ import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.util.MultiValueMap;
 
 /**
- * Attempts to extract a user code from {@link HttpServletRequest} for the
- * OAuth 2.0 Device Authorization Grant and then converts it to an
- * {@link OAuth2DeviceVerificationAuthenticationToken} used for authenticating
- * the request.
+ * Attempts to extract a user code from {@link HttpServletRequest} for the OAuth 2.0
+ * Device Authorization Grant and then converts it to an
+ * {@link OAuth2DeviceVerificationAuthenticationToken} used for authenticating the
+ * request.
  *
  * @author Steve Riesenberg
  * @since 1.1
@@ -46,8 +46,9 @@ import org.springframework.util.MultiValueMap;
 public final class OAuth2DeviceVerificationAuthenticationConverter implements AuthenticationConverter {
 
 	private static final String ERROR_URI = "https://datatracker.ietf.org/doc/html/rfc6749#section-5.2";
-	private static final Authentication ANONYMOUS_AUTHENTICATION = new AnonymousAuthenticationToken(
-			"anonymous", "anonymousUser", AuthorityUtils.createAuthorityList("ROLE_ANONYMOUS"));
+
+	private static final Authentication ANONYMOUS_AUTHENTICATION = new AnonymousAuthenticationToken("anonymous",
+			"anonymousUser", AuthorityUtils.createAuthorityList("ROLE_ANONYMOUS"));
 
 	@Override
 	public Authentication convert(HttpServletRequest request) {
@@ -59,19 +60,14 @@ public final class OAuth2DeviceVerificationAuthenticationConverter implements Au
 			return null;
 		}
 
-		MultiValueMap<String, String> parameters =
-				"GET".equals(request.getMethod()) ?
-						OAuth2EndpointUtils.getQueryParameters(request) :
-						OAuth2EndpointUtils.getFormParameters(request);
+		MultiValueMap<String, String> parameters = "GET".equals(request.getMethod())
+				? OAuth2EndpointUtils.getQueryParameters(request) : OAuth2EndpointUtils.getFormParameters(request);
 
 		// user_code (REQUIRED)
 		String userCode = parameters.getFirst(OAuth2ParameterNames.USER_CODE);
-		if (!OAuth2EndpointUtils.validateUserCode(userCode) ||
-				parameters.get(OAuth2ParameterNames.USER_CODE).size() != 1) {
-			OAuth2EndpointUtils.throwError(
-					OAuth2ErrorCodes.INVALID_REQUEST,
-					OAuth2ParameterNames.USER_CODE,
-					ERROR_URI);
+		if (!OAuth2EndpointUtils.validateUserCode(userCode)
+				|| parameters.get(OAuth2ParameterNames.USER_CODE).size() != 1) {
+			OAuth2EndpointUtils.throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.USER_CODE, ERROR_URI);
 		}
 
 		Authentication principal = SecurityContextHolder.getContext().getAuthentication();

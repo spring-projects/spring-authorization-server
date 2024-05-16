@@ -62,7 +62,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @ExtendWith(SpringTestContextExtension.class)
 public class OidcProviderConfigurationTests {
+
 	private static final String DEFAULT_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI = "/.well-known/openid-configuration";
+
 	private static final String ISSUER = "https://example.com";
 
 	public final SpringTestContext spring = new SpringTestContext();
@@ -115,7 +117,8 @@ public class OidcProviderConfigurationTests {
 
 	// gh-616
 	@Test
-	public void requestWhenConfigurationRequestAndConfigurationCustomizerSetThenReturnCustomConfigurationResponse() throws Exception {
+	public void requestWhenConfigurationRequestAndConfigurationCustomizerSetThenReturnCustomConfigurationResponse()
+			throws Exception {
 		this.spring.register(AuthorizationServerConfigurationWithProviderConfigurationCustomizer.class).autowire();
 
 		this.mvc.perform(get(ISSUER.concat(DEFAULT_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI)))
@@ -125,7 +128,8 @@ public class OidcProviderConfigurationTests {
 	}
 
 	@Test
-	public void requestWhenConfigurationRequestAndClientRegistrationEnabledThenConfigurationResponseIncludesRegistrationEndpoint() throws Exception {
+	public void requestWhenConfigurationRequestAndClientRegistrationEnabledThenConfigurationResponseIncludesRegistrationEndpoint()
+			throws Exception {
 		this.spring.register(AuthorizationServerConfigurationWithClientRegistrationEnabled.class).autowire();
 
 		this.mvc.perform(get(ISSUER.concat(DEFAULT_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI)))
@@ -172,50 +176,43 @@ public class OidcProviderConfigurationTests {
 	@Test
 	public void loadContextWhenIssuerNotValidUrlThenThrowException() {
 		assertThatThrownBy(
-				() -> this.spring.register(AuthorizationServerConfigurationWithInvalidIssuerUrl.class).autowire()
-		);
+				() -> this.spring.register(AuthorizationServerConfigurationWithInvalidIssuerUrl.class).autowire());
 	}
 
 	@Test
 	public void loadContextWhenIssuerNotValidUriThenThrowException() {
 		assertThatThrownBy(
-				() -> this.spring.register(AuthorizationServerConfigurationWithInvalidIssuerUri.class).autowire()
-		);
+				() -> this.spring.register(AuthorizationServerConfigurationWithInvalidIssuerUri.class).autowire());
 	}
 
 	@Test
 	public void loadContextWhenIssuerWithQueryThenThrowException() {
 		assertThatThrownBy(
-				() -> this.spring.register(AuthorizationServerConfigurationWithIssuerQuery.class).autowire()
-		);
+				() -> this.spring.register(AuthorizationServerConfigurationWithIssuerQuery.class).autowire());
 	}
 
 	@Test
 	public void loadContextWhenIssuerWithFragmentThenThrowException() {
 		assertThatThrownBy(
-				() -> this.spring.register(AuthorizationServerConfigurationWithIssuerFragment.class).autowire()
-		);
+				() -> this.spring.register(AuthorizationServerConfigurationWithIssuerFragment.class).autowire());
 	}
 
 	@Test
 	public void loadContextWhenIssuerWithQueryAndFragmentThenThrowException() {
-		assertThatThrownBy(
-				() -> this.spring.register(AuthorizationServerConfigurationWithIssuerQueryAndFragment.class).autowire()
-		);
+		assertThatThrownBy(() -> this.spring.register(AuthorizationServerConfigurationWithIssuerQueryAndFragment.class)
+			.autowire());
 	}
 
 	@Test
 	public void loadContextWhenIssuerWithEmptyQueryThenThrowException() {
 		assertThatThrownBy(
-				() -> this.spring.register(AuthorizationServerConfigurationWithIssuerEmptyQuery.class).autowire()
-		);
+				() -> this.spring.register(AuthorizationServerConfigurationWithIssuerEmptyQuery.class).autowire());
 	}
 
 	@Test
 	public void loadContextWhenIssuerWithEmptyFragmentThenThrowException() {
 		assertThatThrownBy(
-				() -> this.spring.register(AuthorizationServerConfigurationWithIssuerEmptyFragment.class).autowire()
-		);
+				() -> this.spring.register(AuthorizationServerConfigurationWithIssuerEmptyFragment.class).autowire());
 	}
 
 	@EnableWebSecurity
@@ -225,8 +222,8 @@ public class OidcProviderConfigurationTests {
 		@Bean
 		SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
 			OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http);
-			http.getConfigurer(OAuth2AuthorizationServerConfigurer.class)
-					.oidc(Customizer.withDefaults());	// Enable OpenID Connect 1.0
+			// Enable OpenID Connect 1.0
+			http.getConfigurer(OAuth2AuthorizationServerConfigurer.class).oidc(Customizer.withDefaults());
 			return http.build();
 		}
 
@@ -260,7 +257,8 @@ public class OidcProviderConfigurationTests {
 
 	@EnableWebSecurity
 	@Configuration(proxyBeanMethods = false)
-	static class AuthorizationServerConfigurationWithProviderConfigurationCustomizer extends AuthorizationServerConfiguration {
+	static class AuthorizationServerConfigurationWithProviderConfigurationCustomizer
+			extends AuthorizationServerConfiguration {
 
 		// @formatter:off
 		@Bean
@@ -289,15 +287,15 @@ public class OidcProviderConfigurationTests {
 		// @formatter:on
 
 		private Consumer<OidcProviderConfiguration.Builder> providerConfigurationCustomizer() {
-			return (providerConfiguration) ->
-					providerConfiguration.scope(OidcScopes.PROFILE).scope(OidcScopes.EMAIL);
+			return (providerConfiguration) -> providerConfiguration.scope(OidcScopes.PROFILE).scope(OidcScopes.EMAIL);
 		}
 
 	}
 
 	@EnableWebSecurity
 	@Configuration(proxyBeanMethods = false)
-	static class AuthorizationServerConfigurationWithClientRegistrationEnabled extends AuthorizationServerConfiguration {
+	static class AuthorizationServerConfigurationWithClientRegistrationEnabled
+			extends AuthorizationServerConfiguration {
 
 		// @formatter:off
 		@Bean
@@ -325,6 +323,7 @@ public class OidcProviderConfigurationTests {
 		AuthorizationServerSettings authorizationServerSettings() {
 			return AuthorizationServerSettings.builder().issuer("urn:example").build();
 		}
+
 	}
 
 	@EnableWebSecurity
@@ -335,6 +334,7 @@ public class OidcProviderConfigurationTests {
 		AuthorizationServerSettings authorizationServerSettings() {
 			return AuthorizationServerSettings.builder().issuer("https://not a valid uri").build();
 		}
+
 	}
 
 	@EnableWebSecurity
@@ -345,6 +345,7 @@ public class OidcProviderConfigurationTests {
 		AuthorizationServerSettings authorizationServerSettings() {
 			return AuthorizationServerSettings.builder().issuer(ISSUER + "?param=value").build();
 		}
+
 	}
 
 	@EnableWebSecurity
@@ -355,6 +356,7 @@ public class OidcProviderConfigurationTests {
 		AuthorizationServerSettings authorizationServerSettings() {
 			return AuthorizationServerSettings.builder().issuer(ISSUER + "#fragment").build();
 		}
+
 	}
 
 	@EnableWebSecurity
@@ -365,6 +367,7 @@ public class OidcProviderConfigurationTests {
 		AuthorizationServerSettings authorizationServerSettings() {
 			return AuthorizationServerSettings.builder().issuer(ISSUER + "?param=value#fragment").build();
 		}
+
 	}
 
 	@EnableWebSecurity
@@ -375,6 +378,7 @@ public class OidcProviderConfigurationTests {
 		AuthorizationServerSettings authorizationServerSettings() {
 			return AuthorizationServerSettings.builder().issuer(ISSUER + "?").build();
 		}
+
 	}
 
 	@EnableWebSecurity
@@ -385,6 +389,7 @@ public class OidcProviderConfigurationTests {
 		AuthorizationServerSettings authorizationServerSettings() {
 			return AuthorizationServerSettings.builder().issuer(ISSUER + "#").build();
 		}
+
 	}
 
 }

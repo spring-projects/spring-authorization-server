@@ -25,17 +25,21 @@ import org.springframework.util.Assert;
  *
  * @author Joe Grandja
  * @since 0.0.1
- * @see <a target="_blank" href="https://tools.ietf.org/html/rfc7009#section-4.1.2">4.1.2 OAuth Token Type Hints Registry</a>
+ * @see <a target="_blank" href="https://tools.ietf.org/html/rfc7009#section-4.1.2">4.1.2
+ * OAuth Token Type Hints Registry</a>
  */
 public final class OAuth2TokenType implements Serializable {
+
 	private static final long serialVersionUID = SpringAuthorizationServerVersion.SERIAL_VERSION_UID;
+
 	public static final OAuth2TokenType ACCESS_TOKEN = new OAuth2TokenType("access_token");
+
 	public static final OAuth2TokenType REFRESH_TOKEN = new OAuth2TokenType("refresh_token");
+
 	private final String value;
 
 	/**
 	 * Constructs an {@code OAuth2TokenType} using the provided value.
-	 *
 	 * @param value the value of the token type
 	 */
 	public OAuth2TokenType(String value) {
@@ -45,7 +49,6 @@ public final class OAuth2TokenType implements Serializable {
 
 	/**
 	 * Returns the value of the token type.
-	 *
 	 * @return the value of the token type
 	 */
 	public String getValue() {
@@ -68,4 +71,5 @@ public final class OAuth2TokenType implements Serializable {
 	public int hashCode() {
 		return getValue().hashCode();
 	}
+
 }

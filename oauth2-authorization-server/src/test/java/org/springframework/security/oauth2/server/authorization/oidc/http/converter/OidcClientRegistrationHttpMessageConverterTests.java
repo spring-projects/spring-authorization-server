@@ -41,12 +41,13 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Tests for {@link OidcClientRegistrationHttpMessageConverter}
-
+ *
  * @author Ovidiu Popa
  * @author Joe Grandja
  * @since 0.1.1
  */
 public class OidcClientRegistrationHttpMessageConverterTests {
+
 	private final OidcClientRegistrationHttpMessageConverter messageConverter = new OidcClientRegistrationHttpMessageConverter();
 
 	@Test
@@ -57,15 +58,15 @@ public class OidcClientRegistrationHttpMessageConverterTests {
 	@Test
 	public void setClientRegistrationConverterWhenNullThenThrowIllegalArgumentException() {
 		assertThatIllegalArgumentException()
-				.isThrownBy(() -> this.messageConverter.setClientRegistrationConverter(null))
-				.withMessageContaining("clientRegistrationConverter cannot be null");
+			.isThrownBy(() -> this.messageConverter.setClientRegistrationConverter(null))
+			.withMessageContaining("clientRegistrationConverter cannot be null");
 	}
 
 	@Test
 	public void setClientRegistrationParametersConverterWhenNullThenThrowIllegalArgumentException() {
 		assertThatIllegalArgumentException()
-				.isThrownBy(() -> this.messageConverter.setClientRegistrationParametersConverter(null))
-				.withMessageContaining("clientRegistrationParametersConverter cannot be null");
+			.isThrownBy(() -> this.messageConverter.setClientRegistrationParametersConverter(null))
+			.withMessageContaining("clientRegistrationParametersConverter cannot be null");
 	}
 
 	@Test
@@ -78,10 +79,10 @@ public class OidcClientRegistrationHttpMessageConverterTests {
 				+ "}\n";
 		// @formatter:on
 
-		MockClientHttpResponse response = new MockClientHttpResponse(
-				clientRegistrationRequest.getBytes(), HttpStatus.OK);
-		OidcClientRegistration clientRegistration = this.messageConverter
-				.readInternal(OidcClientRegistration.class, response);
+		MockClientHttpResponse response = new MockClientHttpResponse(clientRegistrationRequest.getBytes(),
+				HttpStatus.OK);
+		OidcClientRegistration clientRegistration = this.messageConverter.readInternal(OidcClientRegistration.class,
+				response);
 
 		assertThat(clientRegistration.getClaims()).hasSize(1);
 		assertThat(clientRegistration.getRedirectUris()).containsOnly("https://client.example.com");
@@ -117,10 +118,10 @@ public class OidcClientRegistrationHttpMessageConverterTests {
 				+"		\"a-claim\": \"a-value\"\n"
 				+"}\n";
 		// @formatter:on
-		MockClientHttpResponse response = new MockClientHttpResponse(
-				clientRegistrationRequest.getBytes(), HttpStatus.OK);
-		OidcClientRegistration clientRegistration = this.messageConverter
-				.readInternal(OidcClientRegistration.class, response);
+		MockClientHttpResponse response = new MockClientHttpResponse(clientRegistrationRequest.getBytes(),
+				HttpStatus.OK);
+		OidcClientRegistration clientRegistration = this.messageConverter.readInternal(OidcClientRegistration.class,
+				response);
 
 		assertThat(clientRegistration.getClientId()).isEqualTo("client-id");
 		assertThat(clientRegistration.getClientIdIssuedAt()).isEqualTo(Instant.ofEpochSecond(1607633867L));
@@ -128,10 +129,14 @@ public class OidcClientRegistrationHttpMessageConverterTests {
 		assertThat(clientRegistration.getClientSecretExpiresAt()).isEqualTo(Instant.ofEpochSecond(1607637467L));
 		assertThat(clientRegistration.getClientName()).isEqualTo("client-name");
 		assertThat(clientRegistration.getRedirectUris()).containsOnly("https://client.example.com");
-		assertThat(clientRegistration.getPostLogoutRedirectUris()).containsOnly("https://client.example.com/oidc-post-logout");
-		assertThat(clientRegistration.getTokenEndpointAuthenticationMethod()).isEqualTo(ClientAuthenticationMethod.CLIENT_SECRET_JWT.getValue());
-		assertThat(clientRegistration.getTokenEndpointAuthenticationSigningAlgorithm()).isEqualTo(MacAlgorithm.HS256.getName());
-		assertThat(clientRegistration.getGrantTypes()).containsExactlyInAnyOrder("authorization_code", "client_credentials");
+		assertThat(clientRegistration.getPostLogoutRedirectUris())
+			.containsOnly("https://client.example.com/oidc-post-logout");
+		assertThat(clientRegistration.getTokenEndpointAuthenticationMethod())
+			.isEqualTo(ClientAuthenticationMethod.CLIENT_SECRET_JWT.getValue());
+		assertThat(clientRegistration.getTokenEndpointAuthenticationSigningAlgorithm())
+			.isEqualTo(MacAlgorithm.HS256.getName());
+		assertThat(clientRegistration.getGrantTypes()).containsExactlyInAnyOrder("authorization_code",
+				"client_credentials");
 		assertThat(clientRegistration.getResponseTypes()).containsOnly("code");
 		assertThat(clientRegistration.getScopes()).containsExactlyInAnyOrder("scope1", "scope2");
 		assertThat(clientRegistration.getJwkSetUrl()).isEqualTo(new URL("https://client.example.com/jwks"));
@@ -151,10 +156,10 @@ public class OidcClientRegistrationHttpMessageConverterTests {
 				+ "		]\n"
 				+"}\n";
 		// @formatter:on
-		MockClientHttpResponse response = new MockClientHttpResponse(
-				clientRegistrationRequest.getBytes(), HttpStatus.OK);
-		OidcClientRegistration clientRegistration = this.messageConverter
-				.readInternal(OidcClientRegistration.class, response);
+		MockClientHttpResponse response = new MockClientHttpResponse(clientRegistrationRequest.getBytes(),
+				HttpStatus.OK);
+		OidcClientRegistration clientRegistration = this.messageConverter.readInternal(OidcClientRegistration.class,
+				response);
 
 		assertThat(clientRegistration.getClaims()).hasSize(3);
 		assertThat(clientRegistration.getClientId()).isEqualTo("client-id");
@@ -172,9 +177,9 @@ public class OidcClientRegistrationHttpMessageConverterTests {
 		MockClientHttpResponse response = new MockClientHttpResponse("{}".getBytes(), HttpStatus.OK);
 
 		assertThatExceptionOfType(HttpMessageNotReadableException.class)
-				.isThrownBy(() -> this.messageConverter.readInternal(OidcClientRegistration.class, response))
-				.withMessageContaining("An error occurred reading the OpenID Client Registration")
-				.withMessageContaining(errorMessage);
+			.isThrownBy(() -> this.messageConverter.readInternal(OidcClientRegistration.class, response))
+			.withMessageContaining("An error occurred reading the OpenID Client Registration")
+			.withMessageContaining(errorMessage);
 	}
 
 	@Test
@@ -213,16 +218,19 @@ public class OidcClientRegistrationHttpMessageConverterTests {
 		assertThat(clientRegistrationResponse).contains("\"client_secret_expires_at\":1607637467");
 		assertThat(clientRegistrationResponse).contains("\"client_name\":\"client-name\"");
 		assertThat(clientRegistrationResponse).contains("\"redirect_uris\":[\"https://client.example.com\"]");
-		assertThat(clientRegistrationResponse).contains("\"post_logout_redirect_uris\":[\"https://client.example.com/oidc-post-logout\"]");
+		assertThat(clientRegistrationResponse)
+			.contains("\"post_logout_redirect_uris\":[\"https://client.example.com/oidc-post-logout\"]");
 		assertThat(clientRegistrationResponse).contains("\"token_endpoint_auth_method\":\"client_secret_jwt\"");
 		assertThat(clientRegistrationResponse).contains("\"token_endpoint_auth_signing_alg\":\"HS256\"");
-		assertThat(clientRegistrationResponse).contains("\"grant_types\":[\"authorization_code\",\"client_credentials\"]");
+		assertThat(clientRegistrationResponse)
+			.contains("\"grant_types\":[\"authorization_code\",\"client_credentials\"]");
 		assertThat(clientRegistrationResponse).contains("\"response_types\":[\"code\"]");
 		assertThat(clientRegistrationResponse).contains("\"scope\":\"scope1 scope2\"");
 		assertThat(clientRegistrationResponse).contains("\"jwks_uri\":\"https://client.example.com/jwks\"");
 		assertThat(clientRegistrationResponse).contains("\"id_token_signed_response_alg\":\"RS256\"");
 		assertThat(clientRegistrationResponse).contains("\"registration_access_token\":\"registration-access-token\"");
-		assertThat(clientRegistrationResponse).contains("\"registration_client_uri\":\"https://auth-server.com/connect/register?client_id=1\"");
+		assertThat(clientRegistrationResponse)
+			.contains("\"registration_client_uri\":\"https://auth-server.com/connect/register?client_id=1\"");
 		assertThat(clientRegistrationResponse).contains("\"a-claim\":\"a-value\"");
 	}
 

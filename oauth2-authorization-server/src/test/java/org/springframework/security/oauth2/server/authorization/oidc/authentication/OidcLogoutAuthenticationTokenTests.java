@@ -31,55 +31,62 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
  * @author Joe Grandja
  */
 public class OidcLogoutAuthenticationTokenTests {
+
 	private final String idTokenHint = "id-token";
+
 	private final OidcIdToken idToken = OidcIdToken.withTokenValue(this.idTokenHint)
-			.issuer("https://provider.com")
-			.subject("principal")
-			.issuedAt(Instant.now().minusSeconds(60))
-			.expiresAt(Instant.now().plusSeconds(60))
-			.build();
+		.issuer("https://provider.com")
+		.subject("principal")
+		.issuedAt(Instant.now().minusSeconds(60))
+		.expiresAt(Instant.now().plusSeconds(60))
+		.build();
+
 	private final TestingAuthenticationToken principal = new TestingAuthenticationToken("principal", "credentials");
+
 	private final String sessionId = "session-1";
+
 	private final String clientId = "client-1";
+
 	private final String postLogoutRedirectUri = "https://example.com/oidc-post-logout";
+
 	private final String state = "state-1";
 
 	@Test
 	public void constructorWhenIdTokenHintEmptyThenThrowIllegalArgumentException() {
 		assertThatIllegalArgumentException()
-				.isThrownBy(() -> new OidcLogoutAuthenticationToken(
-						"", this.principal, this.sessionId, this.clientId, this.postLogoutRedirectUri, this.state))
-				.withMessage("idTokenHint cannot be empty");
+			.isThrownBy(() -> new OidcLogoutAuthenticationToken("", this.principal, this.sessionId, this.clientId,
+					this.postLogoutRedirectUri, this.state))
+			.withMessage("idTokenHint cannot be empty");
 		assertThatIllegalArgumentException()
-				.isThrownBy(() -> new OidcLogoutAuthenticationToken(
-						(String) null, this.principal, this.sessionId, this.clientId, this.postLogoutRedirectUri, this.state))
-				.withMessage("idTokenHint cannot be empty");
+			.isThrownBy(() -> new OidcLogoutAuthenticationToken((String) null, this.principal, this.sessionId,
+					this.clientId, this.postLogoutRedirectUri, this.state))
+			.withMessage("idTokenHint cannot be empty");
 	}
 
 	@Test
 	public void constructorWhenIdTokenNullThenThrowIllegalArgumentException() {
 		assertThatIllegalArgumentException()
-				.isThrownBy(() -> new OidcLogoutAuthenticationToken(
-						(OidcIdToken) null, this.principal, this.sessionId, this.clientId, this.postLogoutRedirectUri, this.state))
-				.withMessage("idToken cannot be null");
+			.isThrownBy(() -> new OidcLogoutAuthenticationToken((OidcIdToken) null, this.principal, this.sessionId,
+					this.clientId, this.postLogoutRedirectUri, this.state))
+			.withMessage("idToken cannot be null");
 	}
 
 	@Test
 	public void constructorWhenPrincipalNullThenThrowIllegalArgumentException() {
 		assertThatIllegalArgumentException()
-				.isThrownBy(() -> new OidcLogoutAuthenticationToken(
-						this.idTokenHint, null, this.sessionId, this.clientId, this.postLogoutRedirectUri, this.state))
-				.withMessage("principal cannot be null");
+			.isThrownBy(() -> new OidcLogoutAuthenticationToken(this.idTokenHint, null, this.sessionId, this.clientId,
+					this.postLogoutRedirectUri, this.state))
+			.withMessage("principal cannot be null");
 		assertThatIllegalArgumentException()
-				.isThrownBy(() -> new OidcLogoutAuthenticationToken(
-						this.idToken, null, this.sessionId, this.clientId, this.postLogoutRedirectUri, this.state))
-				.withMessage("principal cannot be null");
+			.isThrownBy(() -> new OidcLogoutAuthenticationToken(this.idToken, null, this.sessionId, this.clientId,
+					this.postLogoutRedirectUri, this.state))
+			.withMessage("principal cannot be null");
 	}
 
 	@Test
 	public void constructorWhenIdTokenHintProvidedThenCreated() {
-		OidcLogoutAuthenticationToken authentication = new OidcLogoutAuthenticationToken(
-				this.idTokenHint, this.principal, this.sessionId, this.clientId, this.postLogoutRedirectUri, this.state);
+		OidcLogoutAuthenticationToken authentication = new OidcLogoutAuthenticationToken(this.idTokenHint,
+				this.principal, this.sessionId, this.clientId, this.postLogoutRedirectUri, this.state);
 		assertThat(authentication.getPrincipal()).isEqualTo(this.principal);
 		assertThat(authentication.getCredentials().toString()).isEmpty();
 		assertThat(authentication.getIdTokenHint()).isEqualTo(this.idTokenHint);
@@ -93,8 +100,8 @@ public class OidcLogoutAuthenticationTokenTests {
 
 	@Test
 	public void constructorWhenIdTokenProvidedThenCreated() {
-		OidcLogoutAuthenticationToken authentication = new OidcLogoutAuthenticationToken(
-				this.idToken, this.principal, this.sessionId, this.clientId, this.postLogoutRedirectUri, this.state);
+		OidcLogoutAuthenticationToken authentication = new OidcLogoutAuthenticationToken(this.idToken, this.principal,
+				this.sessionId, this.clientId, this.postLogoutRedirectUri, this.state);
 		assertThat(authentication.getPrincipal()).isEqualTo(this.principal);
 		assertThat(authentication.getCredentials().toString()).isEmpty();
 		assertThat(authentication.getIdTokenHint()).isEqualTo(this.idToken.getTokenValue());

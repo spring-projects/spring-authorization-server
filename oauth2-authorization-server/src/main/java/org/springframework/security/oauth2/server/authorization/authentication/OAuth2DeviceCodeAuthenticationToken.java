@@ -23,8 +23,8 @@ import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.util.Assert;
 
 /**
- * An {@link Authentication} implementation for the Device Access Token Request
- * used in the OAuth 2.0 Device Authorization Grant.
+ * An {@link Authentication} implementation for the Device Access Token Request used in
+ * the OAuth 2.0 Device Authorization Grant.
  *
  * @author Steve Riesenberg
  * @since 1.1
@@ -36,8 +36,8 @@ public class OAuth2DeviceCodeAuthenticationToken extends OAuth2AuthorizationGran
 	private final String deviceCode;
 
 	/**
-	 * Constructs an {@code OAuth2DeviceCodeAuthenticationToken} using the provided parameters.
-	 *
+	 * Constructs an {@code OAuth2DeviceCodeAuthenticationToken} using the provided
+	 * parameters.
 	 * @param deviceCode the device code
 	 * @param clientPrincipal the authenticated client principal
 	 * @param additionalParameters the additional parameters
@@ -51,7 +51,6 @@ public class OAuth2DeviceCodeAuthenticationToken extends OAuth2AuthorizationGran
 
 	/**
 	 * Returns the device code.
-	 *
 	 * @return the device code
 	 */
 	public String getDeviceCode() {

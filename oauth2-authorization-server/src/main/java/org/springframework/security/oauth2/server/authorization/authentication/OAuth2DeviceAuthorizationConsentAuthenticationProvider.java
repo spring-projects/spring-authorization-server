@@ -64,20 +64,23 @@ public final class OAuth2DeviceAuthorizationConsentAuthenticationProvider implem
 	static final OAuth2TokenType STATE_TOKEN_TYPE = new OAuth2TokenType(OAuth2ParameterNames.STATE);
 
 	private final Log logger = LogFactory.getLog(getClass());
+
 	private final RegisteredClientRepository registeredClientRepository;
+
 	private final OAuth2AuthorizationService authorizationService;
+
 	private final OAuth2AuthorizationConsentService authorizationConsentService;
+
 	private Consumer<OAuth2AuthorizationConsentAuthenticationContext> authorizationConsentCustomizer;
 
 	/**
-	 * Constructs an {@code OAuth2DeviceAuthorizationConsentAuthenticationProvider} using the provided parameters.
-	 *
+	 * Constructs an {@code OAuth2DeviceAuthorizationConsentAuthenticationProvider} using
+	 * the provided parameters.
 	 * @param registeredClientRepository the repository of registered clients
 	 * @param authorizationService the authorization service
 	 * @param authorizationConsentService the authorization consent service
 	 */
-	public OAuth2DeviceAuthorizationConsentAuthenticationProvider(
-			RegisteredClientRepository registeredClientRepository,
+	public OAuth2DeviceAuthorizationConsentAuthenticationProvider(RegisteredClientRepository registeredClientRepository,
 			OAuth2AuthorizationService authorizationService,
 			OAuth2AuthorizationConsentService authorizationConsentService) {
 		Assert.notNull(registeredClientRepository, "registeredClientRepository cannot be null");
@@ -90,11 +93,10 @@ public final class OAuth2DeviceAuthorizationConsentAuthenticationProvider implem
 
 	@Override
 	public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-		OAuth2DeviceAuthorizationConsentAuthenticationToken deviceAuthorizationConsentAuthentication =
-				(OAuth2DeviceAuthorizationConsentAuthenticationToken) authentication;
+		OAuth2DeviceAuthorizationConsentAuthenticationToken deviceAuthorizationConsentAuthentication = (OAuth2DeviceAuthorizationConsentAuthenticationToken) authentication;
 
-		OAuth2Authorization authorization = this.authorizationService.findByToken(
-				deviceAuthorizationConsentAuthentication.getState(), STATE_TOKEN_TYPE);
+		OAuth2Authorization authorization = this.authorizationService
+			.findByToken(deviceAuthorizationConsentAuthentication.getState(), STATE_TOKEN_TYPE);
 		if (authorization == null) {
 			throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.STATE);
 		}
@@ -109,8 +111,8 @@ public final class OAuth2DeviceAuthorizationConsentAuthenticationProvider implem
 			throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.STATE);
 		}
 
-		RegisteredClient registeredClient = this.registeredClientRepository.findByClientId(
-				deviceAuthorizationConsentAuthentication.getClientId());
+		RegisteredClient registeredClient = this.registeredClientRepository
+			.findByClientId(deviceAuthorizationConsentAuthentication.getClientId());
 		if (registeredClient == null || !registeredClient.getId().equals(authorization.getRegisteredClientId())) {
 			throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.CLIENT_ID);
 		}
@@ -129,10 +131,10 @@ public final class OAuth2DeviceAuthorizationConsentAuthenticationProvider implem
 			this.logger.trace("Validated device authorization consent request parameters");
 		}
 
-		OAuth2AuthorizationConsent currentAuthorizationConsent = this.authorizationConsentService.findById(
-				authorization.getRegisteredClientId(), principal.getName());
-		Set<String> currentAuthorizedScopes = currentAuthorizationConsent != null ?
-				currentAuthorizationConsent.getScopes() : Collections.emptySet();
+		OAuth2AuthorizationConsent currentAuthorizationConsent = this.authorizationConsentService
+			.findById(authorization.getRegisteredClientId(), principal.getName());
+		Set<String> currentAuthorizedScopes = currentAuthorizationConsent != null
+				? currentAuthorizationConsent.getScopes() : Collections.emptySet();
 
 		if (!currentAuthorizedScopes.isEmpty()) {
 			for (String requestedScope : requestedScopes) {
@@ -148,9 +150,10 @@ public final class OAuth2DeviceAuthorizationConsentAuthenticationProvider implem
 				this.logger.trace("Retrieved existing authorization consent");
 			}
 			authorizationConsentBuilder = OAuth2AuthorizationConsent.from(currentAuthorizationConsent);
-		} else {
-			authorizationConsentBuilder = OAuth2AuthorizationConsent.withId(
-					authorization.getRegisteredClientId(), principal.getName());
+		}
+		else {
+			authorizationConsentBuilder = OAuth2AuthorizationConsent.withId(authorization.getRegisteredClientId(),
+					principal.getName());
 		}
 		authorizedScopes.forEach(authorizationConsentBuilder::scope);
 
@@ -184,12 +187,12 @@ public final class OAuth2DeviceAuthorizationConsentAuthenticationProvider implem
 				}
 			}
 			authorization = OAuth2Authorization.from(authorization)
-					.token(deviceCodeToken.getToken(), metadata ->
-							metadata.put(OAuth2Authorization.Token.INVALIDATED_METADATA_NAME, true))
-					.token(userCodeToken.getToken(), metadata ->
-							metadata.put(OAuth2Authorization.Token.INVALIDATED_METADATA_NAME, true))
-					.attributes(attrs -> attrs.remove(OAuth2ParameterNames.STATE))
-					.build();
+				.token(deviceCodeToken.getToken(),
+						metadata -> metadata.put(OAuth2Authorization.Token.INVALIDATED_METADATA_NAME, true))
+				.token(userCodeToken.getToken(),
+						metadata -> metadata.put(OAuth2Authorization.Token.INVALIDATED_METADATA_NAME, true))
+				.attributes(attrs -> attrs.remove(OAuth2ParameterNames.STATE))
+				.build();
 			this.authorizationService.save(authorization);
 			if (this.logger.isTraceEnabled()) {
 				this.logger.trace("Invalidated device code and user code because authorization consent was denied");
@@ -206,12 +209,12 @@ public final class OAuth2DeviceAuthorizationConsentAuthenticationProvider implem
 		}
 
 		authorization = OAuth2Authorization.from(authorization)
-				.authorizedScopes(authorizedScopes)
-				.token(userCodeToken.getToken(), metadata ->
-						metadata.put(OAuth2Authorization.Token.INVALIDATED_METADATA_NAME, true))
-				.attributes(attrs -> attrs.remove(OAuth2ParameterNames.STATE))
-				.attributes(attrs -> attrs.remove(OAuth2ParameterNames.SCOPE))
-				.build();
+			.authorizedScopes(authorizedScopes)
+			.token(userCodeToken.getToken(),
+					metadata -> metadata.put(OAuth2Authorization.Token.INVALIDATED_METADATA_NAME, true))
+			.attributes(attrs -> attrs.remove(OAuth2ParameterNames.STATE))
+			.attributes(attrs -> attrs.remove(OAuth2ParameterNames.SCOPE))
+			.build();
 		this.authorizationService.save(authorization);
 
 		if (this.logger.isTraceEnabled()) {
@@ -230,33 +233,36 @@ public final class OAuth2DeviceAuthorizationConsentAuthenticationProvider implem
 	}
 
 	/**
-	 * Sets the {@code Consumer} providing access to the {@link OAuth2AuthorizationConsentAuthenticationContext}
-	 * containing an {@link OAuth2AuthorizationConsent.Builder} and additional context information.
+	 * Sets the {@code Consumer} providing access to the
+	 * {@link OAuth2AuthorizationConsentAuthenticationContext} containing an
+	 * {@link OAuth2AuthorizationConsent.Builder} and additional context information.
 	 *
 	 * <p>
 	 * The following context attributes are available:
 	 * <ul>
-	 * <li>The {@link OAuth2AuthorizationConsent.Builder} used to build the authorization consent
-	 * prior to {@link OAuth2AuthorizationConsentService#save(OAuth2AuthorizationConsent)}.</li>
+	 * <li>The {@link OAuth2AuthorizationConsent.Builder} used to build the authorization
+	 * consent prior to
+	 * {@link OAuth2AuthorizationConsentService#save(OAuth2AuthorizationConsent)}.</li>
 	 * <li>The {@link Authentication} of type
 	 * {@link OAuth2DeviceAuthorizationConsentAuthenticationToken}.</li>
-	 * <li>The {@link RegisteredClient} associated with the device authorization request.</li>
-	 * <li>The {@link OAuth2Authorization} associated with the state token presented in the
-	 * device authorization consent request.</li>
+	 * <li>The {@link RegisteredClient} associated with the device authorization
+	 * request.</li>
+	 * <li>The {@link OAuth2Authorization} associated with the state token presented in
+	 * the device authorization consent request.</li>
 	 * </ul>
-	 *
 	 * @param authorizationConsentCustomizer the {@code Consumer} providing access to the
-	 * {@link OAuth2AuthorizationConsentAuthenticationContext} containing an {@link OAuth2AuthorizationConsent.Builder}
+	 * {@link OAuth2AuthorizationConsentAuthenticationContext} containing an
+	 * {@link OAuth2AuthorizationConsent.Builder}
 	 */
-	public void setAuthorizationConsentCustomizer(Consumer<OAuth2AuthorizationConsentAuthenticationContext> authorizationConsentCustomizer) {
+	public void setAuthorizationConsentCustomizer(
+			Consumer<OAuth2AuthorizationConsentAuthenticationContext> authorizationConsentCustomizer) {
 		Assert.notNull(authorizationConsentCustomizer, "authorizationConsentCustomizer cannot be null");
 		this.authorizationConsentCustomizer = authorizationConsentCustomizer;
 	}
 
 	private static boolean isPrincipalAuthenticated(Authentication principal) {
-		return principal != null &&
-				!AnonymousAuthenticationToken.class.isAssignableFrom(principal.getClass()) &&
-				principal.isAuthenticated();
+		return principal != null && !AnonymousAuthenticationToken.class.isAssignableFrom(principal.getClass())
+				&& principal.isAuthenticated();
 	}
 
 	private static void throwError(String errorCode, String parameterName) {

@@ -55,12 +55,21 @@ import static org.springframework.security.oauth2.server.authorization.config.an
  * @see OidcLogoutEndpointFilter
  */
 public final class OidcLogoutEndpointConfigurer extends AbstractOAuth2Configurer {
+
 	private RequestMatcher requestMatcher;
+
 	private final List<AuthenticationConverter> logoutRequestConverters = new ArrayList<>();
-	private Consumer<List<AuthenticationConverter>> logoutRequestConvertersConsumer = (logoutRequestConverters) -> {};
+
+	private Consumer<List<AuthenticationConverter>> logoutRequestConvertersConsumer = (logoutRequestConverters) -> {
+	};
+
 	private final List<AuthenticationProvider> authenticationProviders = new ArrayList<>();
-	private Consumer<List<AuthenticationProvider>> authenticationProvidersConsumer = (authenticationProviders) -> {};
+
+	private Consumer<List<AuthenticationProvider>> authenticationProvidersConsumer = (authenticationProviders) -> {
+	};
+
 	private AuthenticationSuccessHandler logoutResponseHandler;
+
 	private AuthenticationFailureHandler errorResponseHandler;
 
 	/**
@@ -71,25 +80,26 @@ public final class OidcLogoutEndpointConfigurer extends AbstractOAuth2Configurer
 	}
 
 	/**
-	 * Adds an {@link AuthenticationConverter} used when attempting to extract a Logout Request from {@link HttpServletRequest}
-	 * to an instance of {@link OidcLogoutAuthenticationToken} used for authenticating the request.
-	 *
-	 * @param logoutRequestConverter an {@link AuthenticationConverter} used when attempting to extract a Logout Request from {@link HttpServletRequest}
+	 * Adds an {@link AuthenticationConverter} used when attempting to extract a Logout
+	 * Request from {@link HttpServletRequest} to an instance of
+	 * {@link OidcLogoutAuthenticationToken} used for authenticating the request.
+	 * @param logoutRequestConverter an {@link AuthenticationConverter} used when
+	 * attempting to extract a Logout Request from {@link HttpServletRequest}
 	 * @return the {@link OidcLogoutEndpointConfigurer} for further configuration
 	 */
-	public OidcLogoutEndpointConfigurer logoutRequestConverter(
-			AuthenticationConverter logoutRequestConverter) {
+	public OidcLogoutEndpointConfigurer logoutRequestConverter(AuthenticationConverter logoutRequestConverter) {
 		Assert.notNull(logoutRequestConverter, "logoutRequestConverter cannot be null");
 		this.logoutRequestConverters.add(logoutRequestConverter);
 		return this;
 	}
 
 	/**
-	 * Sets the {@code Consumer} providing access to the {@code List} of default
-	 * and (optionally) added {@link #logoutRequestConverter(AuthenticationConverter) AuthenticationConverter}'s
-	 * allowing the ability to add, remove, or customize a specific {@link AuthenticationConverter}.
-	 *
-	 * @param logoutRequestConvertersConsumer the {@code Consumer} providing access to the {@code List} of default and (optionally) added {@link AuthenticationConverter}'s
+	 * Sets the {@code Consumer} providing access to the {@code List} of default and
+	 * (optionally) added {@link #logoutRequestConverter(AuthenticationConverter)
+	 * AuthenticationConverter}'s allowing the ability to add, remove, or customize a
+	 * specific {@link AuthenticationConverter}.
+	 * @param logoutRequestConvertersConsumer the {@code Consumer} providing access to the
+	 * {@code List} of default and (optionally) added {@link AuthenticationConverter}'s
 	 * @return the {@link OidcLogoutEndpointConfigurer} for further configuration
 	 */
 	public OidcLogoutEndpointConfigurer logoutRequestConverters(
@@ -100,9 +110,10 @@ public final class OidcLogoutEndpointConfigurer extends AbstractOAuth2Configurer
 	}
 
 	/**
-	 * Adds an {@link AuthenticationProvider} used for authenticating an {@link OidcLogoutAuthenticationToken}.
-	 *
-	 * @param authenticationProvider an {@link AuthenticationProvider} used for authenticating an {@link OidcLogoutAuthenticationToken}
+	 * Adds an {@link AuthenticationProvider} used for authenticating an
+	 * {@link OidcLogoutAuthenticationToken}.
+	 * @param authenticationProvider an {@link AuthenticationProvider} used for
+	 * authenticating an {@link OidcLogoutAuthenticationToken}
 	 * @return the {@link OidcLogoutEndpointConfigurer} for further configuration
 	 */
 	public OidcLogoutEndpointConfigurer authenticationProvider(AuthenticationProvider authenticationProvider) {
@@ -112,11 +123,12 @@ public final class OidcLogoutEndpointConfigurer extends AbstractOAuth2Configurer
 	}
 
 	/**
-	 * Sets the {@code Consumer} providing access to the {@code List} of default
-	 * and (optionally) added {@link #authenticationProvider(AuthenticationProvider) AuthenticationProvider}'s
-	 * allowing the ability to add, remove, or customize a specific {@link AuthenticationProvider}.
-	 *
-	 * @param authenticationProvidersConsumer the {@code Consumer} providing access to the {@code List} of default and (optionally) added {@link AuthenticationProvider}'s
+	 * Sets the {@code Consumer} providing access to the {@code List} of default and
+	 * (optionally) added {@link #authenticationProvider(AuthenticationProvider)
+	 * AuthenticationProvider}'s allowing the ability to add, remove, or customize a
+	 * specific {@link AuthenticationProvider}.
+	 * @param authenticationProvidersConsumer the {@code Consumer} providing access to the
+	 * {@code List} of default and (optionally) added {@link AuthenticationProvider}'s
 	 * @return the {@link OidcLogoutEndpointConfigurer} for further configuration
 	 */
 	public OidcLogoutEndpointConfigurer authenticationProviders(
@@ -127,10 +139,10 @@ public final class OidcLogoutEndpointConfigurer extends AbstractOAuth2Configurer
 	}
 
 	/**
-	 * Sets the {@link AuthenticationSuccessHandler} used for handling an {@link OidcLogoutAuthenticationToken}
-	 * and performing the logout.
-	 *
-	 * @param logoutResponseHandler the {@link AuthenticationSuccessHandler} used for handling an {@link OidcLogoutAuthenticationToken}
+	 * Sets the {@link AuthenticationSuccessHandler} used for handling an
+	 * {@link OidcLogoutAuthenticationToken} and performing the logout.
+	 * @param logoutResponseHandler the {@link AuthenticationSuccessHandler} used for
+	 * handling an {@link OidcLogoutAuthenticationToken}
 	 * @return the {@link OidcLogoutEndpointConfigurer} for further configuration
 	 */
 	public OidcLogoutEndpointConfigurer logoutResponseHandler(AuthenticationSuccessHandler logoutResponseHandler) {
@@ -139,10 +151,11 @@ public final class OidcLogoutEndpointConfigurer extends AbstractOAuth2Configurer
 	}
 
 	/**
-	 * Sets the {@link AuthenticationFailureHandler} used for handling an {@link OAuth2AuthenticationException}
-	 * and returning the {@link OAuth2Error Error Response}.
-	 *
-	 * @param errorResponseHandler the {@link AuthenticationFailureHandler} used for handling an {@link OAuth2AuthenticationException}
+	 * Sets the {@link AuthenticationFailureHandler} used for handling an
+	 * {@link OAuth2AuthenticationException} and returning the {@link OAuth2Error Error
+	 * Response}.
+	 * @param errorResponseHandler the {@link AuthenticationFailureHandler} used for
+	 * handling an {@link OAuth2AuthenticationException}
 	 * @return the {@link OidcLogoutEndpointConfigurer} for further configuration
 	 */
 	public OidcLogoutEndpointConfigurer errorResponseHandler(AuthenticationFailureHandler errorResponseHandler) {
@@ -166,14 +179,15 @@ public final class OidcLogoutEndpointConfigurer extends AbstractOAuth2Configurer
 			authenticationProviders.addAll(0, this.authenticationProviders);
 		}
 		this.authenticationProvidersConsumer.accept(authenticationProviders);
-		authenticationProviders.forEach(authenticationProvider ->
-				httpSecurity.authenticationProvider(postProcess(authenticationProvider)));
+		authenticationProviders.forEach(
+				authenticationProvider -> httpSecurity.authenticationProvider(postProcess(authenticationProvider)));
 	}
 
 	@Override
 	void configure(HttpSecurity httpSecurity) {
 		AuthenticationManager authenticationManager = httpSecurity.getSharedObject(AuthenticationManager.class);
-		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils.getAuthorizationServerSettings(httpSecurity);
+		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils
+			.getAuthorizationServerSettings(httpSecurity);
 
 		String logoutEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed() ?
 				withMultipleIssuersPattern(authorizationServerSettings.getOidcLogoutEndpoint()) :
@@ -185,8 +199,8 @@ public final class OidcLogoutEndpointConfigurer extends AbstractOAuth2Configurer
 			authenticationConverters.addAll(0, this.logoutRequestConverters);
 		}
 		this.logoutRequestConvertersConsumer.accept(authenticationConverters);
-		oidcLogoutEndpointFilter.setAuthenticationConverter(
-				new DelegatingAuthenticationConverter(authenticationConverters));
+		oidcLogoutEndpointFilter
+			.setAuthenticationConverter(new DelegatingAuthenticationConverter(authenticationConverters));
 		if (this.logoutResponseHandler != null) {
 			oidcLogoutEndpointFilter.setAuthenticationSuccessHandler(this.logoutResponseHandler);
 		}
@@ -212,11 +226,10 @@ public final class OidcLogoutEndpointConfigurer extends AbstractOAuth2Configurer
 	private static List<AuthenticationProvider> createDefaultAuthenticationProviders(HttpSecurity httpSecurity) {
 		List<AuthenticationProvider> authenticationProviders = new ArrayList<>();
 
-		OidcLogoutAuthenticationProvider oidcLogoutAuthenticationProvider =
-				new OidcLogoutAuthenticationProvider(
-						OAuth2ConfigurerUtils.getRegisteredClientRepository(httpSecurity),
-						OAuth2ConfigurerUtils.getAuthorizationService(httpSecurity),
-						httpSecurity.getSharedObject(SessionRegistry.class));
+		OidcLogoutAuthenticationProvider oidcLogoutAuthenticationProvider = new OidcLogoutAuthenticationProvider(
+				OAuth2ConfigurerUtils.getRegisteredClientRepository(httpSecurity),
+				OAuth2ConfigurerUtils.getAuthorizationService(httpSecurity),
+				httpSecurity.getSharedObject(SessionRegistry.class));
 		authenticationProviders.add(oidcLogoutAuthenticationProvider);
 
 		return authenticationProviders;

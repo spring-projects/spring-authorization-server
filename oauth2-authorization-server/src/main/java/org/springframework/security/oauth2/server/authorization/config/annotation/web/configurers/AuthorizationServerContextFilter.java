@@ -36,7 +36,8 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.util.UriComponentsBuilder;
 
 /**
- * A {@code Filter} that associates the {@link AuthorizationServerContext} to the {@link AuthorizationServerContextHolder}.
+ * A {@code Filter} that associates the {@link AuthorizationServerContext} to the
+ * {@link AuthorizationServerContextHolder}.
  *
  * @author Joe Grandja
  * @since 0.2.2
@@ -45,6 +46,7 @@ import org.springframework.web.util.UriComponentsBuilder;
  * @see AuthorizationServerSettings
  */
 final class AuthorizationServerContextFilter extends OncePerRequestFilter {
+
 	private final AuthorizationServerSettings authorizationServerSettings;
 	private final IssuerResolver issuerResolver;
 
@@ -64,7 +66,8 @@ final class AuthorizationServerContextFilter extends OncePerRequestFilter {
 					new DefaultAuthorizationServerContext(issuer, this.authorizationServerSettings);
 			AuthorizationServerContextHolder.setContext(authorizationServerContext);
 			filterChain.doFilter(request, response);
-		} finally {
+		}
+		finally {
 			AuthorizationServerContextHolder.resetContext();
 		}
 	}

@@ -27,8 +27,8 @@ import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 import org.springframework.security.oauth2.jwt.Jwt;
 
 /**
- * A {@link ClaimAccessor} for the "claims" that are contained
- * in the OpenID Client Registration Request and Response.
+ * A {@link ClaimAccessor} for the "claims" that are contained in the OpenID Client
+ * Registration Request and Response.
  *
  * @author Ovidiu Popa
  * @author Joe Grandja
@@ -36,14 +36,17 @@ import org.springframework.security.oauth2.jwt.Jwt;
  * @see ClaimAccessor
  * @see OidcClientMetadataClaimNames
  * @see OidcClientRegistration
- * @see <a target="_blank" href="https://openid.net/specs/openid-connect-registration-1_0.html#ClientMetadata">2. Client Metadata</a>
- * @see <a target="_blank" href="https://openid.net/specs/openid-connect-rpinitiated-1_0.html#ClientMetadata">3.1. Client Registration Metadata</a>
+ * @see <a target="_blank" href=
+ * "https://openid.net/specs/openid-connect-registration-1_0.html#ClientMetadata">2.
+ * Client Metadata</a>
+ * @see <a target="_blank" href=
+ * "https://openid.net/specs/openid-connect-rpinitiated-1_0.html#ClientMetadata">3.1.
+ * Client Registration Metadata</a>
  */
 public interface OidcClientMetadataClaimAccessor extends ClaimAccessor {
 
 	/**
 	 * Returns the Client Identifier {@code (client_id)}.
-	 *
 	 * @return the Client Identifier
 	 */
 	default String getClientId() {
@@ -51,8 +54,8 @@ public interface OidcClientMetadataClaimAccessor extends ClaimAccessor {
 	}
 
 	/**
-	 * Returns the time at which the Client Identifier was issued {@code (client_id_issued_at)}.
-	 *
+	 * Returns the time at which the Client Identifier was issued
+	 * {@code (client_id_issued_at)}.
 	 * @return the time at which the Client Identifier was issued
 	 */
 	default Instant getClientIdIssuedAt() {
@@ -61,7 +64,6 @@ public interface OidcClientMetadataClaimAccessor extends ClaimAccessor {
 
 	/**
 	 * Returns the Client Secret {@code (client_secret)}.
-	 *
 	 * @return the Client Secret
 	 */
 	default String getClientSecret() {
@@ -69,8 +71,8 @@ public interface OidcClientMetadataClaimAccessor extends ClaimAccessor {
 	}
 
 	/**
-	 * Returns the time at which the {@code client_secret} will expire {@code (client_secret_expires_at)}.
-	 *
+	 * Returns the time at which the {@code client_secret} will expire
+	 * {@code (client_secret_expires_at)}.
 	 * @return the time at which the {@code client_secret} will expire
 	 */
 	default Instant getClientSecretExpiresAt() {
@@ -78,8 +80,8 @@ public interface OidcClientMetadataClaimAccessor extends ClaimAccessor {
 	}
 
 	/**
-	 * Returns the name of the Client to be presented to the End-User {@code (client_name)}.
-	 *
+	 * Returns the name of the Client to be presented to the End-User
+	 * {@code (client_name)}.
 	 * @return the name of the Client to be presented to the End-User
 	 */
 	default String getClientName() {
@@ -87,8 +89,8 @@ public interface OidcClientMetadataClaimAccessor extends ClaimAccessor {
 	}
 
 	/**
-	 * Returns the redirection {@code URI} values used by the Client {@code (redirect_uris)}.
-	 *
+	 * Returns the redirection {@code URI} values used by the Client
+	 * {@code (redirect_uris)}.
 	 * @return the redirection {@code URI} values used by the Client
 	 */
 	default List<String> getRedirectUris() {
@@ -96,10 +98,10 @@ public interface OidcClientMetadataClaimAccessor extends ClaimAccessor {
 	}
 
 	/**
-	 * Returns the post logout redirection {@code URI} values used by the Client {@code (post_logout_redirect_uris)}.
-	 * The {@code post_logout_redirect_uri} parameter is used by the client when requesting
-	 * that the End-User's User Agent be redirected to after a logout has been performed.
-	 *
+	 * Returns the post logout redirection {@code URI} values used by the Client
+	 * {@code (post_logout_redirect_uris)}. The {@code post_logout_redirect_uri} parameter
+	 * is used by the client when requesting that the End-User's User Agent be redirected
+	 * to after a logout has been performed.
 	 * @return the post logout redirection {@code URI} values used by the Client
 	 * @since 1.1
 	 */
@@ -108,8 +110,8 @@ public interface OidcClientMetadataClaimAccessor extends ClaimAccessor {
 	}
 
 	/**
-	 * Returns the authentication method used by the Client for the Token Endpoint {@code (token_endpoint_auth_method)}.
-	 *
+	 * Returns the authentication method used by the Client for the Token Endpoint
+	 * {@code (token_endpoint_auth_method)}.
 	 * @return the authentication method used by the Client for the Token Endpoint
 	 */
 	default String getTokenEndpointAuthenticationMethod() {
@@ -117,11 +119,13 @@ public interface OidcClientMetadataClaimAccessor extends ClaimAccessor {
 	}
 
 	/**
-	 * Returns the {@link JwsAlgorithm JWS} algorithm that must be used for signing the {@link Jwt JWT} used to authenticate
-	 * the Client at the Token Endpoint for the {@link ClientAuthenticationMethod#PRIVATE_KEY_JWT private_key_jwt} and
-	 * {@link ClientAuthenticationMethod#CLIENT_SECRET_JWT client_secret_jwt} authentication methods {@code (token_endpoint_auth_signing_alg)}.
-	 *
-	 * @return the {@link JwsAlgorithm JWS} algorithm that must be used for signing the {@link Jwt JWT} used to authenticate the Client at the Token Endpoint
+	 * Returns the {@link JwsAlgorithm JWS} algorithm that must be used for signing the
+	 * {@link Jwt JWT} used to authenticate the Client at the Token Endpoint for the
+	 * {@link ClientAuthenticationMethod#PRIVATE_KEY_JWT private_key_jwt} and
+	 * {@link ClientAuthenticationMethod#CLIENT_SECRET_JWT client_secret_jwt}
+	 * authentication methods {@code (token_endpoint_auth_signing_alg)}.
+	 * @return the {@link JwsAlgorithm JWS} algorithm that must be used for signing the
+	 * {@link Jwt JWT} used to authenticate the Client at the Token Endpoint
 	 * @since 0.2.2
 	 */
 	default String getTokenEndpointAuthenticationSigningAlgorithm() {
@@ -129,27 +133,30 @@ public interface OidcClientMetadataClaimAccessor extends ClaimAccessor {
 	}
 
 	/**
-	 * Returns the OAuth 2.0 {@code grant_type} values that the Client will restrict itself to using {@code (grant_types)}.
-	 *
-	 * @return the OAuth 2.0 {@code grant_type} values that the Client will restrict itself to using
+	 * Returns the OAuth 2.0 {@code grant_type} values that the Client will restrict
+	 * itself to using {@code (grant_types)}.
+	 * @return the OAuth 2.0 {@code grant_type} values that the Client will restrict
+	 * itself to using
 	 */
 	default List<String> getGrantTypes() {
 		return getClaimAsStringList(OidcClientMetadataClaimNames.GRANT_TYPES);
 	}
 
 	/**
-	 * Returns the OAuth 2.0 {@code response_type} values that the Client will restrict itself to using {@code (response_types)}.
-	 *
-	 * @return the OAuth 2.0 {@code response_type} values that the Client will restrict itself to using
+	 * Returns the OAuth 2.0 {@code response_type} values that the Client will restrict
+	 * itself to using {@code (response_types)}.
+	 * @return the OAuth 2.0 {@code response_type} values that the Client will restrict
+	 * itself to using
 	 */
 	default List<String> getResponseTypes() {
 		return getClaimAsStringList(OidcClientMetadataClaimNames.RESPONSE_TYPES);
 	}
 
 	/**
-	 * Returns the OAuth 2.0 {@code scope} values that the Client will restrict itself to using {@code (scope)}.
-	 *
-	 * @return the OAuth 2.0 {@code scope} values that the Client will restrict itself to using
+	 * Returns the OAuth 2.0 {@code scope} values that the Client will restrict itself to
+	 * using {@code (scope)}.
+	 * @return the OAuth 2.0 {@code scope} values that the Client will restrict itself to
+	 * using
 	 */
 	default List<String> getScopes() {
 		return getClaimAsStringList(OidcClientMetadataClaimNames.SCOPE);
@@ -157,7 +164,6 @@ public interface OidcClientMetadataClaimAccessor extends ClaimAccessor {
 
 	/**
 	 * Returns the {@code URL} for the Client's JSON Web Key Set {@code (jwks_uri)}.
-	 *
 	 * @return the {@code URL} for the Client's JSON Web Key Set {@code (jwks_uri)}
 	 * @since 0.2.2
 	 */
@@ -166,18 +172,21 @@ public interface OidcClientMetadataClaimAccessor extends ClaimAccessor {
 	}
 
 	/**
-	 * Returns the {@link SignatureAlgorithm JWS} algorithm required for signing the {@link OidcIdToken ID Token} issued to the Client {@code (id_token_signed_response_alg)}.
-	 *
-	 * @return the {@link SignatureAlgorithm JWS} algorithm required for signing the {@link OidcIdToken ID Token} issued to the Client
+	 * Returns the {@link SignatureAlgorithm JWS} algorithm required for signing the
+	 * {@link OidcIdToken ID Token} issued to the Client
+	 * {@code (id_token_signed_response_alg)}.
+	 * @return the {@link SignatureAlgorithm JWS} algorithm required for signing the
+	 * {@link OidcIdToken ID Token} issued to the Client
 	 */
 	default String getIdTokenSignedResponseAlgorithm() {
 		return getClaimAsString(OidcClientMetadataClaimNames.ID_TOKEN_SIGNED_RESPONSE_ALG);
 	}
 
 	/**
-	 * Returns the Registration Access Token that can be used at the Client Configuration Endpoint.
-	 *
-	 * @return the Registration Access Token that can be used at the Client Configuration Endpoint
+	 * Returns the Registration Access Token that can be used at the Client Configuration
+	 * Endpoint.
+	 * @return the Registration Access Token that can be used at the Client Configuration
+	 * Endpoint
 	 * @since 0.2.1
 	 */
 	default String getRegistrationAccessToken() {
@@ -185,9 +194,10 @@ public interface OidcClientMetadataClaimAccessor extends ClaimAccessor {
 	}
 
 	/**
-	 * Returns the {@code URL} of the Client Configuration Endpoint where the Registration Access Token can be used.
-	 *
-	 * @return the {@code URL} of the Client Configuration Endpoint where the Registration Access Token can be used
+	 * Returns the {@code URL} of the Client Configuration Endpoint where the Registration
+	 * Access Token can be used.
+	 * @return the {@code URL} of the Client Configuration Endpoint where the Registration
+	 * Access Token can be used
 	 * @since 0.2.1
 	 */
 	default URL getRegistrationClientUrl() {

@@ -20,16 +20,16 @@ import java.util.Map;
 import org.springframework.util.Assert;
 
 /**
- * A representation of an OAuth 2.0 Authorization Server Metadata response,
- * which is returned from an OAuth 2.0 Authorization Server's Metadata Endpoint,
- * and contains a set of claims about the Authorization Server's configuration.
- * The claims are defined by the OAuth 2.0 Authorization Server Metadata
- * specification (RFC 8414).
+ * A representation of an OAuth 2.0 Authorization Server Metadata response, which is
+ * returned from an OAuth 2.0 Authorization Server's Metadata Endpoint, and contains a set
+ * of claims about the Authorization Server's configuration. The claims are defined by the
+ * OAuth 2.0 Authorization Server Metadata specification (RFC 8414).
  *
  * @author Daniel Garnier-Moiroux
  * @since 0.1.1
  * @see AbstractOAuth2AuthorizationServerMetadata
- * @see <a target="_blank" href="https://tools.ietf.org/html/rfc8414#section-3.2">3.2. Authorization Server Metadata Response</a>
+ * @see <a target="_blank" href="https://tools.ietf.org/html/rfc8414#section-3.2">3.2.
+ * Authorization Server Metadata Response</a>
  */
 public final class OAuth2AuthorizationServerMetadata extends AbstractOAuth2AuthorizationServerMetadata {
 
@@ -39,7 +39,6 @@ public final class OAuth2AuthorizationServerMetadata extends AbstractOAuth2Autho
 
 	/**
 	 * Constructs a new {@link Builder} with empty claims.
-	 *
 	 * @return the {@link Builder}
 	 */
 	public static Builder builder() {
@@ -48,14 +47,12 @@ public final class OAuth2AuthorizationServerMetadata extends AbstractOAuth2Autho
 
 	/**
 	 * Constructs a new {@link Builder} with the provided claims.
-	 *
 	 * @param claims the claims to initialize the builder
 	 * @return the {@link Builder}
 	 */
 	public static Builder withClaims(Map<String, Object> claims) {
 		Assert.notEmpty(claims, "claims cannot be empty");
-		return new Builder()
-				.claims(c -> c.putAll(claims));
+		return new Builder().claims(c -> c.putAll(claims));
 	}
 
 	/**
@@ -69,10 +66,9 @@ public final class OAuth2AuthorizationServerMetadata extends AbstractOAuth2Autho
 		/**
 		 * Validate the claims and build the {@link OAuth2AuthorizationServerMetadata}.
 		 * <p>
-		 * The following claims are REQUIRED:
-		 * {@code issuer}, {@code authorization_endpoint}, {@code token_endpoint}
-		 * and {@code response_types_supported}.
-		 *
+		 * The following claims are REQUIRED: {@code issuer},
+		 * {@code authorization_endpoint}, {@code token_endpoint} and
+		 * {@code response_types_supported}.
 		 * @return the {@link OAuth2AuthorizationServerMetadata}
 		 */
 		@Override

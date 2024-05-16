@@ -67,12 +67,22 @@ import static org.springframework.security.oauth2.server.authorization.config.an
  * @see OAuth2TokenEndpointFilter
  */
 public final class OAuth2TokenEndpointConfigurer extends AbstractOAuth2Configurer {
+
 	private RequestMatcher requestMatcher;
+
 	private final List<AuthenticationConverter> accessTokenRequestConverters = new ArrayList<>();
-	private Consumer<List<AuthenticationConverter>> accessTokenRequestConvertersConsumer = (accessTokenRequestConverters) -> {};
+
+	private Consumer<List<AuthenticationConverter>> accessTokenRequestConvertersConsumer = (
+			accessTokenRequestConverters) -> {
+	};
+
 	private final List<AuthenticationProvider> authenticationProviders = new ArrayList<>();
-	private Consumer<List<AuthenticationProvider>> authenticationProvidersConsumer = (authenticationProviders) -> {};
+
+	private Consumer<List<AuthenticationProvider>> authenticationProvidersConsumer = (authenticationProviders) -> {
+	};
+
 	private AuthenticationSuccessHandler accessTokenResponseHandler;
+
 	private AuthenticationFailureHandler errorResponseHandler;
 
 	/**
@@ -83,24 +93,29 @@ public final class OAuth2TokenEndpointConfigurer extends AbstractOAuth2Configure
 	}
 
 	/**
-	 * Adds an {@link AuthenticationConverter} used when attempting to extract an Access Token Request from {@link HttpServletRequest}
-	 * to an instance of {@link OAuth2AuthorizationGrantAuthenticationToken} used for authenticating the authorization grant.
-	 *
-	 * @param accessTokenRequestConverter an {@link AuthenticationConverter} used when attempting to extract an Access Token Request from {@link HttpServletRequest}
+	 * Adds an {@link AuthenticationConverter} used when attempting to extract an Access
+	 * Token Request from {@link HttpServletRequest} to an instance of
+	 * {@link OAuth2AuthorizationGrantAuthenticationToken} used for authenticating the
+	 * authorization grant.
+	 * @param accessTokenRequestConverter an {@link AuthenticationConverter} used when
+	 * attempting to extract an Access Token Request from {@link HttpServletRequest}
 	 * @return the {@link OAuth2TokenEndpointConfigurer} for further configuration
 	 */
-	public OAuth2TokenEndpointConfigurer accessTokenRequestConverter(AuthenticationConverter accessTokenRequestConverter) {
+	public OAuth2TokenEndpointConfigurer accessTokenRequestConverter(
+			AuthenticationConverter accessTokenRequestConverter) {
 		Assert.notNull(accessTokenRequestConverter, "accessTokenRequestConverter cannot be null");
 		this.accessTokenRequestConverters.add(accessTokenRequestConverter);
 		return this;
 	}
 
 	/**
-	 * Sets the {@code Consumer} providing access to the {@code List} of default
-	 * and (optionally) added {@link #accessTokenRequestConverter(AuthenticationConverter) AuthenticationConverter}'s
-	 * allowing the ability to add, remove, or customize a specific {@link AuthenticationConverter}.
-	 *
-	 * @param accessTokenRequestConvertersConsumer the {@code Consumer} providing access to the {@code List} of default and (optionally) added {@link AuthenticationConverter}'s
+	 * Sets the {@code Consumer} providing access to the {@code List} of default and
+	 * (optionally) added {@link #accessTokenRequestConverter(AuthenticationConverter)
+	 * AuthenticationConverter}'s allowing the ability to add, remove, or customize a
+	 * specific {@link AuthenticationConverter}.
+	 * @param accessTokenRequestConvertersConsumer the {@code Consumer} providing access
+	 * to the {@code List} of default and (optionally) added
+	 * {@link AuthenticationConverter}'s
 	 * @return the {@link OAuth2TokenEndpointConfigurer} for further configuration
 	 * @since 0.4.0
 	 */
@@ -112,9 +127,10 @@ public final class OAuth2TokenEndpointConfigurer extends AbstractOAuth2Configure
 	}
 
 	/**
-	 * Adds an {@link AuthenticationProvider} used for authenticating a type of {@link OAuth2AuthorizationGrantAuthenticationToken}.
-	 *
-	 * @param authenticationProvider an {@link AuthenticationProvider} used for authenticating a type of {@link OAuth2AuthorizationGrantAuthenticationToken}
+	 * Adds an {@link AuthenticationProvider} used for authenticating a type of
+	 * {@link OAuth2AuthorizationGrantAuthenticationToken}.
+	 * @param authenticationProvider an {@link AuthenticationProvider} used for
+	 * authenticating a type of {@link OAuth2AuthorizationGrantAuthenticationToken}
 	 * @return the {@link OAuth2TokenEndpointConfigurer} for further configuration
 	 */
 	public OAuth2TokenEndpointConfigurer authenticationProvider(AuthenticationProvider authenticationProvider) {
@@ -124,11 +140,12 @@ public final class OAuth2TokenEndpointConfigurer extends AbstractOAuth2Configure
 	}
 
 	/**
-	 * Sets the {@code Consumer} providing access to the {@code List} of default
-	 * and (optionally) added {@link #authenticationProvider(AuthenticationProvider) AuthenticationProvider}'s
-	 * allowing the ability to add, remove, or customize a specific {@link AuthenticationProvider}.
-	 *
-	 * @param authenticationProvidersConsumer the {@code Consumer} providing access to the {@code List} of default and (optionally) added {@link AuthenticationProvider}'s
+	 * Sets the {@code Consumer} providing access to the {@code List} of default and
+	 * (optionally) added {@link #authenticationProvider(AuthenticationProvider)
+	 * AuthenticationProvider}'s allowing the ability to add, remove, or customize a
+	 * specific {@link AuthenticationProvider}.
+	 * @param authenticationProvidersConsumer the {@code Consumer} providing access to the
+	 * {@code List} of default and (optionally) added {@link AuthenticationProvider}'s
 	 * @return the {@link OAuth2TokenEndpointConfigurer} for further configuration
 	 * @since 0.4.0
 	 */
@@ -140,22 +157,25 @@ public final class OAuth2TokenEndpointConfigurer extends AbstractOAuth2Configure
 	}
 
 	/**
-	 * Sets the {@link AuthenticationSuccessHandler} used for handling an {@link OAuth2AccessTokenAuthenticationToken}
-	 * and returning the {@link OAuth2AccessTokenResponse Access Token Response}.
-	 *
-	 * @param accessTokenResponseHandler the {@link AuthenticationSuccessHandler} used for handling an {@link OAuth2AccessTokenAuthenticationToken}
+	 * Sets the {@link AuthenticationSuccessHandler} used for handling an
+	 * {@link OAuth2AccessTokenAuthenticationToken} and returning the
+	 * {@link OAuth2AccessTokenResponse Access Token Response}.
+	 * @param accessTokenResponseHandler the {@link AuthenticationSuccessHandler} used for
+	 * handling an {@link OAuth2AccessTokenAuthenticationToken}
 	 * @return the {@link OAuth2TokenEndpointConfigurer} for further configuration
 	 */
-	public OAuth2TokenEndpointConfigurer accessTokenResponseHandler(AuthenticationSuccessHandler accessTokenResponseHandler) {
+	public OAuth2TokenEndpointConfigurer accessTokenResponseHandler(
+			AuthenticationSuccessHandler accessTokenResponseHandler) {
 		this.accessTokenResponseHandler = accessTokenResponseHandler;
 		return this;
 	}
 
 	/**
-	 * Sets the {@link AuthenticationFailureHandler} used for handling an {@link OAuth2AuthenticationException}
-	 * and returning the {@link OAuth2Error Error Response}.
-	 *
-	 * @param errorResponseHandler the {@link AuthenticationFailureHandler} used for handling an {@link OAuth2AuthenticationException}
+	 * Sets the {@link AuthenticationFailureHandler} used for handling an
+	 * {@link OAuth2AuthenticationException} and returning the {@link OAuth2Error Error
+	 * Response}.
+	 * @param errorResponseHandler the {@link AuthenticationFailureHandler} used for
+	 * handling an {@link OAuth2AuthenticationException}
 	 * @return the {@link OAuth2TokenEndpointConfigurer} for further configuration
 	 */
 	public OAuth2TokenEndpointConfigurer errorResponseHandler(AuthenticationFailureHandler errorResponseHandler) {
@@ -176,14 +196,15 @@ public final class OAuth2TokenEndpointConfigurer extends AbstractOAuth2Configure
 			authenticationProviders.addAll(0, this.authenticationProviders);
 		}
 		this.authenticationProvidersConsumer.accept(authenticationProviders);
-		authenticationProviders.forEach(authenticationProvider ->
-				httpSecurity.authenticationProvider(postProcess(authenticationProvider)));
+		authenticationProviders.forEach(
+				authenticationProvider -> httpSecurity.authenticationProvider(postProcess(authenticationProvider)));
 	}
 
 	@Override
 	void configure(HttpSecurity httpSecurity) {
 		AuthenticationManager authenticationManager = httpSecurity.getSharedObject(AuthenticationManager.class);
-		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils.getAuthorizationServerSettings(httpSecurity);
+		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils
+			.getAuthorizationServerSettings(httpSecurity);
 
 		String tokenEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed() ?
 				withMultipleIssuersPattern(authorizationServerSettings.getTokenEndpoint()) :
@@ -195,8 +216,7 @@ public final class OAuth2TokenEndpointConfigurer extends AbstractOAuth2Configure
 			authenticationConverters.addAll(0, this.accessTokenRequestConverters);
 		}
 		this.accessTokenRequestConvertersConsumer.accept(authenticationConverters);
-		tokenEndpointFilter.setAuthenticationConverter(
-				new DelegatingAuthenticationConverter(authenticationConverters));
+		tokenEndpointFilter.setAuthenticationConverter(new DelegatingAuthenticationConverter(authenticationConverters));
 		if (this.accessTokenResponseHandler != null) {
 			tokenEndpointFilter.setAuthenticationSuccessHandler(this.accessTokenResponseHandler);
 		}
@@ -227,26 +247,27 @@ public final class OAuth2TokenEndpointConfigurer extends AbstractOAuth2Configure
 		List<AuthenticationProvider> authenticationProviders = new ArrayList<>();
 
 		OAuth2AuthorizationService authorizationService = OAuth2ConfigurerUtils.getAuthorizationService(httpSecurity);
-		OAuth2TokenGenerator<? extends OAuth2Token> tokenGenerator = OAuth2ConfigurerUtils.getTokenGenerator(httpSecurity);
+		OAuth2TokenGenerator<? extends OAuth2Token> tokenGenerator = OAuth2ConfigurerUtils
+			.getTokenGenerator(httpSecurity);
 
-		OAuth2AuthorizationCodeAuthenticationProvider authorizationCodeAuthenticationProvider =
-				new OAuth2AuthorizationCodeAuthenticationProvider(authorizationService, tokenGenerator);
+		OAuth2AuthorizationCodeAuthenticationProvider authorizationCodeAuthenticationProvider = new OAuth2AuthorizationCodeAuthenticationProvider(
+				authorizationService, tokenGenerator);
 		SessionRegistry sessionRegistry = httpSecurity.getSharedObject(SessionRegistry.class);
 		if (sessionRegistry != null) {
 			authorizationCodeAuthenticationProvider.setSessionRegistry(sessionRegistry);
 		}
 		authenticationProviders.add(authorizationCodeAuthenticationProvider);
 
-		OAuth2RefreshTokenAuthenticationProvider refreshTokenAuthenticationProvider =
-				new OAuth2RefreshTokenAuthenticationProvider(authorizationService, tokenGenerator);
+		OAuth2RefreshTokenAuthenticationProvider refreshTokenAuthenticationProvider = new OAuth2RefreshTokenAuthenticationProvider(
+				authorizationService, tokenGenerator);
 		authenticationProviders.add(refreshTokenAuthenticationProvider);
 
-		OAuth2ClientCredentialsAuthenticationProvider clientCredentialsAuthenticationProvider =
-				new OAuth2ClientCredentialsAuthenticationProvider(authorizationService, tokenGenerator);
+		OAuth2ClientCredentialsAuthenticationProvider clientCredentialsAuthenticationProvider = new OAuth2ClientCredentialsAuthenticationProvider(
+				authorizationService, tokenGenerator);
 		authenticationProviders.add(clientCredentialsAuthenticationProvider);
 
-		OAuth2DeviceCodeAuthenticationProvider deviceCodeAuthenticationProvider =
-				new OAuth2DeviceCodeAuthenticationProvider(authorizationService, tokenGenerator);
+		OAuth2DeviceCodeAuthenticationProvider deviceCodeAuthenticationProvider = new OAuth2DeviceCodeAuthenticationProvider(
+				authorizationService, tokenGenerator);
 		authenticationProviders.add(deviceCodeAuthenticationProvider);
 
 		OAuth2TokenExchangeAuthenticationProvider tokenExchangeAuthenticationProvider =

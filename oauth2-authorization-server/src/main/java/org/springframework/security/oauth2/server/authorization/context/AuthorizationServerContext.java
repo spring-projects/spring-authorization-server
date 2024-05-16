@@ -49,7 +49,6 @@ public interface AuthorizationServerContext {
 
 	/**
 	 * Returns the {@link AuthorizationServerSettings}.
-	 *
 	 * @return the {@link AuthorizationServerSettings}
 	 */
 	AuthorizationServerSettings getAuthorizationServerSettings();

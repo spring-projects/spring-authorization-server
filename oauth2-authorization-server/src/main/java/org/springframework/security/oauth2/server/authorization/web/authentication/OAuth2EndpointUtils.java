@@ -39,6 +39,7 @@ import org.springframework.util.StringUtils;
  * @since 0.1.2
  */
 final class OAuth2EndpointUtils {
+
 	static final String ACCESS_TOKEN_REQUEST_ERROR_URI = "https://datatracker.ietf.org/doc/html/rfc6749#section-5.2";
 
 	private OAuth2EndpointUtils() {
@@ -73,34 +74,33 @@ final class OAuth2EndpointUtils {
 		return parameters;
 	}
 
-	static Map<String, Object> getParametersIfMatchesAuthorizationCodeGrantRequest(HttpServletRequest request, String... exclusions) {
+	static Map<String, Object> getParametersIfMatchesAuthorizationCodeGrantRequest(HttpServletRequest request,
+			String... exclusions) {
 		if (!matchesAuthorizationCodeGrantRequest(request)) {
 			return Collections.emptyMap();
 		}
-		MultiValueMap<String, String> multiValueParameters =
-				"GET".equals(request.getMethod()) ?
-						getQueryParameters(request) :
-						getFormParameters(request);
+		MultiValueMap<String, String> multiValueParameters = "GET".equals(request.getMethod())
+				? getQueryParameters(request) : getFormParameters(request);
 		for (String exclusion : exclusions) {
 			multiValueParameters.remove(exclusion);
 		}
 
 		Map<String, Object> parameters = new HashMap<>();
-		multiValueParameters.forEach((key, value) ->
-				parameters.put(key, (value.size() == 1) ? value.get(0) : value.toArray(new String[0])));
+		multiValueParameters.forEach(
+				(key, value) -> parameters.put(key, (value.size() == 1) ? value.get(0) : value.toArray(new String[0])));
 
 		return parameters;
 	}
 
 	static boolean matchesAuthorizationCodeGrantRequest(HttpServletRequest request) {
-		return AuthorizationGrantType.AUTHORIZATION_CODE.getValue().equals(
-				request.getParameter(OAuth2ParameterNames.GRANT_TYPE)) &&
-				request.getParameter(OAuth2ParameterNames.CODE) != null;
+		return AuthorizationGrantType.AUTHORIZATION_CODE.getValue()
+			.equals(request.getParameter(OAuth2ParameterNames.GRANT_TYPE))
+				&& request.getParameter(OAuth2ParameterNames.CODE) != null;
 	}
 
 	static boolean matchesPkceTokenRequest(HttpServletRequest request) {
-		return matchesAuthorizationCodeGrantRequest(request) &&
-				request.getParameter(PkceParameterNames.CODE_VERIFIER) != null;
+		return matchesAuthorizationCodeGrantRequest(request)
+				&& request.getParameter(PkceParameterNames.CODE_VERIFIER) != null;
 	}
 
 	static void throwError(String errorCode, String parameterName, String errorUri) {
@@ -119,4 +119,5 @@ final class OAuth2EndpointUtils {
 	static boolean validateUserCode(String userCode) {
 		return (userCode != null && userCode.toUpperCase().replaceAll("[^A-Z\\d]+", "").length() == 8);
 	}
+
 }

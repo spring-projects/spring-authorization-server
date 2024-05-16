@@ -39,15 +39,18 @@ import static org.springframework.security.oauth2.server.authorization.authentic
  * @since 0.0.3
  * @see OAuth2TokenRevocationAuthenticationToken
  * @see OAuth2AuthorizationService
- * @see <a target="_blank" href="https://tools.ietf.org/html/rfc7009#section-2.1">Section 2.1 Revocation Request</a>
+ * @see <a target="_blank" href="https://tools.ietf.org/html/rfc7009#section-2.1">Section
+ * 2.1 Revocation Request</a>
  */
 public final class OAuth2TokenRevocationAuthenticationProvider implements AuthenticationProvider {
+
 	private final Log logger = LogFactory.getLog(getClass());
+
 	private final OAuth2AuthorizationService authorizationService;
 
 	/**
-	 * Constructs an {@code OAuth2TokenRevocationAuthenticationProvider} using the provided parameters.
-	 *
+	 * Constructs an {@code OAuth2TokenRevocationAuthenticationProvider} using the
+	 * provided parameters.
 	 * @param authorizationService the authorization service
 	 */
 	public OAuth2TokenRevocationAuthenticationProvider(OAuth2AuthorizationService authorizationService) {
@@ -57,15 +60,14 @@ public final class OAuth2TokenRevocationAuthenticationProvider implements Authen
 
 	@Override
 	public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-		OAuth2TokenRevocationAuthenticationToken tokenRevocationAuthentication =
-				(OAuth2TokenRevocationAuthenticationToken) authentication;
+		OAuth2TokenRevocationAuthenticationToken tokenRevocationAuthentication = (OAuth2TokenRevocationAuthenticationToken) authentication;
 
-		OAuth2ClientAuthenticationToken clientPrincipal =
-				getAuthenticatedClientElseThrowInvalidClient(tokenRevocationAuthentication);
+		OAuth2ClientAuthenticationToken clientPrincipal = getAuthenticatedClientElseThrowInvalidClient(
+				tokenRevocationAuthentication);
 		RegisteredClient registeredClient = clientPrincipal.getRegisteredClient();
 
-		OAuth2Authorization authorization = this.authorizationService.findByToken(
-				tokenRevocationAuthentication.getToken(), null);
+		OAuth2Authorization authorization = this.authorizationService
+			.findByToken(tokenRevocationAuthentication.getToken(), null);
 		if (authorization == null) {
 			if (this.logger.isTraceEnabled()) {
 				this.logger.trace("Did not authenticate token revocation request since token was not found");
@@ -95,4 +97,5 @@ public final class OAuth2TokenRevocationAuthenticationProvider implements Authen
 	public boolean supports(Class<?> authentication) {
 		return OAuth2TokenRevocationAuthenticationToken.class.isAssignableFrom(authentication);
 	}
+
 }

@@ -37,20 +37,21 @@ public final class ClientSettings extends AbstractSettings {
 	}
 
 	/**
-	 * Returns {@code true} if the client is required to provide a proof key challenge and verifier
-	 * when performing the Authorization Code Grant flow. The default is {@code false}.
-	 *
-	 * @return {@code true} if the client is required to provide a proof key challenge and verifier, {@code false} otherwise
+	 * Returns {@code true} if the client is required to provide a proof key challenge and
+	 * verifier when performing the Authorization Code Grant flow. The default is
+	 * {@code false}.
+	 * @return {@code true} if the client is required to provide a proof key challenge and
+	 * verifier, {@code false} otherwise
 	 */
 	public boolean isRequireProofKey() {
 		return getSetting(ConfigurationSettingNames.Client.REQUIRE_PROOF_KEY);
 	}
 
 	/**
-	 * Returns {@code true} if authorization consent is required when the client requests access.
-	 * The default is {@code false}.
-	 *
-	 * @return {@code true} if authorization consent is required when the client requests access, {@code false} otherwise
+	 * Returns {@code true} if authorization consent is required when the client requests
+	 * access. The default is {@code false}.
+	 * @return {@code true} if authorization consent is required when the client requests
+	 * access, {@code false} otherwise
 	 */
 	public boolean isRequireAuthorizationConsent() {
 		return getSetting(ConfigurationSettingNames.Client.REQUIRE_AUTHORIZATION_CONSENT);
@@ -58,7 +59,6 @@ public final class ClientSettings extends AbstractSettings {
 
 	/**
 	 * Returns the {@code URL} for the Client's JSON Web Key Set.
-	 *
 	 * @return the {@code URL} for the Client's JSON Web Key Set
 	 * @since 0.2.2
 	 */
@@ -67,11 +67,13 @@ public final class ClientSettings extends AbstractSettings {
 	}
 
 	/**
-	 * Returns the {@link JwsAlgorithm JWS} algorithm that must be used for signing the {@link Jwt JWT} used to authenticate
-	 * the Client at the Token Endpoint for the {@link ClientAuthenticationMethod#PRIVATE_KEY_JWT private_key_jwt} and
-	 * {@link ClientAuthenticationMethod#CLIENT_SECRET_JWT client_secret_jwt} authentication methods.
-	 *
-	 * @return the {@link JwsAlgorithm JWS} algorithm that must be used for signing the {@link Jwt JWT} used to authenticate the Client at the Token Endpoint
+	 * Returns the {@link JwsAlgorithm JWS} algorithm that must be used for signing the
+	 * {@link Jwt JWT} used to authenticate the Client at the Token Endpoint for the
+	 * {@link ClientAuthenticationMethod#PRIVATE_KEY_JWT private_key_jwt} and
+	 * {@link ClientAuthenticationMethod#CLIENT_SECRET_JWT client_secret_jwt}
+	 * authentication methods.
+	 * @return the {@link JwsAlgorithm JWS} algorithm that must be used for signing the
+	 * {@link Jwt JWT} used to authenticate the Client at the Token Endpoint
 	 * @since 0.2.2
 	 */
 	public JwsAlgorithm getTokenEndpointAuthenticationSigningAlgorithm() {
@@ -91,25 +93,20 @@ public final class ClientSettings extends AbstractSettings {
 
 	/**
 	 * Constructs a new {@link Builder} with the default settings.
-	 *
 	 * @return the {@link Builder}
 	 */
 	public static Builder builder() {
-		return new Builder()
-				.requireProofKey(false)
-				.requireAuthorizationConsent(false);
+		return new Builder().requireProofKey(false).requireAuthorizationConsent(false);
 	}
 
 	/**
 	 * Constructs a new {@link Builder} with the provided settings.
-	 *
 	 * @param settings the settings to initialize the builder
 	 * @return the {@link Builder}
 	 */
 	public static Builder withSettings(Map<String, Object> settings) {
 		Assert.notEmpty(settings, "settings cannot be empty");
-		return new Builder()
-				.settings(s -> s.putAll(settings));
+		return new Builder().settings(s -> s.putAll(settings));
 	}
 
 	/**
@@ -121,10 +118,10 @@ public final class ClientSettings extends AbstractSettings {
 		}
 
 		/**
-		 * Set to {@code true} if the client is required to provide a proof key challenge and verifier
-		 * when performing the Authorization Code Grant flow.
-		 *
-		 * @param requireProofKey {@code true} if the client is required to provide a proof key challenge and verifier, {@code false} otherwise
+		 * Set to {@code true} if the client is required to provide a proof key challenge
+		 * and verifier when performing the Authorization Code Grant flow.
+		 * @param requireProofKey {@code true} if the client is required to provide a
+		 * proof key challenge and verifier, {@code false} otherwise
 		 * @return the {@link Builder} for further configuration
 		 */
 		public Builder requireProofKey(boolean requireProofKey) {
@@ -132,10 +129,11 @@ public final class ClientSettings extends AbstractSettings {
 		}
 
 		/**
-		 * Set to {@code true} if authorization consent is required when the client requests access.
-		 * This applies to all interactive flows (e.g. {@code authorization_code} and {@code device_code}).
-		 *
-		 * @param requireAuthorizationConsent {@code true} if authorization consent is required when the client requests access, {@code false} otherwise
+		 * Set to {@code true} if authorization consent is required when the client
+		 * requests access. This applies to all interactive flows (e.g.
+		 * {@code authorization_code} and {@code device_code}).
+		 * @param requireAuthorizationConsent {@code true} if authorization consent is
+		 * required when the client requests access, {@code false} otherwise
 		 * @return the {@link Builder} for further configuration
 		 */
 		public Builder requireAuthorizationConsent(boolean requireAuthorizationConsent) {
@@ -144,7 +142,6 @@ public final class ClientSettings extends AbstractSettings {
 
 		/**
 		 * Sets the {@code URL} for the Client's JSON Web Key Set.
-		 *
 		 * @param jwkSetUrl the {@code URL} for the Client's JSON Web Key Set
 		 * @return the {@link Builder} for further configuration
 		 * @since 0.2.2
@@ -154,17 +151,20 @@ public final class ClientSettings extends AbstractSettings {
 		}
 
 		/**
-		 * Sets the {@link JwsAlgorithm JWS} algorithm that must be used for signing the {@link Jwt JWT} used to authenticate
-		 * the Client at the Token Endpoint for the {@link ClientAuthenticationMethod#PRIVATE_KEY_JWT private_key_jwt} and
-		 * {@link ClientAuthenticationMethod#CLIENT_SECRET_JWT client_secret_jwt} authentication methods.
-
-		 * @param authenticationSigningAlgorithm the {@link JwsAlgorithm JWS} algorithm that must be used for signing the {@link Jwt JWT}
-		 *                                       used to authenticate the Client at the Token Endpoint
+		 * Sets the {@link JwsAlgorithm JWS} algorithm that must be used for signing the
+		 * {@link Jwt JWT} used to authenticate the Client at the Token Endpoint for the
+		 * {@link ClientAuthenticationMethod#PRIVATE_KEY_JWT private_key_jwt} and
+		 * {@link ClientAuthenticationMethod#CLIENT_SECRET_JWT client_secret_jwt}
+		 * authentication methods.
+		 * @param authenticationSigningAlgorithm the {@link JwsAlgorithm JWS} algorithm
+		 * that must be used for signing the {@link Jwt JWT} used to authenticate the
+		 * Client at the Token Endpoint
 		 * @return the {@link Builder} for further configuration
 		 * @since 0.2.2
 		 */
 		public Builder tokenEndpointAuthenticationSigningAlgorithm(JwsAlgorithm authenticationSigningAlgorithm) {
-			return setting(ConfigurationSettingNames.Client.TOKEN_ENDPOINT_AUTHENTICATION_SIGNING_ALGORITHM, authenticationSigningAlgorithm);
+			return setting(ConfigurationSettingNames.Client.TOKEN_ENDPOINT_AUTHENTICATION_SIGNING_ALGORITHM,
+					authenticationSigningAlgorithm);
 		}
 
 		/**
@@ -181,7 +181,6 @@ public final class ClientSettings extends AbstractSettings {
 
 		/**
 		 * Builds the {@link ClientSettings}.
-		 *
 		 * @return the {@link ClientSettings}
 		 */
 		@Override

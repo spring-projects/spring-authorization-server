@@ -63,9 +63,9 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.util.UriComponentsBuilder;
 
 /**
- * A {@code Filter} for the OAuth 2.0 Device Authorization Grant,
- * which handles the processing of the Device Verification Request (submission of the user code)
- * and the Device Authorization Consent.
+ * A {@code Filter} for the OAuth 2.0 Device Authorization Grant, which handles the
+ * processing of the Device Verification Request (submission of the user code) and the
+ * Device Authorization Consent.
  *
  * @author Steve Riesenberg
  * @since 1.1
@@ -74,27 +74,36 @@ import org.springframework.web.util.UriComponentsBuilder;
  * @see OAuth2DeviceVerificationAuthenticationProvider
  * @see OAuth2DeviceAuthorizationConsentAuthenticationConverter
  * @see OAuth2DeviceAuthorizationConsentAuthenticationProvider
- * @see <a target="_blank" href="https://datatracker.ietf.org/doc/html/rfc8628">OAuth 2.0 Device Authorization Grant</a>
- * @see <a target="_blank" href="https://datatracker.ietf.org/doc/html/rfc8628#section-3.3">Section 3.3 User Interaction</a>
+ * @see <a target="_blank" href="https://datatracker.ietf.org/doc/html/rfc8628">OAuth 2.0
+ * Device Authorization Grant</a>
+ * @see <a target="_blank" href=
+ * "https://datatracker.ietf.org/doc/html/rfc8628#section-3.3">Section 3.3 User
+ * Interaction</a>
  */
 public final class OAuth2DeviceVerificationEndpointFilter extends OncePerRequestFilter {
 
 	static final String DEFAULT_DEVICE_VERIFICATION_ENDPOINT_URI = "/oauth2/device_verification";
 
 	private final AuthenticationManager authenticationManager;
+
 	private final RequestMatcher deviceVerificationEndpointMatcher;
+
 	private final RedirectStrategy redirectStrategy = new DefaultRedirectStrategy();
-	private AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource =
-			new WebAuthenticationDetailsSource();
+
+	private AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource = new WebAuthenticationDetailsSource();
+
 	private AuthenticationConverter authenticationConverter;
-	private AuthenticationSuccessHandler authenticationSuccessHandler =
-			new SimpleUrlAuthenticationSuccessHandler("/?success");
+
+	private AuthenticationSuccessHandler authenticationSuccessHandler = new SimpleUrlAuthenticationSuccessHandler(
+			"/?success");
+
 	private AuthenticationFailureHandler authenticationFailureHandler = this::sendErrorResponse;
+
 	private String consentPage;
 
 	/**
-	 * Constructs an {@code OAuth2DeviceVerificationEndpointFilter} using the provided parameters.
-	 *
+	 * Constructs an {@code OAuth2DeviceVerificationEndpointFilter} using the provided
+	 * parameters.
 	 * @param authenticationManager the authentication manager
 	 */
 	public OAuth2DeviceVerificationEndpointFilter(AuthenticationManager authenticationManager) {
@@ -102,29 +111,33 @@ public final class OAuth2DeviceVerificationEndpointFilter extends OncePerRequest
 	}
 
 	/**
-	 * Constructs an {@code OAuth2DeviceVerificationEndpointFilter} using the provided parameters.
-	 *
+	 * Constructs an {@code OAuth2DeviceVerificationEndpointFilter} using the provided
+	 * parameters.
 	 * @param authenticationManager the authentication manager
-	 * @param deviceVerificationEndpointUri the endpoint {@code URI} for device verification requests
+	 * @param deviceVerificationEndpointUri the endpoint {@code URI} for device
+	 * verification requests
 	 */
-	public OAuth2DeviceVerificationEndpointFilter(AuthenticationManager authenticationManager, String deviceVerificationEndpointUri) {
+	public OAuth2DeviceVerificationEndpointFilter(AuthenticationManager authenticationManager,
+			String deviceVerificationEndpointUri) {
 		Assert.notNull(authenticationManager, "authenticationManager cannot be null");
 		Assert.hasText(deviceVerificationEndpointUri, "deviceVerificationEndpointUri cannot be empty");
 		this.authenticationManager = authenticationManager;
 		this.deviceVerificationEndpointMatcher = createDefaultRequestMatcher(deviceVerificationEndpointUri);
+		// @formatter:off
 		this.authenticationConverter = new DelegatingAuthenticationConverter(
 				Arrays.asList(
 						new OAuth2DeviceVerificationAuthenticationConverter(),
 						new OAuth2DeviceAuthorizationConsentAuthenticationConverter()));
+		// @formatter:on
 	}
 
 	private RequestMatcher createDefaultRequestMatcher(String deviceVerificationEndpointUri) {
-		RequestMatcher verificationRequestGetMatcher = new AntPathRequestMatcher(
-				deviceVerificationEndpointUri, HttpMethod.GET.name());
-		RequestMatcher verificationRequestPostMatcher = new AntPathRequestMatcher(
-				deviceVerificationEndpointUri, HttpMethod.POST.name());
-		RequestMatcher userCodeParameterMatcher = request ->
-				request.getParameter(OAuth2ParameterNames.USER_CODE) != null;
+		RequestMatcher verificationRequestGetMatcher = new AntPathRequestMatcher(deviceVerificationEndpointUri,
+				HttpMethod.GET.name());
+		RequestMatcher verificationRequestPostMatcher = new AntPathRequestMatcher(deviceVerificationEndpointUri,
+				HttpMethod.POST.name());
+		RequestMatcher userCodeParameterMatcher = request -> request
+			.getParameter(OAuth2ParameterNames.USER_CODE) != null;
 
 		return new AndRequestMatcher(
 				new OrRequestMatcher(verificationRequestGetMatcher, verificationRequestPostMatcher),
@@ -144,14 +157,15 @@ public final class OAuth2DeviceVerificationEndpointFilter extends OncePerRequest
 			Authentication authentication = this.authenticationConverter.convert(request);
 			if (authentication instanceof AbstractAuthenticationToken) {
 				((AbstractAuthenticationToken) authentication)
-						.setDetails(this.authenticationDetailsSource.buildDetails(request));
+					.setDetails(this.authenticationDetailsSource.buildDetails(request));
 			}
 
 			Authentication authenticationResult = this.authenticationManager.authenticate(authentication);
 			if (!authenticationResult.isAuthenticated()) {
-				// If the Principal (Resource Owner) is not authenticated then
-				// pass through the chain with the expectation that the authentication process
-				// will commence via AuthenticationEntryPoint
+				// If the Principal (Resource Owner) is not authenticated then pass
+				// through the chain
+				// with the expectation that the authentication process will commence via
+				// AuthenticationEntryPoint
 				filterChain.doFilter(request, response);
 				return;
 			}
@@ -165,7 +179,8 @@ public final class OAuth2DeviceVerificationEndpointFilter extends OncePerRequest
 			}
 
 			this.authenticationSuccessHandler.onAuthenticationSuccess(request, response, authenticationResult);
-		} catch (OAuth2AuthenticationException ex) {
+		}
+		catch (OAuth2AuthenticationException ex) {
 			if (this.logger.isTraceEnabled()) {
 				this.logger.trace(LogMessage.format("Device verification request failed: %s", ex.getError()), ex);
 			}
@@ -174,21 +189,27 @@ public final class OAuth2DeviceVerificationEndpointFilter extends OncePerRequest
 	}
 
 	/**
-	 * Sets the {@link AuthenticationDetailsSource} used for building an authentication details instance from {@link HttpServletRequest}.
-	 *
-	 * @param authenticationDetailsSource the {@link AuthenticationDetailsSource} used for building an authentication details instance from {@link HttpServletRequest}
+	 * Sets the {@link AuthenticationDetailsSource} used for building an authentication
+	 * details instance from {@link HttpServletRequest}.
+	 * @param authenticationDetailsSource the {@link AuthenticationDetailsSource} used for
+	 * building an authentication details instance from {@link HttpServletRequest}
 	 */
-	public void setAuthenticationDetailsSource(AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource) {
+	public void setAuthenticationDetailsSource(
+			AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource) {
 		Assert.notNull(authenticationDetailsSource, "authenticationDetailsSource cannot be null");
 		this.authenticationDetailsSource = authenticationDetailsSource;
 	}
 
 	/**
-	 * Sets the {@link AuthenticationConverter} used when attempting to extract a Device Verification Request (or Device Authorization Consent) from {@link HttpServletRequest}
-	 * to an instance of {@link OAuth2DeviceVerificationAuthenticationToken} or {@link OAuth2DeviceAuthorizationConsentAuthenticationToken}
-	 * used for authenticating the request.
-	 *
-	 * @param authenticationConverter the {@link AuthenticationConverter} used when attempting to extract a Device Verification Request (or Device Authorization Consent) from {@link HttpServletRequest}
+	 * Sets the {@link AuthenticationConverter} used when attempting to extract a Device
+	 * Verification Request (or Device Authorization Consent) from
+	 * {@link HttpServletRequest} to an instance of
+	 * {@link OAuth2DeviceVerificationAuthenticationToken} or
+	 * {@link OAuth2DeviceAuthorizationConsentAuthenticationToken} used for authenticating
+	 * the request.
+	 * @param authenticationConverter the {@link AuthenticationConverter} used when
+	 * attempting to extract a Device Verification Request (or Device Authorization
+	 * Consent) from {@link HttpServletRequest}
 	 */
 	public void setAuthenticationConverter(AuthenticationConverter authenticationConverter) {
 		Assert.notNull(authenticationConverter, "authenticationConverter cannot be null");
@@ -196,10 +217,10 @@ public final class OAuth2DeviceVerificationEndpointFilter extends OncePerRequest
 	}
 
 	/**
-	 * Sets the {@link AuthenticationSuccessHandler} used for handling an {@link OAuth2DeviceVerificationAuthenticationToken}
-	 * and returning the response.
-	 *
-	 * @param authenticationSuccessHandler the {@link AuthenticationSuccessHandler} used for handling an {@link OAuth2DeviceVerificationAuthenticationToken}
+	 * Sets the {@link AuthenticationSuccessHandler} used for handling an
+	 * {@link OAuth2DeviceVerificationAuthenticationToken} and returning the response.
+	 * @param authenticationSuccessHandler the {@link AuthenticationSuccessHandler} used
+	 * for handling an {@link OAuth2DeviceVerificationAuthenticationToken}
 	 */
 	public void setAuthenticationSuccessHandler(AuthenticationSuccessHandler authenticationSuccessHandler) {
 		Assert.notNull(authenticationSuccessHandler, "authenticationSuccessHandler cannot be null");
@@ -207,10 +228,11 @@ public final class OAuth2DeviceVerificationEndpointFilter extends OncePerRequest
 	}
 
 	/**
-	 * Sets the {@link AuthenticationFailureHandler} used for handling an {@link OAuth2AuthenticationException}
-	 * and returning the {@link OAuth2Error Error Response}.
-	 *
-	 * @param authenticationFailureHandler the {@link AuthenticationFailureHandler} used for handling an {@link OAuth2AuthenticationException}
+	 * Sets the {@link AuthenticationFailureHandler} used for handling an
+	 * {@link OAuth2AuthenticationException} and returning the {@link OAuth2Error Error
+	 * Response}.
+	 * @param authenticationFailureHandler the {@link AuthenticationFailureHandler} used
+	 * for handling an {@link OAuth2AuthenticationException}
 	 */
 	public void setAuthenticationFailureHandler(AuthenticationFailureHandler authenticationFailureHandler) {
 		Assert.notNull(authenticationFailureHandler, "authenticationFailureHandler cannot be null");
@@ -218,10 +240,10 @@ public final class OAuth2DeviceVerificationEndpointFilter extends OncePerRequest
 	}
 
 	/**
-	 * Specify the URI to redirect Resource Owners to if consent is required. A default consent
-	 * page will be generated when this attribute is not specified.
-	 *
-	 * @param consentPage the URI of the custom consent page to redirect to if consent is required (e.g. "/oauth2/consent")
+	 * Specify the URI to redirect Resource Owners to if consent is required. A default
+	 * consent page will be generated when this attribute is not specified.
+	 * @param consentPage the URI of the custom consent page to redirect to if consent is
+	 * required (e.g. "/oauth2/consent")
 	 */
 	public void setConsentPage(String consentPage) {
 		this.consentPage = consentPage;
@@ -230,8 +252,7 @@ public final class OAuth2DeviceVerificationEndpointFilter extends OncePerRequest
 	private void sendAuthorizationConsent(HttpServletRequest request, HttpServletResponse response,
 			Authentication authentication) throws IOException {
 
-		OAuth2DeviceAuthorizationConsentAuthenticationToken authorizationConsentAuthentication =
-				(OAuth2DeviceAuthorizationConsentAuthenticationToken) authentication;
+		OAuth2DeviceAuthorizationConsentAuthenticationToken authorizationConsentAuthentication = (OAuth2DeviceAuthorizationConsentAuthenticationToken) authentication;
 
 		String clientId = authorizationConsentAuthentication.getClientId();
 		Authentication principal = (Authentication) authorizationConsentAuthentication.getPrincipal();
@@ -242,19 +263,21 @@ public final class OAuth2DeviceVerificationEndpointFilter extends OncePerRequest
 
 		if (hasConsentUri()) {
 			String redirectUri = UriComponentsBuilder.fromUriString(resolveConsentUri(request))
-					.queryParam(OAuth2ParameterNames.SCOPE, String.join(" ", requestedScopes))
-					.queryParam(OAuth2ParameterNames.CLIENT_ID, clientId)
-					.queryParam(OAuth2ParameterNames.STATE, state)
-					.queryParam(OAuth2ParameterNames.USER_CODE, userCode)
-					.toUriString();
+				.queryParam(OAuth2ParameterNames.SCOPE, String.join(" ", requestedScopes))
+				.queryParam(OAuth2ParameterNames.CLIENT_ID, clientId)
+				.queryParam(OAuth2ParameterNames.STATE, state)
+				.queryParam(OAuth2ParameterNames.USER_CODE, userCode)
+				.toUriString();
 			this.redirectStrategy.sendRedirect(request, response, redirectUri);
-		} else {
+		}
+		else {
 			if (this.logger.isTraceEnabled()) {
 				this.logger.trace("Displaying generated consent screen");
 			}
 			Map<String, String> additionalParameters = new HashMap<>();
 			additionalParameters.put(OAuth2ParameterNames.USER_CODE, userCode);
-			DefaultConsentPage.displayConsent(request, response, clientId, principal, requestedScopes, authorizedScopes, state, additionalParameters);
+			DefaultConsentPage.displayConsent(request, response, clientId, principal, requestedScopes, authorizedScopes,
+					state, additionalParameters);
 		}
 	}
 

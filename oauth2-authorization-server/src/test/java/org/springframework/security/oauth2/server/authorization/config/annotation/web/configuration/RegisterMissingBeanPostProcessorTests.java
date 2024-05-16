@@ -38,6 +38,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
  * @author Steve Riesenberg
  */
 public class RegisterMissingBeanPostProcessorTests {
+
 	private final RegisterMissingBeanPostProcessor postProcessor = new RegisterMissingBeanPostProcessor();
 
 	@Test
@@ -95,6 +96,7 @@ public class RegisterMissingBeanPostProcessorTests {
 	}
 
 	private static final class SimpleBean {
+
 		private final String field;
 
 		private SimpleBean(String field) {

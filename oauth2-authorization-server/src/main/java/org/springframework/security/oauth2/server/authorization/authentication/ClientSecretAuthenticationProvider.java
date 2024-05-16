@@ -37,8 +37,9 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 import org.springframework.util.Assert;
 
 /**
- * An {@link AuthenticationProvider} implementation used for OAuth 2.0 Client Authentication,
- * which authenticates the {@link OAuth2ParameterNames#CLIENT_SECRET client_secret} parameter.
+ * An {@link AuthenticationProvider} implementation used for OAuth 2.0 Client
+ * Authentication, which authenticates the {@link OAuth2ParameterNames#CLIENT_SECRET
+ * client_secret} parameter.
  *
  * @author Patryk Kostrzewa
  * @author Joe Grandja
@@ -50,15 +51,20 @@ import org.springframework.util.Assert;
  * @see PasswordEncoder
  */
 public final class ClientSecretAuthenticationProvider implements AuthenticationProvider {
+
 	private static final String ERROR_URI = "https://datatracker.ietf.org/doc/html/rfc6749#section-3.2.1";
+
 	private final Log logger = LogFactory.getLog(getClass());
+
 	private final RegisteredClientRepository registeredClientRepository;
+
 	private final CodeVerifierAuthenticator codeVerifierAuthenticator;
+
 	private PasswordEncoder passwordEncoder;
 
 	/**
-	 * Constructs a {@code ClientSecretAuthenticationProvider} using the provided parameters.
-	 *
+	 * Constructs a {@code ClientSecretAuthenticationProvider} using the provided
+	 * parameters.
 	 * @param registeredClientRepository the repository of registered clients
 	 * @param authorizationService the authorization service
 	 */
@@ -72,12 +78,12 @@ public final class ClientSecretAuthenticationProvider implements AuthenticationP
 	}
 
 	/**
-	 * Sets the {@link PasswordEncoder} used to validate
-	 * the {@link RegisteredClient#getClientSecret() client secret}.
-	 * If not set, the client secret will be compared using
+	 * Sets the {@link PasswordEncoder} used to validate the
+	 * {@link RegisteredClient#getClientSecret() client secret}. If not set, the client
+	 * secret will be compared using
 	 * {@link PasswordEncoderFactories#createDelegatingPasswordEncoder()}.
-	 *
-	 * @param passwordEncoder the {@link PasswordEncoder} used to validate the client secret
+	 * @param passwordEncoder the {@link PasswordEncoder} used to validate the client
+	 * secret
 	 */
 	public void setPasswordEncoder(PasswordEncoder passwordEncoder) {
 		Assert.notNull(passwordEncoder, "passwordEncoder cannot be null");
@@ -86,13 +92,14 @@ public final class ClientSecretAuthenticationProvider implements AuthenticationP
 
 	@Override
 	public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-		OAuth2ClientAuthenticationToken clientAuthentication =
-				(OAuth2ClientAuthenticationToken) authentication;
+		OAuth2ClientAuthenticationToken clientAuthentication = (OAuth2ClientAuthenticationToken) authentication;
 
+		// @formatter:off
 		if (!ClientAuthenticationMethod.CLIENT_SECRET_BASIC.equals(clientAuthentication.getClientAuthenticationMethod()) &&
 				!ClientAuthenticationMethod.CLIENT_SECRET_POST.equals(clientAuthentication.getClientAuthenticationMethod())) {
 			return null;
 		}
+		// @formatter:on
 
 		String clientId = clientAuthentication.getPrincipal().toString();
 		RegisteredClient registeredClient = this.registeredClientRepository.findByClientId(clientId);
@@ -104,8 +111,8 @@ public final class ClientSecretAuthenticationProvider implements AuthenticationP
 			this.logger.trace("Retrieved registered client");
 		}
 
-		if (!registeredClient.getClientAuthenticationMethods().contains(
-				clientAuthentication.getClientAuthenticationMethod())) {
+		if (!registeredClient.getClientAuthenticationMethods()
+			.contains(clientAuthentication.getClientAuthenticationMethod())) {
 			throwInvalidClient("authentication_method");
 		}
 
@@ -116,21 +123,22 @@ public final class ClientSecretAuthenticationProvider implements AuthenticationP
 		String clientSecret = clientAuthentication.getCredentials().toString();
 		if (!this.passwordEncoder.matches(clientSecret, registeredClient.getClientSecret())) {
 			if (this.logger.isDebugEnabled()) {
-				this.logger.debug(LogMessage.format("Invalid request: client_secret does not match" +
-						" for registered client '%s'", registeredClient.getId()));
+				this.logger.debug(LogMessage.format(
+						"Invalid request: client_secret does not match" + " for registered client '%s'",
+						registeredClient.getId()));
 			}
 			throwInvalidClient(OAuth2ParameterNames.CLIENT_SECRET);
 		}
 
-		if (registeredClient.getClientSecretExpiresAt() != null &&
-				Instant.now().isAfter(registeredClient.getClientSecretExpiresAt())) {
+		if (registeredClient.getClientSecretExpiresAt() != null
+				&& Instant.now().isAfter(registeredClient.getClientSecretExpiresAt())) {
 			throwInvalidClient("client_secret_expires_at");
 		}
 
 		if (this.passwordEncoder.upgradeEncoding(registeredClient.getClientSecret())) {
 			registeredClient = RegisteredClient.from(registeredClient)
-					.clientSecret(this.passwordEncoder.encode(clientSecret))
-					.build();
+				.clientSecret(this.passwordEncoder.encode(clientSecret))
+				.build();
 			this.registeredClientRepository.save(registeredClient);
 		}
 
@@ -138,7 +146,8 @@ public final class ClientSecretAuthenticationProvider implements AuthenticationP
 			this.logger.trace("Validated client authentication parameters");
 		}
 
-		// Validate the "code_verifier" parameter for the confidential client, if available
+		// Validate the "code_verifier" parameter for the confidential client, if
+		// available
 		this.codeVerifierAuthenticator.authenticateIfAvailable(clientAuthentication, registeredClient);
 
 		if (this.logger.isTraceEnabled()) {
@@ -155,11 +164,8 @@ public final class ClientSecretAuthenticationProvider implements AuthenticationP
 	}
 
 	private static void throwInvalidClient(String parameterName) {
-		OAuth2Error error = new OAuth2Error(
-				OAuth2ErrorCodes.INVALID_CLIENT,
-				"Client authentication failed: " + parameterName,
-				ERROR_URI
-		);
+		OAuth2Error error = new OAuth2Error(OAuth2ErrorCodes.INVALID_CLIENT,
+				"Client authentication failed: " + parameterName, ERROR_URI);
 		throw new OAuth2AuthenticationException(error);
 	}
 

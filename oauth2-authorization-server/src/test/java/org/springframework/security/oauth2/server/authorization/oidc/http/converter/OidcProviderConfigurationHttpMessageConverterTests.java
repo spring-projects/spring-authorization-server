@@ -40,6 +40,7 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
  * @author Daniel Garnier-Moiroux
  */
 public class OidcProviderConfigurationHttpMessageConverterTests {
+
 	private final OidcProviderConfigurationHttpMessageConverter messageConverter = new OidcProviderConfigurationHttpMessageConverter();
 
 	@Test
@@ -49,12 +50,14 @@ public class OidcProviderConfigurationHttpMessageConverterTests {
 
 	@Test
 	public void setProviderConfigurationParametersConverterWhenNullThenThrowIllegalArgumentException() {
-		assertThatIllegalArgumentException().isThrownBy(() -> this.messageConverter.setProviderConfigurationParametersConverter(null));
+		assertThatIllegalArgumentException()
+			.isThrownBy(() -> this.messageConverter.setProviderConfigurationParametersConverter(null));
 	}
 
 	@Test
 	public void setProviderConfigurationConverterWhenNullThenThrowIllegalArgumentException() {
-		assertThatIllegalArgumentException().isThrownBy(() -> this.messageConverter.setProviderConfigurationConverter(null));
+		assertThatIllegalArgumentException()
+			.isThrownBy(() -> this.messageConverter.setProviderConfigurationConverter(null));
 	}
 
 	@Test
@@ -70,12 +73,14 @@ public class OidcProviderConfigurationHttpMessageConverterTests {
 				+ "		\"id_token_signing_alg_values_supported\": [\"RS256\"]\n"
 				+ "}\n";
 		// @formatter:on
-		MockClientHttpResponse response = new MockClientHttpResponse(providerConfigurationResponse.getBytes(), HttpStatus.OK);
+		MockClientHttpResponse response = new MockClientHttpResponse(providerConfigurationResponse.getBytes(),
+				HttpStatus.OK);
 		OidcProviderConfiguration providerConfiguration = this.messageConverter
-				.readInternal(OidcProviderConfiguration.class, response);
+			.readInternal(OidcProviderConfiguration.class, response);
 
 		assertThat(providerConfiguration.getIssuer()).isEqualTo(new URL("https://example.com"));
-		assertThat(providerConfiguration.getAuthorizationEndpoint()).isEqualTo(new URL("https://example.com/oauth2/authorize"));
+		assertThat(providerConfiguration.getAuthorizationEndpoint())
+			.isEqualTo(new URL("https://example.com/oauth2/authorize"));
 		assertThat(providerConfiguration.getTokenEndpoint()).isEqualTo(new URL("https://example.com/oauth2/token"));
 		assertThat(providerConfiguration.getJwkSetUrl()).isEqualTo(new URL("https://example.com/oauth2/jwks"));
 		assertThat(providerConfiguration.getResponseTypes()).containsExactly("code");
@@ -105,23 +110,28 @@ public class OidcProviderConfigurationHttpMessageConverterTests {
 				+ "		\"custom_collection_claim\": [\"value1\", \"value2\"]\n"
 				+ "}\n";
 		// @formatter:on
-		MockClientHttpResponse response = new MockClientHttpResponse(providerConfigurationResponse.getBytes(), HttpStatus.OK);
+		MockClientHttpResponse response = new MockClientHttpResponse(providerConfigurationResponse.getBytes(),
+				HttpStatus.OK);
 		OidcProviderConfiguration providerConfiguration = this.messageConverter
-				.readInternal(OidcProviderConfiguration.class, response);
+			.readInternal(OidcProviderConfiguration.class, response);
 
 		assertThat(providerConfiguration.getIssuer()).isEqualTo(new URL("https://example.com"));
-		assertThat(providerConfiguration.getAuthorizationEndpoint()).isEqualTo(new URL("https://example.com/oauth2/authorize"));
+		assertThat(providerConfiguration.getAuthorizationEndpoint())
+			.isEqualTo(new URL("https://example.com/oauth2/authorize"));
 		assertThat(providerConfiguration.getTokenEndpoint()).isEqualTo(new URL("https://example.com/oauth2/token"));
 		assertThat(providerConfiguration.getJwkSetUrl()).isEqualTo(new URL("https://example.com/oauth2/jwks"));
 		assertThat(providerConfiguration.getUserInfoEndpoint()).isEqualTo(new URL("https://example.com/userinfo"));
 		assertThat(providerConfiguration.getScopes()).containsExactly("openid");
 		assertThat(providerConfiguration.getResponseTypes()).containsExactly("code");
-		assertThat(providerConfiguration.getGrantTypes()).containsExactlyInAnyOrder("authorization_code", "client_credentials");
+		assertThat(providerConfiguration.getGrantTypes()).containsExactlyInAnyOrder("authorization_code",
+				"client_credentials");
 		assertThat(providerConfiguration.getSubjectTypes()).containsExactly("public");
 		assertThat(providerConfiguration.getIdTokenSigningAlgorithms()).containsExactly("RS256");
-		assertThat(providerConfiguration.getTokenEndpointAuthenticationMethods()).containsExactly(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue());
+		assertThat(providerConfiguration.getTokenEndpointAuthenticationMethods())
+			.containsExactly(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue());
 		assertThat(providerConfiguration.<String>getClaim("custom_claim")).isEqualTo("value");
-		assertThat(providerConfiguration.getClaimAsStringList("custom_collection_claim")).containsExactlyInAnyOrder("value1", "value2");
+		assertThat(providerConfiguration.getClaimAsStringList("custom_collection_claim"))
+			.containsExactlyInAnyOrder("value1", "value2");
 	}
 
 	@Test
@@ -133,57 +143,60 @@ public class OidcProviderConfigurationHttpMessageConverterTests {
 		MockClientHttpResponse response = new MockClientHttpResponse("{}".getBytes(), HttpStatus.OK);
 
 		assertThatExceptionOfType(HttpMessageNotReadableException.class)
-				.isThrownBy(() -> this.messageConverter.readInternal(OidcProviderConfiguration.class, response))
-				.withMessageContaining("An error occurred reading the OpenID Provider Configuration")
-				.withMessageContaining(errorMessage);
+			.isThrownBy(() -> this.messageConverter.readInternal(OidcProviderConfiguration.class, response))
+			.withMessageContaining("An error occurred reading the OpenID Provider Configuration")
+			.withMessageContaining(errorMessage);
 	}
 
 	@Test
 	public void readInternalWhenInvalidProviderConfigurationThenThrowException() {
 		String providerConfigurationResponse = "{ \"issuer\": null }";
-		MockClientHttpResponse response = new MockClientHttpResponse(providerConfigurationResponse.getBytes(), HttpStatus.OK);
+		MockClientHttpResponse response = new MockClientHttpResponse(providerConfigurationResponse.getBytes(),
+				HttpStatus.OK);
 
 		assertThatExceptionOfType(HttpMessageNotReadableException.class)
-				.isThrownBy(() -> this.messageConverter.readInternal(OidcProviderConfiguration.class, response))
-				.withMessageContaining("An error occurred reading the OpenID Provider Configuration")
-				.withMessageContaining("issuer cannot be null");
+			.isThrownBy(() -> this.messageConverter.readInternal(OidcProviderConfiguration.class, response))
+			.withMessageContaining("An error occurred reading the OpenID Provider Configuration")
+			.withMessageContaining("issuer cannot be null");
 	}
 
 	@Test
 	public void writeInternalWhenProviderConfigurationThenSuccess() {
-		OidcProviderConfiguration providerConfiguration =
-				OidcProviderConfiguration.builder()
-						.issuer("https://example.com")
-						.authorizationEndpoint("https://example.com/oauth2/authorize")
-						.tokenEndpoint("https://example.com/oauth2/token")
-						.jwkSetUrl("https://example.com/oauth2/jwks")
-						.userInfoEndpoint("https://example.com/userinfo")
-						.scope("openid")
-						.responseType("code")
-						.grantType("authorization_code")
-						.grantType("client_credentials")
-						.subjectType("public")
-						.idTokenSigningAlgorithm("RS256")
-						.tokenEndpointAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue())
-						.claim("custom_claim", "value")
-						.claim("custom_collection_claim", Arrays.asList("value1", "value2"))
-						.build();
+		OidcProviderConfiguration providerConfiguration = OidcProviderConfiguration.builder()
+			.issuer("https://example.com")
+			.authorizationEndpoint("https://example.com/oauth2/authorize")
+			.tokenEndpoint("https://example.com/oauth2/token")
+			.jwkSetUrl("https://example.com/oauth2/jwks")
+			.userInfoEndpoint("https://example.com/userinfo")
+			.scope("openid")
+			.responseType("code")
+			.grantType("authorization_code")
+			.grantType("client_credentials")
+			.subjectType("public")
+			.idTokenSigningAlgorithm("RS256")
+			.tokenEndpointAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue())
+			.claim("custom_claim", "value")
+			.claim("custom_collection_claim", Arrays.asList("value1", "value2"))
+			.build();
 		MockHttpOutputMessage outputMessage = new MockHttpOutputMessage();
 
 		this.messageConverter.writeInternal(providerConfiguration, outputMessage);
 
 		String providerConfigurationResponse = outputMessage.getBodyAsString();
 		assertThat(providerConfigurationResponse).contains("\"issuer\":\"https://example.com\"");
-		assertThat(providerConfigurationResponse).contains("\"authorization_endpoint\":\"https://example.com/oauth2/authorize\"");
+		assertThat(providerConfigurationResponse)
+			.contains("\"authorization_endpoint\":\"https://example.com/oauth2/authorize\"");
 		assertThat(providerConfigurationResponse).contains("\"token_endpoint\":\"https://example.com/oauth2/token\"");
 		assertThat(providerConfigurationResponse).contains("\"jwks_uri\":\"https://example.com/oauth2/jwks\"");
 		assertThat(providerConfigurationResponse).contains("\"userinfo_endpoint\":\"https://example.com/userinfo\"");
 		assertThat(providerConfigurationResponse).contains("\"scopes_supported\":[\"openid\"]");
 		assertThat(providerConfigurationResponse).contains("\"response_types_supported\":[\"code\"]");
-		assertThat(providerConfigurationResponse).contains("\"grant_types_supported\":[\"authorization_code\",\"client_credentials\"]");
+		assertThat(providerConfigurationResponse)
+			.contains("\"grant_types_supported\":[\"authorization_code\",\"client_credentials\"]");
 		assertThat(providerConfigurationResponse).contains("\"subject_types_supported\":[\"public\"]");
 		assertThat(providerConfigurationResponse).contains("\"id_token_signing_alg_values_supported\":[\"RS256\"]");
-		assertThat(providerConfigurationResponse).contains("\"token_endpoint_auth_methods_supported\":[\"client_secret_basic\"]");
+		assertThat(providerConfigurationResponse)
+			.contains("\"token_endpoint_auth_methods_supported\":[\"client_secret_basic\"]");
 		assertThat(providerConfigurationResponse).contains("\"custom_claim\":\"value\"");
 		assertThat(providerConfigurationResponse).contains("\"custom_collection_claim\":[\"value1\",\"value2\"]");
 	}
@@ -191,28 +204,27 @@ public class OidcProviderConfigurationHttpMessageConverterTests {
 	@Test
 	public void writeInternalWhenWriteFailsThenThrowsException() {
 		String errorMessage = "this is not a valid converter";
-		Converter<OidcProviderConfiguration, Map<String, Object>> failingConverter =
-				source -> {
-					throw new RuntimeException(errorMessage);
-				};
+		Converter<OidcProviderConfiguration, Map<String, Object>> failingConverter = source -> {
+			throw new RuntimeException(errorMessage);
+		};
 		this.messageConverter.setProviderConfigurationParametersConverter(failingConverter);
 
-		OidcProviderConfiguration providerConfiguration =
-				OidcProviderConfiguration.builder()
-						.issuer("https://example.com")
-						.authorizationEndpoint("https://example.com/oauth2/authorize")
-						.tokenEndpoint("https://example.com/oauth2/token")
-						.jwkSetUrl("https://example.com/oauth2/jwks")
-						.responseType("code")
-						.subjectType("public")
-						.idTokenSigningAlgorithm("RS256")
-						.build();
+		OidcProviderConfiguration providerConfiguration = OidcProviderConfiguration.builder()
+			.issuer("https://example.com")
+			.authorizationEndpoint("https://example.com/oauth2/authorize")
+			.tokenEndpoint("https://example.com/oauth2/token")
+			.jwkSetUrl("https://example.com/oauth2/jwks")
+			.responseType("code")
+			.subjectType("public")
+			.idTokenSigningAlgorithm("RS256")
+			.build();
 
 		MockHttpOutputMessage outputMessage = new MockHttpOutputMessage();
 
 		assertThatExceptionOfType(HttpMessageNotWritableException.class)
-				.isThrownBy(() -> this.messageConverter.writeInternal(providerConfiguration, outputMessage))
-				.withMessageContaining("An error occurred writing the OpenID Provider Configuration")
-				.withMessageContaining(errorMessage);
+			.isThrownBy(() -> this.messageConverter.writeInternal(providerConfiguration, outputMessage))
+			.withMessageContaining("An error occurred writing the OpenID Provider Configuration")
+			.withMessageContaining(errorMessage);
 	}
+
 }

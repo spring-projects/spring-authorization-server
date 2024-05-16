@@ -34,15 +34,16 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
 
 /**
- * Attempts to extract the parameters from {@link HttpServletRequest}
- * used for authenticating public clients using Proof Key for Code Exchange (PKCE).
+ * Attempts to extract the parameters from {@link HttpServletRequest} used for
+ * authenticating public clients using Proof Key for Code Exchange (PKCE).
  *
  * @author Joe Grandja
  * @since 0.0.2
  * @see AuthenticationConverter
  * @see OAuth2ClientAuthenticationToken
  * @see OAuth2ClientAuthenticationFilter
- * @see <a target="_blank" href="https://tools.ietf.org/html/rfc7636">Proof Key for Code Exchange by OAuth Public Clients</a>
+ * @see <a target="_blank" href="https://tools.ietf.org/html/rfc7636">Proof Key for Code
+ * Exchange by OAuth Public Clients</a>
  */
 public final class PublicClientAuthenticationConverter implements AuthenticationConverter {
 
@@ -53,15 +54,12 @@ public final class PublicClientAuthenticationConverter implements Authentication
 			return null;
 		}
 
-		MultiValueMap<String, String> parameters =
-				"GET".equals(request.getMethod()) ?
-						OAuth2EndpointUtils.getQueryParameters(request) :
-						OAuth2EndpointUtils.getFormParameters(request);
+		MultiValueMap<String, String> parameters = "GET".equals(request.getMethod())
+				? OAuth2EndpointUtils.getQueryParameters(request) : OAuth2EndpointUtils.getFormParameters(request);
 
 		// client_id (REQUIRED for public clients)
 		String clientId = parameters.getFirst(OAuth2ParameterNames.CLIENT_ID);
-		if (!StringUtils.hasText(clientId) ||
-				parameters.get(OAuth2ParameterNames.CLIENT_ID).size() != 1) {
+		if (!StringUtils.hasText(clientId) || parameters.get(OAuth2ParameterNames.CLIENT_ID).size() != 1) {
 			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_REQUEST);
 		}
 
@@ -73,10 +71,11 @@ public final class PublicClientAuthenticationConverter implements Authentication
 		parameters.remove(OAuth2ParameterNames.CLIENT_ID);
 
 		Map<String, Object> additionalParameters = new HashMap<>();
-		parameters.forEach((key, value) ->
-				additionalParameters.put(key, (value.size() == 1) ? value.get(0) : value.toArray(new String[0])));
+		parameters.forEach((key, value) -> additionalParameters.put(key,
+				(value.size() == 1) ? value.get(0) : value.toArray(new String[0])));
 
 		return new OAuth2ClientAuthenticationToken(clientId, ClientAuthenticationMethod.NONE, null,
 				additionalParameters);
 	}
+
 }

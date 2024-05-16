@@ -33,13 +33,16 @@ import org.springframework.util.Assert;
  * @see OidcUserInfoAuthenticationProvider
  */
 public class OidcUserInfoAuthenticationToken extends AbstractAuthenticationToken {
+
 	private static final long serialVersionUID = SpringAuthorizationServerVersion.SERIAL_VERSION_UID;
+
 	private final Authentication principal;
+
 	private final OidcUserInfo userInfo;
 
 	/**
-	 * Constructs an {@code OidcUserInfoAuthenticationToken} using the provided parameters.
-	 *
+	 * Constructs an {@code OidcUserInfoAuthenticationToken} using the provided
+	 * parameters.
 	 * @param principal the principal
 	 */
 	public OidcUserInfoAuthenticationToken(Authentication principal) {
@@ -51,8 +54,8 @@ public class OidcUserInfoAuthenticationToken extends AbstractAuthenticationToken
 	}
 
 	/**
-	 * Constructs an {@code OidcUserInfoAuthenticationToken} using the provided parameters.
-	 *
+	 * Constructs an {@code OidcUserInfoAuthenticationToken} using the provided
+	 * parameters.
 	 * @param principal the authenticated principal
 	 * @param userInfo the UserInfo claims
 	 */
@@ -77,7 +80,6 @@ public class OidcUserInfoAuthenticationToken extends AbstractAuthenticationToken
 
 	/**
 	 * Returns the UserInfo claims.
-	 *
 	 * @return the UserInfo claims
 	 */
 	public OidcUserInfo getUserInfo() {

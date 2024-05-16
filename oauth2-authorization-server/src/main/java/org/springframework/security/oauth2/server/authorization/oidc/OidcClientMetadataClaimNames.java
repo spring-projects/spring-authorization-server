@@ -27,8 +27,12 @@ import org.springframework.security.oauth2.jwt.Jwt;
  * @author Ovidiu Popa
  * @author Joe Grandja
  * @since 0.1.1
- * @see <a target="_blank" href="https://openid.net/specs/openid-connect-registration-1_0.html#ClientMetadata">2. Client Metadata</a>
- * @see <a target="_blank" href="https://openid.net/specs/openid-connect-rpinitiated-1_0.html#ClientMetadata">3.1. Client Registration Metadata</a>
+ * @see <a target="_blank" href=
+ * "https://openid.net/specs/openid-connect-registration-1_0.html#ClientMetadata">2.
+ * Client Metadata</a>
+ * @see <a target="_blank" href=
+ * "https://openid.net/specs/openid-connect-rpinitiated-1_0.html#ClientMetadata">3.1.
+ * Client Registration Metadata</a>
  */
 public final class OidcClientMetadataClaimNames {
 
@@ -48,7 +52,8 @@ public final class OidcClientMetadataClaimNames {
 	public static final String CLIENT_SECRET = "client_secret";
 
 	/**
-	 * {@code client_secret_expires_at} - the time at which the {@code client_secret} will expire or 0 if it will not expire
+	 * {@code client_secret_expires_at} - the time at which the {@code client_secret} will
+	 * expire or 0 if it will not expire
 	 */
 	public static final String CLIENT_SECRET_EXPIRES_AT = "client_secret_expires_at";
 
@@ -63,38 +68,45 @@ public final class OidcClientMetadataClaimNames {
 	public static final String REDIRECT_URIS = "redirect_uris";
 
 	/**
-	 * {@code post_logout_redirect_uris} - the post logout redirection {@code URI} values used by the Client.
-	 * The {@code post_logout_redirect_uri} parameter is used by the client when requesting
-	 * that the End-User's User Agent be redirected to after a logout has been performed.
+	 * {@code post_logout_redirect_uris} - the post logout redirection {@code URI} values
+	 * used by the Client. The {@code post_logout_redirect_uri} parameter is used by the
+	 * client when requesting that the End-User's User Agent be redirected to after a
+	 * logout has been performed.
 	 * @since 1.1
 	 */
 	public static final String POST_LOGOUT_REDIRECT_URIS = "post_logout_redirect_uris";
 
 	/**
-	 * {@code token_endpoint_auth_method} - the authentication method used by the Client for the Token Endpoint
+	 * {@code token_endpoint_auth_method} - the authentication method used by the Client
+	 * for the Token Endpoint
 	 */
 	public static final String TOKEN_ENDPOINT_AUTH_METHOD = "token_endpoint_auth_method";
 
 	/**
-	 * {@code token_endpoint_auth_signing_alg} - the {@link JwsAlgorithm JWS} algorithm that must be used for signing the {@link Jwt JWT}
-	 * used to authenticate the Client at the Token Endpoint for the {@link ClientAuthenticationMethod#PRIVATE_KEY_JWT private_key_jwt} and
-	 * {@link ClientAuthenticationMethod#CLIENT_SECRET_JWT client_secret_jwt} authentication methods
+	 * {@code token_endpoint_auth_signing_alg} - the {@link JwsAlgorithm JWS} algorithm
+	 * that must be used for signing the {@link Jwt JWT} used to authenticate the Client
+	 * at the Token Endpoint for the {@link ClientAuthenticationMethod#PRIVATE_KEY_JWT
+	 * private_key_jwt} and {@link ClientAuthenticationMethod#CLIENT_SECRET_JWT
+	 * client_secret_jwt} authentication methods
 	 * @since 0.2.2
 	 */
 	public static final String TOKEN_ENDPOINT_AUTH_SIGNING_ALG = "token_endpoint_auth_signing_alg";
 
 	/**
-	 * {@code grant_types} - the OAuth 2.0 {@code grant_type} values that the Client will restrict itself to using
+	 * {@code grant_types} - the OAuth 2.0 {@code grant_type} values that the Client will
+	 * restrict itself to using
 	 */
 	public static final String GRANT_TYPES = "grant_types";
 
 	/**
-	 * {@code response_types} - the OAuth 2.0 {@code response_type} values that the Client will restrict itself to using
+	 * {@code response_types} - the OAuth 2.0 {@code response_type} values that the Client
+	 * will restrict itself to using
 	 */
 	public static final String RESPONSE_TYPES = "response_types";
 
 	/**
-	 * {@code scope} - a space-separated list of OAuth 2.0 {@code scope} values that the Client will restrict itself to using
+	 * {@code scope} - a space-separated list of OAuth 2.0 {@code scope} values that the
+	 * Client will restrict itself to using
 	 */
 	public static final String SCOPE = "scope";
 
@@ -105,18 +117,21 @@ public final class OidcClientMetadataClaimNames {
 	public static final String JWKS_URI = "jwks_uri";
 
 	/**
-	 * {@code id_token_signed_response_alg} - the {@link JwsAlgorithm JWS} algorithm required for signing the {@link OidcIdToken ID Token} issued to the Client
+	 * {@code id_token_signed_response_alg} - the {@link JwsAlgorithm JWS} algorithm
+	 * required for signing the {@link OidcIdToken ID Token} issued to the Client
 	 */
 	public static final String ID_TOKEN_SIGNED_RESPONSE_ALG = "id_token_signed_response_alg";
 
 	/**
-	 * {@code registration_access_token} - the Registration Access Token that can be used at the Client Configuration Endpoint
+	 * {@code registration_access_token} - the Registration Access Token that can be used
+	 * at the Client Configuration Endpoint
 	 * @since 0.2.1
 	 */
 	public static final String REGISTRATION_ACCESS_TOKEN = "registration_access_token";
 
 	/**
-	 * {@code registration_client_uri} - the {@code URL} of the Client Configuration Endpoint where the Registration Access Token can be used
+	 * {@code registration_client_uri} - the {@code URL} of the Client Configuration
+	 * Endpoint where the Registration Access Token can be used
 	 * @since 0.2.1
 	 */
 	public static final String REGISTRATION_CLIENT_URI = "registration_client_uri";

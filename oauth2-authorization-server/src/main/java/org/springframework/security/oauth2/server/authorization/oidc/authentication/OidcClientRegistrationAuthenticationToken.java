@@ -25,7 +25,8 @@ import org.springframework.security.oauth2.server.authorization.util.SpringAutho
 import org.springframework.util.Assert;
 
 /**
- * An {@link Authentication} implementation used for OpenID Connect 1.0 Dynamic Client Registration (and Configuration) Endpoint.
+ * An {@link Authentication} implementation used for OpenID Connect 1.0 Dynamic Client
+ * Registration (and Configuration) Endpoint.
  *
  * @author Joe Grandja
  * @author Ovidiu Popa
@@ -36,18 +37,23 @@ import org.springframework.util.Assert;
  * @see OidcClientConfigurationAuthenticationProvider
  */
 public class OidcClientRegistrationAuthenticationToken extends AbstractAuthenticationToken {
+
 	private static final long serialVersionUID = SpringAuthorizationServerVersion.SERIAL_VERSION_UID;
+
 	private final Authentication principal;
+
 	private final OidcClientRegistration clientRegistration;
+
 	private final String clientId;
 
 	/**
-	 * Constructs an {@code OidcClientRegistrationAuthenticationToken} using the provided parameters.
-	 *
+	 * Constructs an {@code OidcClientRegistrationAuthenticationToken} using the provided
+	 * parameters.
 	 * @param principal the authenticated principal
 	 * @param clientRegistration the client registration
 	 */
-	public OidcClientRegistrationAuthenticationToken(Authentication principal, OidcClientRegistration clientRegistration) {
+	public OidcClientRegistrationAuthenticationToken(Authentication principal,
+			OidcClientRegistration clientRegistration) {
 		super(Collections.emptyList());
 		Assert.notNull(principal, "principal cannot be null");
 		Assert.notNull(clientRegistration, "clientRegistration cannot be null");
@@ -58,8 +64,8 @@ public class OidcClientRegistrationAuthenticationToken extends AbstractAuthentic
 	}
 
 	/**
-	 * Constructs an {@code OidcClientRegistrationAuthenticationToken} using the provided parameters.
-	 *
+	 * Constructs an {@code OidcClientRegistrationAuthenticationToken} using the provided
+	 * parameters.
 	 * @param principal the authenticated principal
 	 * @param clientId the client identifier
 	 * @since 0.2.1
@@ -86,7 +92,6 @@ public class OidcClientRegistrationAuthenticationToken extends AbstractAuthentic
 
 	/**
 	 * Returns the client registration.
-	 *
 	 * @return the client registration
 	 */
 	public OidcClientRegistration getClientRegistration() {
@@ -95,7 +100,6 @@ public class OidcClientRegistrationAuthenticationToken extends AbstractAuthentic
 
 	/**
 	 * Returns the client identifier.
-	 *
 	 * @return the client identifier
 	 * @since 0.2.1
 	 */

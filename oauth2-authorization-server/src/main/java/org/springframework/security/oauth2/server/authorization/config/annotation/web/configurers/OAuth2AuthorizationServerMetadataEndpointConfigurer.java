@@ -36,8 +36,11 @@ import org.springframework.security.web.util.matcher.RequestMatcher;
  * @see OAuth2AuthorizationServerMetadataEndpointFilter
  */
 public final class OAuth2AuthorizationServerMetadataEndpointConfigurer extends AbstractOAuth2Configurer {
+
 	private RequestMatcher requestMatcher;
+
 	private Consumer<OAuth2AuthorizationServerMetadata.Builder> authorizationServerMetadataCustomizer;
+
 	private Consumer<OAuth2AuthorizationServerMetadata.Builder> defaultAuthorizationServerMetadataCustomizer;
 
 	/**
@@ -48,11 +51,13 @@ public final class OAuth2AuthorizationServerMetadataEndpointConfigurer extends A
 	}
 
 	/**
-     * Sets the {@code Consumer} providing access to the {@link OAuth2AuthorizationServerMetadata.Builder}
-	 * allowing the ability to customize the claims of the Authorization Server's configuration.
-	 *
-	 * @param authorizationServerMetadataCustomizer the {@code Consumer} providing access to the {@link OAuth2AuthorizationServerMetadata.Builder}
-     * @return the {@link OAuth2AuthorizationServerMetadataEndpointConfigurer} for further configuration
+	 * Sets the {@code Consumer} providing access to the
+	 * {@link OAuth2AuthorizationServerMetadata.Builder} allowing the ability to customize
+	 * the claims of the Authorization Server's configuration.
+	 * @param authorizationServerMetadataCustomizer the {@code Consumer} providing access
+	 * to the {@link OAuth2AuthorizationServerMetadata.Builder}
+	 * @return the {@link OAuth2AuthorizationServerMetadataEndpointConfigurer} for further
+	 * configuration
 	 */
 	public OAuth2AuthorizationServerMetadataEndpointConfigurer authorizationServerMetadataCustomizer(
 			Consumer<OAuth2AuthorizationServerMetadata.Builder> authorizationServerMetadataCustomizer) {
@@ -62,10 +67,9 @@ public final class OAuth2AuthorizationServerMetadataEndpointConfigurer extends A
 
 	void addDefaultAuthorizationServerMetadataCustomizer(
 			Consumer<OAuth2AuthorizationServerMetadata.Builder> defaultAuthorizationServerMetadataCustomizer) {
-		this.defaultAuthorizationServerMetadataCustomizer =
-				this.defaultAuthorizationServerMetadataCustomizer == null ?
-						defaultAuthorizationServerMetadataCustomizer :
-						this.defaultAuthorizationServerMetadataCustomizer.andThen(defaultAuthorizationServerMetadataCustomizer);
+		this.defaultAuthorizationServerMetadataCustomizer = this.defaultAuthorizationServerMetadataCustomizer == null
+				? defaultAuthorizationServerMetadataCustomizer : this.defaultAuthorizationServerMetadataCustomizer
+					.andThen(defaultAuthorizationServerMetadataCustomizer);
 	}
 
 	@Override
@@ -79,26 +83,27 @@ public final class OAuth2AuthorizationServerMetadataEndpointConfigurer extends A
 
 	@Override
 	void configure(HttpSecurity httpSecurity) {
-		OAuth2AuthorizationServerMetadataEndpointFilter authorizationServerMetadataEndpointFilter =
-				new OAuth2AuthorizationServerMetadataEndpointFilter();
+		OAuth2AuthorizationServerMetadataEndpointFilter authorizationServerMetadataEndpointFilter = new OAuth2AuthorizationServerMetadataEndpointFilter();
 		Consumer<OAuth2AuthorizationServerMetadata.Builder> authorizationServerMetadataCustomizer = getAuthorizationServerMetadataCustomizer();
 		if (authorizationServerMetadataCustomizer != null) {
-			authorizationServerMetadataEndpointFilter.setAuthorizationServerMetadataCustomizer(authorizationServerMetadataCustomizer);
+			authorizationServerMetadataEndpointFilter
+				.setAuthorizationServerMetadataCustomizer(authorizationServerMetadataCustomizer);
 		}
-		httpSecurity.addFilterBefore(postProcess(authorizationServerMetadataEndpointFilter), AbstractPreAuthenticatedProcessingFilter.class);
+		httpSecurity.addFilterBefore(postProcess(authorizationServerMetadataEndpointFilter),
+				AbstractPreAuthenticatedProcessingFilter.class);
 	}
 
 	private Consumer<OAuth2AuthorizationServerMetadata.Builder> getAuthorizationServerMetadataCustomizer() {
 		Consumer<OAuth2AuthorizationServerMetadata.Builder> authorizationServerMetadataCustomizer = null;
-		if (this.defaultAuthorizationServerMetadataCustomizer != null || this.authorizationServerMetadataCustomizer != null) {
+		if (this.defaultAuthorizationServerMetadataCustomizer != null
+				|| this.authorizationServerMetadataCustomizer != null) {
 			if (this.defaultAuthorizationServerMetadataCustomizer != null) {
 				authorizationServerMetadataCustomizer = this.defaultAuthorizationServerMetadataCustomizer;
 			}
 			if (this.authorizationServerMetadataCustomizer != null) {
-				authorizationServerMetadataCustomizer =
-						authorizationServerMetadataCustomizer == null ?
-								this.authorizationServerMetadataCustomizer :
-								authorizationServerMetadataCustomizer.andThen(this.authorizationServerMetadataCustomizer);
+				authorizationServerMetadataCustomizer = authorizationServerMetadataCustomizer == null
+						? this.authorizationServerMetadataCustomizer
+						: authorizationServerMetadataCustomizer.andThen(this.authorizationServerMetadataCustomizer);
 			}
 		}
 		return authorizationServerMetadataCustomizer;

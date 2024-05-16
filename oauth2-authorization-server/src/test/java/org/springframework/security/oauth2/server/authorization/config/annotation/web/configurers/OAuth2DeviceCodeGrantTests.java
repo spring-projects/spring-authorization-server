@@ -94,23 +94,28 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @ExtendWith(SpringTestContextExtension.class)
 public class OAuth2DeviceCodeGrantTests {
+
 	private static final String DEFAULT_DEVICE_AUTHORIZATION_ENDPOINT_URI = "/oauth2/device_authorization";
+
 	private static final String DEFAULT_DEVICE_VERIFICATION_ENDPOINT_URI = "/oauth2/device_verification";
+
 	private static final String DEFAULT_TOKEN_ENDPOINT_URI = "/oauth2/token";
+
 	private static final OAuth2TokenType DEVICE_CODE_TOKEN_TYPE = new OAuth2TokenType(OAuth2ParameterNames.DEVICE_CODE);
+
 	private static final String USER_CODE = "ABCD-EFGH";
+
 	private static final String STATE = "123";
+
 	private static final String DEVICE_CODE = "abc-XYZ";
 
 	private static EmbeddedDatabase db;
 
 	private static JWKSource<SecurityContext> jwkSource;
 
-	private static final HttpMessageConverter<OAuth2DeviceAuthorizationResponse> deviceAuthorizationResponseHttpMessageConverter =
-			new OAuth2DeviceAuthorizationResponseHttpMessageConverter();
+	private static final HttpMessageConverter<OAuth2DeviceAuthorizationResponse> deviceAuthorizationResponseHttpMessageConverter = new OAuth2DeviceAuthorizationResponseHttpMessageConverter();
 
-	private static final HttpMessageConverter<OAuth2AccessTokenResponse> accessTokenResponseHttpMessageConverter =
-			new OAuth2AccessTokenResponseHttpMessageConverter();
+	private static final HttpMessageConverter<OAuth2AccessTokenResponse> accessTokenResponseHttpMessageConverter = new OAuth2AccessTokenResponseHttpMessageConverter();
 
 	public final SpringTestContext spring = new SpringTestContext();
 
@@ -237,9 +242,8 @@ public class OAuth2DeviceCodeGrantTests {
 		MockHttpServletResponse servletResponse = mvcResult.getResponse();
 		MockClientHttpResponse httpResponse = new MockClientHttpResponse(servletResponse.getContentAsByteArray(),
 				HttpStatus.OK);
-		OAuth2DeviceAuthorizationResponse deviceAuthorizationResponse =
-				deviceAuthorizationResponseHttpMessageConverter.read(OAuth2DeviceAuthorizationResponse.class,
-						httpResponse);
+		OAuth2DeviceAuthorizationResponse deviceAuthorizationResponse = deviceAuthorizationResponseHttpMessageConverter
+			.read(OAuth2DeviceAuthorizationResponse.class, httpResponse);
 		String userCode = deviceAuthorizationResponse.getUserCode().getTokenValue();
 		assertThat(userCode).matches("[A-Z]{4}-[A-Z]{4}");
 		assertThat(deviceAuthorizationResponse.getVerificationUri())
@@ -525,8 +529,8 @@ public class OAuth2DeviceCodeGrantTests {
 		MockHttpServletResponse servletResponse = mvcResult.getResponse();
 		MockClientHttpResponse httpResponse = new MockClientHttpResponse(servletResponse.getContentAsByteArray(),
 				HttpStatus.OK);
-		OAuth2AccessTokenResponse accessTokenResponse =
-				accessTokenResponseHttpMessageConverter.read(OAuth2AccessTokenResponse.class, httpResponse);
+		OAuth2AccessTokenResponse accessTokenResponse = accessTokenResponseHttpMessageConverter
+			.read(OAuth2AccessTokenResponse.class, httpResponse);
 
 		String accessToken = accessTokenResponse.getAccessToken().getTokenValue();
 		OAuth2Authorization accessTokenAuthorization = this.authorizationService.findByToken(accessToken,

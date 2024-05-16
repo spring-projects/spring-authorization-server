@@ -43,6 +43,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * @author Joe Grandja
  */
 public class OAuth2TokenIntrospectionHttpMessageConverterTests {
+
 	private final OAuth2TokenIntrospectionHttpMessageConverter messageConverter = new OAuth2TokenIntrospectionHttpMessageConverter();
 
 	@Test
@@ -53,13 +54,13 @@ public class OAuth2TokenIntrospectionHttpMessageConverterTests {
 	@Test
 	public void setTokenIntrospectionParametersConverterWhenNullThenThrowIllegalArgumentException() {
 		assertThatIllegalArgumentException()
-				.isThrownBy(() -> this.messageConverter.setTokenIntrospectionParametersConverter(null));
+			.isThrownBy(() -> this.messageConverter.setTokenIntrospectionParametersConverter(null));
 	}
 
 	@Test
 	public void setTokenIntrospectionConverterWhenNullThenThrowIllegalArgumentException() {
 		assertThatIllegalArgumentException()
-				.isThrownBy(() -> this.messageConverter.setTokenIntrospectionConverter(null));
+			.isThrownBy(() -> this.messageConverter.setTokenIntrospectionConverter(null));
 	}
 
 	@Test
@@ -80,21 +81,23 @@ public class OAuth2TokenIntrospectionHttpMessageConverterTests {
 				+ "		\"jti\": \"jwtId1\"\n"
 				+ "}\n";
 		// @formatter:on
-		MockClientHttpResponse response = new MockClientHttpResponse(
-				tokenIntrospectionResponseBody.getBytes(), HttpStatus.OK);
+		MockClientHttpResponse response = new MockClientHttpResponse(tokenIntrospectionResponseBody.getBytes(),
+				HttpStatus.OK);
 		OAuth2TokenIntrospection tokenIntrospectionResponse = this.messageConverter
-				.readInternal(OAuth2TokenIntrospection.class, response);
+			.readInternal(OAuth2TokenIntrospection.class, response);
 
 		assertThat(tokenIntrospectionResponse.isActive()).isTrue();
 		assertThat(tokenIntrospectionResponse.getClientId()).isEqualTo("clientId1");
 		assertThat(tokenIntrospectionResponse.getUsername()).isEqualTo("username1");
 		assertThat(tokenIntrospectionResponse.getIssuedAt()).isEqualTo(Instant.ofEpochSecond(1607633867L));
 		assertThat(tokenIntrospectionResponse.getExpiresAt()).isEqualTo(Instant.ofEpochSecond(1607637467L));
-		assertThat(tokenIntrospectionResponse.getScopes()).containsExactlyInAnyOrderElementsOf(Arrays.asList("scope1", "scope2"));
+		assertThat(tokenIntrospectionResponse.getScopes())
+			.containsExactlyInAnyOrderElementsOf(Arrays.asList("scope1", "scope2"));
 		assertThat(tokenIntrospectionResponse.getTokenType()).isEqualTo("Bearer");
 		assertThat(tokenIntrospectionResponse.getNotBefore()).isEqualTo(Instant.ofEpochSecond(1607633867L));
 		assertThat(tokenIntrospectionResponse.getSubject()).isEqualTo("subject1");
-		assertThat(tokenIntrospectionResponse.getAudience()).containsExactlyInAnyOrderElementsOf(Arrays.asList("audience1", "audience2"));
+		assertThat(tokenIntrospectionResponse.getAudience())
+			.containsExactlyInAnyOrderElementsOf(Arrays.asList("audience1", "audience2"));
 		assertThat(tokenIntrospectionResponse.getIssuer()).isEqualTo(new URL("https://example.com/issuer1"));
 		assertThat(tokenIntrospectionResponse.getId()).isEqualTo("jwtId1");
 	}
@@ -108,9 +111,9 @@ public class OAuth2TokenIntrospectionHttpMessageConverterTests {
 		MockClientHttpResponse response = new MockClientHttpResponse("{}".getBytes(), HttpStatus.OK);
 
 		assertThatExceptionOfType(HttpMessageNotReadableException.class)
-				.isThrownBy(() -> this.messageConverter.readInternal(OAuth2TokenIntrospection.class, response))
-				.withMessageContaining("An error occurred reading the Token Introspection Response")
-				.withMessageContaining(errorMessage);
+			.isThrownBy(() -> this.messageConverter.readInternal(OAuth2TokenIntrospection.class, response))
+			.withMessageContaining("An error occurred reading the Token Introspection Response")
+			.withMessageContaining(errorMessage);
 	}
 
 	@Test
@@ -163,8 +166,9 @@ public class OAuth2TokenIntrospectionHttpMessageConverterTests {
 		MockHttpOutputMessage outputMessage = new MockHttpOutputMessage();
 
 		assertThatThrownBy(() -> this.messageConverter.writeInternal(tokenClaims, outputMessage))
-				.isInstanceOf(HttpMessageNotWritableException.class)
-				.hasMessageContaining("An error occurred writing the Token Introspection Response")
-				.hasMessageContaining(errorMessage);
+			.isInstanceOf(HttpMessageNotWritableException.class)
+			.hasMessageContaining("An error occurred writing the Token Introspection Response")
+			.hasMessageContaining(errorMessage);
 	}
+
 }

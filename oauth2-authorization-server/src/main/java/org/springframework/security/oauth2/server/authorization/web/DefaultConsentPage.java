@@ -33,6 +33,7 @@ import org.springframework.security.oauth2.core.oidc.OidcScopes;
  * For internal use only.
  */
 class DefaultConsentPage {
+
 	private static final MediaType TEXT_HTML_UTF8 = new MediaType("text", "html", StandardCharsets.UTF_8);
 
 	private DefaultConsentPage() {
@@ -42,21 +43,24 @@ class DefaultConsentPage {
 			Authentication principal, Set<String> requestedScopes, Set<String> authorizedScopes, String state,
 			Map<String, String> additionalParameters) throws IOException {
 
-		String consentPage = generateConsentPage(request, clientId, principal, requestedScopes, authorizedScopes, state, additionalParameters);
+		String consentPage = generateConsentPage(request, clientId, principal, requestedScopes, authorizedScopes, state,
+				additionalParameters);
 		response.setContentType(TEXT_HTML_UTF8.toString());
 		response.setContentLength(consentPage.getBytes(StandardCharsets.UTF_8).length);
 		response.getWriter().write(consentPage);
 	}
 
-	private static String generateConsentPage(HttpServletRequest request,
-			String clientId, Authentication principal, Set<String> requestedScopes, Set<String> authorizedScopes, String state,
+	private static String generateConsentPage(HttpServletRequest request, String clientId, Authentication principal,
+			Set<String> requestedScopes, Set<String> authorizedScopes, String state,
 			Map<String, String> additionalParameters) {
 		Set<String> scopesToAuthorize = new HashSet<>();
 		Set<String> scopesPreviouslyAuthorized = new HashSet<>();
 		for (String scope : requestedScopes) {
 			if (authorizedScopes.contains(scope)) {
 				scopesPreviouslyAuthorized.add(scope);
-			} else if (!scope.equals(OidcScopes.OPENID)) { // openid scope does not require consent
+			}
+			else if (!scope.equals(OidcScopes.OPENID)) {
+				// openid scope does not require consent
 				scopesToAuthorize.add(scope);
 			}
 		}
@@ -68,8 +72,8 @@ class DefaultConsentPage {
 		// authorizing the correct device.
 		String userCode = additionalParameters.get(OAuth2ParameterNames.USER_CODE);
 
+		// @formatter:off
 		StringBuilder builder = new StringBuilder();
-
 		builder.append("<!DOCTYPE html>");
 		builder.append("<html lang=\"en\">");
 		builder.append("<head>");
@@ -149,7 +153,9 @@ class DefaultConsentPage {
 		builder.append("</div>");
 		builder.append("</body>");
 		builder.append("</html>");
+		// @formatter:on
 
 		return builder.toString();
 	}
+
 }

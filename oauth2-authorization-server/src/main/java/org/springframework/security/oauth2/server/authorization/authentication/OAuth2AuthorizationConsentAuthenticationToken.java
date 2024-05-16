@@ -28,8 +28,8 @@ import org.springframework.security.oauth2.server.authorization.util.SpringAutho
 import org.springframework.util.Assert;
 
 /**
- * An {@link Authentication} implementation for the OAuth 2.0 Authorization Consent
- * used in the Authorization Code Grant.
+ * An {@link Authentication} implementation for the OAuth 2.0 Authorization Consent used
+ * in the Authorization Code Grant.
  *
  * @author Joe Grandja
  * @since 0.4.0
@@ -37,17 +37,24 @@ import org.springframework.util.Assert;
  * @see OAuth2AuthorizationCodeRequestAuthenticationProvider
  */
 public class OAuth2AuthorizationConsentAuthenticationToken extends AbstractAuthenticationToken {
+
 	private static final long serialVersionUID = SpringAuthorizationServerVersion.SERIAL_VERSION_UID;
+
 	private final String authorizationUri;
+
 	private final String clientId;
+
 	private final Authentication principal;
+
 	private final String state;
+
 	private final Set<String> scopes;
+
 	private final Map<String, Object> additionalParameters;
 
 	/**
-	 * Constructs an {@code OAuth2AuthorizationConsentAuthenticationToken} using the provided parameters.
-	 *
+	 * Constructs an {@code OAuth2AuthorizationConsentAuthenticationToken} using the
+	 * provided parameters.
 	 * @param authorizationUri the authorization URI
 	 * @param clientId the client identifier
 	 * @param principal the {@code Principal} (Resource Owner)
@@ -55,8 +62,9 @@ public class OAuth2AuthorizationConsentAuthenticationToken extends AbstractAuthe
 	 * @param scopes the requested (or authorized) scope(s)
 	 * @param additionalParameters the additional parameters
 	 */
-	public OAuth2AuthorizationConsentAuthenticationToken(String authorizationUri, String clientId, Authentication principal,
-			String state, @Nullable Set<String> scopes, @Nullable Map<String, Object> additionalParameters) {
+	public OAuth2AuthorizationConsentAuthenticationToken(String authorizationUri, String clientId,
+			Authentication principal, String state, @Nullable Set<String> scopes,
+			@Nullable Map<String, Object> additionalParameters) {
 		super(Collections.emptyList());
 		Assert.hasText(authorizationUri, "authorizationUri cannot be empty");
 		Assert.hasText(clientId, "clientId cannot be empty");
@@ -66,14 +74,9 @@ public class OAuth2AuthorizationConsentAuthenticationToken extends AbstractAuthe
 		this.clientId = clientId;
 		this.principal = principal;
 		this.state = state;
-		this.scopes = Collections.unmodifiableSet(
-				scopes != null ?
-						new HashSet<>(scopes) :
-						Collections.emptySet());
+		this.scopes = Collections.unmodifiableSet(scopes != null ? new HashSet<>(scopes) : Collections.emptySet());
 		this.additionalParameters = Collections.unmodifiableMap(
-				additionalParameters != null ?
-						new HashMap<>(additionalParameters) :
-						Collections.emptyMap());
+				additionalParameters != null ? new HashMap<>(additionalParameters) : Collections.emptyMap());
 		setAuthenticated(true);
 	}
 
@@ -89,7 +92,6 @@ public class OAuth2AuthorizationConsentAuthenticationToken extends AbstractAuthe
 
 	/**
 	 * Returns the authorization URI.
-	 *
 	 * @return the authorization URI
 	 */
 	public String getAuthorizationUri() {
@@ -98,7 +100,6 @@ public class OAuth2AuthorizationConsentAuthenticationToken extends AbstractAuthe
 
 	/**
 	 * Returns the client identifier.
-	 *
 	 * @return the client identifier
 	 */
 	public String getClientId() {
@@ -107,7 +108,6 @@ public class OAuth2AuthorizationConsentAuthenticationToken extends AbstractAuthe
 
 	/**
 	 * Returns the state.
-	 *
 	 * @return the state
 	 */
 	public String getState() {
@@ -116,8 +116,8 @@ public class OAuth2AuthorizationConsentAuthenticationToken extends AbstractAuthe
 
 	/**
 	 * Returns the requested (or authorized) scope(s).
-	 *
-	 * @return the requested (or authorized) scope(s), or an empty {@code Set} if not available
+	 * @return the requested (or authorized) scope(s), or an empty {@code Set} if not
+	 * available
 	 */
 	public Set<String> getScopes() {
 		return this.scopes;
@@ -125,7 +125,6 @@ public class OAuth2AuthorizationConsentAuthenticationToken extends AbstractAuthe
 
 	/**
 	 * Returns the additional parameters.
-	 *
 	 * @return the additional parameters, or an empty {@code Map} if not available
 	 */
 	public Map<String, Object> getAdditionalParameters() {

@@ -35,8 +35,11 @@ import org.springframework.security.web.util.matcher.RequestMatcher;
  * @see OidcProviderConfigurationEndpointFilter
  */
 public final class OidcProviderConfigurationEndpointConfigurer extends AbstractOAuth2Configurer {
+
 	private RequestMatcher requestMatcher;
+
 	private Consumer<OidcProviderConfiguration.Builder> providerConfigurationCustomizer;
+
 	private Consumer<OidcProviderConfiguration.Builder> defaultProviderConfigurationCustomizer;
 
 	/**
@@ -47,11 +50,13 @@ public final class OidcProviderConfigurationEndpointConfigurer extends AbstractO
 	}
 
 	/**
-	 * Sets the {@code Consumer} providing access to the {@link OidcProviderConfiguration.Builder}
-	 * allowing the ability to customize the claims of the OpenID Provider's configuration.
-	 *
-	 * @param providerConfigurationCustomizer the {@code Consumer} providing access to the {@link OidcProviderConfiguration.Builder}
-	 * @return the {@link OidcProviderConfigurationEndpointConfigurer} for further configuration
+	 * Sets the {@code Consumer} providing access to the
+	 * {@link OidcProviderConfiguration.Builder} allowing the ability to customize the
+	 * claims of the OpenID Provider's configuration.
+	 * @param providerConfigurationCustomizer the {@code Consumer} providing access to the
+	 * {@link OidcProviderConfiguration.Builder}
+	 * @return the {@link OidcProviderConfigurationEndpointConfigurer} for further
+	 * configuration
 	 */
 	public OidcProviderConfigurationEndpointConfigurer providerConfigurationCustomizer(
 			Consumer<OidcProviderConfiguration.Builder> providerConfigurationCustomizer) {
@@ -61,27 +66,25 @@ public final class OidcProviderConfigurationEndpointConfigurer extends AbstractO
 
 	void addDefaultProviderConfigurationCustomizer(
 			Consumer<OidcProviderConfiguration.Builder> defaultProviderConfigurationCustomizer) {
-		this.defaultProviderConfigurationCustomizer =
-				this.defaultProviderConfigurationCustomizer == null ?
-						defaultProviderConfigurationCustomizer :
-						this.defaultProviderConfigurationCustomizer.andThen(defaultProviderConfigurationCustomizer);
+		this.defaultProviderConfigurationCustomizer = this.defaultProviderConfigurationCustomizer == null
+				? defaultProviderConfigurationCustomizer
+				: this.defaultProviderConfigurationCustomizer.andThen(defaultProviderConfigurationCustomizer);
 	}
 
 	@Override
 	void init(HttpSecurity httpSecurity) {
-		this.requestMatcher = new AntPathRequestMatcher(
-				"/.well-known/openid-configuration", HttpMethod.GET.name());
+		this.requestMatcher = new AntPathRequestMatcher("/.well-known/openid-configuration", HttpMethod.GET.name());
 	}
 
 	@Override
 	void configure(HttpSecurity httpSecurity) {
-		OidcProviderConfigurationEndpointFilter oidcProviderConfigurationEndpointFilter =
-				new OidcProviderConfigurationEndpointFilter();
+		OidcProviderConfigurationEndpointFilter oidcProviderConfigurationEndpointFilter = new OidcProviderConfigurationEndpointFilter();
 		Consumer<OidcProviderConfiguration.Builder> providerConfigurationCustomizer = getProviderConfigurationCustomizer();
 		if (providerConfigurationCustomizer != null) {
 			oidcProviderConfigurationEndpointFilter.setProviderConfigurationCustomizer(providerConfigurationCustomizer);
 		}
-		httpSecurity.addFilterBefore(postProcess(oidcProviderConfigurationEndpointFilter), AbstractPreAuthenticatedProcessingFilter.class);
+		httpSecurity.addFilterBefore(postProcess(oidcProviderConfigurationEndpointFilter),
+				AbstractPreAuthenticatedProcessingFilter.class);
 	}
 
 	private Consumer<OidcProviderConfiguration.Builder> getProviderConfigurationCustomizer() {
@@ -91,10 +94,9 @@ public final class OidcProviderConfigurationEndpointConfigurer extends AbstractO
 				providerConfigurationCustomizer = this.defaultProviderConfigurationCustomizer;
 			}
 			if (this.providerConfigurationCustomizer != null) {
-				providerConfigurationCustomizer =
-						providerConfigurationCustomizer == null ?
-								this.providerConfigurationCustomizer :
-								providerConfigurationCustomizer.andThen(this.providerConfigurationCustomizer);
+				providerConfigurationCustomizer = providerConfigurationCustomizer == null
+						? this.providerConfigurationCustomizer
+						: providerConfigurationCustomizer.andThen(this.providerConfigurationCustomizer);
 			}
 		}
 		return providerConfigurationCustomizer;

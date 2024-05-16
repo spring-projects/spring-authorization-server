@@ -34,20 +34,24 @@ import org.springframework.util.Assert;
  * @see OAuth2TokenRevocationAuthenticationProvider
  */
 public class OAuth2TokenRevocationAuthenticationToken extends AbstractAuthenticationToken {
+
 	private static final long serialVersionUID = SpringAuthorizationServerVersion.SERIAL_VERSION_UID;
+
 	private final String token;
+
 	private final Authentication clientPrincipal;
+
 	private final String tokenTypeHint;
 
 	/**
-	 * Constructs an {@code OAuth2TokenRevocationAuthenticationToken} using the provided parameters.
-	 *
+	 * Constructs an {@code OAuth2TokenRevocationAuthenticationToken} using the provided
+	 * parameters.
 	 * @param token the token
 	 * @param clientPrincipal the authenticated client principal
 	 * @param tokenTypeHint the token type hint
 	 */
-	public OAuth2TokenRevocationAuthenticationToken(String token,
-			Authentication clientPrincipal, @Nullable String tokenTypeHint) {
+	public OAuth2TokenRevocationAuthenticationToken(String token, Authentication clientPrincipal,
+			@Nullable String tokenTypeHint) {
 		super(Collections.emptyList());
 		Assert.hasText(token, "token cannot be empty");
 		Assert.notNull(clientPrincipal, "clientPrincipal cannot be null");
@@ -57,20 +61,19 @@ public class OAuth2TokenRevocationAuthenticationToken extends AbstractAuthentica
 	}
 
 	/**
-	 * Constructs an {@code OAuth2TokenRevocationAuthenticationToken} using the provided parameters.
-	 *
+	 * Constructs an {@code OAuth2TokenRevocationAuthenticationToken} using the provided
+	 * parameters.
 	 * @param revokedToken the revoked token
 	 * @param clientPrincipal the authenticated client principal
 	 */
-	public OAuth2TokenRevocationAuthenticationToken(OAuth2Token revokedToken,
-			Authentication clientPrincipal) {
+	public OAuth2TokenRevocationAuthenticationToken(OAuth2Token revokedToken, Authentication clientPrincipal) {
 		super(Collections.emptyList());
 		Assert.notNull(revokedToken, "revokedToken cannot be null");
 		Assert.notNull(clientPrincipal, "clientPrincipal cannot be null");
 		this.token = revokedToken.getTokenValue();
 		this.clientPrincipal = clientPrincipal;
 		this.tokenTypeHint = null;
-		setAuthenticated(true);		// Indicates that the token was authenticated and revoked
+		setAuthenticated(true); // Indicates that the token was authenticated and revoked
 	}
 
 	@Override
@@ -85,7 +88,6 @@ public class OAuth2TokenRevocationAuthenticationToken extends AbstractAuthentica
 
 	/**
 	 * Returns the token.
-	 *
 	 * @return the token
 	 */
 	public String getToken() {
@@ -94,11 +96,11 @@ public class OAuth2TokenRevocationAuthenticationToken extends AbstractAuthentica
 
 	/**
 	 * Returns the token type hint.
-	 *
 	 * @return the token type hint
 	 */
 	@Nullable
 	public String getTokenTypeHint() {
 		return this.tokenTypeHint;
 	}
+
 }

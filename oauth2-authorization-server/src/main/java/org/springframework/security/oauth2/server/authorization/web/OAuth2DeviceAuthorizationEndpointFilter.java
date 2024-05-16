@@ -54,36 +54,46 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.util.UriComponentsBuilder;
 
 /**
- * A {@code Filter} for the OAuth 2.0 Device Authorization endpoint,
- * which handles the processing of the OAuth 2.0 Device Authorization Request.
+ * A {@code Filter} for the OAuth 2.0 Device Authorization endpoint, which handles the
+ * processing of the OAuth 2.0 Device Authorization Request.
  *
  * @author Steve Riesenberg
  * @since 1.1
  * @see AuthenticationManager
  * @see OAuth2DeviceAuthorizationRequestAuthenticationConverter
  * @see OAuth2DeviceAuthorizationRequestAuthenticationProvider
- * @see <a target="_blank" href="https://datatracker.ietf.org/doc/html/rfc8628">OAuth 2.0 Device Authorization Grant</a>
- * @see <a target="_blank" href="https://datatracker.ietf.org/doc/html/rfc8628#section-3.1">Section 3.1 Device Authorization Request</a>
- * @see <a target="_blank" href="https://datatracker.ietf.org/doc/html/rfc8628#section-3.2">Section 3.2 Device Authorization Response</a>
+ * @see <a target="_blank" href="https://datatracker.ietf.org/doc/html/rfc8628">OAuth 2.0
+ * Device Authorization Grant</a>
+ * @see <a target="_blank" href=
+ * "https://datatracker.ietf.org/doc/html/rfc8628#section-3.1">Section 3.1 Device
+ * Authorization Request</a>
+ * @see <a target="_blank" href=
+ * "https://datatracker.ietf.org/doc/html/rfc8628#section-3.2">Section 3.2 Device
+ * Authorization Response</a>
  */
 public final class OAuth2DeviceAuthorizationEndpointFilter extends OncePerRequestFilter {
 
 	private static final String DEFAULT_DEVICE_AUTHORIZATION_ENDPOINT_URI = "/oauth2/device_authorization";
 
 	private final AuthenticationManager authenticationManager;
+
 	private final RequestMatcher deviceAuthorizationEndpointMatcher;
-	private final HttpMessageConverter<OAuth2DeviceAuthorizationResponse> deviceAuthorizationHttpResponseConverter =
-			new OAuth2DeviceAuthorizationResponseHttpMessageConverter();
-	private AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource =
-			new WebAuthenticationDetailsSource();
+
+	private final HttpMessageConverter<OAuth2DeviceAuthorizationResponse> deviceAuthorizationHttpResponseConverter = new OAuth2DeviceAuthorizationResponseHttpMessageConverter();
+
+	private AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource = new WebAuthenticationDetailsSource();
+
 	private AuthenticationConverter authenticationConverter;
+
 	private AuthenticationSuccessHandler authenticationSuccessHandler = this::sendDeviceAuthorizationResponse;
+
 	private AuthenticationFailureHandler authenticationFailureHandler = new OAuth2ErrorAuthenticationFailureHandler();
+
 	private String verificationUri = OAuth2DeviceVerificationEndpointFilter.DEFAULT_DEVICE_VERIFICATION_ENDPOINT_URI;
 
 	/**
-	 * Constructs an {@code OAuth2DeviceAuthorizationEndpointFilter} using the provided parameters.
-	 *
+	 * Constructs an {@code OAuth2DeviceAuthorizationEndpointFilter} using the provided
+	 * parameters.
 	 * @param authenticationManager the authentication manager
 	 */
 	public OAuth2DeviceAuthorizationEndpointFilter(AuthenticationManager authenticationManager) {
@@ -91,12 +101,14 @@ public final class OAuth2DeviceAuthorizationEndpointFilter extends OncePerReques
 	}
 
 	/**
-	 * Constructs an {@code OAuth2DeviceAuthorizationEndpointFilter} using the provided parameters.
-	 *
+	 * Constructs an {@code OAuth2DeviceAuthorizationEndpointFilter} using the provided
+	 * parameters.
 	 * @param authenticationManager the authentication manager
-	 * @param deviceAuthorizationEndpointUri the endpoint {@code URI} for device authorization requests
+	 * @param deviceAuthorizationEndpointUri the endpoint {@code URI} for device
+	 * authorization requests
 	 */
-	public OAuth2DeviceAuthorizationEndpointFilter(AuthenticationManager authenticationManager, String deviceAuthorizationEndpointUri) {
+	public OAuth2DeviceAuthorizationEndpointFilter(AuthenticationManager authenticationManager,
+			String deviceAuthorizationEndpointUri) {
 		Assert.notNull(authenticationManager, "authenticationManager cannot be null");
 		Assert.hasText(deviceAuthorizationEndpointUri, "deviceAuthorizationEndpointUri cannot be empty");
 		this.authenticationManager = authenticationManager;
@@ -118,15 +130,16 @@ public final class OAuth2DeviceAuthorizationEndpointFilter extends OncePerReques
 			Authentication deviceAuthorizationRequestAuthentication = this.authenticationConverter.convert(request);
 			if (deviceAuthorizationRequestAuthentication instanceof AbstractAuthenticationToken) {
 				((AbstractAuthenticationToken) deviceAuthorizationRequestAuthentication)
-						.setDetails(this.authenticationDetailsSource.buildDetails(request));
+					.setDetails(this.authenticationDetailsSource.buildDetails(request));
 			}
 
-			Authentication deviceAuthorizationRequestAuthenticationResult =
-					this.authenticationManager.authenticate(deviceAuthorizationRequestAuthentication);
+			Authentication deviceAuthorizationRequestAuthenticationResult = this.authenticationManager
+				.authenticate(deviceAuthorizationRequestAuthentication);
 
 			this.authenticationSuccessHandler.onAuthenticationSuccess(request, response,
 					deviceAuthorizationRequestAuthenticationResult);
-		} catch (OAuth2AuthenticationException ex) {
+		}
+		catch (OAuth2AuthenticationException ex) {
 			SecurityContextHolder.clearContext();
 			if (this.logger.isTraceEnabled()) {
 				this.logger.trace(LogMessage.format("Device authorization request failed: %s", ex.getError()), ex);
@@ -136,20 +149,25 @@ public final class OAuth2DeviceAuthorizationEndpointFilter extends OncePerReques
 	}
 
 	/**
-	 * Sets the {@link AuthenticationDetailsSource} used for building an authentication details instance from {@link HttpServletRequest}.
-	 *
-	 * @param authenticationDetailsSource the {@link AuthenticationDetailsSource} used for building an authentication details instance from {@link HttpServletRequest}
+	 * Sets the {@link AuthenticationDetailsSource} used for building an authentication
+	 * details instance from {@link HttpServletRequest}.
+	 * @param authenticationDetailsSource the {@link AuthenticationDetailsSource} used for
+	 * building an authentication details instance from {@link HttpServletRequest}
 	 */
-	public void setAuthenticationDetailsSource(AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource) {
+	public void setAuthenticationDetailsSource(
+			AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource) {
 		Assert.notNull(authenticationDetailsSource, "authenticationDetailsSource cannot be null");
 		this.authenticationDetailsSource = authenticationDetailsSource;
 	}
 
 	/**
-	 * Sets the {@link AuthenticationConverter} used when attempting to extract a Device Authorization Request from {@link HttpServletRequest}
-	 * to an instance of {@link OAuth2DeviceAuthorizationRequestAuthenticationToken} used for authenticating the request.
-	 *
-	 * @param authenticationConverter the {@link AuthenticationConverter} used when attempting to extract a Device Authorization Request from {@link HttpServletRequest}
+	 * Sets the {@link AuthenticationConverter} used when attempting to extract a Device
+	 * Authorization Request from {@link HttpServletRequest} to an instance of
+	 * {@link OAuth2DeviceAuthorizationRequestAuthenticationToken} used for authenticating
+	 * the request.
+	 * @param authenticationConverter the {@link AuthenticationConverter} used when
+	 * attempting to extract a Device Authorization Request from
+	 * {@link HttpServletRequest}
 	 */
 	public void setAuthenticationConverter(AuthenticationConverter authenticationConverter) {
 		Assert.notNull(authenticationConverter, "authenticationConverter cannot be null");
@@ -157,10 +175,11 @@ public final class OAuth2DeviceAuthorizationEndpointFilter extends OncePerReques
 	}
 
 	/**
-	 * Sets the {@link AuthenticationSuccessHandler} used for handling an {@link OAuth2DeviceAuthorizationRequestAuthenticationToken}
-	 * and returning the {@link OAuth2DeviceAuthorizationResponse Device Authorization Response}.
-	 *
-	 * @param authenticationSuccessHandler the {@link AuthenticationSuccessHandler} used for handling an {@link OAuth2DeviceAuthorizationRequestAuthenticationToken}
+	 * Sets the {@link AuthenticationSuccessHandler} used for handling an
+	 * {@link OAuth2DeviceAuthorizationRequestAuthenticationToken} and returning the
+	 * {@link OAuth2DeviceAuthorizationResponse Device Authorization Response}.
+	 * @param authenticationSuccessHandler the {@link AuthenticationSuccessHandler} used
+	 * for handling an {@link OAuth2DeviceAuthorizationRequestAuthenticationToken}
 	 */
 	public void setAuthenticationSuccessHandler(AuthenticationSuccessHandler authenticationSuccessHandler) {
 		Assert.notNull(authenticationSuccessHandler, "authenticationSuccessHandler cannot be null");
@@ -168,10 +187,11 @@ public final class OAuth2DeviceAuthorizationEndpointFilter extends OncePerReques
 	}
 
 	/**
-	 * Sets the {@link AuthenticationFailureHandler} used for handling an {@link OAuth2AuthenticationException}
-	 * and returning the {@link OAuth2Error Error Response}.
-	 *
-	 * @param authenticationFailureHandler the {@link AuthenticationFailureHandler} used for handling an {@link OAuth2AuthenticationException}
+	 * Sets the {@link AuthenticationFailureHandler} used for handling an
+	 * {@link OAuth2AuthenticationException} and returning the {@link OAuth2Error Error
+	 * Response}.
+	 * @param authenticationFailureHandler the {@link AuthenticationFailureHandler} used
+	 * for handling an {@link OAuth2AuthenticationException}
 	 */
 	public void setAuthenticationFailureHandler(AuthenticationFailureHandler authenticationFailureHandler) {
 		Assert.notNull(authenticationFailureHandler, "authenticationFailureHandler cannot be null");
@@ -180,9 +200,11 @@ public final class OAuth2DeviceAuthorizationEndpointFilter extends OncePerReques
 
 	/**
 	 * Sets the end-user verification {@code URI} on the authorization server.
-	 *
-	 * @param verificationUri the end-user verification {@code URI} on the authorization server
-	 * @see <a target="_blank" href="https://datatracker.ietf.org/doc/html/rfc8628#section-3.2">Section 3.2 Device Authorization Response</a>
+	 * @param verificationUri the end-user verification {@code URI} on the authorization
+	 * server
+	 * @see <a target="_blank" href=
+	 * "https://datatracker.ietf.org/doc/html/rfc8628#section-3.2">Section 3.2 Device
+	 * Authorization Response</a>
 	 */
 	public void setVerificationUri(String verificationUri) {
 		Assert.hasText(verificationUri, "verificationUri cannot be empty");
@@ -192,8 +214,7 @@ public final class OAuth2DeviceAuthorizationEndpointFilter extends OncePerReques
 	private void sendDeviceAuthorizationResponse(HttpServletRequest request, HttpServletResponse response,
 			Authentication authentication) throws IOException {
 
-		OAuth2DeviceAuthorizationRequestAuthenticationToken deviceAuthorizationRequestAuthentication =
-				(OAuth2DeviceAuthorizationRequestAuthenticationToken) authentication;
+		OAuth2DeviceAuthorizationRequestAuthenticationToken deviceAuthorizationRequestAuthentication = (OAuth2DeviceAuthorizationRequestAuthenticationToken) authentication;
 
 		OAuth2DeviceCode deviceCode = deviceAuthorizationRequestAuthentication.getDeviceCode();
 		OAuth2UserCode userCode = deviceAuthorizationRequestAuthentication.getUserCode();
@@ -201,7 +222,7 @@ public final class OAuth2DeviceAuthorizationEndpointFilter extends OncePerReques
 		// Generate the fully-qualified verification URI
 		String issuerUri = AuthorizationServerContextHolder.getContext().getIssuer();
 		UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromHttpUrl(issuerUri)
-				.path(this.verificationUri);
+			.path(this.verificationUri);
 		String verificationUri = uriComponentsBuilder.build().toUriString();
 		// @formatter:off
 		String verificationUriComplete = uriComponentsBuilder

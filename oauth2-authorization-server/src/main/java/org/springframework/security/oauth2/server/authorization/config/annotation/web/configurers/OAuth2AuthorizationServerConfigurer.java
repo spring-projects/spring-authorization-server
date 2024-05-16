@@ -84,16 +84,16 @@ public final class OAuth2AuthorizationServerConfigurer
 		extends AbstractHttpConfigurer<OAuth2AuthorizationServerConfigurer, HttpSecurity> {
 
 	private final Map<Class<? extends AbstractOAuth2Configurer>, AbstractOAuth2Configurer> configurers = createConfigurers();
-	private RequestMatcher endpointsMatcher;
 
+	private RequestMatcher endpointsMatcher;
 
 	/**
 	 * Sets the repository of registered clients.
-	 *
 	 * @param registeredClientRepository the repository of registered clients
 	 * @return the {@link OAuth2AuthorizationServerConfigurer} for further configuration
 	 */
-	public OAuth2AuthorizationServerConfigurer registeredClientRepository(RegisteredClientRepository registeredClientRepository) {
+	public OAuth2AuthorizationServerConfigurer registeredClientRepository(
+			RegisteredClientRepository registeredClientRepository) {
 		Assert.notNull(registeredClientRepository, "registeredClientRepository cannot be null");
 		getBuilder().setSharedObject(RegisteredClientRepository.class, registeredClientRepository);
 		return this;
@@ -101,7 +101,6 @@ public final class OAuth2AuthorizationServerConfigurer
 
 	/**
 	 * Sets the authorization service.
-	 *
 	 * @param authorizationService the authorization service
 	 * @return the {@link OAuth2AuthorizationServerConfigurer} for further configuration
 	 */
@@ -113,11 +112,11 @@ public final class OAuth2AuthorizationServerConfigurer
 
 	/**
 	 * Sets the authorization consent service.
-	 *
 	 * @param authorizationConsentService the authorization consent service
 	 * @return the {@link OAuth2AuthorizationServerConfigurer} for further configuration
 	 */
-	public OAuth2AuthorizationServerConfigurer authorizationConsentService(OAuth2AuthorizationConsentService authorizationConsentService) {
+	public OAuth2AuthorizationServerConfigurer authorizationConsentService(
+			OAuth2AuthorizationConsentService authorizationConsentService) {
 		Assert.notNull(authorizationConsentService, "authorizationConsentService cannot be null");
 		getBuilder().setSharedObject(OAuth2AuthorizationConsentService.class, authorizationConsentService);
 		return this;
@@ -125,11 +124,11 @@ public final class OAuth2AuthorizationServerConfigurer
 
 	/**
 	 * Sets the authorization server settings.
-	 *
 	 * @param authorizationServerSettings the authorization server settings
 	 * @return the {@link OAuth2AuthorizationServerConfigurer} for further configuration
 	 */
-	public OAuth2AuthorizationServerConfigurer authorizationServerSettings(AuthorizationServerSettings authorizationServerSettings) {
+	public OAuth2AuthorizationServerConfigurer authorizationServerSettings(
+			AuthorizationServerSettings authorizationServerSettings) {
 		Assert.notNull(authorizationServerSettings, "authorizationServerSettings cannot be null");
 		getBuilder().setSharedObject(AuthorizationServerSettings.class, authorizationServerSettings);
 		return this;
@@ -137,12 +136,12 @@ public final class OAuth2AuthorizationServerConfigurer
 
 	/**
 	 * Sets the token generator.
-	 *
 	 * @param tokenGenerator the token generator
 	 * @return the {@link OAuth2AuthorizationServerConfigurer} for further configuration
 	 * @since 0.2.3
 	 */
-	public OAuth2AuthorizationServerConfigurer tokenGenerator(OAuth2TokenGenerator<? extends OAuth2Token> tokenGenerator) {
+	public OAuth2AuthorizationServerConfigurer tokenGenerator(
+			OAuth2TokenGenerator<? extends OAuth2Token> tokenGenerator) {
 		Assert.notNull(tokenGenerator, "tokenGenerator cannot be null");
 		getBuilder().setSharedObject(OAuth2TokenGenerator.class, tokenGenerator);
 		return this;
@@ -150,101 +149,111 @@ public final class OAuth2AuthorizationServerConfigurer
 
 	/**
 	 * Configures OAuth 2.0 Client Authentication.
-	 *
-	 * @param clientAuthenticationCustomizer the {@link Customizer} providing access to the {@link OAuth2ClientAuthenticationConfigurer}
+	 * @param clientAuthenticationCustomizer the {@link Customizer} providing access to
+	 * the {@link OAuth2ClientAuthenticationConfigurer}
 	 * @return the {@link OAuth2AuthorizationServerConfigurer} for further configuration
 	 */
-	public OAuth2AuthorizationServerConfigurer clientAuthentication(Customizer<OAuth2ClientAuthenticationConfigurer> clientAuthenticationCustomizer) {
+	public OAuth2AuthorizationServerConfigurer clientAuthentication(
+			Customizer<OAuth2ClientAuthenticationConfigurer> clientAuthenticationCustomizer) {
 		clientAuthenticationCustomizer.customize(getConfigurer(OAuth2ClientAuthenticationConfigurer.class));
 		return this;
 	}
 
 	/**
 	 * Configures the OAuth 2.0 Authorization Server Metadata Endpoint.
-	 *
-	 * @param authorizationServerMetadataEndpointCustomizer the {@link Customizer} providing access to the {@link OAuth2AuthorizationServerMetadataEndpointConfigurer}
+	 * @param authorizationServerMetadataEndpointCustomizer the {@link Customizer}
+	 * providing access to the {@link OAuth2AuthorizationServerMetadataEndpointConfigurer}
 	 * @return the {@link OAuth2AuthorizationServerConfigurer} for further configuration
 	 * @since 0.4.0
 	 */
-	public OAuth2AuthorizationServerConfigurer authorizationServerMetadataEndpoint(Customizer<OAuth2AuthorizationServerMetadataEndpointConfigurer> authorizationServerMetadataEndpointCustomizer) {
-		authorizationServerMetadataEndpointCustomizer.customize(getConfigurer(OAuth2AuthorizationServerMetadataEndpointConfigurer.class));
+	public OAuth2AuthorizationServerConfigurer authorizationServerMetadataEndpoint(
+			Customizer<OAuth2AuthorizationServerMetadataEndpointConfigurer> authorizationServerMetadataEndpointCustomizer) {
+		authorizationServerMetadataEndpointCustomizer
+			.customize(getConfigurer(OAuth2AuthorizationServerMetadataEndpointConfigurer.class));
 		return this;
 	}
 
 	/**
 	 * Configures the OAuth 2.0 Authorization Endpoint.
-	 *
-	 * @param authorizationEndpointCustomizer the {@link Customizer} providing access to the {@link OAuth2AuthorizationEndpointConfigurer}
+	 * @param authorizationEndpointCustomizer the {@link Customizer} providing access to
+	 * the {@link OAuth2AuthorizationEndpointConfigurer}
 	 * @return the {@link OAuth2AuthorizationServerConfigurer} for further configuration
 	 */
-	public OAuth2AuthorizationServerConfigurer authorizationEndpoint(Customizer<OAuth2AuthorizationEndpointConfigurer> authorizationEndpointCustomizer) {
+	public OAuth2AuthorizationServerConfigurer authorizationEndpoint(
+			Customizer<OAuth2AuthorizationEndpointConfigurer> authorizationEndpointCustomizer) {
 		authorizationEndpointCustomizer.customize(getConfigurer(OAuth2AuthorizationEndpointConfigurer.class));
 		return this;
 	}
 
 	/**
 	 * Configures the OAuth 2.0 Token Endpoint.
-	 *
-	 * @param tokenEndpointCustomizer the {@link Customizer} providing access to the {@link OAuth2TokenEndpointConfigurer}
+	 * @param tokenEndpointCustomizer the {@link Customizer} providing access to the
+	 * {@link OAuth2TokenEndpointConfigurer}
 	 * @return the {@link OAuth2AuthorizationServerConfigurer} for further configuration
 	 */
-	public OAuth2AuthorizationServerConfigurer tokenEndpoint(Customizer<OAuth2TokenEndpointConfigurer> tokenEndpointCustomizer) {
+	public OAuth2AuthorizationServerConfigurer tokenEndpoint(
+			Customizer<OAuth2TokenEndpointConfigurer> tokenEndpointCustomizer) {
 		tokenEndpointCustomizer.customize(getConfigurer(OAuth2TokenEndpointConfigurer.class));
 		return this;
 	}
 
 	/**
 	 * Configures the OAuth 2.0 Token Introspection Endpoint.
-	 *
-	 * @param tokenIntrospectionEndpointCustomizer the {@link Customizer} providing access to the {@link OAuth2TokenIntrospectionEndpointConfigurer}
+	 * @param tokenIntrospectionEndpointCustomizer the {@link Customizer} providing access
+	 * to the {@link OAuth2TokenIntrospectionEndpointConfigurer}
 	 * @return the {@link OAuth2AuthorizationServerConfigurer} for further configuration
 	 * @since 0.2.3
 	 */
-	public OAuth2AuthorizationServerConfigurer tokenIntrospectionEndpoint(Customizer<OAuth2TokenIntrospectionEndpointConfigurer> tokenIntrospectionEndpointCustomizer) {
+	public OAuth2AuthorizationServerConfigurer tokenIntrospectionEndpoint(
+			Customizer<OAuth2TokenIntrospectionEndpointConfigurer> tokenIntrospectionEndpointCustomizer) {
 		tokenIntrospectionEndpointCustomizer.customize(getConfigurer(OAuth2TokenIntrospectionEndpointConfigurer.class));
 		return this;
 	}
 
 	/**
 	 * Configures the OAuth 2.0 Token Revocation Endpoint.
-	 *
-	 * @param tokenRevocationEndpointCustomizer the {@link Customizer} providing access to the {@link OAuth2TokenRevocationEndpointConfigurer}
+	 * @param tokenRevocationEndpointCustomizer the {@link Customizer} providing access to
+	 * the {@link OAuth2TokenRevocationEndpointConfigurer}
 	 * @return the {@link OAuth2AuthorizationServerConfigurer} for further configuration
 	 * @since 0.2.2
 	 */
-	public OAuth2AuthorizationServerConfigurer tokenRevocationEndpoint(Customizer<OAuth2TokenRevocationEndpointConfigurer> tokenRevocationEndpointCustomizer) {
+	public OAuth2AuthorizationServerConfigurer tokenRevocationEndpoint(
+			Customizer<OAuth2TokenRevocationEndpointConfigurer> tokenRevocationEndpointCustomizer) {
 		tokenRevocationEndpointCustomizer.customize(getConfigurer(OAuth2TokenRevocationEndpointConfigurer.class));
 		return this;
 	}
 
 	/**
 	 * Configures the OAuth 2.0 Device Authorization Endpoint.
-	 *
-	 * @param deviceAuthorizationEndpointCustomizer the {@link Customizer} providing access to the {@link OAuth2DeviceAuthorizationEndpointConfigurer}
+	 * @param deviceAuthorizationEndpointCustomizer the {@link Customizer} providing
+	 * access to the {@link OAuth2DeviceAuthorizationEndpointConfigurer}
 	 * @return the {@link OAuth2AuthorizationServerConfigurer} for further configuration
 	 * @since 1.1
 	 */
-	public OAuth2AuthorizationServerConfigurer deviceAuthorizationEndpoint(Customizer<OAuth2DeviceAuthorizationEndpointConfigurer> deviceAuthorizationEndpointCustomizer) {
-		deviceAuthorizationEndpointCustomizer.customize(getConfigurer(OAuth2DeviceAuthorizationEndpointConfigurer.class));
+	public OAuth2AuthorizationServerConfigurer deviceAuthorizationEndpoint(
+			Customizer<OAuth2DeviceAuthorizationEndpointConfigurer> deviceAuthorizationEndpointCustomizer) {
+		deviceAuthorizationEndpointCustomizer
+			.customize(getConfigurer(OAuth2DeviceAuthorizationEndpointConfigurer.class));
 		return this;
 	}
 
 	/**
 	 * Configures the OAuth 2.0 Device Verification Endpoint.
-	 *
-	 * @param deviceVerificationEndpointCustomizer the {@link Customizer} providing access to the {@link OAuth2DeviceVerificationEndpointConfigurer}
+	 * @param deviceVerificationEndpointCustomizer the {@link Customizer} providing access
+	 * to the {@link OAuth2DeviceVerificationEndpointConfigurer}
 	 * @return the {@link OAuth2AuthorizationServerConfigurer} for further configuration
 	 * @since 1.1
 	 */
-	public OAuth2AuthorizationServerConfigurer deviceVerificationEndpoint(Customizer<OAuth2DeviceVerificationEndpointConfigurer> deviceVerificationEndpointCustomizer) {
+	public OAuth2AuthorizationServerConfigurer deviceVerificationEndpoint(
+			Customizer<OAuth2DeviceVerificationEndpointConfigurer> deviceVerificationEndpointCustomizer) {
 		deviceVerificationEndpointCustomizer.customize(getConfigurer(OAuth2DeviceVerificationEndpointConfigurer.class));
 		return this;
 	}
 
 	/**
 	 * Configures OpenID Connect 1.0 support (disabled by default).
-	 *
-	 * @param oidcCustomizer the {@link Customizer} providing access to the {@link OidcConfigurer}
+	 * @param oidcCustomizer the {@link Customizer} providing access to the
+	 * {@link OidcConfigurer}
 	 * @return the {@link OAuth2AuthorizationServerConfigurer} for further configuration
 	 */
 	public OAuth2AuthorizationServerConfigurer oidc(Customizer<OidcConfigurer> oidcCustomizer) {
@@ -259,7 +268,6 @@ public final class OAuth2AuthorizationServerConfigurer
 
 	/**
 	 * Returns a {@link RequestMatcher} for the authorization server endpoints.
-	 *
 	 * @return a {@link RequestMatcher} for the authorization server endpoints
 	 */
 	public RequestMatcher getEndpointsMatcher() {
@@ -270,42 +278,45 @@ public final class OAuth2AuthorizationServerConfigurer
 
 	@Override
 	public void init(HttpSecurity httpSecurity) {
-		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils.getAuthorizationServerSettings(httpSecurity);
+		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils
+			.getAuthorizationServerSettings(httpSecurity);
 		validateAuthorizationServerSettings(authorizationServerSettings);
 
 		if (isOidcEnabled()) {
 			// Add OpenID Connect session tracking capabilities.
 			initSessionRegistry(httpSecurity);
 			SessionRegistry sessionRegistry = httpSecurity.getSharedObject(SessionRegistry.class);
-			OAuth2AuthorizationEndpointConfigurer authorizationEndpointConfigurer =
-					getConfigurer(OAuth2AuthorizationEndpointConfigurer.class);
+			OAuth2AuthorizationEndpointConfigurer authorizationEndpointConfigurer = getConfigurer(
+					OAuth2AuthorizationEndpointConfigurer.class);
 			authorizationEndpointConfigurer.setSessionAuthenticationStrategy((authentication, request, response) -> {
 				if (authentication instanceof OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthentication) {
 					if (authorizationCodeRequestAuthentication.getScopes().contains(OidcScopes.OPENID)) {
 						if (sessionRegistry.getSessionInformation(request.getSession().getId()) == null) {
-							sessionRegistry.registerNewSession(
-									request.getSession().getId(),
-									((Authentication) authorizationCodeRequestAuthentication.getPrincipal()).getPrincipal());
+							sessionRegistry.registerNewSession(request.getSession().getId(),
+									((Authentication) authorizationCodeRequestAuthentication.getPrincipal())
+										.getPrincipal());
 						}
 					}
 				}
 			});
-		} else {
+		}
+		else {
 			// OpenID Connect is disabled.
 			// Add an authentication validator that rejects authentication requests.
-			OAuth2AuthorizationEndpointConfigurer authorizationEndpointConfigurer =
-					getConfigurer(OAuth2AuthorizationEndpointConfigurer.class);
-			authorizationEndpointConfigurer.addAuthorizationCodeRequestAuthenticationValidator((authenticationContext) -> {
-				OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthentication =
-						authenticationContext.getAuthentication();
-				if (authorizationCodeRequestAuthentication.getScopes().contains(OidcScopes.OPENID)) {
-					OAuth2Error error = new OAuth2Error(OAuth2ErrorCodes.INVALID_SCOPE,
-							"OpenID Connect 1.0 authentication requests are restricted.",
-							"https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.2.1");
-					throw new OAuth2AuthorizationCodeRequestAuthenticationException(
-							error, authorizationCodeRequestAuthentication);
-				}
-			});
+			OAuth2AuthorizationEndpointConfigurer authorizationEndpointConfigurer = getConfigurer(
+					OAuth2AuthorizationEndpointConfigurer.class);
+			authorizationEndpointConfigurer
+				.addAuthorizationCodeRequestAuthenticationValidator((authenticationContext) -> {
+					OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthentication = authenticationContext
+						.getAuthentication();
+					if (authorizationCodeRequestAuthentication.getScopes().contains(OidcScopes.OPENID)) {
+						OAuth2Error error = new OAuth2Error(OAuth2ErrorCodes.INVALID_SCOPE,
+								"OpenID Connect 1.0 authentication requests are restricted.",
+								"https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.2.1");
+						throw new OAuth2AuthorizationCodeRequestAuthenticationException(error,
+								authorizationCodeRequestAuthentication);
+					}
+				});
 		}
 
 		List<RequestMatcher> requestMatchers = new ArrayList<>();
@@ -313,20 +324,18 @@ public final class OAuth2AuthorizationServerConfigurer
 			configurer.init(httpSecurity);
 			requestMatchers.add(configurer.getRequestMatcher());
 		});
-		requestMatchers.add(new AntPathRequestMatcher(
-				authorizationServerSettings.getJwkSetEndpoint(), HttpMethod.GET.name()));
+		requestMatchers
+			.add(new AntPathRequestMatcher(authorizationServerSettings.getJwkSetEndpoint(), HttpMethod.GET.name()));
 		this.endpointsMatcher = new OrRequestMatcher(requestMatchers);
 
-		ExceptionHandlingConfigurer<HttpSecurity> exceptionHandling = httpSecurity.getConfigurer(ExceptionHandlingConfigurer.class);
+		ExceptionHandlingConfigurer<HttpSecurity> exceptionHandling = httpSecurity
+			.getConfigurer(ExceptionHandlingConfigurer.class);
 		if (exceptionHandling != null) {
-			exceptionHandling.defaultAuthenticationEntryPointFor(
-					new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED),
-					new OrRequestMatcher(
-							getRequestMatcher(OAuth2TokenEndpointConfigurer.class),
+			exceptionHandling.defaultAuthenticationEntryPointFor(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED),
+					new OrRequestMatcher(getRequestMatcher(OAuth2TokenEndpointConfigurer.class),
 							getRequestMatcher(OAuth2TokenIntrospectionEndpointConfigurer.class),
 							getRequestMatcher(OAuth2TokenRevocationEndpointConfigurer.class),
-							getRequestMatcher(OAuth2DeviceAuthorizationEndpointConfigurer.class))
-			);
+							getRequestMatcher(OAuth2DeviceAuthorizationEndpointConfigurer.class)));
 		}
 	}
 
@@ -334,16 +343,19 @@ public final class OAuth2AuthorizationServerConfigurer
 	public void configure(HttpSecurity httpSecurity) {
 		this.configurers.values().forEach(configurer -> configurer.configure(httpSecurity));
 
-		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils.getAuthorizationServerSettings(httpSecurity);
+		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils
+			.getAuthorizationServerSettings(httpSecurity);
 
-		AuthorizationServerContextFilter authorizationServerContextFilter = new AuthorizationServerContextFilter(authorizationServerSettings);
+		AuthorizationServerContextFilter authorizationServerContextFilter = new AuthorizationServerContextFilter(
+				authorizationServerSettings);
 		httpSecurity.addFilterAfter(postProcess(authorizationServerContextFilter), SecurityContextHolderFilter.class);
 
 		JWKSource<com.nimbusds.jose.proc.SecurityContext> jwkSource = OAuth2ConfigurerUtils.getJwkSource(httpSecurity);
 		if (jwkSource != null) {
-			NimbusJwkSetEndpointFilter jwkSetEndpointFilter = new NimbusJwkSetEndpointFilter(
-					jwkSource, authorizationServerSettings.getJwkSetEndpoint());
-			httpSecurity.addFilterBefore(postProcess(jwkSetEndpointFilter), AbstractPreAuthenticatedProcessingFilter.class);
+			NimbusJwkSetEndpointFilter jwkSetEndpointFilter = new NimbusJwkSetEndpointFilter(jwkSource,
+					authorizationServerSettings.getJwkSetEndpoint());
+			httpSecurity.addFilterBefore(postProcess(jwkSetEndpointFilter),
+					AbstractPreAuthenticatedProcessingFilter.class);
 		}
 	}
 
@@ -353,14 +365,21 @@ public final class OAuth2AuthorizationServerConfigurer
 
 	private Map<Class<? extends AbstractOAuth2Configurer>, AbstractOAuth2Configurer> createConfigurers() {
 		Map<Class<? extends AbstractOAuth2Configurer>, AbstractOAuth2Configurer> configurers = new LinkedHashMap<>();
-		configurers.put(OAuth2ClientAuthenticationConfigurer.class, new OAuth2ClientAuthenticationConfigurer(this::postProcess));
-		configurers.put(OAuth2AuthorizationServerMetadataEndpointConfigurer.class, new OAuth2AuthorizationServerMetadataEndpointConfigurer(this::postProcess));
-		configurers.put(OAuth2AuthorizationEndpointConfigurer.class, new OAuth2AuthorizationEndpointConfigurer(this::postProcess));
+		configurers.put(OAuth2ClientAuthenticationConfigurer.class,
+				new OAuth2ClientAuthenticationConfigurer(this::postProcess));
+		configurers.put(OAuth2AuthorizationServerMetadataEndpointConfigurer.class,
+				new OAuth2AuthorizationServerMetadataEndpointConfigurer(this::postProcess));
+		configurers.put(OAuth2AuthorizationEndpointConfigurer.class,
+				new OAuth2AuthorizationEndpointConfigurer(this::postProcess));
 		configurers.put(OAuth2TokenEndpointConfigurer.class, new OAuth2TokenEndpointConfigurer(this::postProcess));
-		configurers.put(OAuth2TokenIntrospectionEndpointConfigurer.class, new OAuth2TokenIntrospectionEndpointConfigurer(this::postProcess));
-		configurers.put(OAuth2TokenRevocationEndpointConfigurer.class, new OAuth2TokenRevocationEndpointConfigurer(this::postProcess));
-		configurers.put(OAuth2DeviceAuthorizationEndpointConfigurer.class, new OAuth2DeviceAuthorizationEndpointConfigurer(this::postProcess));
-		configurers.put(OAuth2DeviceVerificationEndpointConfigurer.class, new OAuth2DeviceVerificationEndpointConfigurer(this::postProcess));
+		configurers.put(OAuth2TokenIntrospectionEndpointConfigurer.class,
+				new OAuth2TokenIntrospectionEndpointConfigurer(this::postProcess));
+		configurers.put(OAuth2TokenRevocationEndpointConfigurer.class,
+				new OAuth2TokenRevocationEndpointConfigurer(this::postProcess));
+		configurers.put(OAuth2DeviceAuthorizationEndpointConfigurer.class,
+				new OAuth2DeviceAuthorizationEndpointConfigurer(this::postProcess));
+		configurers.put(OAuth2DeviceVerificationEndpointConfigurer.class,
+				new OAuth2DeviceVerificationEndpointConfigurer(this::postProcess));
 		return configurers;
 	}
 
@@ -384,7 +403,8 @@ public final class OAuth2AuthorizationServerConfigurer
 			try {
 				issuerUri = new URI(authorizationServerSettings.getIssuer());
 				issuerUri.toURL();
-			} catch (Exception ex) {
+			}
+			catch (Exception ex) {
 				throw new IllegalArgumentException("issuer must be a valid URL", ex);
 			}
 			// rfc8414 https://datatracker.ietf.org/doc/html/rfc8414#section-2
@@ -403,9 +423,10 @@ public final class OAuth2AuthorizationServerConfigurer
 		httpSecurity.setSharedObject(SessionRegistry.class, sessionRegistry);
 	}
 
-	private static void registerDelegateApplicationListener(HttpSecurity httpSecurity, ApplicationListener<?> delegate) {
-		DelegatingApplicationListener delegatingApplicationListener =
-				OAuth2ConfigurerUtils.getOptionalBean(httpSecurity, DelegatingApplicationListener.class);
+	private static void registerDelegateApplicationListener(HttpSecurity httpSecurity,
+			ApplicationListener<?> delegate) {
+		DelegatingApplicationListener delegatingApplicationListener = OAuth2ConfigurerUtils
+			.getOptionalBean(httpSecurity, DelegatingApplicationListener.class);
 		if (delegatingApplicationListener == null) {
 			return;
 		}

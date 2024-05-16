@@ -46,7 +46,8 @@ import org.springframework.util.CollectionUtils;
 import static org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthenticationProviderUtils.getAuthenticatedClientElseThrowInvalidClient;
 
 /**
- * An {@link AuthenticationProvider} implementation for the OAuth 2.0 Client Credentials Grant.
+ * An {@link AuthenticationProvider} implementation for the OAuth 2.0 Client Credentials
+ * Grant.
  *
  * @author Alexey Nesterov
  * @author Joe Grandja
@@ -55,18 +56,26 @@ import static org.springframework.security.oauth2.server.authorization.authentic
  * @see OAuth2AccessTokenAuthenticationToken
  * @see OAuth2AuthorizationService
  * @see OAuth2TokenGenerator
- * @see <a target="_blank" href="https://datatracker.ietf.org/doc/html/rfc6749#section-4.4">Section 4.4 Client Credentials Grant</a>
- * @see <a target="_blank" href="https://datatracker.ietf.org/doc/html/rfc6749#section-4.4.2">Section 4.4.2 Access Token Request</a>
+ * @see <a target="_blank" href=
+ * "https://datatracker.ietf.org/doc/html/rfc6749#section-4.4">Section 4.4 Client
+ * Credentials Grant</a>
+ * @see <a target="_blank" href=
+ * "https://datatracker.ietf.org/doc/html/rfc6749#section-4.4.2">Section 4.4.2 Access
+ * Token Request</a>
  */
 public final class OAuth2ClientCredentialsAuthenticationProvider implements AuthenticationProvider {
+
 	private static final String ERROR_URI = "https://datatracker.ietf.org/doc/html/rfc6749#section-5.2";
+
 	private final Log logger = LogFactory.getLog(getClass());
+
 	private final OAuth2AuthorizationService authorizationService;
+
 	private final OAuth2TokenGenerator<? extends OAuth2Token> tokenGenerator;
 
 	/**
-	 * Constructs an {@code OAuth2ClientCredentialsAuthenticationProvider} using the provided parameters.
-	 *
+	 * Constructs an {@code OAuth2ClientCredentialsAuthenticationProvider} using the
+	 * provided parameters.
 	 * @param authorizationService the authorization service
 	 * @param tokenGenerator the token generator
 	 * @since 0.2.3
@@ -81,11 +90,10 @@ public final class OAuth2ClientCredentialsAuthenticationProvider implements Auth
 
 	@Override
 	public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-		OAuth2ClientCredentialsAuthenticationToken clientCredentialsAuthentication =
-				(OAuth2ClientCredentialsAuthenticationToken) authentication;
+		OAuth2ClientCredentialsAuthenticationToken clientCredentialsAuthentication = (OAuth2ClientCredentialsAuthenticationToken) authentication;
 
-		OAuth2ClientAuthenticationToken clientPrincipal =
-				getAuthenticatedClientElseThrowInvalidClient(clientCredentialsAuthentication);
+		OAuth2ClientAuthenticationToken clientPrincipal = getAuthenticatedClientElseThrowInvalidClient(
+				clientCredentialsAuthentication);
 		RegisteredClient registeredClient = clientPrincipal.getRegisteredClient();
 
 		if (this.logger.isTraceEnabled()) {
@@ -144,9 +152,11 @@ public final class OAuth2ClientCredentialsAuthenticationProvider implements Auth
 				.authorizedScopes(authorizedScopes);
 		// @formatter:on
 		if (generatedAccessToken instanceof ClaimAccessor) {
-			authorizationBuilder.token(accessToken, (metadata) ->
-					metadata.put(OAuth2Authorization.Token.CLAIMS_METADATA_NAME, ((ClaimAccessor) generatedAccessToken).getClaims()));
-		} else {
+			authorizationBuilder.token(accessToken,
+					(metadata) -> metadata.put(OAuth2Authorization.Token.CLAIMS_METADATA_NAME,
+							((ClaimAccessor) generatedAccessToken).getClaims()));
+		}
+		else {
 			authorizationBuilder.accessToken(accessToken);
 		}
 

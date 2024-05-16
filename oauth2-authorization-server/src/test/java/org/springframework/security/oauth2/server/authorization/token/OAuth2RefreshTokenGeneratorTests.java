@@ -32,6 +32,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Joe Grandja
  */
 public class OAuth2RefreshTokenGeneratorTests {
+
 	private final OAuth2RefreshTokenGenerator tokenGenerator = new OAuth2RefreshTokenGenerator();
 
 	@Test
@@ -60,7 +61,8 @@ public class OAuth2RefreshTokenGeneratorTests {
 		assertThat(refreshToken).isNotNull();
 
 		Instant issuedAt = Instant.now();
-		Instant expiresAt = issuedAt.plus(tokenContext.getRegisteredClient().getTokenSettings().getRefreshTokenTimeToLive());
+		Instant expiresAt = issuedAt
+			.plus(tokenContext.getRegisteredClient().getTokenSettings().getRefreshTokenTimeToLive());
 		assertThat(refreshToken.getIssuedAt()).isBetween(issuedAt.minusSeconds(1), issuedAt.plusSeconds(1));
 		assertThat(refreshToken.getExpiresAt()).isBetween(expiresAt.minusSeconds(1), expiresAt.plusSeconds(1));
 	}

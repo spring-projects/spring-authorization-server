@@ -28,7 +28,8 @@ import org.springframework.util.StringUtils;
  * A {@link RegisteredClientRepository} that stores {@link RegisteredClient}(s) in-memory.
  *
  * <p>
- * <b>NOTE:</b> This implementation is recommended ONLY to be used during development/testing.
+ * <b>NOTE:</b> This implementation is recommended ONLY to be used during
+ * development/testing.
  *
  * @author Anoop Garlapati
  * @author Ovidiu Popa
@@ -38,12 +39,14 @@ import org.springframework.util.StringUtils;
  * @since 0.0.1
  */
 public final class InMemoryRegisteredClientRepository implements RegisteredClientRepository {
+
 	private final Map<String, RegisteredClient> idRegistrationMap;
+
 	private final Map<String, RegisteredClient> clientIdRegistrationMap;
 
 	/**
-	 * Constructs an {@code InMemoryRegisteredClientRepository} using the provided parameters.
-	 *
+	 * Constructs an {@code InMemoryRegisteredClientRepository} using the provided
+	 * parameters.
 	 * @param registrations the client registration(s)
 	 */
 	public InMemoryRegisteredClientRepository(RegisteredClient... registrations) {
@@ -51,8 +54,8 @@ public final class InMemoryRegisteredClientRepository implements RegisteredClien
 	}
 
 	/**
-	 * Constructs an {@code InMemoryRegisteredClientRepository} using the provided parameters.
-	 *
+	 * Constructs an {@code InMemoryRegisteredClientRepository} using the provided
+	 * parameters.
 	 * @param registrations the client registration(s)
 	 */
 	public InMemoryRegisteredClientRepository(List<RegisteredClient> registrations) {
@@ -93,20 +96,21 @@ public final class InMemoryRegisteredClientRepository implements RegisteredClien
 		return this.clientIdRegistrationMap.get(clientId);
 	}
 
-	private void assertUniqueIdentifiers(RegisteredClient registeredClient, Map<String, RegisteredClient> registrations) {
+	private void assertUniqueIdentifiers(RegisteredClient registeredClient,
+			Map<String, RegisteredClient> registrations) {
 		registrations.values().forEach(registration -> {
 			if (registeredClient.getId().equals(registration.getId())) {
-				throw new IllegalArgumentException("Registered client must be unique. " +
-						"Found duplicate identifier: " + registeredClient.getId());
+				throw new IllegalArgumentException("Registered client must be unique. " + "Found duplicate identifier: "
+						+ registeredClient.getId());
 			}
 			if (registeredClient.getClientId().equals(registration.getClientId())) {
-				throw new IllegalArgumentException("Registered client must be unique. " +
-						"Found duplicate client identifier: " + registeredClient.getClientId());
+				throw new IllegalArgumentException("Registered client must be unique. "
+						+ "Found duplicate client identifier: " + registeredClient.getClientId());
 			}
-			if (StringUtils.hasText(registeredClient.getClientSecret()) &&
-					registeredClient.getClientSecret().equals(registration.getClientSecret())) {
-				throw new IllegalArgumentException("Registered client must be unique. " +
-						"Found duplicate client secret for identifier: " + registeredClient.getId());
+			if (StringUtils.hasText(registeredClient.getClientSecret())
+					&& registeredClient.getClientSecret().equals(registration.getClientSecret())) {
+				throw new IllegalArgumentException("Registered client must be unique. "
+						+ "Found duplicate client secret for identifier: " + registeredClient.getId());
 			}
 		});
 	}

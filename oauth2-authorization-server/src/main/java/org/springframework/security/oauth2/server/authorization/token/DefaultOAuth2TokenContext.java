@@ -30,6 +30,7 @@ import org.springframework.util.Assert;
  * @see OAuth2TokenContext
  */
 public final class DefaultOAuth2TokenContext implements OAuth2TokenContext {
+
 	private final Map<Object, Object> context;
 
 	private DefaultOAuth2TokenContext(Map<Object, Object> context) {
@@ -51,7 +52,6 @@ public final class DefaultOAuth2TokenContext implements OAuth2TokenContext {
 
 	/**
 	 * Returns a new {@link Builder}.
-	 *
 	 * @return the {@link Builder}
 	 */
 	public static Builder builder() {
@@ -68,7 +68,6 @@ public final class DefaultOAuth2TokenContext implements OAuth2TokenContext {
 
 		/**
 		 * Builds a new {@link DefaultOAuth2TokenContext}.
-		 *
 		 * @return the {@link DefaultOAuth2TokenContext}
 		 */
 		public DefaultOAuth2TokenContext build() {

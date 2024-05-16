@@ -30,8 +30,9 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
 
 /**
- * Attempts to extract a Revoke Token Request from {@link HttpServletRequest}
- * and then converts it to an {@link OAuth2TokenRevocationAuthenticationToken} used for authenticating the request.
+ * Attempts to extract a Revoke Token Request from {@link HttpServletRequest} and then
+ * converts it to an {@link OAuth2TokenRevocationAuthenticationToken} used for
+ * authenticating the request.
  *
  * @author Vivek Babu
  * @author Joe Grandja
@@ -50,15 +51,13 @@ public final class OAuth2TokenRevocationAuthenticationConverter implements Authe
 
 		// token (REQUIRED)
 		String token = parameters.getFirst(OAuth2ParameterNames.TOKEN);
-		if (!StringUtils.hasText(token) ||
-				parameters.get(OAuth2ParameterNames.TOKEN).size() != 1) {
+		if (!StringUtils.hasText(token) || parameters.get(OAuth2ParameterNames.TOKEN).size() != 1) {
 			throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.TOKEN);
 		}
 
 		// token_type_hint (OPTIONAL)
 		String tokenTypeHint = parameters.getFirst(OAuth2ParameterNames.TOKEN_TYPE_HINT);
-		if (StringUtils.hasText(tokenTypeHint) &&
-				parameters.get(OAuth2ParameterNames.TOKEN_TYPE_HINT).size() != 1) {
+		if (StringUtils.hasText(tokenTypeHint) && parameters.get(OAuth2ParameterNames.TOKEN_TYPE_HINT).size() != 1) {
 			throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.TOKEN_TYPE_HINT);
 		}
 

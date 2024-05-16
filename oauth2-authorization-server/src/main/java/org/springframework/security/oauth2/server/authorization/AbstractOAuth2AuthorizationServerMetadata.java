@@ -29,19 +29,27 @@ import org.springframework.security.oauth2.server.authorization.util.SpringAutho
 import org.springframework.util.Assert;
 
 /**
- * A base representation of OAuth 2.0 Authorization Server metadata,
- * returned by an endpoint defined in OAuth 2.0 Authorization Server Metadata and OpenID Connect Discovery 1.0.
- * The metadata endpoint returns a set of claims an Authorization Server describes about its configuration.
+ * A base representation of OAuth 2.0 Authorization Server metadata, returned by an
+ * endpoint defined in OAuth 2.0 Authorization Server Metadata and OpenID Connect
+ * Discovery 1.0. The metadata endpoint returns a set of claims an Authorization Server
+ * describes about its configuration.
  *
  * @author Daniel Garnier-Moiroux
  * @see OAuth2AuthorizationServerMetadataClaimAccessor
  * @since 0.1.1
- * @see <a target="_blank" href="https://tools.ietf.org/html/rfc8414#section-3.2">3.2. Authorization Server Metadata Response</a>
- * @see <a target="_blank" href="https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderConfigurationResponse">4.2. OpenID Provider Configuration Response</a>
- * @see <a target="_blank" href="https://www.rfc-editor.org/rfc/rfc8628.html#section-4">4. Device Authorization Grant Metadata</a>
+ * @see <a target="_blank" href="https://tools.ietf.org/html/rfc8414#section-3.2">3.2.
+ * Authorization Server Metadata Response</a>
+ * @see <a target="_blank" href=
+ * "https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderConfigurationResponse">4.2.
+ * OpenID Provider Configuration Response</a>
+ * @see <a target="_blank" href="https://www.rfc-editor.org/rfc/rfc8628.html#section-4">4.
+ * Device Authorization Grant Metadata</a>
  */
-public abstract class AbstractOAuth2AuthorizationServerMetadata implements OAuth2AuthorizationServerMetadataClaimAccessor, Serializable {
+public abstract class AbstractOAuth2AuthorizationServerMetadata
+		implements OAuth2AuthorizationServerMetadataClaimAccessor, Serializable {
+
 	private static final long serialVersionUID = SpringAuthorizationServerVersion.SERIAL_VERSION_UID;
+
 	private final Map<String, Object> claims;
 
 	protected AbstractOAuth2AuthorizationServerMetadata(Map<String, Object> claims) {
@@ -51,7 +59,6 @@ public abstract class AbstractOAuth2AuthorizationServerMetadata implements OAuth
 
 	/**
 	 * Returns the metadata as claims.
-	 *
 	 * @return a {@code Map} of the metadata as claims
 	 */
 	@Override
@@ -63,6 +70,7 @@ public abstract class AbstractOAuth2AuthorizationServerMetadata implements OAuth
 	 * A builder for subclasses of {@link AbstractOAuth2AuthorizationServerMetadata}.
 	 */
 	protected static abstract class AbstractBuilder<T extends AbstractOAuth2AuthorizationServerMetadata, B extends AbstractBuilder<T, B>> {
+
 		private final Map<String, Object> claims = new LinkedHashMap<>();
 
 		protected AbstractBuilder() {
@@ -74,12 +82,14 @@ public abstract class AbstractOAuth2AuthorizationServerMetadata implements OAuth
 
 		@SuppressWarnings("unchecked")
 		protected final B getThis() {
-			return (B) this;	// avoid unchecked casts in subclasses by using "getThis()" instead of "(B) this"
+			// avoid unchecked casts in subclasses by using "getThis()" instead of "(B)
+			// this"
+			return (B) this;
 		}
 
 		/**
-		 * Use this {@code issuer} in the resulting {@link AbstractOAuth2AuthorizationServerMetadata}, REQUIRED.
-		 *
+		 * Use this {@code issuer} in the resulting
+		 * {@link AbstractOAuth2AuthorizationServerMetadata}, REQUIRED.
 		 * @param issuer the {@code URL} of the Authorization Server's Issuer Identifier
 		 * @return the {@link AbstractBuilder} for further configuration
 		 */
@@ -88,9 +98,10 @@ public abstract class AbstractOAuth2AuthorizationServerMetadata implements OAuth
 		}
 
 		/**
-		 * Use this {@code authorization_endpoint} in the resulting {@link AbstractOAuth2AuthorizationServerMetadata}, REQUIRED.
-		 *
-		 * @param authorizationEndpoint the {@code URL} of the OAuth 2.0 Authorization Endpoint
+		 * Use this {@code authorization_endpoint} in the resulting
+		 * {@link AbstractOAuth2AuthorizationServerMetadata}, REQUIRED.
+		 * @param authorizationEndpoint the {@code URL} of the OAuth 2.0 Authorization
+		 * Endpoint
 		 * @return the {@link AbstractBuilder} for further configuration
 		 */
 		public B authorizationEndpoint(String authorizationEndpoint) {
@@ -98,19 +109,21 @@ public abstract class AbstractOAuth2AuthorizationServerMetadata implements OAuth
 		}
 
 		/**
-		 * Use this {@code device_authorization_endpoint} in the resulting {@link AbstractOAuth2AuthorizationServerMetadata}, OPTIONAL.
-		 *
-		 * @param deviceAuthorizationEndpoint the {@code URL} of the OAuth 2.0 Device Authorization Endpoint
+		 * Use this {@code device_authorization_endpoint} in the resulting
+		 * {@link AbstractOAuth2AuthorizationServerMetadata}, OPTIONAL.
+		 * @param deviceAuthorizationEndpoint the {@code URL} of the OAuth 2.0 Device
+		 * Authorization Endpoint
 		 * @return the {@link AbstractBuilder} for further configuration
 		 * @since 1.1
 		 */
 		public B deviceAuthorizationEndpoint(String deviceAuthorizationEndpoint) {
-			return claim(OAuth2AuthorizationServerMetadataClaimNames.DEVICE_AUTHORIZATION_ENDPOINT, deviceAuthorizationEndpoint);
+			return claim(OAuth2AuthorizationServerMetadataClaimNames.DEVICE_AUTHORIZATION_ENDPOINT,
+					deviceAuthorizationEndpoint);
 		}
 
 		/**
-		 * Use this {@code token_endpoint} in the resulting {@link AbstractOAuth2AuthorizationServerMetadata}, REQUIRED.
-		 *
+		 * Use this {@code token_endpoint} in the resulting
+		 * {@link AbstractOAuth2AuthorizationServerMetadata}, REQUIRED.
 		 * @param tokenEndpoint the {@code URL} of the OAuth 2.0 Token Endpoint
 		 * @return the {@link AbstractBuilder} for further configuration
 		 */
@@ -119,31 +132,35 @@ public abstract class AbstractOAuth2AuthorizationServerMetadata implements OAuth
 		}
 
 		/**
-		 * Add this client authentication method to the collection of {@code token_endpoint_auth_methods_supported}
-		 * in the resulting {@link AbstractOAuth2AuthorizationServerMetadata}, OPTIONAL.
-		 *
-		 * @param authenticationMethod the client authentication method supported by the OAuth 2.0 Token Endpoint
+		 * Add this client authentication method to the collection of
+		 * {@code token_endpoint_auth_methods_supported} in the resulting
+		 * {@link AbstractOAuth2AuthorizationServerMetadata}, OPTIONAL.
+		 * @param authenticationMethod the client authentication method supported by the
+		 * OAuth 2.0 Token Endpoint
 		 * @return the {@link AbstractBuilder} for further configuration
 		 */
 		public B tokenEndpointAuthenticationMethod(String authenticationMethod) {
-			addClaimToClaimList(OAuth2AuthorizationServerMetadataClaimNames.TOKEN_ENDPOINT_AUTH_METHODS_SUPPORTED, authenticationMethod);
+			addClaimToClaimList(OAuth2AuthorizationServerMetadataClaimNames.TOKEN_ENDPOINT_AUTH_METHODS_SUPPORTED,
+					authenticationMethod);
 			return getThis();
 		}
 
 		/**
-		 * A {@code Consumer} of the client authentication method(s) allowing the ability to add, replace, or remove.
-		 *
-		 * @param authenticationMethodsConsumer a {@code Consumer} of the client authentication method(s) supported by the OAuth 2.0 Token Endpoint
+		 * A {@code Consumer} of the client authentication method(s) allowing the ability
+		 * to add, replace, or remove.
+		 * @param authenticationMethodsConsumer a {@code Consumer} of the client
+		 * authentication method(s) supported by the OAuth 2.0 Token Endpoint
 		 * @return the {@link AbstractBuilder} for further configuration
 		 */
 		public B tokenEndpointAuthenticationMethods(Consumer<List<String>> authenticationMethodsConsumer) {
-			acceptClaimValues(OAuth2AuthorizationServerMetadataClaimNames.TOKEN_ENDPOINT_AUTH_METHODS_SUPPORTED, authenticationMethodsConsumer);
+			acceptClaimValues(OAuth2AuthorizationServerMetadataClaimNames.TOKEN_ENDPOINT_AUTH_METHODS_SUPPORTED,
+					authenticationMethodsConsumer);
 			return getThis();
 		}
 
 		/**
-		 * Use this {@code jwks_uri} in the resulting {@link AbstractOAuth2AuthorizationServerMetadata}, OPTIONAL.
-		 *
+		 * Use this {@code jwks_uri} in the resulting
+		 * {@link AbstractOAuth2AuthorizationServerMetadata}, OPTIONAL.
 		 * @param jwkSetUrl the {@code URL} of the JSON Web Key Set
 		 * @return the {@link AbstractBuilder} for further configuration
 		 */
@@ -153,8 +170,8 @@ public abstract class AbstractOAuth2AuthorizationServerMetadata implements OAuth
 
 		/**
 		 * Add this OAuth 2.0 {@code scope} to the collection of {@code scopes_supported}
-		 * in the resulting {@link AbstractOAuth2AuthorizationServerMetadata}, RECOMMENDED.
-		 *
+		 * in the resulting {@link AbstractOAuth2AuthorizationServerMetadata},
+		 * RECOMMENDED.
 		 * @param scope the OAuth 2.0 {@code scope} value supported
 		 * @return the {@link AbstractBuilder} for further configuration
 		 */
@@ -164,9 +181,10 @@ public abstract class AbstractOAuth2AuthorizationServerMetadata implements OAuth
 		}
 
 		/**
-		 * A {@code Consumer} of the OAuth 2.0 {@code scope} values supported allowing the ability to add, replace, or remove.
-		 *
-		 * @param scopesConsumer a {@code Consumer} of the OAuth 2.0 {@code scope} values supported
+		 * A {@code Consumer} of the OAuth 2.0 {@code scope} values supported allowing the
+		 * ability to add, replace, or remove.
+		 * @param scopesConsumer a {@code Consumer} of the OAuth 2.0 {@code scope} values
+		 * supported
 		 * @return the {@link AbstractBuilder} for further configuration
 		 */
 		public B scopes(Consumer<List<String>> scopesConsumer) {
@@ -175,9 +193,9 @@ public abstract class AbstractOAuth2AuthorizationServerMetadata implements OAuth
 		}
 
 		/**
-		 * Add this OAuth 2.0 {@code response_type} to the collection of {@code response_types_supported}
-		 * in the resulting {@link AbstractOAuth2AuthorizationServerMetadata}, REQUIRED.
-		 *
+		 * Add this OAuth 2.0 {@code response_type} to the collection of
+		 * {@code response_types_supported} in the resulting
+		 * {@link AbstractOAuth2AuthorizationServerMetadata}, REQUIRED.
 		 * @param responseType the OAuth 2.0 {@code response_type} value supported
 		 * @return the {@link AbstractBuilder} for further configuration
 		 */
@@ -187,20 +205,22 @@ public abstract class AbstractOAuth2AuthorizationServerMetadata implements OAuth
 		}
 
 		/**
-		 * A {@code Consumer} of the OAuth 2.0 {@code response_type} values supported allowing the ability to add, replace, or remove.
-		 *
-		 * @param responseTypesConsumer a {@code Consumer} of the OAuth 2.0 {@code response_type} values supported
+		 * A {@code Consumer} of the OAuth 2.0 {@code response_type} values supported
+		 * allowing the ability to add, replace, or remove.
+		 * @param responseTypesConsumer a {@code Consumer} of the OAuth 2.0
+		 * {@code response_type} values supported
 		 * @return the {@link AbstractBuilder} for further configuration
 		 */
 		public B responseTypes(Consumer<List<String>> responseTypesConsumer) {
-			acceptClaimValues(OAuth2AuthorizationServerMetadataClaimNames.RESPONSE_TYPES_SUPPORTED, responseTypesConsumer);
+			acceptClaimValues(OAuth2AuthorizationServerMetadataClaimNames.RESPONSE_TYPES_SUPPORTED,
+					responseTypesConsumer);
 			return getThis();
 		}
 
 		/**
-		 * Add this OAuth 2.0 {@code grant_type} to the collection of {@code grant_types_supported}
-		 * in the resulting {@link AbstractOAuth2AuthorizationServerMetadata}, OPTIONAL.
-		 *
+		 * Add this OAuth 2.0 {@code grant_type} to the collection of
+		 * {@code grant_types_supported} in the resulting
+		 * {@link AbstractOAuth2AuthorizationServerMetadata}, OPTIONAL.
 		 * @param grantType the OAuth 2.0 {@code grant_type} value supported
 		 * @return the {@link AbstractBuilder} for further configuration
 		 */
@@ -210,9 +230,10 @@ public abstract class AbstractOAuth2AuthorizationServerMetadata implements OAuth
 		}
 
 		/**
-		 * A {@code Consumer} of the OAuth 2.0 {@code grant_type} values supported allowing the ability to add, replace, or remove.
-		 *
-		 * @param grantTypesConsumer a {@code Consumer} of the OAuth 2.0 {@code grant_type} values supported
+		 * A {@code Consumer} of the OAuth 2.0 {@code grant_type} values supported
+		 * allowing the ability to add, replace, or remove.
+		 * @param grantTypesConsumer a {@code Consumer} of the OAuth 2.0
+		 * {@code grant_type} values supported
 		 * @return the {@link AbstractBuilder} for further configuration
 		 */
 		public B grantTypes(Consumer<List<String>> grantTypesConsumer) {
@@ -221,9 +242,10 @@ public abstract class AbstractOAuth2AuthorizationServerMetadata implements OAuth
 		}
 
 		/**
-		 * Use this {@code revocation_endpoint} in the resulting {@link AbstractOAuth2AuthorizationServerMetadata}, OPTIONAL.
-		 *
-		 * @param tokenRevocationEndpoint the {@code URL} of the OAuth 2.0 Token Revocation Endpoint
+		 * Use this {@code revocation_endpoint} in the resulting
+		 * {@link AbstractOAuth2AuthorizationServerMetadata}, OPTIONAL.
+		 * @param tokenRevocationEndpoint the {@code URL} of the OAuth 2.0 Token
+		 * Revocation Endpoint
 		 * @return the {@link AbstractBuilder} for further configuration
 		 */
 		public B tokenRevocationEndpoint(String tokenRevocationEndpoint) {
@@ -231,65 +253,78 @@ public abstract class AbstractOAuth2AuthorizationServerMetadata implements OAuth
 		}
 
 		/**
-		 * Add this client authentication method to the collection of {@code revocation_endpoint_auth_methods_supported}
-		 * in the resulting {@link AbstractOAuth2AuthorizationServerMetadata}, OPTIONAL.
-		 *
-		 * @param authenticationMethod the client authentication method supported by the OAuth 2.0 Token Revocation Endpoint
+		 * Add this client authentication method to the collection of
+		 * {@code revocation_endpoint_auth_methods_supported} in the resulting
+		 * {@link AbstractOAuth2AuthorizationServerMetadata}, OPTIONAL.
+		 * @param authenticationMethod the client authentication method supported by the
+		 * OAuth 2.0 Token Revocation Endpoint
 		 * @return the {@link AbstractBuilder} for further configuration
 		 */
 		public B tokenRevocationEndpointAuthenticationMethod(String authenticationMethod) {
-			addClaimToClaimList(OAuth2AuthorizationServerMetadataClaimNames.REVOCATION_ENDPOINT_AUTH_METHODS_SUPPORTED, authenticationMethod);
+			addClaimToClaimList(OAuth2AuthorizationServerMetadataClaimNames.REVOCATION_ENDPOINT_AUTH_METHODS_SUPPORTED,
+					authenticationMethod);
 			return getThis();
 		}
 
 		/**
-		 * A {@code Consumer} of the client authentication method(s) allowing the ability to add, replace, or remove.
-		 *
-		 * @param authenticationMethodsConsumer a {@code Consumer} of the client authentication method(s) supported by the OAuth 2.0 Token Revocation Endpoint
+		 * A {@code Consumer} of the client authentication method(s) allowing the ability
+		 * to add, replace, or remove.
+		 * @param authenticationMethodsConsumer a {@code Consumer} of the client
+		 * authentication method(s) supported by the OAuth 2.0 Token Revocation Endpoint
 		 * @return the {@link AbstractBuilder} for further configuration
 		 */
 		public B tokenRevocationEndpointAuthenticationMethods(Consumer<List<String>> authenticationMethodsConsumer) {
-			acceptClaimValues(OAuth2AuthorizationServerMetadataClaimNames.REVOCATION_ENDPOINT_AUTH_METHODS_SUPPORTED, authenticationMethodsConsumer);
+			acceptClaimValues(OAuth2AuthorizationServerMetadataClaimNames.REVOCATION_ENDPOINT_AUTH_METHODS_SUPPORTED,
+					authenticationMethodsConsumer);
 			return getThis();
 		}
 
 		/**
-		 * Use this {@code introspection_endpoint} in the resulting {@link AbstractOAuth2AuthorizationServerMetadata}, OPTIONAL.
-		 *
-		 * @param tokenIntrospectionEndpoint the {@code URL} of the OAuth 2.0 Token Introspection Endpoint
+		 * Use this {@code introspection_endpoint} in the resulting
+		 * {@link AbstractOAuth2AuthorizationServerMetadata}, OPTIONAL.
+		 * @param tokenIntrospectionEndpoint the {@code URL} of the OAuth 2.0 Token
+		 * Introspection Endpoint
 		 * @return the {@link AbstractBuilder} for further configuration
 		 */
 		public B tokenIntrospectionEndpoint(String tokenIntrospectionEndpoint) {
-			return claim(OAuth2AuthorizationServerMetadataClaimNames.INTROSPECTION_ENDPOINT, tokenIntrospectionEndpoint);
+			return claim(OAuth2AuthorizationServerMetadataClaimNames.INTROSPECTION_ENDPOINT,
+					tokenIntrospectionEndpoint);
 		}
 
 		/**
-		 * Add this client authentication method to the collection of {@code introspection_endpoint_auth_methods_supported}
-		 * in the resulting {@link AbstractOAuth2AuthorizationServerMetadata}, OPTIONAL.
-		 *
-		 * @param authenticationMethod the client authentication method supported by the OAuth 2.0 Token Introspection Endpoint
+		 * Add this client authentication method to the collection of
+		 * {@code introspection_endpoint_auth_methods_supported} in the resulting
+		 * {@link AbstractOAuth2AuthorizationServerMetadata}, OPTIONAL.
+		 * @param authenticationMethod the client authentication method supported by the
+		 * OAuth 2.0 Token Introspection Endpoint
 		 * @return the {@link AbstractBuilder} for further configuration
 		 */
 		public B tokenIntrospectionEndpointAuthenticationMethod(String authenticationMethod) {
-			addClaimToClaimList(OAuth2AuthorizationServerMetadataClaimNames.INTROSPECTION_ENDPOINT_AUTH_METHODS_SUPPORTED, authenticationMethod);
+			addClaimToClaimList(
+					OAuth2AuthorizationServerMetadataClaimNames.INTROSPECTION_ENDPOINT_AUTH_METHODS_SUPPORTED,
+					authenticationMethod);
 			return getThis();
 		}
 
 		/**
-		 * A {@code Consumer} of the client authentication method(s) allowing the ability to add, replace, or remove.
-		 *
-		 * @param authenticationMethodsConsumer a {@code Consumer} of the client authentication method(s) supported by the OAuth 2.0 Token Introspection Endpoint
+		 * A {@code Consumer} of the client authentication method(s) allowing the ability
+		 * to add, replace, or remove.
+		 * @param authenticationMethodsConsumer a {@code Consumer} of the client
+		 * authentication method(s) supported by the OAuth 2.0 Token Introspection
+		 * Endpoint
 		 * @return the {@link AbstractBuilder} for further configuration
 		 */
 		public B tokenIntrospectionEndpointAuthenticationMethods(Consumer<List<String>> authenticationMethodsConsumer) {
-			acceptClaimValues(OAuth2AuthorizationServerMetadataClaimNames.INTROSPECTION_ENDPOINT_AUTH_METHODS_SUPPORTED, authenticationMethodsConsumer);
+			acceptClaimValues(OAuth2AuthorizationServerMetadataClaimNames.INTROSPECTION_ENDPOINT_AUTH_METHODS_SUPPORTED,
+					authenticationMethodsConsumer);
 			return getThis();
 		}
 
 		/**
-		 * Use this {@code registration_endpoint} in the resulting {@link AbstractOAuth2AuthorizationServerMetadata}, OPTIONAL.
-		 *
-		 * @param clientRegistrationEndpoint the {@code URL} of the OAuth 2.0 Dynamic Client Registration Endpoint
+		 * Use this {@code registration_endpoint} in the resulting
+		 * {@link AbstractOAuth2AuthorizationServerMetadata}, OPTIONAL.
+		 * @param clientRegistrationEndpoint the {@code URL} of the OAuth 2.0 Dynamic
+		 * Client Registration Endpoint
 		 * @return the {@link AbstractBuilder} for further configuration
 		 * @since 0.4.0
 		 */
@@ -298,31 +333,35 @@ public abstract class AbstractOAuth2AuthorizationServerMetadata implements OAuth
 		}
 
 		/**
-		 * Add this Proof Key for Code Exchange (PKCE) {@code code_challenge_method} to the collection of {@code code_challenge_methods_supported}
-		 * in the resulting {@link AbstractOAuth2AuthorizationServerMetadata}, OPTIONAL.
-		 *
+		 * Add this Proof Key for Code Exchange (PKCE) {@code code_challenge_method} to
+		 * the collection of {@code code_challenge_methods_supported} in the resulting
+		 * {@link AbstractOAuth2AuthorizationServerMetadata}, OPTIONAL.
 		 * @param codeChallengeMethod the {@code code_challenge_method} value supported
 		 * @return the {@link AbstractBuilder} for further configuration
 		 */
 		public B codeChallengeMethod(String codeChallengeMethod) {
-			addClaimToClaimList(OAuth2AuthorizationServerMetadataClaimNames.CODE_CHALLENGE_METHODS_SUPPORTED, codeChallengeMethod);
+			addClaimToClaimList(OAuth2AuthorizationServerMetadataClaimNames.CODE_CHALLENGE_METHODS_SUPPORTED,
+					codeChallengeMethod);
 			return getThis();
 		}
 
 		/**
-		 * A {@code Consumer} of the Proof Key for Code Exchange (PKCE) {@code code_challenge_method} values supported allowing the ability to add, replace, or remove.
-		 *
-		 * @param codeChallengeMethodsConsumer a {@code Consumer} of the {@code code_challenge_method} values supported
+		 * A {@code Consumer} of the Proof Key for Code Exchange (PKCE)
+		 * {@code code_challenge_method} values supported allowing the ability to add,
+		 * replace, or remove.
+		 * @param codeChallengeMethodsConsumer a {@code Consumer} of the
+		 * {@code code_challenge_method} values supported
 		 * @return the {@link AbstractBuilder} for further configuration
 		 */
 		public B codeChallengeMethods(Consumer<List<String>> codeChallengeMethodsConsumer) {
-			acceptClaimValues(OAuth2AuthorizationServerMetadataClaimNames.CODE_CHALLENGE_METHODS_SUPPORTED, codeChallengeMethodsConsumer);
+			acceptClaimValues(OAuth2AuthorizationServerMetadataClaimNames.CODE_CHALLENGE_METHODS_SUPPORTED,
+					codeChallengeMethodsConsumer);
 			return getThis();
 		}
 
 		/**
-		 * Use this claim in the resulting {@link AbstractOAuth2AuthorizationServerMetadata}.
-		 *
+		 * Use this claim in the resulting
+		 * {@link AbstractOAuth2AuthorizationServerMetadata}.
 		 * @param name the claim name
 		 * @param value the claim value
 		 * @return the {@link AbstractBuilder} for further configuration
@@ -337,7 +376,6 @@ public abstract class AbstractOAuth2AuthorizationServerMetadata implements OAuth
 		/**
 		 * Provides access to every {@link #claim(String, Object)} declared so far with
 		 * the possibility to add, replace, or remove.
-		 *
 		 * @param claimsConsumer a {@code Consumer} of the claims
 		 * @return the {@link AbstractBuilder} for further configurations
 		 */
@@ -348,59 +386,105 @@ public abstract class AbstractOAuth2AuthorizationServerMetadata implements OAuth
 
 		/**
 		 * Creates the {@link AbstractOAuth2AuthorizationServerMetadata}.
-		 *
 		 * @return the {@link AbstractOAuth2AuthorizationServerMetadata}
 		 */
 		public abstract T build();
 
 		protected void validate() {
-			Assert.notNull(getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.ISSUER), "issuer cannot be null");
-			validateURL(getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.ISSUER), "issuer must be a valid URL");
-			Assert.notNull(getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.AUTHORIZATION_ENDPOINT), "authorizationEndpoint cannot be null");
-			validateURL(getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.AUTHORIZATION_ENDPOINT), "authorizationEndpoint must be a valid URL");
+			Assert.notNull(getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.ISSUER),
+					"issuer cannot be null");
+			validateURL(getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.ISSUER),
+					"issuer must be a valid URL");
+			Assert.notNull(getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.AUTHORIZATION_ENDPOINT),
+					"authorizationEndpoint cannot be null");
+			validateURL(getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.AUTHORIZATION_ENDPOINT),
+					"authorizationEndpoint must be a valid URL");
 			if (getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.DEVICE_AUTHORIZATION_ENDPOINT) != null) {
-				validateURL(getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.DEVICE_AUTHORIZATION_ENDPOINT), "deviceAuthorizationEndpoint must be a valid URL");
+				validateURL(getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.DEVICE_AUTHORIZATION_ENDPOINT),
+						"deviceAuthorizationEndpoint must be a valid URL");
 			}
-			Assert.notNull(getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.TOKEN_ENDPOINT), "tokenEndpoint cannot be null");
-			validateURL(getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.TOKEN_ENDPOINT), "tokenEndpoint must be a valid URL");
-			if (getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.TOKEN_ENDPOINT_AUTH_METHODS_SUPPORTED) != null) {
-				Assert.isInstanceOf(List.class, getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.TOKEN_ENDPOINT_AUTH_METHODS_SUPPORTED), "tokenEndpointAuthenticationMethods must be of type List");
-				Assert.notEmpty((List<?>) getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.TOKEN_ENDPOINT_AUTH_METHODS_SUPPORTED), "tokenEndpointAuthenticationMethods cannot be empty");
+			Assert.notNull(getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.TOKEN_ENDPOINT),
+					"tokenEndpoint cannot be null");
+			validateURL(getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.TOKEN_ENDPOINT),
+					"tokenEndpoint must be a valid URL");
+			if (getClaims()
+				.get(OAuth2AuthorizationServerMetadataClaimNames.TOKEN_ENDPOINT_AUTH_METHODS_SUPPORTED) != null) {
+				Assert.isInstanceOf(List.class,
+						getClaims()
+							.get(OAuth2AuthorizationServerMetadataClaimNames.TOKEN_ENDPOINT_AUTH_METHODS_SUPPORTED),
+						"tokenEndpointAuthenticationMethods must be of type List");
+				Assert.notEmpty(
+						(List<?>) getClaims()
+							.get(OAuth2AuthorizationServerMetadataClaimNames.TOKEN_ENDPOINT_AUTH_METHODS_SUPPORTED),
+						"tokenEndpointAuthenticationMethods cannot be empty");
 			}
 			if (getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.JWKS_URI) != null) {
-				validateURL(getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.JWKS_URI), "jwksUri must be a valid URL");
+				validateURL(getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.JWKS_URI),
+						"jwksUri must be a valid URL");
 			}
 			if (getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.SCOPES_SUPPORTED) != null) {
-				Assert.isInstanceOf(List.class, getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.SCOPES_SUPPORTED), "scopes must be of type List");
-				Assert.notEmpty((List<?>) getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.SCOPES_SUPPORTED), "scopes cannot be empty");
+				Assert.isInstanceOf(List.class,
+						getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.SCOPES_SUPPORTED),
+						"scopes must be of type List");
+				Assert.notEmpty((List<?>) getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.SCOPES_SUPPORTED),
+						"scopes cannot be empty");
 			}
-			Assert.notNull(getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.RESPONSE_TYPES_SUPPORTED), "responseTypes cannot be null");
-			Assert.isInstanceOf(List.class, getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.RESPONSE_TYPES_SUPPORTED), "responseTypes must be of type List");
-			Assert.notEmpty((List<?>) getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.RESPONSE_TYPES_SUPPORTED), "responseTypes cannot be empty");
+			Assert.notNull(getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.RESPONSE_TYPES_SUPPORTED),
+					"responseTypes cannot be null");
+			Assert.isInstanceOf(List.class,
+					getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.RESPONSE_TYPES_SUPPORTED),
+					"responseTypes must be of type List");
+			Assert.notEmpty(
+					(List<?>) getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.RESPONSE_TYPES_SUPPORTED),
+					"responseTypes cannot be empty");
 			if (getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.GRANT_TYPES_SUPPORTED) != null) {
-				Assert.isInstanceOf(List.class, getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.GRANT_TYPES_SUPPORTED), "grantTypes must be of type List");
-				Assert.notEmpty((List<?>) getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.GRANT_TYPES_SUPPORTED), "grantTypes cannot be empty");
+				Assert.isInstanceOf(List.class,
+						getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.GRANT_TYPES_SUPPORTED),
+						"grantTypes must be of type List");
+				Assert.notEmpty(
+						(List<?>) getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.GRANT_TYPES_SUPPORTED),
+						"grantTypes cannot be empty");
 			}
 			if (getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.REVOCATION_ENDPOINT) != null) {
-				validateURL(getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.REVOCATION_ENDPOINT), "tokenRevocationEndpoint must be a valid URL");
+				validateURL(getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.REVOCATION_ENDPOINT),
+						"tokenRevocationEndpoint must be a valid URL");
 			}
-			if (getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.REVOCATION_ENDPOINT_AUTH_METHODS_SUPPORTED) != null) {
-				Assert.isInstanceOf(List.class, getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.REVOCATION_ENDPOINT_AUTH_METHODS_SUPPORTED), "tokenRevocationEndpointAuthenticationMethods must be of type List");
-				Assert.notEmpty((List<?>) getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.REVOCATION_ENDPOINT_AUTH_METHODS_SUPPORTED), "tokenRevocationEndpointAuthenticationMethods cannot be empty");
+			if (getClaims()
+				.get(OAuth2AuthorizationServerMetadataClaimNames.REVOCATION_ENDPOINT_AUTH_METHODS_SUPPORTED) != null) {
+				Assert.isInstanceOf(List.class,
+						getClaims().get(
+								OAuth2AuthorizationServerMetadataClaimNames.REVOCATION_ENDPOINT_AUTH_METHODS_SUPPORTED),
+						"tokenRevocationEndpointAuthenticationMethods must be of type List");
+				Assert.notEmpty(
+						(List<?>) getClaims().get(
+								OAuth2AuthorizationServerMetadataClaimNames.REVOCATION_ENDPOINT_AUTH_METHODS_SUPPORTED),
+						"tokenRevocationEndpointAuthenticationMethods cannot be empty");
 			}
 			if (getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.INTROSPECTION_ENDPOINT) != null) {
-				validateURL(getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.INTROSPECTION_ENDPOINT), "tokenIntrospectionEndpoint must be a valid URL");
+				validateURL(getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.INTROSPECTION_ENDPOINT),
+						"tokenIntrospectionEndpoint must be a valid URL");
 			}
-			if (getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.INTROSPECTION_ENDPOINT_AUTH_METHODS_SUPPORTED) != null) {
-				Assert.isInstanceOf(List.class, getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.INTROSPECTION_ENDPOINT_AUTH_METHODS_SUPPORTED), "tokenIntrospectionEndpointAuthenticationMethods must be of type List");
-				Assert.notEmpty((List<?>) getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.INTROSPECTION_ENDPOINT_AUTH_METHODS_SUPPORTED), "tokenIntrospectionEndpointAuthenticationMethods cannot be empty");
+			if (getClaims().get(
+					OAuth2AuthorizationServerMetadataClaimNames.INTROSPECTION_ENDPOINT_AUTH_METHODS_SUPPORTED) != null) {
+				Assert.isInstanceOf(List.class, getClaims()
+					.get(OAuth2AuthorizationServerMetadataClaimNames.INTROSPECTION_ENDPOINT_AUTH_METHODS_SUPPORTED),
+						"tokenIntrospectionEndpointAuthenticationMethods must be of type List");
+				Assert.notEmpty((List<?>) getClaims()
+					.get(OAuth2AuthorizationServerMetadataClaimNames.INTROSPECTION_ENDPOINT_AUTH_METHODS_SUPPORTED),
+						"tokenIntrospectionEndpointAuthenticationMethods cannot be empty");
 			}
 			if (getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.REGISTRATION_ENDPOINT) != null) {
-				validateURL(getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.REGISTRATION_ENDPOINT), "clientRegistrationEndpoint must be a valid URL");
+				validateURL(getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.REGISTRATION_ENDPOINT),
+						"clientRegistrationEndpoint must be a valid URL");
 			}
 			if (getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.CODE_CHALLENGE_METHODS_SUPPORTED) != null) {
-				Assert.isInstanceOf(List.class, getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.CODE_CHALLENGE_METHODS_SUPPORTED), "codeChallengeMethods must be of type List");
-				Assert.notEmpty((List<?>) getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.CODE_CHALLENGE_METHODS_SUPPORTED), "codeChallengeMethods cannot be empty");
+				Assert.isInstanceOf(List.class,
+						getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.CODE_CHALLENGE_METHODS_SUPPORTED),
+						"codeChallengeMethods must be of type List");
+				Assert.notEmpty(
+						(List<?>) getClaims()
+							.get(OAuth2AuthorizationServerMetadataClaimNames.CODE_CHALLENGE_METHODS_SUPPORTED),
+						"codeChallengeMethods cannot be empty");
 			}
 		}
 
@@ -428,10 +512,12 @@ public abstract class AbstractOAuth2AuthorizationServerMetadata implements OAuth
 
 			try {
 				new URI(url.toString()).toURL();
-			} catch (Exception ex) {
+			}
+			catch (Exception ex) {
 				throw new IllegalArgumentException(errorMessage, ex);
 			}
 		}
 
 	}
+
 }

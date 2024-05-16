@@ -41,7 +41,8 @@ public final class TestJwks {
 		try {
 			rsaKeyPairGenerator = KeyPairGenerator.getInstance("RSA");
 			rsaKeyPairGenerator.initialize(2048);
-		} catch (Exception ex) {
+		}
+		catch (Exception ex) {
 			throw new IllegalStateException(ex);
 		}
 	}

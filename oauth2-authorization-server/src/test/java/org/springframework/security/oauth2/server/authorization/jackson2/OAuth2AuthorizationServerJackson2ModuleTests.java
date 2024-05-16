@@ -39,6 +39,7 @@ public class OAuth2AuthorizationServerJackson2ModuleTests {
 
 	private static final TypeReference<Map<String, Object>> STRING_OBJECT_MAP = new TypeReference<Map<String, Object>>() {
 	};
+
 	private static final TypeReference<Set<String>> STRING_SET = new TypeReference<Set<String>>() {
 	};
 
@@ -71,4 +72,5 @@ public class OAuth2AuthorizationServerJackson2ModuleTests {
 		String json = this.objectMapper.writeValueAsString(set);
 		assertThat(this.objectMapper.readValue(json, STRING_SET)).isEqualTo(set);
 	}
+
 }

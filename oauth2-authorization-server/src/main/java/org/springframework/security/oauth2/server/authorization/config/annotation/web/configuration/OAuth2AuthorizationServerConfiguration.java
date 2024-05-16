@@ -78,10 +78,10 @@ public class OAuth2AuthorizationServerConfiguration {
 		jwsAlgs.addAll(JWSAlgorithm.Family.EC);
 		jwsAlgs.addAll(JWSAlgorithm.Family.HMAC_SHA);
 		ConfigurableJWTProcessor<SecurityContext> jwtProcessor = new DefaultJWTProcessor<>();
-		JWSKeySelector<SecurityContext> jwsKeySelector =
-				new JWSVerificationKeySelector<>(jwsAlgs, jwkSource);
+		JWSKeySelector<SecurityContext> jwsKeySelector = new JWSVerificationKeySelector<>(jwsAlgs, jwkSource);
 		jwtProcessor.setJWSKeySelector(jwsKeySelector);
-		// Override the default Nimbus claims set verifier as NimbusJwtDecoder handles it instead
+		// Override the default Nimbus claims set verifier as NimbusJwtDecoder handles it
+		// instead
 		jwtProcessor.setJWTClaimsSetVerifier((claims, context) -> {
 		});
 		return new NimbusJwtDecoder(jwtProcessor);
@@ -90,7 +90,8 @@ public class OAuth2AuthorizationServerConfiguration {
 	@Bean
 	RegisterMissingBeanPostProcessor registerMissingBeanPostProcessor() {
 		RegisterMissingBeanPostProcessor postProcessor = new RegisterMissingBeanPostProcessor();
-		postProcessor.addBeanDefinition(AuthorizationServerSettings.class, () -> AuthorizationServerSettings.builder().build());
+		postProcessor.addBeanDefinition(AuthorizationServerSettings.class,
+				() -> AuthorizationServerSettings.builder().build());
 		return postProcessor;
 	}
 

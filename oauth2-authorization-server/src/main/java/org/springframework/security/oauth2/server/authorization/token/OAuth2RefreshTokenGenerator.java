@@ -36,8 +36,9 @@ import org.springframework.security.oauth2.server.authorization.authentication.O
  * @see OAuth2RefreshToken
  */
 public final class OAuth2RefreshTokenGenerator implements OAuth2TokenGenerator<OAuth2RefreshToken> {
-	private final StringKeyGenerator refreshTokenGenerator =
-			new Base64StringKeyGenerator(Base64.getUrlEncoder().withoutPadding(), 96);
+
+	private final StringKeyGenerator refreshTokenGenerator = new Base64StringKeyGenerator(
+			Base64.getUrlEncoder().withoutPadding(), 96);
 
 	@Nullable
 	@Override

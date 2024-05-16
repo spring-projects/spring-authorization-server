@@ -37,9 +37,10 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
 
 /**
- * Attempts to extract an Authorization Consent from {@link HttpServletRequest}
- * for the OAuth 2.0 Authorization Code Grant and then converts it to
- * an {@link OAuth2AuthorizationConsentAuthenticationToken} used for authenticating the request.
+ * Attempts to extract an Authorization Consent from {@link HttpServletRequest} for the
+ * OAuth 2.0 Authorization Code Grant and then converts it to an
+ * {@link OAuth2AuthorizationConsentAuthenticationToken} used for authenticating the
+ * request.
  *
  * @author Joe Grandja
  * @since 0.4.0
@@ -48,16 +49,17 @@ import org.springframework.util.StringUtils;
  * @see OAuth2AuthorizationEndpointFilter
  */
 public final class OAuth2AuthorizationConsentAuthenticationConverter implements AuthenticationConverter {
+
 	private static final String DEFAULT_ERROR_URI = "https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.2.1";
-	private static final Authentication ANONYMOUS_AUTHENTICATION = new AnonymousAuthenticationToken(
-			"anonymous", "anonymousUser", AuthorityUtils.createAuthorityList("ROLE_ANONYMOUS"));
+
+	private static final Authentication ANONYMOUS_AUTHENTICATION = new AnonymousAuthenticationToken("anonymous",
+			"anonymousUser", AuthorityUtils.createAuthorityList("ROLE_ANONYMOUS"));
 
 	@Override
 	public Authentication convert(HttpServletRequest request) {
 		MultiValueMap<String, String> parameters = OAuth2EndpointUtils.getFormParameters(request);
 
-		if (!"POST".equals(request.getMethod()) ||
-				parameters.getFirst(OAuth2ParameterNames.RESPONSE_TYPE) != null) {
+		if (!"POST".equals(request.getMethod()) || parameters.getFirst(OAuth2ParameterNames.RESPONSE_TYPE) != null) {
 			return null;
 		}
 
@@ -65,8 +67,7 @@ public final class OAuth2AuthorizationConsentAuthenticationConverter implements 
 
 		// client_id (REQUIRED)
 		String clientId = parameters.getFirst(OAuth2ParameterNames.CLIENT_ID);
-		if (!StringUtils.hasText(clientId) ||
-				parameters.get(OAuth2ParameterNames.CLIENT_ID).size() != 1) {
+		if (!StringUtils.hasText(clientId) || parameters.get(OAuth2ParameterNames.CLIENT_ID).size() != 1) {
 			throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.CLIENT_ID);
 		}
 
@@ -77,8 +78,7 @@ public final class OAuth2AuthorizationConsentAuthenticationConverter implements 
 
 		// state (REQUIRED)
 		String state = parameters.getFirst(OAuth2ParameterNames.STATE);
-		if (!StringUtils.hasText(state) ||
-				parameters.get(OAuth2ParameterNames.STATE).size() != 1) {
+		if (!StringUtils.hasText(state) || parameters.get(OAuth2ParameterNames.STATE).size() != 1) {
 			throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.STATE);
 		}
 
@@ -90,15 +90,14 @@ public final class OAuth2AuthorizationConsentAuthenticationConverter implements 
 
 		Map<String, Object> additionalParameters = new HashMap<>();
 		parameters.forEach((key, value) -> {
-			if (!key.equals(OAuth2ParameterNames.CLIENT_ID) &&
-					!key.equals(OAuth2ParameterNames.STATE) &&
-					!key.equals(OAuth2ParameterNames.SCOPE)) {
+			if (!key.equals(OAuth2ParameterNames.CLIENT_ID) && !key.equals(OAuth2ParameterNames.STATE)
+					&& !key.equals(OAuth2ParameterNames.SCOPE)) {
 				additionalParameters.put(key, (value.size() == 1) ? value.get(0) : value.toArray(new String[0]));
 			}
 		});
 
-		return new OAuth2AuthorizationConsentAuthenticationToken(authorizationUri, clientId, principal,
-				state, scopes, additionalParameters);
+		return new OAuth2AuthorizationConsentAuthenticationToken(authorizationUri, clientId, principal, state, scopes,
+				additionalParameters);
 	}
 
 	private static void throwError(String errorCode, String parameterName) {

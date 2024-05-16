@@ -32,16 +32,15 @@ public interface RegisteredClientRepository {
 	 * Saves the registered client.
 	 *
 	 * <p>
-	 * IMPORTANT: Sensitive information should be encoded externally from the implementation, e.g. {@link RegisteredClient#getClientSecret()}
-	 *
+	 * IMPORTANT: Sensitive information should be encoded externally from the
+	 * implementation, e.g. {@link RegisteredClient#getClientSecret()}
 	 * @param registeredClient the {@link RegisteredClient}
 	 */
 	void save(RegisteredClient registeredClient);
 
 	/**
-	 * Returns the registered client identified by the provided {@code id},
-	 * or {@code null} if not found.
-	 *
+	 * Returns the registered client identified by the provided {@code id}, or
+	 * {@code null} if not found.
 	 * @param id the registration identifier
 	 * @return the {@link RegisteredClient} if found, otherwise {@code null}
 	 */
@@ -49,9 +48,8 @@ public interface RegisteredClientRepository {
 	RegisteredClient findById(String id);
 
 	/**
-	 * Returns the registered client identified by the provided {@code clientId},
-	 * or {@code null} if not found.
-	 *
+	 * Returns the registered client identified by the provided {@code clientId}, or
+	 * {@code null} if not found.
 	 * @param clientId the client identifier
 	 * @return the {@link RegisteredClient} if found, otherwise {@code null}
 	 */

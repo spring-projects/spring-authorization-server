@@ -28,6 +28,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
  * @since 0.2.0
  */
 public final class ConfigurationSettingNames {
+
 	private static final String SETTINGS_NAMESPACE = "settings.";
 
 	private ConfigurationSettingNames() {
@@ -37,19 +38,22 @@ public final class ConfigurationSettingNames {
 	 * The names for client configuration settings.
 	 */
 	public static final class Client {
+
 		private static final String CLIENT_SETTINGS_NAMESPACE = SETTINGS_NAMESPACE.concat("client.");
 
 		/**
-		 * Set to {@code true} if the client is required to provide a proof key challenge and verifier
-		 * when performing the Authorization Code Grant flow.
+		 * Set to {@code true} if the client is required to provide a proof key challenge
+		 * and verifier when performing the Authorization Code Grant flow.
 		 */
 		public static final String REQUIRE_PROOF_KEY = CLIENT_SETTINGS_NAMESPACE.concat("require-proof-key");
 
 		/**
-		 * Set to {@code true} if authorization consent is required when the client requests access.
-		 * This applies to all interactive flows (e.g. {@code authorization_code} and {@code device_code}).
+		 * Set to {@code true} if authorization consent is required when the client
+		 * requests access. This applies to all interactive flows (e.g.
+		 * {@code authorization_code} and {@code device_code}).
 		 */
-		public static final String REQUIRE_AUTHORIZATION_CONSENT = CLIENT_SETTINGS_NAMESPACE.concat("require-authorization-consent");
+		public static final String REQUIRE_AUTHORIZATION_CONSENT = CLIENT_SETTINGS_NAMESPACE
+			.concat("require-authorization-consent");
 
 		/**
 		 * Set the {@code URL} for the Client's JSON Web Key Set.
@@ -58,12 +62,15 @@ public final class ConfigurationSettingNames {
 		public static final String JWK_SET_URL = CLIENT_SETTINGS_NAMESPACE.concat("jwk-set-url");
 
 		/**
-		 * Set the {@link JwsAlgorithm JWS} algorithm that must be used for signing the {@link Jwt JWT}
-		 * used to authenticate the Client at the Token Endpoint for the {@link ClientAuthenticationMethod#PRIVATE_KEY_JWT private_key_jwt} and
-		 * {@link ClientAuthenticationMethod#CLIENT_SECRET_JWT client_secret_jwt} authentication methods.
+		 * Set the {@link JwsAlgorithm JWS} algorithm that must be used for signing the
+		 * {@link Jwt JWT} used to authenticate the Client at the Token Endpoint for the
+		 * {@link ClientAuthenticationMethod#PRIVATE_KEY_JWT private_key_jwt} and
+		 * {@link ClientAuthenticationMethod#CLIENT_SECRET_JWT client_secret_jwt}
+		 * authentication methods.
 		 * @since 0.2.2
 		 */
-		public static final String TOKEN_ENDPOINT_AUTHENTICATION_SIGNING_ALGORITHM = CLIENT_SETTINGS_NAMESPACE.concat("token-endpoint-authentication-signing-algorithm");
+		public static final String TOKEN_ENDPOINT_AUTHENTICATION_SIGNING_ALGORITHM = CLIENT_SETTINGS_NAMESPACE
+			.concat("token-endpoint-authentication-signing-algorithm");
 
 		private Client() {
 		}
@@ -74,7 +81,9 @@ public final class ConfigurationSettingNames {
 	 * The names for authorization server configuration settings.
 	 */
 	public static final class AuthorizationServer {
-		private static final String AUTHORIZATION_SERVER_SETTINGS_NAMESPACE = SETTINGS_NAMESPACE.concat("authorization-server.");
+
+		private static final String AUTHORIZATION_SERVER_SETTINGS_NAMESPACE = SETTINGS_NAMESPACE
+			.concat("authorization-server.");
 
 		/**
 		 * Set the URL the Authorization Server uses as its Issuer Identifier.
@@ -84,17 +93,20 @@ public final class ConfigurationSettingNames {
 		/**
 		 * Set the OAuth 2.0 Authorization endpoint.
 		 */
-		public static final String AUTHORIZATION_ENDPOINT = AUTHORIZATION_SERVER_SETTINGS_NAMESPACE.concat("authorization-endpoint");
+		public static final String AUTHORIZATION_ENDPOINT = AUTHORIZATION_SERVER_SETTINGS_NAMESPACE
+			.concat("authorization-endpoint");
 
 		/**
 		 * Set the OAuth 2.0 Device Authorization endpoint.
 		 */
-		public static final String DEVICE_AUTHORIZATION_ENDPOINT = AUTHORIZATION_SERVER_SETTINGS_NAMESPACE.concat("device-authorization-endpoint");
+		public static final String DEVICE_AUTHORIZATION_ENDPOINT = AUTHORIZATION_SERVER_SETTINGS_NAMESPACE
+			.concat("device-authorization-endpoint");
 
 		/**
 		 * Set the OAuth 2.0 Device Verification endpoint.
 		 */
-		public static final String DEVICE_VERIFICATION_ENDPOINT = AUTHORIZATION_SERVER_SETTINGS_NAMESPACE.concat("device-verification-endpoint");
+		public static final String DEVICE_VERIFICATION_ENDPOINT = AUTHORIZATION_SERVER_SETTINGS_NAMESPACE
+			.concat("device-verification-endpoint");
 
 		/**
 		 * Set the OAuth 2.0 Token endpoint.
@@ -104,33 +116,39 @@ public final class ConfigurationSettingNames {
 		/**
 		 * Set the JWK Set endpoint.
 		 */
-		public static final String JWK_SET_ENDPOINT = AUTHORIZATION_SERVER_SETTINGS_NAMESPACE.concat("jwk-set-endpoint");
+		public static final String JWK_SET_ENDPOINT = AUTHORIZATION_SERVER_SETTINGS_NAMESPACE
+			.concat("jwk-set-endpoint");
 
 		/**
 		 * Set the OAuth 2.0 Token Revocation endpoint.
 		 */
-		public static final String TOKEN_REVOCATION_ENDPOINT = AUTHORIZATION_SERVER_SETTINGS_NAMESPACE.concat("token-revocation-endpoint");
+		public static final String TOKEN_REVOCATION_ENDPOINT = AUTHORIZATION_SERVER_SETTINGS_NAMESPACE
+			.concat("token-revocation-endpoint");
 
 		/**
 		 * Set the OAuth 2.0 Token Introspection endpoint.
 		 */
-		public static final String TOKEN_INTROSPECTION_ENDPOINT = AUTHORIZATION_SERVER_SETTINGS_NAMESPACE.concat("token-introspection-endpoint");
+		public static final String TOKEN_INTROSPECTION_ENDPOINT = AUTHORIZATION_SERVER_SETTINGS_NAMESPACE
+			.concat("token-introspection-endpoint");
 
 		/**
 		 * Set the OpenID Connect 1.0 Client Registration endpoint.
 		 */
-		public static final String OIDC_CLIENT_REGISTRATION_ENDPOINT = AUTHORIZATION_SERVER_SETTINGS_NAMESPACE.concat("oidc-client-registration-endpoint");
+		public static final String OIDC_CLIENT_REGISTRATION_ENDPOINT = AUTHORIZATION_SERVER_SETTINGS_NAMESPACE
+			.concat("oidc-client-registration-endpoint");
 
 		/**
 		 * Set the OpenID Connect 1.0 UserInfo endpoint.
 		 */
-		public static final String OIDC_USER_INFO_ENDPOINT = AUTHORIZATION_SERVER_SETTINGS_NAMESPACE.concat("oidc-user-info-endpoint");
+		public static final String OIDC_USER_INFO_ENDPOINT = AUTHORIZATION_SERVER_SETTINGS_NAMESPACE
+			.concat("oidc-user-info-endpoint");
 
 		/**
 		 * Set the OpenID Connect 1.0 Logout endpoint.
 		 * @since 1.1
 		 */
-		public static final String OIDC_LOGOUT_ENDPOINT = AUTHORIZATION_SERVER_SETTINGS_NAMESPACE.concat("oidc-logout-endpoint");
+		public static final String OIDC_LOGOUT_ENDPOINT = AUTHORIZATION_SERVER_SETTINGS_NAMESPACE
+			.concat("oidc-logout-endpoint");
 
 		private AuthorizationServer() {
 		}
@@ -141,18 +159,21 @@ public final class ConfigurationSettingNames {
 	 * The names for token configuration settings.
 	 */
 	public static final class Token {
+
 		private static final String TOKEN_SETTINGS_NAMESPACE = SETTINGS_NAMESPACE.concat("token.");
 
 		/**
 		 * Set the time-to-live for an authorization code.
 		 * @since 0.4.0
 		 */
-		public static final String AUTHORIZATION_CODE_TIME_TO_LIVE = TOKEN_SETTINGS_NAMESPACE.concat("authorization-code-time-to-live");
+		public static final String AUTHORIZATION_CODE_TIME_TO_LIVE = TOKEN_SETTINGS_NAMESPACE
+			.concat("authorization-code-time-to-live");
 
 		/**
 		 * Set the time-to-live for an access token.
 		 */
-		public static final String ACCESS_TOKEN_TIME_TO_LIVE = TOKEN_SETTINGS_NAMESPACE.concat("access-token-time-to-live");
+		public static final String ACCESS_TOKEN_TIME_TO_LIVE = TOKEN_SETTINGS_NAMESPACE
+			.concat("access-token-time-to-live");
 
 		/**
 		 * Set the {@link OAuth2TokenFormat token format} for an access token.
@@ -164,23 +185,27 @@ public final class ConfigurationSettingNames {
 		 * Set the time-to-live for a device code.
 		 * @since 1.1
 		 */
-		public static final String DEVICE_CODE_TIME_TO_LIVE = TOKEN_SETTINGS_NAMESPACE.concat("device-code-time-to-live");
+		public static final String DEVICE_CODE_TIME_TO_LIVE = TOKEN_SETTINGS_NAMESPACE
+			.concat("device-code-time-to-live");
 
 		/**
-		 * Set to {@code true} if refresh tokens are reused when returning the access token response,
-		 * or {@code false} if a new refresh token is issued.
+		 * Set to {@code true} if refresh tokens are reused when returning the access
+		 * token response, or {@code false} if a new refresh token is issued.
 		 */
 		public static final String REUSE_REFRESH_TOKENS = TOKEN_SETTINGS_NAMESPACE.concat("reuse-refresh-tokens");
 
 		/**
 		 * Set the time-to-live for a refresh token.
 		 */
-		public static final String REFRESH_TOKEN_TIME_TO_LIVE = TOKEN_SETTINGS_NAMESPACE.concat("refresh-token-time-to-live");
+		public static final String REFRESH_TOKEN_TIME_TO_LIVE = TOKEN_SETTINGS_NAMESPACE
+			.concat("refresh-token-time-to-live");
 
 		/**
-		 * Set the {@link SignatureAlgorithm JWS} algorithm for signing the {@link OidcIdToken ID Token}.
+		 * Set the {@link SignatureAlgorithm JWS} algorithm for signing the
+		 * {@link OidcIdToken ID Token}.
 		 */
-		public static final String ID_TOKEN_SIGNATURE_ALGORITHM = TOKEN_SETTINGS_NAMESPACE.concat("id-token-signature-algorithm");
+		public static final String ID_TOKEN_SIGNATURE_ALGORITHM = TOKEN_SETTINGS_NAMESPACE
+			.concat("id-token-signature-algorithm");
 
 		private Token() {
 		}

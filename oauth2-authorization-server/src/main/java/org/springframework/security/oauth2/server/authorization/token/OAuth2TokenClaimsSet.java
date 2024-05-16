@@ -37,6 +37,7 @@ import org.springframework.util.Assert;
  * @see OAuth2Token
  */
 public final class OAuth2TokenClaimsSet implements OAuth2TokenClaimAccessor {
+
 	private final Map<String, Object> claims;
 
 	private OAuth2TokenClaimsSet(Map<String, Object> claims) {
@@ -50,7 +51,6 @@ public final class OAuth2TokenClaimsSet implements OAuth2TokenClaimAccessor {
 
 	/**
 	 * Returns a new {@link Builder}.
-	 *
 	 * @return the {@link Builder}
 	 */
 	public static Builder builder() {
@@ -61,14 +61,15 @@ public final class OAuth2TokenClaimsSet implements OAuth2TokenClaimAccessor {
 	 * A builder for {@link OAuth2TokenClaimsSet}.
 	 */
 	public static final class Builder {
+
 		private final Map<String, Object> claims = new HashMap<>();
 
 		private Builder() {
 		}
 
 		/**
-		 * Sets the issuer {@code (iss)} claim, which identifies the principal that issued the OAuth 2.0 Token.
-		 *
+		 * Sets the issuer {@code (iss)} claim, which identifies the principal that issued
+		 * the OAuth 2.0 Token.
 		 * @param issuer the issuer identifier
 		 * @return the {@link Builder}
 		 */
@@ -77,8 +78,8 @@ public final class OAuth2TokenClaimsSet implements OAuth2TokenClaimAccessor {
 		}
 
 		/**
-		 * Sets the subject {@code (sub)} claim, which identifies the principal that is the subject of the OAuth 2.0 Token.
-		 *
+		 * Sets the subject {@code (sub)} claim, which identifies the principal that is
+		 * the subject of the OAuth 2.0 Token.
 		 * @param subject the subject identifier
 		 * @return the {@link Builder}
 		 */
@@ -87,8 +88,8 @@ public final class OAuth2TokenClaimsSet implements OAuth2TokenClaimAccessor {
 		}
 
 		/**
-		 * Sets the audience {@code (aud)} claim, which identifies the recipient(s) that the OAuth 2.0 Token is intended for.
-		 *
+		 * Sets the audience {@code (aud)} claim, which identifies the recipient(s) that
+		 * the OAuth 2.0 Token is intended for.
 		 * @param audience the audience that this OAuth 2.0 Token is intended for
 		 * @return the {@link Builder}
 		 */
@@ -97,10 +98,10 @@ public final class OAuth2TokenClaimsSet implements OAuth2TokenClaimAccessor {
 		}
 
 		/**
-		 * Sets the expiration time {@code (exp)} claim, which identifies the time on or after
-		 * which the OAuth 2.0 Token MUST NOT be accepted for processing.
-		 *
-		 * @param expiresAt the time on or after which the OAuth 2.0 Token MUST NOT be accepted for processing
+		 * Sets the expiration time {@code (exp)} claim, which identifies the time on or
+		 * after which the OAuth 2.0 Token MUST NOT be accepted for processing.
+		 * @param expiresAt the time on or after which the OAuth 2.0 Token MUST NOT be
+		 * accepted for processing
 		 * @return the {@link Builder}
 		 */
 		public Builder expiresAt(Instant expiresAt) {
@@ -108,10 +109,10 @@ public final class OAuth2TokenClaimsSet implements OAuth2TokenClaimAccessor {
 		}
 
 		/**
-		 * Sets the not before {@code (nbf)} claim, which identifies the time before
-		 * which the OAuth 2.0 Token MUST NOT be accepted for processing.
-		 *
-		 * @param notBefore the time before which the OAuth 2.0 Token MUST NOT be accepted for processing
+		 * Sets the not before {@code (nbf)} claim, which identifies the time before which
+		 * the OAuth 2.0 Token MUST NOT be accepted for processing.
+		 * @param notBefore the time before which the OAuth 2.0 Token MUST NOT be accepted
+		 * for processing
 		 * @return the {@link Builder}
 		 */
 		public Builder notBefore(Instant notBefore) {
@@ -119,8 +120,8 @@ public final class OAuth2TokenClaimsSet implements OAuth2TokenClaimAccessor {
 		}
 
 		/**
-		 * Sets the issued at {@code (iat)} claim, which identifies the time at which the OAuth 2.0 Token was issued.
-		 *
+		 * Sets the issued at {@code (iat)} claim, which identifies the time at which the
+		 * OAuth 2.0 Token was issued.
 		 * @param issuedAt the time at which the OAuth 2.0 Token was issued
 		 * @return the {@link Builder}
 		 */
@@ -129,8 +130,8 @@ public final class OAuth2TokenClaimsSet implements OAuth2TokenClaimAccessor {
 		}
 
 		/**
-		 * Sets the ID {@code (jti)} claim, which provides a unique identifier for the OAuth 2.0 Token.
-		 *
+		 * Sets the ID {@code (jti)} claim, which provides a unique identifier for the
+		 * OAuth 2.0 Token.
 		 * @param jti the unique identifier for the OAuth 2.0 Token
 		 * @return the {@link Builder}
 		 */
@@ -140,7 +141,6 @@ public final class OAuth2TokenClaimsSet implements OAuth2TokenClaimAccessor {
 
 		/**
 		 * Sets the claim.
-		 *
 		 * @param name the claim name
 		 * @param value the claim value
 		 * @return the {@link Builder}
@@ -153,8 +153,8 @@ public final class OAuth2TokenClaimsSet implements OAuth2TokenClaimAccessor {
 		}
 
 		/**
-		 * A {@code Consumer} to be provided access to the claims allowing the ability to add, replace, or remove.
-		 *
+		 * A {@code Consumer} to be provided access to the claims allowing the ability to
+		 * add, replace, or remove.
 		 * @param claimsConsumer a {@code Consumer} of the claims
 		 */
 		public Builder claims(Consumer<Map<String, Object>> claimsConsumer) {
@@ -164,7 +164,6 @@ public final class OAuth2TokenClaimsSet implements OAuth2TokenClaimAccessor {
 
 		/**
 		 * Builds a new {@link OAuth2TokenClaimsSet}.
-		 *
 		 * @return a {@link OAuth2TokenClaimsSet}
 		 */
 		public OAuth2TokenClaimsSet build() {

@@ -71,13 +71,19 @@ import static org.springframework.security.oauth2.server.authorization.authentic
  * @author Steve Riesenberg
  */
 public class OAuth2DeviceCodeAuthenticationProviderTests {
+
 	private static final String DEVICE_CODE = "EfYu_0jEL";
+
 	private static final String USER_CODE = "BCDF-GHJK";
+
 	private static final String ACCESS_TOKEN = "abc123";
+
 	private static final String REFRESH_TOKEN = "xyz456";
 
 	private OAuth2AuthorizationService authorizationService;
+
 	private OAuth2TokenGenerator<OAuth2Token> tokenGenerator;
+
 	private OAuth2DeviceCodeAuthenticationProvider authenticationProvider;
 
 	@BeforeEach
@@ -120,8 +126,8 @@ public class OAuth2DeviceCodeAuthenticationProviderTests {
 
 	@Test
 	public void authenticateWhenClientNotAuthenticatedThenThrowOAuth2AuthenticationException() {
-		OAuth2ClientAuthenticationToken clientPrincipal =
-				new OAuth2ClientAuthenticationToken("client-1", ClientAuthenticationMethod.CLIENT_SECRET_BASIC, null, null);
+		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken("client-1",
+				ClientAuthenticationMethod.CLIENT_SECRET_BASIC, null, null);
 		Authentication authentication = new OAuth2DeviceCodeAuthenticationToken(DEVICE_CODE, clientPrincipal, null);
 		// @formatter:off
 		assertThatExceptionOfType(OAuth2AuthenticationException.class)
@@ -156,7 +162,8 @@ public class OAuth2DeviceCodeAuthenticationProviderTests {
 		RegisteredClient registeredClient2 = TestRegisteredClients.registeredClient2().build();
 		Authentication authentication = createAuthentication(registeredClient);
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient2)
-				.token(createDeviceCode()).build();
+			.token(createDeviceCode())
+			.build();
 		when(this.authorizationService.findByToken(anyString(), any(OAuth2TokenType.class))).thenReturn(authorization);
 		// @formatter:off
 		assertThatExceptionOfType(OAuth2AuthenticationException.class)
@@ -185,7 +192,8 @@ public class OAuth2DeviceCodeAuthenticationProviderTests {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 		Authentication authentication = createAuthentication(registeredClient);
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient)
-				.token(createUserCode()).build();
+			.token(createUserCode())
+			.build();
 		when(this.authorizationService.findByToken(anyString(), any(OAuth2TokenType.class))).thenReturn(authorization);
 		// @formatter:off
 		assertThatExceptionOfType(OAuth2AuthenticationException.class)
@@ -205,7 +213,9 @@ public class OAuth2DeviceCodeAuthenticationProviderTests {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 		Authentication authentication = createAuthentication(registeredClient);
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient)
-				.token(createDeviceCode(), withInvalidated()).token(createUserCode(), withInvalidated()).build();
+			.token(createDeviceCode(), withInvalidated())
+			.token(createUserCode(), withInvalidated())
+			.build();
 		when(this.authorizationService.findByToken(anyString(), any(OAuth2TokenType.class))).thenReturn(authorization);
 		// @formatter:off
 		assertThatExceptionOfType(OAuth2AuthenticationException.class)
@@ -225,7 +235,9 @@ public class OAuth2DeviceCodeAuthenticationProviderTests {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 		Authentication authentication = createAuthentication(registeredClient);
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient)
-				.token(createExpiredDeviceCode()).token(createUserCode(), withInvalidated()).build();
+			.token(createExpiredDeviceCode())
+			.token(createUserCode(), withInvalidated())
+			.build();
 		when(this.authorizationService.findByToken(anyString(), any(OAuth2TokenType.class))).thenReturn(authorization);
 		// @formatter:off
 		assertThatExceptionOfType(OAuth2AuthenticationException.class)
@@ -347,8 +359,8 @@ public class OAuth2DeviceCodeAuthenticationProviderTests {
 		OAuth2AccessToken accessToken = createAccessToken();
 		OAuth2RefreshToken refreshToken = createRefreshToken();
 		when(this.tokenGenerator.generate(any(OAuth2TokenContext.class))).thenReturn(accessToken, refreshToken);
-		OAuth2AccessTokenAuthenticationToken authenticationResult =
-				(OAuth2AccessTokenAuthenticationToken) this.authenticationProvider.authenticate(authentication);
+		OAuth2AccessTokenAuthenticationToken authenticationResult = (OAuth2AccessTokenAuthenticationToken) this.authenticationProvider
+			.authenticate(authentication);
 		assertThat(authenticationResult.getRegisteredClient()).isEqualTo(registeredClient);
 		assertThat(authenticationResult.getPrincipal()).isEqualTo(authentication.getPrincipal());
 		assertThat(authenticationResult.getAccessToken()).isEqualTo(accessToken);
@@ -413,7 +425,8 @@ public class OAuth2DeviceCodeAuthenticationProviderTests {
 
 	private static OAuth2AccessToken createAccessToken() {
 		Instant issuedAt = Instant.now();
-		return new OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER, ACCESS_TOKEN, issuedAt, issuedAt.plus(30, ChronoUnit.MINUTES));
+		return new OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER, ACCESS_TOKEN, issuedAt,
+				issuedAt.plus(30, ChronoUnit.MINUTES));
 	}
 
 	private static OAuth2RefreshToken createRefreshToken() {
@@ -428,4 +441,5 @@ public class OAuth2DeviceCodeAuthenticationProviderTests {
 	public static Function<OAuth2Authorization.Token<? extends OAuth2Token>, Boolean> isInvalidated() {
 		return (token) -> token.getMetadata(OAuth2Authorization.Token.INVALIDATED_METADATA_NAME);
 	}
+
 }

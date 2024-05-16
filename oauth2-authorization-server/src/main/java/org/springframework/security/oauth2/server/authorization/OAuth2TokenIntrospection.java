@@ -39,10 +39,13 @@ import org.springframework.util.Assert;
  * @author Joe Grandja
  * @since 0.1.1
  * @see OAuth2TokenIntrospectionClaimAccessor
- * @see <a target="_blank" href="https://tools.ietf.org/html/rfc7662#section-2.2">Section 2.2 Introspection Response</a>
+ * @see <a target="_blank" href="https://tools.ietf.org/html/rfc7662#section-2.2">Section
+ * 2.2 Introspection Response</a>
  */
 public final class OAuth2TokenIntrospection implements OAuth2TokenIntrospectionClaimAccessor, Serializable {
+
 	private static final long serialVersionUID = SpringAuthorizationServerVersion.SERIAL_VERSION_UID;
+
 	private final Map<String, Object> claims;
 
 	private OAuth2TokenIntrospection(Map<String, Object> claims) {
@@ -51,7 +54,6 @@ public final class OAuth2TokenIntrospection implements OAuth2TokenIntrospectionC
 
 	/**
 	 * Returns the claims in the Token Introspection Response.
-	 *
 	 * @return a {@code Map} of the claims
 	 */
 	@Override
@@ -60,8 +62,8 @@ public final class OAuth2TokenIntrospection implements OAuth2TokenIntrospectionC
 	}
 
 	/**
-	 * Constructs a new {@link Builder} initialized with the {@link #isActive() active} claim to {@code false}.
-	 *
+	 * Constructs a new {@link Builder} initialized with the {@link #isActive() active}
+	 * claim to {@code false}.
 	 * @return the {@link Builder}
 	 */
 	public static Builder builder() {
@@ -69,9 +71,10 @@ public final class OAuth2TokenIntrospection implements OAuth2TokenIntrospectionC
 	}
 
 	/**
-	 * Constructs a new {@link Builder} initialized with the provided {@link #isActive() active} claim.
-	 *
-	 * @param active {@code true} if the token is currently active, {@code false} otherwise
+	 * Constructs a new {@link Builder} initialized with the provided {@link #isActive()
+	 * active} claim.
+	 * @param active {@code true} if the token is currently active, {@code false}
+	 * otherwise
 	 * @return the {@link Builder}
 	 */
 	public static Builder builder(boolean active) {
@@ -80,7 +83,6 @@ public final class OAuth2TokenIntrospection implements OAuth2TokenIntrospectionC
 
 	/**
 	 * Constructs a new {@link Builder} initialized with the provided claims.
-	 *
 	 * @param claims the claims to initialize the builder
 	 * @return the {@link Builder}
 	 */
@@ -93,6 +95,7 @@ public final class OAuth2TokenIntrospection implements OAuth2TokenIntrospectionC
 	 * A builder for {@link OAuth2TokenIntrospection}.
 	 */
 	public static class Builder {
+
 		private final Map<String, Object> claims = new LinkedHashMap<>();
 
 		private Builder(boolean active) {
@@ -100,9 +103,10 @@ public final class OAuth2TokenIntrospection implements OAuth2TokenIntrospectionC
 		}
 
 		/**
-		 * Sets the indicator of whether or not the presented token is currently active, REQUIRED.
-		 *
-		 * @param active {@code true} if the token is currently active, {@code false} otherwise
+		 * Sets the indicator of whether or not the presented token is currently active,
+		 * REQUIRED.
+		 * @param active {@code true} if the token is currently active, {@code false}
+		 * otherwise
 		 * @return the {@link Builder} for further configuration
 		 */
 		public Builder active(boolean active) {
@@ -111,7 +115,6 @@ public final class OAuth2TokenIntrospection implements OAuth2TokenIntrospectionC
 
 		/**
 		 * Add the scope associated with this token, OPTIONAL.
-		 *
 		 * @param scope the scope associated with this token
 		 * @return the {@link Builder} for further configuration
 		 */
@@ -121,10 +124,10 @@ public final class OAuth2TokenIntrospection implements OAuth2TokenIntrospectionC
 		}
 
 		/**
-		 * A {@code Consumer} of the scope(s) associated with this token,
-		 * allowing the ability to add, replace, or remove, OPTIONAL.
-		 *
-		 * @param scopesConsumer a {@code Consumer} of the scope(s) associated with this token
+		 * A {@code Consumer} of the scope(s) associated with this token, allowing the
+		 * ability to add, replace, or remove, OPTIONAL.
+		 * @param scopesConsumer a {@code Consumer} of the scope(s) associated with this
+		 * token
 		 * @return the {@link Builder} for further configuration
 		 */
 		public Builder scopes(Consumer<List<String>> scopesConsumer) {
@@ -133,9 +136,10 @@ public final class OAuth2TokenIntrospection implements OAuth2TokenIntrospectionC
 		}
 
 		/**
-		 * Sets the client identifier for the OAuth 2.0 client that requested this token, OPTIONAL.
-		 *
-		 * @param clientId the client identifier for the OAuth 2.0 client that requested this token
+		 * Sets the client identifier for the OAuth 2.0 client that requested this token,
+		 * OPTIONAL.
+		 * @param clientId the client identifier for the OAuth 2.0 client that requested
+		 * this token
 		 * @return the {@link Builder} for further configuration
 		 */
 		public Builder clientId(String clientId) {
@@ -143,9 +147,10 @@ public final class OAuth2TokenIntrospection implements OAuth2TokenIntrospectionC
 		}
 
 		/**
-		 * Sets the human-readable identifier for the resource owner who authorized this token, OPTIONAL.
-		 *
-		 * @param username the human-readable identifier for the resource owner who authorized this token
+		 * Sets the human-readable identifier for the resource owner who authorized this
+		 * token, OPTIONAL.
+		 * @param username the human-readable identifier for the resource owner who
+		 * authorized this token
 		 * @return the {@link Builder} for further configuration
 		 */
 		public Builder username(String username) {
@@ -154,7 +159,6 @@ public final class OAuth2TokenIntrospection implements OAuth2TokenIntrospectionC
 
 		/**
 		 * Sets the token type (e.g. bearer), OPTIONAL.
-		 *
 		 * @param tokenType the token type
 		 * @return the {@link Builder} for further configuration
 		 */
@@ -164,7 +168,6 @@ public final class OAuth2TokenIntrospection implements OAuth2TokenIntrospectionC
 
 		/**
 		 * Sets the time indicating when this token will expire, OPTIONAL.
-		 *
 		 * @param expiresAt the time indicating when this token will expire
 		 * @return the {@link Builder} for further configuration
 		 */
@@ -174,7 +177,6 @@ public final class OAuth2TokenIntrospection implements OAuth2TokenIntrospectionC
 
 		/**
 		 * Sets the time indicating when this token was originally issued, OPTIONAL.
-		 *
 		 * @param issuedAt the time indicating when this token was originally issued
 		 * @return the {@link Builder} for further configuration
 		 */
@@ -184,7 +186,6 @@ public final class OAuth2TokenIntrospection implements OAuth2TokenIntrospectionC
 
 		/**
 		 * Sets the time indicating when this token is not to be used before, OPTIONAL.
-		 *
 		 * @param notBefore the time indicating when this token is not to be used before
 		 * @return the {@link Builder} for further configuration
 		 */
@@ -193,9 +194,8 @@ public final class OAuth2TokenIntrospection implements OAuth2TokenIntrospectionC
 		}
 
 		/**
-		 * Sets the subject of the token, usually a machine-readable identifier
-		 * of the resource owner who authorized this token, OPTIONAL.
-		 *
+		 * Sets the subject of the token, usually a machine-readable identifier of the
+		 * resource owner who authorized this token, OPTIONAL.
 		 * @param subject the subject of the token
 		 * @return the {@link Builder} for further configuration
 		 */
@@ -205,8 +205,8 @@ public final class OAuth2TokenIntrospection implements OAuth2TokenIntrospectionC
 
 		/**
 		 * Add the identifier representing the intended audience for this token, OPTIONAL.
-		 *
-		 * @param audience the identifier representing the intended audience for this token
+		 * @param audience the identifier representing the intended audience for this
+		 * token
 		 * @return the {@link Builder} for further configuration
 		 */
 		public Builder audience(String audience) {
@@ -215,10 +215,10 @@ public final class OAuth2TokenIntrospection implements OAuth2TokenIntrospectionC
 		}
 
 		/**
-		 * A {@code Consumer} of the intended audience(s) for this token,
-		 * allowing the ability to add, replace, or remove, OPTIONAL.
-		 *
-		 * @param audiencesConsumer a {@code Consumer} of the intended audience(s) for this token
+		 * A {@code Consumer} of the intended audience(s) for this token, allowing the
+		 * ability to add, replace, or remove, OPTIONAL.
+		 * @param audiencesConsumer a {@code Consumer} of the intended audience(s) for
+		 * this token
 		 * @return the {@link Builder} for further configuration
 		 */
 		public Builder audiences(Consumer<List<String>> audiencesConsumer) {
@@ -228,7 +228,6 @@ public final class OAuth2TokenIntrospection implements OAuth2TokenIntrospectionC
 
 		/**
 		 * Sets the issuer of this token, OPTIONAL.
-		 *
 		 * @param issuer the issuer of this token
 		 * @return the {@link Builder} for further configuration
 		 */
@@ -238,7 +237,6 @@ public final class OAuth2TokenIntrospection implements OAuth2TokenIntrospectionC
 
 		/**
 		 * Sets the identifier for the token, OPTIONAL.
-		 *
 		 * @param jti the identifier for the token
 		 * @return the {@link Builder} for further configuration
 		 */
@@ -248,7 +246,6 @@ public final class OAuth2TokenIntrospection implements OAuth2TokenIntrospectionC
 
 		/**
 		 * Sets the claim.
-		 *
 		 * @param name the claim name
 		 * @param value the claim value
 		 * @return the {@link Builder} for further configuration
@@ -263,7 +260,6 @@ public final class OAuth2TokenIntrospection implements OAuth2TokenIntrospectionC
 		/**
 		 * Provides access to every {@link #claim(String, Object)} declared so far with
 		 * the possibility to add, replace, or remove.
-		 *
 		 * @param claimsConsumer a {@code Consumer} of the claims
 		 * @return the {@link Builder} for further configurations
 		 */
@@ -276,7 +272,6 @@ public final class OAuth2TokenIntrospection implements OAuth2TokenIntrospectionC
 		 * Validate the claims and build the {@link OAuth2TokenIntrospection}.
 		 * <p>
 		 * The following claims are REQUIRED: {@code active}
-		 *
 		 * @return the {@link OAuth2TokenIntrospection}
 		 */
 		public OAuth2TokenIntrospection build() {
@@ -286,21 +281,27 @@ public final class OAuth2TokenIntrospection implements OAuth2TokenIntrospectionC
 
 		private void validate() {
 			Assert.notNull(this.claims.get(OAuth2TokenIntrospectionClaimNames.ACTIVE), "active cannot be null");
-			Assert.isInstanceOf(Boolean.class, this.claims.get(OAuth2TokenIntrospectionClaimNames.ACTIVE), "active must be of type boolean");
+			Assert.isInstanceOf(Boolean.class, this.claims.get(OAuth2TokenIntrospectionClaimNames.ACTIVE),
+					"active must be of type boolean");
 			if (this.claims.containsKey(OAuth2TokenIntrospectionClaimNames.SCOPE)) {
-				Assert.isInstanceOf(List.class, this.claims.get(OAuth2TokenIntrospectionClaimNames.SCOPE), "scope must be of type List");
+				Assert.isInstanceOf(List.class, this.claims.get(OAuth2TokenIntrospectionClaimNames.SCOPE),
+						"scope must be of type List");
 			}
 			if (this.claims.containsKey(OAuth2TokenIntrospectionClaimNames.EXP)) {
-				Assert.isInstanceOf(Instant.class, this.claims.get(OAuth2TokenIntrospectionClaimNames.EXP), "exp must be of type Instant");
+				Assert.isInstanceOf(Instant.class, this.claims.get(OAuth2TokenIntrospectionClaimNames.EXP),
+						"exp must be of type Instant");
 			}
 			if (this.claims.containsKey(OAuth2TokenIntrospectionClaimNames.IAT)) {
-				Assert.isInstanceOf(Instant.class, this.claims.get(OAuth2TokenIntrospectionClaimNames.IAT), "iat must be of type Instant");
+				Assert.isInstanceOf(Instant.class, this.claims.get(OAuth2TokenIntrospectionClaimNames.IAT),
+						"iat must be of type Instant");
 			}
 			if (this.claims.containsKey(OAuth2TokenIntrospectionClaimNames.NBF)) {
-				Assert.isInstanceOf(Instant.class, this.claims.get(OAuth2TokenIntrospectionClaimNames.NBF), "nbf must be of type Instant");
+				Assert.isInstanceOf(Instant.class, this.claims.get(OAuth2TokenIntrospectionClaimNames.NBF),
+						"nbf must be of type Instant");
 			}
 			if (this.claims.containsKey(OAuth2TokenIntrospectionClaimNames.AUD)) {
-				Assert.isInstanceOf(List.class, this.claims.get(OAuth2TokenIntrospectionClaimNames.AUD), "aud must be of type List");
+				Assert.isInstanceOf(List.class, this.claims.get(OAuth2TokenIntrospectionClaimNames.AUD),
+						"aud must be of type List");
 			}
 			if (this.claims.containsKey(OAuth2TokenIntrospectionClaimNames.ISS)) {
 				validateURL(this.claims.get(OAuth2TokenIntrospectionClaimNames.ISS), "iss must be a valid URL");
@@ -331,9 +332,12 @@ public final class OAuth2TokenIntrospection implements OAuth2TokenIntrospectionC
 
 			try {
 				new URI(url.toString()).toURL();
-			} catch (Exception ex) {
+			}
+			catch (Exception ex) {
 				throw new IllegalArgumentException(errorMessage, ex);
 			}
 		}
+
 	}
+
 }

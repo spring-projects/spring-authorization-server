@@ -34,12 +34,14 @@ import org.springframework.util.Assert;
  * @see OAuth2RefreshTokenAuthenticationProvider
  */
 public class OAuth2RefreshTokenAuthenticationToken extends OAuth2AuthorizationGrantAuthenticationToken {
+
 	private final String refreshToken;
+
 	private final Set<String> scopes;
 
 	/**
-	 * Constructs an {@code OAuth2RefreshTokenAuthenticationToken} using the provided parameters.
-	 *
+	 * Constructs an {@code OAuth2RefreshTokenAuthenticationToken} using the provided
+	 * parameters.
 	 * @param refreshToken the refresh token
 	 * @param clientPrincipal the authenticated client principal
 	 * @param scopes the requested scope(s)
@@ -50,13 +52,11 @@ public class OAuth2RefreshTokenAuthenticationToken extends OAuth2AuthorizationGr
 		super(AuthorizationGrantType.REFRESH_TOKEN, clientPrincipal, additionalParameters);
 		Assert.hasText(refreshToken, "refreshToken cannot be empty");
 		this.refreshToken = refreshToken;
-		this.scopes = Collections.unmodifiableSet(
-				scopes != null ? new HashSet<>(scopes) : Collections.emptySet());
+		this.scopes = Collections.unmodifiableSet(scopes != null ? new HashSet<>(scopes) : Collections.emptySet());
 	}
 
 	/**
 	 * Returns the refresh token.
-	 *
 	 * @return the refresh token
 	 */
 	public String getRefreshToken() {
@@ -65,10 +65,10 @@ public class OAuth2RefreshTokenAuthenticationToken extends OAuth2AuthorizationGr
 
 	/**
 	 * Returns the requested scope(s).
-	 *
 	 * @return the requested scope(s), or an empty {@code Set} if not available
 	 */
 	public Set<String> getScopes() {
 		return this.scopes;
 	}
+
 }

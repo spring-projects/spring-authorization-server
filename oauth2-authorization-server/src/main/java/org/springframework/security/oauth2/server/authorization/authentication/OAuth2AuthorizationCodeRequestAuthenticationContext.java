@@ -25,8 +25,10 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 import org.springframework.util.Assert;
 
 /**
- * An {@link OAuth2AuthenticationContext} that holds an {@link OAuth2AuthorizationCodeRequestAuthenticationToken} and additional information
- * and is used when validating the OAuth 2.0 Authorization Request used in the Authorization Code Grant.
+ * An {@link OAuth2AuthenticationContext} that holds an
+ * {@link OAuth2AuthorizationCodeRequestAuthenticationToken} and additional information
+ * and is used when validating the OAuth 2.0 Authorization Request used in the
+ * Authorization Code Grant.
  *
  * @author Joe Grandja
  * @since 0.4.0
@@ -35,6 +37,7 @@ import org.springframework.util.Assert;
  * @see OAuth2AuthorizationCodeRequestAuthenticationProvider#setAuthenticationValidator(Consumer)
  */
 public final class OAuth2AuthorizationCodeRequestAuthenticationContext implements OAuth2AuthenticationContext {
+
 	private final Map<Object, Object> context;
 
 	private OAuth2AuthorizationCodeRequestAuthenticationContext(Map<Object, Object> context) {
@@ -56,7 +59,6 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationContext implement
 
 	/**
 	 * Returns the {@link RegisteredClient registered client}.
-	 *
 	 * @return the {@link RegisteredClient}
 	 */
 	public RegisteredClient getRegisteredClient() {
@@ -64,8 +66,8 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationContext implement
 	}
 
 	/**
-	 * Constructs a new {@link Builder} with the provided {@link OAuth2AuthorizationCodeRequestAuthenticationToken}.
-	 *
+	 * Constructs a new {@link Builder} with the provided
+	 * {@link OAuth2AuthorizationCodeRequestAuthenticationToken}.
 	 * @param authentication the {@link OAuth2AuthorizationCodeRequestAuthenticationToken}
 	 * @return the {@link Builder}
 	 */
@@ -76,7 +78,8 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationContext implement
 	/**
 	 * A builder for {@link OAuth2AuthorizationCodeRequestAuthenticationContext}.
 	 */
-	public static final class Builder extends AbstractBuilder<OAuth2AuthorizationCodeRequestAuthenticationContext, Builder> {
+	public static final class Builder
+			extends AbstractBuilder<OAuth2AuthorizationCodeRequestAuthenticationContext, Builder> {
 
 		private Builder(OAuth2AuthorizationCodeRequestAuthenticationToken authentication) {
 			super(authentication);
@@ -84,7 +87,6 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationContext implement
 
 		/**
 		 * Sets the {@link RegisteredClient registered client}.
-		 *
 		 * @param registeredClient the {@link RegisteredClient}
 		 * @return the {@link Builder} for further configuration
 		 */
@@ -94,7 +96,6 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationContext implement
 
 		/**
 		 * Builds a new {@link OAuth2AuthorizationCodeRequestAuthenticationContext}.
-		 *
 		 * @return the {@link OAuth2AuthorizationCodeRequestAuthenticationContext}
 		 */
 		public OAuth2AuthorizationCodeRequestAuthenticationContext build() {

@@ -34,8 +34,9 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
 
 /**
- * Attempts to extract an OpenID Connect 1.0 Dynamic Client Registration (or Client Read) Request from {@link HttpServletRequest}
- * and then converts to an {@link OidcClientRegistrationAuthenticationToken} used for authenticating the request.
+ * Attempts to extract an OpenID Connect 1.0 Dynamic Client Registration (or Client Read)
+ * Request from {@link HttpServletRequest} and then converts to an
+ * {@link OidcClientRegistrationAuthenticationToken} used for authenticating the request.
  *
  * @author Joe Grandja
  * @since 0.4.0
@@ -44,8 +45,8 @@ import org.springframework.util.StringUtils;
  * @see OidcClientRegistrationEndpointFilter
  */
 public final class OidcClientRegistrationAuthenticationConverter implements AuthenticationConverter {
-	private final HttpMessageConverter<OidcClientRegistration> clientRegistrationHttpMessageConverter =
-			new OidcClientRegistrationHttpMessageConverter();
+
+	private final HttpMessageConverter<OidcClientRegistration> clientRegistrationHttpMessageConverter = new OidcClientRegistrationHttpMessageConverter();
 
 	@Override
 	public Authentication convert(HttpServletRequest request) {
@@ -54,11 +55,11 @@ public final class OidcClientRegistrationAuthenticationConverter implements Auth
 		if ("POST".equals(request.getMethod())) {
 			OidcClientRegistration clientRegistration;
 			try {
-				clientRegistration = this.clientRegistrationHttpMessageConverter.read(
-						OidcClientRegistration.class, new ServletServerHttpRequest(request));
-			} catch (Exception ex) {
-				OAuth2Error error = new OAuth2Error(
-						OAuth2ErrorCodes.INVALID_REQUEST,
+				clientRegistration = this.clientRegistrationHttpMessageConverter.read(OidcClientRegistration.class,
+						new ServletServerHttpRequest(request));
+			}
+			catch (Exception ex) {
+				OAuth2Error error = new OAuth2Error(OAuth2ErrorCodes.INVALID_REQUEST,
 						"OpenID Client Registration Error: " + ex.getMessage(),
 						"https://openid.net/specs/openid-connect-registration-1_0.html#RegistrationError");
 				throw new OAuth2AuthenticationException(error, ex);
@@ -70,8 +71,7 @@ public final class OidcClientRegistrationAuthenticationConverter implements Auth
 
 		// client_id (REQUIRED)
 		String clientId = parameters.getFirst(OAuth2ParameterNames.CLIENT_ID);
-		if (!StringUtils.hasText(clientId) ||
-				parameters.get(OAuth2ParameterNames.CLIENT_ID).size() != 1) {
+		if (!StringUtils.hasText(clientId) || parameters.get(OAuth2ParameterNames.CLIENT_ID).size() != 1) {
 			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_REQUEST);
 		}
 

@@ -37,8 +37,9 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 import org.springframework.util.Assert;
 
 /**
- * An {@link AuthenticationProvider} implementation used for OAuth 2.0 Client Authentication,
- * which authenticates the {@link Jwt} {@link OAuth2ParameterNames#CLIENT_ASSERTION client_assertion} parameter.
+ * An {@link AuthenticationProvider} implementation used for OAuth 2.0 Client
+ * Authentication, which authenticates the {@link Jwt}
+ * {@link OAuth2ParameterNames#CLIENT_ASSERTION client_assertion} parameter.
  *
  * @author Rafal Lewczuk
  * @author Joe Grandja
@@ -50,17 +51,23 @@ import org.springframework.util.Assert;
  * @see JwtClientAssertionDecoderFactory
  */
 public final class JwtClientAssertionAuthenticationProvider implements AuthenticationProvider {
+
 	private static final String ERROR_URI = "https://datatracker.ietf.org/doc/html/rfc6749#section-3.2.1";
-	private static final ClientAuthenticationMethod JWT_CLIENT_ASSERTION_AUTHENTICATION_METHOD =
-			new ClientAuthenticationMethod("urn:ietf:params:oauth:client-assertion-type:jwt-bearer");
+
+	private static final ClientAuthenticationMethod JWT_CLIENT_ASSERTION_AUTHENTICATION_METHOD = new ClientAuthenticationMethod(
+			"urn:ietf:params:oauth:client-assertion-type:jwt-bearer");
+
 	private final Log logger = LogFactory.getLog(getClass());
+
 	private final RegisteredClientRepository registeredClientRepository;
+
 	private final CodeVerifierAuthenticator codeVerifierAuthenticator;
+
 	private JwtDecoderFactory<RegisteredClient> jwtDecoderFactory;
 
 	/**
-	 * Constructs a {@code JwtClientAssertionAuthenticationProvider} using the provided parameters.
-	 *
+	 * Constructs a {@code JwtClientAssertionAuthenticationProvider} using the provided
+	 * parameters.
 	 * @param registeredClientRepository the repository of registered clients
 	 * @param authorizationService the authorization service
 	 */
@@ -75,8 +82,7 @@ public final class JwtClientAssertionAuthenticationProvider implements Authentic
 
 	@Override
 	public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-		OAuth2ClientAuthenticationToken clientAuthentication =
-				(OAuth2ClientAuthenticationToken) authentication;
+		OAuth2ClientAuthenticationToken clientAuthentication = (OAuth2ClientAuthenticationToken) authentication;
 
 		if (!JWT_CLIENT_ASSERTION_AUTHENTICATION_METHOD.equals(clientAuthentication.getClientAuthenticationMethod())) {
 			return null;
@@ -92,10 +98,12 @@ public final class JwtClientAssertionAuthenticationProvider implements Authentic
 			this.logger.trace("Retrieved registered client");
 		}
 
+		// @formatter:off
 		if (!registeredClient.getClientAuthenticationMethods().contains(ClientAuthenticationMethod.PRIVATE_KEY_JWT) &&
 				!registeredClient.getClientAuthenticationMethods().contains(ClientAuthenticationMethod.CLIENT_SECRET_JWT)) {
 			throwInvalidClient("authentication_method");
 		}
+		// @formatter:on
 
 		if (clientAuthentication.getCredentials() == null) {
 			throwInvalidClient("credentials");
@@ -105,7 +113,8 @@ public final class JwtClientAssertionAuthenticationProvider implements Authentic
 		JwtDecoder jwtDecoder = this.jwtDecoderFactory.createDecoder(registeredClient);
 		try {
 			jwtAssertion = jwtDecoder.decode(clientAuthentication.getCredentials().toString());
-		} catch (JwtException ex) {
+		}
+		catch (JwtException ex) {
 			throwInvalidClient(OAuth2ParameterNames.CLIENT_ASSERTION, ex);
 		}
 
@@ -113,13 +122,16 @@ public final class JwtClientAssertionAuthenticationProvider implements Authentic
 			this.logger.trace("Validated client authentication parameters");
 		}
 
-		// Validate the "code_verifier" parameter for the confidential client, if available
+		// Validate the "code_verifier" parameter for the confidential client, if
+		// available
 		this.codeVerifierAuthenticator.authenticateIfAvailable(clientAuthentication, registeredClient);
 
+		// @formatter:off
 		ClientAuthenticationMethod clientAuthenticationMethod =
 				registeredClient.getClientSettings().getTokenEndpointAuthenticationSigningAlgorithm() instanceof SignatureAlgorithm ?
 						ClientAuthenticationMethod.PRIVATE_KEY_JWT :
 						ClientAuthenticationMethod.CLIENT_SECRET_JWT;
+		// @formatter:on
 
 		if (this.logger.isTraceEnabled()) {
 			this.logger.trace("Authenticated client assertion");
@@ -134,11 +146,12 @@ public final class JwtClientAssertionAuthenticationProvider implements Authentic
 	}
 
 	/**
-	 * Sets the {@link JwtDecoderFactory} that provides a {@link JwtDecoder} for the specified {@link RegisteredClient}
-	 * and is used for authenticating a {@link Jwt} Bearer Token during OAuth 2.0 Client Authentication.
-	 * The default factory is {@link JwtClientAssertionDecoderFactory}.
-	 *
-	 * @param jwtDecoderFactory the {@link JwtDecoderFactory} that provides a {@link JwtDecoder} for the specified {@link RegisteredClient}
+	 * Sets the {@link JwtDecoderFactory} that provides a {@link JwtDecoder} for the
+	 * specified {@link RegisteredClient} and is used for authenticating a {@link Jwt}
+	 * Bearer Token during OAuth 2.0 Client Authentication. The default factory is
+	 * {@link JwtClientAssertionDecoderFactory}.
+	 * @param jwtDecoderFactory the {@link JwtDecoderFactory} that provides a
+	 * {@link JwtDecoder} for the specified {@link RegisteredClient}
 	 * @since 0.4.0
 	 */
 	public void setJwtDecoderFactory(JwtDecoderFactory<RegisteredClient> jwtDecoderFactory) {
@@ -151,11 +164,8 @@ public final class JwtClientAssertionAuthenticationProvider implements Authentic
 	}
 
 	private static void throwInvalidClient(String parameterName, Throwable cause) {
-		OAuth2Error error = new OAuth2Error(
-				OAuth2ErrorCodes.INVALID_CLIENT,
-				"Client authentication failed: " + parameterName,
-				ERROR_URI
-		);
+		OAuth2Error error = new OAuth2Error(OAuth2ErrorCodes.INVALID_CLIENT,
+				"Client authentication failed: " + parameterName, ERROR_URI);
 		throw new OAuth2AuthenticationException(error, error.toString(), cause);
 	}
 

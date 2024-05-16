@@ -62,9 +62,13 @@ import static org.mockito.Mockito.when;
  * @author Steve Riesenberg
  */
 public class OidcUserInfoEndpointFilterTests {
+
 	private static final String DEFAULT_OIDC_USER_INFO_ENDPOINT_URI = "/userinfo";
+
 	private AuthenticationManager authenticationManager;
+
 	private OidcUserInfoEndpointFilter filter;
+
 	private final HttpMessageConverter<OAuth2Error> errorHttpResponseConverter = new OAuth2ErrorHttpMessageConverter();
 
 	@BeforeEach
@@ -75,37 +79,33 @@ public class OidcUserInfoEndpointFilterTests {
 
 	@Test
 	public void constructorWhenAuthenticationManagerNullThenThrowIllegalArgumentException() {
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> new OidcUserInfoEndpointFilter(null))
-				.withMessage("authenticationManager cannot be null");
+		assertThatIllegalArgumentException().isThrownBy(() -> new OidcUserInfoEndpointFilter(null))
+			.withMessage("authenticationManager cannot be null");
 	}
 
 	@Test
 	public void constructorWhenUserInfoEndpointUriIsEmptyThenThrowIllegalArgumentException() {
 		assertThatIllegalArgumentException()
-				.isThrownBy(() -> new OidcUserInfoEndpointFilter(this.authenticationManager, ""))
-				.withMessage("userInfoEndpointUri cannot be empty");
+			.isThrownBy(() -> new OidcUserInfoEndpointFilter(this.authenticationManager, ""))
+			.withMessage("userInfoEndpointUri cannot be empty");
 	}
 
 	@Test
 	public void setAuthenticationConverterWhenNullThenThrowIllegalArgumentException() {
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> this.filter.setAuthenticationConverter(null))
-				.withMessage("authenticationConverter cannot be null");
+		assertThatIllegalArgumentException().isThrownBy(() -> this.filter.setAuthenticationConverter(null))
+			.withMessage("authenticationConverter cannot be null");
 	}
 
 	@Test
 	public void setAuthenticationSuccessHandlerWhenNullThenThrowIllegalArgumentException() {
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> this.filter.setAuthenticationSuccessHandler(null))
-				.withMessage("authenticationSuccessHandler cannot be null");
+		assertThatIllegalArgumentException().isThrownBy(() -> this.filter.setAuthenticationSuccessHandler(null))
+			.withMessage("authenticationSuccessHandler cannot be null");
 	}
 
 	@Test
 	public void setAuthenticationFailureHandlerWhenNullThenThrowIllegalArgumentException() {
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> this.filter.setAuthenticationFailureHandler(null))
-				.withMessage("authenticationFailureHandler cannot be null");
+		assertThatIllegalArgumentException().isThrownBy(() -> this.filter.setAuthenticationFailureHandler(null))
+			.withMessage("authenticationFailureHandler cannot be null");
 	}
 
 	@Test
@@ -149,7 +149,8 @@ public class OidcUserInfoEndpointFilterTests {
 		JwtAuthenticationToken principal = createJwtAuthenticationToken();
 		SecurityContextHolder.getContext().setAuthentication(principal);
 
-		OidcUserInfoAuthenticationToken authentication = new OidcUserInfoAuthenticationToken(principal, createUserInfo());
+		OidcUserInfoAuthenticationToken authentication = new OidcUserInfoAuthenticationToken(principal,
+				createUserInfo());
 		when(this.authenticationManager.authenticate(any())).thenReturn(authentication);
 
 		String requestUri = DEFAULT_OIDC_USER_INFO_ENDPOINT_URI;
@@ -183,7 +184,7 @@ public class OidcUserInfoEndpointFilterTests {
 		SecurityContextHolder.getContext().setAuthentication(principal);
 
 		when(this.authenticationManager.authenticate(any()))
-				.thenThrow(new OAuth2AuthenticationException(oauth2ErrorCode));
+			.thenThrow(new OAuth2AuthenticationException(oauth2ErrorCode));
 
 		String requestUri = DEFAULT_OIDC_USER_INFO_ENDPOINT_URI;
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestUri);
@@ -208,9 +209,8 @@ public class OidcUserInfoEndpointFilterTests {
 		this.filter.setAuthenticationConverter(authenticationConverter);
 
 		when(authenticationConverter.convert(any())).thenReturn(authentication);
-		when(this.authenticationManager.authenticate(any())).thenReturn(
-				new OidcUserInfoAuthenticationToken(principal, createUserInfo())
-		);
+		when(this.authenticationManager.authenticate(any()))
+			.thenReturn(new OidcUserInfoAuthenticationToken(principal, createUserInfo()));
 
 		String requestUri = DEFAULT_OIDC_USER_INFO_ENDPOINT_URI;
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestUri);
@@ -234,7 +234,8 @@ public class OidcUserInfoEndpointFilterTests {
 		Authentication principal = new TestingAuthenticationToken("principal", "credentials");
 		SecurityContextHolder.getContext().setAuthentication(principal);
 
-		OidcUserInfoAuthenticationToken authentication = new OidcUserInfoAuthenticationToken(principal, createUserInfo());
+		OidcUserInfoAuthenticationToken authentication = new OidcUserInfoAuthenticationToken(principal,
+				createUserInfo());
 		when(this.authenticationManager.authenticate(any())).thenReturn(authentication);
 
 		String requestUri = DEFAULT_OIDC_USER_INFO_ENDPOINT_URI;
@@ -257,8 +258,8 @@ public class OidcUserInfoEndpointFilterTests {
 		Authentication principal = new TestingAuthenticationToken("principal", "credentials");
 		SecurityContextHolder.getContext().setAuthentication(principal);
 
-		OAuth2AuthenticationException authenticationException =
-				new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_TOKEN);
+		OAuth2AuthenticationException authenticationException = new OAuth2AuthenticationException(
+				OAuth2ErrorCodes.INVALID_TOKEN);
 		when(this.authenticationManager.authenticate(any())).thenThrow(authenticationException);
 
 		String requestUri = DEFAULT_OIDC_USER_INFO_ENDPOINT_URI;
@@ -274,8 +275,8 @@ public class OidcUserInfoEndpointFilterTests {
 	}
 
 	private OAuth2Error readError(MockHttpServletResponse response) throws Exception {
-		MockClientHttpResponse httpResponse = new MockClientHttpResponse(
-				response.getContentAsByteArray(), HttpStatus.valueOf(response.getStatus()));
+		MockClientHttpResponse httpResponse = new MockClientHttpResponse(response.getContentAsByteArray(),
+				HttpStatus.valueOf(response.getStatus()));
 		return this.errorHttpResponseConverter.read(OAuth2Error.class, httpResponse);
 	}
 
@@ -294,27 +295,27 @@ public class OidcUserInfoEndpointFilterTests {
 
 	private static OidcUserInfo createUserInfo() {
 		return OidcUserInfo.builder()
-				.subject("user1")
-				.name("First Last")
-				.givenName("First")
-				.familyName("Last")
-				.middleName("Middle")
-				.nickname("User")
-				.preferredUsername("user")
-				.profile("https://example.com/user1")
-				.picture("https://example.com/user1.jpg")
-				.website("https://example.com")
-				.email("user1@example.com")
-				.emailVerified(true)
-				.gender("female")
-				.birthdate("1970-01-01")
-				.zoneinfo("Europe/Paris")
-				.locale("en-US")
-				.phoneNumber("+1 (604) 555-1234;ext=5678")
-				.phoneNumberVerified(false)
-				.address("Champ de Mars\n5 Av. Anatole France\n75007 Paris\nFrance")
-				.updatedAt("1970-01-01T00:00:00Z")
-				.build();
+			.subject("user1")
+			.name("First Last")
+			.givenName("First")
+			.familyName("Last")
+			.middleName("Middle")
+			.nickname("User")
+			.preferredUsername("user")
+			.profile("https://example.com/user1")
+			.picture("https://example.com/user1.jpg")
+			.website("https://example.com")
+			.email("user1@example.com")
+			.emailVerified(true)
+			.gender("female")
+			.birthdate("1970-01-01")
+			.zoneinfo("Europe/Paris")
+			.locale("en-US")
+			.phoneNumber("+1 (604) 555-1234;ext=5678")
+			.phoneNumberVerified(false)
+			.address("Champ de Mars\n5 Av. Anatole France\n75007 Paris\nFrance")
+			.updatedAt("1970-01-01T00:00:00Z")
+			.build();
 	}
 
 	private static void assertUserInfoResponse(String userInfoResponse) {
@@ -336,7 +337,8 @@ public class OidcUserInfoEndpointFilterTests {
 		assertThat(userInfoResponse).contains("\"locale\":\"en-US\"");
 		assertThat(userInfoResponse).contains("\"phone_number\":\"+1 (604) 555-1234;ext=5678\"");
 		assertThat(userInfoResponse).contains("\"phone_number_verified\":false");
-		assertThat(userInfoResponse).contains("\"address\":\"Champ de Mars\\n5 Av. Anatole France\\n75007 Paris\\nFrance\"");
+		assertThat(userInfoResponse)
+			.contains("\"address\":\"Champ de Mars\\n5 Av. Anatole France\\n75007 Paris\\nFrance\"");
 		assertThat(userInfoResponse).contains("\"updated_at\":\"1970-01-01T00:00:00Z\"");
 	}
 

@@ -44,7 +44,9 @@ import static org.mockito.Mockito.verifyNoInteractions;
  * @author Joe Grandja
  */
 public class OAuth2AuthorizationServerMetadataEndpointFilterTests {
+
 	private static final String DEFAULT_OAUTH2_AUTHORIZATION_SERVER_METADATA_ENDPOINT_URI = "/.well-known/oauth-authorization-server";
+
 	private final OAuth2AuthorizationServerMetadataEndpointFilter filter = new OAuth2AuthorizationServerMetadataEndpointFilter();
 
 	@AfterEach
@@ -55,8 +57,8 @@ public class OAuth2AuthorizationServerMetadataEndpointFilterTests {
 	@Test
 	public void setAuthorizationServerMetadataCustomizerWhenNullThenThrowIllegalArgumentException() {
 		assertThatThrownBy(() -> this.filter.setAuthorizationServerMetadataCustomizer(null))
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("authorizationServerMetadataCustomizer cannot be null");
+			.isInstanceOf(IllegalArgumentException.class)
+			.hasMessage("authorizationServerMetadataCustomizer cannot be null");
 	}
 
 	@Test
@@ -95,14 +97,15 @@ public class OAuth2AuthorizationServerMetadataEndpointFilterTests {
 		String tokenIntrospectionEndpoint = "/oauth2/v1/introspect";
 
 		AuthorizationServerSettings authorizationServerSettings = AuthorizationServerSettings.builder()
-				.issuer(issuer)
-				.authorizationEndpoint(authorizationEndpoint)
-				.tokenEndpoint(tokenEndpoint)
-				.jwkSetEndpoint(jwkSetEndpoint)
-				.tokenRevocationEndpoint(tokenRevocationEndpoint)
-				.tokenIntrospectionEndpoint(tokenIntrospectionEndpoint)
-				.build();
-		AuthorizationServerContextHolder.setContext(new TestAuthorizationServerContext(authorizationServerSettings, null));
+			.issuer(issuer)
+			.authorizationEndpoint(authorizationEndpoint)
+			.tokenEndpoint(tokenEndpoint)
+			.jwkSetEndpoint(jwkSetEndpoint)
+			.tokenRevocationEndpoint(tokenRevocationEndpoint)
+			.tokenIntrospectionEndpoint(tokenIntrospectionEndpoint)
+			.build();
+		AuthorizationServerContextHolder
+			.setContext(new TestAuthorizationServerContext(authorizationServerSettings, null));
 
 		String requestUri = DEFAULT_OAUTH2_AUTHORIZATION_SERVER_METADATA_ENDPOINT_URI;
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestUri);
@@ -117,25 +120,34 @@ public class OAuth2AuthorizationServerMetadataEndpointFilterTests {
 		assertThat(response.getContentType()).isEqualTo(MediaType.APPLICATION_JSON_VALUE);
 		String authorizationServerMetadataResponse = response.getContentAsString();
 		assertThat(authorizationServerMetadataResponse).contains("\"issuer\":\"https://example.com\"");
-		assertThat(authorizationServerMetadataResponse).contains("\"authorization_endpoint\":\"https://example.com/oauth2/v1/authorize\"");
-		assertThat(authorizationServerMetadataResponse).contains("\"token_endpoint\":\"https://example.com/oauth2/v1/token\"");
-		assertThat(authorizationServerMetadataResponse).contains("\"token_endpoint_auth_methods_supported\":[\"client_secret_basic\",\"client_secret_post\",\"client_secret_jwt\",\"private_key_jwt\"]");
+		assertThat(authorizationServerMetadataResponse)
+			.contains("\"authorization_endpoint\":\"https://example.com/oauth2/v1/authorize\"");
+		assertThat(authorizationServerMetadataResponse)
+			.contains("\"token_endpoint\":\"https://example.com/oauth2/v1/token\"");
+		assertThat(authorizationServerMetadataResponse).contains(
+				"\"token_endpoint_auth_methods_supported\":[\"client_secret_basic\",\"client_secret_post\",\"client_secret_jwt\",\"private_key_jwt\"]");
 		assertThat(authorizationServerMetadataResponse).contains("\"jwks_uri\":\"https://example.com/oauth2/v1/jwks\"");
 		assertThat(authorizationServerMetadataResponse).contains("\"response_types_supported\":[\"code\"]");
-		assertThat(authorizationServerMetadataResponse).contains("\"grant_types_supported\":[\"authorization_code\",\"client_credentials\",\"refresh_token\",\"urn:ietf:params:oauth:grant-type:device_code\"]");
-		assertThat(authorizationServerMetadataResponse).contains("\"revocation_endpoint\":\"https://example.com/oauth2/v1/revoke\"");
-		assertThat(authorizationServerMetadataResponse).contains("\"revocation_endpoint_auth_methods_supported\":[\"client_secret_basic\",\"client_secret_post\",\"client_secret_jwt\",\"private_key_jwt\"]");
-		assertThat(authorizationServerMetadataResponse).contains("\"introspection_endpoint\":\"https://example.com/oauth2/v1/introspect\"");
-		assertThat(authorizationServerMetadataResponse).contains("\"introspection_endpoint_auth_methods_supported\":[\"client_secret_basic\",\"client_secret_post\",\"client_secret_jwt\",\"private_key_jwt\"]");
+		assertThat(authorizationServerMetadataResponse).contains(
+				"\"grant_types_supported\":[\"authorization_code\",\"client_credentials\",\"refresh_token\",\"urn:ietf:params:oauth:grant-type:device_code\"]");
+		assertThat(authorizationServerMetadataResponse)
+			.contains("\"revocation_endpoint\":\"https://example.com/oauth2/v1/revoke\"");
+		assertThat(authorizationServerMetadataResponse).contains(
+				"\"revocation_endpoint_auth_methods_supported\":[\"client_secret_basic\",\"client_secret_post\",\"client_secret_jwt\",\"private_key_jwt\"]");
+		assertThat(authorizationServerMetadataResponse)
+			.contains("\"introspection_endpoint\":\"https://example.com/oauth2/v1/introspect\"");
+		assertThat(authorizationServerMetadataResponse).contains(
+				"\"introspection_endpoint_auth_methods_supported\":[\"client_secret_basic\",\"client_secret_post\",\"client_secret_jwt\",\"private_key_jwt\"]");
 		assertThat(authorizationServerMetadataResponse).contains("\"code_challenge_methods_supported\":[\"S256\"]");
 	}
 
 	@Test
 	public void doFilterWhenAuthorizationServerSettingsWithInvalidIssuerThenThrowIllegalArgumentException() {
 		AuthorizationServerSettings authorizationServerSettings = AuthorizationServerSettings.builder()
-				.issuer("https://this is an invalid URL")
-				.build();
-		AuthorizationServerContextHolder.setContext(new TestAuthorizationServerContext(authorizationServerSettings, null));
+			.issuer("https://this is an invalid URL")
+			.build();
+		AuthorizationServerContextHolder
+			.setContext(new TestAuthorizationServerContext(authorizationServerSettings, null));
 
 		String requestUri = DEFAULT_OAUTH2_AUTHORIZATION_SERVER_METADATA_ENDPOINT_URI;
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestUri);
@@ -143,10 +155,8 @@ public class OAuth2AuthorizationServerMetadataEndpointFilterTests {
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		FilterChain filterChain = mock(FilterChain.class);
 
-
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> this.filter.doFilter(request, response, filterChain))
-				.withMessage("issuer must be a valid URL");
+		assertThatIllegalArgumentException().isThrownBy(() -> this.filter.doFilter(request, response, filterChain))
+			.withMessage("issuer must be a valid URL");
 	}
 
 }

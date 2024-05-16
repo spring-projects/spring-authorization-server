@@ -26,6 +26,7 @@ import org.springframework.security.web.util.matcher.RequestMatcher;
  * @since 0.1.2
  */
 abstract class AbstractOAuth2Configurer {
+
 	private final ObjectPostProcessor<Object> objectPostProcessor;
 
 	AbstractOAuth2Configurer(ObjectPostProcessor<Object> objectPostProcessor) {

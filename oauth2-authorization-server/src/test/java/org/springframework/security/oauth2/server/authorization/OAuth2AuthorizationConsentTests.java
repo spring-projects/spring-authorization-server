@@ -31,92 +31,75 @@ public class OAuth2AuthorizationConsentTests {
 
 	@Test
 	public void fromWhenAuthorizationConsentNullThenThrowIllegalArgumentException() {
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> OAuth2AuthorizationConsent.from(null))
-				.withMessage("authorizationConsent cannot be null");
+		assertThatIllegalArgumentException().isThrownBy(() -> OAuth2AuthorizationConsent.from(null))
+			.withMessage("authorizationConsent cannot be null");
 	}
 
 	@Test
 	public void withIdWhenRegisteredClientIdNullThenThrowIllegalArgumentException() {
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> OAuth2AuthorizationConsent.withId(null, "some-user"))
-				.withMessage("registeredClientId cannot be empty");
+		assertThatIllegalArgumentException().isThrownBy(() -> OAuth2AuthorizationConsent.withId(null, "some-user"))
+			.withMessage("registeredClientId cannot be empty");
 	}
 
 	@Test
 	public void withIdWhenPrincipalNameNullThenThrowIllegalArgumentException() {
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> OAuth2AuthorizationConsent.withId("some-client", null))
-				.withMessage("principalName cannot be empty");
+		assertThatIllegalArgumentException().isThrownBy(() -> OAuth2AuthorizationConsent.withId("some-client", null))
+			.withMessage("principalName cannot be empty");
 	}
 
 	@Test
 	public void buildWhenAuthoritiesEmptyThenThrowIllegalArgumentException() {
 		OAuth2AuthorizationConsent.Builder builder = OAuth2AuthorizationConsent.withId("some-client", "some-user");
-		assertThatIllegalArgumentException()
-				.isThrownBy(builder::build)
-				.withMessage("authorities cannot be empty");
+		assertThatIllegalArgumentException().isThrownBy(builder::build).withMessage("authorities cannot be empty");
 	}
 
 	@Test
 	public void buildWhenAllAttributesAreProvidedThenAllAttributesAreSet() {
-		OAuth2AuthorizationConsent authorizationConsent =
-				OAuth2AuthorizationConsent.withId("some-client", "some-user")
-						.scope("resource.read")
-						.scope("resource.write")
-						.authority(new SimpleGrantedAuthority("CLAIM_email"))
-						.build();
+		OAuth2AuthorizationConsent authorizationConsent = OAuth2AuthorizationConsent.withId("some-client", "some-user")
+			.scope("resource.read")
+			.scope("resource.write")
+			.authority(new SimpleGrantedAuthority("CLAIM_email"))
+			.build();
 
 		assertThat(authorizationConsent.getRegisteredClientId()).isEqualTo("some-client");
 		assertThat(authorizationConsent.getPrincipalName()).isEqualTo("some-user");
-		assertThat(authorizationConsent.getScopes())
-				.containsExactlyInAnyOrder(
-						"resource.read",
-						"resource.write"
-				);
-		assertThat(authorizationConsent.getAuthorities())
-				.containsExactlyInAnyOrder(
-						new SimpleGrantedAuthority("SCOPE_resource.read"),
-						new SimpleGrantedAuthority("SCOPE_resource.write"),
-						new SimpleGrantedAuthority("CLAIM_email")
-				);
+		assertThat(authorizationConsent.getScopes()).containsExactlyInAnyOrder("resource.read", "resource.write");
+		assertThat(authorizationConsent.getAuthorities()).containsExactlyInAnyOrder(
+				new SimpleGrantedAuthority("SCOPE_resource.read"), new SimpleGrantedAuthority("SCOPE_resource.write"),
+				new SimpleGrantedAuthority("CLAIM_email"));
 	}
 
 	@Test
 	public void fromWhenAuthorizationConsentProvidedThenCopied() {
-		OAuth2AuthorizationConsent previousAuthorizationConsent =
-				OAuth2AuthorizationConsent.withId("some-client", "some-principal")
-						.scope("first.scope")
-						.scope("second.scope")
-						.authority(new SimpleGrantedAuthority("CLAIM_email"))
-						.build();
+		OAuth2AuthorizationConsent previousAuthorizationConsent = OAuth2AuthorizationConsent
+			.withId("some-client", "some-principal")
+			.scope("first.scope")
+			.scope("second.scope")
+			.authority(new SimpleGrantedAuthority("CLAIM_email"))
+			.build();
 
-		OAuth2AuthorizationConsent authorizationConsent =
-				OAuth2AuthorizationConsent.from(previousAuthorizationConsent)
-						.build();
+		OAuth2AuthorizationConsent authorizationConsent = OAuth2AuthorizationConsent.from(previousAuthorizationConsent)
+			.build();
 
 		assertThat(authorizationConsent.getRegisteredClientId()).isEqualTo("some-client");
 		assertThat(authorizationConsent.getPrincipalName()).isEqualTo("some-principal");
-		assertThat(authorizationConsent.getAuthorities())
-				.containsExactlyInAnyOrder(
-						new SimpleGrantedAuthority("SCOPE_first.scope"),
-						new SimpleGrantedAuthority("SCOPE_second.scope"),
-						new SimpleGrantedAuthority("CLAIM_email")
-				);
+		assertThat(authorizationConsent.getAuthorities()).containsExactlyInAnyOrder(
+				new SimpleGrantedAuthority("SCOPE_first.scope"), new SimpleGrantedAuthority("SCOPE_second.scope"),
+				new SimpleGrantedAuthority("CLAIM_email"));
 	}
 
 	@Test
 	public void authoritiesThenCustomizesAuthorities() {
-		OAuth2AuthorizationConsent authorizationConsent =
-				OAuth2AuthorizationConsent.withId("some-client", "some-user")
-						.authority(new SimpleGrantedAuthority("some.authority"))
-						.authorities(authorities -> {
-							authorities.clear();
-							authorities.add(new SimpleGrantedAuthority("other.authority"));
-						})
-						.build();
+		OAuth2AuthorizationConsent authorizationConsent = OAuth2AuthorizationConsent.withId("some-client", "some-user")
+			.authority(new SimpleGrantedAuthority("some.authority"))
+			.authorities(authorities -> {
+				authorities.clear();
+				authorities.add(new SimpleGrantedAuthority("other.authority"));
+			})
+			.build();
 
-		assertThat(authorizationConsent.getAuthorities()).containsExactly(new SimpleGrantedAuthority("other.authority"));
+		assertThat(authorizationConsent.getAuthorities())
+			.containsExactly(new SimpleGrantedAuthority("other.authority"));
 	}
 
 }

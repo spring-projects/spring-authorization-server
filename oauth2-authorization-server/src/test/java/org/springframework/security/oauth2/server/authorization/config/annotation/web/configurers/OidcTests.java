@@ -126,15 +126,23 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @ExtendWith(SpringTestContextExtension.class)
 public class OidcTests {
+
 	private static final String DEFAULT_AUTHORIZATION_ENDPOINT_URI = "/oauth2/authorize";
+
 	private static final String DEFAULT_TOKEN_ENDPOINT_URI = "/oauth2/token";
+
 	private static final String DEFAULT_OIDC_LOGOUT_ENDPOINT_URI = "/connect/logout";
+
 	private static final String AUTHORITIES_CLAIM = "authorities";
+
 	private static final OAuth2TokenType AUTHORIZATION_CODE_TOKEN_TYPE = new OAuth2TokenType(OAuth2ParameterNames.CODE);
+
 	private static EmbeddedDatabase db;
+
 	private static JWKSource<SecurityContext> jwkSource;
-	private static HttpMessageConverter<OAuth2AccessTokenResponse> accessTokenHttpResponseConverter =
-			new OAuth2AccessTokenResponseHttpMessageConverter();
+
+	private static HttpMessageConverter<OAuth2AccessTokenResponse> accessTokenHttpResponseConverter = new OAuth2AccessTokenResponseHttpMessageConverter();
+
 	private static SessionRegistry sessionRegistry;
 
 	public final SpringTestContext spring = new SpringTestContext();
@@ -161,13 +169,13 @@ public class OidcTests {
 	public static void init() {
 		JWKSet jwkSet = new JWKSet(TestJwks.DEFAULT_RSA_JWK);
 		jwkSource = (jwkSelector, securityContext) -> jwkSelector.select(jwkSet);
-		db = new EmbeddedDatabaseBuilder()
-				.generateUniqueName(true)
-				.setType(EmbeddedDatabaseType.HSQL)
-				.setScriptEncoding("UTF-8")
-				.addScript("org/springframework/security/oauth2/server/authorization/oauth2-authorization-schema.sql")
-				.addScript("org/springframework/security/oauth2/server/authorization/client/oauth2-registered-client-schema.sql")
-				.build();
+		db = new EmbeddedDatabaseBuilder().generateUniqueName(true)
+			.setType(EmbeddedDatabaseType.HSQL)
+			.setScriptEncoding("UTF-8")
+			.addScript("org/springframework/security/oauth2/server/authorization/oauth2-authorization-schema.sql")
+			.addScript(
+					"org/springframework/security/oauth2/server/authorization/client/oauth2-registered-client-schema.sql")
+			.build();
 		sessionRegistry = spy(new SessionRegistryImpl());
 	}
 
@@ -191,40 +199,44 @@ public class OidcTests {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().scope(OidcScopes.OPENID).build();
 		this.registeredClientRepository.save(registeredClient);
 
-		MultiValueMap<String, String> authorizationRequestParameters = getAuthorizationRequestParameters(registeredClient);
-		MvcResult mvcResult = this.mvc.perform(get(DEFAULT_AUTHORIZATION_ENDPOINT_URI)
-				.queryParams(authorizationRequestParameters)
+		MultiValueMap<String, String> authorizationRequestParameters = getAuthorizationRequestParameters(
+				registeredClient);
+		MvcResult mvcResult = this.mvc
+			.perform(get(DEFAULT_AUTHORIZATION_ENDPOINT_URI).queryParams(authorizationRequestParameters)
 				.with(user("user").roles("A", "B")))
-				.andExpect(status().is3xxRedirection())
-				.andReturn();
+			.andExpect(status().is3xxRedirection())
+			.andReturn();
 		String redirectedUrl = mvcResult.getResponse().getRedirectedUrl();
 		String expectedRedirectUri = authorizationRequestParameters.getFirst(OAuth2ParameterNames.REDIRECT_URI);
 		assertThat(redirectedUrl).matches(expectedRedirectUri + "\\?code=.{15,}&state=state");
 
 		String authorizationCode = extractParameterFromRedirectUri(redirectedUrl, "code");
-		OAuth2Authorization authorization = this.authorizationService.findByToken(authorizationCode, AUTHORIZATION_CODE_TOKEN_TYPE);
+		OAuth2Authorization authorization = this.authorizationService.findByToken(authorizationCode,
+				AUTHORIZATION_CODE_TOKEN_TYPE);
 
-		mvcResult = this.mvc.perform(post(DEFAULT_TOKEN_ENDPOINT_URI)
-						.params(getTokenRequestParameters(registeredClient, authorization))
-						.header(HttpHeaders.AUTHORIZATION, "Basic " + encodeBasicAuth(
-								registeredClient.getClientId(), registeredClient.getClientSecret())))
-				.andExpect(status().isOk())
-				.andExpect(header().string(HttpHeaders.CACHE_CONTROL, containsString("no-store")))
-				.andExpect(header().string(HttpHeaders.PRAGMA, containsString("no-cache")))
-				.andExpect(jsonPath("$.access_token").isNotEmpty())
-				.andExpect(jsonPath("$.token_type").isNotEmpty())
-				.andExpect(jsonPath("$.expires_in").isNotEmpty())
-				.andExpect(jsonPath("$.refresh_token").isNotEmpty())
-				.andExpect(jsonPath("$.scope").isNotEmpty())
-				.andExpect(jsonPath("$.id_token").isNotEmpty())
-				.andReturn();
+		mvcResult = this.mvc
+			.perform(post(DEFAULT_TOKEN_ENDPOINT_URI).params(getTokenRequestParameters(registeredClient, authorization))
+				.header(HttpHeaders.AUTHORIZATION,
+						"Basic " + encodeBasicAuth(registeredClient.getClientId(), registeredClient.getClientSecret())))
+			.andExpect(status().isOk())
+			.andExpect(header().string(HttpHeaders.CACHE_CONTROL, containsString("no-store")))
+			.andExpect(header().string(HttpHeaders.PRAGMA, containsString("no-cache")))
+			.andExpect(jsonPath("$.access_token").isNotEmpty())
+			.andExpect(jsonPath("$.token_type").isNotEmpty())
+			.andExpect(jsonPath("$.expires_in").isNotEmpty())
+			.andExpect(jsonPath("$.refresh_token").isNotEmpty())
+			.andExpect(jsonPath("$.scope").isNotEmpty())
+			.andExpect(jsonPath("$.id_token").isNotEmpty())
+			.andReturn();
 
 		MockHttpServletResponse servletResponse = mvcResult.getResponse();
-		MockClientHttpResponse httpResponse = new MockClientHttpResponse(
-				servletResponse.getContentAsByteArray(), HttpStatus.valueOf(servletResponse.getStatus()));
-		OAuth2AccessTokenResponse accessTokenResponse = accessTokenHttpResponseConverter.read(OAuth2AccessTokenResponse.class, httpResponse);
+		MockClientHttpResponse httpResponse = new MockClientHttpResponse(servletResponse.getContentAsByteArray(),
+				HttpStatus.valueOf(servletResponse.getStatus()));
+		OAuth2AccessTokenResponse accessTokenResponse = accessTokenHttpResponseConverter
+			.read(OAuth2AccessTokenResponse.class, httpResponse);
 
-		Jwt idToken = this.jwtDecoder.decode((String) accessTokenResponse.getAdditionalParameters().get(OidcParameterNames.ID_TOKEN));
+		Jwt idToken = this.jwtDecoder
+			.decode((String) accessTokenResponse.getAdditionalParameters().get(OidcParameterNames.ID_TOKEN));
 
 		// Assert user authorities was propagated as claim in ID Token
 		List<String> authoritiesClaim = idToken.getClaim(AUTHORITIES_CLAIM);
@@ -247,51 +259,57 @@ public class OidcTests {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().scope(OidcScopes.OPENID).build();
 		this.registeredClientRepository.save(registeredClient);
 
-		MultiValueMap<String, String> authorizationRequestParameters = getAuthorizationRequestParameters(registeredClient);
-		MvcResult mvcResult = this.mvc.perform(get(DEFAULT_AUTHORIZATION_ENDPOINT_URI)
-						.queryParams(authorizationRequestParameters)
-						.with(user("user").roles("A", "B")))
-				.andExpect(status().is3xxRedirection())
-				.andReturn();
+		MultiValueMap<String, String> authorizationRequestParameters = getAuthorizationRequestParameters(
+				registeredClient);
+		MvcResult mvcResult = this.mvc
+			.perform(get(DEFAULT_AUTHORIZATION_ENDPOINT_URI).queryParams(authorizationRequestParameters)
+				.with(user("user").roles("A", "B")))
+			.andExpect(status().is3xxRedirection())
+			.andReturn();
 		String redirectedUrl = mvcResult.getResponse().getRedirectedUrl();
 		String expectedRedirectUri = authorizationRequestParameters.getFirst(OAuth2ParameterNames.REDIRECT_URI);
 		assertThat(redirectedUrl).matches(expectedRedirectUri + "\\?code=.{15,}&state=state");
 
 		String authorizationCode = extractParameterFromRedirectUri(redirectedUrl, "code");
-		OAuth2Authorization authorization = this.authorizationService.findByToken(authorizationCode, AUTHORIZATION_CODE_TOKEN_TYPE);
+		OAuth2Authorization authorization = this.authorizationService.findByToken(authorizationCode,
+				AUTHORIZATION_CODE_TOKEN_TYPE);
 
-		mvcResult = this.mvc.perform(post(DEFAULT_TOKEN_ENDPOINT_URI)
-						.params(getTokenRequestParameters(registeredClient, authorization))
-						.header(HttpHeaders.AUTHORIZATION, "Basic " + encodeBasicAuth(
-								registeredClient.getClientId(), registeredClient.getClientSecret())))
-				.andExpect(status().isOk())
-				.andReturn();
+		mvcResult = this.mvc
+			.perform(post(DEFAULT_TOKEN_ENDPOINT_URI).params(getTokenRequestParameters(registeredClient, authorization))
+				.header(HttpHeaders.AUTHORIZATION,
+						"Basic " + encodeBasicAuth(registeredClient.getClientId(), registeredClient.getClientSecret())))
+			.andExpect(status().isOk())
+			.andReturn();
 
 		MockHttpServletResponse servletResponse = mvcResult.getResponse();
-		MockClientHttpResponse httpResponse = new MockClientHttpResponse(
-				servletResponse.getContentAsByteArray(), HttpStatus.valueOf(servletResponse.getStatus()));
-		OAuth2AccessTokenResponse accessTokenResponse = accessTokenHttpResponseConverter.read(OAuth2AccessTokenResponse.class, httpResponse);
+		MockClientHttpResponse httpResponse = new MockClientHttpResponse(servletResponse.getContentAsByteArray(),
+				HttpStatus.valueOf(servletResponse.getStatus()));
+		OAuth2AccessTokenResponse accessTokenResponse = accessTokenHttpResponseConverter
+			.read(OAuth2AccessTokenResponse.class, httpResponse);
 
-		Jwt idToken = this.jwtDecoder.decode((String) accessTokenResponse.getAdditionalParameters().get(OidcParameterNames.ID_TOKEN));
+		Jwt idToken = this.jwtDecoder
+			.decode((String) accessTokenResponse.getAdditionalParameters().get(OidcParameterNames.ID_TOKEN));
 
 		String sidClaim = idToken.getClaim("sid");
 		assertThat(sidClaim).isNotNull();
 
 		// Refresh access token
-		mvcResult = this.mvc.perform(post(DEFAULT_TOKEN_ENDPOINT_URI)
-						.param(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.REFRESH_TOKEN.getValue())
-						.param(OAuth2ParameterNames.REFRESH_TOKEN, accessTokenResponse.getRefreshToken().getTokenValue())
-						.header(HttpHeaders.AUTHORIZATION, "Basic " + encodeBasicAuth(
-								registeredClient.getClientId(), registeredClient.getClientSecret())))
-				.andExpect(status().isOk())
-				.andReturn();
+		mvcResult = this.mvc
+			.perform(post(DEFAULT_TOKEN_ENDPOINT_URI)
+				.param(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.REFRESH_TOKEN.getValue())
+				.param(OAuth2ParameterNames.REFRESH_TOKEN, accessTokenResponse.getRefreshToken().getTokenValue())
+				.header(HttpHeaders.AUTHORIZATION,
+						"Basic " + encodeBasicAuth(registeredClient.getClientId(), registeredClient.getClientSecret())))
+			.andExpect(status().isOk())
+			.andReturn();
 
 		servletResponse = mvcResult.getResponse();
-		httpResponse = new MockClientHttpResponse(
-				servletResponse.getContentAsByteArray(), HttpStatus.valueOf(servletResponse.getStatus()));
+		httpResponse = new MockClientHttpResponse(servletResponse.getContentAsByteArray(),
+				HttpStatus.valueOf(servletResponse.getStatus()));
 		accessTokenResponse = accessTokenHttpResponseConverter.read(OAuth2AccessTokenResponse.class, httpResponse);
 
-		idToken = this.jwtDecoder.decode((String) accessTokenResponse.getAdditionalParameters().get(OidcParameterNames.ID_TOKEN));
+		idToken = this.jwtDecoder
+			.decode((String) accessTokenResponse.getAdditionalParameters().get(OidcParameterNames.ID_TOKEN));
 
 		assertThat(idToken.<String>getClaim("sid")).isEqualTo(sidClaim);
 	}
@@ -304,41 +322,43 @@ public class OidcTests {
 		this.registeredClientRepository.save(registeredClient);
 
 		// Login
-		MultiValueMap<String, String> authorizationRequestParameters = getAuthorizationRequestParameters(registeredClient);
-		MvcResult mvcResult = this.mvc.perform(get(DEFAULT_AUTHORIZATION_ENDPOINT_URI)
-						.queryParams(authorizationRequestParameters)
-						.with(user("user")))
-				.andExpect(status().is3xxRedirection())
-				.andReturn();
+		MultiValueMap<String, String> authorizationRequestParameters = getAuthorizationRequestParameters(
+				registeredClient);
+		MvcResult mvcResult = this.mvc
+			.perform(get(DEFAULT_AUTHORIZATION_ENDPOINT_URI).queryParams(authorizationRequestParameters)
+				.with(user("user")))
+			.andExpect(status().is3xxRedirection())
+			.andReturn();
 
 		MockHttpSession session = (MockHttpSession) mvcResult.getRequest().getSession();
 		assertThat(session.isNew()).isTrue();
 
 		String redirectedUrl = mvcResult.getResponse().getRedirectedUrl();
 		String authorizationCode = extractParameterFromRedirectUri(redirectedUrl, "code");
-		OAuth2Authorization authorization = this.authorizationService.findByToken(authorizationCode, AUTHORIZATION_CODE_TOKEN_TYPE);
+		OAuth2Authorization authorization = this.authorizationService.findByToken(authorizationCode,
+				AUTHORIZATION_CODE_TOKEN_TYPE);
 
 		// Get ID Token
-		mvcResult = this.mvc.perform(post(DEFAULT_TOKEN_ENDPOINT_URI)
-						.params(getTokenRequestParameters(registeredClient, authorization))
-						.header(HttpHeaders.AUTHORIZATION, "Basic " + encodeBasicAuth(
-								registeredClient.getClientId(), registeredClient.getClientSecret())))
-				.andExpect(status().isOk())
-				.andReturn();
+		mvcResult = this.mvc
+			.perform(post(DEFAULT_TOKEN_ENDPOINT_URI).params(getTokenRequestParameters(registeredClient, authorization))
+				.header(HttpHeaders.AUTHORIZATION,
+						"Basic " + encodeBasicAuth(registeredClient.getClientId(), registeredClient.getClientSecret())))
+			.andExpect(status().isOk())
+			.andReturn();
 
 		MockHttpServletResponse servletResponse = mvcResult.getResponse();
-		MockClientHttpResponse httpResponse = new MockClientHttpResponse(
-				servletResponse.getContentAsByteArray(), HttpStatus.valueOf(servletResponse.getStatus()));
-		OAuth2AccessTokenResponse accessTokenResponse = accessTokenHttpResponseConverter.read(OAuth2AccessTokenResponse.class, httpResponse);
+		MockClientHttpResponse httpResponse = new MockClientHttpResponse(servletResponse.getContentAsByteArray(),
+				HttpStatus.valueOf(servletResponse.getStatus()));
+		OAuth2AccessTokenResponse accessTokenResponse = accessTokenHttpResponseConverter
+			.read(OAuth2AccessTokenResponse.class, httpResponse);
 
 		String idToken = (String) accessTokenResponse.getAdditionalParameters().get(OidcParameterNames.ID_TOKEN);
 
 		// Logout
-		mvcResult = this.mvc.perform(post(DEFAULT_OIDC_LOGOUT_ENDPOINT_URI)
-						.param("id_token_hint", idToken)
-						.session(session))
-				.andExpect(status().is3xxRedirection())
-				.andReturn();
+		mvcResult = this.mvc
+			.perform(post(DEFAULT_OIDC_LOGOUT_ENDPOINT_URI).param("id_token_hint", idToken).session(session))
+			.andExpect(status().is3xxRedirection())
+			.andReturn();
 		redirectedUrl = mvcResult.getResponse().getRedirectedUrl();
 
 		assertThat(redirectedUrl).matches("/");
@@ -353,31 +373,36 @@ public class OidcTests {
 		RegisteredClient registeredClient1 = TestRegisteredClients.registeredClient().scope(OidcScopes.OPENID).build();
 		this.registeredClientRepository.save(registeredClient1);
 
-		MultiValueMap<String, String> authorizationRequestParameters = getAuthorizationRequestParameters(registeredClient1);
-		MvcResult mvcResult = this.mvc.perform(get(DEFAULT_AUTHORIZATION_ENDPOINT_URI)
-						.queryParams(authorizationRequestParameters)
-						.with(user("user1")))
-				.andExpect(status().is3xxRedirection())
-				.andReturn();
+		MultiValueMap<String, String> authorizationRequestParameters = getAuthorizationRequestParameters(
+				registeredClient1);
+		MvcResult mvcResult = this.mvc
+			.perform(get(DEFAULT_AUTHORIZATION_ENDPOINT_URI).queryParams(authorizationRequestParameters)
+				.with(user("user1")))
+			.andExpect(status().is3xxRedirection())
+			.andReturn();
 
 		MockHttpSession user1Session = (MockHttpSession) mvcResult.getRequest().getSession();
 		assertThat(user1Session.isNew()).isTrue();
 
 		String redirectedUrl = mvcResult.getResponse().getRedirectedUrl();
 		String authorizationCode = extractParameterFromRedirectUri(redirectedUrl, "code");
-		OAuth2Authorization user1Authorization = this.authorizationService.findByToken(authorizationCode, AUTHORIZATION_CODE_TOKEN_TYPE);
+		OAuth2Authorization user1Authorization = this.authorizationService.findByToken(authorizationCode,
+				AUTHORIZATION_CODE_TOKEN_TYPE);
 
-		mvcResult = this.mvc.perform(post(DEFAULT_TOKEN_ENDPOINT_URI)
-						.params(getTokenRequestParameters(registeredClient1, user1Authorization))
-						.header(HttpHeaders.AUTHORIZATION, "Basic " + encodeBasicAuth(
-								registeredClient1.getClientId(), registeredClient1.getClientSecret())))
-				.andExpect(status().isOk())
-				.andReturn();
+		mvcResult = this.mvc
+			.perform(post(DEFAULT_TOKEN_ENDPOINT_URI)
+				.params(getTokenRequestParameters(registeredClient1, user1Authorization))
+				.header(HttpHeaders.AUTHORIZATION,
+						"Basic " + encodeBasicAuth(registeredClient1.getClientId(),
+								registeredClient1.getClientSecret())))
+			.andExpect(status().isOk())
+			.andReturn();
 
 		MockHttpServletResponse servletResponse = mvcResult.getResponse();
-		MockClientHttpResponse httpResponse = new MockClientHttpResponse(
-				servletResponse.getContentAsByteArray(), HttpStatus.valueOf(servletResponse.getStatus()));
-		OAuth2AccessTokenResponse accessTokenResponse = accessTokenHttpResponseConverter.read(OAuth2AccessTokenResponse.class, httpResponse);
+		MockClientHttpResponse httpResponse = new MockClientHttpResponse(servletResponse.getContentAsByteArray(),
+				HttpStatus.valueOf(servletResponse.getStatus()));
+		OAuth2AccessTokenResponse accessTokenResponse = accessTokenHttpResponseConverter
+			.read(OAuth2AccessTokenResponse.class, httpResponse);
 
 		String user1IdToken = (String) accessTokenResponse.getAdditionalParameters().get(OidcParameterNames.ID_TOKEN);
 
@@ -386,40 +411,42 @@ public class OidcTests {
 		this.registeredClientRepository.save(registeredClient2);
 
 		authorizationRequestParameters = getAuthorizationRequestParameters(registeredClient2);
-		mvcResult = this.mvc.perform(get(DEFAULT_AUTHORIZATION_ENDPOINT_URI)
-						.queryParams(authorizationRequestParameters)
-						.with(user("user2")))
-				.andExpect(status().is3xxRedirection())
-				.andReturn();
+		mvcResult = this.mvc
+			.perform(get(DEFAULT_AUTHORIZATION_ENDPOINT_URI).queryParams(authorizationRequestParameters)
+				.with(user("user2")))
+			.andExpect(status().is3xxRedirection())
+			.andReturn();
 
 		MockHttpSession user2Session = (MockHttpSession) mvcResult.getRequest().getSession();
 		assertThat(user2Session.isNew()).isTrue();
 
 		redirectedUrl = mvcResult.getResponse().getRedirectedUrl();
 		authorizationCode = extractParameterFromRedirectUri(redirectedUrl, "code");
-		OAuth2Authorization user2Authorization = this.authorizationService.findByToken(authorizationCode, AUTHORIZATION_CODE_TOKEN_TYPE);
+		OAuth2Authorization user2Authorization = this.authorizationService.findByToken(authorizationCode,
+				AUTHORIZATION_CODE_TOKEN_TYPE);
 
-		mvcResult = this.mvc.perform(post(DEFAULT_TOKEN_ENDPOINT_URI)
-						.params(getTokenRequestParameters(registeredClient2, user2Authorization))
-						.header(HttpHeaders.AUTHORIZATION, "Basic " + encodeBasicAuth(
-								registeredClient2.getClientId(), registeredClient2.getClientSecret())))
-				.andExpect(status().isOk())
-				.andReturn();
+		mvcResult = this.mvc
+			.perform(post(DEFAULT_TOKEN_ENDPOINT_URI)
+				.params(getTokenRequestParameters(registeredClient2, user2Authorization))
+				.header(HttpHeaders.AUTHORIZATION,
+						"Basic " + encodeBasicAuth(registeredClient2.getClientId(),
+								registeredClient2.getClientSecret())))
+			.andExpect(status().isOk())
+			.andReturn();
 
 		servletResponse = mvcResult.getResponse();
-		httpResponse = new MockClientHttpResponse(
-				servletResponse.getContentAsByteArray(), HttpStatus.valueOf(servletResponse.getStatus()));
+		httpResponse = new MockClientHttpResponse(servletResponse.getContentAsByteArray(),
+				HttpStatus.valueOf(servletResponse.getStatus()));
 		accessTokenResponse = accessTokenHttpResponseConverter.read(OAuth2AccessTokenResponse.class, httpResponse);
 
 		String user2IdToken = (String) accessTokenResponse.getAdditionalParameters().get(OidcParameterNames.ID_TOKEN);
 
 		// Attempt to log out user1 using user2's ID Token
-		mvcResult = this.mvc.perform(post(DEFAULT_OIDC_LOGOUT_ENDPOINT_URI)
-						.param("id_token_hint", user2IdToken)
-						.session(user1Session))
-				.andExpect(status().isBadRequest())
-				.andExpect(status().reason("[invalid_token] OpenID Connect 1.0 Logout Request Parameter: sub"))
-				.andReturn();
+		mvcResult = this.mvc
+			.perform(post(DEFAULT_OIDC_LOGOUT_ENDPOINT_URI).param("id_token_hint", user2IdToken).session(user1Session))
+			.andExpect(status().isBadRequest())
+			.andExpect(status().reason("[invalid_token] OpenID Connect 1.0 Logout Request Parameter: sub"))
+			.andReturn();
 
 		assertThat(user1Session.isInvalid()).isFalse();
 	}
@@ -434,11 +461,11 @@ public class OidcTests {
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();
 		this.authorizationService.save(authorization);
 
-		this.mvc.perform(post(DEFAULT_TOKEN_ENDPOINT_URI)
-				.params(getTokenRequestParameters(registeredClient, authorization))
-				.header(HttpHeaders.AUTHORIZATION, "Basic " + encodeBasicAuth(
-						registeredClient.getClientId(), registeredClient.getClientSecret())))
-				.andExpect(status().isOk());
+		this.mvc
+			.perform(post(DEFAULT_TOKEN_ENDPOINT_URI).params(getTokenRequestParameters(registeredClient, authorization))
+				.header(HttpHeaders.AUTHORIZATION,
+						"Basic " + encodeBasicAuth(registeredClient.getClientId(), registeredClient.getClientSecret())))
+			.andExpect(status().isOk());
 
 		verify(this.tokenGenerator, times(3)).generate(any());
 	}
@@ -537,7 +564,8 @@ public class OidcTests {
 			OAuth2Authorization authorization) {
 		MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
 		parameters.set(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.AUTHORIZATION_CODE.getValue());
-		parameters.set(OAuth2ParameterNames.CODE, authorization.getToken(OAuth2AuthorizationCode.class).getToken().getTokenValue());
+		parameters.set(OAuth2ParameterNames.CODE,
+				authorization.getToken(OAuth2AuthorizationCode.class).getToken().getTokenValue());
 		parameters.set(OAuth2ParameterNames.REDIRECT_URI, registeredClient.getRedirectUris().iterator().next());
 		return parameters;
 	}
@@ -550,7 +578,8 @@ public class OidcTests {
 		return new String(encodedBytes, StandardCharsets.UTF_8);
 	}
 
-	private String extractParameterFromRedirectUri(String redirectUri, String param) throws UnsupportedEncodingException {
+	private String extractParameterFromRedirectUri(String redirectUri, String param)
+			throws UnsupportedEncodingException {
 		String locationHeader = URLDecoder.decode(redirectUri, StandardCharsets.UTF_8.name());
 		UriComponents uriComponents = UriComponentsBuilder.fromUriString(locationHeader).build();
 		return uriComponents.getQueryParams().getFirst(param);
@@ -563,14 +592,16 @@ public class OidcTests {
 		@Bean
 		SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
 			OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http);
-			http.getConfigurer(OAuth2AuthorizationServerConfigurer.class)
-					.oidc(Customizer.withDefaults());	// Enable OpenID Connect 1.0
+			// Enable OpenID Connect 1.0
+			http.getConfigurer(OAuth2AuthorizationServerConfigurer.class).oidc(Customizer.withDefaults());
 			return http.build();
 		}
 
 		@Bean
-		OAuth2AuthorizationService authorizationService(JdbcOperations jdbcOperations, RegisteredClientRepository registeredClientRepository) {
-			JdbcOAuth2AuthorizationService authorizationService = new JdbcOAuth2AuthorizationService(jdbcOperations, registeredClientRepository);
+		OAuth2AuthorizationService authorizationService(JdbcOperations jdbcOperations,
+				RegisteredClientRepository registeredClientRepository) {
+			JdbcOAuth2AuthorizationService authorizationService = new JdbcOAuth2AuthorizationService(jdbcOperations,
+					registeredClientRepository);
 			authorizationService.setAuthorizationRowMapper(new RowMapper(registeredClientRepository));
 			authorizationService.setAuthorizationParametersMapper(new ParametersMapper());
 			return authorizationService;
@@ -578,7 +609,8 @@ public class OidcTests {
 
 		@Bean
 		RegisteredClientRepository registeredClientRepository(JdbcOperations jdbcOperations) {
-			JdbcRegisteredClientRepository jdbcRegisteredClientRepository = new JdbcRegisteredClientRepository(jdbcOperations);
+			JdbcRegisteredClientRepository jdbcRegisteredClientRepository = new JdbcRegisteredClientRepository(
+					jdbcOperations);
 			RegisteredClientParametersMapper registeredClientParametersMapper = new RegisteredClientParametersMapper();
 			jdbcRegisteredClientRepository.setRegisteredClientParametersMapper(registeredClientParametersMapper);
 			return jdbcRegisteredClientRepository;
@@ -659,9 +691,10 @@ public class OidcTests {
 					new OAuth2AuthorizationServerConfigurer();
 			http.apply(authorizationServerConfigurer);
 
+			// Enable OpenID Connect 1.0
 			authorizationServerConfigurer
 					.tokenGenerator(tokenGenerator())
-					.oidc(Customizer.withDefaults());	// Enable OpenID Connect 1.0
+					.oidc(Customizer.withDefaults());
 
 			RequestMatcher endpointsMatcher = authorizationServerConfigurer.getEndpointsMatcher();
 
@@ -681,8 +714,8 @@ public class OidcTests {
 			JwtGenerator jwtGenerator = new JwtGenerator(new NimbusJwtEncoder(jwkSource()));
 			jwtGenerator.setJwtCustomizer(jwtCustomizer());
 			OAuth2RefreshTokenGenerator refreshTokenGenerator = new OAuth2RefreshTokenGenerator();
-			OAuth2TokenGenerator<OAuth2Token> delegatingTokenGenerator =
-					new DelegatingOAuth2TokenGenerator(jwtGenerator, refreshTokenGenerator);
+			OAuth2TokenGenerator<OAuth2Token> delegatingTokenGenerator = new DelegatingOAuth2TokenGenerator(
+					jwtGenerator, refreshTokenGenerator);
 			return spy(new OAuth2TokenGenerator<OAuth2Token>() {
 				@Override
 				public OAuth2Token generate(OAuth2TokenContext context) {

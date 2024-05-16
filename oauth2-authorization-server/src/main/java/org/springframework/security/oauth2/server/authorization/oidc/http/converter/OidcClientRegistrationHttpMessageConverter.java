@@ -45,7 +45,8 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 /**
- * A {@link HttpMessageConverter} for an {@link OidcClientRegistration OpenID Client Registration Request and Response}.
+ * A {@link HttpMessageConverter} for an {@link OidcClientRegistration OpenID Client
+ * Registration Request and Response}.
  *
  * @author Ovidiu Popa
  * @author Joe Grandja
@@ -58,9 +59,11 @@ public class OidcClientRegistrationHttpMessageConverter extends AbstractHttpMess
 	private static final ParameterizedTypeReference<Map<String, Object>> STRING_OBJECT_MAP = new ParameterizedTypeReference<Map<String, Object>>() {
 	};
 
-	private final GenericHttpMessageConverter<Object> jsonMessageConverter = HttpMessageConverters.getJsonMessageConverter();
+	private final GenericHttpMessageConverter<Object> jsonMessageConverter = HttpMessageConverters
+		.getJsonMessageConverter();
 
 	private Converter<Map<String, Object>, OidcClientRegistration> clientRegistrationConverter = new MapOidcClientRegistrationConverter();
+
 	private Converter<OidcClientRegistration, Map<String, Object>> clientRegistrationParametersConverter = new OidcClientRegistrationMapConverter();
 
 	public OidcClientRegistrationHttpMessageConverter() {
@@ -74,13 +77,14 @@ public class OidcClientRegistrationHttpMessageConverter extends AbstractHttpMess
 
 	@Override
 	@SuppressWarnings("unchecked")
-	protected OidcClientRegistration readInternal(Class<? extends OidcClientRegistration> clazz, HttpInputMessage inputMessage)
-			throws HttpMessageNotReadableException {
+	protected OidcClientRegistration readInternal(Class<? extends OidcClientRegistration> clazz,
+			HttpInputMessage inputMessage) throws HttpMessageNotReadableException {
 		try {
 			Map<String, Object> clientRegistrationParameters = (Map<String, Object>) this.jsonMessageConverter
-					.read(STRING_OBJECT_MAP.getType(), null, inputMessage);
+				.read(STRING_OBJECT_MAP.getType(), null, inputMessage);
 			return this.clientRegistrationConverter.convert(clientRegistrationParameters);
-		} catch (Exception ex) {
+		}
+		catch (Exception ex) {
 			throw new HttpMessageNotReadableException(
 					"An error occurred reading the OpenID Client Registration: " + ex.getMessage(), ex, inputMessage);
 		}
@@ -91,19 +95,21 @@ public class OidcClientRegistrationHttpMessageConverter extends AbstractHttpMess
 			throws HttpMessageNotWritableException {
 		try {
 			Map<String, Object> clientRegistrationParameters = this.clientRegistrationParametersConverter
-					.convert(clientRegistration);
+				.convert(clientRegistration);
 			this.jsonMessageConverter.write(clientRegistrationParameters, STRING_OBJECT_MAP.getType(),
 					MediaType.APPLICATION_JSON, outputMessage);
-		} catch (Exception ex) {
+		}
+		catch (Exception ex) {
 			throw new HttpMessageNotWritableException(
 					"An error occurred writing the OpenID Client Registration: " + ex.getMessage(), ex);
 		}
 	}
 
 	/**
-	 * Sets the {@link Converter} used for converting the OpenID Client Registration parameters to an {@link OidcClientRegistration}.
-	 *
-	 * @param clientRegistrationConverter the {@link Converter} used for converting to an {@link OidcClientRegistration}
+	 * Sets the {@link Converter} used for converting the OpenID Client Registration
+	 * parameters to an {@link OidcClientRegistration}.
+	 * @param clientRegistrationConverter the {@link Converter} used for converting to an
+	 * {@link OidcClientRegistration}
 	 */
 	public final void setClientRegistrationConverter(
 			Converter<Map<String, Object>, OidcClientRegistration> clientRegistrationConverter) {
@@ -114,9 +120,9 @@ public class OidcClientRegistrationHttpMessageConverter extends AbstractHttpMess
 	/**
 	 * Sets the {@link Converter} used for converting the {@link OidcClientRegistration}
 	 * to a {@code Map} representation of the OpenID Client Registration parameters.
-	 *
-	 * @param clientRegistrationParametersConverter the {@link Converter} used for converting to a
-	 * {@code Map} representation of the OpenID Client Registration parameters
+	 * @param clientRegistrationParametersConverter the {@link Converter} used for
+	 * converting to a {@code Map} representation of the OpenID Client Registration
+	 * parameters
 	 */
 	public final void setClientRegistrationParametersConverter(
 			Converter<OidcClientRegistration, Map<String, Object>> clientRegistrationParametersConverter) {
@@ -127,12 +133,19 @@ public class OidcClientRegistrationHttpMessageConverter extends AbstractHttpMess
 	private static final class MapOidcClientRegistrationConverter
 			implements Converter<Map<String, Object>, OidcClientRegistration> {
 
-		private static final ClaimConversionService CLAIM_CONVERSION_SERVICE = ClaimConversionService.getSharedInstance();
+		private static final ClaimConversionService CLAIM_CONVERSION_SERVICE = ClaimConversionService
+			.getSharedInstance();
+
 		private static final TypeDescriptor OBJECT_TYPE_DESCRIPTOR = TypeDescriptor.valueOf(Object.class);
+
 		private static final TypeDescriptor STRING_TYPE_DESCRIPTOR = TypeDescriptor.valueOf(String.class);
+
 		private static final TypeDescriptor INSTANT_TYPE_DESCRIPTOR = TypeDescriptor.valueOf(Instant.class);
+
 		private static final TypeDescriptor URL_TYPE_DESCRIPTOR = TypeDescriptor.valueOf(URL.class);
+
 		private static final Converter<Object, ?> INSTANT_CONVERTER = getConverter(INSTANT_TYPE_DESCRIPTOR);
+
 		private final ClaimTypeConverter claimTypeConverter;
 
 		private MapOidcClientRegistrationConverter() {
@@ -145,7 +158,8 @@ public class OidcClientRegistrationHttpMessageConverter extends AbstractHttpMess
 			claimConverters.put(OidcClientMetadataClaimNames.CLIENT_ID, stringConverter);
 			claimConverters.put(OidcClientMetadataClaimNames.CLIENT_ID_ISSUED_AT, INSTANT_CONVERTER);
 			claimConverters.put(OidcClientMetadataClaimNames.CLIENT_SECRET, stringConverter);
-			claimConverters.put(OidcClientMetadataClaimNames.CLIENT_SECRET_EXPIRES_AT, MapOidcClientRegistrationConverter::convertClientSecretExpiresAt);
+			claimConverters.put(OidcClientMetadataClaimNames.CLIENT_SECRET_EXPIRES_AT,
+					MapOidcClientRegistrationConverter::convertClientSecretExpiresAt);
 			claimConverters.put(OidcClientMetadataClaimNames.CLIENT_NAME, stringConverter);
 			claimConverters.put(OidcClientMetadataClaimNames.REDIRECT_URIS, collectionStringConverter);
 			claimConverters.put(OidcClientMetadataClaimNames.POST_LOGOUT_REDIRECT_URIS, collectionStringConverter);
@@ -187,6 +201,7 @@ public class OidcClientRegistrationHttpMessageConverter extends AbstractHttpMess
 			}
 			return Arrays.asList(StringUtils.delimitedListToStringArray(scope.toString(), " "));
 		}
+
 	}
 
 	private static final class OidcClientRegistrationMapConverter
@@ -196,7 +211,8 @@ public class OidcClientRegistrationHttpMessageConverter extends AbstractHttpMess
 		public Map<String, Object> convert(OidcClientRegistration source) {
 			Map<String, Object> responseClaims = new LinkedHashMap<>(source.getClaims());
 			if (source.getClientIdIssuedAt() != null) {
-				responseClaims.put(OidcClientMetadataClaimNames.CLIENT_ID_ISSUED_AT, source.getClientIdIssuedAt().getEpochSecond());
+				responseClaims.put(OidcClientMetadataClaimNames.CLIENT_ID_ISSUED_AT,
+						source.getClientIdIssuedAt().getEpochSecond());
 			}
 			if (source.getClientSecret() != null) {
 				long clientSecretExpiresAt = 0;
@@ -206,10 +222,12 @@ public class OidcClientRegistrationHttpMessageConverter extends AbstractHttpMess
 				responseClaims.put(OidcClientMetadataClaimNames.CLIENT_SECRET_EXPIRES_AT, clientSecretExpiresAt);
 			}
 			if (!CollectionUtils.isEmpty(source.getScopes())) {
-				responseClaims.put(OidcClientMetadataClaimNames.SCOPE, StringUtils.collectionToDelimitedString(source.getScopes(), " "));
+				responseClaims.put(OidcClientMetadataClaimNames.SCOPE,
+						StringUtils.collectionToDelimitedString(source.getScopes(), " "));
 			}
 			return responseClaims;
 		}
+
 	}
 
 }

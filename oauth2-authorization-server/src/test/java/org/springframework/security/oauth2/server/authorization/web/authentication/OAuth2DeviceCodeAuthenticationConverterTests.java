@@ -42,8 +42,11 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
  * @author Steve Riesenberg
  */
 public class OAuth2DeviceCodeAuthenticationConverterTests {
+
 	private static final String CLIENT_ID = "client-1";
+
 	private static final String TOKEN_URI = "/oauth2/token";
+
 	private static final String DEVICE_CODE = "EfYu_0jEL";
 
 	private OAuth2DeviceCodeAuthenticationConverter converter;
@@ -108,14 +111,13 @@ public class OAuth2DeviceCodeAuthenticationConverterTests {
 		securityContext.setAuthentication(new TestingAuthenticationToken(CLIENT_ID, null));
 		SecurityContextHolder.setContext(securityContext);
 
-		OAuth2DeviceCodeAuthenticationToken authentication =
-				(OAuth2DeviceCodeAuthenticationToken) this.converter.convert(request);
+		OAuth2DeviceCodeAuthenticationToken authentication = (OAuth2DeviceCodeAuthenticationToken) this.converter
+			.convert(request);
 		assertThat(authentication).isNotNull();
 		assertThat(authentication.getDeviceCode()).isEqualTo(DEVICE_CODE);
 		assertThat(authentication.getPrincipal()).isInstanceOf(TestingAuthenticationToken.class);
-		assertThat(authentication.getAdditionalParameters())
-				.containsExactly(entry("param-1", "value-1"),
-					entry("param-2", new String[] {"value-1", "value-2"}));
+		assertThat(authentication.getAdditionalParameters()).containsExactly(entry("param-1", "value-1"),
+				entry("param-2", new String[] { "value-1", "value-2" }));
 	}
 
 	private static MockHttpServletRequest createRequest() {
@@ -124,4 +126,5 @@ public class OAuth2DeviceCodeAuthenticationConverterTests {
 		request.setRequestURI(TOKEN_URI);
 		return request;
 	}
+
 }

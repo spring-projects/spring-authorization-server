@@ -82,14 +82,18 @@ import static org.mockito.Mockito.when;
  * @author Daniel Garnier-Moiroux
  */
 public class OAuth2TokenEndpointFilterTests {
+
 	private static final String DEFAULT_TOKEN_ENDPOINT_URI = "/oauth2/token";
+
 	private static final String REMOTE_ADDRESS = "remote-address";
+
 	private AuthenticationManager authenticationManager;
+
 	private OAuth2TokenEndpointFilter filter;
-	private final HttpMessageConverter<OAuth2Error> errorHttpResponseConverter =
-			new OAuth2ErrorHttpMessageConverter();
-	private final HttpMessageConverter<OAuth2AccessTokenResponse> accessTokenHttpResponseConverter =
-			new OAuth2AccessTokenResponseHttpMessageConverter();
+
+	private final HttpMessageConverter<OAuth2Error> errorHttpResponseConverter = new OAuth2ErrorHttpMessageConverter();
+
+	private final HttpMessageConverter<OAuth2AccessTokenResponse> accessTokenHttpResponseConverter = new OAuth2AccessTokenResponseHttpMessageConverter();
 
 	@BeforeEach
 	public void setUp() {
@@ -105,43 +109,43 @@ public class OAuth2TokenEndpointFilterTests {
 	@Test
 	public void constructorWhenAuthenticationManagerNullThenThrowIllegalArgumentException() {
 		assertThatThrownBy(() -> new OAuth2TokenEndpointFilter(null, "tokenEndpointUri"))
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("authenticationManager cannot be null");
+			.isInstanceOf(IllegalArgumentException.class)
+			.hasMessage("authenticationManager cannot be null");
 	}
 
 	@Test
 	public void constructorWhenTokenEndpointUriNullThenThrowIllegalArgumentException() {
 		assertThatThrownBy(() -> new OAuth2TokenEndpointFilter(this.authenticationManager, null))
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("tokenEndpointUri cannot be empty");
+			.isInstanceOf(IllegalArgumentException.class)
+			.hasMessage("tokenEndpointUri cannot be empty");
 	}
 
 	@Test
 	public void setAuthenticationDetailsSourceWhenNullThenThrowIllegalArgumentException() {
 		assertThatThrownBy(() -> this.filter.setAuthenticationDetailsSource(null))
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("authenticationDetailsSource cannot be null");
+			.isInstanceOf(IllegalArgumentException.class)
+			.hasMessage("authenticationDetailsSource cannot be null");
 	}
 
 	@Test
 	public void setAuthenticationConverterWhenNullThenThrowIllegalArgumentException() {
 		assertThatThrownBy(() -> this.filter.setAuthenticationConverter(null))
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("authenticationConverter cannot be null");
+			.isInstanceOf(IllegalArgumentException.class)
+			.hasMessage("authenticationConverter cannot be null");
 	}
 
 	@Test
 	public void setAuthenticationSuccessHandlerWhenNullThenThrowIllegalArgumentException() {
 		assertThatThrownBy(() -> this.filter.setAuthenticationSuccessHandler(null))
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("authenticationSuccessHandler cannot be null");
+			.isInstanceOf(IllegalArgumentException.class)
+			.hasMessage("authenticationSuccessHandler cannot be null");
 	}
 
 	@Test
 	public void setAuthenticationFailureHandlerWhenNullThenThrowIllegalArgumentException() {
 		assertThatThrownBy(() -> this.filter.setAuthenticationFailureHandler(null))
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("authenticationFailureHandler cannot be null");
+			.isInstanceOf(IllegalArgumentException.class)
+			.hasMessage("authenticationFailureHandler cannot be null");
 	}
 
 	@Test
@@ -176,8 +180,8 @@ public class OAuth2TokenEndpointFilterTests {
 				TestRegisteredClients.registeredClient().build());
 		request.removeParameter(OAuth2ParameterNames.GRANT_TYPE);
 
-		doFilterWhenTokenRequestInvalidParameterThenError(
-				OAuth2ParameterNames.GRANT_TYPE, OAuth2ErrorCodes.INVALID_REQUEST, request);
+		doFilterWhenTokenRequestInvalidParameterThenError(OAuth2ParameterNames.GRANT_TYPE,
+				OAuth2ErrorCodes.INVALID_REQUEST, request);
 	}
 
 	@Test
@@ -186,8 +190,8 @@ public class OAuth2TokenEndpointFilterTests {
 				TestRegisteredClients.registeredClient().build());
 		request.addParameter(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.AUTHORIZATION_CODE.getValue());
 
-		doFilterWhenTokenRequestInvalidParameterThenError(
-				OAuth2ParameterNames.GRANT_TYPE, OAuth2ErrorCodes.INVALID_REQUEST, request);
+		doFilterWhenTokenRequestInvalidParameterThenError(OAuth2ParameterNames.GRANT_TYPE,
+				OAuth2ErrorCodes.INVALID_REQUEST, request);
 	}
 
 	@Test
@@ -196,8 +200,8 @@ public class OAuth2TokenEndpointFilterTests {
 				TestRegisteredClients.registeredClient().build());
 		request.setParameter(OAuth2ParameterNames.GRANT_TYPE, "invalid-grant-type");
 
-		doFilterWhenTokenRequestInvalidParameterThenError(
-				OAuth2ParameterNames.GRANT_TYPE, OAuth2ErrorCodes.UNSUPPORTED_GRANT_TYPE, request);
+		doFilterWhenTokenRequestInvalidParameterThenError(OAuth2ParameterNames.GRANT_TYPE,
+				OAuth2ErrorCodes.UNSUPPORTED_GRANT_TYPE, request);
 	}
 
 	@Test
@@ -206,8 +210,8 @@ public class OAuth2TokenEndpointFilterTests {
 				TestRegisteredClients.registeredClient().build());
 		request.removeParameter(OAuth2ParameterNames.CODE);
 
-		doFilterWhenTokenRequestInvalidParameterThenError(
-				OAuth2ParameterNames.CODE, OAuth2ErrorCodes.INVALID_REQUEST, request);
+		doFilterWhenTokenRequestInvalidParameterThenError(OAuth2ParameterNames.CODE, OAuth2ErrorCodes.INVALID_REQUEST,
+				request);
 	}
 
 	@Test
@@ -216,8 +220,8 @@ public class OAuth2TokenEndpointFilterTests {
 				TestRegisteredClients.registeredClient().build());
 		request.addParameter(OAuth2ParameterNames.CODE, "code-2");
 
-		doFilterWhenTokenRequestInvalidParameterThenError(
-				OAuth2ParameterNames.CODE, OAuth2ErrorCodes.INVALID_REQUEST, request);
+		doFilterWhenTokenRequestInvalidParameterThenError(OAuth2ParameterNames.CODE, OAuth2ErrorCodes.INVALID_REQUEST,
+				request);
 	}
 
 	@Test
@@ -226,24 +230,22 @@ public class OAuth2TokenEndpointFilterTests {
 				TestRegisteredClients.registeredClient().build());
 		request.addParameter(OAuth2ParameterNames.REDIRECT_URI, "https://example2.com");
 
-		doFilterWhenTokenRequestInvalidParameterThenError(
-				OAuth2ParameterNames.REDIRECT_URI, OAuth2ErrorCodes.INVALID_REQUEST, request);
+		doFilterWhenTokenRequestInvalidParameterThenError(OAuth2ParameterNames.REDIRECT_URI,
+				OAuth2ErrorCodes.INVALID_REQUEST, request);
 	}
 
 	@Test
 	public void doFilterWhenAuthorizationCodeTokenRequestThenAccessTokenResponse() throws Exception {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
-		Authentication clientPrincipal = new OAuth2ClientAuthenticationToken(
-				registeredClient, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
-		OAuth2AccessToken accessToken = new OAuth2AccessToken(
-				OAuth2AccessToken.TokenType.BEARER, "token",
+		Authentication clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient,
+				ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
+		OAuth2AccessToken accessToken = new OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER, "token",
 				Instant.now(), Instant.now().plus(Duration.ofHours(1)),
 				new HashSet<>(Arrays.asList("scope1", "scope2")));
-		OAuth2RefreshToken refreshToken = new OAuth2RefreshToken(
-				"refresh-token", Instant.now(), Instant.now().plus(Duration.ofDays(1)));
-		OAuth2AccessTokenAuthenticationToken accessTokenAuthentication =
-				new OAuth2AccessTokenAuthenticationToken(
-						registeredClient, clientPrincipal, accessToken, refreshToken);
+		OAuth2RefreshToken refreshToken = new OAuth2RefreshToken("refresh-token", Instant.now(),
+				Instant.now().plus(Duration.ofDays(1)));
+		OAuth2AccessTokenAuthenticationToken accessTokenAuthentication = new OAuth2AccessTokenAuthenticationToken(
+				registeredClient, clientPrincipal, accessToken, refreshToken);
 
 		when(this.authenticationManager.authenticate(any())).thenReturn(accessTokenAuthentication);
 
@@ -259,24 +261,23 @@ public class OAuth2TokenEndpointFilterTests {
 
 		verifyNoInteractions(filterChain);
 
-		ArgumentCaptor<OAuth2AuthorizationCodeAuthenticationToken> authorizationCodeAuthenticationCaptor =
-				ArgumentCaptor.forClass(OAuth2AuthorizationCodeAuthenticationToken.class);
+		ArgumentCaptor<OAuth2AuthorizationCodeAuthenticationToken> authorizationCodeAuthenticationCaptor = ArgumentCaptor
+			.forClass(OAuth2AuthorizationCodeAuthenticationToken.class);
 		verify(this.authenticationManager).authenticate(authorizationCodeAuthenticationCaptor.capture());
 
-		OAuth2AuthorizationCodeAuthenticationToken authorizationCodeAuthentication =
-				authorizationCodeAuthenticationCaptor.getValue();
-		assertThat(authorizationCodeAuthentication.getCode()).isEqualTo(
-				request.getParameter(OAuth2ParameterNames.CODE));
+		OAuth2AuthorizationCodeAuthenticationToken authorizationCodeAuthentication = authorizationCodeAuthenticationCaptor
+			.getValue();
+		assertThat(authorizationCodeAuthentication.getCode())
+			.isEqualTo(request.getParameter(OAuth2ParameterNames.CODE));
 		assertThat(authorizationCodeAuthentication.getPrincipal()).isEqualTo(clientPrincipal);
-		assertThat(authorizationCodeAuthentication.getRedirectUri()).isEqualTo(
-				request.getParameter(OAuth2ParameterNames.REDIRECT_URI));
-		assertThat(authorizationCodeAuthentication.getAdditionalParameters())
-				.containsExactly(entry("custom-param-1", "custom-value-1"),
-					entry("custom-param-2", new String[] { "custom-value-1", "custom-value-2" }));
-		assertThat(authorizationCodeAuthentication.getDetails())
-				.asInstanceOf(type(WebAuthenticationDetails.class))
-				.extracting(WebAuthenticationDetails::getRemoteAddress)
-				.isEqualTo(REMOTE_ADDRESS);
+		assertThat(authorizationCodeAuthentication.getRedirectUri())
+			.isEqualTo(request.getParameter(OAuth2ParameterNames.REDIRECT_URI));
+		assertThat(authorizationCodeAuthentication.getAdditionalParameters()).containsExactly(
+				entry("custom-param-1", "custom-value-1"),
+				entry("custom-param-2", new String[] { "custom-value-1", "custom-value-2" }));
+		assertThat(authorizationCodeAuthentication.getDetails()).asInstanceOf(type(WebAuthenticationDetails.class))
+			.extracting(WebAuthenticationDetails::getRemoteAddress)
+			.isEqualTo(REMOTE_ADDRESS);
 
 		assertThat(response.getStatus()).isEqualTo(HttpStatus.OK.value());
 		OAuth2AccessTokenResponse accessTokenResponse = readAccessTokenResponse(response);
@@ -284,10 +285,10 @@ public class OAuth2TokenEndpointFilterTests {
 		OAuth2AccessToken accessTokenResult = accessTokenResponse.getAccessToken();
 		assertThat(accessTokenResult.getTokenType()).isEqualTo(accessToken.getTokenType());
 		assertThat(accessTokenResult.getTokenValue()).isEqualTo(accessToken.getTokenValue());
-		assertThat(accessTokenResult.getIssuedAt()).isBetween(
-				accessToken.getIssuedAt().minusSeconds(1), accessToken.getIssuedAt().plusSeconds(1));
-		assertThat(accessTokenResult.getExpiresAt()).isBetween(
-				accessToken.getExpiresAt().minusSeconds(1), accessToken.getExpiresAt().plusSeconds(1));
+		assertThat(accessTokenResult.getIssuedAt()).isBetween(accessToken.getIssuedAt().minusSeconds(1),
+				accessToken.getIssuedAt().plusSeconds(1));
+		assertThat(accessTokenResult.getExpiresAt()).isBetween(accessToken.getExpiresAt().minusSeconds(1),
+				accessToken.getExpiresAt().plusSeconds(1));
 		assertThat(accessTokenResult.getScopes()).isEqualTo(accessToken.getScopes());
 		assertThat(accessTokenResponse.getRefreshToken().getTokenValue()).isEqualTo(refreshToken.getTokenValue());
 	}
@@ -298,22 +299,20 @@ public class OAuth2TokenEndpointFilterTests {
 				TestRegisteredClients.registeredClient2().build());
 		request.addParameter(OAuth2ParameterNames.SCOPE, "profile");
 
-		doFilterWhenTokenRequestInvalidParameterThenError(
-				OAuth2ParameterNames.SCOPE, OAuth2ErrorCodes.INVALID_REQUEST, request);
+		doFilterWhenTokenRequestInvalidParameterThenError(OAuth2ParameterNames.SCOPE, OAuth2ErrorCodes.INVALID_REQUEST,
+				request);
 	}
 
 	@Test
 	public void doFilterWhenClientCredentialsTokenRequestThenAccessTokenResponse() throws Exception {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient2().build();
-		Authentication clientPrincipal = new OAuth2ClientAuthenticationToken(
-				registeredClient, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
-		OAuth2AccessToken accessToken = new OAuth2AccessToken(
-				OAuth2AccessToken.TokenType.BEARER, "token",
+		Authentication clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient,
+				ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
+		OAuth2AccessToken accessToken = new OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER, "token",
 				Instant.now(), Instant.now().plus(Duration.ofHours(1)),
 				new HashSet<>(Arrays.asList("scope1", "scope2")));
-		OAuth2AccessTokenAuthenticationToken accessTokenAuthentication =
-				new OAuth2AccessTokenAuthenticationToken(
-						registeredClient, clientPrincipal, accessToken);
+		OAuth2AccessTokenAuthenticationToken accessTokenAuthentication = new OAuth2AccessTokenAuthenticationToken(
+				registeredClient, clientPrincipal, accessToken);
 
 		when(this.authenticationManager.authenticate(any())).thenReturn(accessTokenAuthentication);
 
@@ -329,35 +328,34 @@ public class OAuth2TokenEndpointFilterTests {
 
 		verifyNoInteractions(filterChain);
 
-		ArgumentCaptor<OAuth2ClientCredentialsAuthenticationToken> clientCredentialsAuthenticationCaptor =
-				ArgumentCaptor.forClass(OAuth2ClientCredentialsAuthenticationToken.class);
+		ArgumentCaptor<OAuth2ClientCredentialsAuthenticationToken> clientCredentialsAuthenticationCaptor = ArgumentCaptor
+			.forClass(OAuth2ClientCredentialsAuthenticationToken.class);
 		verify(this.authenticationManager).authenticate(clientCredentialsAuthenticationCaptor.capture());
 
-		OAuth2ClientCredentialsAuthenticationToken clientCredentialsAuthentication =
-				clientCredentialsAuthenticationCaptor.getValue();
+		OAuth2ClientCredentialsAuthenticationToken clientCredentialsAuthentication = clientCredentialsAuthenticationCaptor
+			.getValue();
 		assertThat(clientCredentialsAuthentication.getPrincipal()).isEqualTo(clientPrincipal);
 		assertThat(clientCredentialsAuthentication.getScopes()).isEqualTo(registeredClient.getScopes());
-		assertThat(clientCredentialsAuthentication.getAdditionalParameters())
-				.containsExactly(entry("custom-param-1", "custom-value-1"),
-					entry("custom-param-2", new String[] { "custom-value-1", "custom-value-2" }));
-		assertThat(clientCredentialsAuthentication.getDetails())
-				.asInstanceOf(type(WebAuthenticationDetails.class))
-				.extracting(WebAuthenticationDetails::getRemoteAddress)
-				.isEqualTo(REMOTE_ADDRESS);
+		assertThat(clientCredentialsAuthentication.getAdditionalParameters()).containsExactly(
+				entry("custom-param-1", "custom-value-1"),
+				entry("custom-param-2", new String[] { "custom-value-1", "custom-value-2" }));
+		assertThat(clientCredentialsAuthentication.getDetails()).asInstanceOf(type(WebAuthenticationDetails.class))
+			.extracting(WebAuthenticationDetails::getRemoteAddress)
+			.isEqualTo(REMOTE_ADDRESS);
 
 		assertThat(response.getStatus()).isEqualTo(HttpStatus.OK.value());
 		// For gh-281, check that expires_in is a number
-		assertThat(new ObjectMapper().readValue(response.getContentAsByteArray(), Map.class).get(OAuth2ParameterNames.EXPIRES_IN))
-				.isInstanceOf(Number.class);
+		assertThat(new ObjectMapper().readValue(response.getContentAsByteArray(), Map.class)
+			.get(OAuth2ParameterNames.EXPIRES_IN)).isInstanceOf(Number.class);
 		OAuth2AccessTokenResponse accessTokenResponse = readAccessTokenResponse(response);
 
 		OAuth2AccessToken accessTokenResult = accessTokenResponse.getAccessToken();
 		assertThat(accessTokenResult.getTokenType()).isEqualTo(accessToken.getTokenType());
 		assertThat(accessTokenResult.getTokenValue()).isEqualTo(accessToken.getTokenValue());
-		assertThat(accessTokenResult.getIssuedAt()).isBetween(
-				accessToken.getIssuedAt().minusSeconds(1), accessToken.getIssuedAt().plusSeconds(1));
-		assertThat(accessTokenResult.getExpiresAt()).isBetween(
-				accessToken.getExpiresAt().minusSeconds(1), accessToken.getExpiresAt().plusSeconds(1));
+		assertThat(accessTokenResult.getIssuedAt()).isBetween(accessToken.getIssuedAt().minusSeconds(1),
+				accessToken.getIssuedAt().plusSeconds(1));
+		assertThat(accessTokenResult.getExpiresAt()).isBetween(accessToken.getExpiresAt().minusSeconds(1),
+				accessToken.getExpiresAt().plusSeconds(1));
 		assertThat(accessTokenResult.getScopes()).isEqualTo(accessToken.getScopes());
 	}
 
@@ -367,8 +365,8 @@ public class OAuth2TokenEndpointFilterTests {
 				TestRegisteredClients.registeredClient().build());
 		request.removeParameter(OAuth2ParameterNames.REFRESH_TOKEN);
 
-		doFilterWhenTokenRequestInvalidParameterThenError(
-				OAuth2ParameterNames.REFRESH_TOKEN, OAuth2ErrorCodes.INVALID_REQUEST, request);
+		doFilterWhenTokenRequestInvalidParameterThenError(OAuth2ParameterNames.REFRESH_TOKEN,
+				OAuth2ErrorCodes.INVALID_REQUEST, request);
 	}
 
 	@Test
@@ -377,8 +375,8 @@ public class OAuth2TokenEndpointFilterTests {
 				TestRegisteredClients.registeredClient().build());
 		request.addParameter(OAuth2ParameterNames.REFRESH_TOKEN, "refresh-token-2");
 
-		doFilterWhenTokenRequestInvalidParameterThenError(
-				OAuth2ParameterNames.REFRESH_TOKEN, OAuth2ErrorCodes.INVALID_REQUEST, request);
+		doFilterWhenTokenRequestInvalidParameterThenError(OAuth2ParameterNames.REFRESH_TOKEN,
+				OAuth2ErrorCodes.INVALID_REQUEST, request);
 	}
 
 	@Test
@@ -387,23 +385,21 @@ public class OAuth2TokenEndpointFilterTests {
 				TestRegisteredClients.registeredClient().build());
 		request.addParameter(OAuth2ParameterNames.SCOPE, "profile");
 
-		doFilterWhenTokenRequestInvalidParameterThenError(
-				OAuth2ParameterNames.SCOPE, OAuth2ErrorCodes.INVALID_REQUEST, request);
+		doFilterWhenTokenRequestInvalidParameterThenError(OAuth2ParameterNames.SCOPE, OAuth2ErrorCodes.INVALID_REQUEST,
+				request);
 	}
 
 	@Test
 	public void doFilterWhenRefreshTokenRequestThenAccessTokenResponse() throws Exception {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
-		Authentication clientPrincipal = new OAuth2ClientAuthenticationToken(
-				registeredClient, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
-		OAuth2AccessToken accessToken = new OAuth2AccessToken(
-				OAuth2AccessToken.TokenType.BEARER, "token",
+		Authentication clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient,
+				ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
+		OAuth2AccessToken accessToken = new OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER, "token",
 				Instant.now(), Instant.now().plus(Duration.ofHours(1)),
 				new HashSet<>(Arrays.asList("scope1", "scope2")));
 		OAuth2RefreshToken refreshToken = new OAuth2RefreshToken("refresh-token", Instant.now());
-		OAuth2AccessTokenAuthenticationToken accessTokenAuthentication =
-				new OAuth2AccessTokenAuthenticationToken(
-						registeredClient, clientPrincipal, accessToken, refreshToken);
+		OAuth2AccessTokenAuthenticationToken accessTokenAuthentication = new OAuth2AccessTokenAuthenticationToken(
+				registeredClient, clientPrincipal, accessToken, refreshToken);
 
 		when(this.authenticationManager.authenticate(any())).thenReturn(accessTokenAuthentication);
 
@@ -419,23 +415,21 @@ public class OAuth2TokenEndpointFilterTests {
 
 		verifyNoInteractions(filterChain);
 
-		ArgumentCaptor<OAuth2RefreshTokenAuthenticationToken> refreshTokenAuthenticationCaptor =
-				ArgumentCaptor.forClass(OAuth2RefreshTokenAuthenticationToken.class);
+		ArgumentCaptor<OAuth2RefreshTokenAuthenticationToken> refreshTokenAuthenticationCaptor = ArgumentCaptor
+			.forClass(OAuth2RefreshTokenAuthenticationToken.class);
 		verify(this.authenticationManager).authenticate(refreshTokenAuthenticationCaptor.capture());
 
-		OAuth2RefreshTokenAuthenticationToken refreshTokenAuthenticationToken =
-				refreshTokenAuthenticationCaptor.getValue();
+		OAuth2RefreshTokenAuthenticationToken refreshTokenAuthenticationToken = refreshTokenAuthenticationCaptor
+			.getValue();
 		assertThat(refreshTokenAuthenticationToken.getRefreshToken()).isEqualTo(refreshToken.getTokenValue());
 		assertThat(refreshTokenAuthenticationToken.getPrincipal()).isEqualTo(clientPrincipal);
 		assertThat(refreshTokenAuthenticationToken.getScopes()).isEqualTo(registeredClient.getScopes());
-		assertThat(refreshTokenAuthenticationToken.getAdditionalParameters())
-				.containsExactly(entry("custom-param-1", "custom-value-1"),
-					entry("custom-param-2", new String[] { "custom-value-1", "custom-value-2" }));
-		assertThat(refreshTokenAuthenticationToken.getDetails())
-				.asInstanceOf(type(WebAuthenticationDetails.class))
-				.extracting(WebAuthenticationDetails::getRemoteAddress)
-				.isEqualTo(REMOTE_ADDRESS);
-
+		assertThat(refreshTokenAuthenticationToken.getAdditionalParameters()).containsExactly(
+				entry("custom-param-1", "custom-value-1"),
+				entry("custom-param-2", new String[] { "custom-value-1", "custom-value-2" }));
+		assertThat(refreshTokenAuthenticationToken.getDetails()).asInstanceOf(type(WebAuthenticationDetails.class))
+			.extracting(WebAuthenticationDetails::getRemoteAddress)
+			.isEqualTo(REMOTE_ADDRESS);
 
 		assertThat(response.getStatus()).isEqualTo(HttpStatus.OK.value());
 		OAuth2AccessTokenResponse accessTokenResponse = readAccessTokenResponse(response);
@@ -443,10 +437,10 @@ public class OAuth2TokenEndpointFilterTests {
 		OAuth2AccessToken accessTokenResult = accessTokenResponse.getAccessToken();
 		assertThat(accessTokenResult.getTokenType()).isEqualTo(accessToken.getTokenType());
 		assertThat(accessTokenResult.getTokenValue()).isEqualTo(accessToken.getTokenValue());
-		assertThat(accessTokenResult.getIssuedAt()).isBetween(
-				accessToken.getIssuedAt().minusSeconds(1), accessToken.getIssuedAt().plusSeconds(1));
-		assertThat(accessTokenResult.getExpiresAt()).isBetween(
-				accessToken.getExpiresAt().minusSeconds(1), accessToken.getExpiresAt().plusSeconds(1));
+		assertThat(accessTokenResult.getIssuedAt()).isBetween(accessToken.getIssuedAt().minusSeconds(1),
+				accessToken.getIssuedAt().plusSeconds(1));
+		assertThat(accessTokenResult.getExpiresAt()).isBetween(accessToken.getExpiresAt().minusSeconds(1),
+				accessToken.getExpiresAt().plusSeconds(1));
 		assertThat(accessTokenResult.getScopes()).isEqualTo(accessToken.getScopes());
 
 		OAuth2RefreshToken refreshTokenResult = accessTokenResponse.getRefreshToken();
@@ -456,23 +450,22 @@ public class OAuth2TokenEndpointFilterTests {
 	@Test
 	public void doFilterWhenCustomAuthenticationDetailsSourceThenUsed() throws Exception {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
-		Authentication clientPrincipal = new OAuth2ClientAuthenticationToken(
-				registeredClient, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
+		Authentication clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient,
+				ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
 
 		MockHttpServletRequest request = createAuthorizationCodeTokenRequest(registeredClient);
 
-		AuthenticationDetailsSource<HttpServletRequest, WebAuthenticationDetails> authenticationDetailsSource =
-				mock(AuthenticationDetailsSource.class);
+		AuthenticationDetailsSource<HttpServletRequest, WebAuthenticationDetails> authenticationDetailsSource = mock(
+				AuthenticationDetailsSource.class);
 		WebAuthenticationDetails webAuthenticationDetails = new WebAuthenticationDetails(request);
 		when(authenticationDetailsSource.buildDetails(any())).thenReturn(webAuthenticationDetails);
 		this.filter.setAuthenticationDetailsSource(authenticationDetailsSource);
 
-		OAuth2AccessToken accessToken = new OAuth2AccessToken(
-				OAuth2AccessToken.TokenType.BEARER, "token",
+		OAuth2AccessToken accessToken = new OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER, "token",
 				Instant.now(), Instant.now().plus(Duration.ofHours(1)),
 				new HashSet<>(Arrays.asList("scope1", "scope2")));
-		OAuth2AccessTokenAuthenticationToken accessTokenAuthentication =
-				new OAuth2AccessTokenAuthenticationToken(registeredClient, clientPrincipal, accessToken);
+		OAuth2AccessTokenAuthenticationToken accessTokenAuthentication = new OAuth2AccessTokenAuthenticationToken(
+				registeredClient, clientPrincipal, accessToken);
 
 		when(this.authenticationManager.authenticate(any())).thenReturn(accessTokenAuthentication);
 
@@ -491,22 +484,21 @@ public class OAuth2TokenEndpointFilterTests {
 	@Test
 	public void doFilterWhenCustomAuthenticationConverterThenUsed() throws Exception {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
-		Authentication clientPrincipal = new OAuth2ClientAuthenticationToken(
-				registeredClient, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
+		Authentication clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient,
+				ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
 
-		OAuth2AuthorizationCodeAuthenticationToken authorizationCodeAuthentication =
-				new OAuth2AuthorizationCodeAuthenticationToken("code", clientPrincipal, null, null);
+		OAuth2AuthorizationCodeAuthenticationToken authorizationCodeAuthentication = new OAuth2AuthorizationCodeAuthenticationToken(
+				"code", clientPrincipal, null, null);
 
 		AuthenticationConverter authenticationConverter = mock(AuthenticationConverter.class);
 		when(authenticationConverter.convert(any())).thenReturn(authorizationCodeAuthentication);
 		this.filter.setAuthenticationConverter(authenticationConverter);
 
-		OAuth2AccessToken accessToken = new OAuth2AccessToken(
-				OAuth2AccessToken.TokenType.BEARER, "token",
+		OAuth2AccessToken accessToken = new OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER, "token",
 				Instant.now(), Instant.now().plus(Duration.ofHours(1)),
 				new HashSet<>(Arrays.asList("scope1", "scope2")));
-		OAuth2AccessTokenAuthenticationToken accessTokenAuthentication =
-				new OAuth2AccessTokenAuthenticationToken(registeredClient, clientPrincipal, accessToken);
+		OAuth2AccessTokenAuthenticationToken accessTokenAuthentication = new OAuth2AccessTokenAuthenticationToken(
+				registeredClient, clientPrincipal, accessToken);
 
 		when(this.authenticationManager.authenticate(any())).thenReturn(accessTokenAuthentication);
 
@@ -529,14 +521,13 @@ public class OAuth2TokenEndpointFilterTests {
 		this.filter.setAuthenticationSuccessHandler(authenticationSuccessHandler);
 
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
-		Authentication clientPrincipal = new OAuth2ClientAuthenticationToken(
-				registeredClient, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
-		OAuth2AccessToken accessToken = new OAuth2AccessToken(
-				OAuth2AccessToken.TokenType.BEARER, "token",
+		Authentication clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient,
+				ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
+		OAuth2AccessToken accessToken = new OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER, "token",
 				Instant.now(), Instant.now().plus(Duration.ofHours(1)),
 				new HashSet<>(Arrays.asList("scope1", "scope2")));
-		OAuth2AccessTokenAuthenticationToken accessTokenAuthentication =
-				new OAuth2AccessTokenAuthenticationToken(registeredClient, clientPrincipal, accessToken);
+		OAuth2AccessTokenAuthenticationToken accessTokenAuthentication = new OAuth2AccessTokenAuthenticationToken(
+				registeredClient, clientPrincipal, accessToken);
 
 		when(this.authenticationManager.authenticate(any())).thenReturn(accessTokenAuthentication);
 
@@ -588,14 +579,14 @@ public class OAuth2TokenEndpointFilterTests {
 	}
 
 	private OAuth2Error readError(MockHttpServletResponse response) throws Exception {
-		MockClientHttpResponse httpResponse = new MockClientHttpResponse(
-				response.getContentAsByteArray(), HttpStatus.valueOf(response.getStatus()));
+		MockClientHttpResponse httpResponse = new MockClientHttpResponse(response.getContentAsByteArray(),
+				HttpStatus.valueOf(response.getStatus()));
 		return this.errorHttpResponseConverter.read(OAuth2Error.class, httpResponse);
 	}
 
 	private OAuth2AccessTokenResponse readAccessTokenResponse(MockHttpServletResponse response) throws Exception {
-		MockClientHttpResponse httpResponse = new MockClientHttpResponse(
-				response.getContentAsByteArray(), HttpStatus.valueOf(response.getStatus()));
+		MockClientHttpResponse httpResponse = new MockClientHttpResponse(response.getContentAsByteArray(),
+				HttpStatus.valueOf(response.getStatus()));
 		return this.accessTokenHttpResponseConverter.read(OAuth2AccessTokenResponse.class, httpResponse);
 	}
 
@@ -610,7 +601,8 @@ public class OAuth2TokenEndpointFilterTests {
 		request.addParameter(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.AUTHORIZATION_CODE.getValue());
 		request.addParameter(OAuth2ParameterNames.CODE, "code");
 		request.addParameter(OAuth2ParameterNames.REDIRECT_URI, redirectUris[0]);
-		// The client does not need to send the client ID param, but we are resilient in case they do
+		// The client does not need to send the client ID param, but we are resilient in
+		// case they do
 		request.addParameter(OAuth2ParameterNames.CLIENT_ID, registeredClient.getClientId());
 		request.addParameter("custom-param-1", "custom-value-1");
 		request.addParameter("custom-param-2", "custom-value-1", "custom-value-2");
@@ -648,4 +640,5 @@ public class OAuth2TokenEndpointFilterTests {
 
 		return request;
 	}
+
 }

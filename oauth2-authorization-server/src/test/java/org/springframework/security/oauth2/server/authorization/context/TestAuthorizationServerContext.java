@@ -24,19 +24,20 @@ import org.springframework.security.oauth2.server.authorization.settings.Authori
  * @author Joe Grandja
  */
 public class TestAuthorizationServerContext implements AuthorizationServerContext {
+
 	private final AuthorizationServerSettings authorizationServerSettings;
+
 	private final Supplier<String> issuerSupplier;
 
-	public TestAuthorizationServerContext(AuthorizationServerSettings authorizationServerSettings, @Nullable Supplier<String> issuerSupplier) {
+	public TestAuthorizationServerContext(AuthorizationServerSettings authorizationServerSettings,
+			@Nullable Supplier<String> issuerSupplier) {
 		this.authorizationServerSettings = authorizationServerSettings;
 		this.issuerSupplier = issuerSupplier;
 	}
 
 	@Override
 	public String getIssuer() {
-		return this.issuerSupplier != null ?
-				this.issuerSupplier.get() :
-				getAuthorizationServerSettings().getIssuer();
+		return this.issuerSupplier != null ? this.issuerSupplier.get() : getAuthorizationServerSettings().getIssuer();
 	}
 
 	@Override

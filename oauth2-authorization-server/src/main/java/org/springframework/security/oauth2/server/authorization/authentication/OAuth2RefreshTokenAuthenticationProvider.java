@@ -62,19 +62,28 @@ import static org.springframework.security.oauth2.server.authorization.authentic
  * @see OAuth2AccessTokenAuthenticationToken
  * @see OAuth2AuthorizationService
  * @see OAuth2TokenGenerator
- * @see <a target="_blank" href="https://datatracker.ietf.org/doc/html/rfc6749#section-1.5">Section 1.5 Refresh Token Grant</a>
- * @see <a target="_blank" href="https://datatracker.ietf.org/doc/html/rfc6749#section-6">Section 6 Refreshing an Access Token</a>
+ * @see <a target="_blank" href=
+ * "https://datatracker.ietf.org/doc/html/rfc6749#section-1.5">Section 1.5 Refresh Token
+ * Grant</a>
+ * @see <a target="_blank" href=
+ * "https://datatracker.ietf.org/doc/html/rfc6749#section-6">Section 6 Refreshing an
+ * Access Token</a>
  */
 public final class OAuth2RefreshTokenAuthenticationProvider implements AuthenticationProvider {
+
 	private static final String ERROR_URI = "https://datatracker.ietf.org/doc/html/rfc6749#section-5.2";
+
 	private static final OAuth2TokenType ID_TOKEN_TOKEN_TYPE = new OAuth2TokenType(OidcParameterNames.ID_TOKEN);
+
 	private final Log logger = LogFactory.getLog(getClass());
+
 	private final OAuth2AuthorizationService authorizationService;
+
 	private final OAuth2TokenGenerator<? extends OAuth2Token> tokenGenerator;
 
 	/**
-	 * Constructs an {@code OAuth2RefreshTokenAuthenticationProvider} using the provided parameters.
-	 *
+	 * Constructs an {@code OAuth2RefreshTokenAuthenticationProvider} using the provided
+	 * parameters.
 	 * @param authorizationService the authorization service
 	 * @param tokenGenerator the token generator
 	 * @since 0.2.3
@@ -89,19 +98,18 @@ public final class OAuth2RefreshTokenAuthenticationProvider implements Authentic
 
 	@Override
 	public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-		OAuth2RefreshTokenAuthenticationToken refreshTokenAuthentication =
-				(OAuth2RefreshTokenAuthenticationToken) authentication;
+		OAuth2RefreshTokenAuthenticationToken refreshTokenAuthentication = (OAuth2RefreshTokenAuthenticationToken) authentication;
 
-		OAuth2ClientAuthenticationToken clientPrincipal =
-				getAuthenticatedClientElseThrowInvalidClient(refreshTokenAuthentication);
+		OAuth2ClientAuthenticationToken clientPrincipal = getAuthenticatedClientElseThrowInvalidClient(
+				refreshTokenAuthentication);
 		RegisteredClient registeredClient = clientPrincipal.getRegisteredClient();
 
 		if (this.logger.isTraceEnabled()) {
 			this.logger.trace("Retrieved registered client");
 		}
 
-		OAuth2Authorization authorization = this.authorizationService.findByToken(
-				refreshTokenAuthentication.getRefreshToken(), OAuth2TokenType.REFRESH_TOKEN);
+		OAuth2Authorization authorization = this.authorizationService
+			.findByToken(refreshTokenAuthentication.getRefreshToken(), OAuth2TokenType.REFRESH_TOKEN);
 		if (authorization == null) {
 			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_GRANT);
 		}
@@ -122,13 +130,16 @@ public final class OAuth2RefreshTokenAuthenticationProvider implements Authentic
 		if (!refreshToken.isActive()) {
 			// As per https://tools.ietf.org/html/rfc6749#section-5.2
 			// invalid_grant: The provided authorization grant (e.g., authorization code,
-			// resource owner credentials) or refresh token is invalid, expired, revoked [...].
+			// resource owner credentials) or refresh token is invalid, expired, revoked
+			// [...].
 			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_GRANT);
 		}
 
 		// As per https://tools.ietf.org/html/rfc6749#section-6
-		// The requested scope MUST NOT include any scope not originally granted by the resource owner,
-		// and if omitted is treated as equal to the scope originally granted by the resource owner.
+		// The requested scope MUST NOT include any scope not originally granted by the
+		// resource owner,
+		// and if omitted is treated as equal to the scope originally granted by the
+		// resource owner.
 		Set<String> scopes = refreshTokenAuthentication.getScopes();
 		Set<String> authorizedScopes = authorization.getAuthorizedScopes();
 		if (!authorizedScopes.containsAll(scopes)) {
@@ -174,10 +185,12 @@ public final class OAuth2RefreshTokenAuthenticationProvider implements Authentic
 				generatedAccessToken.getExpiresAt(), tokenContext.getAuthorizedScopes());
 		if (generatedAccessToken instanceof ClaimAccessor) {
 			authorizationBuilder.token(accessToken, (metadata) -> {
-				metadata.put(OAuth2Authorization.Token.CLAIMS_METADATA_NAME, ((ClaimAccessor) generatedAccessToken).getClaims());
+				metadata.put(OAuth2Authorization.Token.CLAIMS_METADATA_NAME,
+						((ClaimAccessor) generatedAccessToken).getClaims());
 				metadata.put(OAuth2Authorization.Token.INVALIDATED_METADATA_NAME, false);
 			});
-		} else {
+		}
+		else {
 			authorizationBuilder.accessToken(accessToken);
 		}
 
@@ -222,9 +235,10 @@ public final class OAuth2RefreshTokenAuthenticationProvider implements Authentic
 
 			idToken = new OidcIdToken(generatedIdToken.getTokenValue(), generatedIdToken.getIssuedAt(),
 					generatedIdToken.getExpiresAt(), ((Jwt) generatedIdToken).getClaims());
-			authorizationBuilder.token(idToken, (metadata) ->
-					metadata.put(OAuth2Authorization.Token.CLAIMS_METADATA_NAME, idToken.getClaims()));
-		} else {
+			authorizationBuilder.token(idToken,
+					(metadata) -> metadata.put(OAuth2Authorization.Token.CLAIMS_METADATA_NAME, idToken.getClaims()));
+		}
+		else {
 			idToken = null;
 		}
 
@@ -246,8 +260,8 @@ public final class OAuth2RefreshTokenAuthenticationProvider implements Authentic
 			this.logger.trace("Authenticated token request");
 		}
 
-		return new OAuth2AccessTokenAuthenticationToken(
-				registeredClient, clientPrincipal, accessToken, currentRefreshToken, additionalParameters);
+		return new OAuth2AccessTokenAuthenticationToken(registeredClient, clientPrincipal, accessToken,
+				currentRefreshToken, additionalParameters);
 	}
 
 	@Override

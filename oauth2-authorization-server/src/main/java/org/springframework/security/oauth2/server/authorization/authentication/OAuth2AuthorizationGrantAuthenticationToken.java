@@ -27,24 +27,29 @@ import org.springframework.security.oauth2.server.authorization.util.SpringAutho
 import org.springframework.util.Assert;
 
 /**
- * Base implementation of an {@link Authentication} representing an OAuth 2.0 Authorization Grant.
+ * Base implementation of an {@link Authentication} representing an OAuth 2.0
+ * Authorization Grant.
  *
  * @author Joe Grandja
  * @since 0.1.0
  * @see AbstractAuthenticationToken
  * @see AuthorizationGrantType
  * @see OAuth2ClientAuthenticationToken
- * @see <a target="_blank" href="https://tools.ietf.org/html/rfc6749#section-1.3">Section 1.3 Authorization Grant</a>
+ * @see <a target="_blank" href="https://tools.ietf.org/html/rfc6749#section-1.3">Section
+ * 1.3 Authorization Grant</a>
  */
 public class OAuth2AuthorizationGrantAuthenticationToken extends AbstractAuthenticationToken {
+
 	private static final long serialVersionUID = SpringAuthorizationServerVersion.SERIAL_VERSION_UID;
+
 	private final AuthorizationGrantType authorizationGrantType;
+
 	private final Authentication clientPrincipal;
+
 	private final Map<String, Object> additionalParameters;
 
 	/**
 	 * Sub-class constructor.
-	 *
 	 * @param authorizationGrantType the authorization grant type
 	 * @param clientPrincipal the authenticated client principal
 	 * @param additionalParameters the additional parameters
@@ -57,14 +62,11 @@ public class OAuth2AuthorizationGrantAuthenticationToken extends AbstractAuthent
 		this.authorizationGrantType = authorizationGrantType;
 		this.clientPrincipal = clientPrincipal;
 		this.additionalParameters = Collections.unmodifiableMap(
-				additionalParameters != null ?
-						new HashMap<>(additionalParameters) :
-						Collections.emptyMap());
+				additionalParameters != null ? new HashMap<>(additionalParameters) : Collections.emptyMap());
 	}
 
 	/**
 	 * Returns the authorization grant type.
-	 *
 	 * @return the authorization grant type
 	 */
 	public AuthorizationGrantType getGrantType() {
@@ -83,10 +85,10 @@ public class OAuth2AuthorizationGrantAuthenticationToken extends AbstractAuthent
 
 	/**
 	 * Returns the additional parameters.
-	 *
 	 * @return the additional parameters
 	 */
 	public Map<String, Object> getAdditionalParameters() {
 		return this.additionalParameters;
 	}
+
 }

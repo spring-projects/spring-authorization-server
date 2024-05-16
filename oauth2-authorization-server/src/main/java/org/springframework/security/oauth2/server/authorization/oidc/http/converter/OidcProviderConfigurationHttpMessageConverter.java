@@ -38,7 +38,8 @@ import org.springframework.security.oauth2.server.authorization.oidc.OidcProvide
 import org.springframework.util.Assert;
 
 /**
- * A {@link HttpMessageConverter} for an {@link OidcProviderConfiguration OpenID Provider Configuration Response}.
+ * A {@link HttpMessageConverter} for an {@link OidcProviderConfiguration OpenID Provider
+ * Configuration Response}.
  *
  * @author Daniel Garnier-Moiroux
  * @since 0.1.0
@@ -48,12 +49,14 @@ import org.springframework.util.Assert;
 public class OidcProviderConfigurationHttpMessageConverter
 		extends AbstractHttpMessageConverter<OidcProviderConfiguration> {
 
-	private static final ParameterizedTypeReference<Map<String, Object>> STRING_OBJECT_MAP =
-			new ParameterizedTypeReference<Map<String, Object>>() {};
+	private static final ParameterizedTypeReference<Map<String, Object>> STRING_OBJECT_MAP = new ParameterizedTypeReference<Map<String, Object>>() {
+	};
 
-	private final GenericHttpMessageConverter<Object> jsonMessageConverter = HttpMessageConverters.getJsonMessageConverter();
+	private final GenericHttpMessageConverter<Object> jsonMessageConverter = HttpMessageConverters
+		.getJsonMessageConverter();
 
 	private Converter<Map<String, Object>, OidcProviderConfiguration> providerConfigurationConverter = new OidcProviderConfigurationConverter();
+
 	private Converter<OidcProviderConfiguration, Map<String, Object>> providerConfigurationParametersConverter = OidcProviderConfiguration::getClaims;
 
 	public OidcProviderConfigurationHttpMessageConverter() {
@@ -67,15 +70,17 @@ public class OidcProviderConfigurationHttpMessageConverter
 
 	@Override
 	@SuppressWarnings("unchecked")
-	protected OidcProviderConfiguration readInternal(Class<? extends OidcProviderConfiguration> clazz, HttpInputMessage inputMessage)
-			throws HttpMessageNotReadableException {
+	protected OidcProviderConfiguration readInternal(Class<? extends OidcProviderConfiguration> clazz,
+			HttpInputMessage inputMessage) throws HttpMessageNotReadableException {
 		try {
-			Map<String, Object> providerConfigurationParameters =
-					(Map<String, Object>) this.jsonMessageConverter.read(STRING_OBJECT_MAP.getType(), null, inputMessage);
+			Map<String, Object> providerConfigurationParameters = (Map<String, Object>) this.jsonMessageConverter
+				.read(STRING_OBJECT_MAP.getType(), null, inputMessage);
 			return this.providerConfigurationConverter.convert(providerConfigurationParameters);
-		} catch (Exception ex) {
+		}
+		catch (Exception ex) {
 			throw new HttpMessageNotReadableException(
-					"An error occurred reading the OpenID Provider Configuration: " + ex.getMessage(), ex, inputMessage);
+					"An error occurred reading the OpenID Provider Configuration: " + ex.getMessage(), ex,
+					inputMessage);
 		}
 	}
 
@@ -83,50 +88,55 @@ public class OidcProviderConfigurationHttpMessageConverter
 	protected void writeInternal(OidcProviderConfiguration providerConfiguration, HttpOutputMessage outputMessage)
 			throws HttpMessageNotWritableException {
 		try {
-			Map<String, Object> providerConfigurationResponseParameters =
-					this.providerConfigurationParametersConverter.convert(providerConfiguration);
-			this.jsonMessageConverter.write(
-					providerConfigurationResponseParameters,
-					STRING_OBJECT_MAP.getType(),
-					MediaType.APPLICATION_JSON,
-					outputMessage
-			);
-		} catch (Exception ex) {
+			Map<String, Object> providerConfigurationResponseParameters = this.providerConfigurationParametersConverter
+				.convert(providerConfiguration);
+			this.jsonMessageConverter.write(providerConfigurationResponseParameters, STRING_OBJECT_MAP.getType(),
+					MediaType.APPLICATION_JSON, outputMessage);
+		}
+		catch (Exception ex) {
 			throw new HttpMessageNotWritableException(
 					"An error occurred writing the OpenID Provider Configuration: " + ex.getMessage(), ex);
 		}
 	}
 
 	/**
-	 * Sets the {@link Converter} used for converting the OpenID Provider Configuration parameters
-	 * to an {@link OidcProviderConfiguration}.
-	 *
-	 * @param providerConfigurationConverter the {@link Converter} used for converting to an
-	 * {@link OidcProviderConfiguration}
+	 * Sets the {@link Converter} used for converting the OpenID Provider Configuration
+	 * parameters to an {@link OidcProviderConfiguration}.
+	 * @param providerConfigurationConverter the {@link Converter} used for converting to
+	 * an {@link OidcProviderConfiguration}
 	 */
-	public final void setProviderConfigurationConverter(Converter<Map<String, Object>, OidcProviderConfiguration> providerConfigurationConverter) {
+	public final void setProviderConfigurationConverter(
+			Converter<Map<String, Object>, OidcProviderConfiguration> providerConfigurationConverter) {
 		Assert.notNull(providerConfigurationConverter, "providerConfigurationConverter cannot be null");
 		this.providerConfigurationConverter = providerConfigurationConverter;
 	}
 
 	/**
-	 * Sets the {@link Converter} used for converting the {@link OidcProviderConfiguration} to a
-	 * {@code Map} representation of the OpenID Provider Configuration.
-	 *
-	 * @param providerConfigurationParametersConverter the {@link Converter} used for converting to a
-	 * {@code Map} representation of the OpenID Provider Configuration
+	 * Sets the {@link Converter} used for converting the
+	 * {@link OidcProviderConfiguration} to a {@code Map} representation of the OpenID
+	 * Provider Configuration.
+	 * @param providerConfigurationParametersConverter the {@link Converter} used for
+	 * converting to a {@code Map} representation of the OpenID Provider Configuration
 	 */
 	public final void setProviderConfigurationParametersConverter(
 			Converter<OidcProviderConfiguration, Map<String, Object>> providerConfigurationParametersConverter) {
-		Assert.notNull(providerConfigurationParametersConverter, "providerConfigurationParametersConverter cannot be null");
+		Assert.notNull(providerConfigurationParametersConverter,
+				"providerConfigurationParametersConverter cannot be null");
 		this.providerConfigurationParametersConverter = providerConfigurationParametersConverter;
 	}
 
-	private static final class OidcProviderConfigurationConverter implements Converter<Map<String, Object>, OidcProviderConfiguration> {
-		private static final ClaimConversionService CLAIM_CONVERSION_SERVICE = ClaimConversionService.getSharedInstance();
+	private static final class OidcProviderConfigurationConverter
+			implements Converter<Map<String, Object>, OidcProviderConfiguration> {
+
+		private static final ClaimConversionService CLAIM_CONVERSION_SERVICE = ClaimConversionService
+			.getSharedInstance();
+
 		private static final TypeDescriptor OBJECT_TYPE_DESCRIPTOR = TypeDescriptor.valueOf(Object.class);
+
 		private static final TypeDescriptor STRING_TYPE_DESCRIPTOR = TypeDescriptor.valueOf(String.class);
+
 		private static final TypeDescriptor URL_TYPE_DESCRIPTOR = TypeDescriptor.valueOf(URL.class);
+
 		private final ClaimTypeConverter claimTypeConverter;
 
 		private OidcProviderConfigurationConverter() {
@@ -138,13 +148,15 @@ public class OidcProviderConfigurationHttpMessageConverter
 			claimConverters.put(OidcProviderMetadataClaimNames.ISSUER, urlConverter);
 			claimConverters.put(OidcProviderMetadataClaimNames.AUTHORIZATION_ENDPOINT, urlConverter);
 			claimConverters.put(OidcProviderMetadataClaimNames.TOKEN_ENDPOINT, urlConverter);
-			claimConverters.put(OidcProviderMetadataClaimNames.TOKEN_ENDPOINT_AUTH_METHODS_SUPPORTED, collectionStringConverter);
+			claimConverters.put(OidcProviderMetadataClaimNames.TOKEN_ENDPOINT_AUTH_METHODS_SUPPORTED,
+					collectionStringConverter);
 			claimConverters.put(OidcProviderMetadataClaimNames.JWKS_URI, urlConverter);
 			claimConverters.put(OidcProviderMetadataClaimNames.USER_INFO_ENDPOINT, urlConverter);
 			claimConverters.put(OidcProviderMetadataClaimNames.RESPONSE_TYPES_SUPPORTED, collectionStringConverter);
 			claimConverters.put(OidcProviderMetadataClaimNames.GRANT_TYPES_SUPPORTED, collectionStringConverter);
 			claimConverters.put(OidcProviderMetadataClaimNames.SUBJECT_TYPES_SUPPORTED, collectionStringConverter);
-			claimConverters.put(OidcProviderMetadataClaimNames.ID_TOKEN_SIGNING_ALG_VALUES_SUPPORTED, collectionStringConverter);
+			claimConverters.put(OidcProviderMetadataClaimNames.ID_TOKEN_SIGNING_ALG_VALUES_SUPPORTED,
+					collectionStringConverter);
 			claimConverters.put(OidcProviderMetadataClaimNames.SCOPES_SUPPORTED, collectionStringConverter);
 			this.claimTypeConverter = new ClaimTypeConverter(claimConverters);
 		}
@@ -158,5 +170,7 @@ public class OidcProviderConfigurationHttpMessageConverter
 		private static Converter<Object, ?> getConverter(TypeDescriptor targetDescriptor) {
 			return (source) -> CLAIM_CONVERSION_SERVICE.convert(source, OBJECT_TYPE_DESCRIPTOR, targetDescriptor);
 		}
+
 	}
+
 }

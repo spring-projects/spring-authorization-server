@@ -24,12 +24,12 @@ import org.springframework.security.oauth2.core.OAuth2Token;
 import org.springframework.util.Assert;
 
 /**
- * An {@link OAuth2TokenGenerator} that simply delegates to it's
- * internal {@code List} of {@link OAuth2TokenGenerator}(s).
+ * An {@link OAuth2TokenGenerator} that simply delegates to it's internal {@code List} of
+ * {@link OAuth2TokenGenerator}(s).
  * <p>
  * Each {@link OAuth2TokenGenerator} is given a chance to
- * {@link OAuth2TokenGenerator#generate(OAuth2TokenContext)}
- * with the first {@code non-null} {@link OAuth2Token} being returned.
+ * {@link OAuth2TokenGenerator#generate(OAuth2TokenContext)} with the first
+ * {@code non-null} {@link OAuth2Token} being returned.
  *
  * @author Joe Grandja
  * @since 0.2.3
@@ -38,11 +38,11 @@ import org.springframework.util.Assert;
  * @see OAuth2RefreshTokenGenerator
  */
 public final class DelegatingOAuth2TokenGenerator implements OAuth2TokenGenerator<OAuth2Token> {
+
 	private final List<OAuth2TokenGenerator<OAuth2Token>> tokenGenerators;
 
 	/**
 	 * Constructs a {@code DelegatingOAuth2TokenGenerator} using the provided parameters.
-	 *
 	 * @param tokenGenerators an array of {@link OAuth2TokenGenerator}(s)
 	 */
 	@SafeVarargs

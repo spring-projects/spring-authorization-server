@@ -21,22 +21,27 @@ import java.util.List;
 import org.springframework.security.oauth2.core.ClaimAccessor;
 
 /**
- * A {@link ClaimAccessor} for the "claims" an Authorization Server describes about its configuration,
- * used in OAuth 2.0 Authorization Server Metadata and OpenID Connect Discovery 1.0.
+ * A {@link ClaimAccessor} for the "claims" an Authorization Server describes about its
+ * configuration, used in OAuth 2.0 Authorization Server Metadata and OpenID Connect
+ * Discovery 1.0.
  *
  * @author Daniel Garnier-Moiroux
  * @since 0.1.1
  * @see ClaimAccessor
  * @see OAuth2AuthorizationServerMetadataClaimNames
- * @see <a target="_blank" href="https://tools.ietf.org/html/rfc8414#section-2">2. Authorization Server Metadata</a>
- * @see <a target="_blank" href="https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderMetadata">3. OpenID Provider Metadata</a>
- * @see <a target="_blank" href="https://www.rfc-editor.org/rfc/rfc8628.html#section-4">4. Device Authorization Grant Metadata</a>
+ * @see <a target="_blank" href="https://tools.ietf.org/html/rfc8414#section-2">2.
+ * Authorization Server Metadata</a>
+ * @see <a target="_blank" href=
+ * "https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderMetadata">3. OpenID
+ * Provider Metadata</a>
+ * @see <a target="_blank" href="https://www.rfc-editor.org/rfc/rfc8628.html#section-4">4.
+ * Device Authorization Grant Metadata</a>
  */
 public interface OAuth2AuthorizationServerMetadataClaimAccessor extends ClaimAccessor {
 
 	/**
-	 * Returns the {@code URL} the Authorization Server asserts as its Issuer Identifier {@code (issuer)}.
-	 *
+	 * Returns the {@code URL} the Authorization Server asserts as its Issuer Identifier
+	 * {@code (issuer)}.
 	 * @return the {@code URL} the Authorization Server asserts as its Issuer Identifier
 	 */
 	default URL getIssuer() {
@@ -44,8 +49,8 @@ public interface OAuth2AuthorizationServerMetadataClaimAccessor extends ClaimAcc
 	}
 
 	/**
-	 * Returns the {@code URL} of the OAuth 2.0 Authorization Endpoint {@code (authorization_endpoint)}.
-	 *
+	 * Returns the {@code URL} of the OAuth 2.0 Authorization Endpoint
+	 * {@code (authorization_endpoint)}.
 	 * @return the {@code URL} of the OAuth 2.0 Authorization Endpoint
 	 */
 	default URL getAuthorizationEndpoint() {
@@ -53,8 +58,8 @@ public interface OAuth2AuthorizationServerMetadataClaimAccessor extends ClaimAcc
 	}
 
 	/**
-	 * Returns the {@code URL} of the OAuth 2.0 Device Authorization Endpoint {@code (device_authorization_endpoint)}.
-	 *
+	 * Returns the {@code URL} of the OAuth 2.0 Device Authorization Endpoint
+	 * {@code (device_authorization_endpoint)}.
 	 * @return the {@code URL} of the OAuth 2.0 Device Authorization Endpoint
 	 * @since 1.1
 	 */
@@ -64,7 +69,6 @@ public interface OAuth2AuthorizationServerMetadataClaimAccessor extends ClaimAcc
 
 	/**
 	 * Returns the {@code URL} of the OAuth 2.0 Token Endpoint {@code (token_endpoint)}.
-	 *
 	 * @return the {@code URL} of the OAuth 2.0 Token Endpoint
 	 */
 	default URL getTokenEndpoint() {
@@ -72,8 +76,8 @@ public interface OAuth2AuthorizationServerMetadataClaimAccessor extends ClaimAcc
 	}
 
 	/**
-	 * Returns the client authentication methods supported by the OAuth 2.0 Token Endpoint {@code (token_endpoint_auth_methods_supported)}.
-	 *
+	 * Returns the client authentication methods supported by the OAuth 2.0 Token Endpoint
+	 * {@code (token_endpoint_auth_methods_supported)}.
 	 * @return the client authentication methods supported by the OAuth 2.0 Token Endpoint
 	 */
 	default List<String> getTokenEndpointAuthenticationMethods() {
@@ -82,7 +86,6 @@ public interface OAuth2AuthorizationServerMetadataClaimAccessor extends ClaimAcc
 
 	/**
 	 * Returns the {@code URL} of the JSON Web Key Set {@code (jwks_uri)}.
-	 *
 	 * @return the {@code URL} of the JSON Web Key Set
 	 */
 	default URL getJwkSetUrl() {
@@ -91,7 +94,6 @@ public interface OAuth2AuthorizationServerMetadataClaimAccessor extends ClaimAcc
 
 	/**
 	 * Returns the OAuth 2.0 {@code scope} values supported {@code (scopes_supported)}.
-	 *
 	 * @return the OAuth 2.0 {@code scope} values supported
 	 */
 	default List<String> getScopes() {
@@ -99,8 +101,8 @@ public interface OAuth2AuthorizationServerMetadataClaimAccessor extends ClaimAcc
 	}
 
 	/**
-	 * Returns the OAuth 2.0 {@code response_type} values supported {@code (response_types_supported)}.
-	 *
+	 * Returns the OAuth 2.0 {@code response_type} values supported
+	 * {@code (response_types_supported)}.
 	 * @return the OAuth 2.0 {@code response_type} values supported
 	 */
 	default List<String> getResponseTypes() {
@@ -108,8 +110,8 @@ public interface OAuth2AuthorizationServerMetadataClaimAccessor extends ClaimAcc
 	}
 
 	/**
-	 * Returns the OAuth 2.0 {@code grant_type} values supported {@code (grant_types_supported)}.
-	 *
+	 * Returns the OAuth 2.0 {@code grant_type} values supported
+	 * {@code (grant_types_supported)}.
 	 * @return the OAuth 2.0 {@code grant_type} values supported
 	 */
 	default List<String> getGrantTypes() {
@@ -117,8 +119,8 @@ public interface OAuth2AuthorizationServerMetadataClaimAccessor extends ClaimAcc
 	}
 
 	/**
-	 * Returns the {@code URL} of the OAuth 2.0 Token Revocation Endpoint {@code (revocation_endpoint)}.
-	 *
+	 * Returns the {@code URL} of the OAuth 2.0 Token Revocation Endpoint
+	 * {@code (revocation_endpoint)}.
 	 * @return the {@code URL} of the OAuth 2.0 Token Revocation Endpoint
 	 */
 	default URL getTokenRevocationEndpoint() {
@@ -126,17 +128,19 @@ public interface OAuth2AuthorizationServerMetadataClaimAccessor extends ClaimAcc
 	}
 
 	/**
-	 * Returns the client authentication methods supported by the OAuth 2.0 Token Revocation Endpoint {@code (revocation_endpoint_auth_methods_supported)}.
-	 *
-	 * @return the client authentication methods supported by the OAuth 2.0 Token Revocation Endpoint
+	 * Returns the client authentication methods supported by the OAuth 2.0 Token
+	 * Revocation Endpoint {@code (revocation_endpoint_auth_methods_supported)}.
+	 * @return the client authentication methods supported by the OAuth 2.0 Token
+	 * Revocation Endpoint
 	 */
 	default List<String> getTokenRevocationEndpointAuthenticationMethods() {
-		return getClaimAsStringList(OAuth2AuthorizationServerMetadataClaimNames.REVOCATION_ENDPOINT_AUTH_METHODS_SUPPORTED);
+		return getClaimAsStringList(
+				OAuth2AuthorizationServerMetadataClaimNames.REVOCATION_ENDPOINT_AUTH_METHODS_SUPPORTED);
 	}
 
 	/**
-	 * Returns the {@code URL} of the OAuth 2.0 Token Introspection Endpoint {@code (introspection_endpoint)}.
-	 *
+	 * Returns the {@code URL} of the OAuth 2.0 Token Introspection Endpoint
+	 * {@code (introspection_endpoint)}.
 	 * @return the {@code URL} of the OAuth 2.0 Token Introspection Endpoint
 	 */
 	default URL getTokenIntrospectionEndpoint() {
@@ -144,17 +148,19 @@ public interface OAuth2AuthorizationServerMetadataClaimAccessor extends ClaimAcc
 	}
 
 	/**
-	 * Returns the client authentication methods supported by the OAuth 2.0 Token Introspection Endpoint {@code (introspection_endpoint_auth_methods_supported)}.
-	 *
-	 * @return the client authentication methods supported by the OAuth 2.0 Token Introspection Endpoint
+	 * Returns the client authentication methods supported by the OAuth 2.0 Token
+	 * Introspection Endpoint {@code (introspection_endpoint_auth_methods_supported)}.
+	 * @return the client authentication methods supported by the OAuth 2.0 Token
+	 * Introspection Endpoint
 	 */
 	default List<String> getTokenIntrospectionEndpointAuthenticationMethods() {
-		return getClaimAsStringList(OAuth2AuthorizationServerMetadataClaimNames.INTROSPECTION_ENDPOINT_AUTH_METHODS_SUPPORTED);
+		return getClaimAsStringList(
+				OAuth2AuthorizationServerMetadataClaimNames.INTROSPECTION_ENDPOINT_AUTH_METHODS_SUPPORTED);
 	}
 
 	/**
-	 * Returns the {@code URL} of the OAuth 2.0 Dynamic Client Registration Endpoint {@code (registration_endpoint)}.
-	 *
+	 * Returns the {@code URL} of the OAuth 2.0 Dynamic Client Registration Endpoint
+	 * {@code (registration_endpoint)}.
 	 * @return the {@code URL} of the OAuth 2.0 Dynamic Client Registration Endpoint
 	 * @since 0.4.0
 	 */
@@ -163,8 +169,8 @@ public interface OAuth2AuthorizationServerMetadataClaimAccessor extends ClaimAcc
 	}
 
 	/**
-	 * Returns the Proof Key for Code Exchange (PKCE) {@code code_challenge_method} values supported {@code (code_challenge_methods_supported)}.
-	 *
+	 * Returns the Proof Key for Code Exchange (PKCE) {@code code_challenge_method} values
+	 * supported {@code (code_challenge_methods_supported)}.
 	 * @return the {@code code_challenge_method} values supported
 	 */
 	default List<String> getCodeChallengeMethods() {

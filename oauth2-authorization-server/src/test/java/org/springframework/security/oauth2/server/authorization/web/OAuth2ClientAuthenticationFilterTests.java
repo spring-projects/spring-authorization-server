@@ -65,13 +65,18 @@ import static org.mockito.Mockito.when;
  * @author Joe Grandja
  */
 public class OAuth2ClientAuthenticationFilterTests {
+
 	private String filterProcessesUrl = "/oauth2/token";
+
 	private AuthenticationManager authenticationManager;
+
 	private RequestMatcher requestMatcher;
+
 	private AuthenticationConverter authenticationConverter;
+
 	private OAuth2ClientAuthenticationFilter filter;
-	private final HttpMessageConverter<OAuth2Error> errorHttpResponseConverter =
-			new OAuth2ErrorHttpMessageConverter();
+
+	private final HttpMessageConverter<OAuth2Error> errorHttpResponseConverter = new OAuth2ErrorHttpMessageConverter();
 
 	@BeforeEach
 	public void setUp() {
@@ -90,36 +95,36 @@ public class OAuth2ClientAuthenticationFilterTests {
 	@Test
 	public void constructorWhenAuthenticationManagerNullThenThrowIllegalArgumentException() {
 		assertThatThrownBy(() -> new OAuth2ClientAuthenticationFilter(null, this.requestMatcher))
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("authenticationManager cannot be null");
+			.isInstanceOf(IllegalArgumentException.class)
+			.hasMessage("authenticationManager cannot be null");
 	}
 
 	@Test
 	public void constructorWhenRequestMatcherNullThenThrowIllegalArgumentException() {
 		assertThatThrownBy(() -> new OAuth2ClientAuthenticationFilter(this.authenticationManager, null))
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("requestMatcher cannot be null");
+			.isInstanceOf(IllegalArgumentException.class)
+			.hasMessage("requestMatcher cannot be null");
 	}
 
 	@Test
 	public void setAuthenticationConverterWhenNullThenThrowIllegalArgumentException() {
 		assertThatThrownBy(() -> this.filter.setAuthenticationConverter(null))
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("authenticationConverter cannot be null");
+			.isInstanceOf(IllegalArgumentException.class)
+			.hasMessage("authenticationConverter cannot be null");
 	}
 
 	@Test
 	public void setAuthenticationSuccessHandlerWhenNullThenThrowIllegalArgumentException() {
 		assertThatThrownBy(() -> this.filter.setAuthenticationSuccessHandler(null))
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("authenticationSuccessHandler cannot be null");
+			.isInstanceOf(IllegalArgumentException.class)
+			.hasMessage("authenticationSuccessHandler cannot be null");
 	}
 
 	@Test
 	public void setAuthenticationFailureHandlerWhenNullThenThrowIllegalArgumentException() {
 		assertThatThrownBy(() -> this.filter.setAuthenticationFailureHandler(null))
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("authenticationFailureHandler cannot be null");
+			.isInstanceOf(IllegalArgumentException.class)
+			.hasMessage("authenticationFailureHandler cannot be null");
 	}
 
 	@Test
@@ -171,7 +176,8 @@ public class OAuth2ClientAuthenticationFilterTests {
 
 	// gh-889
 	@Test
-	public void doFilterWhenRequestMatchesAndClientIdContainsNonPrintableASCIIThenInvalidRequestError() throws Exception {
+	public void doFilterWhenRequestMatchesAndClientIdContainsNonPrintableASCIIThenInvalidRequestError()
+			throws Exception {
 		// Hex 00 -> null
 		String clientId = new String(Hex.decode("00"), StandardCharsets.UTF_8);
 		assertWhenInvalidClientIdThenInvalidRequestError(clientId);
@@ -237,10 +243,12 @@ public class OAuth2ClientAuthenticationFilterTests {
 		final String remoteAddress = "remote-address";
 
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
-		when(this.authenticationConverter.convert(any(HttpServletRequest.class))).thenReturn(
-				new OAuth2ClientAuthenticationToken(registeredClient.getClientId(), ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret(), null));
-		when(this.authenticationManager.authenticate(any(Authentication.class))).thenReturn(
-				new OAuth2ClientAuthenticationToken(registeredClient, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret()));
+		when(this.authenticationConverter.convert(any(HttpServletRequest.class)))
+			.thenReturn(new OAuth2ClientAuthenticationToken(registeredClient.getClientId(),
+					ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret(), null));
+		when(this.authenticationManager.authenticate(any(Authentication.class)))
+			.thenReturn(new OAuth2ClientAuthenticationToken(registeredClient,
+					ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret()));
 
 		MockHttpServletRequest request = new MockHttpServletRequest("POST", this.filterProcessesUrl);
 		request.setServletPath(this.filterProcessesUrl);
@@ -254,22 +262,23 @@ public class OAuth2ClientAuthenticationFilterTests {
 
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 		assertThat(authentication).isInstanceOf(OAuth2ClientAuthenticationToken.class);
-		assertThat(((OAuth2ClientAuthenticationToken) authentication).getRegisteredClient()).isEqualTo(registeredClient);
+		assertThat(((OAuth2ClientAuthenticationToken) authentication).getRegisteredClient())
+			.isEqualTo(registeredClient);
 
-		ArgumentCaptor<OAuth2ClientAuthenticationToken> authenticationRequestCaptor =
-				ArgumentCaptor.forClass(OAuth2ClientAuthenticationToken.class);
+		ArgumentCaptor<OAuth2ClientAuthenticationToken> authenticationRequestCaptor = ArgumentCaptor
+			.forClass(OAuth2ClientAuthenticationToken.class);
 		verify(this.authenticationManager).authenticate(authenticationRequestCaptor.capture());
-		assertThat(authenticationRequestCaptor)
-				.extracting(ArgumentCaptor::getValue)
-				.extracting(OAuth2ClientAuthenticationToken::getDetails)
-				.asInstanceOf(type(WebAuthenticationDetails.class))
-				.extracting(WebAuthenticationDetails::getRemoteAddress)
-				.isEqualTo(remoteAddress);
+		assertThat(authenticationRequestCaptor).extracting(ArgumentCaptor::getValue)
+			.extracting(OAuth2ClientAuthenticationToken::getDetails)
+			.asInstanceOf(type(WebAuthenticationDetails.class))
+			.extracting(WebAuthenticationDetails::getRemoteAddress)
+			.isEqualTo(remoteAddress);
 	}
 
 	private OAuth2Error readError(MockHttpServletResponse response) throws Exception {
-		MockClientHttpResponse httpResponse = new MockClientHttpResponse(
-				response.getContentAsByteArray(), HttpStatus.valueOf(response.getStatus()));
+		MockClientHttpResponse httpResponse = new MockClientHttpResponse(response.getContentAsByteArray(),
+				HttpStatus.valueOf(response.getStatus()));
 		return this.errorHttpResponseConverter.read(OAuth2Error.class, httpResponse);
 	}
+
 }

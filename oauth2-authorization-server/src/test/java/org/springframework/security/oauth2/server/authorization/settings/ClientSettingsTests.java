@@ -38,42 +38,36 @@ public class ClientSettingsTests {
 
 	@Test
 	public void requireProofKeyWhenTrueThenSet() {
-		ClientSettings clientSettings = ClientSettings.builder()
-				.requireProofKey(true)
-				.build();
+		ClientSettings clientSettings = ClientSettings.builder().requireProofKey(true).build();
 		assertThat(clientSettings.isRequireProofKey()).isTrue();
 	}
 
 	@Test
 	public void requireAuthorizationConsentWhenTrueThenSet() {
-		ClientSettings clientSettings = ClientSettings.builder()
-				.requireAuthorizationConsent(true)
-				.build();
+		ClientSettings clientSettings = ClientSettings.builder().requireAuthorizationConsent(true).build();
 		assertThat(clientSettings.isRequireAuthorizationConsent()).isTrue();
 	}
 
 	@Test
 	public void tokenEndpointAuthenticationSigningAlgorithmWhenHS256ThenSet() {
 		ClientSettings clientSettings = ClientSettings.builder()
-				.tokenEndpointAuthenticationSigningAlgorithm(MacAlgorithm.HS256)
-				.build();
+			.tokenEndpointAuthenticationSigningAlgorithm(MacAlgorithm.HS256)
+			.build();
 		assertThat(clientSettings.getTokenEndpointAuthenticationSigningAlgorithm()).isEqualTo(MacAlgorithm.HS256);
 	}
 
 	@Test
 	public void jwkSetUrlWhenProvidedThenSet() {
-		ClientSettings clientSettings = ClientSettings.builder()
-				.jwkSetUrl("https://client.example.com/jwks")
-				.build();
+		ClientSettings clientSettings = ClientSettings.builder().jwkSetUrl("https://client.example.com/jwks").build();
 		assertThat(clientSettings.getJwkSetUrl()).isEqualTo("https://client.example.com/jwks");
 	}
 
 	@Test
 	public void settingWhenCustomThenSet() {
 		ClientSettings clientSettings = ClientSettings.builder()
-				.setting("name1", "value1")
-				.settings(settings -> settings.put("name2", "value2"))
-				.build();
+			.setting("name1", "value1")
+			.settings(settings -> settings.put("name2", "value2"))
+			.build();
 		assertThat(clientSettings.getSettings()).hasSize(4);
 		assertThat(clientSettings.<String>getSetting("name1")).isEqualTo("value1");
 		assertThat(clientSettings.<String>getSetting("name2")).isEqualTo("value2");

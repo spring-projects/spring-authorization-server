@@ -41,6 +41,7 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
  * @author Steve Riesenberg
  */
 public class OidcUserInfoHttpMessageConverterTests {
+
 	private final OidcUserInfoHttpMessageConverter messageConverter = new OidcUserInfoHttpMessageConverter();
 
 	@Test
@@ -55,7 +56,8 @@ public class OidcUserInfoHttpMessageConverterTests {
 
 	@Test
 	public void setUserInfoParametersConverterWhenNullThenThrowIllegalArgumentException() {
-		assertThatIllegalArgumentException().isThrownBy(() -> this.messageConverter.setUserInfoParametersConverter(null));
+		assertThatIllegalArgumentException()
+			.isThrownBy(() -> this.messageConverter.setUserInfoParametersConverter(null));
 	}
 
 	@Test
@@ -112,7 +114,8 @@ public class OidcUserInfoHttpMessageConverterTests {
 		assertThat(oidcUserInfo.getLocale()).isEqualTo("en-US");
 		assertThat(oidcUserInfo.getPhoneNumber()).isEqualTo("+1 (604) 555-1234;ext=5678");
 		assertThat(oidcUserInfo.getPhoneNumberVerified()).isFalse();
-		assertThat(oidcUserInfo.getAddress().getFormatted()).isEqualTo("Champ de Mars\n5 Av. Anatole France\n75007 Paris\nFrance");
+		assertThat(oidcUserInfo.getAddress().getFormatted())
+			.isEqualTo("Champ de Mars\n5 Av. Anatole France\n75007 Paris\nFrance");
 		assertThat(oidcUserInfo.getAddress().getStreetAddress()).isEqualTo("Champ de Mars\n5 Av. Anatole France");
 		assertThat(oidcUserInfo.getAddress().getLocality()).isEqualTo("Paris");
 		assertThat(oidcUserInfo.getAddress().getPostalCode()).isEqualTo("75007");
@@ -129,9 +132,9 @@ public class OidcUserInfoHttpMessageConverterTests {
 		MockClientHttpResponse response = new MockClientHttpResponse("{}".getBytes(), HttpStatus.OK);
 
 		assertThatExceptionOfType(HttpMessageNotReadableException.class)
-				.isThrownBy(() -> this.messageConverter.readInternal(OidcUserInfo.class, response))
-				.withMessageContaining("An error occurred reading the UserInfo response")
-				.withMessageContaining(errorMessage);
+			.isThrownBy(() -> this.messageConverter.readInternal(OidcUserInfo.class, response))
+			.withMessageContaining("An error occurred reading the UserInfo response")
+			.withMessageContaining(errorMessage);
 	}
 
 	@Test
@@ -140,9 +143,9 @@ public class OidcUserInfoHttpMessageConverterTests {
 		MockClientHttpResponse response = new MockClientHttpResponse(userInfoResponse.getBytes(), HttpStatus.OK);
 
 		assertThatExceptionOfType(HttpMessageNotReadableException.class)
-				.isThrownBy(() -> this.messageConverter.readInternal(OidcUserInfo.class, response))
-				.withMessageContaining("An error occurred reading the UserInfo response")
-				.withMessageContaining("claims cannot be empty");
+			.isThrownBy(() -> this.messageConverter.readInternal(OidcUserInfo.class, response))
+			.withMessageContaining("An error occurred reading the UserInfo response")
+			.withMessageContaining("claims cannot be empty");
 	}
 
 	@Test
@@ -172,7 +175,8 @@ public class OidcUserInfoHttpMessageConverterTests {
 		assertThat(userInfoResponse).contains("\"phone_number\":\"+1 (604) 555-1234;ext=5678\"");
 		assertThat(userInfoResponse).contains("\"phone_number_verified\":false");
 		assertThat(userInfoResponse).contains("\"address\":");
-		assertThat(userInfoResponse).contains("\"formatted\":\"Champ de Mars\\n5 Av. Anatole France\\n75007 Paris\\nFrance\"");
+		assertThat(userInfoResponse)
+			.contains("\"formatted\":\"Champ de Mars\\n5 Av. Anatole France\\n75007 Paris\\nFrance\"");
 		assertThat(userInfoResponse).contains("\"updated_at\":1607633867");
 		assertThat(userInfoResponse).contains("\"custom_claim\":\"value\"");
 		assertThat(userInfoResponse).contains("\"custom_collection_claim\":[\"value1\",\"value2\"]");
@@ -190,35 +194,37 @@ public class OidcUserInfoHttpMessageConverterTests {
 		MockHttpOutputMessage outputMessage = new MockHttpOutputMessage();
 
 		assertThatExceptionOfType(HttpMessageNotWritableException.class)
-				.isThrownBy(() -> this.messageConverter.writeInternal(userInfo, outputMessage))
-				.withMessageContaining("An error occurred writing the UserInfo response")
-				.withMessageContaining(errorMessage);
+			.isThrownBy(() -> this.messageConverter.writeInternal(userInfo, outputMessage))
+			.withMessageContaining("An error occurred writing the UserInfo response")
+			.withMessageContaining(errorMessage);
 	}
 
 	private static OidcUserInfo createUserInfo() {
 		return OidcUserInfo.builder()
-				.subject("user1")
-				.name("First Last")
-				.givenName("First")
-				.familyName("Last")
-				.middleName("Middle")
-				.nickname("User")
-				.preferredUsername("user")
-				.profile("https://example.com/user1")
-				.picture("https://example.com/user1.jpg")
-				.website("https://example.com")
-				.email("user1@example.com")
-				.emailVerified(true)
-				.gender("female")
-				.birthdate("1970-01-01")
-				.zoneinfo("Europe/Paris")
-				.locale("en-US")
-				.phoneNumber("+1 (604) 555-1234;ext=5678")
-				.claim("phone_number_verified", false)
-				.claim("address", Collections.singletonMap("formatted", "Champ de Mars\n5 Av. Anatole France\n75007 Paris\nFrance"))
-				.claim(StandardClaimNames.UPDATED_AT, Instant.ofEpochSecond(1607633867))
-				.claim("custom_claim", "value")
-				.claim("custom_collection_claim", Arrays.asList("value1", "value2"))
-				.build();
+			.subject("user1")
+			.name("First Last")
+			.givenName("First")
+			.familyName("Last")
+			.middleName("Middle")
+			.nickname("User")
+			.preferredUsername("user")
+			.profile("https://example.com/user1")
+			.picture("https://example.com/user1.jpg")
+			.website("https://example.com")
+			.email("user1@example.com")
+			.emailVerified(true)
+			.gender("female")
+			.birthdate("1970-01-01")
+			.zoneinfo("Europe/Paris")
+			.locale("en-US")
+			.phoneNumber("+1 (604) 555-1234;ext=5678")
+			.claim("phone_number_verified", false)
+			.claim("address",
+					Collections.singletonMap("formatted", "Champ de Mars\n5 Av. Anatole France\n75007 Paris\nFrance"))
+			.claim(StandardClaimNames.UPDATED_AT, Instant.ofEpochSecond(1607633867))
+			.claim("custom_claim", "value")
+			.claim("custom_collection_claim", Arrays.asList("value1", "value2"))
+			.build();
 	}
+
 }

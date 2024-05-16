@@ -65,23 +65,24 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 /**
- * A {@code Filter} for the OAuth 2.0 Token endpoint,
- * which handles the processing of an OAuth 2.0 Authorization Grant.
+ * A {@code Filter} for the OAuth 2.0 Token endpoint, which handles the processing of an
+ * OAuth 2.0 Authorization Grant.
  *
  * <p>
  * It converts the OAuth 2.0 Authorization Grant request to an {@link Authentication},
- * which is then authenticated by the {@link AuthenticationManager}.
- * If the authentication succeeds, the {@link AuthenticationManager} returns an
- * {@link OAuth2AccessTokenAuthenticationToken}, which is returned in the OAuth 2.0 Access Token response.
- * In case of any error, an {@link OAuth2Error} is returned in the OAuth 2.0 Error response.
+ * which is then authenticated by the {@link AuthenticationManager}. If the authentication
+ * succeeds, the {@link AuthenticationManager} returns an
+ * {@link OAuth2AccessTokenAuthenticationToken}, which is returned in the OAuth 2.0 Access
+ * Token response. In case of any error, an {@link OAuth2Error} is returned in the OAuth
+ * 2.0 Error response.
  *
  * <p>
- * By default, this {@code Filter} responds to authorization grant requests
- * at the {@code URI} {@code /oauth2/token} and {@code HttpMethod} {@code POST}.
+ * By default, this {@code Filter} responds to authorization grant requests at the
+ * {@code URI} {@code /oauth2/token} and {@code HttpMethod} {@code POST}.
  *
  * <p>
- * The default endpoint {@code URI} {@code /oauth2/token} may be overridden
- * via the constructor {@link #OAuth2TokenEndpointFilter(AuthenticationManager, String)}.
+ * The default endpoint {@code URI} {@code /oauth2/token} may be overridden via the
+ * constructor {@link #OAuth2TokenEndpointFilter(AuthenticationManager, String)}.
  *
  * @author Joe Grandja
  * @author Madhu Bhat
@@ -92,28 +93,34 @@ import org.springframework.web.filter.OncePerRequestFilter;
  * @see OAuth2RefreshTokenAuthenticationProvider
  * @see OAuth2ClientCredentialsAuthenticationProvider
  * @see OAuth2DeviceCodeAuthenticationProvider
- * @see <a target="_blank" href="https://tools.ietf.org/html/rfc6749#section-3.2">Section 3.2 Token Endpoint</a>
+ * @see <a target="_blank" href="https://tools.ietf.org/html/rfc6749#section-3.2">Section
+ * 3.2 Token Endpoint</a>
  */
 public final class OAuth2TokenEndpointFilter extends OncePerRequestFilter {
+
 	/**
 	 * The default endpoint {@code URI} for access token requests.
 	 */
 	private static final String DEFAULT_TOKEN_ENDPOINT_URI = "/oauth2/token";
 
 	private static final String DEFAULT_ERROR_URI = "https://datatracker.ietf.org/doc/html/rfc6749#section-5.2";
+
 	private final AuthenticationManager authenticationManager;
+
 	private final RequestMatcher tokenEndpointMatcher;
-	private final HttpMessageConverter<OAuth2AccessTokenResponse> accessTokenHttpResponseConverter =
-			new OAuth2AccessTokenResponseHttpMessageConverter();
-	private AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource =
-			new WebAuthenticationDetailsSource();
+
+	private final HttpMessageConverter<OAuth2AccessTokenResponse> accessTokenHttpResponseConverter = new OAuth2AccessTokenResponseHttpMessageConverter();
+
+	private AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource = new WebAuthenticationDetailsSource();
+
 	private AuthenticationConverter authenticationConverter;
+
 	private AuthenticationSuccessHandler authenticationSuccessHandler = this::sendAccessTokenResponse;
+
 	private AuthenticationFailureHandler authenticationFailureHandler = new OAuth2ErrorAuthenticationFailureHandler();
 
 	/**
 	 * Constructs an {@code OAuth2TokenEndpointFilter} using the provided parameters.
-	 *
 	 * @param authenticationManager the authentication manager
 	 */
 	public OAuth2TokenEndpointFilter(AuthenticationManager authenticationManager) {
@@ -122,7 +129,6 @@ public final class OAuth2TokenEndpointFilter extends OncePerRequestFilter {
 
 	/**
 	 * Constructs an {@code OAuth2TokenEndpointFilter} using the provided parameters.
-	 *
 	 * @param authenticationManager the authentication manager
 	 * @param tokenEndpointUri the endpoint {@code URI} for access token requests
 	 */
@@ -131,12 +137,14 @@ public final class OAuth2TokenEndpointFilter extends OncePerRequestFilter {
 		Assert.hasText(tokenEndpointUri, "tokenEndpointUri cannot be empty");
 		this.authenticationManager = authenticationManager;
 		this.tokenEndpointMatcher = new AntPathRequestMatcher(tokenEndpointUri, HttpMethod.POST.name());
+		// @formatter:off
 		this.authenticationConverter = new DelegatingAuthenticationConverter(
 				Arrays.asList(
 						new OAuth2AuthorizationCodeAuthenticationConverter(),
 						new OAuth2RefreshTokenAuthenticationConverter(),
 						new OAuth2ClientCredentialsAuthenticationConverter(),
 						new OAuth2DeviceCodeAuthenticationConverter()));
+		// @formatter:on
 	}
 
 	@Override
@@ -160,13 +168,14 @@ public final class OAuth2TokenEndpointFilter extends OncePerRequestFilter {
 			}
 			if (authorizationGrantAuthentication instanceof AbstractAuthenticationToken) {
 				((AbstractAuthenticationToken) authorizationGrantAuthentication)
-						.setDetails(this.authenticationDetailsSource.buildDetails(request));
+					.setDetails(this.authenticationDetailsSource.buildDetails(request));
 			}
 
-			OAuth2AccessTokenAuthenticationToken accessTokenAuthentication =
-					(OAuth2AccessTokenAuthenticationToken) this.authenticationManager.authenticate(authorizationGrantAuthentication);
+			OAuth2AccessTokenAuthenticationToken accessTokenAuthentication = (OAuth2AccessTokenAuthenticationToken) this.authenticationManager
+				.authenticate(authorizationGrantAuthentication);
 			this.authenticationSuccessHandler.onAuthenticationSuccess(request, response, accessTokenAuthentication);
-		} catch (OAuth2AuthenticationException ex) {
+		}
+		catch (OAuth2AuthenticationException ex) {
 			SecurityContextHolder.clearContext();
 			if (this.logger.isTraceEnabled()) {
 				this.logger.trace(LogMessage.format("Token request failed: %s", ex.getError()), ex);
@@ -176,20 +185,24 @@ public final class OAuth2TokenEndpointFilter extends OncePerRequestFilter {
 	}
 
 	/**
-	 * Sets the {@link AuthenticationDetailsSource} used for building an authentication details instance from {@link HttpServletRequest}.
-	 *
-	 * @param authenticationDetailsSource the {@link AuthenticationDetailsSource} used for building an authentication details instance from {@link HttpServletRequest}
+	 * Sets the {@link AuthenticationDetailsSource} used for building an authentication
+	 * details instance from {@link HttpServletRequest}.
+	 * @param authenticationDetailsSource the {@link AuthenticationDetailsSource} used for
+	 * building an authentication details instance from {@link HttpServletRequest}
 	 */
-	public void setAuthenticationDetailsSource(AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource) {
+	public void setAuthenticationDetailsSource(
+			AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource) {
 		Assert.notNull(authenticationDetailsSource, "authenticationDetailsSource cannot be null");
 		this.authenticationDetailsSource = authenticationDetailsSource;
 	}
 
 	/**
-	 * Sets the {@link AuthenticationConverter} used when attempting to extract an Access Token Request from {@link HttpServletRequest}
-	 * to an instance of {@link OAuth2AuthorizationGrantAuthenticationToken} used for authenticating the authorization grant.
-	 *
-	 * @param authenticationConverter the {@link AuthenticationConverter} used when attempting to extract an Access Token Request from {@link HttpServletRequest}
+	 * Sets the {@link AuthenticationConverter} used when attempting to extract an Access
+	 * Token Request from {@link HttpServletRequest} to an instance of
+	 * {@link OAuth2AuthorizationGrantAuthenticationToken} used for authenticating the
+	 * authorization grant.
+	 * @param authenticationConverter the {@link AuthenticationConverter} used when
+	 * attempting to extract an Access Token Request from {@link HttpServletRequest}
 	 */
 	public void setAuthenticationConverter(AuthenticationConverter authenticationConverter) {
 		Assert.notNull(authenticationConverter, "authenticationConverter cannot be null");
@@ -197,10 +210,11 @@ public final class OAuth2TokenEndpointFilter extends OncePerRequestFilter {
 	}
 
 	/**
-	 * Sets the {@link AuthenticationSuccessHandler} used for handling an {@link OAuth2AccessTokenAuthenticationToken}
-	 * and returning the {@link OAuth2AccessTokenResponse Access Token Response}.
-	 *
-	 * @param authenticationSuccessHandler the {@link AuthenticationSuccessHandler} used for handling an {@link OAuth2AccessTokenAuthenticationToken}
+	 * Sets the {@link AuthenticationSuccessHandler} used for handling an
+	 * {@link OAuth2AccessTokenAuthenticationToken} and returning the
+	 * {@link OAuth2AccessTokenResponse Access Token Response}.
+	 * @param authenticationSuccessHandler the {@link AuthenticationSuccessHandler} used
+	 * for handling an {@link OAuth2AccessTokenAuthenticationToken}
 	 */
 	public void setAuthenticationSuccessHandler(AuthenticationSuccessHandler authenticationSuccessHandler) {
 		Assert.notNull(authenticationSuccessHandler, "authenticationSuccessHandler cannot be null");
@@ -208,10 +222,11 @@ public final class OAuth2TokenEndpointFilter extends OncePerRequestFilter {
 	}
 
 	/**
-	 * Sets the {@link AuthenticationFailureHandler} used for handling an {@link OAuth2AuthenticationException}
-	 * and returning the {@link OAuth2Error Error Response}.
-	 *
-	 * @param authenticationFailureHandler the {@link AuthenticationFailureHandler} used for handling an {@link OAuth2AuthenticationException}
+	 * Sets the {@link AuthenticationFailureHandler} used for handling an
+	 * {@link OAuth2AuthenticationException} and returning the {@link OAuth2Error Error
+	 * Response}.
+	 * @param authenticationFailureHandler the {@link AuthenticationFailureHandler} used
+	 * for handling an {@link OAuth2AuthenticationException}
 	 */
 	public void setAuthenticationFailureHandler(AuthenticationFailureHandler authenticationFailureHandler) {
 		Assert.notNull(authenticationFailureHandler, "authenticationFailureHandler cannot be null");
@@ -221,17 +236,15 @@ public final class OAuth2TokenEndpointFilter extends OncePerRequestFilter {
 	private void sendAccessTokenResponse(HttpServletRequest request, HttpServletResponse response,
 			Authentication authentication) throws IOException {
 
-		OAuth2AccessTokenAuthenticationToken accessTokenAuthentication =
-				(OAuth2AccessTokenAuthenticationToken) authentication;
+		OAuth2AccessTokenAuthenticationToken accessTokenAuthentication = (OAuth2AccessTokenAuthenticationToken) authentication;
 
 		OAuth2AccessToken accessToken = accessTokenAuthentication.getAccessToken();
 		OAuth2RefreshToken refreshToken = accessTokenAuthentication.getRefreshToken();
 		Map<String, Object> additionalParameters = accessTokenAuthentication.getAdditionalParameters();
 
-		OAuth2AccessTokenResponse.Builder builder =
-				OAuth2AccessTokenResponse.withToken(accessToken.getTokenValue())
-						.tokenType(accessToken.getTokenType())
-						.scopes(accessToken.getScopes());
+		OAuth2AccessTokenResponse.Builder builder = OAuth2AccessTokenResponse.withToken(accessToken.getTokenValue())
+			.tokenType(accessToken.getTokenType())
+			.scopes(accessToken.getScopes());
 		if (accessToken.getIssuedAt() != null && accessToken.getExpiresAt() != null) {
 			builder.expiresIn(ChronoUnit.SECONDS.between(accessToken.getIssuedAt(), accessToken.getExpiresAt()));
 		}

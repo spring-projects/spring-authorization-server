@@ -40,8 +40,8 @@ import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
 /**
- * An authenticator used for OAuth 2.0 Client Authentication,
- * which authenticates the {@link PkceParameterNames#CODE_VERIFIER code_verifier} parameter.
+ * An authenticator used for OAuth 2.0 Client Authentication, which authenticates the
+ * {@link PkceParameterNames#CODE_VERIFIER code_verifier} parameter.
  *
  * @author Daniel Garnier-Moiroux
  * @author Joe Grandja
@@ -50,8 +50,11 @@ import org.springframework.util.StringUtils;
  * @see OAuth2AuthorizationService
  */
 final class CodeVerifierAuthenticator {
+
 	private static final OAuth2TokenType AUTHORIZATION_CODE_TOKEN_TYPE = new OAuth2TokenType(OAuth2ParameterNames.CODE);
+
 	private final Log logger = LogFactory.getLog(getClass());
+
 	private final OAuth2AuthorizationService authorizationService;
 
 	CodeVerifierAuthenticator(OAuth2AuthorizationService authorizationService) {
@@ -59,8 +62,7 @@ final class CodeVerifierAuthenticator {
 		this.authorizationService = authorizationService;
 	}
 
-	void authenticateRequired(OAuth2ClientAuthenticationToken clientAuthentication,
-			RegisteredClient registeredClient) {
+	void authenticateRequired(OAuth2ClientAuthenticationToken clientAuthentication, RegisteredClient registeredClient) {
 		if (!authenticate(clientAuthentication, registeredClient)) {
 			throwInvalidGrant(PkceParameterNames.CODE_VERIFIER);
 		}
@@ -79,9 +81,8 @@ final class CodeVerifierAuthenticator {
 			return false;
 		}
 
-		OAuth2Authorization authorization = this.authorizationService.findByToken(
-				(String) parameters.get(OAuth2ParameterNames.CODE),
-				AUTHORIZATION_CODE_TOKEN_TYPE);
+		OAuth2Authorization authorization = this.authorizationService
+			.findByToken((String) parameters.get(OAuth2ParameterNames.CODE), AUTHORIZATION_CODE_TOKEN_TYPE);
 		if (authorization == null) {
 			throwInvalidGrant(OAuth2ParameterNames.CODE);
 		}
@@ -90,11 +91,11 @@ final class CodeVerifierAuthenticator {
 			this.logger.trace("Retrieved authorization with authorization code");
 		}
 
-		OAuth2AuthorizationRequest authorizationRequest = authorization.getAttribute(
-				OAuth2AuthorizationRequest.class.getName());
+		OAuth2AuthorizationRequest authorizationRequest = authorization
+			.getAttribute(OAuth2AuthorizationRequest.class.getName());
 
 		String codeChallenge = (String) authorizationRequest.getAdditionalParameters()
-				.get(PkceParameterNames.CODE_CHALLENGE);
+			.get(PkceParameterNames.CODE_CHALLENGE);
 		String codeVerifier = (String) parameters.get(PkceParameterNames.CODE_VERIFIER);
 		if (!StringUtils.hasText(codeChallenge)) {
 			if (registeredClient.getClientSettings().isRequireProofKey() ||
@@ -104,7 +105,8 @@ final class CodeVerifierAuthenticator {
 							" for registered client '%s'", registeredClient.getId()));
 				}
 				throwInvalidGrant(PkceParameterNames.CODE_CHALLENGE);
-			} else {
+			}
+			else {
 				if (this.logger.isTraceEnabled()) {
 					this.logger.trace("Did not authenticate code verifier since requireProofKey=false");
 				}
@@ -117,7 +119,7 @@ final class CodeVerifierAuthenticator {
 		}
 
 		String codeChallengeMethod = (String) authorizationRequest.getAdditionalParameters()
-				.get(PkceParameterNames.CODE_CHALLENGE_METHOD);
+			.get(PkceParameterNames.CODE_CHALLENGE_METHOD);
 		if (!codeVerifierValid(codeVerifier, codeChallenge, codeChallengeMethod)) {
 			if (this.logger.isDebugEnabled()) {
 				this.logger.debug(LogMessage.format("Invalid request: code_verifier is missing or invalid" +
@@ -134,22 +136,27 @@ final class CodeVerifierAuthenticator {
 	}
 
 	private static boolean authorizationCodeGrant(Map<String, Object> parameters) {
+		// @formatter:off
 		return AuthorizationGrantType.AUTHORIZATION_CODE.getValue().equals(
 				parameters.get(OAuth2ParameterNames.GRANT_TYPE)) &&
 				parameters.get(OAuth2ParameterNames.CODE) != null;
+		// @formatter:on
 	}
 
 	private boolean codeVerifierValid(String codeVerifier, String codeChallenge, String codeChallengeMethod) {
 		if (!StringUtils.hasText(codeVerifier)) {
 			return false;
-		} else if ("S256".equals(codeChallengeMethod)) {
+		}
+		else if ("S256".equals(codeChallengeMethod)) {
 			try {
 				MessageDigest md = MessageDigest.getInstance("SHA-256");
 				byte[] digest = md.digest(codeVerifier.getBytes(StandardCharsets.US_ASCII));
 				String encodedVerifier = Base64.getUrlEncoder().withoutPadding().encodeToString(digest);
 				return encodedVerifier.equals(codeChallenge);
-			} catch (NoSuchAlgorithmException ex) {
-				// It is unlikely that SHA-256 is not available on the server. If it is not available,
+			}
+			catch (NoSuchAlgorithmException ex) {
+				// It is unlikely that SHA-256 is not available on the server. If it is
+				// not available,
 				// there will likely be bigger issues as well. We default to SERVER_ERROR.
 				throw new OAuth2AuthenticationException(OAuth2ErrorCodes.SERVER_ERROR);
 			}
@@ -158,11 +165,8 @@ final class CodeVerifierAuthenticator {
 	}
 
 	private static void throwInvalidGrant(String parameterName) {
-		OAuth2Error error = new OAuth2Error(
-				OAuth2ErrorCodes.INVALID_GRANT,
-				"Client authentication failed: " + parameterName,
-				null
-		);
+		OAuth2Error error = new OAuth2Error(OAuth2ErrorCodes.INVALID_GRANT,
+				"Client authentication failed: " + parameterName, null);
 		throw new OAuth2AuthenticationException(error);
 	}
 

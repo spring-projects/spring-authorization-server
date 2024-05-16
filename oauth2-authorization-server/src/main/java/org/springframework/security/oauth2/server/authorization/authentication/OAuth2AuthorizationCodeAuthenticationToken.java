@@ -23,7 +23,8 @@ import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.util.Assert;
 
 /**
- * An {@link Authentication} implementation used for the OAuth 2.0 Authorization Code Grant.
+ * An {@link Authentication} implementation used for the OAuth 2.0 Authorization Code
+ * Grant.
  *
  * @author Joe Grandja
  * @author Madhu Bhat
@@ -33,12 +34,14 @@ import org.springframework.util.Assert;
  * @see OAuth2AuthorizationCodeAuthenticationProvider
  */
 public class OAuth2AuthorizationCodeAuthenticationToken extends OAuth2AuthorizationGrantAuthenticationToken {
+
 	private final String code;
+
 	private final String redirectUri;
 
 	/**
-	 * Constructs an {@code OAuth2AuthorizationCodeAuthenticationToken} using the provided parameters.
-	 *
+	 * Constructs an {@code OAuth2AuthorizationCodeAuthenticationToken} using the provided
+	 * parameters.
 	 * @param code the authorization code
 	 * @param clientPrincipal the authenticated client principal
 	 * @param redirectUri the redirect uri
@@ -54,7 +57,6 @@ public class OAuth2AuthorizationCodeAuthenticationToken extends OAuth2Authorizat
 
 	/**
 	 * Returns the authorization code.
-	 *
 	 * @return the authorization code
 	 */
 	public String getCode() {
@@ -63,11 +65,11 @@ public class OAuth2AuthorizationCodeAuthenticationToken extends OAuth2Authorizat
 
 	/**
 	 * Returns the redirect uri.
-	 *
 	 * @return the redirect uri
 	 */
 	@Nullable
 	public String getRedirectUri() {
 		return this.redirectUri;
 	}
+
 }

@@ -37,7 +37,8 @@ import org.springframework.security.oauth2.core.oidc.StandardClaimNames;
 import org.springframework.util.Assert;
 
 /**
- * A {@link HttpMessageConverter} for an {@link OidcUserInfo OpenID Connect UserInfo Response}.
+ * A {@link HttpMessageConverter} for an {@link OidcUserInfo OpenID Connect UserInfo
+ * Response}.
  *
  * @author Ido Salomon
  * @author Steve Riesenberg
@@ -47,13 +48,14 @@ import org.springframework.util.Assert;
  */
 public class OidcUserInfoHttpMessageConverter extends AbstractHttpMessageConverter<OidcUserInfo> {
 
-	private static final ParameterizedTypeReference<Map<String, Object>> STRING_OBJECT_MAP =
-			new ParameterizedTypeReference<Map<String, Object>>() {};
+	private static final ParameterizedTypeReference<Map<String, Object>> STRING_OBJECT_MAP = new ParameterizedTypeReference<Map<String, Object>>() {
+	};
 
-	private final GenericHttpMessageConverter<Object> jsonMessageConverter =
-			HttpMessageConverters.getJsonMessageConverter();
+	private final GenericHttpMessageConverter<Object> jsonMessageConverter = HttpMessageConverters
+		.getJsonMessageConverter();
 
 	private Converter<Map<String, Object>, OidcUserInfo> userInfoConverter = new MapOidcUserInfoConverter();
+
 	private Converter<OidcUserInfo, Map<String, Object>> userInfoParametersConverter = OidcUserInfo::getClaims;
 
 	public OidcUserInfoHttpMessageConverter() {
@@ -70,10 +72,11 @@ public class OidcUserInfoHttpMessageConverter extends AbstractHttpMessageConvert
 	protected OidcUserInfo readInternal(Class<? extends OidcUserInfo> clazz, HttpInputMessage inputMessage)
 			throws HttpMessageNotReadableException {
 		try {
-			Map<String, Object> userInfoParameters =
-					(Map<String, Object>) this.jsonMessageConverter.read(STRING_OBJECT_MAP.getType(), null, inputMessage);
+			Map<String, Object> userInfoParameters = (Map<String, Object>) this.jsonMessageConverter
+				.read(STRING_OBJECT_MAP.getType(), null, inputMessage);
 			return this.userInfoConverter.convert(userInfoParameters);
-		} catch (Exception ex) {
+		}
+		catch (Exception ex) {
 			throw new HttpMessageNotReadableException(
 					"An error occurred reading the UserInfo response: " + ex.getMessage(), ex, inputMessage);
 		}
@@ -83,25 +86,21 @@ public class OidcUserInfoHttpMessageConverter extends AbstractHttpMessageConvert
 	protected void writeInternal(OidcUserInfo oidcUserInfo, HttpOutputMessage outputMessage)
 			throws HttpMessageNotWritableException {
 		try {
-			Map<String, Object> userInfoResponseParameters =
-					this.userInfoParametersConverter.convert(oidcUserInfo);
-			this.jsonMessageConverter.write(
-					userInfoResponseParameters,
-					STRING_OBJECT_MAP.getType(),
-					MediaType.APPLICATION_JSON,
-					outputMessage
-			);
-		} catch (Exception ex) {
+			Map<String, Object> userInfoResponseParameters = this.userInfoParametersConverter.convert(oidcUserInfo);
+			this.jsonMessageConverter.write(userInfoResponseParameters, STRING_OBJECT_MAP.getType(),
+					MediaType.APPLICATION_JSON, outputMessage);
+		}
+		catch (Exception ex) {
 			throw new HttpMessageNotWritableException(
 					"An error occurred writing the UserInfo response: " + ex.getMessage(), ex);
 		}
 	}
 
 	/**
-	 * Sets the {@link Converter} used for converting the UserInfo parameters
-	 * to an {@link OidcUserInfo}.
-	 *
-	 * @param userInfoConverter the {@link Converter} used for converting to an {@link OidcUserInfo}
+	 * Sets the {@link Converter} used for converting the UserInfo parameters to an
+	 * {@link OidcUserInfo}.
+	 * @param userInfoConverter the {@link Converter} used for converting to an
+	 * {@link OidcUserInfo}
 	 */
 	public final void setUserInfoConverter(Converter<Map<String, Object>, OidcUserInfo> userInfoConverter) {
 		Assert.notNull(userInfoConverter, "userInfoConverter cannot be null");
@@ -111,7 +110,6 @@ public class OidcUserInfoHttpMessageConverter extends AbstractHttpMessageConvert
 	/**
 	 * Sets the {@link Converter} used for converting the {@link OidcUserInfo} to a
 	 * {@code Map} representation of the UserInfo.
-	 *
 	 * @param userInfoParametersConverter the {@link Converter} used for converting to a
 	 * {@code Map} representation of the UserInfo
 	 */
@@ -122,12 +120,21 @@ public class OidcUserInfoHttpMessageConverter extends AbstractHttpMessageConvert
 	}
 
 	private static final class MapOidcUserInfoConverter implements Converter<Map<String, Object>, OidcUserInfo> {
-		private static final ClaimConversionService CLAIM_CONVERSION_SERVICE = ClaimConversionService.getSharedInstance();
+
+		private static final ClaimConversionService CLAIM_CONVERSION_SERVICE = ClaimConversionService
+			.getSharedInstance();
+
 		private static final TypeDescriptor OBJECT_TYPE_DESCRIPTOR = TypeDescriptor.valueOf(Object.class);
+
 		private static final TypeDescriptor BOOLEAN_TYPE_DESCRIPTOR = TypeDescriptor.valueOf(Boolean.class);
+
 		private static final TypeDescriptor STRING_TYPE_DESCRIPTOR = TypeDescriptor.valueOf(String.class);
+
 		private static final TypeDescriptor INSTANT_TYPE_DESCRIPTOR = TypeDescriptor.valueOf(Instant.class);
-		private static final TypeDescriptor STRING_OBJECT_MAP_DESCRIPTOR = TypeDescriptor.map(Map.class, STRING_TYPE_DESCRIPTOR, OBJECT_TYPE_DESCRIPTOR);
+
+		private static final TypeDescriptor STRING_OBJECT_MAP_DESCRIPTOR = TypeDescriptor.map(Map.class,
+				STRING_TYPE_DESCRIPTOR, OBJECT_TYPE_DESCRIPTOR);
+
 		private final ClaimTypeConverter claimTypeConverter;
 
 		private MapOidcUserInfoConverter() {
@@ -170,5 +177,7 @@ public class OidcUserInfoHttpMessageConverter extends AbstractHttpMessageConvert
 		private static Converter<Object, ?> getConverter(TypeDescriptor targetDescriptor) {
 			return (source) -> CLAIM_CONVERSION_SERVICE.convert(source, OBJECT_TYPE_DESCRIPTOR, targetDescriptor);
 		}
+
 	}
+
 }

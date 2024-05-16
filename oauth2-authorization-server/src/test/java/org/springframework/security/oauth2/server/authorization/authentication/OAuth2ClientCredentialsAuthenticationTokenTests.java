@@ -35,17 +35,23 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * @author Alexey Nesterov
  */
 public class OAuth2ClientCredentialsAuthenticationTokenTests {
+
 	private final RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+
 	private final OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(
-			this.registeredClient, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, this.registeredClient.getClientSecret());
+			this.registeredClient, ClientAuthenticationMethod.CLIENT_SECRET_BASIC,
+			this.registeredClient.getClientSecret());
+
 	private Set<String> scopes = Collections.singleton("scope1");
+
 	private Map<String, Object> additionalParameters = Collections.singletonMap("param1", "value1");
 
 	@Test
 	public void constructorWhenClientPrincipalNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> new OAuth2ClientCredentialsAuthenticationToken(null, this.scopes, this.additionalParameters))
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("clientPrincipal cannot be null");
+		assertThatThrownBy(
+				() -> new OAuth2ClientCredentialsAuthenticationToken(null, this.scopes, this.additionalParameters))
+			.isInstanceOf(IllegalArgumentException.class)
+			.hasMessage("clientPrincipal cannot be null");
 	}
 
 	@Test
@@ -73,4 +79,5 @@ public class OAuth2ClientCredentialsAuthenticationTokenTests {
 		assertThat(authentication.getScopes()).isEqualTo(expectedScopes);
 		assertThat(authentication.getAdditionalParameters()).isEqualTo(this.additionalParameters);
 	}
+
 }

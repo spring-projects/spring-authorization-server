@@ -38,6 +38,7 @@ import org.springframework.util.Assert;
  * @see JwtEncoder#encode(JwtEncoderParameters)
  */
 public final class JwtEncodingContext implements OAuth2TokenContext {
+
 	private final Map<Object, Object> context;
 
 	private JwtEncodingContext(Map<Object, Object> context) {
@@ -58,9 +59,8 @@ public final class JwtEncodingContext implements OAuth2TokenContext {
 	}
 
 	/**
-	 * Returns the {@link JwsHeader.Builder JWS headers}
-	 * allowing the ability to add, replace, or remove.
-	 *
+	 * Returns the {@link JwsHeader.Builder JWS headers} allowing the ability to add,
+	 * replace, or remove.
 	 * @return the {@link JwsHeader.Builder}
 	 */
 	public JwsHeader.Builder getJwsHeader() {
@@ -68,9 +68,8 @@ public final class JwtEncodingContext implements OAuth2TokenContext {
 	}
 
 	/**
-	 * Returns the {@link JwtClaimsSet.Builder claims}
-	 * allowing the ability to add, replace, or remove.
-	 *
+	 * Returns the {@link JwtClaimsSet.Builder claims} allowing the ability to add,
+	 * replace, or remove.
 	 * @return the {@link JwtClaimsSet.Builder}
 	 */
 	public JwtClaimsSet.Builder getClaims() {
@@ -79,7 +78,6 @@ public final class JwtEncodingContext implements OAuth2TokenContext {
 
 	/**
 	 * Constructs a new {@link Builder} with the provided JWS headers and claims.
-	 *
 	 * @param jwsHeaderBuilder the JWS headers to initialize the builder
 	 * @param claimsBuilder the claims to initialize the builder
 	 * @return the {@link Builder}
@@ -102,7 +100,6 @@ public final class JwtEncodingContext implements OAuth2TokenContext {
 
 		/**
 		 * Builds a new {@link JwtEncodingContext}.
-		 *
 		 * @return the {@link JwtEncodingContext}
 		 */
 		public JwtEncodingContext build() {

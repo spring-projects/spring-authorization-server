@@ -27,8 +27,8 @@ import org.springframework.security.oauth2.server.authorization.util.SpringAutho
 import org.springframework.util.Assert;
 
 /**
- * An {@link Authentication} implementation for the Device Authorization Consent used
- * in the OAuth 2.0 Device Authorization Grant.
+ * An {@link Authentication} implementation for the Device Authorization Consent used in
+ * the OAuth 2.0 Device Authorization Grant.
  *
  * @author Steve Riesenberg
  * @since 1.1
@@ -36,13 +36,16 @@ import org.springframework.util.Assert;
  * @see OAuth2DeviceAuthorizationConsentAuthenticationProvider
  */
 public class OAuth2DeviceAuthorizationConsentAuthenticationToken extends OAuth2AuthorizationConsentAuthenticationToken {
+
 	private static final long serialVersionUID = SpringAuthorizationServerVersion.SERIAL_VERSION_UID;
+
 	private final String userCode;
+
 	private final Set<String> requestedScopes;
 
 	/**
-	 * Constructs an {@code OAuth2DeviceAuthorizationConsentAuthenticationToken} using the provided parameters.
-	 *
+	 * Constructs an {@code OAuth2DeviceAuthorizationConsentAuthenticationToken} using the
+	 * provided parameters.
 	 * @param authorizationUri the authorization URI
 	 * @param clientId the client identifier
 	 * @param principal the {@code Principal} (Resource Owner)
@@ -62,8 +65,8 @@ public class OAuth2DeviceAuthorizationConsentAuthenticationToken extends OAuth2A
 	}
 
 	/**
-	 * Constructs an {@code OAuth2DeviceAuthorizationConsentAuthenticationToken} using the provided parameters.
-	 *
+	 * Constructs an {@code OAuth2DeviceAuthorizationConsentAuthenticationToken} using the
+	 * provided parameters.
 	 * @param authorizationUri the authorization URI
 	 * @param clientId the client identifier
 	 * @param principal the {@code Principal} (Resource Owner)
@@ -78,16 +81,13 @@ public class OAuth2DeviceAuthorizationConsentAuthenticationToken extends OAuth2A
 		super(authorizationUri, clientId, principal, state, authorizedScopes, null);
 		Assert.hasText(userCode, "userCode cannot be empty");
 		this.userCode = userCode;
-		this.requestedScopes = Collections.unmodifiableSet(
-				requestedScopes != null ?
-						new HashSet<>(requestedScopes) :
-						Collections.emptySet());
+		this.requestedScopes = Collections
+			.unmodifiableSet(requestedScopes != null ? new HashSet<>(requestedScopes) : Collections.emptySet());
 		setAuthenticated(true);
 	}
 
 	/**
 	 * Returns the user code.
-	 *
 	 * @return the user code
 	 */
 	public String getUserCode() {
@@ -96,7 +96,6 @@ public class OAuth2DeviceAuthorizationConsentAuthenticationToken extends OAuth2A
 
 	/**
 	 * Returns the requested scopes.
-	 *
 	 * @return the requested scopes
 	 */
 	public Set<String> getRequestedScopes() {

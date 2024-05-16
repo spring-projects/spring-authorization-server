@@ -34,10 +34,10 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
 
 /**
- * Attempts to extract a Device Authorization Request from {@link HttpServletRequest} for the
- * OAuth 2.0 Device Authorization Grant and then converts it to an
- * {@link OAuth2DeviceAuthorizationRequestAuthenticationToken} used for authenticating
- * the request.
+ * Attempts to extract a Device Authorization Request from {@link HttpServletRequest} for
+ * the OAuth 2.0 Device Authorization Grant and then converts it to an
+ * {@link OAuth2DeviceAuthorizationRequestAuthenticationToken} used for authenticating the
+ * request.
  *
  * @author Steve Riesenberg
  * @since 1.1
@@ -59,12 +59,8 @@ public final class OAuth2DeviceAuthorizationRequestAuthenticationConverter imple
 
 		// scope (OPTIONAL)
 		String scope = parameters.getFirst(OAuth2ParameterNames.SCOPE);
-		if (StringUtils.hasText(scope) &&
-				parameters.get(OAuth2ParameterNames.SCOPE).size() != 1) {
-			OAuth2EndpointUtils.throwError(
-					OAuth2ErrorCodes.INVALID_REQUEST,
-					OAuth2ParameterNames.SCOPE,
-					ERROR_URI);
+		if (StringUtils.hasText(scope) && parameters.get(OAuth2ParameterNames.SCOPE).size() != 1) {
+			OAuth2EndpointUtils.throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.SCOPE, ERROR_URI);
 		}
 		Set<String> requestedScopes = null;
 		if (StringUtils.hasText(scope)) {
@@ -73,8 +69,7 @@ public final class OAuth2DeviceAuthorizationRequestAuthenticationConverter imple
 
 		Map<String, Object> additionalParameters = new HashMap<>();
 		parameters.forEach((key, value) -> {
-			if (!key.equals(OAuth2ParameterNames.CLIENT_ID) &&
-					!key.equals(OAuth2ParameterNames.SCOPE)) {
+			if (!key.equals(OAuth2ParameterNames.CLIENT_ID) && !key.equals(OAuth2ParameterNames.SCOPE)) {
 				additionalParameters.put(key, (value.size() == 1) ? value.get(0) : value.toArray(new String[0]));
 			}
 		});

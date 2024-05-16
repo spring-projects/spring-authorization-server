@@ -56,17 +56,17 @@ public class AuthorizationServerSettingsTests {
 		String issuer = "https://example.com:9000";
 
 		AuthorizationServerSettings authorizationServerSettings = AuthorizationServerSettings.builder()
-				.issuer(issuer)
-				.authorizationEndpoint(authorizationEndpoint)
-				.tokenEndpoint(tokenEndpoint)
-				.jwkSetEndpoint(jwkSetEndpoint)
-				.tokenRevocationEndpoint(tokenRevocationEndpoint)
-				.tokenIntrospectionEndpoint(tokenIntrospectionEndpoint)
-				.tokenRevocationEndpoint(tokenRevocationEndpoint)
-				.oidcClientRegistrationEndpoint(oidcClientRegistrationEndpoint)
-				.oidcUserInfoEndpoint(oidcUserInfoEndpoint)
-				.oidcLogoutEndpoint(oidcLogoutEndpoint)
-				.build();
+			.issuer(issuer)
+			.authorizationEndpoint(authorizationEndpoint)
+			.tokenEndpoint(tokenEndpoint)
+			.jwkSetEndpoint(jwkSetEndpoint)
+			.tokenRevocationEndpoint(tokenRevocationEndpoint)
+			.tokenIntrospectionEndpoint(tokenIntrospectionEndpoint)
+			.tokenRevocationEndpoint(tokenRevocationEndpoint)
+			.oidcClientRegistrationEndpoint(oidcClientRegistrationEndpoint)
+			.oidcUserInfoEndpoint(oidcUserInfoEndpoint)
+			.oidcLogoutEndpoint(oidcLogoutEndpoint)
+			.build();
 
 		assertThat(authorizationServerSettings.getIssuer()).isEqualTo(issuer);
 		assertThat(authorizationServerSettings.getAuthorizationEndpoint()).isEqualTo(authorizationEndpoint);
@@ -74,7 +74,8 @@ public class AuthorizationServerSettingsTests {
 		assertThat(authorizationServerSettings.getJwkSetEndpoint()).isEqualTo(jwkSetEndpoint);
 		assertThat(authorizationServerSettings.getTokenRevocationEndpoint()).isEqualTo(tokenRevocationEndpoint);
 		assertThat(authorizationServerSettings.getTokenIntrospectionEndpoint()).isEqualTo(tokenIntrospectionEndpoint);
-		assertThat(authorizationServerSettings.getOidcClientRegistrationEndpoint()).isEqualTo(oidcClientRegistrationEndpoint);
+		assertThat(authorizationServerSettings.getOidcClientRegistrationEndpoint())
+			.isEqualTo(oidcClientRegistrationEndpoint);
 		assertThat(authorizationServerSettings.getOidcUserInfoEndpoint()).isEqualTo(oidcUserInfoEndpoint);
 		assertThat(authorizationServerSettings.getOidcLogoutEndpoint()).isEqualTo(oidcLogoutEndpoint);
 	}
@@ -82,9 +83,9 @@ public class AuthorizationServerSettingsTests {
 	@Test
 	public void settingWhenCustomThenSet() {
 		AuthorizationServerSettings authorizationServerSettings = AuthorizationServerSettings.builder()
-				.setting("name1", "value1")
-				.settings(settings -> settings.put("name2", "value2"))
-				.build();
+			.setting("name1", "value1")
+			.settings(settings -> settings.put("name2", "value2"))
+			.build();
 
 		assertThat(authorizationServerSettings.getSettings()).hasSize(12);
 		assertThat(authorizationServerSettings.<String>getSetting("name1")).isEqualTo("value1");
@@ -93,65 +94,63 @@ public class AuthorizationServerSettingsTests {
 
 	@Test
 	public void issuerWhenNullThenThrowIllegalArgumentException() {
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> AuthorizationServerSettings.builder().issuer(null))
-				.withMessage("value cannot be null");
+		assertThatIllegalArgumentException().isThrownBy(() -> AuthorizationServerSettings.builder().issuer(null))
+			.withMessage("value cannot be null");
 	}
 
 	@Test
 	public void authorizationEndpointWhenNullThenThrowIllegalArgumentException() {
 		assertThatIllegalArgumentException()
-				.isThrownBy(() -> AuthorizationServerSettings.builder().authorizationEndpoint(null))
-				.withMessage("value cannot be null");
+			.isThrownBy(() -> AuthorizationServerSettings.builder().authorizationEndpoint(null))
+			.withMessage("value cannot be null");
 	}
 
 	@Test
 	public void tokenEndpointWhenNullThenThrowIllegalArgumentException() {
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> AuthorizationServerSettings.builder().tokenEndpoint(null))
-				.withMessage("value cannot be null");
+		assertThatIllegalArgumentException().isThrownBy(() -> AuthorizationServerSettings.builder().tokenEndpoint(null))
+			.withMessage("value cannot be null");
 	}
 
 	@Test
 	public void tokenRevocationEndpointWhenNullThenThrowIllegalArgumentException() {
 		assertThatIllegalArgumentException()
-				.isThrownBy(() -> AuthorizationServerSettings.builder().tokenRevocationEndpoint(null))
-				.withMessage("value cannot be null");
+			.isThrownBy(() -> AuthorizationServerSettings.builder().tokenRevocationEndpoint(null))
+			.withMessage("value cannot be null");
 	}
 
 	@Test
 	public void tokenIntrospectionEndpointWhenNullThenThrowIllegalArgumentException() {
 		assertThatIllegalArgumentException()
-				.isThrownBy(() -> AuthorizationServerSettings.builder().tokenIntrospectionEndpoint(null))
-				.withMessage("value cannot be null");
+			.isThrownBy(() -> AuthorizationServerSettings.builder().tokenIntrospectionEndpoint(null))
+			.withMessage("value cannot be null");
 	}
 
 	@Test
 	public void oidcClientRegistrationEndpointWhenNullThenThrowIllegalArgumentException() {
 		assertThatIllegalArgumentException()
-				.isThrownBy(() -> AuthorizationServerSettings.builder().oidcClientRegistrationEndpoint(null))
-				.withMessage("value cannot be null");
+			.isThrownBy(() -> AuthorizationServerSettings.builder().oidcClientRegistrationEndpoint(null))
+			.withMessage("value cannot be null");
 	}
 
 	@Test
 	public void oidcUserInfoEndpointWhenNullThenThrowIllegalArgumentException() {
 		assertThatIllegalArgumentException()
-				.isThrownBy(() -> AuthorizationServerSettings.builder().oidcUserInfoEndpoint(null))
-				.withMessage("value cannot be null");
+			.isThrownBy(() -> AuthorizationServerSettings.builder().oidcUserInfoEndpoint(null))
+			.withMessage("value cannot be null");
 	}
 
 	@Test
 	public void jwksEndpointWhenNullThenThrowIllegalArgumentException() {
 		assertThatIllegalArgumentException()
-				.isThrownBy(() -> AuthorizationServerSettings.builder().jwkSetEndpoint(null))
-				.withMessage("value cannot be null");
+			.isThrownBy(() -> AuthorizationServerSettings.builder().jwkSetEndpoint(null))
+			.withMessage("value cannot be null");
 	}
 
 	@Test
 	public void oidcLogoutEndpointWhenNullThenThrowIllegalArgumentException() {
 		assertThatIllegalArgumentException()
-				.isThrownBy(() -> AuthorizationServerSettings.builder().oidcLogoutEndpoint(null))
-				.withMessage("value cannot be null");
+			.isThrownBy(() -> AuthorizationServerSettings.builder().oidcLogoutEndpoint(null))
+			.withMessage("value cannot be null");
 	}
 
 }

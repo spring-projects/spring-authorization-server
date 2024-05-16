@@ -26,8 +26,9 @@ import org.springframework.security.oauth2.server.authorization.web.authenticati
 import org.springframework.util.Assert;
 
 /**
- * An {@link OAuth2AuthenticationContext} that holds an {@link OAuth2AccessTokenAuthenticationToken} and additional information
- * and is used when customizing the {@link OAuth2AccessTokenResponse}.
+ * An {@link OAuth2AuthenticationContext} that holds an
+ * {@link OAuth2AccessTokenAuthenticationToken} and additional information and is used
+ * when customizing the {@link OAuth2AccessTokenResponse}.
  *
  * @author Dmitriy Dubson
  * @since 1.3
@@ -37,6 +38,7 @@ import org.springframework.util.Assert;
  * @see OAuth2AccessTokenResponseAuthenticationSuccessHandler#setAccessTokenResponseCustomizer(Consumer)
  */
 public final class OAuth2AccessTokenAuthenticationContext implements OAuth2AuthenticationContext {
+
 	private final Map<Object, Object> context;
 
 	private OAuth2AccessTokenAuthenticationContext(Map<Object, Object> context) {
@@ -57,8 +59,8 @@ public final class OAuth2AccessTokenAuthenticationContext implements OAuth2Authe
 	}
 
 	/**
-	 * Returns the {@link OAuth2AccessTokenResponse.Builder access token response builder}.
-	 *
+	 * Returns the {@link OAuth2AccessTokenResponse.Builder access token response
+	 * builder}.
 	 * @return the {@link OAuth2AccessTokenResponse.Builder}
 	 */
 	public OAuth2AccessTokenResponse.Builder getAccessTokenResponse() {
@@ -66,8 +68,8 @@ public final class OAuth2AccessTokenAuthenticationContext implements OAuth2Authe
 	}
 
 	/**
-	 * Constructs a new {@link Builder} with the provided {@link OAuth2AccessTokenAuthenticationToken}.
-	 *
+	 * Constructs a new {@link Builder} with the provided
+	 * {@link OAuth2AccessTokenAuthenticationToken}.
 	 * @param authentication the {@link OAuth2AccessTokenAuthenticationToken}
 	 * @return the {@link Builder}
 	 */
@@ -85,8 +87,8 @@ public final class OAuth2AccessTokenAuthenticationContext implements OAuth2Authe
 		}
 
 		/**
-		 * Sets the {@link OAuth2AccessTokenResponse.Builder access token response builder}.
-		 *
+		 * Sets the {@link OAuth2AccessTokenResponse.Builder access token response
+		 * builder}.
 		 * @param accessTokenResponse the {@link OAuth2AccessTokenResponse.Builder}
 		 * @return the {@link Builder} for further configuration
 		 */
@@ -96,7 +98,6 @@ public final class OAuth2AccessTokenAuthenticationContext implements OAuth2Authe
 
 		/**
 		 * Builds a new {@link OAuth2AccessTokenAuthenticationContext}.
-		 *
 		 * @return the {@link OAuth2AccessTokenAuthenticationContext}
 		 */
 		public OAuth2AccessTokenAuthenticationContext build() {

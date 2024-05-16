@@ -39,6 +39,7 @@ import static org.assertj.core.api.Assertions.entry;
  * @author Joe Grandja
  */
 public class X509ClientCertificateAuthenticationConverterTests {
+
 	private final X509ClientCertificateAuthenticationConverter converter = new X509ClientCertificateAuthenticationConverter();
 
 	@Test
@@ -51,8 +52,7 @@ public class X509ClientCertificateAuthenticationConverterTests {
 	@Test
 	public void convertWhenEmptyX509CertificateThenReturnNull() {
 		MockHttpServletRequest request = new MockHttpServletRequest();
-		request.setAttribute("jakarta.servlet.request.X509Certificate",
-				new X509Certificate[0]);
+		request.setAttribute("jakarta.servlet.request.X509Certificate", new X509Certificate[0]);
 		Authentication authentication = this.converter.convert(request);
 		assertThat(authentication).isNull();
 	}
@@ -62,11 +62,10 @@ public class X509ClientCertificateAuthenticationConverterTests {
 		MockHttpServletRequest request = new MockHttpServletRequest();
 		request.setAttribute("jakarta.servlet.request.X509Certificate",
 				TestX509Certificates.DEMO_CLIENT_PKI_CERTIFICATE);
-		assertThatThrownBy(() -> this.converter.convert(request))
-				.isInstanceOf(OAuth2AuthenticationException.class)
-				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
-				.extracting("errorCode")
-				.isEqualTo(OAuth2ErrorCodes.INVALID_REQUEST);
+		assertThatThrownBy(() -> this.converter.convert(request)).isInstanceOf(OAuth2AuthenticationException.class)
+			.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+			.extracting("errorCode")
+			.isEqualTo(OAuth2ErrorCodes.INVALID_REQUEST);
 	}
 
 	@Test
@@ -76,11 +75,10 @@ public class X509ClientCertificateAuthenticationConverterTests {
 				TestX509Certificates.DEMO_CLIENT_PKI_CERTIFICATE);
 		request.addParameter(OAuth2ParameterNames.CLIENT_ID, "client-1");
 		request.addParameter(OAuth2ParameterNames.CLIENT_ID, "client-2");
-		assertThatThrownBy(() -> this.converter.convert(request))
-				.isInstanceOf(OAuth2AuthenticationException.class)
-				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
-				.extracting("errorCode")
-				.isEqualTo(OAuth2ErrorCodes.INVALID_REQUEST);
+		assertThatThrownBy(() -> this.converter.convert(request)).isInstanceOf(OAuth2AuthenticationException.class)
+			.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+			.extracting("errorCode")
+			.isEqualTo(OAuth2ErrorCodes.INVALID_REQUEST);
 	}
 
 	@Test
@@ -93,16 +91,16 @@ public class X509ClientCertificateAuthenticationConverterTests {
 		request.addParameter(OAuth2ParameterNames.CODE, "code");
 		request.addParameter("custom-param-1", "custom-value-1");
 		request.addParameter("custom-param-2", "custom-value-1", "custom-value-2");
-		OAuth2ClientAuthenticationToken authentication = (OAuth2ClientAuthenticationToken) this.converter.convert(request);
+		OAuth2ClientAuthenticationToken authentication = (OAuth2ClientAuthenticationToken) this.converter
+			.convert(request);
 		assertThat(authentication.getPrincipal()).isEqualTo("client-1");
 		assertThat(authentication.getCredentials()).isEqualTo(TestX509Certificates.DEMO_CLIENT_PKI_CERTIFICATE);
-		assertThat(authentication.getClientAuthenticationMethod()).isEqualTo(ClientAuthenticationMethod.TLS_CLIENT_AUTH);
-		assertThat(authentication.getAdditionalParameters())
-				.containsOnly(
-						entry(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.AUTHORIZATION_CODE.getValue()),
-						entry(OAuth2ParameterNames.CODE, "code"),
-						entry("custom-param-1", "custom-value-1"),
-						entry("custom-param-2", new String[] {"custom-value-1", "custom-value-2"}));
+		assertThat(authentication.getClientAuthenticationMethod())
+			.isEqualTo(ClientAuthenticationMethod.TLS_CLIENT_AUTH);
+		assertThat(authentication.getAdditionalParameters()).containsOnly(
+				entry(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.AUTHORIZATION_CODE.getValue()),
+				entry(OAuth2ParameterNames.CODE, "code"), entry("custom-param-1", "custom-value-1"),
+				entry("custom-param-2", new String[] { "custom-value-1", "custom-value-2" }));
 	}
 
 	@Test
@@ -115,16 +113,16 @@ public class X509ClientCertificateAuthenticationConverterTests {
 		request.addParameter(OAuth2ParameterNames.CODE, "code");
 		request.addParameter("custom-param-1", "custom-value-1");
 		request.addParameter("custom-param-2", "custom-value-1", "custom-value-2");
-		OAuth2ClientAuthenticationToken authentication = (OAuth2ClientAuthenticationToken) this.converter.convert(request);
+		OAuth2ClientAuthenticationToken authentication = (OAuth2ClientAuthenticationToken) this.converter
+			.convert(request);
 		assertThat(authentication.getPrincipal()).isEqualTo("client-1");
 		assertThat(authentication.getCredentials()).isEqualTo(TestX509Certificates.DEMO_CLIENT_SELF_SIGNED_CERTIFICATE);
-		assertThat(authentication.getClientAuthenticationMethod()).isEqualTo(ClientAuthenticationMethod.SELF_SIGNED_TLS_CLIENT_AUTH);
-		assertThat(authentication.getAdditionalParameters())
-				.containsOnly(
-						entry(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.AUTHORIZATION_CODE.getValue()),
-						entry(OAuth2ParameterNames.CODE, "code"),
-						entry("custom-param-1", "custom-value-1"),
-						entry("custom-param-2", new String[] {"custom-value-1", "custom-value-2"}));
+		assertThat(authentication.getClientAuthenticationMethod())
+			.isEqualTo(ClientAuthenticationMethod.SELF_SIGNED_TLS_CLIENT_AUTH);
+		assertThat(authentication.getAdditionalParameters()).containsOnly(
+				entry(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.AUTHORIZATION_CODE.getValue()),
+				entry(OAuth2ParameterNames.CODE, "code"), entry("custom-param-1", "custom-value-1"),
+				entry("custom-param-2", new String[] { "custom-value-1", "custom-value-2" }));
 	}
 
 }

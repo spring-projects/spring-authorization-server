@@ -208,10 +208,11 @@ public final class OidcUserInfoEndpointConfigurer extends AbstractOAuth2Configur
 
 	@Override
 	void init(HttpSecurity httpSecurity) {
-		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils.getAuthorizationServerSettings(httpSecurity);
-		String userInfoEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed() ?
-				withMultipleIssuersPattern(authorizationServerSettings.getOidcUserInfoEndpoint()) :
-				authorizationServerSettings.getOidcUserInfoEndpoint();
+		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils
+			.getAuthorizationServerSettings(httpSecurity);
+		String userInfoEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed()
+				? withMultipleIssuersPattern(authorizationServerSettings.getOidcUserInfoEndpoint())
+				: authorizationServerSettings.getOidcUserInfoEndpoint();
 		this.requestMatcher = new OrRequestMatcher(
 				new AntPathRequestMatcher(userInfoEndpointUri, HttpMethod.GET.name()),
 				new AntPathRequestMatcher(userInfoEndpointUri, HttpMethod.POST.name()));
@@ -231,11 +232,11 @@ public final class OidcUserInfoEndpointConfigurer extends AbstractOAuth2Configur
 		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils
 			.getAuthorizationServerSettings(httpSecurity);
 
-		String userInfoEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed() ?
-				withMultipleIssuersPattern(authorizationServerSettings.getOidcUserInfoEndpoint()) :
-				authorizationServerSettings.getOidcUserInfoEndpoint();
-		OidcUserInfoEndpointFilter oidcUserInfoEndpointFilter =
-				new OidcUserInfoEndpointFilter(authenticationManager, userInfoEndpointUri);
+		String userInfoEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed()
+				? withMultipleIssuersPattern(authorizationServerSettings.getOidcUserInfoEndpoint())
+				: authorizationServerSettings.getOidcUserInfoEndpoint();
+		OidcUserInfoEndpointFilter oidcUserInfoEndpointFilter = new OidcUserInfoEndpointFilter(authenticationManager,
+				userInfoEndpointUri);
 		List<AuthenticationConverter> authenticationConverters = createDefaultAuthenticationConverters();
 		if (!this.userInfoRequestConverters.isEmpty()) {
 			authenticationConverters.addAll(0, this.userInfoRequestConverters);

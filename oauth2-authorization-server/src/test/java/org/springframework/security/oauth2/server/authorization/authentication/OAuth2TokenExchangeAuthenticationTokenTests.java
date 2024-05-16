@@ -35,17 +35,27 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * @author Steve Riesenberg
  */
 public class OAuth2TokenExchangeAuthenticationTokenTests {
-	private static final Set<String> RESOURCES = Set.of("https://mydomain.com/resource1", "https://mydomain.com/resource2");
+
+	private static final Set<String> RESOURCES = Set.of("https://mydomain.com/resource1",
+			"https://mydomain.com/resource2");
+
 	private static final Set<String> AUDIENCES = Set.of("audience1", "audience2");
+
 	private static final String SUBJECT_TOKEN = "EfYu_0jEL";
+
 	private static final String ACTOR_TOKEN = "JlNE_xR1f";
+
 	private static final String ACCESS_TOKEN_TYPE_VALUE = "urn:ietf:params:oauth:token-type:access_token";
+
 	private static final String JWT_TOKEN_TYPE_VALUE = "urn:ietf:params:oauth:token-type:jwt";
 
 	private RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
-	private OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(
-			this.registeredClient, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, this.registeredClient.getClientSecret());
+
+	private OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(this.registeredClient,
+			ClientAuthenticationMethod.CLIENT_SECRET_BASIC, this.registeredClient.getClientSecret());
+
 	private Set<String> scopes = Collections.singleton("scope1");
+
 	private Map<String, Object> additionalParameters = Collections.singletonMap("param1", "value1");
 
 	@Test

@@ -146,8 +146,8 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 	@Test
 	public void setAuthorizationConsentRequiredWhenNullThenThrowIllegalArgumentException() {
 		assertThatThrownBy(() -> this.authenticationProvider.setAuthorizationConsentRequired(null))
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("authorizationConsentRequired cannot be null");
+			.isInstanceOf(IllegalArgumentException.class)
+			.hasMessage("authorizationConsentRequired cannot be null");
 	}
 
 	@Test
@@ -486,23 +486,24 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 	@Test
 	public void authenticateWhenCustomAuthorizationConsentRequiredThenUsed() {
 		@SuppressWarnings("unchecked")
-		Predicate<OAuth2AuthorizationCodeRequestAuthenticationContext> authorizationConsentRequired = mock(Predicate.class);
+		Predicate<OAuth2AuthorizationCodeRequestAuthenticationContext> authorizationConsentRequired = mock(
+				Predicate.class);
 		this.authenticationProvider.setAuthorizationConsentRequired(authorizationConsentRequired);
 
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
-				.thenReturn(registeredClient);
+			.thenReturn(registeredClient);
 
 		String redirectUri = registeredClient.getRedirectUris().toArray(new String[0])[1];
-		OAuth2AuthorizationCodeRequestAuthenticationToken authentication =
-				new OAuth2AuthorizationCodeRequestAuthenticationToken(
-						AUTHORIZATION_URI, registeredClient.getClientId(), principal,
-						redirectUri, STATE, registeredClient.getScopes(), null);
+		OAuth2AuthorizationCodeRequestAuthenticationToken authentication = new OAuth2AuthorizationCodeRequestAuthenticationToken(
+				AUTHORIZATION_URI, registeredClient.getClientId(), principal, redirectUri, STATE,
+				registeredClient.getScopes(), null);
 
-		OAuth2AuthorizationCodeRequestAuthenticationToken authenticationResult =
-				(OAuth2AuthorizationCodeRequestAuthenticationToken) this.authenticationProvider.authenticate(authentication);
+		OAuth2AuthorizationCodeRequestAuthenticationToken authenticationResult = (OAuth2AuthorizationCodeRequestAuthenticationToken) this.authenticationProvider
+			.authenticate(authentication);
 
-		assertAuthorizationCodeRequestWithAuthorizationCodeResult(registeredClient, authentication, authenticationResult);
+		assertAuthorizationCodeRequestWithAuthorizationCodeResult(registeredClient, authentication,
+				authenticationResult);
 
 		verify(authorizationConsentRequired).test(any());
 	}

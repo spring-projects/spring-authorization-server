@@ -387,7 +387,8 @@ public class OidcClientRegistrationTests {
 		when(authenticationProvider.authenticate(any())).thenThrow(new OAuth2AuthenticationException("error"));
 
 		this.mvc.perform(get(ISSUER.concat(DEFAULT_OIDC_CLIENT_REGISTRATION_ENDPOINT_URI))
-				.param(OAuth2ParameterNames.CLIENT_ID, "invalid").with(jwt()));
+			.param(OAuth2ParameterNames.CLIENT_ID, "invalid")
+			.with(jwt()));
 
 		verify(authenticationFailureHandler).onAuthenticationFailure(any(), any(), any());
 		verifyNoInteractions(authenticationSuccessHandler);
@@ -411,14 +412,16 @@ public class OidcClientRegistrationTests {
 
 		OidcClientRegistration clientRegistrationResponse = registerClient(clientRegistration);
 
-		this.mvc.perform(post(ISSUER.concat(DEFAULT_TOKEN_ENDPOINT_URI))
-						.param(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
-						.param(OAuth2ParameterNames.SCOPE, "scope1")
-						.with(httpBasic(clientRegistrationResponse.getClientId(), clientRegistrationResponse.getClientSecret())))
-				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.access_token").isNotEmpty())
-				.andExpect(jsonPath("$.scope").value("scope1"))
-				.andReturn();
+		this.mvc
+			.perform(post(ISSUER.concat(DEFAULT_TOKEN_ENDPOINT_URI))
+				.param(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
+				.param(OAuth2ParameterNames.SCOPE, "scope1")
+				.with(httpBasic(clientRegistrationResponse.getClientId(),
+						clientRegistrationResponse.getClientSecret())))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.access_token").isNotEmpty())
+			.andExpect(jsonPath("$.scope").value("scope1"))
+			.andReturn();
 	}
 
 	// gh-1344
@@ -445,12 +448,12 @@ public class OidcClientRegistrationTests {
 		Instant issuedAt = Instant.now();
 		Instant expiresAt = issuedAt.plus(1, ChronoUnit.HOURS);
 		JwtClaimsSet jwtClaimsSet = JwtClaimsSet.builder()
-				.issuer(clientRegistrationResponse.getClientId())
-				.subject(clientRegistrationResponse.getClientId())
-				.audience(Collections.singletonList(asUrl(ISSUER, this.authorizationServerSettings.getTokenEndpoint())))
-				.issuedAt(issuedAt)
-				.expiresAt(expiresAt)
-				.build();
+			.issuer(clientRegistrationResponse.getClientId())
+			.subject(clientRegistrationResponse.getClientId())
+			.audience(Collections.singletonList(asUrl(ISSUER, this.authorizationServerSettings.getTokenEndpoint())))
+			.issuedAt(issuedAt)
+			.expiresAt(expiresAt)
+			.build();
 
 		JWKSet jwkSet = new JWKSet(
 				TestJwks.jwk(new SecretKeySpec(clientRegistrationResponse.getClientSecret().getBytes(), "HS256"))
@@ -460,15 +463,17 @@ public class OidcClientRegistrationTests {
 
 		Jwt jwtAssertion = jwtClientAssertionEncoder.encode(JwtEncoderParameters.from(jwsHeader, jwtClaimsSet));
 
-		this.mvc.perform(post(ISSUER.concat(DEFAULT_TOKEN_ENDPOINT_URI))
-						.param(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
-						.param(OAuth2ParameterNames.SCOPE, "scope1")
-						.param(OAuth2ParameterNames.CLIENT_ASSERTION_TYPE, "urn:ietf:params:oauth:client-assertion-type:jwt-bearer")
-						.param(OAuth2ParameterNames.CLIENT_ASSERTION, jwtAssertion.getTokenValue())
-						.param(OAuth2ParameterNames.CLIENT_ID, clientRegistrationResponse.getClientId()))
-				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.access_token").isNotEmpty())
-				.andExpect(jsonPath("$.scope").value("scope1"));
+		this.mvc
+			.perform(post(ISSUER.concat(DEFAULT_TOKEN_ENDPOINT_URI))
+				.param(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
+				.param(OAuth2ParameterNames.SCOPE, "scope1")
+				.param(OAuth2ParameterNames.CLIENT_ASSERTION_TYPE,
+						"urn:ietf:params:oauth:client-assertion-type:jwt-bearer")
+				.param(OAuth2ParameterNames.CLIENT_ASSERTION, jwtAssertion.getTokenValue())
+				.param(OAuth2ParameterNames.CLIENT_ID, clientRegistrationResponse.getClientId()))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.access_token").isNotEmpty())
+			.andExpect(jsonPath("$.scope").value("scope1"));
 	}
 
 	@Test
@@ -533,7 +538,8 @@ public class OidcClientRegistrationTests {
 		// @formatter:on
 		Jwt jwtAssertion = jwtClientAssertionEncoder.encode(JwtEncoderParameters.from(jwsHeader, jwtClaimsSet));
 
-		MvcResult mvcResult = this.mvc.perform(post(ISSUER.concat(DEFAULT_TOKEN_ENDPOINT_URI))
+		MvcResult mvcResult = this.mvc
+			.perform(post(ISSUER.concat(DEFAULT_TOKEN_ENDPOINT_URI))
 				.param(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
 				.param(OAuth2ParameterNames.SCOPE, clientRegistrationScope)
 				.param(OAuth2ParameterNames.CLIENT_ASSERTION_TYPE,
@@ -553,8 +559,8 @@ public class OidcClientRegistrationTests {
 		httpHeaders.setBearerAuth(accessToken.getTokenValue());
 
 		// Register the client
-		mvcResult = this.mvc.perform(post(ISSUER.concat(DEFAULT_OIDC_CLIENT_REGISTRATION_ENDPOINT_URI))
-				.headers(httpHeaders)
+		mvcResult = this.mvc
+			.perform(post(ISSUER.concat(DEFAULT_OIDC_CLIENT_REGISTRATION_ENDPOINT_URI)).headers(httpHeaders)
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(getClientRegistrationRequestContent(clientRegistration)))
 			.andExpect(status().isCreated())
@@ -569,11 +575,11 @@ public class OidcClientRegistrationTests {
 		Instant issuedAt = Instant.now();
 		Instant expiresAt = issuedAt.plus(1, ChronoUnit.HOURS);
 		return JwtClaimsSet.builder()
-				.issuer(registeredClient.getClientId())
-				.subject(registeredClient.getClientId())
-				.audience(Collections.singletonList(asUrl(ISSUER, this.authorizationServerSettings.getTokenEndpoint())))
-				.issuedAt(issuedAt)
-				.expiresAt(expiresAt);
+			.issuer(registeredClient.getClientId())
+			.subject(registeredClient.getClientId())
+			.audience(Collections.singletonList(asUrl(ISSUER, this.authorizationServerSettings.getTokenEndpoint())))
+			.issuedAt(issuedAt)
+			.expiresAt(expiresAt);
 	}
 
 	private static String asUrl(String uri, String path) {
@@ -753,9 +759,7 @@ public class OidcClientRegistrationTests {
 
 		@Bean
 		AuthorizationServerSettings authorizationServerSettings() {
-			return AuthorizationServerSettings.builder()
-					.multipleIssuersAllowed(true)
-					.build();
+			return AuthorizationServerSettings.builder().multipleIssuersAllowed(true).build();
 		}
 
 		@Bean

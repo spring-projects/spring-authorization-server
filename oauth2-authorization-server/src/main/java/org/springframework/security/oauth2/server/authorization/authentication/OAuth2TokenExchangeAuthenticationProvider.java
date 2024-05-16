@@ -55,7 +55,8 @@ import org.springframework.util.StringUtils;
 import static org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthenticationProviderUtils.getAuthenticatedClientElseThrowInvalidClient;
 
 /**
- * An {@link AuthenticationProvider} implementation for the OAuth 2.0 Token Exchange Grant.
+ * An {@link AuthenticationProvider} implementation for the OAuth 2.0 Token Exchange
+ * Grant.
  *
  * @author Steve Riesenberg
  * @since 1.3
@@ -63,8 +64,10 @@ import static org.springframework.security.oauth2.server.authorization.authentic
  * @see OAuth2AccessTokenAuthenticationToken
  * @see OAuth2AuthorizationService
  * @see OAuth2TokenGenerator
- * @see <a target="_blank" href="https://datatracker.ietf.org/doc/html/rfc8693#section-1">Section 1 Introduction</a>
- * @see <a target="_blank" href="https://datatracker.ietf.org/doc/html/rfc8693#section-2.1">Section 2.1 Request</a>
+ * @see <a target="_blank" href=
+ * "https://datatracker.ietf.org/doc/html/rfc8693#section-1">Section 1 Introduction</a>
+ * @see <a target="_blank" href=
+ * "https://datatracker.ietf.org/doc/html/rfc8693#section-2.1">Section 2.1 Request</a>
  */
 public final class OAuth2TokenExchangeAuthenticationProvider implements AuthenticationProvider {
 
@@ -83,8 +86,8 @@ public final class OAuth2TokenExchangeAuthenticationProvider implements Authenti
 	private final OAuth2TokenGenerator<? extends OAuth2Token> tokenGenerator;
 
 	/**
-	 * Constructs an {@code OAuth2TokenExchangeAuthenticationProvider} using the provided parameters.
-	 *
+	 * Constructs an {@code OAuth2TokenExchangeAuthenticationProvider} using the provided
+	 * parameters.
 	 * @param authorizationService the authorization service
 	 * @param tokenGenerator the token generator
 	 */
@@ -98,11 +101,10 @@ public final class OAuth2TokenExchangeAuthenticationProvider implements Authenti
 
 	@Override
 	public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-		OAuth2TokenExchangeAuthenticationToken tokenExchangeAuthentication =
-			(OAuth2TokenExchangeAuthenticationToken) authentication;
+		OAuth2TokenExchangeAuthenticationToken tokenExchangeAuthentication = (OAuth2TokenExchangeAuthenticationToken) authentication;
 
-		OAuth2ClientAuthenticationToken clientPrincipal =
-			getAuthenticatedClientElseThrowInvalidClient(tokenExchangeAuthentication);
+		OAuth2ClientAuthenticationToken clientPrincipal = getAuthenticatedClientElseThrowInvalidClient(
+				tokenExchangeAuthentication);
 		RegisteredClient registeredClient = clientPrincipal.getRegisteredClient();
 
 		if (this.logger.isTraceEnabled()) {
@@ -113,13 +115,14 @@ public final class OAuth2TokenExchangeAuthenticationProvider implements Authenti
 			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.UNAUTHORIZED_CLIENT);
 		}
 
-		if (JWT_TOKEN_TYPE_VALUE.equals(tokenExchangeAuthentication.getRequestedTokenType()) &&
-				!OAuth2TokenFormat.SELF_CONTAINED.equals(registeredClient.getTokenSettings().getAccessTokenFormat())) {
+		if (JWT_TOKEN_TYPE_VALUE.equals(tokenExchangeAuthentication.getRequestedTokenType())
+				&& !OAuth2TokenFormat.SELF_CONTAINED
+					.equals(registeredClient.getTokenSettings().getAccessTokenFormat())) {
 			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_REQUEST);
 		}
 
-		OAuth2Authorization subjectAuthorization = this.authorizationService.findByToken(
-			tokenExchangeAuthentication.getSubjectToken(), OAuth2TokenType.ACCESS_TOKEN);
+		OAuth2Authorization subjectAuthorization = this.authorizationService
+			.findByToken(tokenExchangeAuthentication.getSubjectToken(), OAuth2TokenType.ACCESS_TOKEN);
 		if (subjectAuthorization == null) {
 			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_GRANT);
 		}
@@ -128,12 +131,13 @@ public final class OAuth2TokenExchangeAuthenticationProvider implements Authenti
 			this.logger.trace("Retrieved authorization with subject token");
 		}
 
-		OAuth2Authorization.Token<OAuth2Token> subjectToken = subjectAuthorization.getToken(
-				tokenExchangeAuthentication.getSubjectToken());
+		OAuth2Authorization.Token<OAuth2Token> subjectToken = subjectAuthorization
+			.getToken(tokenExchangeAuthentication.getSubjectToken());
 		if (!subjectToken.isActive()) {
 			// As per https://tools.ietf.org/html/rfc6749#section-5.2
 			// invalid_grant: The provided authorization grant (e.g., authorization code,
-			// resource owner credentials) or refresh token is invalid, expired, revoked [...].
+			// resource owner credentials) or refresh token is invalid, expired, revoked
+			// [...].
 			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_GRANT);
 		}
 
@@ -152,16 +156,15 @@ public final class OAuth2TokenExchangeAuthenticationProvider implements Authenti
 		// The may_act claim makes a statement that one party is authorized to
 		// become the actor and act on behalf of another party.
 		Map<String, Object> authorizedActorClaims = null;
-		if (subjectToken.getClaims() != null &&
-				subjectToken.getClaims().containsKey(MAY_ACT) &&
-				subjectToken.getClaims().get(MAY_ACT) instanceof Map<?, ?> mayAct) {
+		if (subjectToken.getClaims() != null && subjectToken.getClaims().containsKey(MAY_ACT)
+				&& subjectToken.getClaims().get(MAY_ACT) instanceof Map<?, ?> mayAct) {
 			authorizedActorClaims = (Map<String, Object>) mayAct;
 		}
 
 		OAuth2Authorization actorAuthorization = null;
 		if (StringUtils.hasText(tokenExchangeAuthentication.getActorToken())) {
-			actorAuthorization = this.authorizationService.findByToken(
-					tokenExchangeAuthentication.getActorToken(), OAuth2TokenType.ACCESS_TOKEN);
+			actorAuthorization = this.authorizationService.findByToken(tokenExchangeAuthentication.getActorToken(),
+					OAuth2TokenType.ACCESS_TOKEN);
 			if (actorAuthorization == null) {
 				throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_GRANT);
 			}
@@ -170,12 +173,14 @@ public final class OAuth2TokenExchangeAuthenticationProvider implements Authenti
 				this.logger.trace("Retrieved authorization with actor token");
 			}
 
-			OAuth2Authorization.Token<OAuth2Token> actorToken = actorAuthorization.getToken(
-					tokenExchangeAuthentication.getActorToken());
+			OAuth2Authorization.Token<OAuth2Token> actorToken = actorAuthorization
+				.getToken(tokenExchangeAuthentication.getActorToken());
 			if (!actorToken.isActive()) {
 				// As per https://tools.ietf.org/html/rfc6749#section-5.2
-				// invalid_grant: The provided authorization grant (e.g., authorization code,
-				// resource owner credentials) or refresh token is invalid, expired, revoked [...].
+				// invalid_grant: The provided authorization grant (e.g., authorization
+				// code,
+				// resource owner credentials) or refresh token is invalid, expired,
+				// revoked [...].
 				throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_GRANT);
 			}
 
@@ -187,14 +192,16 @@ public final class OAuth2TokenExchangeAuthenticationProvider implements Authenti
 				validateClaims(authorizedActorClaims, actorToken.getClaims(), OAuth2TokenClaimNames.ISS,
 						OAuth2TokenClaimNames.SUB);
 			}
-		} else if (authorizedActorClaims != null) {
+		}
+		else if (authorizedActorClaims != null) {
 			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_GRANT);
 		}
 
 		Set<String> authorizedScopes = Collections.emptySet();
 		if (!CollectionUtils.isEmpty(tokenExchangeAuthentication.getScopes())) {
 			authorizedScopes = validateRequestedScopes(registeredClient, tokenExchangeAuthentication.getScopes());
-		} else if (!CollectionUtils.isEmpty(subjectAuthorization.getAuthorizedScopes())) {
+		}
+		else if (!CollectionUtils.isEmpty(subjectAuthorization.getAuthorizedScopes())) {
 			authorizedScopes = validateRequestedScopes(registeredClient, subjectAuthorization.getAuthorizedScopes());
 		}
 
@@ -248,21 +255,21 @@ public final class OAuth2TokenExchangeAuthenticationProvider implements Authenti
 		}
 
 		Map<String, Object> additionalParameters = new HashMap<>();
-		additionalParameters.put(OAuth2ParameterNames.ISSUED_TOKEN_TYPE, tokenExchangeAuthentication.getRequestedTokenType());
+		additionalParameters.put(OAuth2ParameterNames.ISSUED_TOKEN_TYPE,
+				tokenExchangeAuthentication.getRequestedTokenType());
 
 		if (this.logger.isTraceEnabled()) {
 			this.logger.trace("Authenticated token request");
 		}
 
-		return new OAuth2AccessTokenAuthenticationToken(
-				registeredClient, clientPrincipal, accessToken, null, additionalParameters);
+		return new OAuth2AccessTokenAuthenticationToken(registeredClient, clientPrincipal, accessToken, null,
+				additionalParameters);
 	}
 
 	private static boolean isValidTokenType(String tokenType, OAuth2Authorization.Token<OAuth2Token> token) {
 		String tokenFormat = token.getMetadata(OAuth2TokenFormat.class.getName());
-		return ACCESS_TOKEN_TYPE_VALUE.equals(tokenType) ||
-				JWT_TOKEN_TYPE_VALUE.equals(tokenType) &&
-				OAuth2TokenFormat.SELF_CONTAINED.getValue().equals(tokenFormat);
+		return ACCESS_TOKEN_TYPE_VALUE.equals(tokenType) || JWT_TOKEN_TYPE_VALUE.equals(tokenType)
+				&& OAuth2TokenFormat.SELF_CONTAINED.getValue().equals(tokenFormat);
 	}
 
 	private static Set<String> validateRequestedScopes(RegisteredClient registeredClient, Set<String> requestedScopes) {
@@ -275,7 +282,8 @@ public final class OAuth2TokenExchangeAuthenticationProvider implements Authenti
 		return new LinkedHashSet<>(requestedScopes);
 	}
 
-	private static void validateClaims(Map<String, Object> expectedClaims, Map<String, Object> actualClaims, String... claimNames) {
+	private static void validateClaims(Map<String, Object> expectedClaims, Map<String, Object> actualClaims,
+			String... claimNames) {
 		if (actualClaims == null) {
 			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_GRANT);
 		}
@@ -287,7 +295,8 @@ public final class OAuth2TokenExchangeAuthenticationProvider implements Authenti
 		}
 	}
 
-	private static Authentication getPrincipal(OAuth2Authorization subjectAuthorization, OAuth2Authorization actorAuthorization) {
+	private static Authentication getPrincipal(OAuth2Authorization subjectAuthorization,
+			OAuth2Authorization actorAuthorization) {
 		Authentication subjectPrincipal = subjectAuthorization.getAttribute(Principal.class.getName());
 		if (actorAuthorization == null) {
 			if (subjectPrincipal instanceof OAuth2TokenExchangeCompositeAuthenticationToken compositeAuthenticationToken) {

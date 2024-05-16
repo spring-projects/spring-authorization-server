@@ -22,10 +22,16 @@ package org.springframework.security.oauth2.server.authorization;
  * @author Daniel Garnier-Moiroux
  * @author Joe Grandja
  * @since 0.1.1
- * @see <a target="_blank" href="https://tools.ietf.org/html/rfc8414#section-2">2. Authorization Server Metadata</a>
- * @see <a target="_blank" href="https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderMetadata">3. OpenID Provider Metadata</a>
- * @see <a target="_blank" href="https://www.rfc-editor.org/rfc/rfc8628.html#section-4">4. Device Authorization Grant Metadata</a>
- * @see <a target="_blank" href="https://datatracker.ietf.org/doc/html/rfc8705#section-3.3">3.3 Mutual-TLS Client Certificate-Bound Access Tokens Metadata</a>
+ * @see <a target="_blank" href="https://tools.ietf.org/html/rfc8414#section-2">2.
+ * Authorization Server Metadata</a>
+ * @see <a target="_blank" href=
+ * "https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderMetadata">3. OpenID
+ * Provider Metadata</a>
+ * @see <a target="_blank" href="https://www.rfc-editor.org/rfc/rfc8628.html#section-4">4.
+ * Device Authorization Grant Metadata</a>
+ * @see <a target="_blank" href=
+ * "https://datatracker.ietf.org/doc/html/rfc8705#section-3.3">3.3 Mutual-TLS Client
+ * Certificate-Bound Access Tokens Metadata</a>
  */
 public class OAuth2AuthorizationServerMetadataClaimNames {
 
@@ -118,7 +124,8 @@ public class OAuth2AuthorizationServerMetadataClaimNames {
 	public static final String CODE_CHALLENGE_METHODS_SUPPORTED = "code_challenge_methods_supported";
 
 	/**
-	 * {@code tls_client_certificate_bound_access_tokens} - {@code true} to indicate support for mutual-TLS client certificate-bound access tokens
+	 * {@code tls_client_certificate_bound_access_tokens} - {@code true} to indicate
+	 * support for mutual-TLS client certificate-bound access tokens
 	 * @since 1.3
 	 */
 	public static final String TLS_CLIENT_CERTIFICATE_BOUND_ACCESS_TOKENS = "tls_client_certificate_bound_access_tokens";

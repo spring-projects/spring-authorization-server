@@ -150,14 +150,14 @@ class OAuth2AuthorizationServerBeanRegistrationAotProcessor implements BeanRegis
 					loadClass("org.springframework.security.jackson2.UserMixin"));
 			this.reflectionHintsRegistrar.registerReflectionHints(hints.reflection(),
 					loadClass("org.springframework.security.jackson2.SimpleGrantedAuthorityMixin"));
-			this.reflectionHintsRegistrar.registerReflectionHints(hints.reflection(),
-					loadClass("org.springframework.security.oauth2.server.authorization.jackson2.OAuth2ActorAuthenticationTokenMixin"));
-			this.reflectionHintsRegistrar.registerReflectionHints(hints.reflection(),
-					loadClass("org.springframework.security.oauth2.server.authorization.jackson2.OAuth2AuthorizationRequestMixin"));
-			this.reflectionHintsRegistrar.registerReflectionHints(hints.reflection(),
-					loadClass("org.springframework.security.oauth2.server.authorization.jackson2.OAuth2CompositeAuthenticationTokenMixin"));
-			this.reflectionHintsRegistrar.registerReflectionHints(hints.reflection(),
-					loadClass("org.springframework.security.oauth2.server.authorization.jackson2.OAuth2TokenFormatMixin"));
+			this.reflectionHintsRegistrar.registerReflectionHints(hints.reflection(), loadClass(
+					"org.springframework.security.oauth2.server.authorization.jackson2.OAuth2ActorAuthenticationTokenMixin"));
+			this.reflectionHintsRegistrar.registerReflectionHints(hints.reflection(), loadClass(
+					"org.springframework.security.oauth2.server.authorization.jackson2.OAuth2AuthorizationRequestMixin"));
+			this.reflectionHintsRegistrar.registerReflectionHints(hints.reflection(), loadClass(
+					"org.springframework.security.oauth2.server.authorization.jackson2.OAuth2CompositeAuthenticationTokenMixin"));
+			this.reflectionHintsRegistrar.registerReflectionHints(hints.reflection(), loadClass(
+					"org.springframework.security.oauth2.server.authorization.jackson2.OAuth2TokenFormatMixin"));
 
 			// Check if Spring Security OAuth2 Client is on classpath
 			if (ClassUtils.isPresent("org.springframework.security.oauth2.client.registration.ClientRegistration",

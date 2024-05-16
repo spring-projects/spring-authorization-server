@@ -81,10 +81,11 @@ public final class ClientSettings extends AbstractSettings {
 	}
 
 	/**
-	 * Returns the expected subject distinguished name associated to the client {@code X509Certificate}
-	 * received during client authentication when using the {@code tls_client_auth} method.
-	 *
-	 * @return the expected subject distinguished name associated to the client {@code X509Certificate} received during client authentication
+	 * Returns the expected subject distinguished name associated to the client
+	 * {@code X509Certificate} received during client authentication when using the
+	 * {@code tls_client_auth} method.
+	 * @return the expected subject distinguished name associated to the client
+	 * {@code X509Certificate} received during client authentication
 	 * @since 1.3
 	 */
 	public String getX509CertificateSubjectDN() {
@@ -168,10 +169,12 @@ public final class ClientSettings extends AbstractSettings {
 		}
 
 		/**
-		 * Sets the expected subject distinguished name associated to the client {@code X509Certificate}
-		 * received during client authentication when using the {@code tls_client_auth} method.
-		 *
-		 * @param x509CertificateSubjectDN the expected subject distinguished name associated to the client {@code X509Certificate} received during client authentication		 * @return the {@link Builder} for further configuration
+		 * Sets the expected subject distinguished name associated to the client
+		 * {@code X509Certificate} received during client authentication when using the
+		 * {@code tls_client_auth} method.
+		 * @param x509CertificateSubjectDN the expected subject distinguished name
+		 * associated to the client {@code X509Certificate} received during client
+		 * authentication * @return the {@link Builder} for further configuration
 		 * @return the {@link Builder} for further configuration
 		 * @since 1.3
 		 */

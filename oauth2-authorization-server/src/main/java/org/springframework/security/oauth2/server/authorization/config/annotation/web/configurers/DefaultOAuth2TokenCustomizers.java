@@ -54,13 +54,14 @@ final class DefaultOAuth2TokenCustomizers {
 
 	private static void customize(OAuth2TokenContext tokenContext, Map<String, Object> claims) {
 		// Add 'cnf' claim for Mutual-TLS Client Certificate-Bound Access Tokens
-		if (OAuth2TokenType.ACCESS_TOKEN.equals(tokenContext.getTokenType()) &&
-				tokenContext.getAuthorizationGrant() != null &&
-				tokenContext.getAuthorizationGrant().getPrincipal() instanceof OAuth2ClientAuthenticationToken clientAuthentication) {
+		if (OAuth2TokenType.ACCESS_TOKEN.equals(tokenContext.getTokenType())
+				&& tokenContext.getAuthorizationGrant() != null && tokenContext.getAuthorizationGrant()
+					.getPrincipal() instanceof OAuth2ClientAuthenticationToken clientAuthentication) {
 
-			if ((ClientAuthenticationMethod.TLS_CLIENT_AUTH.equals(clientAuthentication.getClientAuthenticationMethod()) ||
-					ClientAuthenticationMethod.SELF_SIGNED_TLS_CLIENT_AUTH.equals(clientAuthentication.getClientAuthenticationMethod())) &&
-					tokenContext.getRegisteredClient().getTokenSettings().isX509CertificateBoundAccessTokens()) {
+			if ((ClientAuthenticationMethod.TLS_CLIENT_AUTH.equals(clientAuthentication.getClientAuthenticationMethod())
+					|| ClientAuthenticationMethod.SELF_SIGNED_TLS_CLIENT_AUTH
+						.equals(clientAuthentication.getClientAuthenticationMethod()))
+					&& tokenContext.getRegisteredClient().getTokenSettings().isX509CertificateBoundAccessTokens()) {
 
 				X509Certificate[] clientCertificateChain = (X509Certificate[]) clientAuthentication.getCredentials();
 				try {
@@ -68,7 +69,8 @@ final class DefaultOAuth2TokenCustomizers {
 					Map<String, Object> x5tClaim = new HashMap<>();
 					x5tClaim.put("x5t#S256", sha256Thumbprint);
 					claims.put("cnf", x5tClaim);
-				} catch (Exception ex) {
+				}
+				catch (Exception ex) {
 					OAuth2Error error = new OAuth2Error(OAuth2ErrorCodes.SERVER_ERROR,
 							"Failed to compute SHA-256 Thumbprint for client X509Certificate.", null);
 					throw new OAuth2AuthenticationException(error, ex);
@@ -77,8 +79,10 @@ final class DefaultOAuth2TokenCustomizers {
 		}
 
 		// Add 'act' claim for delegation use case of Token Exchange Grant.
-		// If more than one actor is present, we create a chain of delegation by nesting "act" claims.
-		if (tokenContext.getPrincipal() instanceof OAuth2TokenExchangeCompositeAuthenticationToken compositeAuthenticationToken) {
+		// If more than one actor is present, we create a chain of delegation by nesting
+		// "act" claims.
+		if (tokenContext
+			.getPrincipal() instanceof OAuth2TokenExchangeCompositeAuthenticationToken compositeAuthenticationToken) {
 			Map<String, Object> currentClaims = claims;
 			for (OAuth2TokenExchangeActor actor : compositeAuthenticationToken.getActors()) {
 				Map<String, Object> actorClaims = actor.getClaims();

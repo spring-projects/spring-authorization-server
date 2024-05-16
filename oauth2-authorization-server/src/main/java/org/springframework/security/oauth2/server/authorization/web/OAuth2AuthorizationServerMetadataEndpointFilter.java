@@ -61,9 +61,12 @@ public final class OAuth2AuthorizationServerMetadataEndpointFilter extends OnceP
 	private static final String DEFAULT_OAUTH2_AUTHORIZATION_SERVER_METADATA_ENDPOINT_URI = "/.well-known/oauth-authorization-server";
 
 	private final RequestMatcher requestMatcher = createRequestMatcher();
-	private final OAuth2AuthorizationServerMetadataHttpMessageConverter authorizationServerMetadataHttpMessageConverter =
-			new OAuth2AuthorizationServerMetadataHttpMessageConverter();
-	private Consumer<OAuth2AuthorizationServerMetadata.Builder> authorizationServerMetadataCustomizer = (authorizationServerMetadata) -> {};
+
+	private final OAuth2AuthorizationServerMetadataHttpMessageConverter authorizationServerMetadataHttpMessageConverter = new OAuth2AuthorizationServerMetadataHttpMessageConverter();
+
+	private Consumer<OAuth2AuthorizationServerMetadata.Builder> authorizationServerMetadataCustomizer = (
+			authorizationServerMetadata) -> {
+	};
 
 	/**
 	 * Sets the {@code Consumer} providing access to the
@@ -93,25 +96,26 @@ public final class OAuth2AuthorizationServerMetadataEndpointFilter extends OnceP
 		AuthorizationServerSettings authorizationServerSettings = authorizationServerContext
 			.getAuthorizationServerSettings();
 
-		OAuth2AuthorizationServerMetadata.Builder authorizationServerMetadata = OAuth2AuthorizationServerMetadata.builder()
-				.issuer(issuer)
-				.authorizationEndpoint(asUrl(issuer, authorizationServerSettings.getAuthorizationEndpoint()))
-				.deviceAuthorizationEndpoint(asUrl(issuer, authorizationServerSettings.getDeviceAuthorizationEndpoint()))
-				.tokenEndpoint(asUrl(issuer, authorizationServerSettings.getTokenEndpoint()))
-				.tokenEndpointAuthenticationMethods(clientAuthenticationMethods())
-				.jwkSetUrl(asUrl(issuer, authorizationServerSettings.getJwkSetEndpoint()))
-				.responseType(OAuth2AuthorizationResponseType.CODE.getValue())
-				.grantType(AuthorizationGrantType.AUTHORIZATION_CODE.getValue())
-				.grantType(AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
-				.grantType(AuthorizationGrantType.REFRESH_TOKEN.getValue())
-				.grantType(AuthorizationGrantType.DEVICE_CODE.getValue())
-				.grantType(AuthorizationGrantType.TOKEN_EXCHANGE.getValue())
-				.tokenRevocationEndpoint(asUrl(issuer, authorizationServerSettings.getTokenRevocationEndpoint()))
-				.tokenRevocationEndpointAuthenticationMethods(clientAuthenticationMethods())
-				.tokenIntrospectionEndpoint(asUrl(issuer, authorizationServerSettings.getTokenIntrospectionEndpoint()))
-				.tokenIntrospectionEndpointAuthenticationMethods(clientAuthenticationMethods())
-				.codeChallengeMethod("S256")
-				.tlsClientCertificateBoundAccessTokens(true);
+		OAuth2AuthorizationServerMetadata.Builder authorizationServerMetadata = OAuth2AuthorizationServerMetadata
+			.builder()
+			.issuer(issuer)
+			.authorizationEndpoint(asUrl(issuer, authorizationServerSettings.getAuthorizationEndpoint()))
+			.deviceAuthorizationEndpoint(asUrl(issuer, authorizationServerSettings.getDeviceAuthorizationEndpoint()))
+			.tokenEndpoint(asUrl(issuer, authorizationServerSettings.getTokenEndpoint()))
+			.tokenEndpointAuthenticationMethods(clientAuthenticationMethods())
+			.jwkSetUrl(asUrl(issuer, authorizationServerSettings.getJwkSetEndpoint()))
+			.responseType(OAuth2AuthorizationResponseType.CODE.getValue())
+			.grantType(AuthorizationGrantType.AUTHORIZATION_CODE.getValue())
+			.grantType(AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
+			.grantType(AuthorizationGrantType.REFRESH_TOKEN.getValue())
+			.grantType(AuthorizationGrantType.DEVICE_CODE.getValue())
+			.grantType(AuthorizationGrantType.TOKEN_EXCHANGE.getValue())
+			.tokenRevocationEndpoint(asUrl(issuer, authorizationServerSettings.getTokenRevocationEndpoint()))
+			.tokenRevocationEndpointAuthenticationMethods(clientAuthenticationMethods())
+			.tokenIntrospectionEndpoint(asUrl(issuer, authorizationServerSettings.getTokenIntrospectionEndpoint()))
+			.tokenIntrospectionEndpointAuthenticationMethods(clientAuthenticationMethods())
+			.codeChallengeMethod("S256")
+			.tlsClientCertificateBoundAccessTokens(true);
 
 		this.authorizationServerMetadataCustomizer.accept(authorizationServerMetadata);
 
@@ -125,10 +129,10 @@ public final class OAuth2AuthorizationServerMetadataEndpointFilter extends OnceP
 				DEFAULT_OAUTH2_AUTHORIZATION_SERVER_METADATA_ENDPOINT_URI, HttpMethod.GET.name());
 		final RequestMatcher multipleIssuersRequestMatcher = new AntPathRequestMatcher(
 				DEFAULT_OAUTH2_AUTHORIZATION_SERVER_METADATA_ENDPOINT_URI + "/**", HttpMethod.GET.name());
-		return (request) ->
-				AuthorizationServerContextHolder.getContext().getAuthorizationServerSettings().isMultipleIssuersAllowed() ?
-						multipleIssuersRequestMatcher.matches(request) :
-						defaultRequestMatcher.matches(request);
+		return (request) -> AuthorizationServerContextHolder.getContext()
+			.getAuthorizationServerSettings()
+			.isMultipleIssuersAllowed() ? multipleIssuersRequestMatcher.matches(request)
+					: defaultRequestMatcher.matches(request);
 	}
 
 	private static Consumer<List<String>> clientAuthenticationMethods() {

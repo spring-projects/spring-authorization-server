@@ -25,8 +25,9 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 import org.springframework.util.Assert;
 
 /**
- * An {@link OAuth2AuthenticationContext} that holds an {@link OAuth2ClientAuthenticationToken} and additional information
- * and is used when validating an OAuth 2.0 Client Authentication.
+ * An {@link OAuth2AuthenticationContext} that holds an
+ * {@link OAuth2ClientAuthenticationToken} and additional information and is used when
+ * validating an OAuth 2.0 Client Authentication.
  *
  * @author Joe Grandja
  * @since 1.3
@@ -35,6 +36,7 @@ import org.springframework.util.Assert;
  * @see X509ClientCertificateAuthenticationProvider#setCertificateVerifier(Consumer)
  */
 public final class OAuth2ClientAuthenticationContext implements OAuth2AuthenticationContext {
+
 	private final Map<Object, Object> context;
 
 	private OAuth2ClientAuthenticationContext(Map<Object, Object> context) {
@@ -56,7 +58,6 @@ public final class OAuth2ClientAuthenticationContext implements OAuth2Authentica
 
 	/**
 	 * Returns the {@link RegisteredClient registered client}.
-	 *
 	 * @return the {@link RegisteredClient}
 	 */
 	public RegisteredClient getRegisteredClient() {
@@ -64,8 +65,8 @@ public final class OAuth2ClientAuthenticationContext implements OAuth2Authentica
 	}
 
 	/**
-	 * Constructs a new {@link Builder} with the provided {@link OAuth2ClientAuthenticationToken}.
-	 *
+	 * Constructs a new {@link Builder} with the provided
+	 * {@link OAuth2ClientAuthenticationToken}.
 	 * @param authentication the {@link OAuth2ClientAuthenticationToken}
 	 * @return the {@link Builder}
 	 */
@@ -84,7 +85,6 @@ public final class OAuth2ClientAuthenticationContext implements OAuth2Authentica
 
 		/**
 		 * Sets the {@link RegisteredClient registered client}.
-		 *
 		 * @param registeredClient the {@link RegisteredClient}
 		 * @return the {@link Builder} for further configuration
 		 */
@@ -94,7 +94,6 @@ public final class OAuth2ClientAuthenticationContext implements OAuth2Authentica
 
 		/**
 		 * Builds a new {@link OAuth2ClientAuthenticationContext}.
-		 *
 		 * @return the {@link OAuth2ClientAuthenticationContext}
 		 */
 		public OAuth2ClientAuthenticationContext build() {

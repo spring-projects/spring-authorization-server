@@ -52,15 +52,20 @@ import org.springframework.web.client.RestOperations;
 import org.springframework.web.client.RestTemplate;
 
 /**
- * The default {@code X509Certificate} verifier for the {@code self_signed_tls_client_auth} authentication method.
+ * The default {@code X509Certificate} verifier for the
+ * {@code self_signed_tls_client_auth} authentication method.
  *
  * @author Joe Grandja
  * @since 1.3
  * @see X509ClientCertificateAuthenticationProvider#setCertificateVerifier(Consumer)
  */
 final class X509SelfSignedCertificateVerifier implements Consumer<OAuth2ClientAuthenticationContext> {
+
 	private static final String ERROR_URI = "https://datatracker.ietf.org/doc/html/rfc6749#section-3.2.1";
-	private static final JWKMatcher HAS_X509_CERT_CHAIN_MATCHER = new JWKMatcher.Builder().hasX509CertChain(true).build();
+
+	private static final JWKMatcher HAS_X509_CERT_CHAIN_MATCHER = new JWKMatcher.Builder().hasX509CertChain(true)
+		.build();
+
 	private final Function<RegisteredClient, JWKSet> jwkSetSupplier = new JwkSetSupplier();
 
 	@Override
@@ -98,17 +103,17 @@ final class X509SelfSignedCertificateVerifier implements Consumer<OAuth2ClientAu
 	}
 
 	private static void throwInvalidClient(String parameterName, Throwable cause) {
-		OAuth2Error error = new OAuth2Error(
-				OAuth2ErrorCodes.INVALID_CLIENT,
-				"Client authentication failed: " + parameterName,
-				ERROR_URI
-		);
+		OAuth2Error error = new OAuth2Error(OAuth2ErrorCodes.INVALID_CLIENT,
+				"Client authentication failed: " + parameterName, ERROR_URI);
 		throw new OAuth2AuthenticationException(error, error.toString(), cause);
 	}
 
 	private static class JwkSetSupplier implements Function<RegisteredClient, JWKSet> {
+
 		private static final MediaType APPLICATION_JWK_SET_JSON = new MediaType("application", "jwk-set+json");
+
 		private final RestOperations restOperations;
+
 		private final Map<String, Supplier<JWKSet>> jwkSets = new ConcurrentHashMap<>();
 
 		private JwkSetSupplier() {
@@ -120,13 +125,12 @@ final class X509SelfSignedCertificateVerifier implements Consumer<OAuth2ClientAu
 
 		@Override
 		public JWKSet apply(RegisteredClient registeredClient) {
-			Supplier<JWKSet> jwkSetSupplier = this.jwkSets.computeIfAbsent(
-					registeredClient.getId(), (key) -> {
-						if (!StringUtils.hasText(registeredClient.getClientSettings().getJwkSetUrl())) {
-							throwInvalidClient("client_jwk_set_url");
-						}
-						return new JwkSetHolder(registeredClient.getClientSettings().getJwkSetUrl());
-					});
+			Supplier<JWKSet> jwkSetSupplier = this.jwkSets.computeIfAbsent(registeredClient.getId(), (key) -> {
+				if (!StringUtils.hasText(registeredClient.getClientSettings().getJwkSetUrl())) {
+					throwInvalidClient("client_jwk_set_url");
+				}
+				return new JwkSetHolder(registeredClient.getClientSettings().getJwkSetUrl());
+			});
 			return jwkSetSupplier.get();
 		}
 
@@ -134,7 +138,8 @@ final class X509SelfSignedCertificateVerifier implements Consumer<OAuth2ClientAu
 			URI jwkSetUri = null;
 			try {
 				jwkSetUri = new URI(jwkSetUrl);
-			} catch (URISyntaxException ex) {
+			}
+			catch (URISyntaxException ex) {
 				throwInvalidClient("jwk_set_uri", ex);
 			}
 
@@ -144,7 +149,8 @@ final class X509SelfSignedCertificateVerifier implements Consumer<OAuth2ClientAu
 			ResponseEntity<String> response = null;
 			try {
 				response = this.restOperations.exchange(request, String.class);
-			} catch (Exception ex) {
+			}
+			catch (Exception ex) {
 				throwInvalidClient("jwk_set_response_error", ex);
 			}
 			if (response.getStatusCode().value() != 200) {
@@ -154,7 +160,8 @@ final class X509SelfSignedCertificateVerifier implements Consumer<OAuth2ClientAu
 			JWKSet jwkSet = null;
 			try {
 				jwkSet = JWKSet.parse(response.getBody());
-			} catch (ParseException ex) {
+			}
+			catch (ParseException ex) {
 				throwInvalidClient("jwk_set_response_body", ex);
 			}
 
@@ -162,10 +169,15 @@ final class X509SelfSignedCertificateVerifier implements Consumer<OAuth2ClientAu
 		}
 
 		private class JwkSetHolder implements Supplier<JWKSet> {
+
 			private final ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock();
+
 			private final Clock clock = Clock.systemUTC();
+
 			private final String jwkSetUrl;
+
 			private JWKSet jwkSet;
+
 			private Instant lastUpdatedAt;
 
 			private JwkSetHolder(String jwkSetUrl) {
@@ -184,22 +196,24 @@ final class X509SelfSignedCertificateVerifier implements Consumer<OAuth2ClientAu
 							this.lastUpdatedAt = Instant.now();
 						}
 						this.rwLock.readLock().lock();
-					} finally {
+					}
+					finally {
 						this.rwLock.writeLock().unlock();
 					}
 				}
 
 				try {
 					return this.jwkSet;
-				} finally {
+				}
+				finally {
 					this.rwLock.readLock().unlock();
 				}
 			}
 
 			private boolean shouldRefresh() {
 				// Refresh every 5 minutes
-				return (this.jwkSet == null ||
-						this.clock.instant().isAfter(this.lastUpdatedAt.plus(5, ChronoUnit.MINUTES)));
+				return (this.jwkSet == null
+						|| this.clock.instant().isAfter(this.lastUpdatedAt.plus(5, ChronoUnit.MINUTES)));
 			}
 
 		}

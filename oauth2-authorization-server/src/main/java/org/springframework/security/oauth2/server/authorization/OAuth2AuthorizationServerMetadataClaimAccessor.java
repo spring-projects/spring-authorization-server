@@ -30,10 +30,16 @@ import org.springframework.security.oauth2.core.ClaimAccessor;
  * @since 0.1.1
  * @see ClaimAccessor
  * @see OAuth2AuthorizationServerMetadataClaimNames
- * @see <a target="_blank" href="https://tools.ietf.org/html/rfc8414#section-2">2. Authorization Server Metadata</a>
- * @see <a target="_blank" href="https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderMetadata">3. OpenID Provider Metadata</a>
- * @see <a target="_blank" href="https://www.rfc-editor.org/rfc/rfc8628.html#section-4">4. Device Authorization Grant Metadata</a>
- * @see <a target="_blank" href="https://datatracker.ietf.org/doc/html/rfc8705#section-3.3">3.3 Mutual-TLS Client Certificate-Bound Access Tokens Metadata</a>
+ * @see <a target="_blank" href="https://tools.ietf.org/html/rfc8414#section-2">2.
+ * Authorization Server Metadata</a>
+ * @see <a target="_blank" href=
+ * "https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderMetadata">3. OpenID
+ * Provider Metadata</a>
+ * @see <a target="_blank" href="https://www.rfc-editor.org/rfc/rfc8628.html#section-4">4.
+ * Device Authorization Grant Metadata</a>
+ * @see <a target="_blank" href=
+ * "https://datatracker.ietf.org/doc/html/rfc8705#section-3.3">3.3 Mutual-TLS Client
+ * Certificate-Bound Access Tokens Metadata</a>
  */
 public interface OAuth2AuthorizationServerMetadataClaimAccessor extends ClaimAccessor {
 
@@ -176,13 +182,15 @@ public interface OAuth2AuthorizationServerMetadataClaimAccessor extends ClaimAcc
 	}
 
 	/**
-	 * Returns {@code true} to indicate support for mutual-TLS client certificate-bound access tokens {@code (tls_client_certificate_bound_access_tokens)}.
-	 *
-	 * @return {@code true} to indicate support for mutual-TLS client certificate-bound access tokens, {@code false} otherwise
+	 * Returns {@code true} to indicate support for mutual-TLS client certificate-bound
+	 * access tokens {@code (tls_client_certificate_bound_access_tokens)}.
+	 * @return {@code true} to indicate support for mutual-TLS client certificate-bound
+	 * access tokens, {@code false} otherwise
 	 * @since 1.3
 	 */
 	default boolean isTlsClientCertificateBoundAccessTokens() {
-		return Boolean.TRUE.equals(getClaimAsBoolean(OAuth2AuthorizationServerMetadataClaimNames.TLS_CLIENT_CERTIFICATE_BOUND_ACCESS_TOKENS));
+		return Boolean.TRUE.equals(getClaimAsBoolean(
+				OAuth2AuthorizationServerMetadataClaimNames.TLS_CLIENT_CERTIFICATE_BOUND_ACCESS_TOKENS));
 	}
 
 }

@@ -28,8 +28,10 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 import org.springframework.util.Assert;
 
 /**
- * An {@link OAuth2AuthenticationContext} that holds an {@link OAuth2AuthorizationCodeRequestAuthenticationToken} and additional information
- * and is used when validating the OAuth 2.0 Authorization Request parameters, as well as, determining if authorization consent is required.
+ * An {@link OAuth2AuthenticationContext} that holds an
+ * {@link OAuth2AuthorizationCodeRequestAuthenticationToken} and additional information
+ * and is used when validating the OAuth 2.0 Authorization Request parameters, as well as,
+ * determining if authorization consent is required.
  *
  * @author Joe Grandja
  * @since 0.4.0
@@ -69,7 +71,6 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationContext implement
 
 	/**
 	 * Returns the {@link OAuth2AuthorizationRequest authorization request}.
-	 *
 	 * @return the {@link OAuth2AuthorizationRequest}
 	 * @since 1.3
 	 */
@@ -80,7 +81,6 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationContext implement
 
 	/**
 	 * Returns the {@link OAuth2AuthorizationConsent authorization consent}.
-	 *
 	 * @return the {@link OAuth2AuthorizationConsent}
 	 * @since 1.3
 	 */
@@ -89,10 +89,9 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationContext implement
 		return get(OAuth2AuthorizationConsent.class);
 	}
 
-
 	/**
-	 * Constructs a new {@link Builder} with the provided {@link OAuth2AuthorizationCodeRequestAuthenticationToken}.
-	 *
+	 * Constructs a new {@link Builder} with the provided
+	 * {@link OAuth2AuthorizationCodeRequestAuthenticationToken}.
 	 * @param authentication the {@link OAuth2AuthorizationCodeRequestAuthenticationToken}
 	 * @return the {@link Builder}
 	 */
@@ -121,7 +120,6 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationContext implement
 
 		/**
 		 * Sets the {@link OAuth2AuthorizationRequest authorization request}.
-		 *
 		 * @param authorizationRequest the {@link OAuth2AuthorizationRequest}
 		 * @return the {@link Builder} for further configuration
 		 * @since 1.3
@@ -132,7 +130,6 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationContext implement
 
 		/**
 		 * Sets the {@link OAuth2AuthorizationConsent authorization consent}.
-		 *
 		 * @param authorizationConsent the {@link OAuth2AuthorizationConsent}
 		 * @return the {@link Builder} for further configuration
 		 * @since 1.3

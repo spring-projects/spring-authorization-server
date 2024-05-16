@@ -65,18 +65,27 @@ import static org.mockito.Mockito.when;
  * @author Joe Grandja
  */
 public class X509ClientCertificateAuthenticationProviderTests {
-	// See RFC 7636: Appendix B.  Example for the S256 code_challenge_method
+
+	// See RFC 7636: Appendix B. Example for the S256 code_challenge_method
 	// https://tools.ietf.org/html/rfc7636#appendix-B
 	private static final String S256_CODE_VERIFIER = "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk";
+
 	private static final String S256_CODE_CHALLENGE = "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM";
 
 	private static final String AUTHORIZATION_CODE = "code";
+
 	private static final OAuth2TokenType AUTHORIZATION_CODE_TOKEN_TYPE = new OAuth2TokenType(OAuth2ParameterNames.CODE);
+
 	private JWKSet selfSignedCertificateJwkSet;
+
 	private MockWebServer server;
+
 	private String clientJwkSetUrl;
+
 	private RegisteredClientRepository registeredClientRepository;
+
 	private OAuth2AuthorizationService authorizationService;
+
 	private X509ClientCertificateAuthenticationProvider authenticationProvider;
 
 	@BeforeEach
@@ -102,8 +111,8 @@ public class X509ClientCertificateAuthenticationProviderTests {
 
 		this.registeredClientRepository = mock(RegisteredClientRepository.class);
 		this.authorizationService = mock(OAuth2AuthorizationService.class);
-		this.authenticationProvider = new X509ClientCertificateAuthenticationProvider(
-				this.registeredClientRepository, this.authorizationService);
+		this.authenticationProvider = new X509ClientCertificateAuthenticationProvider(this.registeredClientRepository,
+				this.authorizationService);
 	}
 
 	@AfterEach
@@ -114,22 +123,22 @@ public class X509ClientCertificateAuthenticationProviderTests {
 	@Test
 	public void constructorWhenRegisteredClientRepositoryNullThenThrowIllegalArgumentException() {
 		assertThatThrownBy(() -> new X509ClientCertificateAuthenticationProvider(null, this.authorizationService))
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("registeredClientRepository cannot be null");
+			.isInstanceOf(IllegalArgumentException.class)
+			.hasMessage("registeredClientRepository cannot be null");
 	}
 
 	@Test
 	public void constructorWhenAuthorizationServiceNullThenThrowIllegalArgumentException() {
 		assertThatThrownBy(() -> new X509ClientCertificateAuthenticationProvider(this.registeredClientRepository, null))
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("authorizationService cannot be null");
+			.isInstanceOf(IllegalArgumentException.class)
+			.hasMessage("authorizationService cannot be null");
 	}
 
 	@Test
 	public void setCertificateVerifierWhenNullThenThrowIllegalArgumentException() {
 		assertThatThrownBy(() -> this.authenticationProvider.setCertificateVerifier(null))
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("certificateVerifier cannot be null");
+			.isInstanceOf(IllegalArgumentException.class)
+			.hasMessage("certificateVerifier cannot be null");
 	}
 
 	@Test
@@ -145,36 +154,36 @@ public class X509ClientCertificateAuthenticationProviderTests {
 				.build();
 		// @formatter:on
 		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
-				.thenReturn(registeredClient);
+			.thenReturn(registeredClient);
 
 		OAuth2ClientAuthenticationToken authentication = new OAuth2ClientAuthenticationToken(
 				registeredClient.getClientId() + "-invalid", ClientAuthenticationMethod.TLS_CLIENT_AUTH,
 				TestX509Certificates.DEMO_CLIENT_PKI_CERTIFICATE, null);
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
-				.isInstanceOf(OAuth2AuthenticationException.class)
-				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
-				.satisfies(error -> {
-					assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_CLIENT);
-					assertThat(error.getDescription()).contains(OAuth2ParameterNames.CLIENT_ID);
-				});
+			.isInstanceOf(OAuth2AuthenticationException.class)
+			.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+			.satisfies(error -> {
+				assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_CLIENT);
+				assertThat(error.getDescription()).contains(OAuth2ParameterNames.CLIENT_ID);
+			});
 	}
 
 	@Test
 	public void authenticateWhenUnsupportedClientAuthenticationMethodThenThrowOAuth2AuthenticationException() {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
-				.thenReturn(registeredClient);
+			.thenReturn(registeredClient);
 
 		OAuth2ClientAuthenticationToken authentication = new OAuth2ClientAuthenticationToken(
 				registeredClient.getClientId(), ClientAuthenticationMethod.TLS_CLIENT_AUTH,
 				TestX509Certificates.DEMO_CLIENT_PKI_CERTIFICATE, null);
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
-				.isInstanceOf(OAuth2AuthenticationException.class)
-				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
-				.satisfies(error -> {
-					assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_CLIENT);
-					assertThat(error.getDescription()).contains("authentication_method");
-				});
+			.isInstanceOf(OAuth2AuthenticationException.class)
+			.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+			.satisfies(error -> {
+				assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_CLIENT);
+				assertThat(error.getDescription()).contains("authentication_method");
+			});
 	}
 
 	@Test
@@ -185,17 +194,17 @@ public class X509ClientCertificateAuthenticationProviderTests {
 				.build();
 		// @formatter:on
 		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
-				.thenReturn(registeredClient);
+			.thenReturn(registeredClient);
 
 		OAuth2ClientAuthenticationToken authentication = new OAuth2ClientAuthenticationToken(
 				registeredClient.getClientId(), ClientAuthenticationMethod.TLS_CLIENT_AUTH, null, null);
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
-				.isInstanceOf(OAuth2AuthenticationException.class)
-				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
-				.satisfies(error -> {
-					assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_CLIENT);
-					assertThat(error.getDescription()).contains("credentials");
-				});
+			.isInstanceOf(OAuth2AuthenticationException.class)
+			.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+			.satisfies(error -> {
+				assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_CLIENT);
+				assertThat(error.getDescription()).contains("credentials");
+			});
 	}
 
 	@Test
@@ -211,18 +220,18 @@ public class X509ClientCertificateAuthenticationProviderTests {
 				.build();
 		// @formatter:on
 		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
-				.thenReturn(registeredClient);
+			.thenReturn(registeredClient);
 
 		OAuth2ClientAuthenticationToken authentication = new OAuth2ClientAuthenticationToken(
 				registeredClient.getClientId(), ClientAuthenticationMethod.TLS_CLIENT_AUTH,
 				TestX509Certificates.DEMO_CLIENT_PKI_CERTIFICATE, null);
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
-				.isInstanceOf(OAuth2AuthenticationException.class)
-				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
-				.satisfies(error -> {
-					assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_CLIENT);
-					assertThat(error.getDescription()).contains("x509_certificate_subject_dn");
-				});
+			.isInstanceOf(OAuth2AuthenticationException.class)
+			.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+			.satisfies(error -> {
+				assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_CLIENT);
+				assertThat(error.getDescription()).contains("x509_certificate_subject_dn");
+			});
 	}
 
 	@Test
@@ -238,20 +247,21 @@ public class X509ClientCertificateAuthenticationProviderTests {
 				.build();
 		// @formatter:on
 		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
-				.thenReturn(registeredClient);
+			.thenReturn(registeredClient);
 
 		OAuth2ClientAuthenticationToken authentication = new OAuth2ClientAuthenticationToken(
 				registeredClient.getClientId(), ClientAuthenticationMethod.TLS_CLIENT_AUTH,
 				TestX509Certificates.DEMO_CLIENT_PKI_CERTIFICATE, null);
 
-		OAuth2ClientAuthenticationToken authenticationResult =
-				(OAuth2ClientAuthenticationToken) this.authenticationProvider.authenticate(authentication);
+		OAuth2ClientAuthenticationToken authenticationResult = (OAuth2ClientAuthenticationToken) this.authenticationProvider
+			.authenticate(authentication);
 
 		assertThat(authenticationResult.isAuthenticated()).isTrue();
 		assertThat(authenticationResult.getPrincipal().toString()).isEqualTo(registeredClient.getClientId());
 		assertThat(authenticationResult.getCredentials()).isEqualTo(TestX509Certificates.DEMO_CLIENT_PKI_CERTIFICATE);
 		assertThat(authenticationResult.getRegisteredClient()).isEqualTo(registeredClient);
-		assertThat(authenticationResult.getClientAuthenticationMethod()).isEqualTo(ClientAuthenticationMethod.TLS_CLIENT_AUTH);
+		assertThat(authenticationResult.getClientAuthenticationMethod())
+			.isEqualTo(ClientAuthenticationMethod.TLS_CLIENT_AUTH);
 	}
 
 	@Test
@@ -267,18 +277,19 @@ public class X509ClientCertificateAuthenticationProviderTests {
 				.build();
 		// @formatter:on
 		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
-				.thenReturn(registeredClient);
+			.thenReturn(registeredClient);
 
+		// PKI Certificate will have different issuer
 		OAuth2ClientAuthenticationToken authentication = new OAuth2ClientAuthenticationToken(
 				registeredClient.getClientId(), ClientAuthenticationMethod.SELF_SIGNED_TLS_CLIENT_AUTH,
-				TestX509Certificates.DEMO_CLIENT_PKI_CERTIFICATE, null);	// PKI Certificate will have different issuer
+				TestX509Certificates.DEMO_CLIENT_PKI_CERTIFICATE, null);
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
-				.isInstanceOf(OAuth2AuthenticationException.class)
-				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
-				.satisfies(error -> {
-					assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_CLIENT);
-					assertThat(error.getDescription()).contains("x509_certificate_issuer");
-				});
+			.isInstanceOf(OAuth2AuthenticationException.class)
+			.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+			.satisfies(error -> {
+				assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_CLIENT);
+				assertThat(error.getDescription()).contains("x509_certificate_issuer");
+			});
 	}
 
 	@Test
@@ -289,18 +300,18 @@ public class X509ClientCertificateAuthenticationProviderTests {
 				.build();
 		// @formatter:on
 		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
-				.thenReturn(registeredClient);
+			.thenReturn(registeredClient);
 
 		OAuth2ClientAuthenticationToken authentication = new OAuth2ClientAuthenticationToken(
 				registeredClient.getClientId(), ClientAuthenticationMethod.SELF_SIGNED_TLS_CLIENT_AUTH,
 				TestX509Certificates.DEMO_CLIENT_SELF_SIGNED_CERTIFICATE, null);
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
-				.isInstanceOf(OAuth2AuthenticationException.class)
-				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
-				.satisfies(error -> {
-					assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_CLIENT);
-					assertThat(error.getDescription()).contains("client_jwk_set_url");
-				});
+			.isInstanceOf(OAuth2AuthenticationException.class)
+			.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+			.satisfies(error -> {
+				assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_CLIENT);
+				assertThat(error.getDescription()).contains("client_jwk_set_url");
+			});
 	}
 
 	@Test
@@ -316,18 +327,18 @@ public class X509ClientCertificateAuthenticationProviderTests {
 				.build();
 		// @formatter:on
 		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
-				.thenReturn(registeredClient);
+			.thenReturn(registeredClient);
 
 		OAuth2ClientAuthenticationToken authentication = new OAuth2ClientAuthenticationToken(
 				registeredClient.getClientId(), ClientAuthenticationMethod.SELF_SIGNED_TLS_CLIENT_AUTH,
 				TestX509Certificates.DEMO_CLIENT_SELF_SIGNED_CERTIFICATE, null);
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
-				.isInstanceOf(OAuth2AuthenticationException.class)
-				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
-				.satisfies(error -> {
-					assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_CLIENT);
-					assertThat(error.getDescription()).contains("jwk_set_uri");
-				});
+			.isInstanceOf(OAuth2AuthenticationException.class)
+			.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+			.satisfies(error -> {
+				assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_CLIENT);
+				assertThat(error.getDescription()).contains("jwk_set_uri");
+			});
 	}
 
 	@Test
@@ -352,7 +363,8 @@ public class X509ClientCertificateAuthenticationProviderTests {
 	}
 
 	@Test
-	public void authenticateWhenSelfSignedX509CertificateJwkSetResponseNoMatchingKeysThenThrowOAuth2AuthenticationException() throws Exception {
+	public void authenticateWhenSelfSignedX509CertificateJwkSetResponseNoMatchingKeysThenThrowOAuth2AuthenticationException()
+			throws Exception {
 		// @formatter:off
 		X509Certificate pkiCertificate = TestX509Certificates.DEMO_CLIENT_PKI_CERTIFICATE[0];
 		RSAKey pkiRSAKey = new RSAKey.Builder((RSAPublicKey) pkiCertificate.getPublicKey())
@@ -396,18 +408,18 @@ public class X509ClientCertificateAuthenticationProviderTests {
 				.build();
 		// @formatter:on
 		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
-				.thenReturn(registeredClient);
+			.thenReturn(registeredClient);
 
 		OAuth2ClientAuthenticationToken authentication = new OAuth2ClientAuthenticationToken(
 				registeredClient.getClientId(), ClientAuthenticationMethod.SELF_SIGNED_TLS_CLIENT_AUTH,
 				TestX509Certificates.DEMO_CLIENT_SELF_SIGNED_CERTIFICATE, null);
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
-				.isInstanceOf(OAuth2AuthenticationException.class)
-				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
-				.satisfies(error -> {
-					assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_CLIENT);
-					assertThat(error.getDescription()).contains(expectedErrorDescription);
-				});
+			.isInstanceOf(OAuth2AuthenticationException.class)
+			.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+			.satisfies(error -> {
+				assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_CLIENT);
+				assertThat(error.getDescription()).contains(expectedErrorDescription);
+			});
 	}
 
 	@Test
@@ -423,20 +435,22 @@ public class X509ClientCertificateAuthenticationProviderTests {
 				.build();
 		// @formatter:on
 		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
-				.thenReturn(registeredClient);
+			.thenReturn(registeredClient);
 
 		OAuth2ClientAuthenticationToken authentication = new OAuth2ClientAuthenticationToken(
 				registeredClient.getClientId(), ClientAuthenticationMethod.SELF_SIGNED_TLS_CLIENT_AUTH,
 				TestX509Certificates.DEMO_CLIENT_SELF_SIGNED_CERTIFICATE, null);
 
-		OAuth2ClientAuthenticationToken authenticationResult =
-				(OAuth2ClientAuthenticationToken) this.authenticationProvider.authenticate(authentication);
+		OAuth2ClientAuthenticationToken authenticationResult = (OAuth2ClientAuthenticationToken) this.authenticationProvider
+			.authenticate(authentication);
 
 		assertThat(authenticationResult.isAuthenticated()).isTrue();
 		assertThat(authenticationResult.getPrincipal().toString()).isEqualTo(registeredClient.getClientId());
-		assertThat(authenticationResult.getCredentials()).isEqualTo(TestX509Certificates.DEMO_CLIENT_SELF_SIGNED_CERTIFICATE);
+		assertThat(authenticationResult.getCredentials())
+			.isEqualTo(TestX509Certificates.DEMO_CLIENT_SELF_SIGNED_CERTIFICATE);
 		assertThat(authenticationResult.getRegisteredClient()).isEqualTo(registeredClient);
-		assertThat(authenticationResult.getClientAuthenticationMethod()).isEqualTo(ClientAuthenticationMethod.SELF_SIGNED_TLS_CLIENT_AUTH);
+		assertThat(authenticationResult.getClientAuthenticationMethod())
+			.isEqualTo(ClientAuthenticationMethod.SELF_SIGNED_TLS_CLIENT_AUTH);
 	}
 
 	@Test
@@ -452,13 +466,13 @@ public class X509ClientCertificateAuthenticationProviderTests {
 				.build();
 		// @formatter:on
 		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
-				.thenReturn(registeredClient);
+			.thenReturn(registeredClient);
 
 		OAuth2Authorization authorization = TestOAuth2Authorizations
-				.authorization(registeredClient, createPkceAuthorizationParametersS256())
-				.build();
+			.authorization(registeredClient, createPkceAuthorizationParametersS256())
+			.build();
 		when(this.authorizationService.findByToken(eq(AUTHORIZATION_CODE), eq(AUTHORIZATION_CODE_TOKEN_TYPE)))
-				.thenReturn(authorization);
+			.thenReturn(authorization);
 
 		Map<String, Object> parameters = createPkceTokenParameters(S256_CODE_VERIFIER);
 
@@ -466,15 +480,16 @@ public class X509ClientCertificateAuthenticationProviderTests {
 				registeredClient.getClientId(), ClientAuthenticationMethod.TLS_CLIENT_AUTH,
 				TestX509Certificates.DEMO_CLIENT_PKI_CERTIFICATE, parameters);
 
-		OAuth2ClientAuthenticationToken authenticationResult =
-				(OAuth2ClientAuthenticationToken) this.authenticationProvider.authenticate(authentication);
+		OAuth2ClientAuthenticationToken authenticationResult = (OAuth2ClientAuthenticationToken) this.authenticationProvider
+			.authenticate(authentication);
 
 		verify(this.authorizationService).findByToken(eq(AUTHORIZATION_CODE), eq(AUTHORIZATION_CODE_TOKEN_TYPE));
 		assertThat(authenticationResult.isAuthenticated()).isTrue();
 		assertThat(authenticationResult.getPrincipal().toString()).isEqualTo(registeredClient.getClientId());
 		assertThat(authenticationResult.getCredentials()).isEqualTo(TestX509Certificates.DEMO_CLIENT_PKI_CERTIFICATE);
 		assertThat(authenticationResult.getRegisteredClient()).isEqualTo(registeredClient);
-		assertThat(authenticationResult.getClientAuthenticationMethod()).isEqualTo(ClientAuthenticationMethod.TLS_CLIENT_AUTH);
+		assertThat(authenticationResult.getClientAuthenticationMethod())
+			.isEqualTo(ClientAuthenticationMethod.TLS_CLIENT_AUTH);
 	}
 
 	private static Map<String, Object> createPkceAuthorizationParametersS256() {

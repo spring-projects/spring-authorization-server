@@ -57,8 +57,8 @@ public class OAuth2TokenExchangeCompositeAuthenticationTokenTests {
 		OAuth2TokenExchangeActor actor1 = new OAuth2TokenExchangeActor(Map.of("claim1", "value1"));
 		OAuth2TokenExchangeActor actor2 = new OAuth2TokenExchangeActor(Map.of("claim2", "value2"));
 		List<OAuth2TokenExchangeActor> actors = List.of(actor1, actor2);
-		OAuth2TokenExchangeCompositeAuthenticationToken authentication =
-				new OAuth2TokenExchangeCompositeAuthenticationToken(subject, actors);
+		OAuth2TokenExchangeCompositeAuthenticationToken authentication = new OAuth2TokenExchangeCompositeAuthenticationToken(
+				subject, actors);
 		assertThat(authentication.getSubject()).isEqualTo(subject);
 		assertThat(authentication.getActors()).isEqualTo(actors);
 	}

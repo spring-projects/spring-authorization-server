@@ -101,11 +101,12 @@ public final class TokenSettings extends AbstractSettings {
 	}
 
 	/**
-	 * Returns {@code true} if access tokens must be bound to the client {@code X509Certificate}
-	 * received during client authentication when using the {@code tls_client_auth} or {@code self_signed_tls_client_auth} method.
-	 * The default is {@code false}.
-	 *
-	 * @return {@code true} if access tokens must be bound to the client {@code X509Certificate}, {@code false} otherwise
+	 * Returns {@code true} if access tokens must be bound to the client
+	 * {@code X509Certificate} received during client authentication when using the
+	 * {@code tls_client_auth} or {@code self_signed_tls_client_auth} method. The default
+	 * is {@code false}.
+	 * @return {@code true} if access tokens must be bound to the client
+	 * {@code X509Certificate}, {@code false} otherwise
 	 * @since 1.3
 	 */
 	public boolean isX509CertificateBoundAccessTokens() {
@@ -117,15 +118,14 @@ public final class TokenSettings extends AbstractSettings {
 	 * @return the {@link Builder}
 	 */
 	public static Builder builder() {
-		return new Builder()
-				.authorizationCodeTimeToLive(Duration.ofMinutes(5))
-				.accessTokenTimeToLive(Duration.ofMinutes(5))
-				.accessTokenFormat(OAuth2TokenFormat.SELF_CONTAINED)
-				.deviceCodeTimeToLive(Duration.ofMinutes(5))
-				.reuseRefreshTokens(true)
-				.refreshTokenTimeToLive(Duration.ofMinutes(60))
-				.idTokenSignatureAlgorithm(SignatureAlgorithm.RS256)
-				.x509CertificateBoundAccessTokens(false);
+		return new Builder().authorizationCodeTimeToLive(Duration.ofMinutes(5))
+			.accessTokenTimeToLive(Duration.ofMinutes(5))
+			.accessTokenFormat(OAuth2TokenFormat.SELF_CONTAINED)
+			.deviceCodeTimeToLive(Duration.ofMinutes(5))
+			.reuseRefreshTokens(true)
+			.refreshTokenTimeToLive(Duration.ofMinutes(60))
+			.idTokenSignatureAlgorithm(SignatureAlgorithm.RS256)
+			.x509CertificateBoundAccessTokens(false);
 	}
 
 	/**
@@ -237,15 +237,17 @@ public final class TokenSettings extends AbstractSettings {
 		}
 
 		/**
-		 * Set to {@code true} if access tokens must be bound to the client {@code X509Certificate}
-		 * received during client authentication when using the {@code tls_client_auth} or {@code self_signed_tls_client_auth} method.
-		 *
-		 * @param x509CertificateBoundAccessTokens {@code true} if access tokens must be bound to the client {@code X509Certificate}, {@code false} otherwise
+		 * Set to {@code true} if access tokens must be bound to the client
+		 * {@code X509Certificate} received during client authentication when using the
+		 * {@code tls_client_auth} or {@code self_signed_tls_client_auth} method.
+		 * @param x509CertificateBoundAccessTokens {@code true} if access tokens must be
+		 * bound to the client {@code X509Certificate}, {@code false} otherwise
 		 * @return the {@link Builder} for further configuration
 		 * @since 1.3
 		 */
 		public Builder x509CertificateBoundAccessTokens(boolean x509CertificateBoundAccessTokens) {
-			return setting(ConfigurationSettingNames.Token.X509_CERTIFICATE_BOUND_ACCESS_TOKENS, x509CertificateBoundAccessTokens);
+			return setting(ConfigurationSettingNames.Token.X509_CERTIFICATE_BOUND_ACCESS_TOKENS,
+					x509CertificateBoundAccessTokens);
 		}
 
 		/**

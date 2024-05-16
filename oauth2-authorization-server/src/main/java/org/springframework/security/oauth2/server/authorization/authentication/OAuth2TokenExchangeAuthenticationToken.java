@@ -53,8 +53,8 @@ public class OAuth2TokenExchangeAuthenticationToken extends OAuth2AuthorizationG
 	private final Set<String> scopes;
 
 	/**
-	 * Constructs an {@code OAuth2TokenExchangeAuthenticationToken} using the provided parameters.
-	 *
+	 * Constructs an {@code OAuth2TokenExchangeAuthenticationToken} using the provided
+	 * parameters.
 	 * @param requestedTokenType the requested token type
 	 * @param subjectToken the subject token
 	 * @param subjectTokenType the subject token type
@@ -79,17 +79,15 @@ public class OAuth2TokenExchangeAuthenticationToken extends OAuth2AuthorizationG
 		this.subjectTokenType = subjectTokenType;
 		this.actorToken = actorToken;
 		this.actorTokenType = actorTokenType;
-		this.resources = Collections.unmodifiableSet(
-				resources != null ? new LinkedHashSet<>(resources) : Collections.emptySet());
-		this.audiences = Collections.unmodifiableSet(
-				audiences != null ? new LinkedHashSet<>(audiences) : Collections.emptySet());
-		this.scopes = Collections.unmodifiableSet(
-				scopes != null ? new HashSet<>(scopes) : Collections.emptySet());
+		this.resources = Collections
+			.unmodifiableSet(resources != null ? new LinkedHashSet<>(resources) : Collections.emptySet());
+		this.audiences = Collections
+			.unmodifiableSet(audiences != null ? new LinkedHashSet<>(audiences) : Collections.emptySet());
+		this.scopes = Collections.unmodifiableSet(scopes != null ? new HashSet<>(scopes) : Collections.emptySet());
 	}
 
 	/**
 	 * Returns the requested token type.
-	 *
 	 * @return the requested token type
 	 */
 	public String getRequestedTokenType() {
@@ -98,7 +96,6 @@ public class OAuth2TokenExchangeAuthenticationToken extends OAuth2AuthorizationG
 
 	/**
 	 * Returns the subject token.
-	 *
 	 * @return the subject token
 	 */
 	public String getSubjectToken() {
@@ -107,7 +104,6 @@ public class OAuth2TokenExchangeAuthenticationToken extends OAuth2AuthorizationG
 
 	/**
 	 * Returns the subject token type.
-	 *
 	 * @return the subject token type
 	 */
 	public String getSubjectTokenType() {
@@ -116,7 +112,6 @@ public class OAuth2TokenExchangeAuthenticationToken extends OAuth2AuthorizationG
 
 	/**
 	 * Returns the actor token.
-	 *
 	 * @return the actor token
 	 */
 	public String getActorToken() {
@@ -125,7 +120,6 @@ public class OAuth2TokenExchangeAuthenticationToken extends OAuth2AuthorizationG
 
 	/**
 	 * Returns the actor token type.
-	 *
 	 * @return the actor token type
 	 */
 	public String getActorTokenType() {
@@ -134,7 +128,6 @@ public class OAuth2TokenExchangeAuthenticationToken extends OAuth2AuthorizationG
 
 	/**
 	 * Returns the requested resource URI(s).
-	 *
 	 * @return the requested resource URI(s), or an empty {@code Set} if not available
 	 */
 	public Set<String> getResources() {
@@ -143,7 +136,6 @@ public class OAuth2TokenExchangeAuthenticationToken extends OAuth2AuthorizationG
 
 	/**
 	 * Returns the requested audience value(s).
-	 *
 	 * @return the requested audience value(s), or an empty {@code Set} if not available
 	 */
 	public Set<String> getAudiences() {
@@ -152,7 +144,6 @@ public class OAuth2TokenExchangeAuthenticationToken extends OAuth2AuthorizationG
 
 	/**
 	 * Returns the requested scope(s).
-	 *
 	 * @return the requested scope(s), or an empty {@code Set} if not available
 	 */
 	public Set<String> getScopes() {

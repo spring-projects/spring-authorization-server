@@ -437,11 +437,10 @@ public class OAuth2TokenIntrospectionTests {
 
 		OAuth2AccessToken accessToken = authorization.getAccessToken().getToken();
 
-		Authentication clientPrincipal = new OAuth2ClientAuthenticationToken(
-				introspectRegisteredClient, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, introspectRegisteredClient.getClientSecret());
-		OAuth2TokenIntrospectionAuthenticationToken tokenIntrospectionAuthentication =
-				new OAuth2TokenIntrospectionAuthenticationToken(
-						accessToken.getTokenValue(), clientPrincipal, null, null);
+		Authentication clientPrincipal = new OAuth2ClientAuthenticationToken(introspectRegisteredClient,
+				ClientAuthenticationMethod.CLIENT_SECRET_BASIC, introspectRegisteredClient.getClientSecret());
+		OAuth2TokenIntrospectionAuthenticationToken tokenIntrospectionAuthentication = new OAuth2TokenIntrospectionAuthenticationToken(
+				accessToken.getTokenValue(), clientPrincipal, null, null);
 
 		when(authenticationConverter.convert(any())).thenReturn(tokenIntrospectionAuthentication);
 		when(authenticationProvider.supports(eq(OAuth2TokenIntrospectionAuthenticationToken.class))).thenReturn(true);
@@ -600,10 +599,12 @@ public class OAuth2TokenIntrospectionTests {
 		}
 		// @formatter:on
 
-
 		@Override
 		AuthorizationServerSettings authorizationServerSettings() {
-			return AuthorizationServerSettings.builder().multipleIssuersAllowed(true).tokenIntrospectionEndpoint("/test/introspect").build();
+			return AuthorizationServerSettings.builder()
+				.multipleIssuersAllowed(true)
+				.tokenIntrospectionEndpoint("/test/introspect")
+				.build();
 		}
 
 	}

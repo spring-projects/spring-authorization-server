@@ -73,11 +73,13 @@ public final class ConfigurationSettingNames {
 			.concat("token-endpoint-authentication-signing-algorithm");
 
 		/**
-		 * Set the expected subject distinguished name associated to the client {@code X509Certificate}
-		 * received during client authentication when using the {@code tls_client_auth} method.
+		 * Set the expected subject distinguished name associated to the client
+		 * {@code X509Certificate} received during client authentication when using the
+		 * {@code tls_client_auth} method.
 		 * @since 1.3
 		 */
-		public static final String X509_CERTIFICATE_SUBJECT_DN = CLIENT_SETTINGS_NAMESPACE.concat("x509-certificate-subject-dn");
+		public static final String X509_CERTIFICATE_SUBJECT_DN = CLIENT_SETTINGS_NAMESPACE
+			.concat("x509-certificate-subject-dn");
 
 		private Client() {
 		}
@@ -101,7 +103,8 @@ public final class ConfigurationSettingNames {
 		 * Set to {@code true} if multiple issuers are allowed per host.
 		 * @since 1.3
 		 */
-		public static final String MULTIPLE_ISSUERS_ALLOWED = AUTHORIZATION_SERVER_SETTINGS_NAMESPACE.concat("multiple-issuers-allowed");
+		public static final String MULTIPLE_ISSUERS_ALLOWED = AUTHORIZATION_SERVER_SETTINGS_NAMESPACE
+			.concat("multiple-issuers-allowed");
 
 		/**
 		 * Set the OAuth 2.0 Authorization endpoint.
@@ -221,11 +224,13 @@ public final class ConfigurationSettingNames {
 			.concat("id-token-signature-algorithm");
 
 		/**
-		 * Set to {@code true} if access tokens must be bound to the client {@code X509Certificate}
-		 * received during client authentication when using the {@code tls_client_auth} or {@code self_signed_tls_client_auth} method.
+		 * Set to {@code true} if access tokens must be bound to the client
+		 * {@code X509Certificate} received during client authentication when using the
+		 * {@code tls_client_auth} or {@code self_signed_tls_client_auth} method.
 		 * @since 1.3
 		 */
-		public static final String X509_CERTIFICATE_BOUND_ACCESS_TOKENS = TOKEN_SETTINGS_NAMESPACE.concat("x509-certificate-bound-access-tokens");
+		public static final String X509_CERTIFICATE_BOUND_ACCESS_TOKENS = TOKEN_SETTINGS_NAMESPACE
+			.concat("x509-certificate-bound-access-tokens");
 
 		private Token() {
 		}

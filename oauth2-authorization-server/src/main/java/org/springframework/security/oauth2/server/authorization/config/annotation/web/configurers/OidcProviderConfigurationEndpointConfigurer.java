@@ -74,10 +74,10 @@ public final class OidcProviderConfigurationEndpointConfigurer extends AbstractO
 
 	@Override
 	void init(HttpSecurity httpSecurity) {
-		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils.getAuthorizationServerSettings(httpSecurity);
-		String oidcProviderConfigurationEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed() ?
-				"/**/.well-known/openid-configuration" :
-				"/.well-known/openid-configuration";
+		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils
+			.getAuthorizationServerSettings(httpSecurity);
+		String oidcProviderConfigurationEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed()
+				? "/**/.well-known/openid-configuration" : "/.well-known/openid-configuration";
 		this.requestMatcher = new AntPathRequestMatcher(oidcProviderConfigurationEndpointUri, HttpMethod.GET.name());
 	}
 

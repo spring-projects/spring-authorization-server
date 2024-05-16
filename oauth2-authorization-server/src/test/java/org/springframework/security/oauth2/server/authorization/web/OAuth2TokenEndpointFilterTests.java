@@ -452,17 +452,16 @@ public class OAuth2TokenEndpointFilterTests {
 	@Test
 	public void doFilterWhenTokenExchangeRequestThenAccessTokenResponse() throws Exception {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
-				.authorizationGrantType(AuthorizationGrantType.TOKEN_EXCHANGE).build();
-		Authentication clientPrincipal = new OAuth2ClientAuthenticationToken(
-				registeredClient, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
-		OAuth2AccessToken accessToken = new OAuth2AccessToken(
-				OAuth2AccessToken.TokenType.BEARER, "token",
+			.authorizationGrantType(AuthorizationGrantType.TOKEN_EXCHANGE)
+			.build();
+		Authentication clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient,
+				ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
+		OAuth2AccessToken accessToken = new OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER, "token",
 				Instant.now(), Instant.now().plus(Duration.ofHours(1)),
 				new HashSet<>(Arrays.asList("scope1", "scope2")));
 		OAuth2RefreshToken refreshToken = new OAuth2RefreshToken("refresh-token", Instant.now());
-		OAuth2AccessTokenAuthenticationToken accessTokenAuthentication =
-				new OAuth2AccessTokenAuthenticationToken(
-						registeredClient, clientPrincipal, accessToken, refreshToken);
+		OAuth2AccessTokenAuthenticationToken accessTokenAuthentication = new OAuth2AccessTokenAuthenticationToken(
+				registeredClient, clientPrincipal, accessToken, refreshToken);
 
 		when(this.authenticationManager.authenticate(any())).thenReturn(accessTokenAuthentication);
 
@@ -478,24 +477,22 @@ public class OAuth2TokenEndpointFilterTests {
 
 		verifyNoInteractions(filterChain);
 
-		ArgumentCaptor<OAuth2TokenExchangeAuthenticationToken> tokenExchangeAuthenticationCaptor =
-				ArgumentCaptor.forClass(OAuth2TokenExchangeAuthenticationToken.class);
+		ArgumentCaptor<OAuth2TokenExchangeAuthenticationToken> tokenExchangeAuthenticationCaptor = ArgumentCaptor
+			.forClass(OAuth2TokenExchangeAuthenticationToken.class);
 		verify(this.authenticationManager).authenticate(tokenExchangeAuthenticationCaptor.capture());
 
-		OAuth2TokenExchangeAuthenticationToken tokenExchangeAuthenticationToken =
-				tokenExchangeAuthenticationCaptor.getValue();
+		OAuth2TokenExchangeAuthenticationToken tokenExchangeAuthenticationToken = tokenExchangeAuthenticationCaptor
+			.getValue();
 		assertThat(tokenExchangeAuthenticationToken.getSubjectToken()).isEqualTo("subject-token");
 		assertThat(tokenExchangeAuthenticationToken.getSubjectTokenType()).isEqualTo(ACCESS_TOKEN_TYPE);
 		assertThat(tokenExchangeAuthenticationToken.getPrincipal()).isEqualTo(clientPrincipal);
 		assertThat(tokenExchangeAuthenticationToken.getScopes()).isEqualTo(registeredClient.getScopes());
-		assertThat(tokenExchangeAuthenticationToken.getAdditionalParameters())
-				.containsExactly(entry("custom-param-1", "custom-value-1"),
-					entry("custom-param-2", new String[] { "custom-value-1", "custom-value-2" }));
-		assertThat(tokenExchangeAuthenticationToken.getDetails())
-				.asInstanceOf(type(WebAuthenticationDetails.class))
-				.extracting(WebAuthenticationDetails::getRemoteAddress)
-				.isEqualTo(REMOTE_ADDRESS);
-
+		assertThat(tokenExchangeAuthenticationToken.getAdditionalParameters()).containsExactly(
+				entry("custom-param-1", "custom-value-1"),
+				entry("custom-param-2", new String[] { "custom-value-1", "custom-value-2" }));
+		assertThat(tokenExchangeAuthenticationToken.getDetails()).asInstanceOf(type(WebAuthenticationDetails.class))
+			.extracting(WebAuthenticationDetails::getRemoteAddress)
+			.isEqualTo(REMOTE_ADDRESS);
 
 		assertThat(response.getStatus()).isEqualTo(HttpStatus.OK.value());
 		OAuth2AccessTokenResponse accessTokenResponse = readAccessTokenResponse(response);
@@ -503,10 +500,10 @@ public class OAuth2TokenEndpointFilterTests {
 		OAuth2AccessToken accessTokenResult = accessTokenResponse.getAccessToken();
 		assertThat(accessTokenResult.getTokenType()).isEqualTo(accessToken.getTokenType());
 		assertThat(accessTokenResult.getTokenValue()).isEqualTo(accessToken.getTokenValue());
-		assertThat(accessTokenResult.getIssuedAt()).isBetween(
-				accessToken.getIssuedAt().minusSeconds(1), accessToken.getIssuedAt().plusSeconds(1));
-		assertThat(accessTokenResult.getExpiresAt()).isBetween(
-				accessToken.getExpiresAt().minusSeconds(1), accessToken.getExpiresAt().plusSeconds(1));
+		assertThat(accessTokenResult.getIssuedAt()).isBetween(accessToken.getIssuedAt().minusSeconds(1),
+				accessToken.getIssuedAt().plusSeconds(1));
+		assertThat(accessTokenResult.getExpiresAt()).isBetween(accessToken.getExpiresAt().minusSeconds(1),
+				accessToken.getExpiresAt().plusSeconds(1));
 		assertThat(accessTokenResult.getScopes()).isEqualTo(accessToken.getScopes());
 
 		OAuth2RefreshToken refreshTokenResult = accessTokenResponse.getRefreshToken();

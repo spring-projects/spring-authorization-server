@@ -110,13 +110,14 @@ public class OAuth2AuthorizationServerMetadataTests {
 		this.spring.register(AuthorizationServerConfiguration.class).autowire();
 
 		this.mvc.perform(get(ISSUER.concat(DEFAULT_OAUTH2_AUTHORIZATION_SERVER_METADATA_ENDPOINT_URI)))
-				.andExpect(status().is2xxSuccessful())
-				.andExpect(jsonPath("issuer").value(ISSUER))
-				.andReturn();
+			.andExpect(status().is2xxSuccessful())
+			.andExpect(jsonPath("issuer").value(ISSUER))
+			.andReturn();
 	}
 
 	@Test
-	public void requestWhenAuthorizationServerMetadataRequestIncludesIssuerPathThenMetadataResponseHasIssuerPath() throws Exception {
+	public void requestWhenAuthorizationServerMetadataRequestIncludesIssuerPathThenMetadataResponseHasIssuerPath()
+			throws Exception {
 		this.spring.register(AuthorizationServerConfigurationWithMultipleIssuersAllowed.class).autowire();
 
 		String host = "https://example.com:8443";
@@ -124,23 +125,23 @@ public class OAuth2AuthorizationServerMetadataTests {
 		String issuerPath = "/issuer1";
 		String issuer = host.concat(issuerPath);
 		this.mvc.perform(get(host.concat(DEFAULT_OAUTH2_AUTHORIZATION_SERVER_METADATA_ENDPOINT_URI).concat(issuerPath)))
-				.andExpect(status().is2xxSuccessful())
-				.andExpect(jsonPath("issuer").value(issuer))
-				.andReturn();
+			.andExpect(status().is2xxSuccessful())
+			.andExpect(jsonPath("issuer").value(issuer))
+			.andReturn();
 
 		issuerPath = "/path1/issuer2";
 		issuer = host.concat(issuerPath);
 		this.mvc.perform(get(host.concat(DEFAULT_OAUTH2_AUTHORIZATION_SERVER_METADATA_ENDPOINT_URI).concat(issuerPath)))
-				.andExpect(status().is2xxSuccessful())
-				.andExpect(jsonPath("issuer").value(issuer))
-				.andReturn();
+			.andExpect(status().is2xxSuccessful())
+			.andExpect(jsonPath("issuer").value(issuer))
+			.andReturn();
 
 		issuerPath = "/path1/path2/issuer3";
 		issuer = host.concat(issuerPath);
 		this.mvc.perform(get(host.concat(DEFAULT_OAUTH2_AUTHORIZATION_SERVER_METADATA_ENDPOINT_URI).concat(issuerPath)))
-				.andExpect(status().is2xxSuccessful())
-				.andExpect(jsonPath("issuer").value(issuer))
-				.andReturn();
+			.andExpect(status().is2xxSuccessful())
+			.andExpect(jsonPath("issuer").value(issuer))
+			.andReturn();
 	}
 
 	// gh-616
@@ -150,9 +151,9 @@ public class OAuth2AuthorizationServerMetadataTests {
 		this.spring.register(AuthorizationServerConfigurationWithMetadataCustomizer.class).autowire();
 
 		this.mvc.perform(get(ISSUER.concat(DEFAULT_OAUTH2_AUTHORIZATION_SERVER_METADATA_ENDPOINT_URI)))
-				.andExpect(status().is2xxSuccessful())
-				.andExpect(jsonPath(OAuth2AuthorizationServerMetadataClaimNames.SCOPES_SUPPORTED,
-						hasItems("scope1", "scope2")));
+			.andExpect(status().is2xxSuccessful())
+			.andExpect(jsonPath(OAuth2AuthorizationServerMetadataClaimNames.SCOPES_SUPPORTED,
+					hasItems("scope1", "scope2")));
 	}
 
 	@EnableWebSecurity

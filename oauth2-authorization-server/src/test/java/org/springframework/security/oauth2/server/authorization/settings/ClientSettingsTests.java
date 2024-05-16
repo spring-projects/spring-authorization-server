@@ -65,9 +65,10 @@ public class ClientSettingsTests {
 	@Test
 	public void x509CertificateSubjectDNWhenProvidedThenSet() {
 		ClientSettings clientSettings = ClientSettings.builder()
-				.x509CertificateSubjectDN("CN=demo-client-sample, OU=Spring Samples, O=Spring, C=US")
-				.build();
-		assertThat(clientSettings.getX509CertificateSubjectDN()).isEqualTo("CN=demo-client-sample, OU=Spring Samples, O=Spring, C=US");
+			.x509CertificateSubjectDN("CN=demo-client-sample, OU=Spring Samples, O=Spring, C=US")
+			.build();
+		assertThat(clientSettings.getX509CertificateSubjectDN())
+			.isEqualTo("CN=demo-client-sample, OU=Spring Samples, O=Spring, C=US");
 	}
 
 	@Test

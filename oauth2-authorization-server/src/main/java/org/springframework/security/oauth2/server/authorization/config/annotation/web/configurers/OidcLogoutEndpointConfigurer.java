@@ -165,14 +165,13 @@ public final class OidcLogoutEndpointConfigurer extends AbstractOAuth2Configurer
 
 	@Override
 	void init(HttpSecurity httpSecurity) {
-		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils.getAuthorizationServerSettings(httpSecurity);
-		String logoutEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed() ?
-				withMultipleIssuersPattern(authorizationServerSettings.getOidcLogoutEndpoint()) :
-				authorizationServerSettings.getOidcLogoutEndpoint();
-		this.requestMatcher = new OrRequestMatcher(
-				new AntPathRequestMatcher(logoutEndpointUri, HttpMethod.GET.name()),
-				new AntPathRequestMatcher(logoutEndpointUri, HttpMethod.POST.name())
-		);
+		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils
+			.getAuthorizationServerSettings(httpSecurity);
+		String logoutEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed()
+				? withMultipleIssuersPattern(authorizationServerSettings.getOidcLogoutEndpoint())
+				: authorizationServerSettings.getOidcLogoutEndpoint();
+		this.requestMatcher = new OrRequestMatcher(new AntPathRequestMatcher(logoutEndpointUri, HttpMethod.GET.name()),
+				new AntPathRequestMatcher(logoutEndpointUri, HttpMethod.POST.name()));
 
 		List<AuthenticationProvider> authenticationProviders = createDefaultAuthenticationProviders(httpSecurity);
 		if (!this.authenticationProviders.isEmpty()) {
@@ -189,11 +188,11 @@ public final class OidcLogoutEndpointConfigurer extends AbstractOAuth2Configurer
 		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils
 			.getAuthorizationServerSettings(httpSecurity);
 
-		String logoutEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed() ?
-				withMultipleIssuersPattern(authorizationServerSettings.getOidcLogoutEndpoint()) :
-				authorizationServerSettings.getOidcLogoutEndpoint();
-		OidcLogoutEndpointFilter oidcLogoutEndpointFilter =
-				new OidcLogoutEndpointFilter(authenticationManager, logoutEndpointUri);
+		String logoutEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed()
+				? withMultipleIssuersPattern(authorizationServerSettings.getOidcLogoutEndpoint())
+				: authorizationServerSettings.getOidcLogoutEndpoint();
+		OidcLogoutEndpointFilter oidcLogoutEndpointFilter = new OidcLogoutEndpointFilter(authenticationManager,
+				logoutEndpointUri);
 		List<AuthenticationConverter> authenticationConverters = createDefaultAuthenticationConverters();
 		if (!this.logoutRequestConverters.isEmpty()) {
 			authenticationConverters.addAll(0, this.logoutRequestConverters);

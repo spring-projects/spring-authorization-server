@@ -53,13 +53,16 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * @author Dmitriy Dubson
  */
 public class OAuth2AccessTokenResponseAuthenticationSuccessHandlerTests {
+
 	private final RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
-	private final HttpMessageConverter<OAuth2AccessTokenResponse> accessTokenHttpResponseConverter =
-			new OAuth2AccessTokenResponseHttpMessageConverter();
+
+	private final HttpMessageConverter<OAuth2AccessTokenResponse> accessTokenHttpResponseConverter = new OAuth2AccessTokenResponseHttpMessageConverter();
+
 	private final OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(
-			this.registeredClient, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, this.registeredClient.getClientSecret());
-	private final OAuth2AccessTokenResponseAuthenticationSuccessHandler authenticationSuccessHandler =
-			new OAuth2AccessTokenResponseAuthenticationSuccessHandler();
+			this.registeredClient, ClientAuthenticationMethod.CLIENT_SECRET_BASIC,
+			this.registeredClient.getClientSecret());
+
+	private final OAuth2AccessTokenResponseAuthenticationSuccessHandler authenticationSuccessHandler = new OAuth2AccessTokenResponseAuthenticationSuccessHandler();
 
 	@Test
 	public void setAccessTokenResponseCustomizerWhenNullThenThrowIllegalArgumentException() {
@@ -79,23 +82,22 @@ public class OAuth2AccessTokenResponseAuthenticationSuccessHandlerTests {
 		OAuth2AccessToken accessToken = authorization.getAccessToken().getToken();
 		OAuth2RefreshToken refreshToken = authorization.getRefreshToken().getToken();
 		Map<String, Object> additionalParameters = Collections.singletonMap("param1", "value1");
-		Authentication authentication = new OAuth2AccessTokenAuthenticationToken(
-				this.registeredClient, this.clientPrincipal, accessToken, refreshToken, additionalParameters);
+		Authentication authentication = new OAuth2AccessTokenAuthenticationToken(this.registeredClient,
+				this.clientPrincipal, accessToken, refreshToken, additionalParameters);
 
 		this.authenticationSuccessHandler.onAuthenticationSuccess(request, response, authentication);
 
 		OAuth2AccessTokenResponse accessTokenResponse = readAccessTokenResponse(response);
 		assertThat(accessTokenResponse.getAccessToken().getTokenValue()).isEqualTo(accessToken.getTokenValue());
 		assertThat(accessTokenResponse.getAccessToken().getTokenType()).isEqualTo(accessToken.getTokenType());
-		assertThat(accessTokenResponse.getAccessToken().getIssuedAt()).isBetween(
-				accessToken.getIssuedAt().minusSeconds(1), accessToken.getIssuedAt().plusSeconds(1));
-		assertThat(accessTokenResponse.getAccessToken().getExpiresAt()).isBetween(
-				accessToken.getExpiresAt().minusSeconds(1), accessToken.getExpiresAt().plusSeconds(1));
+		assertThat(accessTokenResponse.getAccessToken().getIssuedAt())
+			.isBetween(accessToken.getIssuedAt().minusSeconds(1), accessToken.getIssuedAt().plusSeconds(1));
+		assertThat(accessTokenResponse.getAccessToken().getExpiresAt())
+			.isBetween(accessToken.getExpiresAt().minusSeconds(1), accessToken.getExpiresAt().plusSeconds(1));
 		assertThat(accessTokenResponse.getRefreshToken()).isNotNull();
 		assertThat(accessTokenResponse.getRefreshToken().getTokenValue()).isEqualTo(refreshToken.getTokenValue());
-		assertThat(accessTokenResponse.getAdditionalParameters()).containsExactlyInAnyOrderEntriesOf(
-				Map.of("param1", "value1")
-		);
+		assertThat(accessTokenResponse.getAdditionalParameters())
+			.containsExactlyInAnyOrderEntriesOf(Map.of("param1", "value1"));
 	}
 
 	@Test
@@ -103,16 +105,17 @@ public class OAuth2AccessTokenResponseAuthenticationSuccessHandlerTests {
 		MockHttpServletRequest request = new MockHttpServletRequest();
 		MockHttpServletResponse response = new MockHttpServletResponse();
 
-		assertThatThrownBy(() ->
-				this.authenticationSuccessHandler.onAuthenticationSuccess(request, response, new TestingAuthenticationToken(this.clientPrincipal, null)))
-				.isInstanceOf(OAuth2AuthenticationException.class)
-				.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
-				.extracting("errorCode")
-				.isEqualTo(OAuth2ErrorCodes.SERVER_ERROR);
+		assertThatThrownBy(() -> this.authenticationSuccessHandler.onAuthenticationSuccess(request, response,
+				new TestingAuthenticationToken(this.clientPrincipal, null)))
+			.isInstanceOf(OAuth2AuthenticationException.class)
+			.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+			.extracting("errorCode")
+			.isEqualTo(OAuth2ErrorCodes.SERVER_ERROR);
 	}
 
 	@Test
-	public void onAuthenticationSuccessWhenAccessTokenResponseCustomizerSetThenAccessTokenResponseCustomized() throws Exception {
+	public void onAuthenticationSuccessWhenAccessTokenResponseCustomizerSetThenAccessTokenResponseCustomized()
+			throws Exception {
 		MockHttpServletRequest request = new MockHttpServletRequest();
 		MockHttpServletResponse response = new MockHttpServletResponse();
 
@@ -120,8 +123,8 @@ public class OAuth2AccessTokenResponseAuthenticationSuccessHandlerTests {
 		OAuth2AccessToken accessToken = authorization.getAccessToken().getToken();
 		OAuth2RefreshToken refreshToken = authorization.getRefreshToken().getToken();
 		Map<String, Object> additionalParameters = Collections.singletonMap("param1", "value1");
-		Authentication authentication = new OAuth2AccessTokenAuthenticationToken(
-				this.registeredClient, this.clientPrincipal, accessToken, refreshToken, additionalParameters);
+		Authentication authentication = new OAuth2AccessTokenAuthenticationToken(this.registeredClient,
+				this.clientPrincipal, accessToken, refreshToken, additionalParameters);
 
 		Consumer<OAuth2AccessTokenAuthenticationContext> accessTokenResponseCustomizer = (authenticationContext) -> {
 			OAuth2AccessTokenAuthenticationToken accessTokenAuthentication = authenticationContext.getAuthentication();
@@ -136,20 +139,19 @@ public class OAuth2AccessTokenResponseAuthenticationSuccessHandlerTests {
 		OAuth2AccessTokenResponse accessTokenResponse = readAccessTokenResponse(response);
 		assertThat(accessTokenResponse.getAccessToken().getTokenValue()).isEqualTo(accessToken.getTokenValue());
 		assertThat(accessTokenResponse.getAccessToken().getTokenType()).isEqualTo(accessToken.getTokenType());
-		assertThat(accessTokenResponse.getAccessToken().getIssuedAt()).isBetween(
-				accessToken.getIssuedAt().minusSeconds(1), accessToken.getIssuedAt().plusSeconds(1));
-		assertThat(accessTokenResponse.getAccessToken().getExpiresAt()).isBetween(
-				accessToken.getExpiresAt().minusSeconds(1), accessToken.getExpiresAt().plusSeconds(1));
+		assertThat(accessTokenResponse.getAccessToken().getIssuedAt())
+			.isBetween(accessToken.getIssuedAt().minusSeconds(1), accessToken.getIssuedAt().plusSeconds(1));
+		assertThat(accessTokenResponse.getAccessToken().getExpiresAt())
+			.isBetween(accessToken.getExpiresAt().minusSeconds(1), accessToken.getExpiresAt().plusSeconds(1));
 		assertThat(accessTokenResponse.getRefreshToken()).isNotNull();
 		assertThat(accessTokenResponse.getRefreshToken().getTokenValue()).isEqualTo(refreshToken.getTokenValue());
-		assertThat(accessTokenResponse.getAdditionalParameters()).containsExactlyInAnyOrderEntriesOf(
-				Map.of("param1", "value1", "authorization_id", "id")
-		);
+		assertThat(accessTokenResponse.getAdditionalParameters())
+			.containsExactlyInAnyOrderEntriesOf(Map.of("param1", "value1", "authorization_id", "id"));
 	}
 
 	private OAuth2AccessTokenResponse readAccessTokenResponse(MockHttpServletResponse response) throws Exception {
-		MockClientHttpResponse httpResponse = new MockClientHttpResponse(
-				response.getContentAsByteArray(), HttpStatus.valueOf(response.getStatus()));
+		MockClientHttpResponse httpResponse = new MockClientHttpResponse(response.getContentAsByteArray(),
+				HttpStatus.valueOf(response.getStatus()));
 		return this.accessTokenHttpResponseConverter.read(OAuth2AccessTokenResponse.class, httpResponse);
 	}
 

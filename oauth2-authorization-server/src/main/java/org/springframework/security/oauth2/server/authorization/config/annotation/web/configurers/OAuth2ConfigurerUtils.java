@@ -59,9 +59,7 @@ final class OAuth2ConfigurerUtils {
 
 	static String withMultipleIssuersPattern(String endpointUri) {
 		Assert.hasText(endpointUri, "endpointUri cannot be empty");
-		return endpointUri.startsWith("/") ?
-				"/**" + endpointUri :
-				"/**/" + endpointUri;
+		return endpointUri.startsWith("/") ? "/**" + endpointUri : "/**/" + endpointUri;
 	}
 
 	static RegisteredClientRepository getRegisteredClientRepository(HttpSecurity httpSecurity) {
@@ -168,8 +166,10 @@ final class OAuth2ConfigurerUtils {
 	}
 
 	private static OAuth2TokenCustomizer<JwtEncodingContext> getJwtCustomizer(HttpSecurity httpSecurity) {
-		final OAuth2TokenCustomizer<JwtEncodingContext> defaultJwtCustomizer = DefaultOAuth2TokenCustomizers.jwtCustomizer();
-		ResolvableType type = ResolvableType.forClassWithGenerics(OAuth2TokenCustomizer.class, JwtEncodingContext.class);
+		final OAuth2TokenCustomizer<JwtEncodingContext> defaultJwtCustomizer = DefaultOAuth2TokenCustomizers
+			.jwtCustomizer();
+		ResolvableType type = ResolvableType.forClassWithGenerics(OAuth2TokenCustomizer.class,
+				JwtEncodingContext.class);
 		final OAuth2TokenCustomizer<JwtEncodingContext> jwtCustomizer = getOptionalBean(httpSecurity, type);
 		if (jwtCustomizer == null) {
 			return defaultJwtCustomizer;
@@ -181,8 +181,10 @@ final class OAuth2ConfigurerUtils {
 	}
 
 	private static OAuth2TokenCustomizer<OAuth2TokenClaimsContext> getAccessTokenCustomizer(HttpSecurity httpSecurity) {
-		final OAuth2TokenCustomizer<OAuth2TokenClaimsContext> defaultAccessTokenCustomizer = DefaultOAuth2TokenCustomizers.accessTokenCustomizer();
-		ResolvableType type = ResolvableType.forClassWithGenerics(OAuth2TokenCustomizer.class, OAuth2TokenClaimsContext.class);
+		final OAuth2TokenCustomizer<OAuth2TokenClaimsContext> defaultAccessTokenCustomizer = DefaultOAuth2TokenCustomizers
+			.accessTokenCustomizer();
+		ResolvableType type = ResolvableType.forClassWithGenerics(OAuth2TokenCustomizer.class,
+				OAuth2TokenClaimsContext.class);
 		OAuth2TokenCustomizer<OAuth2TokenClaimsContext> accessTokenCustomizer = getOptionalBean(httpSecurity, type);
 		if (accessTokenCustomizer == null) {
 			return defaultAccessTokenCustomizer;

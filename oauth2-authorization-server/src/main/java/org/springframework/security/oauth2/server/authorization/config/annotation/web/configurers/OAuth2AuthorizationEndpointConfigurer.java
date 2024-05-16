@@ -236,10 +236,11 @@ public final class OAuth2AuthorizationEndpointConfigurer extends AbstractOAuth2C
 
 	@Override
 	void init(HttpSecurity httpSecurity) {
-		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils.getAuthorizationServerSettings(httpSecurity);
-		String authorizationEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed() ?
-				withMultipleIssuersPattern(authorizationServerSettings.getAuthorizationEndpoint()) :
-				authorizationServerSettings.getAuthorizationEndpoint();
+		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils
+			.getAuthorizationServerSettings(httpSecurity);
+		String authorizationEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed()
+				? withMultipleIssuersPattern(authorizationServerSettings.getAuthorizationEndpoint())
+				: authorizationServerSettings.getAuthorizationEndpoint();
 		this.requestMatcher = new OrRequestMatcher(
 				new AntPathRequestMatcher(authorizationEndpointUri, HttpMethod.GET.name()),
 				new AntPathRequestMatcher(authorizationEndpointUri, HttpMethod.POST.name()));
@@ -256,12 +257,13 @@ public final class OAuth2AuthorizationEndpointConfigurer extends AbstractOAuth2C
 	@Override
 	void configure(HttpSecurity httpSecurity) {
 		AuthenticationManager authenticationManager = httpSecurity.getSharedObject(AuthenticationManager.class);
-		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils.getAuthorizationServerSettings(httpSecurity);
-		String authorizationEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed() ?
-				withMultipleIssuersPattern(authorizationServerSettings.getAuthorizationEndpoint()) :
-				authorizationServerSettings.getAuthorizationEndpoint();
-		OAuth2AuthorizationEndpointFilter authorizationEndpointFilter =
-				new OAuth2AuthorizationEndpointFilter(authenticationManager, authorizationEndpointUri);
+		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils
+			.getAuthorizationServerSettings(httpSecurity);
+		String authorizationEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed()
+				? withMultipleIssuersPattern(authorizationServerSettings.getAuthorizationEndpoint())
+				: authorizationServerSettings.getAuthorizationEndpoint();
+		OAuth2AuthorizationEndpointFilter authorizationEndpointFilter = new OAuth2AuthorizationEndpointFilter(
+				authenticationManager, authorizationEndpointUri);
 		List<AuthenticationConverter> authenticationConverters = createDefaultAuthenticationConverters();
 		if (!this.authorizationRequestConverters.isEmpty()) {
 			authenticationConverters.addAll(0, this.authorizationRequestConverters);

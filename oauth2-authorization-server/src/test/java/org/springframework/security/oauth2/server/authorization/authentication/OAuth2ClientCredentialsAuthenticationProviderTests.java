@@ -145,8 +145,8 @@ public class OAuth2ClientCredentialsAuthenticationProviderTests {
 	@Test
 	public void setAuthenticationValidatorWhenNullThenThrowIllegalArgumentException() {
 		assertThatThrownBy(() -> this.authenticationProvider.setAuthenticationValidator(null))
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("authenticationValidator cannot be null");
+			.isInstanceOf(IllegalArgumentException.class)
+			.hasMessage("authenticationValidator cannot be null");
 	}
 
 	@Test
@@ -325,10 +325,10 @@ public class OAuth2ClientCredentialsAuthenticationProviderTests {
 	@Test
 	public void authenticateWhenCustomAuthenticationValidatorThenUsed() {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient2().build();
-		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(
-				registeredClient, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
-		OAuth2ClientCredentialsAuthenticationToken authentication =
-				new OAuth2ClientCredentialsAuthenticationToken(clientPrincipal, registeredClient.getScopes(), null);
+		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient,
+				ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
+		OAuth2ClientCredentialsAuthenticationToken authentication = new OAuth2ClientCredentialsAuthenticationToken(
+				clientPrincipal, registeredClient.getScopes(), null);
 
 		@SuppressWarnings("unchecked")
 		Consumer<OAuth2ClientCredentialsAuthenticationContext> authenticationValidator = mock(Consumer.class);

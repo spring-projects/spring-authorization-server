@@ -220,8 +220,9 @@ public final class OAuth2DeviceAuthorizationEndpointFilter extends OncePerReques
 		OAuth2UserCode userCode = deviceAuthorizationRequestAuthentication.getUserCode();
 
 		// Generate the fully-qualified verification URI
-		UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromHttpUrl(UrlUtils.buildFullRequestUrl(request))
-				.replacePath(this.verificationUri);
+		UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder
+			.fromHttpUrl(UrlUtils.buildFullRequestUrl(request))
+			.replacePath(this.verificationUri);
 		String verificationUri = uriComponentsBuilder.build().toUriString();
 		// @formatter:off
 		String verificationUriComplete = uriComponentsBuilder

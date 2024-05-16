@@ -324,12 +324,13 @@ public class OidcTests {
 		String issuer = "https://example.com:8443/issuer1";
 
 		// Login
-		MultiValueMap<String, String> authorizationRequestParameters = getAuthorizationRequestParameters(registeredClient);
-		MvcResult mvcResult = this.mvc.perform(get(issuer.concat(DEFAULT_AUTHORIZATION_ENDPOINT_URI))
-						.queryParams(authorizationRequestParameters)
-						.with(user("user")))
-				.andExpect(status().is3xxRedirection())
-				.andReturn();
+		MultiValueMap<String, String> authorizationRequestParameters = getAuthorizationRequestParameters(
+				registeredClient);
+		MvcResult mvcResult = this.mvc
+			.perform(get(issuer.concat(DEFAULT_AUTHORIZATION_ENDPOINT_URI)).queryParams(authorizationRequestParameters)
+				.with(user("user")))
+			.andExpect(status().is3xxRedirection())
+			.andReturn();
 
 		MockHttpSession session = (MockHttpSession) mvcResult.getRequest().getSession();
 		assertThat(session.isNew()).isTrue();
@@ -340,12 +341,13 @@ public class OidcTests {
 				AUTHORIZATION_CODE_TOKEN_TYPE);
 
 		// Get ID Token
-		mvcResult = this.mvc.perform(post(issuer.concat(DEFAULT_TOKEN_ENDPOINT_URI))
-						.params(getTokenRequestParameters(registeredClient, authorization))
-						.header(HttpHeaders.AUTHORIZATION, "Basic " + encodeBasicAuth(
-								registeredClient.getClientId(), registeredClient.getClientSecret())))
-				.andExpect(status().isOk())
-				.andReturn();
+		mvcResult = this.mvc
+			.perform(post(issuer.concat(DEFAULT_TOKEN_ENDPOINT_URI))
+				.params(getTokenRequestParameters(registeredClient, authorization))
+				.header(HttpHeaders.AUTHORIZATION,
+						"Basic " + encodeBasicAuth(registeredClient.getClientId(), registeredClient.getClientSecret())))
+			.andExpect(status().isOk())
+			.andReturn();
 
 		MockHttpServletResponse servletResponse = mvcResult.getResponse();
 		MockClientHttpResponse httpResponse = new MockClientHttpResponse(servletResponse.getContentAsByteArray(),
@@ -356,11 +358,11 @@ public class OidcTests {
 		String idToken = (String) accessTokenResponse.getAdditionalParameters().get(OidcParameterNames.ID_TOKEN);
 
 		// Logout
-		mvcResult = this.mvc.perform(post(issuer.concat(DEFAULT_OIDC_LOGOUT_ENDPOINT_URI))
-						.param("id_token_hint", idToken)
-						.session(session))
-				.andExpect(status().is3xxRedirection())
-				.andReturn();
+		mvcResult = this.mvc
+			.perform(post(issuer.concat(DEFAULT_OIDC_LOGOUT_ENDPOINT_URI)).param("id_token_hint", idToken)
+				.session(session))
+			.andExpect(status().is3xxRedirection())
+			.andReturn();
 		redirectedUrl = mvcResult.getResponse().getRedirectedUrl();
 
 		assertThat(redirectedUrl).matches("/");

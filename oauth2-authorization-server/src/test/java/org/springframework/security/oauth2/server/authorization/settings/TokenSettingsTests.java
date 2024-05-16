@@ -153,18 +153,16 @@ public class TokenSettingsTests {
 
 	@Test
 	public void x509CertificateBoundAccessTokensWhenTrueThenSet() {
-		TokenSettings tokenSettings = TokenSettings.builder()
-				.x509CertificateBoundAccessTokens(true)
-				.build();
+		TokenSettings tokenSettings = TokenSettings.builder().x509CertificateBoundAccessTokens(true).build();
 		assertThat(tokenSettings.isX509CertificateBoundAccessTokens()).isTrue();
 	}
 
 	@Test
 	public void settingWhenCustomThenSet() {
 		TokenSettings tokenSettings = TokenSettings.builder()
-				.setting("name1", "value1")
-				.settings(settings -> settings.put("name2", "value2"))
-				.build();
+			.setting("name1", "value1")
+			.settings(settings -> settings.put("name2", "value2"))
+			.build();
 		assertThat(tokenSettings.getSettings()).hasSize(10);
 		assertThat(tokenSettings.<String>getSetting("name1")).isEqualTo("value1");
 		assertThat(tokenSettings.<String>getSetting("name2")).isEqualTo("value2");

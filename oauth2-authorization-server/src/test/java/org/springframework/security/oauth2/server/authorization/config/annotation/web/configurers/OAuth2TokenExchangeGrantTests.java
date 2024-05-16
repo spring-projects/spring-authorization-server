@@ -94,18 +94,24 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @ExtendWith(SpringTestContextExtension.class)
 public class OAuth2TokenExchangeGrantTests {
+
 	private static final String DEFAULT_TOKEN_ENDPOINT_URI = "/oauth2/token";
+
 	private static final String RESOURCE = "https://mydomain.com/resource";
+
 	private static final String AUDIENCE = "audience";
+
 	private static final String SUBJECT_TOKEN = "EfYu_0jEL";
+
 	private static final String ACTOR_TOKEN = "JlNE_xR1f";
+
 	private static final String ACCESS_TOKEN_TYPE_VALUE = "urn:ietf:params:oauth:token-type:access_token";
+
 	private static final String JWT_TOKEN_TYPE_VALUE = "urn:ietf:params:oauth:token-type:jwt";
 
 	public final SpringTestContext spring = new SpringTestContext();
 
-	private final HttpMessageConverter<OAuth2AccessTokenResponse> accessTokenResponseHttpMessageConverter =
-			new OAuth2AccessTokenResponseHttpMessageConverter();
+	private final HttpMessageConverter<OAuth2AccessTokenResponse> accessTokenResponseHttpMessageConverter = new OAuth2AccessTokenResponseHttpMessageConverter();
 
 	@Autowired
 	private MockMvc mvc;
@@ -152,7 +158,8 @@ public class OAuth2TokenExchangeGrantTests {
 		this.spring.register(AuthorizationServerConfiguration.class).autowire();
 
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
-				.authorizationGrantType(AuthorizationGrantType.TOKEN_EXCHANGE).build();
+			.authorizationGrantType(AuthorizationGrantType.TOKEN_EXCHANGE)
+			.build();
 		this.registeredClientRepository.save(registeredClient);
 
 		MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
@@ -168,23 +175,27 @@ public class OAuth2TokenExchangeGrantTests {
 	}
 
 	@Test
-	public void requestWhenAccessTokenRequestValidAndNoActorTokenThenReturnAccessTokenResponseForImpersonation() throws Exception {
+	public void requestWhenAccessTokenRequestValidAndNoActorTokenThenReturnAccessTokenResponseForImpersonation()
+			throws Exception {
 		this.spring.register(AuthorizationServerConfiguration.class).autowire();
 
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
-				.authorizationGrantType(AuthorizationGrantType.TOKEN_EXCHANGE).build();
+			.authorizationGrantType(AuthorizationGrantType.TOKEN_EXCHANGE)
+			.build();
 		this.registeredClientRepository.save(registeredClient);
 
 		UsernamePasswordAuthenticationToken userPrincipal = createUserPrincipal("user");
 		OAuth2Authorization subjectAuthorization = TestOAuth2Authorizations.authorization(registeredClient)
-				.attribute(Principal.class.getName(), userPrincipal).build();
+			.attribute(Principal.class.getName(), userPrincipal)
+			.build();
 		this.authorizationService.save(subjectAuthorization);
 
 		MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
 		parameters.set(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.TOKEN_EXCHANGE.getValue());
 		parameters.set(OAuth2ParameterNames.CLIENT_ID, registeredClient.getClientId());
 		parameters.set(OAuth2ParameterNames.REQUESTED_TOKEN_TYPE, JWT_TOKEN_TYPE_VALUE);
-		parameters.set(OAuth2ParameterNames.SUBJECT_TOKEN, subjectAuthorization.getAccessToken().getToken().getTokenValue());
+		parameters.set(OAuth2ParameterNames.SUBJECT_TOKEN,
+				subjectAuthorization.getAccessToken().getToken().getTokenValue());
 		parameters.set(OAuth2ParameterNames.SUBJECT_TOKEN_TYPE, JWT_TOKEN_TYPE_VALUE);
 		parameters.set(OAuth2ParameterNames.RESOURCE, RESOURCE);
 		parameters.set(OAuth2ParameterNames.AUDIENCE, AUDIENCE);
@@ -208,8 +219,8 @@ public class OAuth2TokenExchangeGrantTests {
 		MockHttpServletResponse servletResponse = mvcResult.getResponse();
 		MockClientHttpResponse httpResponse = new MockClientHttpResponse(servletResponse.getContentAsByteArray(),
 				HttpStatus.OK);
-		OAuth2AccessTokenResponse accessTokenResponse =
-				this.accessTokenResponseHttpMessageConverter.read(OAuth2AccessTokenResponse.class, httpResponse);
+		OAuth2AccessTokenResponse accessTokenResponse = this.accessTokenResponseHttpMessageConverter
+			.read(OAuth2AccessTokenResponse.class, httpResponse);
 
 		String accessToken = accessTokenResponse.getAccessToken().getTokenValue();
 		OAuth2Authorization authorization = this.authorizationService.findByToken(accessToken,
@@ -217,19 +228,22 @@ public class OAuth2TokenExchangeGrantTests {
 		assertThat(authorization).isNotNull();
 		assertThat(authorization.getAccessToken()).isNotNull();
 		assertThat(authorization.getAccessToken().getClaims()).isNotNull();
-		// We do not populate claims (e.g. `aud`) based on the resource or audience parameters
+		// We do not populate claims (e.g. `aud`) based on the resource or audience
+		// parameters
 		assertThat(authorization.getAccessToken().getClaims().get(OAuth2TokenClaimNames.AUD))
-				.isEqualTo(List.of(registeredClient.getClientId()));
+			.isEqualTo(List.of(registeredClient.getClientId()));
 		assertThat(authorization.getRefreshToken()).isNull();
 		assertThat(authorization.<Authentication>getAttribute(Principal.class.getName())).isEqualTo(userPrincipal);
 	}
 
 	@Test
-	public void requestWhenAccessTokenRequestValidAndActorTokenThenReturnAccessTokenResponseForDelegation() throws Exception {
+	public void requestWhenAccessTokenRequestValidAndActorTokenThenReturnAccessTokenResponseForDelegation()
+			throws Exception {
 		this.spring.register(AuthorizationServerConfiguration.class).autowire();
 
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
-				.authorizationGrantType(AuthorizationGrantType.TOKEN_EXCHANGE).build();
+			.authorizationGrantType(AuthorizationGrantType.TOKEN_EXCHANGE)
+			.build();
 		this.registeredClientRepository.save(registeredClient);
 
 		UsernamePasswordAuthenticationToken userPrincipal = createUserPrincipal("user");
@@ -284,8 +298,8 @@ public class OAuth2TokenExchangeGrantTests {
 		MockHttpServletResponse servletResponse = mvcResult.getResponse();
 		MockClientHttpResponse httpResponse = new MockClientHttpResponse(servletResponse.getContentAsByteArray(),
 				HttpStatus.OK);
-		OAuth2AccessTokenResponse accessTokenResponse =
-				this.accessTokenResponseHttpMessageConverter.read(OAuth2AccessTokenResponse.class, httpResponse);
+		OAuth2AccessTokenResponse accessTokenResponse = this.accessTokenResponseHttpMessageConverter
+			.read(OAuth2AccessTokenResponse.class, httpResponse);
 
 		String accessToken = accessTokenResponse.getAccessToken().getTokenValue();
 		OAuth2Authorization authorization = this.authorizationService.findByToken(accessToken,
@@ -296,7 +310,7 @@ public class OAuth2TokenExchangeGrantTests {
 		assertThat(authorization.getAccessToken().getClaims().get("act")).isNotNull();
 		assertThat(authorization.getRefreshToken()).isNull();
 		assertThat(authorization.<Authentication>getAttribute(Principal.class.getName()))
-				.isInstanceOf(OAuth2TokenExchangeCompositeAuthenticationToken.class);
+			.isInstanceOf(OAuth2TokenExchangeCompositeAuthenticationToken.class);
 	}
 
 	private static OAuth2AccessToken createAccessToken(String tokenValue) {
@@ -363,6 +377,7 @@ public class OAuth2TokenExchangeGrantTests {
 		PasswordEncoder passwordEncoder() {
 			return NoOpPasswordEncoder.getInstance();
 		}
+
 	}
 
 }

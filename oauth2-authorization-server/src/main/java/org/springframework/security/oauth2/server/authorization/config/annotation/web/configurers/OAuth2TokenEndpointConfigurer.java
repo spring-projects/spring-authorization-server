@@ -185,10 +185,11 @@ public final class OAuth2TokenEndpointConfigurer extends AbstractOAuth2Configure
 
 	@Override
 	void init(HttpSecurity httpSecurity) {
-		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils.getAuthorizationServerSettings(httpSecurity);
-		String tokenEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed() ?
-				withMultipleIssuersPattern(authorizationServerSettings.getTokenEndpoint()) :
-				authorizationServerSettings.getTokenEndpoint();
+		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils
+			.getAuthorizationServerSettings(httpSecurity);
+		String tokenEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed()
+				? withMultipleIssuersPattern(authorizationServerSettings.getTokenEndpoint())
+				: authorizationServerSettings.getTokenEndpoint();
 		this.requestMatcher = new AntPathRequestMatcher(tokenEndpointUri, HttpMethod.POST.name());
 
 		List<AuthenticationProvider> authenticationProviders = createDefaultAuthenticationProviders(httpSecurity);
@@ -206,11 +207,11 @@ public final class OAuth2TokenEndpointConfigurer extends AbstractOAuth2Configure
 		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils
 			.getAuthorizationServerSettings(httpSecurity);
 
-		String tokenEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed() ?
-				withMultipleIssuersPattern(authorizationServerSettings.getTokenEndpoint()) :
-				authorizationServerSettings.getTokenEndpoint();
-		OAuth2TokenEndpointFilter tokenEndpointFilter =
-				new OAuth2TokenEndpointFilter(authenticationManager, tokenEndpointUri);
+		String tokenEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed()
+				? withMultipleIssuersPattern(authorizationServerSettings.getTokenEndpoint())
+				: authorizationServerSettings.getTokenEndpoint();
+		OAuth2TokenEndpointFilter tokenEndpointFilter = new OAuth2TokenEndpointFilter(authenticationManager,
+				tokenEndpointUri);
 		List<AuthenticationConverter> authenticationConverters = createDefaultAuthenticationConverters();
 		if (!this.accessTokenRequestConverters.isEmpty()) {
 			authenticationConverters.addAll(0, this.accessTokenRequestConverters);
@@ -270,8 +271,8 @@ public final class OAuth2TokenEndpointConfigurer extends AbstractOAuth2Configure
 				authorizationService, tokenGenerator);
 		authenticationProviders.add(deviceCodeAuthenticationProvider);
 
-		OAuth2TokenExchangeAuthenticationProvider tokenExchangeAuthenticationProvider =
-				new OAuth2TokenExchangeAuthenticationProvider(authorizationService, tokenGenerator);
+		OAuth2TokenExchangeAuthenticationProvider tokenExchangeAuthenticationProvider = new OAuth2TokenExchangeAuthenticationProvider(
+				authorizationService, tokenGenerator);
 		authenticationProviders.add(tokenExchangeAuthenticationProvider);
 
 		return authenticationProviders;

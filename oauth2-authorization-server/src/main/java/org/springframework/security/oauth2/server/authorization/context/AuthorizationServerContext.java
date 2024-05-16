@@ -32,18 +32,24 @@ public interface AuthorizationServerContext {
 	 * resolves the issuer identifier from the <i>"current"</i> request.
 	 *
 	 * <p>
-	 * The issuer identifier may contain a path component to support {@link AuthorizationServerSettings#isMultipleIssuersAllowed() multiple issuers per host} in a multi-tenant hosting configuration.
+	 * The issuer identifier may contain a path component to support
+	 * {@link AuthorizationServerSettings#isMultipleIssuersAllowed() multiple issuers per
+	 * host} in a multi-tenant hosting configuration.
 	 *
 	 * <p>
 	 * For example:
 	 * <ul>
-	 * <li>{@code https://example.com/issuer1/oauth2/token} &mdash; resolves the issuer to {@code https://example.com/issuer1}</li>
-	 * <li>{@code https://example.com/issuer2/oauth2/token} &mdash; resolves the issuer to {@code https://example.com/issuer2}</li>
-	 * <li>{@code https://example.com/authz/issuer1/oauth2/token} &mdash; resolves the issuer to {@code https://example.com/authz/issuer1}</li>
-	 * <li>{@code https://example.com/authz/issuer2/oauth2/token} &mdash; resolves the issuer to {@code https://example.com/authz/issuer2}</li>
+	 * <li>{@code https://example.com/issuer1/oauth2/token} &mdash; resolves the issuer to
+	 * {@code https://example.com/issuer1}</li>
+	 * <li>{@code https://example.com/issuer2/oauth2/token} &mdash; resolves the issuer to
+	 * {@code https://example.com/issuer2}</li>
+	 * <li>{@code https://example.com/authz/issuer1/oauth2/token} &mdash; resolves the
+	 * issuer to {@code https://example.com/authz/issuer1}</li>
+	 * <li>{@code https://example.com/authz/issuer2/oauth2/token} &mdash; resolves the
+	 * issuer to {@code https://example.com/authz/issuer2}</li>
 	 * </ul>
-	 *
-	 * @return {@link AuthorizationServerSettings#getIssuer()} if available, otherwise, resolves the issuer identifier from the <i>"current"</i> request
+	 * @return {@link AuthorizationServerSettings#getIssuer()} if available, otherwise,
+	 * resolves the issuer identifier from the <i>"current"</i> request
 	 */
 	String getIssuer();
 

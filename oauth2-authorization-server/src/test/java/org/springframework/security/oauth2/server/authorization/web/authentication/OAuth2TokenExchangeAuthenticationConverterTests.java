@@ -41,11 +41,17 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
  * @author Steve Riesenberg
  */
 public class OAuth2TokenExchangeAuthenticationConverterTests {
+
 	private static final String CLIENT_ID = "client-1";
+
 	private static final String TOKEN_URI = "/oauth2/token";
+
 	private static final String SUBJECT_TOKEN = "EfYu_0jEL";
+
 	private static final String ACTOR_TOKEN = "JlNE_xR1f";
+
 	private static final String ACCESS_TOKEN_TYPE_VALUE = "urn:ietf:params:oauth:token-type:access_token";
+
 	private static final String JWT_TOKEN_TYPE_VALUE = "urn:ietf:params:oauth:token-type:jwt";
 
 	private OAuth2TokenExchangeAuthenticationConverter converter;
@@ -222,7 +228,6 @@ public class OAuth2TokenExchangeAuthenticationConverterTests {
 		// @formatter:on
 	}
 
-
 	@Test
 	public void convertWhenMultipleActorTokenParametersThenInvalidRequestError() {
 		MockHttpServletRequest request = createRequest();
@@ -312,8 +317,8 @@ public class OAuth2TokenExchangeAuthenticationConverterTests {
 		securityContext.setAuthentication(new TestingAuthenticationToken(CLIENT_ID, null));
 		SecurityContextHolder.setContext(securityContext);
 
-		OAuth2TokenExchangeAuthenticationToken authentication =
-				(OAuth2TokenExchangeAuthenticationToken) this.converter.convert(request);
+		OAuth2TokenExchangeAuthenticationToken authentication = (OAuth2TokenExchangeAuthenticationToken) this.converter
+			.convert(request);
 		assertThat(authentication).isNotNull();
 		assertThat(authentication.getResources()).containsExactly("https://mydomain.com/resource1",
 				"https://mydomain.com/resource2");

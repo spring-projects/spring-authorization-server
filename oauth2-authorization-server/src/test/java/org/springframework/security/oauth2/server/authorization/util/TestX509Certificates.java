@@ -29,22 +29,25 @@ public final class TestX509Certificates {
 			// Generate the Root certificate (Trust Anchor or most-trusted CA)
 			KeyPair rootKeyPair = X509CertificateUtils.generateRSAKeyPair();
 			String distinguishedName = "CN=spring-samples-trusted-ca, OU=Spring Samples, O=Spring, C=US";
-			X509Certificate rootCertificate = X509CertificateUtils.createTrustAnchorCertificate(rootKeyPair, distinguishedName);
+			X509Certificate rootCertificate = X509CertificateUtils.createTrustAnchorCertificate(rootKeyPair,
+					distinguishedName);
 
 			// Generate the CA (intermediary) certificate
 			KeyPair caKeyPair = X509CertificateUtils.generateRSAKeyPair();
 			distinguishedName = "CN=spring-samples-ca, OU=Spring Samples, O=Spring, C=US";
-			X509Certificate caCertificate = X509CertificateUtils.createCACertificate(
-					rootCertificate, rootKeyPair.getPrivate(), caKeyPair.getPublic(), distinguishedName);
+			X509Certificate caCertificate = X509CertificateUtils.createCACertificate(rootCertificate,
+					rootKeyPair.getPrivate(), caKeyPair.getPublic(), distinguishedName);
 
 			// Generate certificate for demo-client-sample
 			KeyPair demoClientKeyPair = X509CertificateUtils.generateRSAKeyPair();
 			distinguishedName = "CN=demo-client-sample, OU=Spring Samples, O=Spring, C=US";
-			X509Certificate demoClientCertificate = X509CertificateUtils.createEndEntityCertificate(
-					caCertificate, caKeyPair.getPrivate(), demoClientKeyPair.getPublic(), distinguishedName);
+			X509Certificate demoClientCertificate = X509CertificateUtils.createEndEntityCertificate(caCertificate,
+					caKeyPair.getPrivate(), demoClientKeyPair.getPublic(), distinguishedName);
 
-			DEMO_CLIENT_PKI_CERTIFICATE = new X509Certificate[] { demoClientCertificate, caCertificate, rootCertificate };
-		} catch (Exception ex) {
+			DEMO_CLIENT_PKI_CERTIFICATE = new X509Certificate[] { demoClientCertificate, caCertificate,
+					rootCertificate };
+		}
+		catch (Exception ex) {
 			throw new IllegalStateException(ex);
 		}
 	}
@@ -55,10 +58,12 @@ public final class TestX509Certificates {
 			// Generate self-signed certificate for demo-client-sample
 			KeyPair keyPair = X509CertificateUtils.generateRSAKeyPair();
 			String distinguishedName = "CN=demo-client-sample, OU=Spring Samples, O=Spring, C=US";
-			X509Certificate demoClientSelfSignedCertificate = X509CertificateUtils.createTrustAnchorCertificate(keyPair, distinguishedName);
+			X509Certificate demoClientSelfSignedCertificate = X509CertificateUtils.createTrustAnchorCertificate(keyPair,
+					distinguishedName);
 
 			DEMO_CLIENT_SELF_SIGNED_CERTIFICATE = new X509Certificate[] { demoClientSelfSignedCertificate };
-		} catch (Exception ex) {
+		}
+		catch (Exception ex) {
 			throw new IllegalStateException(ex);
 		}
 	}

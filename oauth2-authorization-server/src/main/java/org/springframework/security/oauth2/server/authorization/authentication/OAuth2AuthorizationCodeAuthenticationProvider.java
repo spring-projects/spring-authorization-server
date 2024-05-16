@@ -157,11 +157,12 @@ public final class OAuth2AuthorizationCodeAuthenticationProvider implements Auth
 			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_GRANT);
 		}
 
-		if (StringUtils.hasText(authorizationRequest.getRedirectUri()) &&
-				!authorizationRequest.getRedirectUri().equals(authorizationCodeAuthentication.getRedirectUri())) {
+		if (StringUtils.hasText(authorizationRequest.getRedirectUri())
+				&& !authorizationRequest.getRedirectUri().equals(authorizationCodeAuthentication.getRedirectUri())) {
 			if (this.logger.isDebugEnabled()) {
-				this.logger.debug(LogMessage.format("Invalid request: redirect_uri does not match" +
-						" for registered client '%s'", registeredClient.getId()));
+				this.logger.debug(LogMessage.format(
+						"Invalid request: redirect_uri does not match" + " for registered client '%s'",
+						registeredClient.getId()));
 			}
 			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_GRANT);
 		}

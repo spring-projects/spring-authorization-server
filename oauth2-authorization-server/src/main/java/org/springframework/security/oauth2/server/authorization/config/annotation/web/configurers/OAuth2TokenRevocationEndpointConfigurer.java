@@ -179,10 +179,11 @@ public final class OAuth2TokenRevocationEndpointConfigurer extends AbstractOAuth
 
 	@Override
 	void init(HttpSecurity httpSecurity) {
-		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils.getAuthorizationServerSettings(httpSecurity);
-		String tokenRevocationEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed() ?
-				withMultipleIssuersPattern(authorizationServerSettings.getTokenRevocationEndpoint()) :
-				authorizationServerSettings.getTokenRevocationEndpoint();
+		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils
+			.getAuthorizationServerSettings(httpSecurity);
+		String tokenRevocationEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed()
+				? withMultipleIssuersPattern(authorizationServerSettings.getTokenRevocationEndpoint())
+				: authorizationServerSettings.getTokenRevocationEndpoint();
 		this.requestMatcher = new AntPathRequestMatcher(tokenRevocationEndpointUri, HttpMethod.POST.name());
 
 		List<AuthenticationProvider> authenticationProviders = createDefaultAuthenticationProviders(httpSecurity);
@@ -200,11 +201,11 @@ public final class OAuth2TokenRevocationEndpointConfigurer extends AbstractOAuth
 		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils
 			.getAuthorizationServerSettings(httpSecurity);
 
-		String tokenRevocationEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed() ?
-				withMultipleIssuersPattern(authorizationServerSettings.getTokenRevocationEndpoint()) :
-				authorizationServerSettings.getTokenRevocationEndpoint();
-		OAuth2TokenRevocationEndpointFilter revocationEndpointFilter =
-				new OAuth2TokenRevocationEndpointFilter(authenticationManager, tokenRevocationEndpointUri);
+		String tokenRevocationEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed()
+				? withMultipleIssuersPattern(authorizationServerSettings.getTokenRevocationEndpoint())
+				: authorizationServerSettings.getTokenRevocationEndpoint();
+		OAuth2TokenRevocationEndpointFilter revocationEndpointFilter = new OAuth2TokenRevocationEndpointFilter(
+				authenticationManager, tokenRevocationEndpointUri);
 		List<AuthenticationConverter> authenticationConverters = createDefaultAuthenticationConverters();
 		if (!this.revocationRequestConverters.isEmpty()) {
 			authenticationConverters.addAll(0, this.revocationRequestConverters);

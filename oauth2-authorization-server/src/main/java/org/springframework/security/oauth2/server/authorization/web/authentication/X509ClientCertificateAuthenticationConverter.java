@@ -33,9 +33,10 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
 
 /**
- * Attempts to extract a client {@code X509Certificate} chain from {@link HttpServletRequest}
- * and then converts to an {@link OAuth2ClientAuthenticationToken} used for authenticating the client
- * using the {@code tls_client_auth} or {@code self_signed_tls_client_auth} method.
+ * Attempts to extract a client {@code X509Certificate} chain from
+ * {@link HttpServletRequest} and then converts to an
+ * {@link OAuth2ClientAuthenticationToken} used for authenticating the client using the
+ * {@code tls_client_auth} or {@code self_signed_tls_client_auth} method.
  *
  * @author Joe Grandja
  * @since 1.3
@@ -48,8 +49,8 @@ public final class X509ClientCertificateAuthenticationConverter implements Authe
 	@Nullable
 	@Override
 	public Authentication convert(HttpServletRequest request) {
-		X509Certificate[] clientCertificateChain =
-				(X509Certificate[]) request.getAttribute("jakarta.servlet.request.X509Certificate");
+		X509Certificate[] clientCertificateChain = (X509Certificate[]) request
+			.getAttribute("jakarta.servlet.request.X509Certificate");
 		if (clientCertificateChain == null || clientCertificateChain.length == 0) {
 			return null;
 		}
@@ -58,21 +59,18 @@ public final class X509ClientCertificateAuthenticationConverter implements Authe
 
 		// client_id (REQUIRED)
 		String clientId = parameters.getFirst(OAuth2ParameterNames.CLIENT_ID);
-		if (!StringUtils.hasText(clientId) ||
-				parameters.get(OAuth2ParameterNames.CLIENT_ID).size() != 1) {
+		if (!StringUtils.hasText(clientId) || parameters.get(OAuth2ParameterNames.CLIENT_ID).size() != 1) {
 			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_REQUEST);
 		}
 
-		Map<String, Object> additionalParameters = OAuth2EndpointUtils.getParametersIfMatchesAuthorizationCodeGrantRequest(
-				request, OAuth2ParameterNames.CLIENT_ID);
+		Map<String, Object> additionalParameters = OAuth2EndpointUtils
+			.getParametersIfMatchesAuthorizationCodeGrantRequest(request, OAuth2ParameterNames.CLIENT_ID);
 
-		ClientAuthenticationMethod clientAuthenticationMethod =
-				clientCertificateChain.length == 1 ?
-						ClientAuthenticationMethod.SELF_SIGNED_TLS_CLIENT_AUTH :
-						ClientAuthenticationMethod.TLS_CLIENT_AUTH;
+		ClientAuthenticationMethod clientAuthenticationMethod = clientCertificateChain.length == 1
+				? ClientAuthenticationMethod.SELF_SIGNED_TLS_CLIENT_AUTH : ClientAuthenticationMethod.TLS_CLIENT_AUTH;
 
-		return new OAuth2ClientAuthenticationToken(clientId, clientAuthenticationMethod,
-				clientCertificateChain, additionalParameters);
+		return new OAuth2ClientAuthenticationToken(clientId, clientAuthenticationMethod, clientCertificateChain,
+				additionalParameters);
 	}
 
 }

@@ -86,13 +86,16 @@ public class AuthorizationServerSettingsTests {
 	public void buildWhenIssuerSetAndMultipleIssuersAllowedTrueThenThrowIllegalArgumentException() {
 		String issuer = "https://example.com:9000";
 		assertThatIllegalArgumentException()
-				.isThrownBy(() -> AuthorizationServerSettings.builder().issuer(issuer).multipleIssuersAllowed(true).build())
-				.withMessage("The issuer identifier (" + issuer + ") cannot be set when isMultipleIssuersAllowed() is true.");
+			.isThrownBy(() -> AuthorizationServerSettings.builder().issuer(issuer).multipleIssuersAllowed(true).build())
+			.withMessage(
+					"The issuer identifier (" + issuer + ") cannot be set when isMultipleIssuersAllowed() is true.");
 	}
 
 	@Test
 	public void buildWhenIssuerNotSetAndMultipleIssuersAllowedTrueThenDefaultsAreSet() {
-		AuthorizationServerSettings authorizationServerSettings = AuthorizationServerSettings.builder().multipleIssuersAllowed(true).build();
+		AuthorizationServerSettings authorizationServerSettings = AuthorizationServerSettings.builder()
+			.multipleIssuersAllowed(true)
+			.build();
 
 		assertThat(authorizationServerSettings.getIssuer()).isNull();
 		assertThat(authorizationServerSettings.isMultipleIssuersAllowed()).isTrue();

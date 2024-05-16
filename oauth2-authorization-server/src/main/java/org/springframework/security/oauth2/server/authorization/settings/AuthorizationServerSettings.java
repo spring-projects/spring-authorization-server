@@ -44,8 +44,9 @@ public final class AuthorizationServerSettings extends AbstractSettings {
 	}
 
 	/**
-	 * Returns {@code true} if multiple issuers are allowed per host. The default is {@code false}.
-	 * Using path components in the URL of the issuer identifier enables supporting multiple issuers per host in a multi-tenant hosting configuration.
+	 * Returns {@code true} if multiple issuers are allowed per host. The default is
+	 * {@code false}. Using path components in the URL of the issuer identifier enables
+	 * supporting multiple issuers per host in a multi-tenant hosting configuration.
 	 *
 	 * <p>
 	 * For example:
@@ -53,8 +54,8 @@ public final class AuthorizationServerSettings extends AbstractSettings {
 	 * <li>{@code https://example.com/issuer1}</li>
 	 * <li>{@code https://example.com/authz/issuer2}</li>
 	 * </ul>
-	 *
-	 * @return {@code true} if multiple issuers are allowed per host, {@code false} otherwise
+	 * @return {@code true} if multiple issuers are allowed per host, {@code false}
+	 * otherwise
 	 * @since 1.3
 	 * @see AuthorizationServerContext#getIssuer()
 	 */
@@ -198,8 +199,9 @@ public final class AuthorizationServerSettings extends AbstractSettings {
 		}
 
 		/**
-		 * Set to {@code true} if multiple issuers are allowed per host.
-		 * Using path components in the URL of the issuer identifier enables supporting multiple issuers per host in a multi-tenant hosting configuration.
+		 * Set to {@code true} if multiple issuers are allowed per host. Using path
+		 * components in the URL of the issuer identifier enables supporting multiple
+		 * issuers per host in a multi-tenant hosting configuration.
 		 *
 		 * <p>
 		 * For example:
@@ -209,17 +211,20 @@ public final class AuthorizationServerSettings extends AbstractSettings {
 		 * </ul>
 		 *
 		 * <p>
-		 * <b>NOTE:</b> Explicitly configuring the issuer identifier via {@link #issuer(String)} forces to a single-tenant configuration.
-		 * Avoid configuring the issuer identifier when using a multi-tenant hosting configuration,
-		 * allowing the issuer identifier to be resolved from the <i>"current"</i> request.
-		 *
-		 * @param multipleIssuersAllowed {@code true} if multiple issuers are allowed per host, {@code false} otherwise
+		 * <b>NOTE:</b> Explicitly configuring the issuer identifier via
+		 * {@link #issuer(String)} forces to a single-tenant configuration. Avoid
+		 * configuring the issuer identifier when using a multi-tenant hosting
+		 * configuration, allowing the issuer identifier to be resolved from the
+		 * <i>"current"</i> request.
+		 * @param multipleIssuersAllowed {@code true} if multiple issuers are allowed per
+		 * host, {@code false} otherwise
 		 * @return the {@link Builder} for further configuration
 		 * @since 1.3
 		 * @see AuthorizationServerContext#getIssuer()
 		 */
 		public Builder multipleIssuersAllowed(boolean multipleIssuersAllowed) {
-			return setting(ConfigurationSettingNames.AuthorizationServer.MULTIPLE_ISSUERS_ALLOWED, multipleIssuersAllowed);
+			return setting(ConfigurationSettingNames.AuthorizationServer.MULTIPLE_ISSUERS_ALLOWED,
+					multipleIssuersAllowed);
 		}
 
 		/**
@@ -328,9 +333,10 @@ public final class AuthorizationServerSettings extends AbstractSettings {
 		@Override
 		public AuthorizationServerSettings build() {
 			AuthorizationServerSettings authorizationServerSettings = new AuthorizationServerSettings(getSettings());
-			if (authorizationServerSettings.getIssuer() != null && authorizationServerSettings.isMultipleIssuersAllowed()) {
-				throw new IllegalArgumentException("The issuer identifier (" + authorizationServerSettings.getIssuer() +
-						") cannot be set when isMultipleIssuersAllowed() is true.");
+			if (authorizationServerSettings.getIssuer() != null
+					&& authorizationServerSettings.isMultipleIssuersAllowed()) {
+				throw new IllegalArgumentException("The issuer identifier (" + authorizationServerSettings.getIssuer()
+						+ ") cannot be set when isMultipleIssuersAllowed() is true.");
 			}
 			return authorizationServerSettings;
 		}

@@ -71,8 +71,8 @@ public final class OAuth2ClientCredentialsAuthenticationProvider implements Auth
 	private final OAuth2AuthorizationService authorizationService;
 
 	private final OAuth2TokenGenerator<? extends OAuth2Token> tokenGenerator;
-	private Consumer<OAuth2ClientCredentialsAuthenticationContext> authenticationValidator =
-			new OAuth2ClientCredentialsAuthenticationValidator();
+
+	private Consumer<OAuth2ClientCredentialsAuthenticationContext> authenticationValidator = new OAuth2ClientCredentialsAuthenticationValidator();
 
 	/**
 	 * Constructs an {@code OAuth2ClientCredentialsAuthenticationProvider} using the
@@ -103,16 +103,17 @@ public final class OAuth2ClientCredentialsAuthenticationProvider implements Auth
 
 		if (!registeredClient.getAuthorizationGrantTypes().contains(AuthorizationGrantType.CLIENT_CREDENTIALS)) {
 			if (this.logger.isDebugEnabled()) {
-				this.logger.debug(LogMessage.format("Invalid request: requested grant_type is not allowed" +
-						" for registered client '%s'", registeredClient.getId()));
+				this.logger.debug(LogMessage.format(
+						"Invalid request: requested grant_type is not allowed" + " for registered client '%s'",
+						registeredClient.getId()));
 			}
 			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.UNAUTHORIZED_CLIENT);
 		}
 
-		OAuth2ClientCredentialsAuthenticationContext authenticationContext =
-				OAuth2ClientCredentialsAuthenticationContext.with(clientCredentialsAuthentication)
-						.registeredClient(registeredClient)
-						.build();
+		OAuth2ClientCredentialsAuthenticationContext authenticationContext = OAuth2ClientCredentialsAuthenticationContext
+			.with(clientCredentialsAuthentication)
+			.registeredClient(registeredClient)
+			.build();
 		this.authenticationValidator.accept(authenticationContext);
 
 		Set<String> authorizedScopes = new LinkedHashSet<>(clientCredentialsAuthentication.getScopes());
@@ -173,18 +174,22 @@ public final class OAuth2ClientCredentialsAuthenticationProvider implements Auth
 	}
 
 	/**
-	 * Sets the {@code Consumer} providing access to the {@link OAuth2ClientCredentialsAuthenticationContext}
-	 * and is responsible for validating specific OAuth 2.0 Client Credentials Grant Request parameters
-	 * associated in the {@link OAuth2ClientCredentialsAuthenticationToken}.
-	 * The default authentication validator is {@link OAuth2ClientCredentialsAuthenticationValidator}.
+	 * Sets the {@code Consumer} providing access to the
+	 * {@link OAuth2ClientCredentialsAuthenticationContext} and is responsible for
+	 * validating specific OAuth 2.0 Client Credentials Grant Request parameters
+	 * associated in the {@link OAuth2ClientCredentialsAuthenticationToken}. The default
+	 * authentication validator is {@link OAuth2ClientCredentialsAuthenticationValidator}.
 	 *
 	 * <p>
-	 * <b>NOTE:</b> The authentication validator MUST throw {@link OAuth2AuthenticationException} if validation fails.
-	 *
-	 * @param authenticationValidator the {@code Consumer} providing access to the {@link OAuth2ClientCredentialsAuthenticationContext} and is responsible for validating specific OAuth 2.0 Client Credentials Grant Request parameters
+	 * <b>NOTE:</b> The authentication validator MUST throw
+	 * {@link OAuth2AuthenticationException} if validation fails.
+	 * @param authenticationValidator the {@code Consumer} providing access to the
+	 * {@link OAuth2ClientCredentialsAuthenticationContext} and is responsible for
+	 * validating specific OAuth 2.0 Client Credentials Grant Request parameters
 	 * @since 1.3
 	 */
-	public void setAuthenticationValidator(Consumer<OAuth2ClientCredentialsAuthenticationContext> authenticationValidator) {
+	public void setAuthenticationValidator(
+			Consumer<OAuth2ClientCredentialsAuthenticationContext> authenticationValidator) {
 		Assert.notNull(authenticationValidator, "authenticationValidator cannot be null");
 		this.authenticationValidator = authenticationValidator;
 	}

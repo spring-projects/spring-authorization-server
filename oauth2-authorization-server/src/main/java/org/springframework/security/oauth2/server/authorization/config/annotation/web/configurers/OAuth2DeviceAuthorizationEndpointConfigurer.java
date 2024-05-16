@@ -197,11 +197,11 @@ public final class OAuth2DeviceAuthorizationEndpointConfigurer extends AbstractO
 
 	@Override
 	public void init(HttpSecurity builder) {
-		AuthorizationServerSettings authorizationServerSettings =
-				OAuth2ConfigurerUtils.getAuthorizationServerSettings(builder);
-		String deviceAuthorizationEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed() ?
-				withMultipleIssuersPattern(authorizationServerSettings.getDeviceAuthorizationEndpoint()) :
-				authorizationServerSettings.getDeviceAuthorizationEndpoint();
+		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils
+			.getAuthorizationServerSettings(builder);
+		String deviceAuthorizationEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed()
+				? withMultipleIssuersPattern(authorizationServerSettings.getDeviceAuthorizationEndpoint())
+				: authorizationServerSettings.getDeviceAuthorizationEndpoint();
 		this.requestMatcher = new AntPathRequestMatcher(deviceAuthorizationEndpointUri, HttpMethod.POST.name());
 
 		List<AuthenticationProvider> authenticationProviders = createDefaultAuthenticationProviders(builder);
@@ -219,11 +219,11 @@ public final class OAuth2DeviceAuthorizationEndpointConfigurer extends AbstractO
 		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils
 			.getAuthorizationServerSettings(builder);
 
-		String deviceAuthorizationEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed() ?
-				withMultipleIssuersPattern(authorizationServerSettings.getDeviceAuthorizationEndpoint()) :
-				authorizationServerSettings.getDeviceAuthorizationEndpoint();
-		OAuth2DeviceAuthorizationEndpointFilter deviceAuthorizationEndpointFilter =
-				new OAuth2DeviceAuthorizationEndpointFilter(authenticationManager, deviceAuthorizationEndpointUri);
+		String deviceAuthorizationEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed()
+				? withMultipleIssuersPattern(authorizationServerSettings.getDeviceAuthorizationEndpoint())
+				: authorizationServerSettings.getDeviceAuthorizationEndpoint();
+		OAuth2DeviceAuthorizationEndpointFilter deviceAuthorizationEndpointFilter = new OAuth2DeviceAuthorizationEndpointFilter(
+				authenticationManager, deviceAuthorizationEndpointUri);
 
 		List<AuthenticationConverter> authenticationConverters = createDefaultAuthenticationConverters();
 		if (!this.deviceAuthorizationRequestConverters.isEmpty()) {

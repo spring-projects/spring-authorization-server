@@ -180,10 +180,11 @@ public final class OAuth2TokenIntrospectionEndpointConfigurer extends AbstractOA
 
 	@Override
 	void init(HttpSecurity httpSecurity) {
-		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils.getAuthorizationServerSettings(httpSecurity);
-		String tokenIntrospectionEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed() ?
-				withMultipleIssuersPattern(authorizationServerSettings.getTokenIntrospectionEndpoint()) :
-				authorizationServerSettings.getTokenIntrospectionEndpoint();
+		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils
+			.getAuthorizationServerSettings(httpSecurity);
+		String tokenIntrospectionEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed()
+				? withMultipleIssuersPattern(authorizationServerSettings.getTokenIntrospectionEndpoint())
+				: authorizationServerSettings.getTokenIntrospectionEndpoint();
 		this.requestMatcher = new AntPathRequestMatcher(tokenIntrospectionEndpointUri, HttpMethod.POST.name());
 
 		List<AuthenticationProvider> authenticationProviders = createDefaultAuthenticationProviders(httpSecurity);
@@ -198,12 +199,13 @@ public final class OAuth2TokenIntrospectionEndpointConfigurer extends AbstractOA
 	@Override
 	void configure(HttpSecurity httpSecurity) {
 		AuthenticationManager authenticationManager = httpSecurity.getSharedObject(AuthenticationManager.class);
-		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils.getAuthorizationServerSettings(httpSecurity);
-		String tokenIntrospectionEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed() ?
-				withMultipleIssuersPattern(authorizationServerSettings.getTokenIntrospectionEndpoint()) :
-				authorizationServerSettings.getTokenIntrospectionEndpoint();
-		OAuth2TokenIntrospectionEndpointFilter introspectionEndpointFilter =
-				new OAuth2TokenIntrospectionEndpointFilter(authenticationManager, tokenIntrospectionEndpointUri);
+		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils
+			.getAuthorizationServerSettings(httpSecurity);
+		String tokenIntrospectionEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed()
+				? withMultipleIssuersPattern(authorizationServerSettings.getTokenIntrospectionEndpoint())
+				: authorizationServerSettings.getTokenIntrospectionEndpoint();
+		OAuth2TokenIntrospectionEndpointFilter introspectionEndpointFilter = new OAuth2TokenIntrospectionEndpointFilter(
+				authenticationManager, tokenIntrospectionEndpointUri);
 		List<AuthenticationConverter> authenticationConverters = createDefaultAuthenticationConverters();
 		if (!this.introspectionRequestConverters.isEmpty()) {
 			authenticationConverters.addAll(0, this.introspectionRequestConverters);

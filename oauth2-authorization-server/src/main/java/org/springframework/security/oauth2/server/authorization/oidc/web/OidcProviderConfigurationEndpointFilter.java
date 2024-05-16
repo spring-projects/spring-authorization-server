@@ -63,9 +63,11 @@ public final class OidcProviderConfigurationEndpointFilter extends OncePerReques
 	private static final String DEFAULT_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI = "/.well-known/openid-configuration";
 
 	private final RequestMatcher requestMatcher = createRequestMatcher();
-	private final OidcProviderConfigurationHttpMessageConverter providerConfigurationHttpMessageConverter =
-			new OidcProviderConfigurationHttpMessageConverter();
-	private Consumer<OidcProviderConfiguration.Builder> providerConfigurationCustomizer = (providerConfiguration) -> {};
+
+	private final OidcProviderConfigurationHttpMessageConverter providerConfigurationHttpMessageConverter = new OidcProviderConfigurationHttpMessageConverter();
+
+	private Consumer<OidcProviderConfiguration.Builder> providerConfigurationCustomizer = (providerConfiguration) -> {
+	};
 
 	/**
 	 * Sets the {@code Consumer} providing access to the
@@ -96,29 +98,29 @@ public final class OidcProviderConfigurationEndpointFilter extends OncePerReques
 			.getAuthorizationServerSettings();
 
 		OidcProviderConfiguration.Builder providerConfiguration = OidcProviderConfiguration.builder()
-				.issuer(issuer)
-				.authorizationEndpoint(asUrl(issuer, authorizationServerSettings.getAuthorizationEndpoint()))
-				.deviceAuthorizationEndpoint(asUrl(issuer, authorizationServerSettings.getDeviceAuthorizationEndpoint()))
-				.tokenEndpoint(asUrl(issuer, authorizationServerSettings.getTokenEndpoint()))
-				.tokenEndpointAuthenticationMethods(clientAuthenticationMethods())
-				.jwkSetUrl(asUrl(issuer, authorizationServerSettings.getJwkSetEndpoint()))
-				.userInfoEndpoint(asUrl(issuer, authorizationServerSettings.getOidcUserInfoEndpoint()))
-				.endSessionEndpoint(asUrl(issuer, authorizationServerSettings.getOidcLogoutEndpoint()))
-				.responseType(OAuth2AuthorizationResponseType.CODE.getValue())
-				.grantType(AuthorizationGrantType.AUTHORIZATION_CODE.getValue())
-				.grantType(AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
-				.grantType(AuthorizationGrantType.REFRESH_TOKEN.getValue())
-				.grantType(AuthorizationGrantType.DEVICE_CODE.getValue())
-				.grantType(AuthorizationGrantType.TOKEN_EXCHANGE.getValue())
-				.tokenRevocationEndpoint(asUrl(issuer, authorizationServerSettings.getTokenRevocationEndpoint()))
-				.tokenRevocationEndpointAuthenticationMethods(clientAuthenticationMethods())
-				.tokenIntrospectionEndpoint(asUrl(issuer, authorizationServerSettings.getTokenIntrospectionEndpoint()))
-				.tokenIntrospectionEndpointAuthenticationMethods(clientAuthenticationMethods())
-				.codeChallengeMethod("S256")
-				.tlsClientCertificateBoundAccessTokens(true)
-				.subjectType("public")
-				.idTokenSigningAlgorithm(SignatureAlgorithm.RS256.getName())
-				.scope(OidcScopes.OPENID);
+			.issuer(issuer)
+			.authorizationEndpoint(asUrl(issuer, authorizationServerSettings.getAuthorizationEndpoint()))
+			.deviceAuthorizationEndpoint(asUrl(issuer, authorizationServerSettings.getDeviceAuthorizationEndpoint()))
+			.tokenEndpoint(asUrl(issuer, authorizationServerSettings.getTokenEndpoint()))
+			.tokenEndpointAuthenticationMethods(clientAuthenticationMethods())
+			.jwkSetUrl(asUrl(issuer, authorizationServerSettings.getJwkSetEndpoint()))
+			.userInfoEndpoint(asUrl(issuer, authorizationServerSettings.getOidcUserInfoEndpoint()))
+			.endSessionEndpoint(asUrl(issuer, authorizationServerSettings.getOidcLogoutEndpoint()))
+			.responseType(OAuth2AuthorizationResponseType.CODE.getValue())
+			.grantType(AuthorizationGrantType.AUTHORIZATION_CODE.getValue())
+			.grantType(AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
+			.grantType(AuthorizationGrantType.REFRESH_TOKEN.getValue())
+			.grantType(AuthorizationGrantType.DEVICE_CODE.getValue())
+			.grantType(AuthorizationGrantType.TOKEN_EXCHANGE.getValue())
+			.tokenRevocationEndpoint(asUrl(issuer, authorizationServerSettings.getTokenRevocationEndpoint()))
+			.tokenRevocationEndpointAuthenticationMethods(clientAuthenticationMethods())
+			.tokenIntrospectionEndpoint(asUrl(issuer, authorizationServerSettings.getTokenIntrospectionEndpoint()))
+			.tokenIntrospectionEndpointAuthenticationMethods(clientAuthenticationMethods())
+			.codeChallengeMethod("S256")
+			.tlsClientCertificateBoundAccessTokens(true)
+			.subjectType("public")
+			.idTokenSigningAlgorithm(SignatureAlgorithm.RS256.getName())
+			.scope(OidcScopes.OPENID);
 
 		this.providerConfigurationCustomizer.accept(providerConfiguration);
 
@@ -132,10 +134,10 @@ public final class OidcProviderConfigurationEndpointFilter extends OncePerReques
 				DEFAULT_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI, HttpMethod.GET.name());
 		final RequestMatcher multipleIssuersRequestMatcher = new AntPathRequestMatcher(
 				"/**" + DEFAULT_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI, HttpMethod.GET.name());
-		return (request) ->
-				AuthorizationServerContextHolder.getContext().getAuthorizationServerSettings().isMultipleIssuersAllowed() ?
-						multipleIssuersRequestMatcher.matches(request) :
-						defaultRequestMatcher.matches(request);
+		return (request) -> AuthorizationServerContextHolder.getContext()
+			.getAuthorizationServerSettings()
+			.isMultipleIssuersAllowed() ? multipleIssuersRequestMatcher.matches(request)
+					: defaultRequestMatcher.matches(request);
 	}
 
 	private static Consumer<List<String>> clientAuthenticationMethods() {

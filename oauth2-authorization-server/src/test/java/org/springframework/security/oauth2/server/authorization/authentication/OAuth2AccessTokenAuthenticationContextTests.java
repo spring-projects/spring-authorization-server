@@ -34,39 +34,43 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * @author Dmitriy Dubson
  */
 public class OAuth2AccessTokenAuthenticationContextTests {
+
 	private final RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
-	private final OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(this.registeredClient).build();
-	private OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(
-			this.registeredClient, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, this.registeredClient.getClientSecret());
-	private final OAuth2AccessTokenAuthenticationToken accessTokenAuthenticationToken =
-			new OAuth2AccessTokenAuthenticationToken(this.registeredClient, this.clientPrincipal,
-					this.authorization.getAccessToken().getToken(), this.authorization.getRefreshToken().getToken());
+
+	private final OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(this.registeredClient)
+		.build();
+
+	private OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(this.registeredClient,
+			ClientAuthenticationMethod.CLIENT_SECRET_BASIC, this.registeredClient.getClientSecret());
+
+	private final OAuth2AccessTokenAuthenticationToken accessTokenAuthenticationToken = new OAuth2AccessTokenAuthenticationToken(
+			this.registeredClient, this.clientPrincipal, this.authorization.getAccessToken().getToken(),
+			this.authorization.getRefreshToken().getToken());
 
 	@Test
 	public void withWhenAuthenticationNullThenThrowIllegalArgumentException() {
 		assertThatThrownBy(() -> OAuth2AccessTokenAuthenticationContext.with(null))
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("authentication cannot be null");
+			.isInstanceOf(IllegalArgumentException.class)
+			.hasMessage("authentication cannot be null");
 	}
 
 	@Test
 	public void setWhenValueNullThenThrowIllegalArgumentException() {
-		OAuth2AccessTokenAuthenticationContext.Builder builder =
-				OAuth2AccessTokenAuthenticationContext.with(this.accessTokenAuthenticationToken);
+		OAuth2AccessTokenAuthenticationContext.Builder builder = OAuth2AccessTokenAuthenticationContext
+			.with(this.accessTokenAuthenticationToken);
 
-		assertThatThrownBy(() -> builder.accessTokenResponse(null))
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("value cannot be null");
+		assertThatThrownBy(() -> builder.accessTokenResponse(null)).isInstanceOf(IllegalArgumentException.class)
+			.hasMessage("value cannot be null");
 	}
 
 	@Test
 	public void buildWhenAllValuesProvidedThenAllValuesAreSet() {
-		OAuth2AccessTokenResponse.Builder accessTokenResponseBuilder =
-				OAuth2AccessTokenResponse.withToken(this.accessTokenAuthenticationToken.getAccessToken().getTokenValue());
-		OAuth2AccessTokenAuthenticationContext context =
-				OAuth2AccessTokenAuthenticationContext.with(this.accessTokenAuthenticationToken)
-						.accessTokenResponse(accessTokenResponseBuilder)
-						.build();
+		OAuth2AccessTokenResponse.Builder accessTokenResponseBuilder = OAuth2AccessTokenResponse
+			.withToken(this.accessTokenAuthenticationToken.getAccessToken().getTokenValue());
+		OAuth2AccessTokenAuthenticationContext context = OAuth2AccessTokenAuthenticationContext
+			.with(this.accessTokenAuthenticationToken)
+			.accessTokenResponse(accessTokenResponseBuilder)
+			.build();
 
 		assertThat(context.<Authentication>getAuthentication()).isEqualTo(this.accessTokenAuthenticationToken);
 		assertThat(context.getAccessTokenResponse()).isEqualTo(accessTokenResponseBuilder);

@@ -26,8 +26,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.util.Assert;
 
 /**
- * An {@link Authentication} implementation used for the OAuth 2.0 Token Exchange Grant
- * to represent the principal in a composite token (e.g. the "delegation" use case).
+ * An {@link Authentication} implementation used for the OAuth 2.0 Token Exchange Grant to
+ * represent the principal in a composite token (e.g. the "delegation" use case).
  *
  * @author Steve Riesenberg
  * @since 1.3
@@ -39,7 +39,8 @@ public class OAuth2TokenExchangeCompositeAuthenticationToken extends AbstractAut
 
 	private final List<OAuth2TokenExchangeActor> actors;
 
-	public OAuth2TokenExchangeCompositeAuthenticationToken(Authentication subject, List<OAuth2TokenExchangeActor> actors) {
+	public OAuth2TokenExchangeCompositeAuthenticationToken(Authentication subject,
+			List<OAuth2TokenExchangeActor> actors) {
 		super(subject != null ? subject.getAuthorities() : null);
 		Assert.notNull(subject, "subject cannot be null");
 		Assert.notNull(actors, "actors cannot be null");
@@ -72,8 +73,8 @@ public class OAuth2TokenExchangeCompositeAuthenticationToken extends AbstractAut
 		if (!(obj instanceof OAuth2TokenExchangeCompositeAuthenticationToken other)) {
 			return false;
 		}
-		return super.equals(obj) && Objects.equals(this.subject, other.subject) &&
-				Objects.equals(this.actors, other.actors);
+		return super.equals(obj) && Objects.equals(this.subject, other.subject)
+				&& Objects.equals(this.actors, other.actors);
 	}
 
 	@Override

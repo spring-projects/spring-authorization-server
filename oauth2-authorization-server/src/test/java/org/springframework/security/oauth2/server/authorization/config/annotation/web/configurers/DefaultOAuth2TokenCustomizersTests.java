@@ -55,9 +55,13 @@ import static org.mockito.Mockito.when;
  * @author Joe Grandja
  */
 class DefaultOAuth2TokenCustomizersTests {
+
 	private static final String ISSUER_1 = "issuer-1";
+
 	private static final String ISSUER_2 = "issuer-2";
+
 	private JwsHeader.Builder jwsHeaderBuilder;
+
 	private JwtClaimsSet.Builder jwtClaimsBuilder;
 
 	@BeforeEach
@@ -131,10 +135,10 @@ class DefaultOAuth2TokenCustomizersTests {
 		when(tokenExchangeAuthentication.getAudiences()).thenReturn(Collections.emptySet());
 
 		Authentication subject = new TestingAuthenticationToken("subject", null);
-		OAuth2TokenExchangeActor actor1 = new OAuth2TokenExchangeActor(Map.of(JwtClaimNames.ISS, ISSUER_1,
-				JwtClaimNames.SUB, "actor1"));
-		OAuth2TokenExchangeActor actor2 = new OAuth2TokenExchangeActor(Map.of(JwtClaimNames.ISS, ISSUER_2,
-				JwtClaimNames.SUB, "actor2"));
+		OAuth2TokenExchangeActor actor1 = new OAuth2TokenExchangeActor(
+				Map.of(JwtClaimNames.ISS, ISSUER_1, JwtClaimNames.SUB, "actor1"));
+		OAuth2TokenExchangeActor actor2 = new OAuth2TokenExchangeActor(
+				Map.of(JwtClaimNames.ISS, ISSUER_2, JwtClaimNames.SUB, "actor2"));
 		OAuth2TokenExchangeCompositeAuthenticationToken principal = new OAuth2TokenExchangeCompositeAuthenticationToken(
 				subject, List.of(actor1, actor2));
 
@@ -177,11 +181,10 @@ class DefaultOAuth2TokenCustomizersTests {
 				)
 				.build();
 		// @formatter:on
-		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(
-				registeredClient, ClientAuthenticationMethod.TLS_CLIENT_AUTH,
-				TestX509Certificates.DEMO_CLIENT_PKI_CERTIFICATE);
-		OAuth2ClientCredentialsAuthenticationToken clientCredentialsAuthentication =
-				new OAuth2ClientCredentialsAuthenticationToken(clientPrincipal, null, null);
+		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient,
+				ClientAuthenticationMethod.TLS_CLIENT_AUTH, TestX509Certificates.DEMO_CLIENT_PKI_CERTIFICATE);
+		OAuth2ClientCredentialsAuthenticationToken clientCredentialsAuthentication = new OAuth2ClientCredentialsAuthenticationToken(
+				clientPrincipal, null, null);
 		// @formatter:off
 		JwtEncodingContext tokenContext = JwtEncodingContext.with(this.jwsHeaderBuilder, this.jwtClaimsBuilder)
 				.tokenType(OAuth2TokenType.ACCESS_TOKEN)
@@ -215,11 +218,11 @@ class DefaultOAuth2TokenCustomizersTests {
 				)
 				.build();
 		// @formatter:on
-		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(
-				registeredClient, ClientAuthenticationMethod.SELF_SIGNED_TLS_CLIENT_AUTH,
+		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient,
+				ClientAuthenticationMethod.SELF_SIGNED_TLS_CLIENT_AUTH,
 				TestX509Certificates.DEMO_CLIENT_SELF_SIGNED_CERTIFICATE);
-		OAuth2ClientCredentialsAuthenticationToken clientCredentialsAuthentication =
-				new OAuth2ClientCredentialsAuthenticationToken(clientPrincipal, null, null);
+		OAuth2ClientCredentialsAuthenticationToken clientCredentialsAuthentication = new OAuth2ClientCredentialsAuthenticationToken(
+				clientPrincipal, null, null);
 		// @formatter:off
 		JwtEncodingContext tokenContext = JwtEncodingContext.with(this.jwsHeaderBuilder, this.jwtClaimsBuilder)
 				.tokenType(OAuth2TokenType.ACCESS_TOKEN)

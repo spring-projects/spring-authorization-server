@@ -25,8 +25,9 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 import org.springframework.util.Assert;
 
 /**
- * An {@link OAuth2AuthenticationContext} that holds an {@link OAuth2ClientCredentialsAuthenticationToken} and additional information
- * and is used when validating the OAuth 2.0 Client Credentials Grant Request.
+ * An {@link OAuth2AuthenticationContext} that holds an
+ * {@link OAuth2ClientCredentialsAuthenticationToken} and additional information and is
+ * used when validating the OAuth 2.0 Client Credentials Grant Request.
  *
  * @author Adam Pilling
  * @since 1.3
@@ -35,6 +36,7 @@ import org.springframework.util.Assert;
  * @see OAuth2ClientCredentialsAuthenticationProvider#setAuthenticationValidator(Consumer)
  */
 public final class OAuth2ClientCredentialsAuthenticationContext implements OAuth2AuthenticationContext {
+
 	private final Map<Object, Object> context;
 
 	private OAuth2ClientCredentialsAuthenticationContext(Map<Object, Object> context) {
@@ -56,7 +58,6 @@ public final class OAuth2ClientCredentialsAuthenticationContext implements OAuth
 
 	/**
 	 * Returns the {@link RegisteredClient registered client}.
-	 *
 	 * @return the {@link RegisteredClient}
 	 */
 	public RegisteredClient getRegisteredClient() {
@@ -64,8 +65,8 @@ public final class OAuth2ClientCredentialsAuthenticationContext implements OAuth
 	}
 
 	/**
-	 * Constructs a new {@link Builder} with the provided {@link OAuth2ClientCredentialsAuthenticationToken}.
-	 *
+	 * Constructs a new {@link Builder} with the provided
+	 * {@link OAuth2ClientCredentialsAuthenticationToken}.
 	 * @param authentication the {@link OAuth2ClientCredentialsAuthenticationToken}
 	 * @return the {@link Builder}
 	 */
@@ -84,7 +85,6 @@ public final class OAuth2ClientCredentialsAuthenticationContext implements OAuth
 
 		/**
 		 * Sets the {@link RegisteredClient registered client}.
-		 *
 		 * @param registeredClient the {@link RegisteredClient}
 		 * @return the {@link Builder} for further configuration
 		 */
@@ -94,7 +94,6 @@ public final class OAuth2ClientCredentialsAuthenticationContext implements OAuth
 
 		/**
 		 * Builds a new {@link OAuth2ClientCredentialsAuthenticationContext}.
-		 *
 		 * @return the {@link OAuth2ClientCredentialsAuthenticationContext}
 		 */
 		public OAuth2ClientCredentialsAuthenticationContext build() {

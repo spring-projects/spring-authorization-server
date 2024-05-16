@@ -80,28 +80,29 @@ public class OidcProviderConfigurationTests {
 		this.spring.register(AuthorizationServerConfiguration.class).autowire();
 
 		this.mvc.perform(get(ISSUER.concat(DEFAULT_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI)))
-				.andExpect(status().is2xxSuccessful())
-				.andExpectAll(defaultConfigurationMatchers(ISSUER));
+			.andExpect(status().is2xxSuccessful())
+			.andExpectAll(defaultConfigurationMatchers(ISSUER));
 	}
 
 	@Test
-	public void requestWhenConfigurationRequestIncludesIssuerPathThenConfigurationResponseHasIssuerPath() throws Exception {
+	public void requestWhenConfigurationRequestIncludesIssuerPathThenConfigurationResponseHasIssuerPath()
+			throws Exception {
 		this.spring.register(AuthorizationServerConfigurationWithMultipleIssuersAllowed.class).autowire();
 
 		String issuer = "https://example.com:8443/issuer1";
 		this.mvc.perform(get(issuer.concat(DEFAULT_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI)))
-				.andExpect(status().is2xxSuccessful())
-				.andExpectAll(defaultConfigurationMatchers(issuer));
+			.andExpect(status().is2xxSuccessful())
+			.andExpectAll(defaultConfigurationMatchers(issuer));
 
 		issuer = "https://example.com:8443/path1/issuer2";
 		this.mvc.perform(get(issuer.concat(DEFAULT_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI)))
-				.andExpect(status().is2xxSuccessful())
-				.andExpectAll(defaultConfigurationMatchers(issuer));
+			.andExpect(status().is2xxSuccessful())
+			.andExpectAll(defaultConfigurationMatchers(issuer));
 
 		issuer = "https://example.com:8443/path1/path2/issuer3";
 		this.mvc.perform(get(issuer.concat(DEFAULT_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI)))
-				.andExpect(status().is2xxSuccessful())
-				.andExpectAll(defaultConfigurationMatchers(issuer));
+			.andExpect(status().is2xxSuccessful())
+			.andExpectAll(defaultConfigurationMatchers(issuer));
 	}
 
 	// gh-632
@@ -109,10 +110,9 @@ public class OidcProviderConfigurationTests {
 	public void requestWhenConfigurationRequestAndUserAuthenticatedThenReturnConfigurationResponse() throws Exception {
 		this.spring.register(AuthorizationServerConfiguration.class).autowire();
 
-		this.mvc.perform(get(ISSUER.concat(DEFAULT_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI))
-				.with(user("user")))
-				.andExpect(status().is2xxSuccessful())
-				.andExpectAll(defaultConfigurationMatchers(ISSUER));
+		this.mvc.perform(get(ISSUER.concat(DEFAULT_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI)).with(user("user")))
+			.andExpect(status().is2xxSuccessful())
+			.andExpectAll(defaultConfigurationMatchers(ISSUER));
 	}
 
 	// gh-616
@@ -122,9 +122,9 @@ public class OidcProviderConfigurationTests {
 		this.spring.register(AuthorizationServerConfigurationWithProviderConfigurationCustomizer.class).autowire();
 
 		this.mvc.perform(get(ISSUER.concat(DEFAULT_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI)))
-				.andExpect(status().is2xxSuccessful())
-				.andExpect(jsonPath(OAuth2AuthorizationServerMetadataClaimNames.SCOPES_SUPPORTED,
-						hasItems(OidcScopes.OPENID, OidcScopes.PROFILE, OidcScopes.EMAIL)));
+			.andExpect(status().is2xxSuccessful())
+			.andExpect(jsonPath(OAuth2AuthorizationServerMetadataClaimNames.SCOPES_SUPPORTED,
+					hasItems(OidcScopes.OPENID, OidcScopes.PROFILE, OidcScopes.EMAIL)));
 	}
 
 	@Test
@@ -133,9 +133,10 @@ public class OidcProviderConfigurationTests {
 		this.spring.register(AuthorizationServerConfigurationWithClientRegistrationEnabled.class).autowire();
 
 		this.mvc.perform(get(ISSUER.concat(DEFAULT_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI)))
-				.andExpect(status().is2xxSuccessful())
-				.andExpectAll(defaultConfigurationMatchers(ISSUER))
-				.andExpect(jsonPath("$.registration_endpoint").value(ISSUER.concat(this.authorizationServerSettings.getOidcClientRegistrationEndpoint())));
+			.andExpect(status().is2xxSuccessful())
+			.andExpectAll(defaultConfigurationMatchers(ISSUER))
+			.andExpect(jsonPath("$.registration_endpoint")
+				.value(ISSUER.concat(this.authorizationServerSettings.getOidcClientRegistrationEndpoint())));
 	}
 
 	private ResultMatcher[] defaultConfigurationMatchers(String issuer) {
@@ -235,9 +236,7 @@ public class OidcProviderConfigurationTests {
 
 		@Bean
 		AuthorizationServerSettings authorizationServerSettings() {
-			return AuthorizationServerSettings.builder()
-					.issuer(ISSUER)
-					.build();
+			return AuthorizationServerSettings.builder().issuer(ISSUER).build();
 		}
 
 	}
@@ -248,9 +247,7 @@ public class OidcProviderConfigurationTests {
 
 		@Bean
 		AuthorizationServerSettings authorizationServerSettings() {
-			return AuthorizationServerSettings.builder()
-					.multipleIssuersAllowed(true)
-					.build();
+			return AuthorizationServerSettings.builder().multipleIssuersAllowed(true).build();
 		}
 
 	}

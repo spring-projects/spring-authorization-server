@@ -82,13 +82,13 @@ public class JwkSetTests {
 	public static void init() {
 		JWKSet jwkSet = new JWKSet(TestJwks.DEFAULT_RSA_JWK);
 		jwkSource = (jwkSelector, securityContext) -> jwkSelector.select(jwkSet);
-		db = new EmbeddedDatabaseBuilder()
-				.generateUniqueName(true)
-				.setType(EmbeddedDatabaseType.HSQL)
-				.setScriptEncoding("UTF-8")
-				.addScript("org/springframework/security/oauth2/server/authorization/oauth2-authorization-schema.sql")
-				.addScript("org/springframework/security/oauth2/server/authorization/client/oauth2-registered-client-schema.sql")
-				.build();
+		db = new EmbeddedDatabaseBuilder().generateUniqueName(true)
+			.setType(EmbeddedDatabaseType.HSQL)
+			.setScriptEncoding("UTF-8")
+			.addScript("org/springframework/security/oauth2/server/authorization/oauth2-authorization-schema.sql")
+			.addScript(
+					"org/springframework/security/oauth2/server/authorization/client/oauth2-registered-client-schema.sql")
+			.build();
 	}
 
 	@AfterEach
@@ -188,7 +188,10 @@ public class JwkSetTests {
 
 		@Bean
 		AuthorizationServerSettings authorizationServerSettings() {
-			return AuthorizationServerSettings.builder().jwkSetEndpoint("/test/jwks").multipleIssuersAllowed(true).build();
+			return AuthorizationServerSettings.builder()
+				.jwkSetEndpoint("/test/jwks")
+				.multipleIssuersAllowed(true)
+				.build();
 		}
 
 	}

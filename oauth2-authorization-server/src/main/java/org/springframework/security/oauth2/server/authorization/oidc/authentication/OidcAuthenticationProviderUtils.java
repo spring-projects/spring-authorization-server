@@ -67,11 +67,11 @@ final class OidcAuthenticationProviderUtils {
 	static <T extends OAuth2Token> OAuth2AccessToken accessToken(OAuth2Authorization.Builder builder, T token,
 			OAuth2TokenContext accessTokenContext) {
 
-		OAuth2AccessToken accessToken = new OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER,
-				token.getTokenValue(), token.getIssuedAt(), token.getExpiresAt(),
-				accessTokenContext.getAuthorizedScopes());
-		OAuth2TokenFormat accessTokenFormat = accessTokenContext.getRegisteredClient().getTokenSettings()
-				.getAccessTokenFormat();
+		OAuth2AccessToken accessToken = new OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER, token.getTokenValue(),
+				token.getIssuedAt(), token.getExpiresAt(), accessTokenContext.getAuthorizedScopes());
+		OAuth2TokenFormat accessTokenFormat = accessTokenContext.getRegisteredClient()
+			.getTokenSettings()
+			.getAccessTokenFormat();
 		builder.token(accessToken, (metadata) -> {
 			if (token instanceof ClaimAccessor claimAccessor) {
 				metadata.put(OAuth2Authorization.Token.CLAIMS_METADATA_NAME, claimAccessor.getClaims());

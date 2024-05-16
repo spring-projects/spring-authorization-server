@@ -25,8 +25,9 @@ import org.springframework.security.oauth2.server.authorization.token.OAuth2Toke
 import org.springframework.util.Assert;
 
 /**
- * A {@link ClaimAccessor} used for the OAuth 2.0 Token Exchange Grant to represent an actor in a
- * {@link OAuth2TokenExchangeCompositeAuthenticationToken} (e.g. the "delegation" use case).
+ * A {@link ClaimAccessor} used for the OAuth 2.0 Token Exchange Grant to represent an
+ * actor in a {@link OAuth2TokenExchangeCompositeAuthenticationToken} (e.g. the
+ * "delegation" use case).
  *
  * @author Steve Riesenberg
  * @since 1.3

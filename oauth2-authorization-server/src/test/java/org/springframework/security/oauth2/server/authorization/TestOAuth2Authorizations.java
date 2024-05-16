@@ -92,8 +92,8 @@ public class TestOAuth2Authorizations {
 			.attribute(Principal.class.getName(),
 					new TestingAuthenticationToken("principal", null, "ROLE_A", "ROLE_B"));
 		if (accessToken != null) {
-			OAuth2RefreshToken refreshToken = new OAuth2RefreshToken(
-					"refresh-token", Instant.now(), Instant.now().plus(1, ChronoUnit.HOURS));
+			OAuth2RefreshToken refreshToken = new OAuth2RefreshToken("refresh-token", Instant.now(),
+					Instant.now().plus(1, ChronoUnit.HOURS));
 			builder
 				.token(accessToken, (metadata) -> metadata.putAll(tokenMetadata(registeredClient, accessTokenClaims)))
 				.refreshToken(refreshToken);
@@ -102,7 +102,8 @@ public class TestOAuth2Authorizations {
 		return builder;
 	}
 
-	private static Map<String, Object> tokenMetadata(RegisteredClient registeredClient, Map<String, Object> tokenClaims) {
+	private static Map<String, Object> tokenMetadata(RegisteredClient registeredClient,
+			Map<String, Object> tokenClaims) {
 		Map<String, Object> tokenMetadata = new HashMap<>();
 		OAuth2TokenFormat accessTokenFormat = registeredClient.getTokenSettings().getAccessTokenFormat();
 		tokenMetadata.put(OAuth2TokenFormat.class.getName(), accessTokenFormat.getValue());

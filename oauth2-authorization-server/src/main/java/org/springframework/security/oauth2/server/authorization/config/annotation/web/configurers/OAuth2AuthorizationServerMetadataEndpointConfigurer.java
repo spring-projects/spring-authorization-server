@@ -74,10 +74,10 @@ public final class OAuth2AuthorizationServerMetadataEndpointConfigurer extends A
 
 	@Override
 	void init(HttpSecurity httpSecurity) {
-		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils.getAuthorizationServerSettings(httpSecurity);
-		String authorizationServerMetadataEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed() ?
-				"/.well-known/oauth-authorization-server/**" :
-				"/.well-known/oauth-authorization-server";
+		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils
+			.getAuthorizationServerSettings(httpSecurity);
+		String authorizationServerMetadataEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed()
+				? "/.well-known/oauth-authorization-server/**" : "/.well-known/oauth-authorization-server";
 		this.requestMatcher = new AntPathRequestMatcher(authorizationServerMetadataEndpointUri, HttpMethod.GET.name());
 	}
 

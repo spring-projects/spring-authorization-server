@@ -190,10 +190,11 @@ public final class OidcClientRegistrationEndpointConfigurer extends AbstractOAut
 
 	@Override
 	void init(HttpSecurity httpSecurity) {
-		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils.getAuthorizationServerSettings(httpSecurity);
-		String clientRegistrationEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed() ?
-				withMultipleIssuersPattern(authorizationServerSettings.getOidcClientRegistrationEndpoint()) :
-				authorizationServerSettings.getOidcClientRegistrationEndpoint();
+		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils
+			.getAuthorizationServerSettings(httpSecurity);
+		String clientRegistrationEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed()
+				? withMultipleIssuersPattern(authorizationServerSettings.getOidcClientRegistrationEndpoint())
+				: authorizationServerSettings.getOidcClientRegistrationEndpoint();
 		this.requestMatcher = new OrRequestMatcher(
 				new AntPathRequestMatcher(clientRegistrationEndpointUri, HttpMethod.POST.name()),
 				new AntPathRequestMatcher(clientRegistrationEndpointUri, HttpMethod.GET.name()));
@@ -213,11 +214,11 @@ public final class OidcClientRegistrationEndpointConfigurer extends AbstractOAut
 		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils
 			.getAuthorizationServerSettings(httpSecurity);
 
-		String clientRegistrationEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed() ?
-				withMultipleIssuersPattern(authorizationServerSettings.getOidcClientRegistrationEndpoint()) :
-				authorizationServerSettings.getOidcClientRegistrationEndpoint();
-		OidcClientRegistrationEndpointFilter oidcClientRegistrationEndpointFilter =
-				new OidcClientRegistrationEndpointFilter(authenticationManager, clientRegistrationEndpointUri);
+		String clientRegistrationEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed()
+				? withMultipleIssuersPattern(authorizationServerSettings.getOidcClientRegistrationEndpoint())
+				: authorizationServerSettings.getOidcClientRegistrationEndpoint();
+		OidcClientRegistrationEndpointFilter oidcClientRegistrationEndpointFilter = new OidcClientRegistrationEndpointFilter(
+				authenticationManager, clientRegistrationEndpointUri);
 		List<AuthenticationConverter> authenticationConverters = createDefaultAuthenticationConverters();
 		if (!this.clientRegistrationRequestConverters.isEmpty()) {
 			authenticationConverters.addAll(0, this.clientRegistrationRequestConverters);

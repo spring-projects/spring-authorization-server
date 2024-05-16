@@ -37,9 +37,10 @@ import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
 /**
- * An {@link AuthenticationProvider} implementation used for OAuth 2.0 Client Authentication,
- * which authenticates the client {@code X509Certificate} received
- * when the {@code tls_client_auth} or {@code self_signed_tls_client_auth} authentication method is used.
+ * An {@link AuthenticationProvider} implementation used for OAuth 2.0 Client
+ * Authentication, which authenticates the client {@code X509Certificate} received when
+ * the {@code tls_client_auth} or {@code self_signed_tls_client_auth} authentication
+ * method is used.
  *
  * @author Joe Grandja
  * @since 1.3
@@ -49,17 +50,22 @@ import org.springframework.util.StringUtils;
  * @see OAuth2AuthorizationService
  */
 public final class X509ClientCertificateAuthenticationProvider implements AuthenticationProvider {
+
 	private static final String ERROR_URI = "https://datatracker.ietf.org/doc/html/rfc6749#section-3.2.1";
+
 	private final Log logger = LogFactory.getLog(getClass());
+
 	private final RegisteredClientRepository registeredClientRepository;
+
 	private final CodeVerifierAuthenticator codeVerifierAuthenticator;
-	private final Consumer<OAuth2ClientAuthenticationContext> selfSignedCertificateVerifier =
-			new X509SelfSignedCertificateVerifier();
+
+	private final Consumer<OAuth2ClientAuthenticationContext> selfSignedCertificateVerifier = new X509SelfSignedCertificateVerifier();
+
 	private Consumer<OAuth2ClientAuthenticationContext> certificateVerifier = this::verifyX509Certificate;
 
 	/**
-	 * Constructs a {@code X509ClientCertificateAuthenticationProvider} using the provided parameters.
-	 *
+	 * Constructs a {@code X509ClientCertificateAuthenticationProvider} using the provided
+	 * parameters.
 	 * @param registeredClientRepository the repository of registered clients
 	 * @param authorizationService the authorization service
 	 */
@@ -73,11 +79,11 @@ public final class X509ClientCertificateAuthenticationProvider implements Authen
 
 	@Override
 	public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-		OAuth2ClientAuthenticationToken clientAuthentication =
-				(OAuth2ClientAuthenticationToken) authentication;
+		OAuth2ClientAuthenticationToken clientAuthentication = (OAuth2ClientAuthenticationToken) authentication;
 
-		if (!ClientAuthenticationMethod.TLS_CLIENT_AUTH.equals(clientAuthentication.getClientAuthenticationMethod()) &&
-				!ClientAuthenticationMethod.SELF_SIGNED_TLS_CLIENT_AUTH.equals(clientAuthentication.getClientAuthenticationMethod())) {
+		if (!ClientAuthenticationMethod.TLS_CLIENT_AUTH.equals(clientAuthentication.getClientAuthenticationMethod())
+				&& !ClientAuthenticationMethod.SELF_SIGNED_TLS_CLIENT_AUTH
+					.equals(clientAuthentication.getClientAuthenticationMethod())) {
 			return null;
 		}
 
@@ -91,8 +97,8 @@ public final class X509ClientCertificateAuthenticationProvider implements Authen
 			this.logger.trace("Retrieved registered client");
 		}
 
-		if (!registeredClient.getClientAuthenticationMethods().contains(
-				clientAuthentication.getClientAuthenticationMethod())) {
+		if (!registeredClient.getClientAuthenticationMethods()
+			.contains(clientAuthentication.getClientAuthenticationMethod())) {
 			throwInvalidClient("authentication_method");
 		}
 
@@ -100,17 +106,18 @@ public final class X509ClientCertificateAuthenticationProvider implements Authen
 			throwInvalidClient("credentials");
 		}
 
-		OAuth2ClientAuthenticationContext authenticationContext =
-				OAuth2ClientAuthenticationContext.with(clientAuthentication)
-						.registeredClient(registeredClient)
-						.build();
+		OAuth2ClientAuthenticationContext authenticationContext = OAuth2ClientAuthenticationContext
+			.with(clientAuthentication)
+			.registeredClient(registeredClient)
+			.build();
 		this.certificateVerifier.accept(authenticationContext);
 
 		if (this.logger.isTraceEnabled()) {
 			this.logger.trace("Validated client authentication parameters");
 		}
 
-		// Validate the "code_verifier" parameter for the confidential client, if available
+		// Validate the "code_verifier" parameter for the confidential client, if
+		// available
 		this.codeVerifierAuthenticator.authenticateIfAvailable(clientAuthentication, registeredClient);
 
 		if (this.logger.isTraceEnabled()) {
@@ -127,15 +134,20 @@ public final class X509ClientCertificateAuthenticationProvider implements Authen
 	}
 
 	/**
-	 * Sets the {@code Consumer} providing access to the {@link OAuth2ClientAuthenticationContext}
-	 * and is responsible for verifying the client {@code X509Certificate} associated in the {@link OAuth2ClientAuthenticationToken}.
-	 * The default implementation for the {@code tls_client_auth} authentication method
-	 * verifies the {@link ClientSettings#getX509CertificateSubjectDN() expected subject distinguished name}.
+	 * Sets the {@code Consumer} providing access to the
+	 * {@link OAuth2ClientAuthenticationContext} and is responsible for verifying the
+	 * client {@code X509Certificate} associated in the
+	 * {@link OAuth2ClientAuthenticationToken}. The default implementation for the
+	 * {@code tls_client_auth} authentication method verifies the
+	 * {@link ClientSettings#getX509CertificateSubjectDN() expected subject distinguished
+	 * name}.
 	 *
 	 * <p>
-	 * <b>NOTE:</b> If verification fails, an {@link OAuth2AuthenticationException} MUST be thrown.
-	 *
-	 * @param certificateVerifier the {@code Consumer} providing access to the {@link OAuth2ClientAuthenticationContext} and is responsible for verifying the client {@code X509Certificate}
+	 * <b>NOTE:</b> If verification fails, an {@link OAuth2AuthenticationException} MUST
+	 * be thrown.
+	 * @param certificateVerifier the {@code Consumer} providing access to the
+	 * {@link OAuth2ClientAuthenticationContext} and is responsible for verifying the
+	 * client {@code X509Certificate}
 	 */
 	public void setCertificateVerifier(Consumer<OAuth2ClientAuthenticationContext> certificateVerifier) {
 		Assert.notNull(certificateVerifier, "certificateVerifier cannot be null");
@@ -144,9 +156,11 @@ public final class X509ClientCertificateAuthenticationProvider implements Authen
 
 	private void verifyX509Certificate(OAuth2ClientAuthenticationContext clientAuthenticationContext) {
 		OAuth2ClientAuthenticationToken clientAuthentication = clientAuthenticationContext.getAuthentication();
-		if (ClientAuthenticationMethod.SELF_SIGNED_TLS_CLIENT_AUTH.equals(clientAuthentication.getClientAuthenticationMethod())) {
+		if (ClientAuthenticationMethod.SELF_SIGNED_TLS_CLIENT_AUTH
+			.equals(clientAuthentication.getClientAuthenticationMethod())) {
 			this.selfSignedCertificateVerifier.accept(clientAuthenticationContext);
-		} else {
+		}
+		else {
 			verifyX509CertificateSubjectDN(clientAuthenticationContext);
 		}
 	}
@@ -157,8 +171,8 @@ public final class X509ClientCertificateAuthenticationProvider implements Authen
 		X509Certificate[] clientCertificateChain = (X509Certificate[]) clientAuthentication.getCredentials();
 		X509Certificate clientCertificate = clientCertificateChain[0];
 		String expectedSubjectDN = registeredClient.getClientSettings().getX509CertificateSubjectDN();
-		if (!StringUtils.hasText(expectedSubjectDN) ||
-				!clientCertificate.getSubjectX500Principal().getName().equals(expectedSubjectDN)) {
+		if (!StringUtils.hasText(expectedSubjectDN)
+				|| !clientCertificate.getSubjectX500Principal().getName().equals(expectedSubjectDN)) {
 			throwInvalidClient("x509_certificate_subject_dn");
 		}
 	}
@@ -168,11 +182,8 @@ public final class X509ClientCertificateAuthenticationProvider implements Authen
 	}
 
 	private static void throwInvalidClient(String parameterName, Throwable cause) {
-		OAuth2Error error = new OAuth2Error(
-				OAuth2ErrorCodes.INVALID_CLIENT,
-				"Client authentication failed: " + parameterName,
-				ERROR_URI
-		);
+		OAuth2Error error = new OAuth2Error(OAuth2ErrorCodes.INVALID_CLIENT,
+				"Client authentication failed: " + parameterName, ERROR_URI);
 		throw new OAuth2AuthenticationException(error, error.toString(), cause);
 	}
 

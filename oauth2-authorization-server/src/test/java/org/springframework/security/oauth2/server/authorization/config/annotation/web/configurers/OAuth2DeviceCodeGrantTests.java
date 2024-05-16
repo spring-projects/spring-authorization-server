@@ -247,9 +247,9 @@ public class OAuth2DeviceCodeGrantTests {
 		String userCode = deviceAuthorizationResponse.getUserCode().getTokenValue();
 		assertThat(userCode).matches("[A-Z]{4}-[A-Z]{4}");
 		assertThat(deviceAuthorizationResponse.getVerificationUri())
-				.isEqualTo("https://example.com:8443/oauth2/device_verification");
+			.isEqualTo("https://example.com:8443/oauth2/device_verification");
 		assertThat(deviceAuthorizationResponse.getVerificationUriComplete())
-				.isEqualTo("https://example.com:8443/oauth2/device_verification?user_code=" + userCode);
+			.isEqualTo("https://example.com:8443/oauth2/device_verification?user_code=" + userCode);
 
 		String deviceCode = deviceAuthorizationResponse.getDeviceCode().getTokenValue();
 		OAuth2Authorization authorization = this.authorizationService.findByToken(deviceCode, DEVICE_CODE_TOKEN_TYPE);

@@ -28,7 +28,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2TokenExchangeCompositeAuthenticationToken;
 
 /**
- * This mixin class is used to serialize/deserialize {@link OAuth2TokenExchangeCompositeAuthenticationToken}.
+ * This mixin class is used to serialize/deserialize
+ * {@link OAuth2TokenExchangeCompositeAuthenticationToken}.
  *
  * @author Steve Riesenberg
  * @since 1.3

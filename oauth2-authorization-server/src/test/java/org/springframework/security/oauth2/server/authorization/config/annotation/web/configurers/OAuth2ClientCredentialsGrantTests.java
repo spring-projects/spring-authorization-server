@@ -298,14 +298,14 @@ public class OAuth2ClientCredentialsGrantTests {
 		// @formatter:on
 		this.registeredClientRepository.save(registeredClient);
 
-		this.mvc.perform(post(DEFAULT_TOKEN_ENDPOINT_URI)
-						.with(x509(TestX509Certificates.DEMO_CLIENT_PKI_CERTIFICATE))
-						.param(OAuth2ParameterNames.CLIENT_ID, registeredClient.getClientId())
-						.param(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
-						.param(OAuth2ParameterNames.SCOPE, "scope1 scope2"))
-				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.access_token").isNotEmpty())
-				.andExpect(jsonPath("$.scope").value("scope1 scope2"));
+		this.mvc
+			.perform(post(DEFAULT_TOKEN_ENDPOINT_URI).with(x509(TestX509Certificates.DEMO_CLIENT_PKI_CERTIFICATE))
+				.param(OAuth2ParameterNames.CLIENT_ID, registeredClient.getClientId())
+				.param(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
+				.param(OAuth2ParameterNames.SCOPE, "scope1 scope2"))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.access_token").isNotEmpty())
+			.andExpect(jsonPath("$.scope").value("scope1 scope2"));
 
 		verify(jwtCustomizer).customize(any());
 	}
@@ -344,13 +344,12 @@ public class OAuth2ClientCredentialsGrantTests {
 			.forClass(List.class);
 		verify(authenticationConvertersConsumer).accept(authenticationConvertersCaptor.capture());
 		List<AuthenticationConverter> authenticationConverters = authenticationConvertersCaptor.getValue();
-		assertThat(authenticationConverters).allMatch((converter) ->
-				converter == authenticationConverter ||
-						converter instanceof OAuth2AuthorizationCodeAuthenticationConverter ||
-						converter instanceof OAuth2RefreshTokenAuthenticationConverter ||
-						converter instanceof OAuth2ClientCredentialsAuthenticationConverter ||
-						converter instanceof OAuth2DeviceCodeAuthenticationConverter ||
-						converter instanceof OAuth2TokenExchangeAuthenticationConverter);
+		assertThat(authenticationConverters).allMatch((converter) -> converter == authenticationConverter
+				|| converter instanceof OAuth2AuthorizationCodeAuthenticationConverter
+				|| converter instanceof OAuth2RefreshTokenAuthenticationConverter
+				|| converter instanceof OAuth2ClientCredentialsAuthenticationConverter
+				|| converter instanceof OAuth2DeviceCodeAuthenticationConverter
+				|| converter instanceof OAuth2TokenExchangeAuthenticationConverter);
 
 		verify(authenticationProvider).authenticate(eq(clientCredentialsAuthentication));
 
@@ -359,13 +358,12 @@ public class OAuth2ClientCredentialsGrantTests {
 			.forClass(List.class);
 		verify(authenticationProvidersConsumer).accept(authenticationProvidersCaptor.capture());
 		List<AuthenticationProvider> authenticationProviders = authenticationProvidersCaptor.getValue();
-		assertThat(authenticationProviders).allMatch((provider) ->
-				provider == authenticationProvider ||
-						provider instanceof OAuth2AuthorizationCodeAuthenticationProvider ||
-						provider instanceof OAuth2RefreshTokenAuthenticationProvider ||
-						provider instanceof OAuth2ClientCredentialsAuthenticationProvider ||
-						provider instanceof OAuth2DeviceCodeAuthenticationProvider ||
-						provider instanceof OAuth2TokenExchangeAuthenticationProvider);
+		assertThat(authenticationProviders).allMatch((provider) -> provider == authenticationProvider
+				|| provider instanceof OAuth2AuthorizationCodeAuthenticationProvider
+				|| provider instanceof OAuth2RefreshTokenAuthenticationProvider
+				|| provider instanceof OAuth2ClientCredentialsAuthenticationProvider
+				|| provider instanceof OAuth2DeviceCodeAuthenticationProvider
+				|| provider instanceof OAuth2TokenExchangeAuthenticationProvider);
 
 		verify(authenticationSuccessHandler).onAuthenticationSuccess(any(), any(), eq(accessTokenAuthentication));
 	}
@@ -395,13 +393,12 @@ public class OAuth2ClientCredentialsGrantTests {
 			.forClass(List.class);
 		verify(authenticationConvertersConsumer).accept(authenticationConvertersCaptor.capture());
 		List<AuthenticationConverter> authenticationConverters = authenticationConvertersCaptor.getValue();
-		assertThat(authenticationConverters).allMatch((converter) ->
-				converter == authenticationConverter ||
-						converter instanceof JwtClientAssertionAuthenticationConverter ||
-						converter instanceof X509ClientCertificateAuthenticationConverter ||
-						converter instanceof ClientSecretBasicAuthenticationConverter ||
-						converter instanceof ClientSecretPostAuthenticationConverter ||
-						converter instanceof PublicClientAuthenticationConverter);
+		assertThat(authenticationConverters).allMatch((converter) -> converter == authenticationConverter
+				|| converter instanceof JwtClientAssertionAuthenticationConverter
+				|| converter instanceof X509ClientCertificateAuthenticationConverter
+				|| converter instanceof ClientSecretBasicAuthenticationConverter
+				|| converter instanceof ClientSecretPostAuthenticationConverter
+				|| converter instanceof PublicClientAuthenticationConverter);
 
 		verify(authenticationProvider).authenticate(eq(clientPrincipal));
 
@@ -410,12 +407,11 @@ public class OAuth2ClientCredentialsGrantTests {
 			.forClass(List.class);
 		verify(authenticationProvidersConsumer).accept(authenticationProvidersCaptor.capture());
 		List<AuthenticationProvider> authenticationProviders = authenticationProvidersCaptor.getValue();
-		assertThat(authenticationProviders).allMatch((provider) ->
-				provider == authenticationProvider ||
-						provider instanceof JwtClientAssertionAuthenticationProvider ||
-						provider instanceof X509ClientCertificateAuthenticationProvider ||
-						provider instanceof ClientSecretAuthenticationProvider ||
-						provider instanceof PublicClientAuthenticationProvider);
+		assertThat(authenticationProviders).allMatch((provider) -> provider == authenticationProvider
+				|| provider instanceof JwtClientAssertionAuthenticationProvider
+				|| provider instanceof X509ClientCertificateAuthenticationProvider
+				|| provider instanceof ClientSecretAuthenticationProvider
+				|| provider instanceof PublicClientAuthenticationProvider);
 
 		verify(authenticationSuccessHandler).onAuthenticationSuccess(any(), any(), eq(clientPrincipal));
 	}
@@ -429,14 +425,15 @@ public class OAuth2ClientCredentialsGrantTests {
 
 		String issuer = "https://example.com:8443/issuer1";
 
-		this.mvc.perform(post(issuer.concat(DEFAULT_TOKEN_ENDPOINT_URI))
-						.param(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
-						.param(OAuth2ParameterNames.SCOPE, "scope1 scope2")
-						.header(HttpHeaders.AUTHORIZATION, "Basic " + encodeBasicAuth(
-								registeredClient.getClientId(), registeredClient.getClientSecret())))
-				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.access_token").isNotEmpty())
-				.andExpect(jsonPath("$.scope").value("scope1 scope2"));
+		this.mvc
+			.perform(post(issuer.concat(DEFAULT_TOKEN_ENDPOINT_URI))
+				.param(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
+				.param(OAuth2ParameterNames.SCOPE, "scope1 scope2")
+				.header(HttpHeaders.AUTHORIZATION,
+						"Basic " + encodeBasicAuth(registeredClient.getClientId(), registeredClient.getClientSecret())))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.access_token").isNotEmpty())
+			.andExpect(jsonPath("$.scope").value("scope1 scope2"));
 
 		ArgumentCaptor<JwtEncodingContext> jwtEncodingContextCaptor = ArgumentCaptor.forClass(JwtEncodingContext.class);
 		verify(jwtCustomizer).customize(jwtEncodingContextCaptor.capture());

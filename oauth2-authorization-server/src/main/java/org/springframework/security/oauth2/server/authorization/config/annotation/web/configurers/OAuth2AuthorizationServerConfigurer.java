@@ -326,9 +326,9 @@ public final class OAuth2AuthorizationServerConfigurer
 			configurer.init(httpSecurity);
 			requestMatchers.add(configurer.getRequestMatcher());
 		});
-		String jwkSetEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed() ?
-				withMultipleIssuersPattern(authorizationServerSettings.getJwkSetEndpoint()) :
-				authorizationServerSettings.getJwkSetEndpoint();
+		String jwkSetEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed()
+				? withMultipleIssuersPattern(authorizationServerSettings.getJwkSetEndpoint())
+				: authorizationServerSettings.getJwkSetEndpoint();
 		requestMatchers.add(new AntPathRequestMatcher(jwkSetEndpointUri, HttpMethod.GET.name()));
 		this.endpointsMatcher = new OrRequestMatcher(requestMatchers);
 
@@ -356,12 +356,13 @@ public final class OAuth2AuthorizationServerConfigurer
 
 		JWKSource<com.nimbusds.jose.proc.SecurityContext> jwkSource = OAuth2ConfigurerUtils.getJwkSource(httpSecurity);
 		if (jwkSource != null) {
-			String jwkSetEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed() ?
-					withMultipleIssuersPattern(authorizationServerSettings.getJwkSetEndpoint()) :
-					authorizationServerSettings.getJwkSetEndpoint();
-			NimbusJwkSetEndpointFilter jwkSetEndpointFilter =
-					new NimbusJwkSetEndpointFilter(jwkSource, jwkSetEndpointUri);
-			httpSecurity.addFilterBefore(postProcess(jwkSetEndpointFilter), AbstractPreAuthenticatedProcessingFilter.class);
+			String jwkSetEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed()
+					? withMultipleIssuersPattern(authorizationServerSettings.getJwkSetEndpoint())
+					: authorizationServerSettings.getJwkSetEndpoint();
+			NimbusJwkSetEndpointFilter jwkSetEndpointFilter = new NimbusJwkSetEndpointFilter(jwkSource,
+					jwkSetEndpointUri);
+			httpSecurity.addFilterBefore(postProcess(jwkSetEndpointFilter),
+					AbstractPreAuthenticatedProcessingFilter.class);
 		}
 	}
 

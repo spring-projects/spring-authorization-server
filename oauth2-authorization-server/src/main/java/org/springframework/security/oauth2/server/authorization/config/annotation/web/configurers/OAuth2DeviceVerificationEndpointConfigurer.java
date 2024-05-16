@@ -232,11 +232,11 @@ public final class OAuth2DeviceVerificationEndpointConfigurer extends AbstractOA
 
 	@Override
 	public void init(HttpSecurity builder) {
-		AuthorizationServerSettings authorizationServerSettings =
-				OAuth2ConfigurerUtils.getAuthorizationServerSettings(builder);
-		String deviceVerificationEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed() ?
-				withMultipleIssuersPattern(authorizationServerSettings.getDeviceVerificationEndpoint()) :
-				authorizationServerSettings.getDeviceVerificationEndpoint();
+		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils
+			.getAuthorizationServerSettings(builder);
+		String deviceVerificationEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed()
+				? withMultipleIssuersPattern(authorizationServerSettings.getDeviceVerificationEndpoint())
+				: authorizationServerSettings.getDeviceVerificationEndpoint();
 		this.requestMatcher = new OrRequestMatcher(
 				new AntPathRequestMatcher(deviceVerificationEndpointUri, HttpMethod.GET.name()),
 				new AntPathRequestMatcher(deviceVerificationEndpointUri, HttpMethod.POST.name()));
@@ -256,11 +256,11 @@ public final class OAuth2DeviceVerificationEndpointConfigurer extends AbstractOA
 		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils
 			.getAuthorizationServerSettings(builder);
 
-		String deviceVerificationEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed() ?
-				withMultipleIssuersPattern(authorizationServerSettings.getDeviceVerificationEndpoint()) :
-				authorizationServerSettings.getDeviceVerificationEndpoint();
-		OAuth2DeviceVerificationEndpointFilter deviceVerificationEndpointFilter =
-				new OAuth2DeviceVerificationEndpointFilter(authenticationManager, deviceVerificationEndpointUri);
+		String deviceVerificationEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed()
+				? withMultipleIssuersPattern(authorizationServerSettings.getDeviceVerificationEndpoint())
+				: authorizationServerSettings.getDeviceVerificationEndpoint();
+		OAuth2DeviceVerificationEndpointFilter deviceVerificationEndpointFilter = new OAuth2DeviceVerificationEndpointFilter(
+				authenticationManager, deviceVerificationEndpointUri);
 		List<AuthenticationConverter> authenticationConverters = createDefaultAuthenticationConverters();
 		if (!this.deviceVerificationRequestConverters.isEmpty()) {
 			authenticationConverters.addAll(0, this.deviceVerificationRequestConverters);

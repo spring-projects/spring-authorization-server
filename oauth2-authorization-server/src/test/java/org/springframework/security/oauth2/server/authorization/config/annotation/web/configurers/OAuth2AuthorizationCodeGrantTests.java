@@ -918,30 +918,33 @@ public class OAuth2AuthorizationCodeGrantTests {
 
 		String issuer = "https://example.com:8443/issuer1";
 
-		MvcResult mvcResult = this.mvc.perform(get(issuer.concat(DEFAULT_AUTHORIZATION_ENDPOINT_URI))
-						.queryParams(getAuthorizationRequestParameters(registeredClient))
-						.queryParam(PkceParameterNames.CODE_CHALLENGE, S256_CODE_CHALLENGE)
-						.queryParam(PkceParameterNames.CODE_CHALLENGE_METHOD, "S256")
-						.with(user("user")))
-				.andExpect(status().is3xxRedirection())
-				.andReturn();
+		MvcResult mvcResult = this.mvc
+			.perform(get(issuer.concat(DEFAULT_AUTHORIZATION_ENDPOINT_URI))
+				.queryParams(getAuthorizationRequestParameters(registeredClient))
+				.queryParam(PkceParameterNames.CODE_CHALLENGE, S256_CODE_CHALLENGE)
+				.queryParam(PkceParameterNames.CODE_CHALLENGE_METHOD, "S256")
+				.with(user("user")))
+			.andExpect(status().is3xxRedirection())
+			.andReturn();
 
 		String authorizationCode = extractParameterFromRedirectUri(mvcResult.getResponse().getRedirectedUrl(), "code");
-		OAuth2Authorization authorizationCodeAuthorization = this.authorizationService.findByToken(authorizationCode, AUTHORIZATION_CODE_TOKEN_TYPE);
+		OAuth2Authorization authorizationCodeAuthorization = this.authorizationService.findByToken(authorizationCode,
+				AUTHORIZATION_CODE_TOKEN_TYPE);
 
-		this.mvc.perform(post(issuer.concat(DEFAULT_TOKEN_ENDPOINT_URI))
+		this.mvc
+			.perform(post(issuer.concat(DEFAULT_TOKEN_ENDPOINT_URI))
 				.params(getTokenRequestParameters(registeredClient, authorizationCodeAuthorization))
 				.param(OAuth2ParameterNames.CLIENT_ID, registeredClient.getClientId())
 				.param(PkceParameterNames.CODE_VERIFIER, S256_CODE_VERIFIER))
-				.andExpect(header().string(HttpHeaders.CACHE_CONTROL, containsString("no-store")))
-				.andExpect(header().string(HttpHeaders.PRAGMA, containsString("no-cache")))
-				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.access_token").isNotEmpty())
-				.andExpect(jsonPath("$.token_type").isNotEmpty())
-				.andExpect(jsonPath("$.expires_in").isNotEmpty())
-				.andExpect(jsonPath("$.refresh_token").doesNotExist())
-				.andExpect(jsonPath("$.scope").isNotEmpty())
-				.andReturn();
+			.andExpect(header().string(HttpHeaders.CACHE_CONTROL, containsString("no-store")))
+			.andExpect(header().string(HttpHeaders.PRAGMA, containsString("no-cache")))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.access_token").isNotEmpty())
+			.andExpect(jsonPath("$.token_type").isNotEmpty())
+			.andExpect(jsonPath("$.expires_in").isNotEmpty())
+			.andExpect(jsonPath("$.refresh_token").doesNotExist())
+			.andExpect(jsonPath("$.scope").isNotEmpty())
+			.andReturn();
 
 		ArgumentCaptor<OAuth2TokenContext> tokenContextCaptor = ArgumentCaptor.forClass(OAuth2TokenContext.class);
 		verify(tokenGenerator).generate(tokenContextCaptor.capture());
@@ -1333,7 +1336,8 @@ public class OAuth2AuthorizationCodeGrantTests {
 
 	@EnableWebSecurity
 	@Import(OAuth2AuthorizationServerConfiguration.class)
-	static class AuthorizationServerConfigurationWithMultipleIssuersAllowed extends AuthorizationServerConfigurationWithTokenGenerator {
+	static class AuthorizationServerConfigurationWithMultipleIssuersAllowed
+			extends AuthorizationServerConfigurationWithTokenGenerator {
 
 		@Bean
 		AuthorizationServerSettings authorizationServerSettings() {

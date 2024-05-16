@@ -180,21 +180,21 @@ public final class OAuth2ClientAuthenticationConfigurer extends AbstractOAuth2Co
 
 	@Override
 	void init(HttpSecurity httpSecurity) {
-		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils.getAuthorizationServerSettings(httpSecurity);
-		String tokenEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed() ?
-				withMultipleIssuersPattern(authorizationServerSettings.getTokenEndpoint()) :
-				authorizationServerSettings.getTokenEndpoint();
-		String tokenIntrospectionEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed() ?
-				withMultipleIssuersPattern(authorizationServerSettings.getTokenIntrospectionEndpoint()) :
-				authorizationServerSettings.getTokenIntrospectionEndpoint();
-		String tokenRevocationEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed() ?
-				withMultipleIssuersPattern(authorizationServerSettings.getTokenRevocationEndpoint()) :
-				authorizationServerSettings.getTokenRevocationEndpoint();
-		String deviceAuthorizationEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed() ?
-				withMultipleIssuersPattern(authorizationServerSettings.getDeviceAuthorizationEndpoint()) :
-				authorizationServerSettings.getDeviceAuthorizationEndpoint();
-		this.requestMatcher = new OrRequestMatcher(
-				new AntPathRequestMatcher(tokenEndpointUri, HttpMethod.POST.name()),
+		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils
+			.getAuthorizationServerSettings(httpSecurity);
+		String tokenEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed()
+				? withMultipleIssuersPattern(authorizationServerSettings.getTokenEndpoint())
+				: authorizationServerSettings.getTokenEndpoint();
+		String tokenIntrospectionEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed()
+				? withMultipleIssuersPattern(authorizationServerSettings.getTokenIntrospectionEndpoint())
+				: authorizationServerSettings.getTokenIntrospectionEndpoint();
+		String tokenRevocationEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed()
+				? withMultipleIssuersPattern(authorizationServerSettings.getTokenRevocationEndpoint())
+				: authorizationServerSettings.getTokenRevocationEndpoint();
+		String deviceAuthorizationEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed()
+				? withMultipleIssuersPattern(authorizationServerSettings.getDeviceAuthorizationEndpoint())
+				: authorizationServerSettings.getDeviceAuthorizationEndpoint();
+		this.requestMatcher = new OrRequestMatcher(new AntPathRequestMatcher(tokenEndpointUri, HttpMethod.POST.name()),
 				new AntPathRequestMatcher(tokenIntrospectionEndpointUri, HttpMethod.POST.name()),
 				new AntPathRequestMatcher(tokenRevocationEndpointUri, HttpMethod.POST.name()),
 				new AntPathRequestMatcher(deviceAuthorizationEndpointUri, HttpMethod.POST.name()));
@@ -257,12 +257,12 @@ public final class OAuth2ClientAuthenticationConfigurer extends AbstractOAuth2Co
 				registeredClientRepository, authorizationService);
 		authenticationProviders.add(jwtClientAssertionAuthenticationProvider);
 
-		X509ClientCertificateAuthenticationProvider x509ClientCertificateAuthenticationProvider =
-				new X509ClientCertificateAuthenticationProvider(registeredClientRepository, authorizationService);
+		X509ClientCertificateAuthenticationProvider x509ClientCertificateAuthenticationProvider = new X509ClientCertificateAuthenticationProvider(
+				registeredClientRepository, authorizationService);
 		authenticationProviders.add(x509ClientCertificateAuthenticationProvider);
 
-		ClientSecretAuthenticationProvider clientSecretAuthenticationProvider =
-				new ClientSecretAuthenticationProvider(registeredClientRepository, authorizationService);
+		ClientSecretAuthenticationProvider clientSecretAuthenticationProvider = new ClientSecretAuthenticationProvider(
+				registeredClientRepository, authorizationService);
 		PasswordEncoder passwordEncoder = OAuth2ConfigurerUtils.getOptionalBean(httpSecurity, PasswordEncoder.class);
 		if (passwordEncoder != null) {
 			clientSecretAuthenticationProvider.setPasswordEncoder(passwordEncoder);

@@ -127,8 +127,9 @@ public final class OAuth2RefreshTokenAuthenticationProvider implements Authentic
 
 		if (!registeredClient.getAuthorizationGrantTypes().contains(AuthorizationGrantType.REFRESH_TOKEN)) {
 			if (this.logger.isDebugEnabled()) {
-				this.logger.debug(LogMessage.format("Invalid request: requested grant_type is not allowed" +
-						" for registered client '%s'", registeredClient.getId()));
+				this.logger.debug(LogMessage.format(
+						"Invalid request: requested grant_type is not allowed" + " for registered client '%s'",
+						registeredClient.getId()));
 			}
 			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.UNAUTHORIZED_CLIENT);
 		}
@@ -137,10 +138,12 @@ public final class OAuth2RefreshTokenAuthenticationProvider implements Authentic
 		if (!refreshToken.isActive()) {
 			// As per https://tools.ietf.org/html/rfc6749#section-5.2
 			// invalid_grant: The provided authorization grant (e.g., authorization code,
-			// resource owner credentials) or refresh token is invalid, expired, revoked [...].
+			// resource owner credentials) or refresh token is invalid, expired, revoked
+			// [...].
 			if (this.logger.isDebugEnabled()) {
-				this.logger.debug(LogMessage.format("Invalid request: refresh_token is not active" +
-						" for registered client '%s'", registeredClient.getId()));
+				this.logger.debug(LogMessage.format(
+						"Invalid request: refresh_token is not active" + " for registered client '%s'",
+						registeredClient.getId()));
 			}
 			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_GRANT);
 		}

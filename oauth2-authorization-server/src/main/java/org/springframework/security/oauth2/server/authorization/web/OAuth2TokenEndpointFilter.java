@@ -104,10 +104,12 @@ public final class OAuth2TokenEndpointFilter extends OncePerRequestFilter {
 
 	private final RequestMatcher tokenEndpointMatcher;
 
-	private AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource =
-			new WebAuthenticationDetailsSource();
+	private AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource = new WebAuthenticationDetailsSource();
+
 	private AuthenticationConverter authenticationConverter;
+
 	private AuthenticationSuccessHandler authenticationSuccessHandler = new OAuth2AccessTokenResponseAuthenticationSuccessHandler();
+
 	private AuthenticationFailureHandler authenticationFailureHandler = new OAuth2ErrorAuthenticationFailureHandler();
 
 	/**

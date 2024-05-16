@@ -44,8 +44,9 @@ import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 
 /**
- * An implementation of an {@link AuthenticationSuccessHandler} used for handling an {@link OAuth2AccessTokenAuthenticationToken}
- * and returning the {@link OAuth2AccessTokenResponse Access Token Response}.
+ * An implementation of an {@link AuthenticationSuccessHandler} used for handling an
+ * {@link OAuth2AccessTokenAuthenticationToken} and returning the
+ * {@link OAuth2AccessTokenResponse Access Token Response}.
  *
  * @author Dmitriy Dubson
  * @since 1.3
@@ -53,9 +54,11 @@ import org.springframework.util.CollectionUtils;
  * @see OAuth2AccessTokenResponseHttpMessageConverter
  */
 public final class OAuth2AccessTokenResponseAuthenticationSuccessHandler implements AuthenticationSuccessHandler {
+
 	private final Log logger = LogFactory.getLog(getClass());
-	private final HttpMessageConverter<OAuth2AccessTokenResponse> accessTokenResponseConverter =
-			new OAuth2AccessTokenResponseHttpMessageConverter();
+
+	private final HttpMessageConverter<OAuth2AccessTokenResponse> accessTokenResponseConverter = new OAuth2AccessTokenResponseHttpMessageConverter();
+
 	private Consumer<OAuth2AccessTokenAuthenticationContext> accessTokenResponseCustomizer;
 
 	@Override
@@ -63,11 +66,12 @@ public final class OAuth2AccessTokenResponseAuthenticationSuccessHandler impleme
 			Authentication authentication) throws IOException, ServletException {
 		if (!(authentication instanceof OAuth2AccessTokenAuthenticationToken accessTokenAuthentication)) {
 			if (this.logger.isErrorEnabled()) {
-				this.logger.error(Authentication.class.getSimpleName() + " must be of type " +
-						OAuth2AccessTokenAuthenticationToken.class.getName() +
-						" but was " + authentication.getClass().getName());
+				this.logger.error(Authentication.class.getSimpleName() + " must be of type "
+						+ OAuth2AccessTokenAuthenticationToken.class.getName() + " but was "
+						+ authentication.getClass().getName());
 			}
-			OAuth2Error error = new OAuth2Error(OAuth2ErrorCodes.SERVER_ERROR, "Unable to process the access token response.", null);
+			OAuth2Error error = new OAuth2Error(OAuth2ErrorCodes.SERVER_ERROR,
+					"Unable to process the access token response.", null);
 			throw new OAuth2AuthenticationException(error);
 		}
 
@@ -75,10 +79,9 @@ public final class OAuth2AccessTokenResponseAuthenticationSuccessHandler impleme
 		OAuth2RefreshToken refreshToken = accessTokenAuthentication.getRefreshToken();
 		Map<String, Object> additionalParameters = accessTokenAuthentication.getAdditionalParameters();
 
-		OAuth2AccessTokenResponse.Builder builder =
-				OAuth2AccessTokenResponse.withToken(accessToken.getTokenValue())
-						.tokenType(accessToken.getTokenType())
-						.scopes(accessToken.getScopes());
+		OAuth2AccessTokenResponse.Builder builder = OAuth2AccessTokenResponse.withToken(accessToken.getTokenValue())
+			.tokenType(accessToken.getTokenType())
+			.scopes(accessToken.getScopes());
 		if (accessToken.getIssuedAt() != null && accessToken.getExpiresAt() != null) {
 			builder.expiresIn(ChronoUnit.SECONDS.between(accessToken.getIssuedAt(), accessToken.getExpiresAt()));
 		}
@@ -108,12 +111,15 @@ public final class OAuth2AccessTokenResponseAuthenticationSuccessHandler impleme
 	}
 
 	/**
-	 * Sets the {@code Consumer} providing access to the {@link OAuth2AccessTokenAuthenticationContext}
-	 * containing an {@link OAuth2AccessTokenResponse.Builder} and additional context information.
-	 *
-	 * @param accessTokenResponseCustomizer the {@code Consumer} providing access to the {@link OAuth2AccessTokenAuthenticationContext} containing an {@link OAuth2AccessTokenResponse.Builder}
+	 * Sets the {@code Consumer} providing access to the
+	 * {@link OAuth2AccessTokenAuthenticationContext} containing an
+	 * {@link OAuth2AccessTokenResponse.Builder} and additional context information.
+	 * @param accessTokenResponseCustomizer the {@code Consumer} providing access to the
+	 * {@link OAuth2AccessTokenAuthenticationContext} containing an
+	 * {@link OAuth2AccessTokenResponse.Builder}
 	 */
-	public void setAccessTokenResponseCustomizer(Consumer<OAuth2AccessTokenAuthenticationContext> accessTokenResponseCustomizer) {
+	public void setAccessTokenResponseCustomizer(
+			Consumer<OAuth2AccessTokenAuthenticationContext> accessTokenResponseCustomizer) {
 		Assert.notNull(accessTokenResponseCustomizer, "accessTokenResponseCustomizer cannot be null");
 		this.accessTokenResponseCustomizer = accessTokenResponseCustomizer;
 	}

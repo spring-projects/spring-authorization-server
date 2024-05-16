@@ -7,27 +7,11 @@
 This guide shows how to customize Spring Authorization Server to support multiple issuers per host in a multi-tenant hosting configuration.
 The purpose of this guide is to demonstrate a general pattern for building multi-tenant capable components for Spring Authorization Server, which can also be applied to other components to suit your needs.
 
-* xref:guides/how-to-multitenancy.adoc#multi-tenant-enable-multiple-issuers[Enable multiple issuers]
 * xref:guides/how-to-multitenancy.adoc#multi-tenant-define-tenant-identifier[Define the tenant identifier]
+* xref:guides/how-to-multitenancy.adoc#multi-tenant-enable-multiple-issuers[Enable multiple issuers]
 * xref:guides/how-to-multitenancy.adoc#multi-tenant-create-component-registry[Create a component registry]
 * xref:guides/how-to-multitenancy.adoc#multi-tenant-create-components[Create multi-tenant components]
 * xref:guides/how-to-multitenancy.adoc#multi-tenant-add-tenants-dynamically[Add tenants dynamically]
-
-[[multi-tenant-enable-multiple-issuers]]
-== Enable multiple issuers
-
-Support for using multiple issuers per host is disabled by default.
-To enable, add the following configuration:
-
-.AuthorizationServerSettingsConfig
-[source,java]
-----
-include::{examples-dir}/main/java/sample/multitenancy/AuthorizationServerSettingsConfig.java[]
-----
-
-<1> Set to `true` to allow usage of multiple issuers per host.
-
-WARNING: Do not allow for any arbitrary issuer to be used. An allowlist of approved issuers should be enforced.
 
 [[multi-tenant-define-tenant-identifier]]
 == Define the tenant identifier
@@ -52,6 +36,20 @@ For example, an https://openid.net/specs/openid-connect-discovery-1_0.html#Provi
 NOTE: The base URL of the xref:protocol-endpoints.adoc[Protocol Endpoints] is the issuer identifier value.
 
 Essentially, an issuer identifier with a path component represents the _"tenant identifier"_.
+
+[[multi-tenant-enable-multiple-issuers]]
+== Enable multiple issuers
+
+Support for using multiple issuers per host is disabled by default.
+To enable, add the following configuration:
+
+.AuthorizationServerSettingsConfig
+[source,java]
+----
+include::{examples-dir}/main/java/sample/multitenancy/AuthorizationServerSettingsConfig.java[]
+----
+
+<1> Set to `true` to allow usage of multiple issuers per host.
 
 [[multi-tenant-create-component-registry]]
 == Create a component registry

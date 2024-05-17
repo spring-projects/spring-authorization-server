@@ -65,6 +65,8 @@ We will use the following class in each of the delegating implementations below:
 include::{examples-dir}/main/java/sample/multitenancy/TenantPerIssuerComponentRegistry.java[]
 ----
 
+<1> Component registration implicitly enables an allowlist of approved issuers that can be used.
+
 TIP: This registry is designed to allow components to be easily registered at startup to support adding tenants statically, but also supports xref:guides/how-to-multitenancy.adoc#multi-tenant-add-tenants-dynamically[adding tenants dynamically] at runtime.
 
 [[multi-tenant-create-components]]
@@ -98,6 +100,7 @@ TIP: Click on the "Expand folded text" icon in the code sample above to display 
 <2> A `JdbcRegisteredClientRepository` instance mapped to issuer identifier `issuer2` and using a dedicated `DataSource`.
 <3> A composite implementation of a `RegisteredClientRepository` that delegates to a `JdbcRegisteredClientRepository` mapped to the _"requested"_ issuer identifier.
 <4> Obtain the `JdbcRegisteredClientRepository` that is mapped to the _"requested"_ issuer identifier indicated by `AuthorizationServerContext.getIssuer()`.
+<5> If unable to find `JdbcRegisteredClientRepository`, then error since the _"requested"_ issuer identifier is not in the allowlist of approved issuers.
 
 IMPORTANT: Explicitly configuring the issuer identifier via `AuthorizationServerSettings.builder().issuer("http://localhost:9000")` forces to a single-tenant configuration. Avoid explicitly configuring the issuer identifier when using a multi-tenant hosting configuration.
 
@@ -132,6 +135,7 @@ include::{examples-dir}/main/java/sample/multitenancy/OAuth2AuthorizationService
 <2> A `JdbcOAuth2AuthorizationService` instance mapped to issuer identifier `issuer2` and using a dedicated `DataSource`.
 <3> A composite implementation of an `OAuth2AuthorizationService` that delegates to a `JdbcOAuth2AuthorizationService` mapped to the _"requested"_ issuer identifier.
 <4> Obtain the `JdbcOAuth2AuthorizationService` that is mapped to the _"requested"_ issuer identifier indicated by `AuthorizationServerContext.getIssuer()`.
+<5> If unable to find `JdbcOAuth2AuthorizationService`, then error since the _"requested"_ issuer identifier is not in the allowlist of approved issuers.
 
 [[multi-tenant-oauth2-authorization-consent-service]]
 === Multi-tenant OAuth2AuthorizationConsentService
@@ -148,6 +152,7 @@ include::{examples-dir}/main/java/sample/multitenancy/OAuth2AuthorizationConsent
 <2> A `JdbcOAuth2AuthorizationConsentService` instance mapped to issuer identifier `issuer2` and using a dedicated `DataSource`.
 <3> A composite implementation of an `OAuth2AuthorizationConsentService` that delegates to a `JdbcOAuth2AuthorizationConsentService` mapped to the _"requested"_ issuer identifier.
 <4> Obtain the `JdbcOAuth2AuthorizationConsentService` that is mapped to the _"requested"_ issuer identifier indicated by `AuthorizationServerContext.getIssuer()`.
+<5> If unable to find `JdbcOAuth2AuthorizationConsentService`, then error since the _"requested"_ issuer identifier is not in the allowlist of approved issuers.
 
 [[multi-tenant-jwk-source]]
 === Multi-tenant JWKSource
@@ -164,6 +169,7 @@ include::{examples-dir}/main/java/sample/multitenancy/JWKSourceConfig.java[]
 <2> A `JWKSet` instance mapped to issuer identifier `issuer2`.
 <3> A composite implementation of an `JWKSource<SecurityContext>` that uses the `JWKSet` mapped to the _"requested"_ issuer identifier.
 <4> Obtain the `JWKSet` that is mapped to the _"requested"_ issuer identifier indicated by `AuthorizationServerContext.getIssuer()`.
+<5> If unable to find `JWKSet`, then error since the _"requested"_ issuer identifier is not in the allowlist of approved issuers.
 
 [[multi-tenant-add-tenants-dynamically]]
 == Add Tenants Dynamically

@@ -19,7 +19,6 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
-import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -33,6 +32,7 @@ import com.nimbusds.jose.proc.SecurityContext;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.util.Assert;
 
 @Configuration(proxyBeanMethods = false)
 public class JWKSourceConfig {
@@ -77,12 +77,13 @@ public class JWKSourceConfig {
 
 		@Override
 		public List<JWK> get(JWKSelector jwkSelector, SecurityContext context) throws KeySourceException {
-			JWKSet jwkSet = getJwkSet();
-			return (jwkSet != null) ? jwkSelector.select(jwkSet) : Collections.emptyList();
+			return jwkSelector.select(getJwkSet());
 		}
 
 		private JWKSet getJwkSet() {
-			return this.componentRegistry.get(JWKSet.class);	// <4>
+			JWKSet jwkSet = this.componentRegistry.get(JWKSet.class);	// <4>
+			Assert.state(jwkSet != null, "JWKSet not found for \"requested\" issuer identifier.");	// <5>
+			return jwkSet;
 		}
 
 	}

@@ -28,6 +28,7 @@ import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.server.authorization.client.JdbcRegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
+import org.springframework.util.Assert;
 
 @Configuration(proxyBeanMethods = false)
 public class RegisteredClientRepositoryConfig {
@@ -88,30 +89,25 @@ public class RegisteredClientRepositoryConfig {
 
 		@Override
 		public void save(RegisteredClient registeredClient) {
-			RegisteredClientRepository registeredClientRepository = getRegisteredClientRepository();
-			if (registeredClientRepository != null) {
-				registeredClientRepository.save(registeredClient);
-			}
+			getRegisteredClientRepository().save(registeredClient);
 		}
 
 		@Override
 		public RegisteredClient findById(String id) {
-			RegisteredClientRepository registeredClientRepository = getRegisteredClientRepository();
-			return (registeredClientRepository != null) ?
-					registeredClientRepository.findById(id) :
-					null;
+			return getRegisteredClientRepository().findById(id);
 		}
 
 		@Override
 		public RegisteredClient findByClientId(String clientId) {
-			RegisteredClientRepository registeredClientRepository = getRegisteredClientRepository();
-			return (registeredClientRepository != null) ?
-					registeredClientRepository.findByClientId(clientId) :
-					null;
+			return getRegisteredClientRepository().findByClientId(clientId);
 		}
 
 		private RegisteredClientRepository getRegisteredClientRepository() {
-			return this.componentRegistry.get(RegisteredClientRepository.class);	// <4>
+			RegisteredClientRepository registeredClientRepository =
+					this.componentRegistry.get(RegisteredClientRepository.class);	// <4>
+			Assert.state(registeredClientRepository != null,
+					"RegisteredClientRepository not found for \"requested\" issuer identifier.");	// <5>
+			return registeredClientRepository;
 		}
 
 	}

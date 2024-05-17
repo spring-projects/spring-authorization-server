@@ -26,6 +26,7 @@ import org.springframework.security.oauth2.server.authorization.OAuth2Authorizat
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenType;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
+import org.springframework.util.Assert;
 
 @Configuration(proxyBeanMethods = false)
 public class OAuth2AuthorizationServiceConfig {
@@ -57,38 +58,30 @@ public class OAuth2AuthorizationServiceConfig {
 
 		@Override
 		public void save(OAuth2Authorization authorization) {
-			OAuth2AuthorizationService authorizationService = getAuthorizationService();
-			if (authorizationService != null) {
-				authorizationService.save(authorization);
-			}
+			getAuthorizationService().save(authorization);
 		}
 
 		@Override
 		public void remove(OAuth2Authorization authorization) {
-			OAuth2AuthorizationService authorizationService = getAuthorizationService();
-			if (authorizationService != null) {
-				authorizationService.remove(authorization);
-			}
+			getAuthorizationService().remove(authorization);
 		}
 
 		@Override
 		public OAuth2Authorization findById(String id) {
-			OAuth2AuthorizationService authorizationService = getAuthorizationService();
-			return (authorizationService != null) ?
-					authorizationService.findById(id) :
-					null;
+			return getAuthorizationService().findById(id);
 		}
 
 		@Override
 		public OAuth2Authorization findByToken(String token, OAuth2TokenType tokenType) {
-			OAuth2AuthorizationService authorizationService = getAuthorizationService();
-			return (authorizationService != null) ?
-					authorizationService.findByToken(token, tokenType) :
-					null;
+			return getAuthorizationService().findByToken(token, tokenType);
 		}
 
 		private OAuth2AuthorizationService getAuthorizationService() {
-			return this.componentRegistry.get(OAuth2AuthorizationService.class);	// <4>
+			OAuth2AuthorizationService authorizationService =
+					this.componentRegistry.get(OAuth2AuthorizationService.class);	// <4>
+			Assert.state(authorizationService != null,
+					"OAuth2AuthorizationService not found for \"requested\" issuer identifier.");	// <5>
+			return authorizationService;
 		}
 
 	}

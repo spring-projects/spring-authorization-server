@@ -128,7 +128,7 @@ public final class JwtClientAssertionAuthenticationProvider implements Authentic
 
 		// @formatter:off
 		ClientAuthenticationMethod clientAuthenticationMethod =
-				registeredClient.getClientSettings().getTokenEndpointAuthenticationSigningAlgorithm() instanceof SignatureAlgorithm ?
+				(registeredClient.getClientSettings().getTokenEndpointAuthenticationSigningAlgorithm() instanceof SignatureAlgorithm) ?
 						ClientAuthenticationMethod.PRIVATE_KEY_JWT :
 						ClientAuthenticationMethod.CLIENT_SECRET_JWT;
 		// @formatter:on

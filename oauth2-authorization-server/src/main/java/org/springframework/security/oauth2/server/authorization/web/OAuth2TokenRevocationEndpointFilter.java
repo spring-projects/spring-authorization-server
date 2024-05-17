@@ -51,12 +51,12 @@ import org.springframework.web.filter.OncePerRequestFilter;
  * @author Vivek Babu
  * @author Joe Grandja
  * @author Arfat Chaus
+ * @since 0.0.3
  * @see OAuth2TokenRevocationAuthenticationProvider
  * @see <a target="_blank" href="https://tools.ietf.org/html/rfc7009#section-2">Section 2
  * Token Revocation</a>
  * @see <a target="_blank" href="https://tools.ietf.org/html/rfc7009#section-2.1">Section
  * 2.1 Revocation Request</a>
- * @since 0.0.3
  */
 public final class OAuth2TokenRevocationEndpointFilter extends OncePerRequestFilter {
 

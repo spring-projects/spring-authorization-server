@@ -23,8 +23,8 @@ import org.springframework.lang.Nullable;
  * @author Joe Grandja
  * @author Anoop Garlapati
  * @author Ovidiu Popa
- * @see RegisteredClient
  * @since 0.0.1
+ * @see RegisteredClient
  */
 public interface RegisteredClientRepository {
 

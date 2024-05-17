@@ -44,6 +44,7 @@ public final class OidcProviderConfigurationEndpointConfigurer extends AbstractO
 
 	/**
 	 * Restrict for internal use only.
+	 * @param objectPostProcessor an {@code ObjectPostProcessor}
 	 */
 	OidcProviderConfigurationEndpointConfigurer(ObjectPostProcessor<Object> objectPostProcessor) {
 		super(objectPostProcessor);
@@ -66,7 +67,7 @@ public final class OidcProviderConfigurationEndpointConfigurer extends AbstractO
 
 	void addDefaultProviderConfigurationCustomizer(
 			Consumer<OidcProviderConfiguration.Builder> defaultProviderConfigurationCustomizer) {
-		this.defaultProviderConfigurationCustomizer = this.defaultProviderConfigurationCustomizer == null
+		this.defaultProviderConfigurationCustomizer = (this.defaultProviderConfigurationCustomizer == null)
 				? defaultProviderConfigurationCustomizer
 				: this.defaultProviderConfigurationCustomizer.andThen(defaultProviderConfigurationCustomizer);
 	}
@@ -94,9 +95,9 @@ public final class OidcProviderConfigurationEndpointConfigurer extends AbstractO
 				providerConfigurationCustomizer = this.defaultProviderConfigurationCustomizer;
 			}
 			if (this.providerConfigurationCustomizer != null) {
-				providerConfigurationCustomizer = providerConfigurationCustomizer == null
-						? this.providerConfigurationCustomizer
-						: providerConfigurationCustomizer.andThen(this.providerConfigurationCustomizer);
+				providerConfigurationCustomizer = (providerConfigurationCustomizer != null)
+						? providerConfigurationCustomizer.andThen(this.providerConfigurationCustomizer)
+						: this.providerConfigurationCustomizer;
 			}
 		}
 		return providerConfigurationCustomizer;

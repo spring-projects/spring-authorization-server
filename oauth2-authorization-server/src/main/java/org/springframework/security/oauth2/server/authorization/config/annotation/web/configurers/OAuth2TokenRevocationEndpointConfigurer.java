@@ -72,6 +72,7 @@ public final class OAuth2TokenRevocationEndpointConfigurer extends AbstractOAuth
 
 	/**
 	 * Restrict for internal use only.
+	 * @param objectPostProcessor an {@code ObjectPostProcessor}
 	 */
 	OAuth2TokenRevocationEndpointConfigurer(ObjectPostProcessor<Object> objectPostProcessor) {
 		super(objectPostProcessor);
@@ -188,7 +189,7 @@ public final class OAuth2TokenRevocationEndpointConfigurer extends AbstractOAuth
 		}
 		this.authenticationProvidersConsumer.accept(authenticationProviders);
 		authenticationProviders.forEach(
-				authenticationProvider -> httpSecurity.authenticationProvider(postProcess(authenticationProvider)));
+				(authenticationProvider) -> httpSecurity.authenticationProvider(postProcess(authenticationProvider)));
 	}
 
 	@Override

@@ -49,6 +49,7 @@ public final class OidcConfigurer extends AbstractOAuth2Configurer {
 
 	/**
 	 * Restrict for internal use only.
+	 * @param objectPostProcessor an {@code ObjectPostProcessor}
 	 */
 	OidcConfigurer(ObjectPostProcessor<Object> objectPostProcessor) {
 		super(objectPostProcessor);
@@ -117,7 +118,7 @@ public final class OidcConfigurer extends AbstractOAuth2Configurer {
 	@Override
 	void init(HttpSecurity httpSecurity) {
 		List<RequestMatcher> requestMatchers = new ArrayList<>();
-		this.configurers.values().forEach(configurer -> {
+		this.configurers.values().forEach((configurer) -> {
 			configurer.init(httpSecurity);
 			requestMatchers.add(configurer.getRequestMatcher());
 		});
@@ -147,7 +148,7 @@ public final class OidcConfigurer extends AbstractOAuth2Configurer {
 			});
 		}
 
-		this.configurers.values().forEach(configurer -> configurer.configure(httpSecurity));
+		this.configurers.values().forEach((configurer) -> configurer.configure(httpSecurity));
 	}
 
 	@Override

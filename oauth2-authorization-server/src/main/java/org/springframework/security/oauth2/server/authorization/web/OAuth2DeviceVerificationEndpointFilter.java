@@ -136,8 +136,8 @@ public final class OAuth2DeviceVerificationEndpointFilter extends OncePerRequest
 				HttpMethod.GET.name());
 		RequestMatcher verificationRequestPostMatcher = new AntPathRequestMatcher(deviceVerificationEndpointUri,
 				HttpMethod.POST.name());
-		RequestMatcher userCodeParameterMatcher = request -> request
-			.getParameter(OAuth2ParameterNames.USER_CODE) != null;
+		RequestMatcher userCodeParameterMatcher = (
+				request) -> request.getParameter(OAuth2ParameterNames.USER_CODE) != null;
 
 		return new AndRequestMatcher(
 				new OrRequestMatcher(verificationRequestGetMatcher, verificationRequestPostMatcher),

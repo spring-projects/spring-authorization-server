@@ -94,7 +94,7 @@ public final class InMemoryOAuth2AuthorizationService implements OAuth2Authoriza
 	 */
 	public InMemoryOAuth2AuthorizationService(List<OAuth2Authorization> authorizations) {
 		Assert.notNull(authorizations, "authorizations cannot be null");
-		authorizations.forEach(authorization -> {
+		authorizations.forEach((authorization) -> {
 			Assert.notNull(authorization, "authorization cannot be null");
 			Assert.isTrue(!this.authorizations.containsKey(authorization.getId()),
 					"The authorization must be unique. Found duplicate identifier: " + authorization.getId());
@@ -129,7 +129,7 @@ public final class InMemoryOAuth2AuthorizationService implements OAuth2Authoriza
 	public OAuth2Authorization findById(String id) {
 		Assert.hasText(id, "id cannot be empty");
 		OAuth2Authorization authorization = this.authorizations.get(id);
-		return authorization != null ? authorization : this.initializedAuthorizations.get(id);
+		return (authorization != null) ? authorization : this.initializedAuthorizations.get(id);
 	}
 
 	@Nullable
@@ -164,19 +164,26 @@ public final class InMemoryOAuth2AuthorizationService implements OAuth2Authoriza
 					matchesRefreshToken(authorization, token) ||
 					matchesDeviceCode(authorization, token) ||
 					matchesUserCode(authorization, token);
-		} else if (OAuth2ParameterNames.STATE.equals(tokenType.getValue())) {
+		}
+		else if (OAuth2ParameterNames.STATE.equals(tokenType.getValue())) {
 			return matchesState(authorization, token);
-		} else if (OAuth2ParameterNames.CODE.equals(tokenType.getValue())) {
+		}
+		else if (OAuth2ParameterNames.CODE.equals(tokenType.getValue())) {
 			return matchesAuthorizationCode(authorization, token);
-		} else if (OAuth2TokenType.ACCESS_TOKEN.equals(tokenType)) {
+		}
+		else if (OAuth2TokenType.ACCESS_TOKEN.equals(tokenType)) {
 			return matchesAccessToken(authorization, token);
-		} else if (OidcParameterNames.ID_TOKEN.equals(tokenType.getValue())) {
+		}
+		else if (OidcParameterNames.ID_TOKEN.equals(tokenType.getValue())) {
 			return matchesIdToken(authorization, token);
-		} else if (OAuth2TokenType.REFRESH_TOKEN.equals(tokenType)) {
+		}
+		else if (OAuth2TokenType.REFRESH_TOKEN.equals(tokenType)) {
 			return matchesRefreshToken(authorization, token);
-		} else if (OAuth2ParameterNames.DEVICE_CODE.equals(tokenType.getValue())) {
+		}
+		else if (OAuth2ParameterNames.DEVICE_CODE.equals(tokenType.getValue())) {
 			return matchesDeviceCode(authorization, token);
-		} else if (OAuth2ParameterNames.USER_CODE.equals(tokenType.getValue())) {
+		}
+		else if (OAuth2ParameterNames.USER_CODE.equals(tokenType.getValue())) {
 			return matchesUserCode(authorization, token);
 		}
 		// @formatter:on

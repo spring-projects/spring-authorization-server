@@ -186,12 +186,12 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 				.build();
 
 			if (this.logger.isTraceEnabled()) {
-				logger.trace("Generated authorization consent state");
+				this.logger.trace("Generated authorization consent state");
 			}
 
 			this.authorizationService.save(authorization);
 
-			Set<String> currentAuthorizedScopes = currentAuthorizationConsent != null
+			Set<String> currentAuthorizedScopes = (currentAuthorizationConsent != null)
 					? currentAuthorizationConsent.getScopes() : null;
 
 			if (this.logger.isTraceEnabled()) {

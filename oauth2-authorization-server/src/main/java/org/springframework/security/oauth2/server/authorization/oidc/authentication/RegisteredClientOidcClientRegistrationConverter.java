@@ -46,16 +46,16 @@ final class RegisteredClientOidcClientRegistrationConverter
 			builder.clientSecret(registeredClient.getClientSecret());
 		}
 
-		builder.redirectUris(redirectUris ->
+		builder.redirectUris((redirectUris) ->
 				redirectUris.addAll(registeredClient.getRedirectUris()));
 
 		if (!CollectionUtils.isEmpty(registeredClient.getPostLogoutRedirectUris())) {
-			builder.postLogoutRedirectUris(postLogoutRedirectUris ->
+			builder.postLogoutRedirectUris((postLogoutRedirectUris) ->
 					postLogoutRedirectUris.addAll(registeredClient.getPostLogoutRedirectUris()));
 		}
 
-		builder.grantTypes(grantTypes ->
-				registeredClient.getAuthorizationGrantTypes().forEach(authorizationGrantType ->
+		builder.grantTypes((grantTypes) ->
+				registeredClient.getAuthorizationGrantTypes().forEach((authorizationGrantType) ->
 						grantTypes.add(authorizationGrantType.getValue())));
 
 		if (registeredClient.getAuthorizationGrantTypes().contains(AuthorizationGrantType.AUTHORIZATION_CODE)) {
@@ -63,7 +63,7 @@ final class RegisteredClientOidcClientRegistrationConverter
 		}
 
 		if (!CollectionUtils.isEmpty(registeredClient.getScopes())) {
-			builder.scopes(scopes ->
+			builder.scopes((scopes) ->
 					scopes.addAll(registeredClient.getScopes()));
 		}
 

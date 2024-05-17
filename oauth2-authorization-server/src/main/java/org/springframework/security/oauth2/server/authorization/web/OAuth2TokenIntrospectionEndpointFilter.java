@@ -53,12 +53,12 @@ import org.springframework.web.filter.OncePerRequestFilter;
  * @author Gerardo Roza
  * @author Joe Grandja
  * @author Gaurav Tiwari
+ * @since 0.1.1
  * @see OAuth2TokenIntrospectionAuthenticationProvider
  * @see <a target="_blank" href="https://tools.ietf.org/html/rfc7662#section-2">Section 2
  * Introspection Endpoint</a>
  * @see <a target="_blank" href="https://tools.ietf.org/html/rfc7662#section-2.1">Section
  * 2.1 Introspection Request</a>
- * @since 0.1.1
  */
 public final class OAuth2TokenIntrospectionEndpointFilter extends OncePerRequestFilter {
 

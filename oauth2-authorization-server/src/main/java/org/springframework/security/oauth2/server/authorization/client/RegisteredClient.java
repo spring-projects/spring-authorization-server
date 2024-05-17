@@ -40,9 +40,9 @@ import org.springframework.util.StringUtils;
  *
  * @author Joe Grandja
  * @author Anoop Garlapati
+ * @since 0.0.1
  * @see <a target="_blank" href="https://tools.ietf.org/html/rfc6749#section-2">Section 2
  * Client Registration</a>
- * @since 0.0.1
  */
 public class RegisteredClient implements Serializable {
 
@@ -594,7 +594,7 @@ public class RegisteredClient implements Serializable {
 
 		private static boolean validateScope(String scope) {
 			return scope == null || scope.chars()
-				.allMatch(c -> withinTheRangeOf(c, 0x21, 0x21) || withinTheRangeOf(c, 0x23, 0x5B)
+				.allMatch((c) -> withinTheRangeOf(c, 0x21, 0x21) || withinTheRangeOf(c, 0x23, 0x5B)
 						|| withinTheRangeOf(c, 0x5D, 0x7E));
 		}
 

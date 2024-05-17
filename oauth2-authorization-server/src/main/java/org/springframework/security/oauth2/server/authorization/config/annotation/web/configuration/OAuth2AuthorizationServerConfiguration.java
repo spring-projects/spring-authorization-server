@@ -64,10 +64,10 @@ public class OAuth2AuthorizationServerConfiguration {
 
 		http
 			.securityMatcher(endpointsMatcher)
-			.authorizeHttpRequests(authorize ->
+			.authorizeHttpRequests((authorize) ->
 				authorize.anyRequest().authenticated()
 			)
-			.csrf(csrf -> csrf.ignoringRequestMatchers(endpointsMatcher))
+			.csrf((csrf) -> csrf.ignoringRequestMatchers(endpointsMatcher))
 			.apply(authorizationServerConfigurer);
 	}
 	// @formatter:on

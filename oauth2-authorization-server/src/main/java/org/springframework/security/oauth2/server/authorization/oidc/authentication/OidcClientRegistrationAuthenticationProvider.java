@@ -427,31 +427,35 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 				builder
 						.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_POST)
 						.clientSecret(CLIENT_SECRET_GENERATOR.generateKey());
-			} else if (ClientAuthenticationMethod.CLIENT_SECRET_JWT.getValue().equals(clientRegistration.getTokenEndpointAuthenticationMethod())) {
+			}
+			else if (ClientAuthenticationMethod.CLIENT_SECRET_JWT.getValue().equals(clientRegistration.getTokenEndpointAuthenticationMethod())) {
 				builder
 						.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_JWT)
 						.clientSecret(CLIENT_SECRET_GENERATOR.generateKey());
-			} else if (ClientAuthenticationMethod.PRIVATE_KEY_JWT.getValue().equals(clientRegistration.getTokenEndpointAuthenticationMethod())) {
+			}
+			else if (ClientAuthenticationMethod.PRIVATE_KEY_JWT.getValue().equals(clientRegistration.getTokenEndpointAuthenticationMethod())) {
 				builder.clientAuthenticationMethod(ClientAuthenticationMethod.PRIVATE_KEY_JWT);
-			} else {
+			}
+			else {
 				builder
 						.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
 						.clientSecret(CLIENT_SECRET_GENERATOR.generateKey());
 			}
 
-			builder.redirectUris(redirectUris ->
+			builder.redirectUris((redirectUris) ->
 					redirectUris.addAll(clientRegistration.getRedirectUris()));
 
 			if (!CollectionUtils.isEmpty(clientRegistration.getPostLogoutRedirectUris())) {
-				builder.postLogoutRedirectUris(postLogoutRedirectUris ->
+				builder.postLogoutRedirectUris((postLogoutRedirectUris) ->
 						postLogoutRedirectUris.addAll(clientRegistration.getPostLogoutRedirectUris()));
 			}
 
 			if (!CollectionUtils.isEmpty(clientRegistration.getGrantTypes())) {
-				builder.authorizationGrantTypes(authorizationGrantTypes ->
-						clientRegistration.getGrantTypes().forEach(grantType ->
+				builder.authorizationGrantTypes((authorizationGrantTypes) ->
+						clientRegistration.getGrantTypes().forEach((grantType) ->
 								authorizationGrantTypes.add(new AuthorizationGrantType(grantType))));
-			} else {
+			}
+			else {
 				builder.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE);
 			}
 			if (CollectionUtils.isEmpty(clientRegistration.getResponseTypes()) ||
@@ -460,7 +464,7 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 			}
 
 			if (!CollectionUtils.isEmpty(clientRegistration.getScopes())) {
-				builder.scopes(scopes ->
+				builder.scopes((scopes) ->
 						scopes.addAll(clientRegistration.getScopes()));
 			}
 
@@ -474,7 +478,8 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 					macAlgorithm = MacAlgorithm.HS256;
 				}
 				clientSettingsBuilder.tokenEndpointAuthenticationSigningAlgorithm(macAlgorithm);
-			} else if (ClientAuthenticationMethod.PRIVATE_KEY_JWT.getValue().equals(clientRegistration.getTokenEndpointAuthenticationMethod())) {
+			}
+			else if (ClientAuthenticationMethod.PRIVATE_KEY_JWT.getValue().equals(clientRegistration.getTokenEndpointAuthenticationMethod())) {
 				SignatureAlgorithm signatureAlgorithm = SignatureAlgorithm.from(clientRegistration.getTokenEndpointAuthenticationSigningAlgorithm());
 				if (signatureAlgorithm == null) {
 					signatureAlgorithm = SignatureAlgorithm.RS256;

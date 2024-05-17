@@ -67,7 +67,7 @@ final class AuthorizationServerContextFilter extends OncePerRequestFilter {
 
 	private static String resolveIssuer(AuthorizationServerSettings authorizationServerSettings,
 			HttpServletRequest request) {
-		return authorizationServerSettings.getIssuer() != null ? authorizationServerSettings.getIssuer()
+		return (authorizationServerSettings.getIssuer() != null) ? authorizationServerSettings.getIssuer()
 				: getContextPath(request);
 	}
 

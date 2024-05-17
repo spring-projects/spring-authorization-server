@@ -34,9 +34,9 @@ import org.springframework.util.StringUtils;
  * @author Anoop Garlapati
  * @author Ovidiu Popa
  * @author Joe Grandja
+ * @since 0.0.1
  * @see RegisteredClientRepository
  * @see RegisteredClient
- * @since 0.0.1
  */
 public final class InMemoryRegisteredClientRepository implements RegisteredClientRepository {
 
@@ -98,7 +98,7 @@ public final class InMemoryRegisteredClientRepository implements RegisteredClien
 
 	private void assertUniqueIdentifiers(RegisteredClient registeredClient,
 			Map<String, RegisteredClient> registrations) {
-		registrations.values().forEach(registration -> {
+		registrations.values().forEach((registration) -> {
 			if (registeredClient.getId().equals(registration.getId())) {
 				throw new IllegalArgumentException("Registered client must be unique. " + "Found duplicate identifier: "
 						+ registeredClient.getId());

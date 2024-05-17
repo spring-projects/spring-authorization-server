@@ -67,7 +67,7 @@ public class OAuth2TokenIntrospectionAuthenticationToken extends AbstractAuthent
 		this.clientPrincipal = clientPrincipal;
 		this.tokenTypeHint = tokenTypeHint;
 		this.additionalParameters = Collections.unmodifiableMap(
-				additionalParameters != null ? new HashMap<>(additionalParameters) : Collections.emptyMap());
+				(additionalParameters != null) ? new HashMap<>(additionalParameters) : Collections.emptyMap());
 		this.tokenClaims = OAuth2TokenIntrospection.builder().build();
 	}
 

@@ -15,10 +15,10 @@
  */
 package org.springframework.security.oauth2.server.authorization;
 
+import java.security.Principal;
+
 import org.springframework.lang.Nullable;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
-
-import java.security.Principal;
 
 /**
  * Implementations of this interface are responsible for the management of

@@ -45,8 +45,6 @@ import org.springframework.security.oauth2.server.authorization.token.OAuth2Toke
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenGenerator;
 import org.springframework.util.Assert;
 
-import static org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthenticationProviderUtils.getAuthenticatedClientElseThrowInvalidClient;
-
 /**
  * An {@link AuthenticationProvider} implementation for the Device Access Token Request
  * used in the OAuth 2.0 Device Authorization Grant.
@@ -102,8 +100,8 @@ public final class OAuth2DeviceCodeAuthenticationProvider implements Authenticat
 	public Authentication authenticate(Authentication authentication) throws AuthenticationException {
 		OAuth2DeviceCodeAuthenticationToken deviceCodeAuthentication = (OAuth2DeviceCodeAuthenticationToken) authentication;
 
-		OAuth2ClientAuthenticationToken clientPrincipal = getAuthenticatedClientElseThrowInvalidClient(
-				deviceCodeAuthentication);
+		OAuth2ClientAuthenticationToken clientPrincipal = OAuth2AuthenticationProviderUtils
+			.getAuthenticatedClientElseThrowInvalidClient(deviceCodeAuthentication);
 		RegisteredClient registeredClient = clientPrincipal.getRegisteredClient();
 
 		if (this.logger.isTraceEnabled()) {
@@ -203,7 +201,7 @@ public final class OAuth2DeviceCodeAuthenticationProvider implements Authenticat
 		// @formatter:off
 		OAuth2Authorization.Builder authorizationBuilder = OAuth2Authorization.from(authorization)
 				// Invalidate the device code as it can only be used (successfully) once
-				.token(deviceCode.getToken(), metadata ->
+				.token(deviceCode.getToken(), (metadata) ->
 						metadata.put(OAuth2Authorization.Token.INVALIDATED_METADATA_NAME, true));
 		// @formatter:on
 

@@ -320,7 +320,7 @@ public final class OAuth2AuthorizationServerConfigurer
 		}
 
 		List<RequestMatcher> requestMatchers = new ArrayList<>();
-		this.configurers.values().forEach(configurer -> {
+		this.configurers.values().forEach((configurer) -> {
 			configurer.init(httpSecurity);
 			requestMatchers.add(configurer.getRequestMatcher());
 		});
@@ -341,7 +341,7 @@ public final class OAuth2AuthorizationServerConfigurer
 
 	@Override
 	public void configure(HttpSecurity httpSecurity) {
-		this.configurers.values().forEach(configurer -> configurer.configure(httpSecurity));
+		this.configurers.values().forEach((configurer) -> configurer.configure(httpSecurity));
 
 		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils
 			.getAuthorizationServerSettings(httpSecurity);
@@ -394,7 +394,7 @@ public final class OAuth2AuthorizationServerConfigurer
 
 	private <T extends AbstractOAuth2Configurer> RequestMatcher getRequestMatcher(Class<T> configurerType) {
 		T configurer = getConfigurer(configurerType);
-		return configurer != null ? configurer.getRequestMatcher() : null;
+		return (configurer != null) ? configurer.getRequestMatcher() : null;
 	}
 
 	private static void validateAuthorizationServerSettings(AuthorizationServerSettings authorizationServerSettings) {

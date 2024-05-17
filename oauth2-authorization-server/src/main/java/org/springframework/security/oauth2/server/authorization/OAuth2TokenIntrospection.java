@@ -88,13 +88,13 @@ public final class OAuth2TokenIntrospection implements OAuth2TokenIntrospectionC
 	 */
 	public static Builder withClaims(Map<String, Object> claims) {
 		Assert.notEmpty(claims, "claims cannot be empty");
-		return builder().claims(c -> c.putAll(claims));
+		return builder().claims((c) -> c.putAll(claims));
 	}
 
 	/**
 	 * A builder for {@link OAuth2TokenIntrospection}.
 	 */
-	public static class Builder {
+	public static final class Builder {
 
 		private final Map<String, Object> claims = new LinkedHashMap<>();
 
@@ -312,7 +312,7 @@ public final class OAuth2TokenIntrospection implements OAuth2TokenIntrospectionC
 		private void addClaimToClaimList(String name, String value) {
 			Assert.hasText(name, "name cannot be empty");
 			Assert.notNull(value, "value cannot be null");
-			this.claims.computeIfAbsent(name, k -> new LinkedList<String>());
+			this.claims.computeIfAbsent(name, (k) -> new LinkedList<String>());
 			((List<String>) this.claims.get(name)).add(value);
 		}
 
@@ -320,7 +320,7 @@ public final class OAuth2TokenIntrospection implements OAuth2TokenIntrospectionC
 		private void acceptClaimValues(String name, Consumer<List<String>> valuesConsumer) {
 			Assert.hasText(name, "name cannot be empty");
 			Assert.notNull(valuesConsumer, "valuesConsumer cannot be null");
-			this.claims.computeIfAbsent(name, k -> new LinkedList<String>());
+			this.claims.computeIfAbsent(name, (k) -> new LinkedList<String>());
 			List<String> values = (List<String>) this.claims.get(name);
 			valuesConsumer.accept(values);
 		}

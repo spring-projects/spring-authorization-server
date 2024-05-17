@@ -32,8 +32,14 @@ public final class OAuth2TokenType implements Serializable {
 
 	private static final long serialVersionUID = SpringAuthorizationServerVersion.SERIAL_VERSION_UID;
 
+	/**
+	 * {@code access_token} token type.
+	 */
 	public static final OAuth2TokenType ACCESS_TOKEN = new OAuth2TokenType("access_token");
 
+	/**
+	 * {@code refresh_token} token type.
+	 */
 	public static final OAuth2TokenType REFRESH_TOKEN = new OAuth2TokenType("refresh_token");
 
 	private final String value;

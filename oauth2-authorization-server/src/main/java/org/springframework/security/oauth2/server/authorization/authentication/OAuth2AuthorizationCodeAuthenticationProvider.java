@@ -64,8 +64,6 @@ import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
-import static org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthenticationProviderUtils.getAuthenticatedClientElseThrowInvalidClient;
-
 /**
  * An {@link AuthenticationProvider} implementation for the OAuth 2.0 Authorization Code
  * Grant.
@@ -120,8 +118,8 @@ public final class OAuth2AuthorizationCodeAuthenticationProvider implements Auth
 	public Authentication authenticate(Authentication authentication) throws AuthenticationException {
 		OAuth2AuthorizationCodeAuthenticationToken authorizationCodeAuthentication = (OAuth2AuthorizationCodeAuthenticationToken) authentication;
 
-		OAuth2ClientAuthenticationToken clientPrincipal = getAuthenticatedClientElseThrowInvalidClient(
-				authorizationCodeAuthentication);
+		OAuth2ClientAuthenticationToken clientPrincipal = OAuth2AuthenticationProviderUtils
+			.getAuthenticatedClientElseThrowInvalidClient(authorizationCodeAuthentication);
 		RegisteredClient registeredClient = clientPrincipal.getRegisteredClient();
 
 		if (this.logger.isTraceEnabled()) {
@@ -166,7 +164,7 @@ public final class OAuth2AuthorizationCodeAuthenticationProvider implements Auth
 
 		if (!authorizationCode.isActive()) {
 			if (authorizationCode.isInvalidated()) {
-				OAuth2Authorization.Token<? extends OAuth2Token> token = authorization.getRefreshToken() != null
+				OAuth2Authorization.Token<? extends OAuth2Token> token = (authorization.getRefreshToken() != null)
 						? authorization.getRefreshToken() : authorization.getAccessToken();
 				if (token != null) {
 					// Invalidate the access (and refresh) token as the client is

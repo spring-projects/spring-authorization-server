@@ -52,13 +52,13 @@ public final class OAuth2AuthorizationServerMetadata extends AbstractOAuth2Autho
 	 */
 	public static Builder withClaims(Map<String, Object> claims) {
 		Assert.notEmpty(claims, "claims cannot be empty");
-		return new Builder().claims(c -> c.putAll(claims));
+		return new Builder().claims((c) -> c.putAll(claims));
 	}
 
 	/**
 	 * Helps configure an {@link OAuth2AuthorizationServerMetadata}.
 	 */
-	public static class Builder extends AbstractBuilder<OAuth2AuthorizationServerMetadata, Builder> {
+	public static final class Builder extends AbstractBuilder<OAuth2AuthorizationServerMetadata, Builder> {
 
 		private Builder() {
 		}

@@ -86,8 +86,11 @@ public abstract class AbstractSettings implements Serializable {
 
 	/**
 	 * A builder for subclasses of {@link AbstractSettings}.
+	 *
+	 * @param <T> the type of object
+	 * @param <B> the type of the builder
 	 */
-	protected static abstract class AbstractBuilder<T extends AbstractSettings, B extends AbstractBuilder<T, B>> {
+	protected abstract static class AbstractBuilder<T extends AbstractSettings, B extends AbstractBuilder<T, B>> {
 
 		private final Map<String, Object> settings = new HashMap<>();
 

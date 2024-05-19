@@ -60,8 +60,8 @@ public class JwtClientAssertionDecoderFactoryTests {
 
 		assertThatThrownBy(() -> this.jwtDecoderFactory.createDecoder(registeredClient))
 			.isInstanceOf(OAuth2AuthenticationException.class)
-			.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
-			.satisfies(error -> {
+			.extracting((ex) -> ((OAuth2AuthenticationException) ex).getError())
+			.satisfies((error) -> {
 				assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_CLIENT);
 				assertThat(error.getDescription()).isEqualTo("Failed to find a Signature Verifier for Client: '"
 						+ registeredClient.getId() + "'. Check to ensure you have configured the JWK Set URL.");
@@ -84,8 +84,8 @@ public class JwtClientAssertionDecoderFactoryTests {
 
 		assertThatThrownBy(() -> this.jwtDecoderFactory.createDecoder(registeredClient))
 			.isInstanceOf(OAuth2AuthenticationException.class)
-			.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
-			.satisfies(error -> {
+			.extracting((ex) -> ((OAuth2AuthenticationException) ex).getError())
+			.satisfies((error) -> {
 				assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_CLIENT);
 				assertThat(error.getDescription()).isEqualTo("Failed to find a Signature Verifier for Client: '"
 						+ registeredClient.getId() + "'. Check to ensure you have configured the client secret.");
@@ -102,8 +102,8 @@ public class JwtClientAssertionDecoderFactoryTests {
 
 		assertThatThrownBy(() -> this.jwtDecoderFactory.createDecoder(registeredClient))
 			.isInstanceOf(OAuth2AuthenticationException.class)
-			.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
-			.satisfies(error -> {
+			.extracting((ex) -> ((OAuth2AuthenticationException) ex).getError())
+			.satisfies((error) -> {
 				assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_CLIENT);
 				assertThat(error.getDescription())
 					.isEqualTo("Failed to find a Signature Verifier for Client: '" + registeredClient.getId()

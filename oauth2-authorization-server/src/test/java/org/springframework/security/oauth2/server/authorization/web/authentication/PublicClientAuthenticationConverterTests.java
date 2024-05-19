@@ -52,7 +52,7 @@ public class PublicClientAuthenticationConverterTests {
 		MockHttpServletRequest request = createPkceTokenRequest();
 		request.removeParameter(OAuth2ParameterNames.CLIENT_ID);
 		assertThatThrownBy(() -> this.converter.convert(request)).isInstanceOf(OAuth2AuthenticationException.class)
-			.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+			.extracting((ex) -> ((OAuth2AuthenticationException) ex).getError())
 			.extracting("errorCode")
 			.isEqualTo(OAuth2ErrorCodes.INVALID_REQUEST);
 	}
@@ -62,7 +62,7 @@ public class PublicClientAuthenticationConverterTests {
 		MockHttpServletRequest request = createPkceTokenRequest();
 		request.addParameter(OAuth2ParameterNames.CLIENT_ID, "client-2");
 		assertThatThrownBy(() -> this.converter.convert(request)).isInstanceOf(OAuth2AuthenticationException.class)
-			.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+			.extracting((ex) -> ((OAuth2AuthenticationException) ex).getError())
 			.extracting("errorCode")
 			.isEqualTo(OAuth2ErrorCodes.INVALID_REQUEST);
 	}
@@ -72,7 +72,7 @@ public class PublicClientAuthenticationConverterTests {
 		MockHttpServletRequest request = createPkceTokenRequest();
 		request.addParameter(PkceParameterNames.CODE_VERIFIER, "code-verifier-2");
 		assertThatThrownBy(() -> this.converter.convert(request)).isInstanceOf(OAuth2AuthenticationException.class)
-			.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+			.extracting((ex) -> ((OAuth2AuthenticationException) ex).getError())
 			.extracting("errorCode")
 			.isEqualTo(OAuth2ErrorCodes.INVALID_REQUEST);
 	}

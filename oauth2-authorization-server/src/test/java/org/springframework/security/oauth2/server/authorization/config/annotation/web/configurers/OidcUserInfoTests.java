@@ -87,13 +87,13 @@ import org.springframework.test.web.servlet.ResultMatcher;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doAnswer;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.willAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -202,7 +202,7 @@ public class OidcUserInfoTests {
 		OAuth2Authorization authorization = createAuthorization();
 		this.authorizationService.save(authorization);
 
-		when(userInfoMapper.apply(any())).thenReturn(createUserInfo());
+		given(userInfoMapper.apply(any())).willReturn(createUserInfo());
 
 		OAuth2AccessToken accessToken = authorization.getAccessToken().getToken();
 		// @formatter:off
@@ -221,7 +221,7 @@ public class OidcUserInfoTests {
 		verify(authenticationProvidersConsumer).accept(authenticationProvidersCaptor.capture());
 		List<AuthenticationProvider> authenticationProviders = authenticationProvidersCaptor.getValue();
 		assertThat(authenticationProviders).hasSize(2)
-			.allMatch(provider -> provider == authenticationProvider
+			.allMatch((provider) -> provider == authenticationProvider
 					|| provider instanceof OidcUserInfoAuthenticationProvider);
 
 		ArgumentCaptor<List<AuthenticationConverter>> authenticationConvertersCaptor = ArgumentCaptor
@@ -238,12 +238,12 @@ public class OidcUserInfoTests {
 		OAuth2Authorization authorization = createAuthorization();
 		this.authorizationService.save(authorization);
 
-		when(authenticationProvider.supports(eq(OidcUserInfoAuthenticationToken.class))).thenReturn(true);
+		given(authenticationProvider.supports(eq(OidcUserInfoAuthenticationToken.class))).willReturn(true);
 		String tokenValue = authorization.getAccessToken().getToken().getTokenValue();
 		Jwt jwt = this.jwtDecoder.decode(tokenValue);
 		OidcUserInfoAuthenticationToken oidcUserInfoAuthentication = new OidcUserInfoAuthenticationToken(
 				new JwtAuthenticationToken(jwt), createUserInfo());
-		when(authenticationProvider.authenticate(any())).thenReturn(oidcUserInfoAuthentication);
+		given(authenticationProvider.authenticate(any())).willReturn(oidcUserInfoAuthentication);
 
 		OAuth2AccessToken accessToken = authorization.getAccessToken().getToken();
 		// @formatter:off
@@ -262,13 +262,13 @@ public class OidcUserInfoTests {
 	public void requestWhenUserInfoEndpointCustomizedWithAuthenticationFailureHandlerThenUsed() throws Exception {
 		this.spring.register(CustomUserInfoConfiguration.class).autowire();
 
-		when(userInfoMapper.apply(any())).thenReturn(createUserInfo());
-		doAnswer(invocation -> {
+		given(userInfoMapper.apply(any())).willReturn(createUserInfo());
+		willAnswer((invocation) -> {
 			HttpServletResponse response = invocation.getArgument(1);
 			response.setStatus(HttpStatus.UNAUTHORIZED.value());
 			response.getWriter().write("unauthorized");
 			return null;
-		}).when(authenticationFailureHandler).onAuthenticationFailure(any(), any(), any());
+		}).given(authenticationFailureHandler).onAuthenticationFailure(any(), any(), any());
 
 		OAuth2AccessToken accessToken = createAuthorization().getAccessToken().getToken();
 		// @formatter:off
@@ -336,7 +336,7 @@ public class OidcUserInfoTests {
 		JwsHeader headers = JwsHeader.with(SignatureAlgorithm.RS256).build();
 		// @formatter:off
 		JwtClaimsSet claimSet = JwtClaimsSet.builder()
-				.claims(claims -> claims.putAll(createUserInfo().getClaims()))
+				.claims((claims) -> claims.putAll(createUserInfo().getClaims()))
 				.build();
 		// @formatter:on
 		Jwt jwt = this.jwtEncoder.encode(JwtEncoderParameters.from(headers, claimSet));
@@ -347,7 +347,7 @@ public class OidcUserInfoTests {
 		OAuth2AccessToken accessToken = new OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER, jwt.getTokenValue(),
 				now, now.plusSeconds(300), scopes);
 		OidcIdToken idToken = OidcIdToken.withTokenValue("id-token")
-			.claims(claims -> claims.putAll(createUserInfo().getClaims()))
+			.claims((claims) -> claims.putAll(createUserInfo().getClaims()))
 			.build();
 
 		return TestOAuth2Authorizations.authorization().accessToken(accessToken).token(idToken).build();
@@ -393,16 +393,16 @@ public class OidcUserInfoTests {
 			// @formatter:off
 			http
 				.securityMatcher(endpointsMatcher)
-				.authorizeHttpRequests(authorize ->
+				.authorizeHttpRequests((authorize) ->
 					authorize.anyRequest().authenticated()
 				)
-				.csrf(csrf -> csrf.ignoringRequestMatchers(endpointsMatcher))
-				.oauth2ResourceServer(resourceServer ->
+				.csrf((csrf) -> csrf.ignoringRequestMatchers(endpointsMatcher))
+				.oauth2ResourceServer((resourceServer) ->
 					resourceServer.jwt(Customizer.withDefaults())
 				)
 				.apply(authorizationServerConfigurer)
-					.oidc(oidc -> oidc
-						.userInfoEndpoint(userInfo -> userInfo
+					.oidc((oidc) -> oidc
+						.userInfoEndpoint((userInfo) -> userInfo
 							.userInfoRequestConverter(authenticationConverter)
 							.userInfoRequestConverters(authenticationConvertersConsumer)
 							.authenticationProvider(authenticationProvider)
@@ -435,14 +435,14 @@ public class OidcUserInfoTests {
 			// @formatter:off
 			http
 				.securityMatcher(endpointsMatcher)
-				.authorizeHttpRequests(authorize ->
+				.authorizeHttpRequests((authorize) ->
 					authorize.anyRequest().authenticated()
 				)
-				.csrf(csrf -> csrf.ignoringRequestMatchers(endpointsMatcher))
-				.oauth2ResourceServer(resourceServer ->
+				.csrf((csrf) -> csrf.ignoringRequestMatchers(endpointsMatcher))
+				.oauth2ResourceServer((resourceServer) ->
 					resourceServer.jwt(Customizer.withDefaults())
 				)
-				.securityContext(securityContext ->
+				.securityContext((securityContext) ->
 					securityContext.securityContextRepository(securityContextRepository))
 				.apply(authorizationServerConfigurer);
 			// @formatter:on
@@ -466,11 +466,11 @@ public class OidcUserInfoTests {
 			// @formatter:off
 			http
 				.securityMatcher(endpointsMatcher)
-				.authorizeHttpRequests(authorize ->
+				.authorizeHttpRequests((authorize) ->
 					authorize.anyRequest().authenticated()
 				)
-				.csrf(csrf -> csrf.ignoringRequestMatchers(endpointsMatcher))
-				.oauth2ResourceServer(resourceServer ->
+				.csrf((csrf) -> csrf.ignoringRequestMatchers(endpointsMatcher))
+				.oauth2ResourceServer((resourceServer) ->
 					resourceServer.jwt(Customizer.withDefaults())
 				)
 				.apply(authorizationServerConfigurer);

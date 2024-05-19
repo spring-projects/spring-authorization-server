@@ -252,7 +252,7 @@ public class OidcClientRegistrationTests {
 		// @formatter:off
 		OidcClientRegistration clientRegistration = this.minimalBuilder
 				.redirectUri("https://client1.example.com")
-				.redirectUris(redirectUris -> {
+				.redirectUris((redirectUris) -> {
 					redirectUris.clear();
 					redirectUris.add("https://client2.example.com");
 				})
@@ -285,7 +285,7 @@ public class OidcClientRegistrationTests {
 		// @formatter:off
 		OidcClientRegistration clientRegistration = this.minimalBuilder
 				.postLogoutRedirectUri("https://client1.example.com/oidc-post-logout")
-				.postLogoutRedirectUris(postLogoutRedirectUris -> {
+				.postLogoutRedirectUris((postLogoutRedirectUris) -> {
 					postLogoutRedirectUris.clear();
 					postLogoutRedirectUris.add("https://client2.example.com/oidc-post-logout");
 				})
@@ -318,7 +318,7 @@ public class OidcClientRegistrationTests {
 		// @formatter:off
 		OidcClientRegistration clientRegistration = this.minimalBuilder
 				.grantType("authorization_code")
-				.grantTypes(grantTypes -> {
+				.grantTypes((grantTypes) -> {
 					grantTypes.clear();
 					grantTypes.add("client_credentials");
 				})
@@ -350,7 +350,7 @@ public class OidcClientRegistrationTests {
 		// @formatter:off
 		OidcClientRegistration clientRegistration = this.minimalBuilder
 				.responseType("token")
-				.responseTypes(responseTypes -> {
+				.responseTypes((responseTypes) -> {
 					responseTypes.clear();
 					responseTypes.add("code");
 				})
@@ -382,7 +382,7 @@ public class OidcClientRegistrationTests {
 		// @formatter:off
 		OidcClientRegistration clientRegistration = this.minimalBuilder
 				.scope("should-be-removed")
-				.scopes(scopes -> {
+				.scopes((scopes) -> {
 					scopes.clear();
 					scopes.add("scope1");
 				})

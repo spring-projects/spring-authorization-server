@@ -53,7 +53,7 @@ public class OAuth2TokenClaimsSetTests {
 				.notBefore(issuedAt)
 				.expiresAt(expiresAt)
 				.id("id")
-				.claims(claims -> claims.put(customClaimName, customClaimValue))
+				.claims((claims) -> claims.put(customClaimName, customClaimValue))
 				.build();
 
 		OAuth2TokenClaimsSet claimsSet = OAuth2TokenClaimsSet.builder()
@@ -64,7 +64,7 @@ public class OAuth2TokenClaimsSetTests {
 				.notBefore(expectedClaimsSet.getNotBefore())
 				.expiresAt(expectedClaimsSet.getExpiresAt())
 				.id(expectedClaimsSet.getId())
-				.claims(claims -> claims.put(customClaimName, expectedClaimsSet.getClaim(customClaimName)))
+				.claims((claims) -> claims.put(customClaimName, expectedClaimsSet.getClaim(customClaimName)))
 				.build();
 		// @formatter:on
 

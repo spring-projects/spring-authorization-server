@@ -105,7 +105,7 @@ public class OAuth2TokenIntrospectionHttpMessageConverterTests {
 	@Test
 	public void readInternalWhenFailingConverterThenThrowException() {
 		String errorMessage = "this is not a valid converter";
-		this.messageConverter.setTokenIntrospectionConverter(source -> {
+		this.messageConverter.setTokenIntrospectionConverter((source) -> {
 			throw new RuntimeException(errorMessage);
 		});
 		MockClientHttpResponse response = new MockClientHttpResponse("{}".getBytes(), HttpStatus.OK);
@@ -156,7 +156,7 @@ public class OAuth2TokenIntrospectionHttpMessageConverterTests {
 	@Test
 	public void writeInternalWhenWriteFailsThenThrowsException() {
 		String errorMessage = "this is not a valid converter";
-		Converter<OAuth2TokenIntrospection, Map<String, Object>> failingConverter = source -> {
+		Converter<OAuth2TokenIntrospection, Map<String, Object>> failingConverter = (source) -> {
 			throw new RuntimeException(errorMessage);
 		};
 		this.messageConverter.setTokenIntrospectionParametersConverter(failingConverter);

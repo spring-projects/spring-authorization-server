@@ -63,10 +63,10 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 /**
  * Tests for {@link JdbcOAuth2AuthorizationService}.
@@ -182,14 +182,13 @@ public class JdbcOAuth2AuthorizationServiceTests {
 
 	@Test
 	public void saveWhenAuthorizationNewThenSaved() {
-		when(this.registeredClientRepository.findById(eq(REGISTERED_CLIENT.getId())))
-				.thenReturn(REGISTERED_CLIENT);
+		given(this.registeredClientRepository.findById(eq(REGISTERED_CLIENT.getId()))).willReturn(REGISTERED_CLIENT);
 		OAuth2Authorization expectedAuthorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
-				.id(ID)
-				.principalName(PRINCIPAL_NAME)
-				.authorizationGrantType(AUTHORIZATION_GRANT_TYPE)
-				.token(AUTHORIZATION_CODE)
-				.build();
+			.id(ID)
+			.principalName(PRINCIPAL_NAME)
+			.authorizationGrantType(AUTHORIZATION_GRANT_TYPE)
+			.token(AUTHORIZATION_CODE)
+			.build();
 		this.authorizationService.save(expectedAuthorization);
 
 		OAuth2Authorization authorization = this.authorizationService.findById(ID);
@@ -198,53 +197,47 @@ public class JdbcOAuth2AuthorizationServiceTests {
 
 	@Test
 	public void saveWhenAuthorizationExistsThenUpdated() {
-		when(this.registeredClientRepository.findById(eq(REGISTERED_CLIENT.getId())))
-				.thenReturn(REGISTERED_CLIENT);
+		given(this.registeredClientRepository.findById(eq(REGISTERED_CLIENT.getId()))).willReturn(REGISTERED_CLIENT);
 		OAuth2Authorization originalAuthorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
-				.id(ID)
-				.principalName(PRINCIPAL_NAME)
-				.authorizationGrantType(AUTHORIZATION_GRANT_TYPE)
-				.token(AUTHORIZATION_CODE)
-				.build();
+			.id(ID)
+			.principalName(PRINCIPAL_NAME)
+			.authorizationGrantType(AUTHORIZATION_GRANT_TYPE)
+			.token(AUTHORIZATION_CODE)
+			.build();
 		this.authorizationService.save(originalAuthorization);
 
-		OAuth2Authorization authorization = this.authorizationService.findById(
-				originalAuthorization.getId());
+		OAuth2Authorization authorization = this.authorizationService.findById(originalAuthorization.getId());
 		assertThat(authorization).isEqualTo(originalAuthorization);
 
 		OAuth2Authorization updatedAuthorization = OAuth2Authorization.from(authorization)
-				.attribute("custom-name-1", "custom-value-1")
-				.build();
+			.attribute("custom-name-1", "custom-value-1")
+			.build();
 		this.authorizationService.save(updatedAuthorization);
 
-		authorization = this.authorizationService.findById(
-				updatedAuthorization.getId());
+		authorization = this.authorizationService.findById(updatedAuthorization.getId());
 		assertThat(authorization).isEqualTo(updatedAuthorization);
 		assertThat(authorization).isNotEqualTo(originalAuthorization);
 	}
 
 	@Test
 	public void saveLoadAuthorizationWhenCustomStrategiesSetThenCalled() throws Exception {
-		when(this.registeredClientRepository.findById(eq(REGISTERED_CLIENT.getId())))
-				.thenReturn(REGISTERED_CLIENT);
+		given(this.registeredClientRepository.findById(eq(REGISTERED_CLIENT.getId()))).willReturn(REGISTERED_CLIENT);
 		OAuth2Authorization originalAuthorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
-				.id(ID)
-				.principalName(PRINCIPAL_NAME)
-				.authorizationGrantType(AUTHORIZATION_GRANT_TYPE)
-				.token(AUTHORIZATION_CODE)
-				.build();
+			.id(ID)
+			.principalName(PRINCIPAL_NAME)
+			.authorizationGrantType(AUTHORIZATION_GRANT_TYPE)
+			.token(AUTHORIZATION_CODE)
+			.build();
 
 		RowMapper<OAuth2Authorization> authorizationRowMapper = spy(
-				new JdbcOAuth2AuthorizationService.OAuth2AuthorizationRowMapper(
-						this.registeredClientRepository));
+				new JdbcOAuth2AuthorizationService.OAuth2AuthorizationRowMapper(this.registeredClientRepository));
 		this.authorizationService.setAuthorizationRowMapper(authorizationRowMapper);
 		Function<OAuth2Authorization, List<SqlParameterValue>> authorizationParametersMapper = spy(
 				new JdbcOAuth2AuthorizationService.OAuth2AuthorizationParametersMapper());
 		this.authorizationService.setAuthorizationParametersMapper(authorizationParametersMapper);
 
 		this.authorizationService.save(originalAuthorization);
-		OAuth2Authorization authorization = this.authorizationService.findById(
-				originalAuthorization.getId());
+		OAuth2Authorization authorization = this.authorizationService.findById(originalAuthorization.getId());
 		assertThat(authorization).isEqualTo(originalAuthorization);
 		verify(authorizationRowMapper).mapRow(any(), anyInt());
 		verify(authorizationParametersMapper).apply(any());
@@ -261,23 +254,22 @@ public class JdbcOAuth2AuthorizationServiceTests {
 
 	@Test
 	public void removeWhenAuthorizationProvidedThenRemoved() {
-		when(this.registeredClientRepository.findById(eq(REGISTERED_CLIENT.getId())))
-				.thenReturn(REGISTERED_CLIENT);
+		given(this.registeredClientRepository.findById(eq(REGISTERED_CLIENT.getId()))).willReturn(REGISTERED_CLIENT);
 		OAuth2Authorization expectedAuthorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
-				.id(ID)
-				.principalName(PRINCIPAL_NAME)
-				.authorizationGrantType(AUTHORIZATION_GRANT_TYPE)
-				.token(AUTHORIZATION_CODE)
-				.build();
+			.id(ID)
+			.principalName(PRINCIPAL_NAME)
+			.authorizationGrantType(AUTHORIZATION_GRANT_TYPE)
+			.token(AUTHORIZATION_CODE)
+			.build();
 
 		this.authorizationService.save(expectedAuthorization);
-		OAuth2Authorization authorization = this.authorizationService.findByToken(
-				AUTHORIZATION_CODE.getTokenValue(), AUTHORIZATION_CODE_TOKEN_TYPE);
+		OAuth2Authorization authorization = this.authorizationService.findByToken(AUTHORIZATION_CODE.getTokenValue(),
+				AUTHORIZATION_CODE_TOKEN_TYPE);
 		assertThat(authorization).isEqualTo(expectedAuthorization);
 
 		this.authorizationService.remove(authorization);
-		authorization = this.authorizationService.findByToken(
-				AUTHORIZATION_CODE.getTokenValue(), AUTHORIZATION_CODE_TOKEN_TYPE);
+		authorization = this.authorizationService.findByToken(AUTHORIZATION_CODE.getTokenValue(),
+				AUTHORIZATION_CODE_TOKEN_TYPE);
 		assertThat(authorization).isNull();
 	}
 
@@ -310,19 +302,17 @@ public class JdbcOAuth2AuthorizationServiceTests {
 
 	@Test
 	public void findByTokenWhenStateExistsThenFound() {
-		when(this.registeredClientRepository.findById(eq(REGISTERED_CLIENT.getId())))
-				.thenReturn(REGISTERED_CLIENT);
+		given(this.registeredClientRepository.findById(eq(REGISTERED_CLIENT.getId()))).willReturn(REGISTERED_CLIENT);
 		String state = "state";
 		OAuth2Authorization authorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
-				.id(ID)
-				.principalName(PRINCIPAL_NAME)
-				.authorizationGrantType(AUTHORIZATION_GRANT_TYPE)
-				.attribute(OAuth2ParameterNames.STATE, state)
-				.build();
+			.id(ID)
+			.principalName(PRINCIPAL_NAME)
+			.authorizationGrantType(AUTHORIZATION_GRANT_TYPE)
+			.attribute(OAuth2ParameterNames.STATE, state)
+			.build();
 		this.authorizationService.save(authorization);
 
-		OAuth2Authorization result = this.authorizationService.findByToken(
-				state, STATE_TOKEN_TYPE);
+		OAuth2Authorization result = this.authorizationService.findByToken(state, STATE_TOKEN_TYPE);
 		assertThat(authorization).isEqualTo(result);
 		result = this.authorizationService.findByToken(state, null);
 		assertThat(authorization).isEqualTo(result);
@@ -330,18 +320,17 @@ public class JdbcOAuth2AuthorizationServiceTests {
 
 	@Test
 	public void findByTokenWhenAuthorizationCodeExistsThenFound() {
-		when(this.registeredClientRepository.findById(eq(REGISTERED_CLIENT.getId())))
-				.thenReturn(REGISTERED_CLIENT);
+		given(this.registeredClientRepository.findById(eq(REGISTERED_CLIENT.getId()))).willReturn(REGISTERED_CLIENT);
 		OAuth2Authorization authorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
-				.id(ID)
-				.principalName(PRINCIPAL_NAME)
-				.authorizationGrantType(AUTHORIZATION_GRANT_TYPE)
-				.token(AUTHORIZATION_CODE)
-				.build();
+			.id(ID)
+			.principalName(PRINCIPAL_NAME)
+			.authorizationGrantType(AUTHORIZATION_GRANT_TYPE)
+			.token(AUTHORIZATION_CODE)
+			.build();
 		this.authorizationService.save(authorization);
 
-		OAuth2Authorization result = this.authorizationService.findByToken(
-				AUTHORIZATION_CODE.getTokenValue(), AUTHORIZATION_CODE_TOKEN_TYPE);
+		OAuth2Authorization result = this.authorizationService.findByToken(AUTHORIZATION_CODE.getTokenValue(),
+				AUTHORIZATION_CODE_TOKEN_TYPE);
 		assertThat(authorization).isEqualTo(result);
 		result = this.authorizationService.findByToken(AUTHORIZATION_CODE.getTokenValue(), null);
 		assertThat(authorization).isEqualTo(result);
@@ -349,21 +338,21 @@ public class JdbcOAuth2AuthorizationServiceTests {
 
 	@Test
 	public void findByTokenWhenAccessTokenExistsThenFound() {
-		when(this.registeredClientRepository.findById(eq(REGISTERED_CLIENT.getId())))
-				.thenReturn(REGISTERED_CLIENT);
-		OAuth2AccessToken accessToken = new OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER,
-				"access-token", Instant.now().minusSeconds(60).truncatedTo(ChronoUnit.MILLIS), Instant.now().truncatedTo(ChronoUnit.MILLIS));
+		given(this.registeredClientRepository.findById(eq(REGISTERED_CLIENT.getId()))).willReturn(REGISTERED_CLIENT);
+		OAuth2AccessToken accessToken = new OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER, "access-token",
+				Instant.now().minusSeconds(60).truncatedTo(ChronoUnit.MILLIS),
+				Instant.now().truncatedTo(ChronoUnit.MILLIS));
 		OAuth2Authorization authorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
-				.id(ID)
-				.principalName(PRINCIPAL_NAME)
-				.authorizationGrantType(AUTHORIZATION_GRANT_TYPE)
-				.token(AUTHORIZATION_CODE)
-				.accessToken(accessToken)
-				.build();
+			.id(ID)
+			.principalName(PRINCIPAL_NAME)
+			.authorizationGrantType(AUTHORIZATION_GRANT_TYPE)
+			.token(AUTHORIZATION_CODE)
+			.accessToken(accessToken)
+			.build();
 		this.authorizationService.save(authorization);
 
-		OAuth2Authorization result = this.authorizationService.findByToken(
-				accessToken.getTokenValue(), OAuth2TokenType.ACCESS_TOKEN);
+		OAuth2Authorization result = this.authorizationService.findByToken(accessToken.getTokenValue(),
+				OAuth2TokenType.ACCESS_TOKEN);
 		assertThat(authorization).isEqualTo(result);
 		result = this.authorizationService.findByToken(accessToken.getTokenValue(), null);
 		assertThat(authorization).isEqualTo(result);
@@ -371,25 +360,24 @@ public class JdbcOAuth2AuthorizationServiceTests {
 
 	@Test
 	public void findByTokenWhenIdTokenExistsThenFound() {
-		when(this.registeredClientRepository.findById(eq(REGISTERED_CLIENT.getId())))
-				.thenReturn(REGISTERED_CLIENT);
-		OidcIdToken idToken =  OidcIdToken.withTokenValue("id-token")
-				.issuer("https://provider.com")
-				.subject("subject")
-				.issuedAt(Instant.now().minusSeconds(60).truncatedTo(ChronoUnit.MILLIS))
-				.expiresAt(Instant.now().truncatedTo(ChronoUnit.MILLIS))
-				.build();
+		given(this.registeredClientRepository.findById(eq(REGISTERED_CLIENT.getId()))).willReturn(REGISTERED_CLIENT);
+		OidcIdToken idToken = OidcIdToken.withTokenValue("id-token")
+			.issuer("https://provider.com")
+			.subject("subject")
+			.issuedAt(Instant.now().minusSeconds(60).truncatedTo(ChronoUnit.MILLIS))
+			.expiresAt(Instant.now().truncatedTo(ChronoUnit.MILLIS))
+			.build();
 		OAuth2Authorization authorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
-				.id(ID)
-				.principalName(PRINCIPAL_NAME)
-				.authorizationGrantType(AUTHORIZATION_GRANT_TYPE)
-				.token(idToken, (metadata) ->
-						metadata.put(OAuth2Authorization.Token.CLAIMS_METADATA_NAME, idToken.getClaims()))
-				.build();
+			.id(ID)
+			.principalName(PRINCIPAL_NAME)
+			.authorizationGrantType(AUTHORIZATION_GRANT_TYPE)
+			.token(idToken,
+					(metadata) -> metadata.put(OAuth2Authorization.Token.CLAIMS_METADATA_NAME, idToken.getClaims()))
+			.build();
 		this.authorizationService.save(authorization);
 
-		OAuth2Authorization result = this.authorizationService.findByToken(
-				idToken.getTokenValue(), ID_TOKEN_TOKEN_TYPE);
+		OAuth2Authorization result = this.authorizationService.findByToken(idToken.getTokenValue(),
+				ID_TOKEN_TOKEN_TYPE);
 		assertThat(authorization).isEqualTo(result);
 		result = this.authorizationService.findByToken(idToken.getTokenValue(), null);
 		assertThat(authorization).isEqualTo(result);
@@ -397,21 +385,20 @@ public class JdbcOAuth2AuthorizationServiceTests {
 
 	@Test
 	public void findByTokenWhenRefreshTokenExistsThenFound() {
-		when(this.registeredClientRepository.findById(eq(REGISTERED_CLIENT.getId())))
-				.thenReturn(REGISTERED_CLIENT);
+		given(this.registeredClientRepository.findById(eq(REGISTERED_CLIENT.getId()))).willReturn(REGISTERED_CLIENT);
 		OAuth2RefreshToken refreshToken = new OAuth2RefreshToken("refresh-token",
 				Instant.now().truncatedTo(ChronoUnit.MILLIS),
 				Instant.now().plus(5, ChronoUnit.MINUTES).truncatedTo(ChronoUnit.MILLIS));
 		OAuth2Authorization authorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
-				.id(ID)
-				.principalName(PRINCIPAL_NAME)
-				.authorizationGrantType(AUTHORIZATION_GRANT_TYPE)
-				.refreshToken(refreshToken)
-				.build();
+			.id(ID)
+			.principalName(PRINCIPAL_NAME)
+			.authorizationGrantType(AUTHORIZATION_GRANT_TYPE)
+			.refreshToken(refreshToken)
+			.build();
 		this.authorizationService.save(authorization);
 
-		OAuth2Authorization result = this.authorizationService.findByToken(
-				refreshToken.getTokenValue(), OAuth2TokenType.REFRESH_TOKEN);
+		OAuth2Authorization result = this.authorizationService.findByToken(refreshToken.getTokenValue(),
+				OAuth2TokenType.REFRESH_TOKEN);
 		assertThat(authorization).isEqualTo(result);
 		result = this.authorizationService.findByToken(refreshToken.getTokenValue(), null);
 		assertThat(authorization).isEqualTo(result);
@@ -419,21 +406,19 @@ public class JdbcOAuth2AuthorizationServiceTests {
 
 	@Test
 	public void findByTokenWhenDeviceCodeExistsThenFound() {
-		when(this.registeredClientRepository.findById(eq(REGISTERED_CLIENT.getId())))
-				.thenReturn(REGISTERED_CLIENT);
-		OAuth2DeviceCode deviceCode = new OAuth2DeviceCode("device-code",
-				Instant.now().truncatedTo(ChronoUnit.MILLIS),
+		given(this.registeredClientRepository.findById(eq(REGISTERED_CLIENT.getId()))).willReturn(REGISTERED_CLIENT);
+		OAuth2DeviceCode deviceCode = new OAuth2DeviceCode("device-code", Instant.now().truncatedTo(ChronoUnit.MILLIS),
 				Instant.now().plus(5, ChronoUnit.MINUTES).truncatedTo(ChronoUnit.MILLIS));
 		OAuth2Authorization authorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
-				.id(ID)
-				.principalName(PRINCIPAL_NAME)
-				.authorizationGrantType(AUTHORIZATION_GRANT_TYPE)
-				.token(deviceCode)
-				.build();
+			.id(ID)
+			.principalName(PRINCIPAL_NAME)
+			.authorizationGrantType(AUTHORIZATION_GRANT_TYPE)
+			.token(deviceCode)
+			.build();
 		this.authorizationService.save(authorization);
 
-		OAuth2Authorization result = this.authorizationService.findByToken(
-				deviceCode.getTokenValue(), DEVICE_CODE_TOKEN_TYPE);
+		OAuth2Authorization result = this.authorizationService.findByToken(deviceCode.getTokenValue(),
+				DEVICE_CODE_TOKEN_TYPE);
 		assertThat(authorization).isEqualTo(result);
 		result = this.authorizationService.findByToken(deviceCode.getTokenValue(), null);
 		assertThat(authorization).isEqualTo(result);
@@ -441,21 +426,19 @@ public class JdbcOAuth2AuthorizationServiceTests {
 
 	@Test
 	public void findByTokenWhenUserCodeExistsThenFound() {
-		when(this.registeredClientRepository.findById(eq(REGISTERED_CLIENT.getId())))
-				.thenReturn(REGISTERED_CLIENT);
-		OAuth2UserCode userCode = new OAuth2UserCode("user-code",
-				Instant.now().truncatedTo(ChronoUnit.MILLIS),
+		given(this.registeredClientRepository.findById(eq(REGISTERED_CLIENT.getId()))).willReturn(REGISTERED_CLIENT);
+		OAuth2UserCode userCode = new OAuth2UserCode("user-code", Instant.now().truncatedTo(ChronoUnit.MILLIS),
 				Instant.now().plus(5, ChronoUnit.MINUTES).truncatedTo(ChronoUnit.MILLIS));
 		OAuth2Authorization authorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
-				.id(ID)
-				.principalName(PRINCIPAL_NAME)
-				.authorizationGrantType(AUTHORIZATION_GRANT_TYPE)
-				.token(userCode)
-				.build();
+			.id(ID)
+			.principalName(PRINCIPAL_NAME)
+			.authorizationGrantType(AUTHORIZATION_GRANT_TYPE)
+			.token(userCode)
+			.build();
 		this.authorizationService.save(authorization);
 
-		OAuth2Authorization result = this.authorizationService.findByToken(
-				userCode.getTokenValue(), USER_CODE_TOKEN_TYPE);
+		OAuth2Authorization result = this.authorizationService.findByToken(userCode.getTokenValue(),
+				USER_CODE_TOKEN_TYPE);
 		assertThat(authorization).isEqualTo(result);
 		result = this.authorizationService.findByToken(userCode.getTokenValue(), null);
 		assertThat(authorization).isEqualTo(result);
@@ -487,20 +470,19 @@ public class JdbcOAuth2AuthorizationServiceTests {
 
 	@Test
 	public void tableDefinitionWhenCustomThenAbleToOverride() {
-		when(this.registeredClientRepository.findById(eq(REGISTERED_CLIENT.getId())))
-				.thenReturn(REGISTERED_CLIENT);
+		given(this.registeredClientRepository.findById(eq(REGISTERED_CLIENT.getId()))).willReturn(REGISTERED_CLIENT);
 
 		EmbeddedDatabase db = createDb(CUSTOM_OAUTH2_AUTHORIZATION_SCHEMA_SQL_RESOURCE);
-		OAuth2AuthorizationService authorizationService =
-				new CustomJdbcOAuth2AuthorizationService(new JdbcTemplate(db), this.registeredClientRepository);
+		OAuth2AuthorizationService authorizationService = new CustomJdbcOAuth2AuthorizationService(new JdbcTemplate(db),
+				this.registeredClientRepository);
 		String state = "state";
 		OAuth2Authorization originalAuthorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
-				.id(ID)
-				.principalName(PRINCIPAL_NAME)
-				.authorizationGrantType(AUTHORIZATION_GRANT_TYPE)
-				.attribute(OAuth2ParameterNames.STATE, state)
-				.token(AUTHORIZATION_CODE)
-				.build();
+			.id(ID)
+			.principalName(PRINCIPAL_NAME)
+			.authorizationGrantType(AUTHORIZATION_GRANT_TYPE)
+			.attribute(OAuth2ParameterNames.STATE, state)
+			.token(AUTHORIZATION_CODE)
+			.build();
 		authorizationService.save(originalAuthorization);
 		OAuth2Authorization foundAuthorization1 = authorizationService.findById(originalAuthorization.getId());
 		assertThat(foundAuthorization1).isEqualTo(originalAuthorization);
@@ -511,31 +493,28 @@ public class JdbcOAuth2AuthorizationServiceTests {
 
 	@Test
 	public void tableDefinitionWhenClobSqlTypeThenAuthorizationUpdated() {
-		when(this.registeredClientRepository.findById(eq(REGISTERED_CLIENT.getId())))
-				.thenReturn(REGISTERED_CLIENT);
+		given(this.registeredClientRepository.findById(eq(REGISTERED_CLIENT.getId()))).willReturn(REGISTERED_CLIENT);
 
 		EmbeddedDatabase db = createDb(OAUTH2_AUTHORIZATION_SCHEMA_CLOB_DATA_TYPE_SQL_RESOURCE);
-		OAuth2AuthorizationService authorizationService =
-				new JdbcOAuth2AuthorizationService(new JdbcTemplate(db), this.registeredClientRepository);
+		OAuth2AuthorizationService authorizationService = new JdbcOAuth2AuthorizationService(new JdbcTemplate(db),
+				this.registeredClientRepository);
 		OAuth2Authorization originalAuthorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
-				.id(ID)
-				.principalName(PRINCIPAL_NAME)
-				.authorizationGrantType(AUTHORIZATION_GRANT_TYPE)
-				.token(AUTHORIZATION_CODE)
-				.build();
+			.id(ID)
+			.principalName(PRINCIPAL_NAME)
+			.authorizationGrantType(AUTHORIZATION_GRANT_TYPE)
+			.token(AUTHORIZATION_CODE)
+			.build();
 		authorizationService.save(originalAuthorization);
 
-		OAuth2Authorization authorization = authorizationService.findById(
-				originalAuthorization.getId());
+		OAuth2Authorization authorization = authorizationService.findById(originalAuthorization.getId());
 		assertThat(authorization).isEqualTo(originalAuthorization);
 
 		OAuth2Authorization updatedAuthorization = OAuth2Authorization.from(authorization)
-				.attribute("custom-name-1", "custom-value-1")
-				.build();
+			.attribute("custom-name-1", "custom-value-1")
+			.build();
 		authorizationService.save(updatedAuthorization);
 
-		authorization = authorizationService.findById(
-				updatedAuthorization.getId());
+		authorization = authorizationService.findById(updatedAuthorization.getId());
 		assertThat(authorization).isEqualTo(updatedAuthorization);
 		assertThat(authorization).isNotEqualTo(originalAuthorization);
 		db.shutdown();

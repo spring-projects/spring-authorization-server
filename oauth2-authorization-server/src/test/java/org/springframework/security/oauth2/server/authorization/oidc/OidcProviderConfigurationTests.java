@@ -404,7 +404,7 @@ public class OidcProviderConfigurationTests {
 	@Test
 	public void responseTypesWhenAddingOrRemovingThenCorrectValues() {
 		OidcProviderConfiguration configuration = this.minimalConfigurationBuilder.responseType("should-be-removed")
-			.responseTypes(responseTypes -> {
+			.responseTypes((responseTypes) -> {
 				responseTypes.clear();
 				responseTypes.add("some-response-type");
 			})
@@ -416,8 +416,8 @@ public class OidcProviderConfigurationTests {
 	@Test
 	public void responseTypesWhenNotPresentAndAddingThenCorrectValues() {
 		OidcProviderConfiguration configuration = this.minimalConfigurationBuilder
-			.claims(claims -> claims.remove(OidcProviderMetadataClaimNames.RESPONSE_TYPES_SUPPORTED))
-			.responseTypes(responseTypes -> responseTypes.add("some-response-type"))
+			.claims((claims) -> claims.remove(OidcProviderMetadataClaimNames.RESPONSE_TYPES_SUPPORTED))
+			.responseTypes((responseTypes) -> responseTypes.add("some-response-type"))
 			.build();
 
 		assertThat(configuration.getResponseTypes()).containsExactly("some-response-type");
@@ -426,7 +426,7 @@ public class OidcProviderConfigurationTests {
 	@Test
 	public void subjectTypesWhenAddingOrRemovingThenCorrectValues() {
 		OidcProviderConfiguration configuration = this.minimalConfigurationBuilder.subjectType("should-be-removed")
-			.subjectTypes(subjectTypes -> {
+			.subjectTypes((subjectTypes) -> {
 				subjectTypes.clear();
 				subjectTypes.add("some-subject-type");
 			})
@@ -439,7 +439,7 @@ public class OidcProviderConfigurationTests {
 	public void idTokenSigningAlgorithmsWhenAddingOrRemovingThenCorrectValues() {
 		OidcProviderConfiguration configuration = this.minimalConfigurationBuilder
 			.idTokenSigningAlgorithm("should-be-removed")
-			.idTokenSigningAlgorithms(signingAlgorithms -> {
+			.idTokenSigningAlgorithms((signingAlgorithms) -> {
 				signingAlgorithms.clear();
 				signingAlgorithms.add("ES256");
 			})
@@ -451,7 +451,7 @@ public class OidcProviderConfigurationTests {
 	@Test
 	public void scopesWhenAddingOrRemovingThenCorrectValues() {
 		OidcProviderConfiguration configuration = this.minimalConfigurationBuilder.scope("should-be-removed")
-			.scopes(scopes -> {
+			.scopes((scopes) -> {
 				scopes.clear();
 				scopes.add("some-scope");
 			})
@@ -463,7 +463,7 @@ public class OidcProviderConfigurationTests {
 	@Test
 	public void grantTypesWhenAddingOrRemovingThenCorrectValues() {
 		OidcProviderConfiguration configuration = this.minimalConfigurationBuilder.grantType("should-be-removed")
-			.grantTypes(grantTypes -> {
+			.grantTypes((grantTypes) -> {
 				grantTypes.clear();
 				grantTypes.add("some-grant-type");
 			})
@@ -476,7 +476,7 @@ public class OidcProviderConfigurationTests {
 	public void tokenEndpointAuthenticationMethodsWhenAddingOrRemovingThenCorrectValues() {
 		OidcProviderConfiguration configuration = this.minimalConfigurationBuilder
 			.tokenEndpointAuthenticationMethod("should-be-removed")
-			.tokenEndpointAuthenticationMethods(authMethods -> {
+			.tokenEndpointAuthenticationMethods((authMethods) -> {
 				authMethods.clear();
 				authMethods.add("some-authentication-method");
 			})

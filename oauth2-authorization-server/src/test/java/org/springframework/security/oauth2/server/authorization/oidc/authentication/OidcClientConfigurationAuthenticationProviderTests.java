@@ -60,10 +60,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 /**
  * Tests for {@link OidcClientConfigurationAuthenticationProvider}.
@@ -125,7 +125,7 @@ public class OidcClientConfigurationAuthenticationProviderTests {
 
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 			.isInstanceOf(OAuth2AuthenticationException.class)
-			.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+			.extracting((ex) -> ((OAuth2AuthenticationException) ex).getError())
 			.extracting("errorCode")
 			.isEqualTo(OAuth2ErrorCodes.INVALID_TOKEN);
 	}
@@ -139,7 +139,7 @@ public class OidcClientConfigurationAuthenticationProviderTests {
 
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 			.isInstanceOf(OAuth2AuthenticationException.class)
-			.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+			.extracting((ex) -> ((OAuth2AuthenticationException) ex).getError())
 			.extracting("errorCode")
 			.isEqualTo(OAuth2ErrorCodes.INVALID_TOKEN);
 	}
@@ -155,7 +155,7 @@ public class OidcClientConfigurationAuthenticationProviderTests {
 
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 			.isInstanceOf(OAuth2AuthenticationException.class)
-			.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+			.extracting((ex) -> ((OAuth2AuthenticationException) ex).getError())
 			.extracting("errorCode")
 			.isEqualTo(OAuth2ErrorCodes.INVALID_TOKEN);
 		verify(this.authorizationService).findByToken(eq(jwt.getTokenValue()), eq(OAuth2TokenType.ACCESS_TOKEN));
@@ -171,9 +171,9 @@ public class OidcClientConfigurationAuthenticationProviderTests {
 			.authorization(registeredClient, jwtAccessToken, jwt.getClaims())
 			.build();
 		authorization = OidcAuthenticationProviderUtils.invalidate(authorization, jwtAccessToken);
-		when(this.authorizationService.findByToken(eq(jwtAccessToken.getTokenValue()),
+		given(this.authorizationService.findByToken(eq(jwtAccessToken.getTokenValue()),
 				eq(OAuth2TokenType.ACCESS_TOKEN)))
-			.thenReturn(authorization);
+			.willReturn(authorization);
 
 		JwtAuthenticationToken principal = new JwtAuthenticationToken(jwt,
 				AuthorityUtils.createAuthorityList("SCOPE_client.read"));
@@ -183,7 +183,7 @@ public class OidcClientConfigurationAuthenticationProviderTests {
 
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 			.isInstanceOf(OAuth2AuthenticationException.class)
-			.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+			.extracting((ex) -> ((OAuth2AuthenticationException) ex).getError())
 			.extracting("errorCode")
 			.isEqualTo(OAuth2ErrorCodes.INVALID_TOKEN);
 		verify(this.authorizationService).findByToken(eq(jwtAccessToken.getTokenValue()),
@@ -199,9 +199,9 @@ public class OidcClientConfigurationAuthenticationProviderTests {
 		OAuth2Authorization authorization = TestOAuth2Authorizations
 			.authorization(registeredClient, jwtAccessToken, jwt.getClaims())
 			.build();
-		when(this.authorizationService.findByToken(eq(jwtAccessToken.getTokenValue()),
+		given(this.authorizationService.findByToken(eq(jwtAccessToken.getTokenValue()),
 				eq(OAuth2TokenType.ACCESS_TOKEN)))
-			.thenReturn(authorization);
+			.willReturn(authorization);
 
 		JwtAuthenticationToken principal = new JwtAuthenticationToken(jwt,
 				AuthorityUtils.createAuthorityList("SCOPE_unauthorized.scope"));
@@ -211,7 +211,7 @@ public class OidcClientConfigurationAuthenticationProviderTests {
 
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 			.isInstanceOf(OAuth2AuthenticationException.class)
-			.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+			.extracting((ex) -> ((OAuth2AuthenticationException) ex).getError())
 			.extracting("errorCode")
 			.isEqualTo(OAuth2ErrorCodes.INSUFFICIENT_SCOPE);
 		verify(this.authorizationService).findByToken(eq(jwtAccessToken.getTokenValue()),
@@ -227,9 +227,9 @@ public class OidcClientConfigurationAuthenticationProviderTests {
 		OAuth2Authorization authorization = TestOAuth2Authorizations
 			.authorization(registeredClient, jwtAccessToken, jwt.getClaims())
 			.build();
-		when(this.authorizationService.findByToken(eq(jwtAccessToken.getTokenValue()),
+		given(this.authorizationService.findByToken(eq(jwtAccessToken.getTokenValue()),
 				eq(OAuth2TokenType.ACCESS_TOKEN)))
-			.thenReturn(authorization);
+			.willReturn(authorization);
 
 		JwtAuthenticationToken principal = new JwtAuthenticationToken(jwt,
 				AuthorityUtils.createAuthorityList("SCOPE_client.read", "SCOPE_scope1"));
@@ -239,7 +239,7 @@ public class OidcClientConfigurationAuthenticationProviderTests {
 
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 			.isInstanceOf(OAuth2AuthenticationException.class)
-			.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+			.extracting((ex) -> ((OAuth2AuthenticationException) ex).getError())
 			.extracting("errorCode")
 			.isEqualTo(OAuth2ErrorCodes.INVALID_TOKEN);
 		verify(this.authorizationService).findByToken(eq(jwtAccessToken.getTokenValue()),
@@ -255,9 +255,9 @@ public class OidcClientConfigurationAuthenticationProviderTests {
 		OAuth2Authorization authorization = TestOAuth2Authorizations
 			.authorization(registeredClient, jwtAccessToken, jwt.getClaims())
 			.build();
-		when(this.authorizationService.findByToken(eq(jwtAccessToken.getTokenValue()),
+		given(this.authorizationService.findByToken(eq(jwtAccessToken.getTokenValue()),
 				eq(OAuth2TokenType.ACCESS_TOKEN)))
-			.thenReturn(authorization);
+			.willReturn(authorization);
 
 		JwtAuthenticationToken principal = new JwtAuthenticationToken(jwt,
 				AuthorityUtils.createAuthorityList("SCOPE_client.read"));
@@ -267,7 +267,7 @@ public class OidcClientConfigurationAuthenticationProviderTests {
 
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 			.isInstanceOf(OAuth2AuthenticationException.class)
-			.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+			.extracting((ex) -> ((OAuth2AuthenticationException) ex).getError())
 			.extracting("errorCode")
 			.isEqualTo(OAuth2ErrorCodes.INVALID_CLIENT);
 		verify(this.authorizationService).findByToken(eq(jwtAccessToken.getTokenValue()),
@@ -288,11 +288,11 @@ public class OidcClientConfigurationAuthenticationProviderTests {
 		OAuth2Authorization authorization = TestOAuth2Authorizations
 			.authorization(authorizedRegisteredClient, jwtAccessToken, jwt.getClaims())
 			.build();
-		when(this.authorizationService.findByToken(eq(jwtAccessToken.getTokenValue()),
+		given(this.authorizationService.findByToken(eq(jwtAccessToken.getTokenValue()),
 				eq(OAuth2TokenType.ACCESS_TOKEN)))
-			.thenReturn(authorization);
-		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
-			.thenReturn(registeredClient);
+			.willReturn(authorization);
+		given(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
+			.willReturn(registeredClient);
 
 		JwtAuthenticationToken principal = new JwtAuthenticationToken(jwt,
 				AuthorityUtils.createAuthorityList("SCOPE_client.read"));
@@ -302,7 +302,7 @@ public class OidcClientConfigurationAuthenticationProviderTests {
 
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 			.isInstanceOf(OAuth2AuthenticationException.class)
-			.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+			.extracting((ex) -> ((OAuth2AuthenticationException) ex).getError())
 			.extracting("errorCode")
 			.isEqualTo(OAuth2ErrorCodes.INVALID_CLIENT);
 		verify(this.authorizationService).findByToken(eq(jwtAccessToken.getTokenValue()),
@@ -328,11 +328,11 @@ public class OidcClientConfigurationAuthenticationProviderTests {
 		OAuth2Authorization authorization = TestOAuth2Authorizations
 			.authorization(registeredClient, jwtAccessToken, jwt.getClaims())
 			.build();
-		when(this.authorizationService.findByToken(eq(jwtAccessToken.getTokenValue()),
+		given(this.authorizationService.findByToken(eq(jwtAccessToken.getTokenValue()),
 				eq(OAuth2TokenType.ACCESS_TOKEN)))
-			.thenReturn(authorization);
-		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
-			.thenReturn(registeredClient);
+			.willReturn(authorization);
+		given(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
+			.willReturn(registeredClient);
 
 		JwtAuthenticationToken principal = new JwtAuthenticationToken(jwt,
 				AuthorityUtils.createAuthorityList("SCOPE_client.read"));
@@ -363,7 +363,7 @@ public class OidcClientConfigurationAuthenticationProviderTests {
 
 		List<String> grantTypes = new ArrayList<>();
 		registeredClient.getAuthorizationGrantTypes()
-			.forEach(authorizationGrantType -> grantTypes.add(authorizationGrantType.getValue()));
+			.forEach((authorizationGrantType) -> grantTypes.add(authorizationGrantType.getValue()));
 		assertThat(clientRegistrationResult.getGrantTypes()).containsExactlyInAnyOrderElementsOf(grantTypes);
 
 		assertThat(clientRegistrationResult.getResponseTypes())
@@ -403,8 +403,8 @@ public class OidcClientConfigurationAuthenticationProviderTests {
 				.claim(OAuth2ParameterNames.SCOPE, scopes)
 				.build();
 		Jwt jwt = Jwt.withTokenValue("jwt-access-token")
-				.headers(headers -> headers.putAll(jwsHeader.getHeaders()))
-				.claims(claims -> claims.putAll(jwtClaimsSet.getClaims()))
+				.headers((headers) -> headers.putAll(jwsHeader.getHeaders()))
+				.claims((claims) -> claims.putAll(jwtClaimsSet.getClaims()))
 				.build();
 		// @formatter:on
 		return jwt;

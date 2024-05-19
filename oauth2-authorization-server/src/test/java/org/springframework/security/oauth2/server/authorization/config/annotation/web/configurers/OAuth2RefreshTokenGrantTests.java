@@ -142,8 +142,8 @@ public class OAuth2RefreshTokenGrantTests {
 
 	@AfterEach
 	public void tearDown() {
-		jdbcOperations.update("truncate table oauth2_authorization");
-		jdbcOperations.update("truncate table oauth2_registered_client");
+		this.jdbcOperations.update("truncate table oauth2_authorization");
+		this.jdbcOperations.update("truncate table oauth2_registered_client");
 	}
 
 	@AfterAll
@@ -282,7 +282,7 @@ public class OAuth2RefreshTokenGrantTests {
 
 		@Bean
 		OAuth2TokenCustomizer<JwtEncodingContext> jwtCustomizer() {
-			return context -> {
+			return (context) -> {
 				if (AuthorizationGrantType.REFRESH_TOKEN.equals(context.getAuthorizationGrantType())) {
 					Authentication principal = context.getPrincipal();
 					Set<String> authorities = new HashSet<>();

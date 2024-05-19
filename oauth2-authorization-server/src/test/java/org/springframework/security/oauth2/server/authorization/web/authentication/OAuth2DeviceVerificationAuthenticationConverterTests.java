@@ -15,6 +15,8 @@
  */
 package org.springframework.security.oauth2.server.authorization.web.authentication;
 
+import java.util.Map;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -33,7 +35,6 @@ import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2DeviceVerificationAuthenticationToken;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import static java.util.Map.entry;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
@@ -179,8 +180,8 @@ public class OAuth2DeviceVerificationAuthenticationConverterTests {
 		assertThat(authentication).isNotNull();
 		assertThat(authentication.getPrincipal()).isInstanceOf(TestingAuthenticationToken.class);
 		assertThat(authentication.getUserCode()).isEqualTo(USER_CODE);
-		assertThat(authentication.getAdditionalParameters()).containsExactly(entry("param-1", "value-1"),
-				entry("param-2", new String[] { "value-1", "value-2" }));
+		assertThat(authentication.getAdditionalParameters()).containsExactly(Map.entry("param-1", "value-1"),
+				Map.entry("param-2", new String[] { "value-1", "value-2" }));
 	}
 
 	private static MockHttpServletRequest createRequest() {

@@ -23,7 +23,6 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -67,10 +66,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
 
 /**
  * Tests for {@link OidcClientRegistrationEndpointFilter}.
@@ -199,7 +198,7 @@ public class OidcClientRegistrationEndpointFilterTests {
 		securityContext.setAuthentication(principal);
 		SecurityContextHolder.setContext(securityContext);
 
-		when(this.authenticationManager.authenticate(any())).thenThrow(new OAuth2AuthenticationException(errorCode));
+		given(this.authenticationManager.authenticate(any())).willThrow(new OAuth2AuthenticationException(errorCode));
 
 		// @formatter:off
 		OidcClientRegistration clientRegistrationRequest = OidcClientRegistration.builder()
@@ -235,9 +234,9 @@ public class OidcClientRegistrationEndpointFilterTests {
 
 		OidcClientRegistration clientRegistrationRequest = OidcClientRegistration.builder()
 				.clientName(expectedClientRegistrationResponse.getClientName())
-				.redirectUris(redirectUris -> redirectUris.addAll(expectedClientRegistrationResponse.getRedirectUris()))
-				.grantTypes(grantTypes -> grantTypes.addAll(expectedClientRegistrationResponse.getGrantTypes()))
-				.scopes(scopes -> scopes.addAll(expectedClientRegistrationResponse.getScopes()))
+				.redirectUris((redirectUris) -> redirectUris.addAll(expectedClientRegistrationResponse.getRedirectUris()))
+				.grantTypes((grantTypes) -> grantTypes.addAll(expectedClientRegistrationResponse.getGrantTypes()))
+				.scopes((scopes) -> scopes.addAll(expectedClientRegistrationResponse.getScopes()))
 				.build();
 		// @formatter:on
 
@@ -248,7 +247,7 @@ public class OidcClientRegistrationEndpointFilterTests {
 		OidcClientRegistrationAuthenticationToken clientRegistrationAuthenticationResult = new OidcClientRegistrationAuthenticationToken(
 				principal, expectedClientRegistrationResponse);
 
-		when(this.authenticationManager.authenticate(any())).thenReturn(clientRegistrationAuthenticationResult);
+		given(this.authenticationManager.authenticate(any())).willReturn(clientRegistrationAuthenticationResult);
 
 		SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
 		securityContext.setAuthentication(principal);
@@ -384,7 +383,7 @@ public class OidcClientRegistrationEndpointFilterTests {
 		securityContext.setAuthentication(principal);
 		SecurityContextHolder.setContext(securityContext);
 
-		when(this.authenticationManager.authenticate(any())).thenThrow(new OAuth2AuthenticationException(errorCode));
+		given(this.authenticationManager.authenticate(any())).willThrow(new OAuth2AuthenticationException(errorCode));
 
 		String requestUri = DEFAULT_OIDC_CLIENT_REGISTRATION_ENDPOINT_URI;
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestUri);
@@ -414,7 +413,7 @@ public class OidcClientRegistrationEndpointFilterTests {
 		OidcClientRegistrationAuthenticationToken clientConfigurationAuthenticationResult = new OidcClientRegistrationAuthenticationToken(
 				principal, expectedClientRegistrationResponse);
 
-		when(this.authenticationManager.authenticate(any())).thenReturn(clientConfigurationAuthenticationResult);
+		given(this.authenticationManager.authenticate(any())).willReturn(clientConfigurationAuthenticationResult);
 
 		SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
 		securityContext.setAuthentication(principal);
@@ -489,7 +488,7 @@ public class OidcClientRegistrationEndpointFilterTests {
 		OidcClientRegistrationAuthenticationToken clientRegistrationAuthenticationResult = new OidcClientRegistrationAuthenticationToken(
 				principal, expectedClientRegistrationResponse);
 
-		when(this.authenticationManager.authenticate(any())).thenReturn(clientRegistrationAuthenticationResult);
+		given(this.authenticationManager.authenticate(any())).willReturn(clientRegistrationAuthenticationResult);
 		AuthenticationSuccessHandler successHandler = mock(AuthenticationSuccessHandler.class);
 		this.filter.setAuthenticationSuccessHandler(successHandler);
 
@@ -516,8 +515,8 @@ public class OidcClientRegistrationEndpointFilterTests {
 		AuthenticationFailureHandler authenticationFailureHandler = mock(AuthenticationFailureHandler.class);
 		this.filter.setAuthenticationFailureHandler(authenticationFailureHandler);
 
-		when(this.authenticationManager.authenticate(any()))
-			.thenThrow(new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_TOKEN));
+		given(this.authenticationManager.authenticate(any()))
+			.willThrow(new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_TOKEN));
 
 		String requestUri = DEFAULT_OIDC_CLIENT_REGISTRATION_ENDPOINT_URI;
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestUri);
@@ -593,8 +592,8 @@ public class OidcClientRegistrationEndpointFilterTests {
 				.claim(OAuth2ParameterNames.SCOPE, Collections.singleton(scope))
 				.build();
 		Jwt jwt = Jwt.withTokenValue("jwt-access-token")
-				.headers(headers -> headers.putAll(jwsHeader.getHeaders()))
-				.claims(claims -> claims.putAll(jwtClaimsSet.getClaims()))
+				.headers((headers) -> headers.putAll(jwsHeader.getHeaders()))
+				.claims((claims) -> claims.putAll(jwtClaimsSet.getClaims()))
 				.build();
 		// @formatter:on
 		return jwt;

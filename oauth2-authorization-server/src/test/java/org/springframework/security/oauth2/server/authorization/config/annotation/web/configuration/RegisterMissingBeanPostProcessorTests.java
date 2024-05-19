@@ -104,7 +104,7 @@ public class RegisterMissingBeanPostProcessorTests {
 		}
 
 		private String getField() {
-			return field;
+			return this.field;
 		}
 
 	}

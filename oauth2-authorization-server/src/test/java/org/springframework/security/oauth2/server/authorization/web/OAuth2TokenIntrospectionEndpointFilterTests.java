@@ -23,7 +23,6 @@ import java.util.HashSet;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -60,10 +59,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.entry;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
 
 /**
  * Tests for {@link OAuth2TokenIntrospectionEndpointFilter}.
@@ -199,7 +198,7 @@ public class OAuth2TokenIntrospectionEndpointFilterTests {
 				.username("authorizing-username")
 				.issuedAt(accessToken.getIssuedAt())
 				.expiresAt(accessToken.getExpiresAt())
-				.scopes(scopes -> scopes.addAll(accessToken.getScopes()))
+				.scopes((scopes) -> scopes.addAll(accessToken.getScopes()))
 				.tokenType(accessToken.getTokenType().getValue())
 				.notBefore(accessToken.getIssuedAt())
 				.subject("authorizing-subject")
@@ -211,7 +210,7 @@ public class OAuth2TokenIntrospectionEndpointFilterTests {
 		OAuth2TokenIntrospectionAuthenticationToken tokenIntrospectionAuthenticationResult = new OAuth2TokenIntrospectionAuthenticationToken(
 				accessToken.getTokenValue(), clientPrincipal, tokenClaims);
 
-		when(this.authenticationManager.authenticate(any())).thenReturn(tokenIntrospectionAuthenticationResult);
+		given(this.authenticationManager.authenticate(any())).willReturn(tokenIntrospectionAuthenticationResult);
 
 		SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
 		securityContext.setAuthentication(clientPrincipal);
@@ -269,10 +268,10 @@ public class OAuth2TokenIntrospectionEndpointFilterTests {
 				accessToken.getTokenValue(), clientPrincipal, OAuth2TokenType.ACCESS_TOKEN.getValue(), null);
 
 		AuthenticationConverter authenticationConverter = mock(AuthenticationConverter.class);
-		when(authenticationConverter.convert(any())).thenReturn(tokenIntrospectionAuthentication);
+		given(authenticationConverter.convert(any())).willReturn(tokenIntrospectionAuthentication);
 		this.filter.setAuthenticationConverter(authenticationConverter);
 
-		when(this.authenticationManager.authenticate(any())).thenReturn(tokenIntrospectionAuthentication);
+		given(this.authenticationManager.authenticate(any())).willReturn(tokenIntrospectionAuthentication);
 
 		SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
 		securityContext.setAuthentication(clientPrincipal);
@@ -302,7 +301,7 @@ public class OAuth2TokenIntrospectionEndpointFilterTests {
 		AuthenticationSuccessHandler authenticationSuccessHandler = mock(AuthenticationSuccessHandler.class);
 		this.filter.setAuthenticationSuccessHandler(authenticationSuccessHandler);
 
-		when(this.authenticationManager.authenticate(any())).thenReturn(tokenIntrospectionAuthentication);
+		given(this.authenticationManager.authenticate(any())).willReturn(tokenIntrospectionAuthentication);
 
 		SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
 		securityContext.setAuthentication(clientPrincipal);
@@ -330,7 +329,7 @@ public class OAuth2TokenIntrospectionEndpointFilterTests {
 		AuthenticationFailureHandler authenticationFailureHandler = mock(AuthenticationFailureHandler.class);
 		this.filter.setAuthenticationFailureHandler(authenticationFailureHandler);
 
-		when(this.authenticationManager.authenticate(any())).thenThrow(OAuth2AuthenticationException.class);
+		given(this.authenticationManager.authenticate(any())).willThrow(OAuth2AuthenticationException.class);
 
 		SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
 		securityContext.setAuthentication(clientPrincipal);

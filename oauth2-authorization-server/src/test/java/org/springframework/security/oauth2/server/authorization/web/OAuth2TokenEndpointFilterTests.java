@@ -21,11 +21,11 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -67,12 +67,11 @@ import org.springframework.util.StringUtils;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.entry;
-import static org.assertj.core.api.InstanceOfAssertFactories.type;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
 
 /**
  * Tests for {@link OAuth2TokenEndpointFilter}.
@@ -247,7 +246,7 @@ public class OAuth2TokenEndpointFilterTests {
 		OAuth2AccessTokenAuthenticationToken accessTokenAuthentication = new OAuth2AccessTokenAuthenticationToken(
 				registeredClient, clientPrincipal, accessToken, refreshToken);
 
-		when(this.authenticationManager.authenticate(any())).thenReturn(accessTokenAuthentication);
+		given(this.authenticationManager.authenticate(any())).willReturn(accessTokenAuthentication);
 
 		SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
 		securityContext.setAuthentication(clientPrincipal);
@@ -275,7 +274,8 @@ public class OAuth2TokenEndpointFilterTests {
 		assertThat(authorizationCodeAuthentication.getAdditionalParameters()).containsExactly(
 				entry("custom-param-1", "custom-value-1"),
 				entry("custom-param-2", new String[] { "custom-value-1", "custom-value-2" }));
-		assertThat(authorizationCodeAuthentication.getDetails()).asInstanceOf(type(WebAuthenticationDetails.class))
+		assertThat(authorizationCodeAuthentication.getDetails())
+			.asInstanceOf(InstanceOfAssertFactories.type(WebAuthenticationDetails.class))
 			.extracting(WebAuthenticationDetails::getRemoteAddress)
 			.isEqualTo(REMOTE_ADDRESS);
 
@@ -314,7 +314,7 @@ public class OAuth2TokenEndpointFilterTests {
 		OAuth2AccessTokenAuthenticationToken accessTokenAuthentication = new OAuth2AccessTokenAuthenticationToken(
 				registeredClient, clientPrincipal, accessToken);
 
-		when(this.authenticationManager.authenticate(any())).thenReturn(accessTokenAuthentication);
+		given(this.authenticationManager.authenticate(any())).willReturn(accessTokenAuthentication);
 
 		SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
 		securityContext.setAuthentication(clientPrincipal);
@@ -339,7 +339,8 @@ public class OAuth2TokenEndpointFilterTests {
 		assertThat(clientCredentialsAuthentication.getAdditionalParameters()).containsExactly(
 				entry("custom-param-1", "custom-value-1"),
 				entry("custom-param-2", new String[] { "custom-value-1", "custom-value-2" }));
-		assertThat(clientCredentialsAuthentication.getDetails()).asInstanceOf(type(WebAuthenticationDetails.class))
+		assertThat(clientCredentialsAuthentication.getDetails())
+			.asInstanceOf(InstanceOfAssertFactories.type(WebAuthenticationDetails.class))
 			.extracting(WebAuthenticationDetails::getRemoteAddress)
 			.isEqualTo(REMOTE_ADDRESS);
 
@@ -401,7 +402,7 @@ public class OAuth2TokenEndpointFilterTests {
 		OAuth2AccessTokenAuthenticationToken accessTokenAuthentication = new OAuth2AccessTokenAuthenticationToken(
 				registeredClient, clientPrincipal, accessToken, refreshToken);
 
-		when(this.authenticationManager.authenticate(any())).thenReturn(accessTokenAuthentication);
+		given(this.authenticationManager.authenticate(any())).willReturn(accessTokenAuthentication);
 
 		SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
 		securityContext.setAuthentication(clientPrincipal);
@@ -427,7 +428,8 @@ public class OAuth2TokenEndpointFilterTests {
 		assertThat(refreshTokenAuthenticationToken.getAdditionalParameters()).containsExactly(
 				entry("custom-param-1", "custom-value-1"),
 				entry("custom-param-2", new String[] { "custom-value-1", "custom-value-2" }));
-		assertThat(refreshTokenAuthenticationToken.getDetails()).asInstanceOf(type(WebAuthenticationDetails.class))
+		assertThat(refreshTokenAuthenticationToken.getDetails())
+			.asInstanceOf(InstanceOfAssertFactories.type(WebAuthenticationDetails.class))
 			.extracting(WebAuthenticationDetails::getRemoteAddress)
 			.isEqualTo(REMOTE_ADDRESS);
 
@@ -458,7 +460,7 @@ public class OAuth2TokenEndpointFilterTests {
 		AuthenticationDetailsSource<HttpServletRequest, WebAuthenticationDetails> authenticationDetailsSource = mock(
 				AuthenticationDetailsSource.class);
 		WebAuthenticationDetails webAuthenticationDetails = new WebAuthenticationDetails(request);
-		when(authenticationDetailsSource.buildDetails(any())).thenReturn(webAuthenticationDetails);
+		given(authenticationDetailsSource.buildDetails(any())).willReturn(webAuthenticationDetails);
 		this.filter.setAuthenticationDetailsSource(authenticationDetailsSource);
 
 		OAuth2AccessToken accessToken = new OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER, "token",
@@ -467,7 +469,7 @@ public class OAuth2TokenEndpointFilterTests {
 		OAuth2AccessTokenAuthenticationToken accessTokenAuthentication = new OAuth2AccessTokenAuthenticationToken(
 				registeredClient, clientPrincipal, accessToken);
 
-		when(this.authenticationManager.authenticate(any())).thenReturn(accessTokenAuthentication);
+		given(this.authenticationManager.authenticate(any())).willReturn(accessTokenAuthentication);
 
 		SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
 		securityContext.setAuthentication(clientPrincipal);
@@ -491,7 +493,7 @@ public class OAuth2TokenEndpointFilterTests {
 				"code", clientPrincipal, null, null);
 
 		AuthenticationConverter authenticationConverter = mock(AuthenticationConverter.class);
-		when(authenticationConverter.convert(any())).thenReturn(authorizationCodeAuthentication);
+		given(authenticationConverter.convert(any())).willReturn(authorizationCodeAuthentication);
 		this.filter.setAuthenticationConverter(authenticationConverter);
 
 		OAuth2AccessToken accessToken = new OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER, "token",
@@ -500,7 +502,7 @@ public class OAuth2TokenEndpointFilterTests {
 		OAuth2AccessTokenAuthenticationToken accessTokenAuthentication = new OAuth2AccessTokenAuthenticationToken(
 				registeredClient, clientPrincipal, accessToken);
 
-		when(this.authenticationManager.authenticate(any())).thenReturn(accessTokenAuthentication);
+		given(this.authenticationManager.authenticate(any())).willReturn(accessTokenAuthentication);
 
 		SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
 		securityContext.setAuthentication(clientPrincipal);
@@ -529,7 +531,7 @@ public class OAuth2TokenEndpointFilterTests {
 		OAuth2AccessTokenAuthenticationToken accessTokenAuthentication = new OAuth2AccessTokenAuthenticationToken(
 				registeredClient, clientPrincipal, accessToken);
 
-		when(this.authenticationManager.authenticate(any())).thenReturn(accessTokenAuthentication);
+		given(this.authenticationManager.authenticate(any())).willReturn(accessTokenAuthentication);
 
 		SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
 		securityContext.setAuthentication(clientPrincipal);

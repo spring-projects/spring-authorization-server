@@ -92,7 +92,7 @@ public class OAuth2AuthorizationConsentTests {
 	public void authoritiesThenCustomizesAuthorities() {
 		OAuth2AuthorizationConsent authorizationConsent = OAuth2AuthorizationConsent.withId("some-client", "some-user")
 			.authority(new SimpleGrantedAuthority("some.authority"))
-			.authorities(authorities -> {
+			.authorities((authorities) -> {
 				authorities.clear();
 				authorities.add(new SimpleGrantedAuthority("other.authority"));
 			})

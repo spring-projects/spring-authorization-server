@@ -19,7 +19,6 @@ import java.time.Instant;
 import java.util.Collections;
 
 import jakarta.servlet.FilterChain;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -51,10 +50,10 @@ import org.springframework.security.web.authentication.AuthenticationSuccessHand
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
 
 /**
  * Tests for {@link OidcUserInfoEndpointFilter}.
@@ -151,7 +150,7 @@ public class OidcUserInfoEndpointFilterTests {
 
 		OidcUserInfoAuthenticationToken authentication = new OidcUserInfoAuthenticationToken(principal,
 				createUserInfo());
-		when(this.authenticationManager.authenticate(any())).thenReturn(authentication);
+		given(this.authenticationManager.authenticate(any())).willReturn(authentication);
 
 		String requestUri = DEFAULT_OIDC_USER_INFO_ENDPOINT_URI;
 		MockHttpServletRequest request = new MockHttpServletRequest(httpMethod, requestUri);
@@ -183,8 +182,8 @@ public class OidcUserInfoEndpointFilterTests {
 		Authentication principal = new TestingAuthenticationToken("principal", "credentials");
 		SecurityContextHolder.getContext().setAuthentication(principal);
 
-		when(this.authenticationManager.authenticate(any()))
-			.thenThrow(new OAuth2AuthenticationException(oauth2ErrorCode));
+		given(this.authenticationManager.authenticate(any()))
+			.willThrow(new OAuth2AuthenticationException(oauth2ErrorCode));
 
 		String requestUri = DEFAULT_OIDC_USER_INFO_ENDPOINT_URI;
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestUri);
@@ -208,9 +207,9 @@ public class OidcUserInfoEndpointFilterTests {
 		AuthenticationConverter authenticationConverter = mock(AuthenticationConverter.class);
 		this.filter.setAuthenticationConverter(authenticationConverter);
 
-		when(authenticationConverter.convert(any())).thenReturn(authentication);
-		when(this.authenticationManager.authenticate(any()))
-			.thenReturn(new OidcUserInfoAuthenticationToken(principal, createUserInfo()));
+		given(authenticationConverter.convert(any())).willReturn(authentication);
+		given(this.authenticationManager.authenticate(any()))
+			.willReturn(new OidcUserInfoAuthenticationToken(principal, createUserInfo()));
 
 		String requestUri = DEFAULT_OIDC_USER_INFO_ENDPOINT_URI;
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestUri);
@@ -236,7 +235,7 @@ public class OidcUserInfoEndpointFilterTests {
 
 		OidcUserInfoAuthenticationToken authentication = new OidcUserInfoAuthenticationToken(principal,
 				createUserInfo());
-		when(this.authenticationManager.authenticate(any())).thenReturn(authentication);
+		given(this.authenticationManager.authenticate(any())).willReturn(authentication);
 
 		String requestUri = DEFAULT_OIDC_USER_INFO_ENDPOINT_URI;
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestUri);
@@ -260,7 +259,7 @@ public class OidcUserInfoEndpointFilterTests {
 
 		OAuth2AuthenticationException authenticationException = new OAuth2AuthenticationException(
 				OAuth2ErrorCodes.INVALID_TOKEN);
-		when(this.authenticationManager.authenticate(any())).thenThrow(authenticationException);
+		given(this.authenticationManager.authenticate(any())).willThrow(authenticationException);
 
 		String requestUri = DEFAULT_OIDC_USER_INFO_ENDPOINT_URI;
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestUri);

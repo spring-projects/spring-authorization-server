@@ -25,8 +25,8 @@ import org.springframework.security.oauth2.core.OAuth2Token;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 /**
  * Tests for {@link DelegatingOAuth2TokenGenerator}.
@@ -60,7 +60,7 @@ public class DelegatingOAuth2TokenGeneratorTests {
 
 		OAuth2AccessToken accessToken = new OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER, "access-token",
 				Instant.now(), Instant.now().plusSeconds(300));
-		when(tokenGenerator3.generate(any())).thenReturn(accessToken);
+		given(tokenGenerator3.generate(any())).willReturn(accessToken);
 
 		DelegatingOAuth2TokenGenerator delegatingTokenGenerator = new DelegatingOAuth2TokenGenerator(tokenGenerator1,
 				tokenGenerator2, tokenGenerator3);

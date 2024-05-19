@@ -54,9 +54,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 /**
  * Tests for {@link OAuth2AuthorizationCodeRequestAuthenticationProvider}.
@@ -147,11 +147,11 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 		String redirectUri = registeredClient.getRedirectUris().toArray(new String[0])[1];
 		OAuth2AuthorizationCodeRequestAuthenticationToken authentication = new OAuth2AuthorizationCodeRequestAuthenticationToken(
-				AUTHORIZATION_URI, registeredClient.getClientId(), principal, redirectUri, STATE,
+				AUTHORIZATION_URI, registeredClient.getClientId(), this.principal, redirectUri, STATE,
 				registeredClient.getScopes(), null);
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 			.isInstanceOf(OAuth2AuthorizationCodeRequestAuthenticationException.class)
-			.satisfies(ex -> assertAuthenticationException((OAuth2AuthorizationCodeRequestAuthenticationException) ex,
+			.satisfies((ex) -> assertAuthenticationException((OAuth2AuthorizationCodeRequestAuthenticationException) ex,
 					OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.CLIENT_ID, null));
 	}
 
@@ -159,14 +159,14 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 	@Test
 	public void authenticateWhenInvalidRedirectUriHostThenThrowOAuth2AuthorizationCodeRequestAuthenticationException() {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
-		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
-			.thenReturn(registeredClient);
+		given(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
+			.willReturn(registeredClient);
 		OAuth2AuthorizationCodeRequestAuthenticationToken authentication = new OAuth2AuthorizationCodeRequestAuthenticationToken(
-				AUTHORIZATION_URI, registeredClient.getClientId(), principal, "https:///invalid", STATE,
+				AUTHORIZATION_URI, registeredClient.getClientId(), this.principal, "https:///invalid", STATE,
 				registeredClient.getScopes(), null);
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 			.isInstanceOf(OAuth2AuthorizationCodeRequestAuthenticationException.class)
-			.satisfies(ex -> assertAuthenticationException((OAuth2AuthorizationCodeRequestAuthenticationException) ex,
+			.satisfies((ex) -> assertAuthenticationException((OAuth2AuthorizationCodeRequestAuthenticationException) ex,
 					OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.REDIRECT_URI, null));
 	}
 
@@ -174,28 +174,28 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 	@Test
 	public void authenticateWhenInvalidRedirectUriFragmentThenThrowOAuth2AuthorizationCodeRequestAuthenticationException() {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
-		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
-			.thenReturn(registeredClient);
+		given(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
+			.willReturn(registeredClient);
 		OAuth2AuthorizationCodeRequestAuthenticationToken authentication = new OAuth2AuthorizationCodeRequestAuthenticationToken(
-				AUTHORIZATION_URI, registeredClient.getClientId(), principal, "https://example.com#fragment", STATE,
-				registeredClient.getScopes(), null);
+				AUTHORIZATION_URI, registeredClient.getClientId(), this.principal, "https://example.com#fragment",
+				STATE, registeredClient.getScopes(), null);
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 			.isInstanceOf(OAuth2AuthorizationCodeRequestAuthenticationException.class)
-			.satisfies(ex -> assertAuthenticationException((OAuth2AuthorizationCodeRequestAuthenticationException) ex,
+			.satisfies((ex) -> assertAuthenticationException((OAuth2AuthorizationCodeRequestAuthenticationException) ex,
 					OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.REDIRECT_URI, null));
 	}
 
 	@Test
 	public void authenticateWhenUnregisteredRedirectUriThenThrowOAuth2AuthorizationCodeRequestAuthenticationException() {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
-		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
-			.thenReturn(registeredClient);
+		given(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
+			.willReturn(registeredClient);
 		OAuth2AuthorizationCodeRequestAuthenticationToken authentication = new OAuth2AuthorizationCodeRequestAuthenticationToken(
-				AUTHORIZATION_URI, registeredClient.getClientId(), principal, "https://invalid-example.com", STATE,
+				AUTHORIZATION_URI, registeredClient.getClientId(), this.principal, "https://invalid-example.com", STATE,
 				registeredClient.getScopes(), null);
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 			.isInstanceOf(OAuth2AuthorizationCodeRequestAuthenticationException.class)
-			.satisfies(ex -> assertAuthenticationException((OAuth2AuthorizationCodeRequestAuthenticationException) ex,
+			.satisfies((ex) -> assertAuthenticationException((OAuth2AuthorizationCodeRequestAuthenticationException) ex,
 					OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.REDIRECT_URI, null));
 	}
 
@@ -205,10 +205,10 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
 			.redirectUri("https://127.0.0.1:8080")
 			.build();
-		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
-			.thenReturn(registeredClient);
+		given(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
+			.willReturn(registeredClient);
 		OAuth2AuthorizationCodeRequestAuthenticationToken authentication = new OAuth2AuthorizationCodeRequestAuthenticationToken(
-				AUTHORIZATION_URI, registeredClient.getClientId(), principal, "https://127.0.0.1:5000", STATE,
+				AUTHORIZATION_URI, registeredClient.getClientId(), this.principal, "https://127.0.0.1:5000", STATE,
 				registeredClient.getScopes(), null);
 
 		OAuth2AuthorizationCodeRequestAuthenticationToken authenticationResult = (OAuth2AuthorizationCodeRequestAuthenticationToken) this.authenticationProvider
@@ -224,10 +224,10 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
 			.redirectUri("https://[::1]:8080")
 			.build();
-		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
-			.thenReturn(registeredClient);
+		given(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
+			.willReturn(registeredClient);
 		OAuth2AuthorizationCodeRequestAuthenticationToken authentication = new OAuth2AuthorizationCodeRequestAuthenticationToken(
-				AUTHORIZATION_URI, registeredClient.getClientId(), principal, "https://[::1]:5000", STATE,
+				AUTHORIZATION_URI, registeredClient.getClientId(), this.principal, "https://[::1]:5000", STATE,
 				registeredClient.getScopes(), null);
 
 		OAuth2AuthorizationCodeRequestAuthenticationToken authenticationResult = (OAuth2AuthorizationCodeRequestAuthenticationToken) this.authenticationProvider
@@ -242,14 +242,14 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
 			.redirectUri("https://example2.com")
 			.build();
-		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
-			.thenReturn(registeredClient);
+		given(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
+			.willReturn(registeredClient);
 		OAuth2AuthorizationCodeRequestAuthenticationToken authentication = new OAuth2AuthorizationCodeRequestAuthenticationToken(
-				AUTHORIZATION_URI, registeredClient.getClientId(), principal, null, STATE, registeredClient.getScopes(),
-				null);
+				AUTHORIZATION_URI, registeredClient.getClientId(), this.principal, null, STATE,
+				registeredClient.getScopes(), null);
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 			.isInstanceOf(OAuth2AuthorizationCodeRequestAuthenticationException.class)
-			.satisfies(ex -> assertAuthenticationException((OAuth2AuthorizationCodeRequestAuthenticationException) ex,
+			.satisfies((ex) -> assertAuthenticationException((OAuth2AuthorizationCodeRequestAuthenticationException) ex,
 					OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.REDIRECT_URI, null));
 	}
 
@@ -257,14 +257,14 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 	public void authenticateWhenAuthenticationRequestMissingRedirectUriThenThrowOAuth2AuthorizationCodeRequestAuthenticationException() {
 		// redirect_uri is REQUIRED for OpenID Connect requests
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().scope(OidcScopes.OPENID).build();
-		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
-			.thenReturn(registeredClient);
+		given(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
+			.willReturn(registeredClient);
 		OAuth2AuthorizationCodeRequestAuthenticationToken authentication = new OAuth2AuthorizationCodeRequestAuthenticationToken(
-				AUTHORIZATION_URI, registeredClient.getClientId(), principal, null, STATE, registeredClient.getScopes(),
-				null);
+				AUTHORIZATION_URI, registeredClient.getClientId(), this.principal, null, STATE,
+				registeredClient.getScopes(), null);
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 			.isInstanceOf(OAuth2AuthorizationCodeRequestAuthenticationException.class)
-			.satisfies(ex -> assertAuthenticationException((OAuth2AuthorizationCodeRequestAuthenticationException) ex,
+			.satisfies((ex) -> assertAuthenticationException((OAuth2AuthorizationCodeRequestAuthenticationException) ex,
 					OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.REDIRECT_URI, null));
 	}
 
@@ -274,15 +274,15 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 			.authorizationGrantTypes(Set::clear)
 			.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
 			.build();
-		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
-			.thenReturn(registeredClient);
+		given(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
+			.willReturn(registeredClient);
 		String redirectUri = registeredClient.getRedirectUris().toArray(new String[0])[1];
 		OAuth2AuthorizationCodeRequestAuthenticationToken authentication = new OAuth2AuthorizationCodeRequestAuthenticationToken(
-				AUTHORIZATION_URI, registeredClient.getClientId(), principal, redirectUri, STATE,
+				AUTHORIZATION_URI, registeredClient.getClientId(), this.principal, redirectUri, STATE,
 				registeredClient.getScopes(), null);
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 			.isInstanceOf(OAuth2AuthorizationCodeRequestAuthenticationException.class)
-			.satisfies(ex -> assertAuthenticationException((OAuth2AuthorizationCodeRequestAuthenticationException) ex,
+			.satisfies((ex) -> assertAuthenticationException((OAuth2AuthorizationCodeRequestAuthenticationException) ex,
 					OAuth2ErrorCodes.UNAUTHORIZED_CLIENT, OAuth2ParameterNames.CLIENT_ID,
 					authentication.getRedirectUri()));
 	}
@@ -290,15 +290,15 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 	@Test
 	public void authenticateWhenInvalidScopeThenThrowOAuth2AuthorizationCodeRequestAuthenticationException() {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
-		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
-			.thenReturn(registeredClient);
+		given(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
+			.willReturn(registeredClient);
 		String redirectUri = registeredClient.getRedirectUris().toArray(new String[0])[2];
 		OAuth2AuthorizationCodeRequestAuthenticationToken authentication = new OAuth2AuthorizationCodeRequestAuthenticationToken(
-				AUTHORIZATION_URI, registeredClient.getClientId(), principal, redirectUri, STATE,
+				AUTHORIZATION_URI, registeredClient.getClientId(), this.principal, redirectUri, STATE,
 				Collections.singleton("invalid-scope"), null);
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 			.isInstanceOf(OAuth2AuthorizationCodeRequestAuthenticationException.class)
-			.satisfies(ex -> assertAuthenticationException((OAuth2AuthorizationCodeRequestAuthenticationException) ex,
+			.satisfies((ex) -> assertAuthenticationException((OAuth2AuthorizationCodeRequestAuthenticationException) ex,
 					OAuth2ErrorCodes.INVALID_SCOPE, OAuth2ParameterNames.SCOPE, authentication.getRedirectUri()));
 	}
 
@@ -307,15 +307,15 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
 			.clientSettings(ClientSettings.builder().requireProofKey(true).build())
 			.build();
-		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
-			.thenReturn(registeredClient);
+		given(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
+			.willReturn(registeredClient);
 		String redirectUri = registeredClient.getRedirectUris().toArray(new String[0])[2];
 		OAuth2AuthorizationCodeRequestAuthenticationToken authentication = new OAuth2AuthorizationCodeRequestAuthenticationToken(
-				AUTHORIZATION_URI, registeredClient.getClientId(), principal, redirectUri, STATE,
+				AUTHORIZATION_URI, registeredClient.getClientId(), this.principal, redirectUri, STATE,
 				registeredClient.getScopes(), null);
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 			.isInstanceOf(OAuth2AuthorizationCodeRequestAuthenticationException.class)
-			.satisfies(ex -> assertAuthenticationException((OAuth2AuthorizationCodeRequestAuthenticationException) ex,
+			.satisfies((ex) -> assertAuthenticationException((OAuth2AuthorizationCodeRequestAuthenticationException) ex,
 					OAuth2ErrorCodes.INVALID_REQUEST, PkceParameterNames.CODE_CHALLENGE,
 					authentication.getRedirectUri()));
 	}
@@ -323,18 +323,18 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 	@Test
 	public void authenticateWhenPkceUnsupportedCodeChallengeMethodThenThrowOAuth2AuthorizationCodeRequestAuthenticationException() {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
-		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
-			.thenReturn(registeredClient);
+		given(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
+			.willReturn(registeredClient);
 		String redirectUri = registeredClient.getRedirectUris().toArray(new String[0])[0];
 		Map<String, Object> additionalParameters = new HashMap<>();
 		additionalParameters.put(PkceParameterNames.CODE_CHALLENGE, "code-challenge");
 		additionalParameters.put(PkceParameterNames.CODE_CHALLENGE_METHOD, "unsupported");
 		OAuth2AuthorizationCodeRequestAuthenticationToken authentication = new OAuth2AuthorizationCodeRequestAuthenticationToken(
-				AUTHORIZATION_URI, registeredClient.getClientId(), principal, redirectUri, STATE,
+				AUTHORIZATION_URI, registeredClient.getClientId(), this.principal, redirectUri, STATE,
 				registeredClient.getScopes(), additionalParameters);
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 			.isInstanceOf(OAuth2AuthorizationCodeRequestAuthenticationException.class)
-			.satisfies(ex -> assertAuthenticationException((OAuth2AuthorizationCodeRequestAuthenticationException) ex,
+			.satisfies((ex) -> assertAuthenticationException((OAuth2AuthorizationCodeRequestAuthenticationException) ex,
 					OAuth2ErrorCodes.INVALID_REQUEST, PkceParameterNames.CODE_CHALLENGE_METHOD,
 					authentication.getRedirectUri()));
 	}
@@ -343,17 +343,17 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 	@Test
 	public void authenticateWhenPkceMissingCodeChallengeMethodThenThrowOAuth2AuthorizationCodeRequestAuthenticationException() {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
-		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
-			.thenReturn(registeredClient);
+		given(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
+			.willReturn(registeredClient);
 		String redirectUri = registeredClient.getRedirectUris().toArray(new String[0])[2];
 		Map<String, Object> additionalParameters = new HashMap<>();
 		additionalParameters.put(PkceParameterNames.CODE_CHALLENGE, "code-challenge");
 		OAuth2AuthorizationCodeRequestAuthenticationToken authentication = new OAuth2AuthorizationCodeRequestAuthenticationToken(
-				AUTHORIZATION_URI, registeredClient.getClientId(), principal, redirectUri, STATE,
+				AUTHORIZATION_URI, registeredClient.getClientId(), this.principal, redirectUri, STATE,
 				registeredClient.getScopes(), additionalParameters);
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 			.isInstanceOf(OAuth2AuthorizationCodeRequestAuthenticationException.class)
-			.satisfies(ex -> assertAuthenticationException((OAuth2AuthorizationCodeRequestAuthenticationException) ex,
+			.satisfies((ex) -> assertAuthenticationException((OAuth2AuthorizationCodeRequestAuthenticationException) ex,
 					OAuth2ErrorCodes.INVALID_REQUEST, PkceParameterNames.CODE_CHALLENGE_METHOD,
 					authentication.getRedirectUri()));
 	}
@@ -361,13 +361,13 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 	@Test
 	public void authenticateWhenPrincipalNotAuthenticatedThenReturnAuthorizationCodeRequest() {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
-		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
-			.thenReturn(registeredClient);
+		given(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
+			.willReturn(registeredClient);
 		this.principal.setAuthenticated(false);
 
 		String redirectUri = registeredClient.getRedirectUris().toArray(new String[0])[1];
 		OAuth2AuthorizationCodeRequestAuthenticationToken authentication = new OAuth2AuthorizationCodeRequestAuthenticationToken(
-				AUTHORIZATION_URI, registeredClient.getClientId(), principal, redirectUri, STATE,
+				AUTHORIZATION_URI, registeredClient.getClientId(), this.principal, redirectUri, STATE,
 				registeredClient.getScopes(), null);
 
 		OAuth2AuthorizationCodeRequestAuthenticationToken authenticationResult = (OAuth2AuthorizationCodeRequestAuthenticationToken) this.authenticationProvider
@@ -382,12 +382,12 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
 			.clientSettings(ClientSettings.builder().requireAuthorizationConsent(true).build())
 			.build();
-		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
-			.thenReturn(registeredClient);
+		given(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
+			.willReturn(registeredClient);
 
 		String redirectUri = registeredClient.getRedirectUris().toArray(new String[0])[0];
 		OAuth2AuthorizationCodeRequestAuthenticationToken authentication = new OAuth2AuthorizationCodeRequestAuthenticationToken(
-				AUTHORIZATION_URI, registeredClient.getClientId(), principal, redirectUri, STATE,
+				AUTHORIZATION_URI, registeredClient.getClientId(), this.principal, redirectUri, STATE,
 				registeredClient.getScopes(), null);
 
 		OAuth2AuthorizationConsentAuthenticationToken authenticationResult = (OAuth2AuthorizationConsentAuthenticationToken) this.authenticationProvider
@@ -428,17 +428,17 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 	public void authenticateWhenRequireAuthorizationConsentAndOnlyOpenidScopeRequestedThenAuthorizationConsentNotRequired() {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
 			.clientSettings(ClientSettings.builder().requireAuthorizationConsent(true).build())
-			.scopes(scopes -> {
+			.scopes((scopes) -> {
 				scopes.clear();
 				scopes.add(OidcScopes.OPENID);
 			})
 			.build();
-		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
-			.thenReturn(registeredClient);
+		given(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
+			.willReturn(registeredClient);
 
 		String redirectUri = registeredClient.getRedirectUris().toArray(new String[0])[1];
 		OAuth2AuthorizationCodeRequestAuthenticationToken authentication = new OAuth2AuthorizationCodeRequestAuthenticationToken(
-				AUTHORIZATION_URI, registeredClient.getClientId(), principal, redirectUri, STATE,
+				AUTHORIZATION_URI, registeredClient.getClientId(), this.principal, redirectUri, STATE,
 				registeredClient.getScopes(), null);
 
 		OAuth2AuthorizationCodeRequestAuthenticationToken authenticationResult = (OAuth2AuthorizationCodeRequestAuthenticationToken) this.authenticationProvider
@@ -453,19 +453,19 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
 			.clientSettings(ClientSettings.builder().requireAuthorizationConsent(true).build())
 			.build();
-		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
-			.thenReturn(registeredClient);
+		given(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
+			.willReturn(registeredClient);
 
 		OAuth2AuthorizationConsent.Builder builder = OAuth2AuthorizationConsent.withId(registeredClient.getId(),
 				this.principal.getName());
 		registeredClient.getScopes().forEach(builder::scope);
 		OAuth2AuthorizationConsent previousAuthorizationConsent = builder.build();
-		when(this.authorizationConsentService.findById(eq(registeredClient.getId()), eq(this.principal.getName())))
-			.thenReturn(previousAuthorizationConsent);
+		given(this.authorizationConsentService.findById(eq(registeredClient.getId()), eq(this.principal.getName())))
+			.willReturn(previousAuthorizationConsent);
 
 		String redirectUri = registeredClient.getRedirectUris().toArray(new String[0])[2];
 		OAuth2AuthorizationCodeRequestAuthenticationToken authentication = new OAuth2AuthorizationCodeRequestAuthenticationToken(
-				AUTHORIZATION_URI, registeredClient.getClientId(), principal, redirectUri, STATE,
+				AUTHORIZATION_URI, registeredClient.getClientId(), this.principal, redirectUri, STATE,
 				registeredClient.getScopes(), null);
 
 		OAuth2AuthorizationCodeRequestAuthenticationToken authenticationResult = (OAuth2AuthorizationCodeRequestAuthenticationToken) this.authenticationProvider
@@ -478,15 +478,15 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 	@Test
 	public void authenticateWhenAuthorizationCodeRequestValidThenReturnAuthorizationCode() {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
-		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
-			.thenReturn(registeredClient);
+		given(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
+			.willReturn(registeredClient);
 
 		String redirectUri = registeredClient.getRedirectUris().toArray(new String[0])[0];
 		Map<String, Object> additionalParameters = new HashMap<>();
 		additionalParameters.put(PkceParameterNames.CODE_CHALLENGE, "code-challenge");
 		additionalParameters.put(PkceParameterNames.CODE_CHALLENGE_METHOD, "S256");
 		OAuth2AuthorizationCodeRequestAuthenticationToken authentication = new OAuth2AuthorizationCodeRequestAuthenticationToken(
-				AUTHORIZATION_URI, registeredClient.getClientId(), principal, redirectUri, STATE,
+				AUTHORIZATION_URI, registeredClient.getClientId(), this.principal, redirectUri, STATE,
 				registeredClient.getScopes(), additionalParameters);
 
 		OAuth2AuthorizationCodeRequestAuthenticationToken authenticationResult = (OAuth2AuthorizationCodeRequestAuthenticationToken) this.authenticationProvider
@@ -499,8 +499,8 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 	@Test
 	public void authenticateWhenAuthorizationCodeNotGeneratedThenThrowOAuth2AuthorizationCodeRequestAuthenticationException() {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
-		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
-			.thenReturn(registeredClient);
+		given(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
+			.willReturn(registeredClient);
 
 		@SuppressWarnings("unchecked")
 		OAuth2TokenGenerator<OAuth2AuthorizationCode> authorizationCodeGenerator = mock(OAuth2TokenGenerator.class);
@@ -508,13 +508,13 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 
 		String redirectUri = registeredClient.getRedirectUris().toArray(new String[0])[1];
 		OAuth2AuthorizationCodeRequestAuthenticationToken authentication = new OAuth2AuthorizationCodeRequestAuthenticationToken(
-				AUTHORIZATION_URI, registeredClient.getClientId(), principal, redirectUri, STATE,
+				AUTHORIZATION_URI, registeredClient.getClientId(), this.principal, redirectUri, STATE,
 				registeredClient.getScopes(), null);
 
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 			.isInstanceOf(OAuth2AuthorizationCodeRequestAuthenticationException.class)
-			.extracting(ex -> ((OAuth2AuthorizationCodeRequestAuthenticationException) ex).getError())
-			.satisfies(error -> {
+			.extracting((ex) -> ((OAuth2AuthorizationCodeRequestAuthenticationException) ex).getError())
+			.satisfies((error) -> {
 				assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.SERVER_ERROR);
 				assertThat(error.getDescription())
 					.contains("The token generator failed to generate the authorization code.");
@@ -524,8 +524,8 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 	@Test
 	public void authenticateWhenCustomAuthenticationValidatorThenUsed() {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
-		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
-			.thenReturn(registeredClient);
+		given(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
+			.willReturn(registeredClient);
 
 		@SuppressWarnings("unchecked")
 		Consumer<OAuth2AuthorizationCodeRequestAuthenticationContext> authenticationValidator = mock(Consumer.class);
@@ -533,7 +533,7 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 
 		String redirectUri = registeredClient.getRedirectUris().toArray(new String[0])[2];
 		OAuth2AuthorizationCodeRequestAuthenticationToken authentication = new OAuth2AuthorizationCodeRequestAuthenticationToken(
-				AUTHORIZATION_URI, registeredClient.getClientId(), principal, redirectUri, STATE,
+				AUTHORIZATION_URI, registeredClient.getClientId(), this.principal, redirectUri, STATE,
 				registeredClient.getScopes(), null);
 
 		OAuth2AuthorizationCodeRequestAuthenticationToken authenticationResult = (OAuth2AuthorizationCodeRequestAuthenticationToken) this.authenticationProvider

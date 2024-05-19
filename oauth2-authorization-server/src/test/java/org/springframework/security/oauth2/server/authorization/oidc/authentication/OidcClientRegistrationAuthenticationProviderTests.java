@@ -71,6 +71,7 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
@@ -78,7 +79,6 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
 
 /**
  * Tests for {@link OidcClientRegistrationAuthenticationProvider}.
@@ -193,7 +193,7 @@ public class OidcClientRegistrationAuthenticationProviderTests {
 
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 			.isInstanceOf(OAuth2AuthenticationException.class)
-			.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+			.extracting((ex) -> ((OAuth2AuthenticationException) ex).getError())
 			.extracting("errorCode")
 			.isEqualTo(OAuth2ErrorCodes.INVALID_TOKEN);
 	}
@@ -210,7 +210,7 @@ public class OidcClientRegistrationAuthenticationProviderTests {
 
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 			.isInstanceOf(OAuth2AuthenticationException.class)
-			.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+			.extracting((ex) -> ((OAuth2AuthenticationException) ex).getError())
 			.extracting("errorCode")
 			.isEqualTo(OAuth2ErrorCodes.INVALID_TOKEN);
 	}
@@ -229,7 +229,7 @@ public class OidcClientRegistrationAuthenticationProviderTests {
 
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 			.isInstanceOf(OAuth2AuthenticationException.class)
-			.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+			.extracting((ex) -> ((OAuth2AuthenticationException) ex).getError())
 			.extracting("errorCode")
 			.isEqualTo(OAuth2ErrorCodes.INVALID_TOKEN);
 		verify(this.authorizationService).findByToken(eq(jwt.getTokenValue()), eq(OAuth2TokenType.ACCESS_TOKEN));
@@ -245,9 +245,9 @@ public class OidcClientRegistrationAuthenticationProviderTests {
 			.authorization(registeredClient, jwtAccessToken, jwt.getClaims())
 			.build();
 		authorization = OidcAuthenticationProviderUtils.invalidate(authorization, jwtAccessToken);
-		when(this.authorizationService.findByToken(eq(jwtAccessToken.getTokenValue()),
+		given(this.authorizationService.findByToken(eq(jwtAccessToken.getTokenValue()),
 				eq(OAuth2TokenType.ACCESS_TOKEN)))
-			.thenReturn(authorization);
+			.willReturn(authorization);
 
 		JwtAuthenticationToken principal = new JwtAuthenticationToken(jwt,
 				AuthorityUtils.createAuthorityList("SCOPE_client.create"));
@@ -260,7 +260,7 @@ public class OidcClientRegistrationAuthenticationProviderTests {
 
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 			.isInstanceOf(OAuth2AuthenticationException.class)
-			.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+			.extracting((ex) -> ((OAuth2AuthenticationException) ex).getError())
 			.extracting("errorCode")
 			.isEqualTo(OAuth2ErrorCodes.INVALID_TOKEN);
 		verify(this.authorizationService).findByToken(eq(jwtAccessToken.getTokenValue()),
@@ -276,9 +276,9 @@ public class OidcClientRegistrationAuthenticationProviderTests {
 		OAuth2Authorization authorization = TestOAuth2Authorizations
 			.authorization(registeredClient, jwtAccessToken, jwt.getClaims())
 			.build();
-		when(this.authorizationService.findByToken(eq(jwtAccessToken.getTokenValue()),
+		given(this.authorizationService.findByToken(eq(jwtAccessToken.getTokenValue()),
 				eq(OAuth2TokenType.ACCESS_TOKEN)))
-			.thenReturn(authorization);
+			.willReturn(authorization);
 
 		JwtAuthenticationToken principal = new JwtAuthenticationToken(jwt,
 				AuthorityUtils.createAuthorityList("SCOPE_unauthorized.scope"));
@@ -291,7 +291,7 @@ public class OidcClientRegistrationAuthenticationProviderTests {
 
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 			.isInstanceOf(OAuth2AuthenticationException.class)
-			.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+			.extracting((ex) -> ((OAuth2AuthenticationException) ex).getError())
 			.extracting("errorCode")
 			.isEqualTo(OAuth2ErrorCodes.INSUFFICIENT_SCOPE);
 		verify(this.authorizationService).findByToken(eq(jwtAccessToken.getTokenValue()),
@@ -307,9 +307,9 @@ public class OidcClientRegistrationAuthenticationProviderTests {
 		OAuth2Authorization authorization = TestOAuth2Authorizations
 			.authorization(registeredClient, jwtAccessToken, jwt.getClaims())
 			.build();
-		when(this.authorizationService.findByToken(eq(jwtAccessToken.getTokenValue()),
+		given(this.authorizationService.findByToken(eq(jwtAccessToken.getTokenValue()),
 				eq(OAuth2TokenType.ACCESS_TOKEN)))
-			.thenReturn(authorization);
+			.willReturn(authorization);
 
 		JwtAuthenticationToken principal = new JwtAuthenticationToken(jwt,
 				AuthorityUtils.createAuthorityList("SCOPE_client.create", "SCOPE_scope1"));
@@ -322,7 +322,7 @@ public class OidcClientRegistrationAuthenticationProviderTests {
 
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 			.isInstanceOf(OAuth2AuthenticationException.class)
-			.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+			.extracting((ex) -> ((OAuth2AuthenticationException) ex).getError())
 			.extracting("errorCode")
 			.isEqualTo(OAuth2ErrorCodes.INVALID_TOKEN);
 		verify(this.authorizationService).findByToken(eq(jwtAccessToken.getTokenValue()),
@@ -338,9 +338,9 @@ public class OidcClientRegistrationAuthenticationProviderTests {
 		OAuth2Authorization authorization = TestOAuth2Authorizations
 			.authorization(registeredClient, jwtAccessToken, jwt.getClaims())
 			.build();
-		when(this.authorizationService.findByToken(eq(jwtAccessToken.getTokenValue()),
+		given(this.authorizationService.findByToken(eq(jwtAccessToken.getTokenValue()),
 				eq(OAuth2TokenType.ACCESS_TOKEN)))
-			.thenReturn(authorization);
+			.willReturn(authorization);
 
 		JwtAuthenticationToken principal = new JwtAuthenticationToken(jwt,
 				AuthorityUtils.createAuthorityList("SCOPE_client.create"));
@@ -355,8 +355,8 @@ public class OidcClientRegistrationAuthenticationProviderTests {
 
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 			.isInstanceOf(OAuth2AuthenticationException.class)
-			.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
-			.satisfies(error -> {
+			.extracting((ex) -> ((OAuth2AuthenticationException) ex).getError())
+			.satisfies((error) -> {
 				assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_REDIRECT_URI);
 				assertThat(error.getDescription()).contains(OidcClientMetadataClaimNames.REDIRECT_URIS);
 			});
@@ -373,9 +373,9 @@ public class OidcClientRegistrationAuthenticationProviderTests {
 		OAuth2Authorization authorization = TestOAuth2Authorizations
 			.authorization(registeredClient, jwtAccessToken, jwt.getClaims())
 			.build();
-		when(this.authorizationService.findByToken(eq(jwtAccessToken.getTokenValue()),
+		given(this.authorizationService.findByToken(eq(jwtAccessToken.getTokenValue()),
 				eq(OAuth2TokenType.ACCESS_TOKEN)))
-			.thenReturn(authorization);
+			.willReturn(authorization);
 
 		JwtAuthenticationToken principal = new JwtAuthenticationToken(jwt,
 				AuthorityUtils.createAuthorityList("SCOPE_client.create"));
@@ -390,8 +390,8 @@ public class OidcClientRegistrationAuthenticationProviderTests {
 
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 			.isInstanceOf(OAuth2AuthenticationException.class)
-			.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
-			.satisfies(error -> {
+			.extracting((ex) -> ((OAuth2AuthenticationException) ex).getError())
+			.satisfies((error) -> {
 				assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_REDIRECT_URI);
 				assertThat(error.getDescription()).contains(OidcClientMetadataClaimNames.REDIRECT_URIS);
 			});
@@ -408,9 +408,9 @@ public class OidcClientRegistrationAuthenticationProviderTests {
 		OAuth2Authorization authorization = TestOAuth2Authorizations
 			.authorization(registeredClient, jwtAccessToken, jwt.getClaims())
 			.build();
-		when(this.authorizationService.findByToken(eq(jwtAccessToken.getTokenValue()),
+		given(this.authorizationService.findByToken(eq(jwtAccessToken.getTokenValue()),
 				eq(OAuth2TokenType.ACCESS_TOKEN)))
-			.thenReturn(authorization);
+			.willReturn(authorization);
 
 		JwtAuthenticationToken principal = new JwtAuthenticationToken(jwt,
 				AuthorityUtils.createAuthorityList("SCOPE_client.create"));
@@ -426,8 +426,8 @@ public class OidcClientRegistrationAuthenticationProviderTests {
 
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 			.isInstanceOf(OAuth2AuthenticationException.class)
-			.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
-			.satisfies(error -> {
+			.extracting((ex) -> ((OAuth2AuthenticationException) ex).getError())
+			.satisfies((error) -> {
 				assertThat(error.getErrorCode()).isEqualTo("invalid_client_metadata");
 				assertThat(error.getDescription()).contains(OidcClientMetadataClaimNames.POST_LOGOUT_REDIRECT_URIS);
 			});
@@ -444,9 +444,9 @@ public class OidcClientRegistrationAuthenticationProviderTests {
 		OAuth2Authorization authorization = TestOAuth2Authorizations
 			.authorization(registeredClient, jwtAccessToken, jwt.getClaims())
 			.build();
-		when(this.authorizationService.findByToken(eq(jwtAccessToken.getTokenValue()),
+		given(this.authorizationService.findByToken(eq(jwtAccessToken.getTokenValue()),
 				eq(OAuth2TokenType.ACCESS_TOKEN)))
-			.thenReturn(authorization);
+			.willReturn(authorization);
 
 		JwtAuthenticationToken principal = new JwtAuthenticationToken(jwt,
 				AuthorityUtils.createAuthorityList("SCOPE_client.create"));
@@ -462,8 +462,8 @@ public class OidcClientRegistrationAuthenticationProviderTests {
 
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 			.isInstanceOf(OAuth2AuthenticationException.class)
-			.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
-			.satisfies(error -> {
+			.extracting((ex) -> ((OAuth2AuthenticationException) ex).getError())
+			.satisfies((error) -> {
 				assertThat(error.getErrorCode()).isEqualTo("invalid_client_metadata");
 				assertThat(error.getDescription()).contains(OidcClientMetadataClaimNames.POST_LOGOUT_REDIRECT_URIS);
 			});
@@ -480,9 +480,9 @@ public class OidcClientRegistrationAuthenticationProviderTests {
 		OAuth2Authorization authorization = TestOAuth2Authorizations
 			.authorization(registeredClient, jwtAccessToken, jwt.getClaims())
 			.build();
-		when(this.authorizationService.findByToken(eq(jwtAccessToken.getTokenValue()),
+		given(this.authorizationService.findByToken(eq(jwtAccessToken.getTokenValue()),
 				eq(OAuth2TokenType.ACCESS_TOKEN)))
-			.thenReturn(authorization);
+			.willReturn(authorization);
 
 		JwtAuthenticationToken principal = new JwtAuthenticationToken(jwt,
 				AuthorityUtils.createAuthorityList("SCOPE_client.create"));
@@ -544,8 +544,8 @@ public class OidcClientRegistrationAuthenticationProviderTests {
 
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 			.isInstanceOf(OAuth2AuthenticationException.class)
-			.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
-			.satisfies(error -> {
+			.extracting((ex) -> ((OAuth2AuthenticationException) ex).getError())
+			.satisfies((error) -> {
 				assertThat(error.getErrorCode()).isEqualTo(errorCode);
 				assertThat(error.getDescription()).contains(errorDescription);
 			});
@@ -560,10 +560,10 @@ public class OidcClientRegistrationAuthenticationProviderTests {
 		OAuth2Authorization authorization = TestOAuth2Authorizations
 			.authorization(registeredClient, jwtAccessToken, jwt.getClaims())
 			.build();
-		when(this.authorizationService.findByToken(eq(jwtAccessToken.getTokenValue()),
+		given(this.authorizationService.findByToken(eq(jwtAccessToken.getTokenValue()),
 				eq(OAuth2TokenType.ACCESS_TOKEN)))
-			.thenReturn(authorization);
-		when(this.jwtEncoder.encode(any())).thenReturn(createJwtClientConfiguration());
+			.willReturn(authorization);
+		given(this.jwtEncoder.encode(any())).willReturn(createJwtClientConfiguration());
 
 		JwtAuthenticationToken principal = new JwtAuthenticationToken(jwt,
 				AuthorityUtils.createAuthorityList("SCOPE_client.create"));
@@ -611,9 +611,9 @@ public class OidcClientRegistrationAuthenticationProviderTests {
 		OAuth2Authorization authorization = TestOAuth2Authorizations
 			.authorization(registeredClient, jwtAccessToken, jwt.getClaims())
 			.build();
-		when(this.authorizationService.findByToken(eq(jwtAccessToken.getTokenValue()),
+		given(this.authorizationService.findByToken(eq(jwtAccessToken.getTokenValue()),
 				eq(OAuth2TokenType.ACCESS_TOKEN)))
-			.thenReturn(authorization);
+			.willReturn(authorization);
 
 		doReturn(null).when(this.tokenGenerator).generate(any());
 
@@ -635,8 +635,8 @@ public class OidcClientRegistrationAuthenticationProviderTests {
 
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 			.isInstanceOf(OAuth2AuthenticationException.class)
-			.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
-			.satisfies(error -> {
+			.extracting((ex) -> ((OAuth2AuthenticationException) ex).getError())
+			.satisfies((error) -> {
 				assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.SERVER_ERROR);
 				assertThat(error.getDescription())
 					.contains("The token generator failed to generate the registration access token.");
@@ -652,10 +652,10 @@ public class OidcClientRegistrationAuthenticationProviderTests {
 		OAuth2Authorization authorization = TestOAuth2Authorizations
 			.authorization(registeredClient, jwtAccessToken, jwt.getClaims())
 			.build();
-		when(this.authorizationService.findByToken(eq(jwtAccessToken.getTokenValue()),
+		given(this.authorizationService.findByToken(eq(jwtAccessToken.getTokenValue()),
 				eq(OAuth2TokenType.ACCESS_TOKEN)))
-			.thenReturn(authorization);
-		when(this.jwtEncoder.encode(any())).thenReturn(createJwtClientConfiguration());
+			.willReturn(authorization);
+		given(this.jwtEncoder.encode(any())).willReturn(createJwtClientConfiguration());
 
 		JwtAuthenticationToken principal = new JwtAuthenticationToken(jwt,
 				AuthorityUtils.createAuthorityList("SCOPE_client.create"));
@@ -734,7 +734,7 @@ public class OidcClientRegistrationAuthenticationProviderTests {
 
 		List<String> grantTypes = new ArrayList<>();
 		registeredClientResult.getAuthorizationGrantTypes()
-			.forEach(authorizationGrantType -> grantTypes.add(authorizationGrantType.getValue()));
+			.forEach((authorizationGrantType) -> grantTypes.add(authorizationGrantType.getValue()));
 		assertThat(clientRegistrationResult.getGrantTypes()).containsExactlyInAnyOrderElementsOf(grantTypes);
 
 		assertThat(clientRegistrationResult.getResponseTypes())
@@ -774,8 +774,8 @@ public class OidcClientRegistrationAuthenticationProviderTests {
 				.claim(OAuth2ParameterNames.SCOPE, scopes)
 				.build();
 		Jwt jwt = Jwt.withTokenValue("jwt-access-token")
-				.headers(headers -> headers.putAll(jwsHeader.getHeaders()))
-				.claims(claims -> claims.putAll(jwtClaimsSet.getClaims()))
+				.headers((headers) -> headers.putAll(jwsHeader.getHeaders()))
+				.claims((claims) -> claims.putAll(jwtClaimsSet.getClaims()))
 				.build();
 		// @formatter:on
 		return jwt;

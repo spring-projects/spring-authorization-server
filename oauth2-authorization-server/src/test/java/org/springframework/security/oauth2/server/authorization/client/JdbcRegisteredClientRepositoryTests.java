@@ -374,15 +374,15 @@ public class JdbcRegisteredClientRepositoryTests {
 				// @formatter:off
 				RegisteredClient.Builder builder = RegisteredClient.withId(rs.getString("id"))
 						.clientId(rs.getString("clientId"))
-						.clientIdIssuedAt(clientIdIssuedAt != null ? clientIdIssuedAt.toInstant() : null)
+						.clientIdIssuedAt((clientIdIssuedAt != null) ? clientIdIssuedAt.toInstant() : null)
 						.clientSecret(rs.getString("clientSecret"))
-						.clientSecretExpiresAt(clientSecretExpiresAt != null ? clientSecretExpiresAt.toInstant() : null)
+						.clientSecretExpiresAt((clientSecretExpiresAt != null) ? clientSecretExpiresAt.toInstant() : null)
 						.clientName(rs.getString("clientName"))
 						.clientAuthenticationMethods((authenticationMethods) ->
-								clientAuthenticationMethods.forEach(authenticationMethod ->
+								clientAuthenticationMethods.forEach((authenticationMethod) ->
 										authenticationMethods.add(resolveClientAuthenticationMethod(authenticationMethod))))
 						.authorizationGrantTypes((grantTypes) ->
-								authorizationGrantTypes.forEach(grantType ->
+								authorizationGrantTypes.forEach((grantType) ->
 										grantTypes.add(resolveAuthorizationGrantType(grantType))))
 						.redirectUris((uris) -> uris.addAll(redirectUris))
 						.postLogoutRedirectUris((uris) -> uris.addAll(postLogoutRedirectUris))

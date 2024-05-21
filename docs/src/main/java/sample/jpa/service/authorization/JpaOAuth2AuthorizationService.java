@@ -88,26 +88,21 @@ public class JpaOAuth2AuthorizationService implements OAuth2AuthorizationService
 	@Override
 	public OAuth2Authorization findByToken(String token, OAuth2TokenType tokenType) {
 		Assert.hasText(token, "token cannot be empty");
-
 		Optional<Authorization> result;
+
 		if (tokenType == null) {
 			result = this.authorizationRepository.findByStateOrAuthorizationCodeValueOrAccessTokenValueOrRefreshTokenValueOrOidcIdTokenValueOrUserCodeValueOrDeviceCodeValue(token);
-		} else if (OAuth2ParameterNames.STATE.equals(tokenType.getValue())) {
-			result = this.authorizationRepository.findByState(token);
-		} else if (OAuth2ParameterNames.CODE.equals(tokenType.getValue())) {
-			result = this.authorizationRepository.findByAuthorizationCodeValue(token);
-		} else if (OAuth2ParameterNames.ACCESS_TOKEN.equals(tokenType.getValue())) {
-			result = this.authorizationRepository.findByAccessTokenValue(token);
-		} else if (OAuth2ParameterNames.REFRESH_TOKEN.equals(tokenType.getValue())) {
-			result = this.authorizationRepository.findByRefreshTokenValue(token);
-		} else if (OidcParameterNames.ID_TOKEN.equals(tokenType.getValue())) {
-			result = this.authorizationRepository.findByOidcIdTokenValue(token);
-		} else if (OAuth2ParameterNames.USER_CODE.equals(tokenType.getValue())) {
-			result = this.authorizationRepository.findByUserCodeValue(token);
-		} else if (OAuth2ParameterNames.DEVICE_CODE.equals(tokenType.getValue())) {
-			result = this.authorizationRepository.findByDeviceCodeValue(token);
 		} else {
-			result = Optional.empty();
+			result = switch (tokenType.getValue()) {
+				case OAuth2ParameterNames.STATE -> this.authorizationRepository.findByState(token);
+				case OAuth2ParameterNames.CODE -> this.authorizationRepository.findByAuthorizationCodeValue(token);
+				case OAuth2ParameterNames.ACCESS_TOKEN -> this.authorizationRepository.findByAccessTokenValue(token);
+				case OAuth2ParameterNames.REFRESH_TOKEN -> this.authorizationRepository.findByRefreshTokenValue(token);
+				case OidcParameterNames.ID_TOKEN -> this.authorizationRepository.findByOidcIdTokenValue(token);
+				case OAuth2ParameterNames.USER_CODE -> this.authorizationRepository.findByUserCodeValue(token);
+				case OAuth2ParameterNames.DEVICE_CODE -> this.authorizationRepository.findByDeviceCodeValue(token);
+				default -> Optional.empty();
+			};
 		}
 
 		return result.map(this::toObject).orElse(null);

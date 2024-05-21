@@ -155,7 +155,6 @@ public final class InMemoryOAuth2AuthorizationService implements OAuth2Authoriza
 
 	private static boolean hasToken(OAuth2Authorization authorization, String token,
 			@Nullable OAuth2TokenType tokenType) {
-		// @formatter:off
 		if (tokenType == null) {
 			return matchesState(authorization, token) ||
 					matchesAuthorizationCode(authorization, token) ||
@@ -164,23 +163,18 @@ public final class InMemoryOAuth2AuthorizationService implements OAuth2Authoriza
 					matchesRefreshToken(authorization, token) ||
 					matchesDeviceCode(authorization, token) ||
 					matchesUserCode(authorization, token);
-		} else if (OAuth2ParameterNames.STATE.equals(tokenType.getValue())) {
-			return matchesState(authorization, token);
-		} else if (OAuth2ParameterNames.CODE.equals(tokenType.getValue())) {
-			return matchesAuthorizationCode(authorization, token);
-		} else if (OAuth2TokenType.ACCESS_TOKEN.equals(tokenType)) {
-			return matchesAccessToken(authorization, token);
-		} else if (OidcParameterNames.ID_TOKEN.equals(tokenType.getValue())) {
-			return matchesIdToken(authorization, token);
-		} else if (OAuth2TokenType.REFRESH_TOKEN.equals(tokenType)) {
-			return matchesRefreshToken(authorization, token);
-		} else if (OAuth2ParameterNames.DEVICE_CODE.equals(tokenType.getValue())) {
-			return matchesDeviceCode(authorization, token);
-		} else if (OAuth2ParameterNames.USER_CODE.equals(tokenType.getValue())) {
-			return matchesUserCode(authorization, token);
 		}
-		// @formatter:on
-		return false;
+
+		return switch (tokenType.getValue()) {
+			case OAuth2ParameterNames.STATE -> matchesState(authorization, token);
+			case OAuth2ParameterNames.CODE -> matchesAuthorizationCode(authorization, token);
+			case OAuth2ParameterNames.ACCESS_TOKEN -> matchesAccessToken(authorization, token);
+			case OidcParameterNames.ID_TOKEN -> matchesIdToken(authorization, token);
+			case OAuth2ParameterNames.REFRESH_TOKEN -> matchesRefreshToken(authorization, token);
+			case OAuth2ParameterNames.DEVICE_CODE -> matchesDeviceCode(authorization, token);
+			case OAuth2ParameterNames.USER_CODE -> matchesUserCode(authorization, token);
+			default -> false;
+		};
 	}
 
 	private static boolean matchesState(OAuth2Authorization authorization, String token) {

@@ -287,6 +287,7 @@ public class JdbcOAuth2AuthorizationService implements OAuth2AuthorizationServic
 	public OAuth2Authorization findByToken(String token, @Nullable OAuth2TokenType tokenType) {
 		Assert.hasText(token, "token cannot be empty");
 		List<SqlParameterValue> parameters = new ArrayList<>();
+
 		if (tokenType == null) {
 			parameters.add(new SqlParameterValue(Types.VARCHAR, token));
 			parameters.add(mapToSqlParameter("authorization_code_value", token));
@@ -297,35 +298,38 @@ public class JdbcOAuth2AuthorizationService implements OAuth2AuthorizationServic
 			parameters.add(mapToSqlParameter("device_code_value", token));
 			return findBy(UNKNOWN_TOKEN_TYPE_FILTER, parameters);
 		}
-		else if (OAuth2ParameterNames.STATE.equals(tokenType.getValue())) {
-			parameters.add(new SqlParameterValue(Types.VARCHAR, token));
-			return findBy(STATE_FILTER, parameters);
-		}
-		else if (OAuth2ParameterNames.CODE.equals(tokenType.getValue())) {
-			parameters.add(mapToSqlParameter("authorization_code_value", token));
-			return findBy(AUTHORIZATION_CODE_FILTER, parameters);
-		}
-		else if (OAuth2TokenType.ACCESS_TOKEN.equals(tokenType)) {
-			parameters.add(mapToSqlParameter("access_token_value", token));
-			return findBy(ACCESS_TOKEN_FILTER, parameters);
-		}
-		else if (OidcParameterNames.ID_TOKEN.equals(tokenType.getValue())) {
-			parameters.add(mapToSqlParameter("oidc_id_token_value", token));
-			return findBy(ID_TOKEN_FILTER, parameters);
-		}
-		else if (OAuth2TokenType.REFRESH_TOKEN.equals(tokenType)) {
-			parameters.add(mapToSqlParameter("refresh_token_value", token));
-			return findBy(REFRESH_TOKEN_FILTER, parameters);
-		}
-		else if (OAuth2ParameterNames.USER_CODE.equals(tokenType.getValue())) {
-			parameters.add(mapToSqlParameter("user_code_value", token));
-			return findBy(USER_CODE_FILTER, parameters);
-		}
-		else if (OAuth2ParameterNames.DEVICE_CODE.equals(tokenType.getValue())) {
-			parameters.add(mapToSqlParameter("device_code_value", token));
-			return findBy(DEVICE_CODE_FILTER, parameters);
-		}
-		return null;
+
+		return switch (tokenType.getValue()) {
+			case OAuth2ParameterNames.STATE -> {
+				parameters.add(new SqlParameterValue(Types.VARCHAR, token));
+				yield findBy(STATE_FILTER, parameters);
+			}
+			case OAuth2ParameterNames.CODE -> {
+				parameters.add(mapToSqlParameter("authorization_code_value", token));
+				yield findBy(AUTHORIZATION_CODE_FILTER, parameters);
+			}
+			case OAuth2ParameterNames.ACCESS_TOKEN -> {
+				parameters.add(mapToSqlParameter("access_token_value", token));
+				yield findBy(ACCESS_TOKEN_FILTER, parameters);
+			}
+			case OidcParameterNames.ID_TOKEN -> {
+				parameters.add(mapToSqlParameter("oidc_id_token_value", token));
+				yield findBy(ID_TOKEN_FILTER, parameters);
+			}
+			case OAuth2ParameterNames.REFRESH_TOKEN -> {
+				parameters.add(mapToSqlParameter("refresh_token_value", token));
+				yield findBy(REFRESH_TOKEN_FILTER, parameters);
+			}
+			case OAuth2ParameterNames.USER_CODE -> {
+				parameters.add(mapToSqlParameter("user_code_value", token));
+				yield findBy(USER_CODE_FILTER, parameters);
+			}
+			case OAuth2ParameterNames.DEVICE_CODE -> {
+				parameters.add(mapToSqlParameter("device_code_value", token));
+				yield findBy(DEVICE_CODE_FILTER, parameters);
+			}
+			default -> null;
+		};
 	}
 
 	private OAuth2Authorization findBy(String filter, List<SqlParameterValue> parameters) {

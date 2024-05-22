@@ -1,0 +1,22 @@
+name: Update Antora UI Spring
+
+on:
+  schedule:
+    - cron: '0 10 * * *' # Once per day at 10am UTC
+  workflow_dispatch:
+
+permissions:
+  pull-requests: write
+  issues: write
+  contents: write
+
+jobs:
+  update-antora-ui-spring-docs-build:
+    runs-on: ubuntu-latest
+    name: Update on docs-build
+    steps:
+      - uses: spring-io/spring-doc-actions/update-antora-spring-ui@17ed79ea5fbd65813c69ef1062a024d4a37ff0ca
+        name: Update
+        with:
+          docs-branch: 'docs-build'
+          token: ${{ secrets.GITHUB_TOKEN }}

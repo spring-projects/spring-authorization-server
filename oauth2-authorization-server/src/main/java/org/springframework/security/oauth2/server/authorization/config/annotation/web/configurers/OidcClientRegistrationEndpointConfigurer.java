@@ -46,8 +46,6 @@ import org.springframework.security.web.util.matcher.OrRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
 
-import static org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2ConfigurerUtils.withMultipleIssuersPattern;
-
 /**
  * Configurer for OpenID Connect 1.0 Dynamic Client Registration Endpoint.
  *
@@ -194,7 +192,8 @@ public final class OidcClientRegistrationEndpointConfigurer extends AbstractOAut
 		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils
 			.getAuthorizationServerSettings(httpSecurity);
 		String clientRegistrationEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed()
-				? withMultipleIssuersPattern(authorizationServerSettings.getOidcClientRegistrationEndpoint())
+				? OAuth2ConfigurerUtils
+					.withMultipleIssuersPattern(authorizationServerSettings.getOidcClientRegistrationEndpoint())
 				: authorizationServerSettings.getOidcClientRegistrationEndpoint();
 		this.requestMatcher = new OrRequestMatcher(
 				new AntPathRequestMatcher(clientRegistrationEndpointUri, HttpMethod.POST.name()),
@@ -216,7 +215,8 @@ public final class OidcClientRegistrationEndpointConfigurer extends AbstractOAut
 			.getAuthorizationServerSettings(httpSecurity);
 
 		String clientRegistrationEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed()
-				? withMultipleIssuersPattern(authorizationServerSettings.getOidcClientRegistrationEndpoint())
+				? OAuth2ConfigurerUtils
+					.withMultipleIssuersPattern(authorizationServerSettings.getOidcClientRegistrationEndpoint())
 				: authorizationServerSettings.getOidcClientRegistrationEndpoint();
 		OidcClientRegistrationEndpointFilter oidcClientRegistrationEndpointFilter = new OidcClientRegistrationEndpointFilter(
 				authenticationManager, clientRegistrationEndpointUri);

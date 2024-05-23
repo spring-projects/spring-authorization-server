@@ -66,7 +66,7 @@ public final class X509ClientCertificateAuthenticationConverter implements Authe
 		Map<String, Object> additionalParameters = OAuth2EndpointUtils
 			.getParametersIfMatchesAuthorizationCodeGrantRequest(request, OAuth2ParameterNames.CLIENT_ID);
 
-		ClientAuthenticationMethod clientAuthenticationMethod = clientCertificateChain.length == 1
+		ClientAuthenticationMethod clientAuthenticationMethod = (clientCertificateChain.length == 1)
 				? ClientAuthenticationMethod.SELF_SIGNED_TLS_CLIENT_AUTH : ClientAuthenticationMethod.TLS_CLIENT_AUTH;
 
 		return new OAuth2ClientAuthenticationToken(clientId, clientAuthenticationMethod, clientCertificateChain,

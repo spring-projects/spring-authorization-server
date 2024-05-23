@@ -49,8 +49,6 @@ import org.springframework.security.web.util.matcher.OrRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
 
-import static org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2ConfigurerUtils.withMultipleIssuersPattern;
-
 /**
  * Configurer for OpenID Connect 1.0 UserInfo Endpoint.
  *
@@ -212,7 +210,8 @@ public final class OidcUserInfoEndpointConfigurer extends AbstractOAuth2Configur
 		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils
 			.getAuthorizationServerSettings(httpSecurity);
 		String userInfoEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed()
-				? withMultipleIssuersPattern(authorizationServerSettings.getOidcUserInfoEndpoint())
+				? OAuth2ConfigurerUtils
+					.withMultipleIssuersPattern(authorizationServerSettings.getOidcUserInfoEndpoint())
 				: authorizationServerSettings.getOidcUserInfoEndpoint();
 		this.requestMatcher = new OrRequestMatcher(
 				new AntPathRequestMatcher(userInfoEndpointUri, HttpMethod.GET.name()),
@@ -234,7 +233,8 @@ public final class OidcUserInfoEndpointConfigurer extends AbstractOAuth2Configur
 			.getAuthorizationServerSettings(httpSecurity);
 
 		String userInfoEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed()
-				? withMultipleIssuersPattern(authorizationServerSettings.getOidcUserInfoEndpoint())
+				? OAuth2ConfigurerUtils
+					.withMultipleIssuersPattern(authorizationServerSettings.getOidcUserInfoEndpoint())
 				: authorizationServerSettings.getOidcUserInfoEndpoint();
 		OidcUserInfoEndpointFilter oidcUserInfoEndpointFilter = new OidcUserInfoEndpointFilter(authenticationManager,
 				userInfoEndpointUri);

@@ -43,8 +43,6 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
 
-import static org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2ConfigurerUtils.withMultipleIssuersPattern;
-
 /**
  * Configurer for the OAuth 2.0 Token Introspection Endpoint.
  *
@@ -184,7 +182,8 @@ public final class OAuth2TokenIntrospectionEndpointConfigurer extends AbstractOA
 		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils
 			.getAuthorizationServerSettings(httpSecurity);
 		String tokenIntrospectionEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed()
-				? withMultipleIssuersPattern(authorizationServerSettings.getTokenIntrospectionEndpoint())
+				? OAuth2ConfigurerUtils
+					.withMultipleIssuersPattern(authorizationServerSettings.getTokenIntrospectionEndpoint())
 				: authorizationServerSettings.getTokenIntrospectionEndpoint();
 		this.requestMatcher = new AntPathRequestMatcher(tokenIntrospectionEndpointUri, HttpMethod.POST.name());
 
@@ -203,7 +202,8 @@ public final class OAuth2TokenIntrospectionEndpointConfigurer extends AbstractOA
 		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils
 			.getAuthorizationServerSettings(httpSecurity);
 		String tokenIntrospectionEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed()
-				? withMultipleIssuersPattern(authorizationServerSettings.getTokenIntrospectionEndpoint())
+				? OAuth2ConfigurerUtils
+					.withMultipleIssuersPattern(authorizationServerSettings.getTokenIntrospectionEndpoint())
 				: authorizationServerSettings.getTokenIntrospectionEndpoint();
 		OAuth2TokenIntrospectionEndpointFilter introspectionEndpointFilter = new OAuth2TokenIntrospectionEndpointFilter(
 				authenticationManager, tokenIntrospectionEndpointUri);

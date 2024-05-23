@@ -56,8 +56,6 @@ import org.springframework.security.web.util.matcher.OrRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
 
-import static org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2ConfigurerUtils.withMultipleIssuersPattern;
-
 /**
  * An {@link AbstractHttpConfigurer} for OAuth 2.0 Authorization Server support.
  *
@@ -327,7 +325,7 @@ public final class OAuth2AuthorizationServerConfigurer
 			requestMatchers.add(configurer.getRequestMatcher());
 		});
 		String jwkSetEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed()
-				? withMultipleIssuersPattern(authorizationServerSettings.getJwkSetEndpoint())
+				? OAuth2ConfigurerUtils.withMultipleIssuersPattern(authorizationServerSettings.getJwkSetEndpoint())
 				: authorizationServerSettings.getJwkSetEndpoint();
 		requestMatchers.add(new AntPathRequestMatcher(jwkSetEndpointUri, HttpMethod.GET.name()));
 		this.endpointsMatcher = new OrRequestMatcher(requestMatchers);
@@ -357,7 +355,7 @@ public final class OAuth2AuthorizationServerConfigurer
 		JWKSource<com.nimbusds.jose.proc.SecurityContext> jwkSource = OAuth2ConfigurerUtils.getJwkSource(httpSecurity);
 		if (jwkSource != null) {
 			String jwkSetEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed()
-					? withMultipleIssuersPattern(authorizationServerSettings.getJwkSetEndpoint())
+					? OAuth2ConfigurerUtils.withMultipleIssuersPattern(authorizationServerSettings.getJwkSetEndpoint())
 					: authorizationServerSettings.getJwkSetEndpoint();
 			NimbusJwkSetEndpointFilter jwkSetEndpointFilter = new NimbusJwkSetEndpointFilter(jwkSource,
 					jwkSetEndpointUri);

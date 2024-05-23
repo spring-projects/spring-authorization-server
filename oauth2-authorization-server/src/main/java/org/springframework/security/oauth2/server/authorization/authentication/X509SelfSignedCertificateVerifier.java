@@ -108,7 +108,7 @@ final class X509SelfSignedCertificateVerifier implements Consumer<OAuth2ClientAu
 		throw new OAuth2AuthenticationException(error, error.toString(), cause);
 	}
 
-	private static class JwkSetSupplier implements Function<RegisteredClient, JWKSet> {
+	private static final class JwkSetSupplier implements Function<RegisteredClient, JWKSet> {
 
 		private static final MediaType APPLICATION_JWK_SET_JSON = new MediaType("application", "jwk-set+json");
 
@@ -168,7 +168,7 @@ final class X509SelfSignedCertificateVerifier implements Consumer<OAuth2ClientAu
 			return jwkSet;
 		}
 
-		private class JwkSetHolder implements Supplier<JWKSet> {
+		private final class JwkSetHolder implements Supplier<JWKSet> {
 
 			private final ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock();
 

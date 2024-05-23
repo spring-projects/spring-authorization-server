@@ -42,8 +42,6 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
 
-import static org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2ConfigurerUtils.withMultipleIssuersPattern;
-
 /**
  * Configurer for the OAuth 2.0 Token Revocation Endpoint.
  *
@@ -183,7 +181,8 @@ public final class OAuth2TokenRevocationEndpointConfigurer extends AbstractOAuth
 		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils
 			.getAuthorizationServerSettings(httpSecurity);
 		String tokenRevocationEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed()
-				? withMultipleIssuersPattern(authorizationServerSettings.getTokenRevocationEndpoint())
+				? OAuth2ConfigurerUtils
+					.withMultipleIssuersPattern(authorizationServerSettings.getTokenRevocationEndpoint())
 				: authorizationServerSettings.getTokenRevocationEndpoint();
 		this.requestMatcher = new AntPathRequestMatcher(tokenRevocationEndpointUri, HttpMethod.POST.name());
 
@@ -203,7 +202,8 @@ public final class OAuth2TokenRevocationEndpointConfigurer extends AbstractOAuth
 			.getAuthorizationServerSettings(httpSecurity);
 
 		String tokenRevocationEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed()
-				? withMultipleIssuersPattern(authorizationServerSettings.getTokenRevocationEndpoint())
+				? OAuth2ConfigurerUtils
+					.withMultipleIssuersPattern(authorizationServerSettings.getTokenRevocationEndpoint())
 				: authorizationServerSettings.getTokenRevocationEndpoint();
 		OAuth2TokenRevocationEndpointFilter revocationEndpointFilter = new OAuth2TokenRevocationEndpointFilter(
 				authenticationManager, tokenRevocationEndpointUri);

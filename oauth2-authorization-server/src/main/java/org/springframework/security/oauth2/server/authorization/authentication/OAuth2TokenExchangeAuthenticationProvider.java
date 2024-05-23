@@ -52,8 +52,6 @@ import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
-import static org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthenticationProviderUtils.getAuthenticatedClientElseThrowInvalidClient;
-
 /**
  * An {@link AuthenticationProvider} implementation for the OAuth 2.0 Token Exchange
  * Grant.
@@ -103,8 +101,8 @@ public final class OAuth2TokenExchangeAuthenticationProvider implements Authenti
 	public Authentication authenticate(Authentication authentication) throws AuthenticationException {
 		OAuth2TokenExchangeAuthenticationToken tokenExchangeAuthentication = (OAuth2TokenExchangeAuthenticationToken) authentication;
 
-		OAuth2ClientAuthenticationToken clientPrincipal = getAuthenticatedClientElseThrowInvalidClient(
-				tokenExchangeAuthentication);
+		OAuth2ClientAuthenticationToken clientPrincipal = OAuth2AuthenticationProviderUtils
+			.getAuthenticatedClientElseThrowInvalidClient(tokenExchangeAuthentication);
 		RegisteredClient registeredClient = clientPrincipal.getRegisteredClient();
 
 		if (this.logger.isTraceEnabled()) {

@@ -44,8 +44,6 @@ import org.springframework.security.web.util.matcher.OrRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
 
-import static org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2ConfigurerUtils.withMultipleIssuersPattern;
-
 /**
  * Configurer for OpenID Connect 1.0 RP-Initiated Logout Endpoint.
  *
@@ -169,7 +167,7 @@ public final class OidcLogoutEndpointConfigurer extends AbstractOAuth2Configurer
 		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils
 			.getAuthorizationServerSettings(httpSecurity);
 		String logoutEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed()
-				? withMultipleIssuersPattern(authorizationServerSettings.getOidcLogoutEndpoint())
+				? OAuth2ConfigurerUtils.withMultipleIssuersPattern(authorizationServerSettings.getOidcLogoutEndpoint())
 				: authorizationServerSettings.getOidcLogoutEndpoint();
 		this.requestMatcher = new OrRequestMatcher(new AntPathRequestMatcher(logoutEndpointUri, HttpMethod.GET.name()),
 				new AntPathRequestMatcher(logoutEndpointUri, HttpMethod.POST.name()));
@@ -190,7 +188,7 @@ public final class OidcLogoutEndpointConfigurer extends AbstractOAuth2Configurer
 			.getAuthorizationServerSettings(httpSecurity);
 
 		String logoutEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed()
-				? withMultipleIssuersPattern(authorizationServerSettings.getOidcLogoutEndpoint())
+				? OAuth2ConfigurerUtils.withMultipleIssuersPattern(authorizationServerSettings.getOidcLogoutEndpoint())
 				: authorizationServerSettings.getOidcLogoutEndpoint();
 		OidcLogoutEndpointFilter oidcLogoutEndpointFilter = new OidcLogoutEndpointFilter(authenticationManager,
 				logoutEndpointUri);

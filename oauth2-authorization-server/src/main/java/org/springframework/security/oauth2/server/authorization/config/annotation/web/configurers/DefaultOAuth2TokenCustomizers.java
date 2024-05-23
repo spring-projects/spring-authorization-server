@@ -44,6 +44,9 @@ import org.springframework.security.oauth2.server.authorization.token.OAuth2Toke
  */
 final class DefaultOAuth2TokenCustomizers {
 
+	private DefaultOAuth2TokenCustomizers() {
+	}
+
 	static OAuth2TokenCustomizer<JwtEncodingContext> jwtCustomizer() {
 		return (context) -> context.getClaims().claims((claims) -> customize(context, claims));
 	}

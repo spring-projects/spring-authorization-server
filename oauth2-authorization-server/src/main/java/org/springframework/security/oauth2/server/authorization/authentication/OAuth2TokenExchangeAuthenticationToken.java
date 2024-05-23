@@ -80,10 +80,10 @@ public class OAuth2TokenExchangeAuthenticationToken extends OAuth2AuthorizationG
 		this.actorToken = actorToken;
 		this.actorTokenType = actorTokenType;
 		this.resources = Collections
-			.unmodifiableSet(resources != null ? new LinkedHashSet<>(resources) : Collections.emptySet());
+			.unmodifiableSet((resources != null) ? new LinkedHashSet<>(resources) : Collections.emptySet());
 		this.audiences = Collections
-			.unmodifiableSet(audiences != null ? new LinkedHashSet<>(audiences) : Collections.emptySet());
-		this.scopes = Collections.unmodifiableSet(scopes != null ? new HashSet<>(scopes) : Collections.emptySet());
+			.unmodifiableSet((audiences != null) ? new LinkedHashSet<>(audiences) : Collections.emptySet());
+		this.scopes = Collections.unmodifiableSet((scopes != null) ? new HashSet<>(scopes) : Collections.emptySet());
 	}
 
 	/**

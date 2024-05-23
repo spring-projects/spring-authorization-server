@@ -45,8 +45,6 @@ import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
-import static org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2ConfigurerUtils.withMultipleIssuersPattern;
-
 /**
  * Configurer for the OAuth 2.0 Device Authorization Endpoint.
  *
@@ -201,7 +199,8 @@ public final class OAuth2DeviceAuthorizationEndpointConfigurer extends AbstractO
 		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils
 			.getAuthorizationServerSettings(builder);
 		String deviceAuthorizationEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed()
-				? withMultipleIssuersPattern(authorizationServerSettings.getDeviceAuthorizationEndpoint())
+				? OAuth2ConfigurerUtils
+					.withMultipleIssuersPattern(authorizationServerSettings.getDeviceAuthorizationEndpoint())
 				: authorizationServerSettings.getDeviceAuthorizationEndpoint();
 		this.requestMatcher = new AntPathRequestMatcher(deviceAuthorizationEndpointUri, HttpMethod.POST.name());
 
@@ -221,7 +220,8 @@ public final class OAuth2DeviceAuthorizationEndpointConfigurer extends AbstractO
 			.getAuthorizationServerSettings(builder);
 
 		String deviceAuthorizationEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed()
-				? withMultipleIssuersPattern(authorizationServerSettings.getDeviceAuthorizationEndpoint())
+				? OAuth2ConfigurerUtils
+					.withMultipleIssuersPattern(authorizationServerSettings.getDeviceAuthorizationEndpoint())
 				: authorizationServerSettings.getDeviceAuthorizationEndpoint();
 		OAuth2DeviceAuthorizationEndpointFilter deviceAuthorizationEndpointFilter = new OAuth2DeviceAuthorizationEndpointFilter(
 				authenticationManager, deviceAuthorizationEndpointUri);

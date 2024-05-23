@@ -41,7 +41,7 @@ public class OAuth2TokenExchangeCompositeAuthenticationToken extends AbstractAut
 
 	public OAuth2TokenExchangeCompositeAuthenticationToken(Authentication subject,
 			List<OAuth2TokenExchangeActor> actors) {
-		super(subject != null ? subject.getAuthorities() : null);
+		super((subject != null) ? subject.getAuthorities() : null);
 		Assert.notNull(subject, "subject cannot be null");
 		Assert.notNull(actors, "actors cannot be null");
 		this.subject = subject;

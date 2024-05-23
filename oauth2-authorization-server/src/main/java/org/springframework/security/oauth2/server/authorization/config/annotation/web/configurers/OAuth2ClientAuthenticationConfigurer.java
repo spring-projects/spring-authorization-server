@@ -53,8 +53,6 @@ import org.springframework.security.web.util.matcher.OrRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
 
-import static org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2ConfigurerUtils.withMultipleIssuersPattern;
-
 /**
  * Configurer for OAuth 2.0 Client Authentication.
  *
@@ -184,16 +182,19 @@ public final class OAuth2ClientAuthenticationConfigurer extends AbstractOAuth2Co
 		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils
 			.getAuthorizationServerSettings(httpSecurity);
 		String tokenEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed()
-				? withMultipleIssuersPattern(authorizationServerSettings.getTokenEndpoint())
+				? OAuth2ConfigurerUtils.withMultipleIssuersPattern(authorizationServerSettings.getTokenEndpoint())
 				: authorizationServerSettings.getTokenEndpoint();
 		String tokenIntrospectionEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed()
-				? withMultipleIssuersPattern(authorizationServerSettings.getTokenIntrospectionEndpoint())
+				? OAuth2ConfigurerUtils
+					.withMultipleIssuersPattern(authorizationServerSettings.getTokenIntrospectionEndpoint())
 				: authorizationServerSettings.getTokenIntrospectionEndpoint();
 		String tokenRevocationEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed()
-				? withMultipleIssuersPattern(authorizationServerSettings.getTokenRevocationEndpoint())
+				? OAuth2ConfigurerUtils
+					.withMultipleIssuersPattern(authorizationServerSettings.getTokenRevocationEndpoint())
 				: authorizationServerSettings.getTokenRevocationEndpoint();
 		String deviceAuthorizationEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed()
-				? withMultipleIssuersPattern(authorizationServerSettings.getDeviceAuthorizationEndpoint())
+				? OAuth2ConfigurerUtils
+					.withMultipleIssuersPattern(authorizationServerSettings.getDeviceAuthorizationEndpoint())
 				: authorizationServerSettings.getDeviceAuthorizationEndpoint();
 		this.requestMatcher = new OrRequestMatcher(new AntPathRequestMatcher(tokenEndpointUri, HttpMethod.POST.name()),
 				new AntPathRequestMatcher(tokenIntrospectionEndpointUri, HttpMethod.POST.name()),

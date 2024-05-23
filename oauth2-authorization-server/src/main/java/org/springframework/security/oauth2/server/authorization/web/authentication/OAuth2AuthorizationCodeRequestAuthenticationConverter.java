@@ -145,10 +145,10 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationConverter impleme
 	}
 
 	private static RequestMatcher createOidcRequestMatcher() {
-		RequestMatcher postMethodMatcher = request -> "POST".equals(request.getMethod());
-		RequestMatcher responseTypeParameterMatcher = request -> request
-			.getParameter(OAuth2ParameterNames.RESPONSE_TYPE) != null;
-		RequestMatcher openidScopeMatcher = request -> {
+		RequestMatcher postMethodMatcher = (request) -> "POST".equals(request.getMethod());
+		RequestMatcher responseTypeParameterMatcher = (
+				request) -> request.getParameter(OAuth2ParameterNames.RESPONSE_TYPE) != null;
+		RequestMatcher openidScopeMatcher = (request) -> {
 			String scope = request.getParameter(OAuth2ParameterNames.SCOPE);
 			return StringUtils.hasText(scope) && scope.contains(OidcScopes.OPENID);
 		};

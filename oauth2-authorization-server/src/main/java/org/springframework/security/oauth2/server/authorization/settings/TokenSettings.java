@@ -76,6 +76,8 @@ public final class TokenSettings extends AbstractSettings {
 	 * Returns {@code true} if refresh tokens are reused when returning the access token
 	 * response, or {@code false} if a new refresh token is issued. The default is
 	 * {@code true}.
+	 * @return {@code true} if refresh tokens are reused when returning the access token
+	 * response, {@code false} otherwise
 	 */
 	public boolean isReuseRefreshTokens() {
 		return getSetting(ConfigurationSettingNames.Token.REUSE_REFRESH_TOKENS);
@@ -135,13 +137,13 @@ public final class TokenSettings extends AbstractSettings {
 	 */
 	public static Builder withSettings(Map<String, Object> settings) {
 		Assert.notEmpty(settings, "settings cannot be empty");
-		return new Builder().settings(s -> s.putAll(settings));
+		return new Builder().settings((s) -> s.putAll(settings));
 	}
 
 	/**
 	 * A builder for {@link TokenSettings}.
 	 */
-	public final static class Builder extends AbstractBuilder<TokenSettings, Builder> {
+	public static final class Builder extends AbstractBuilder<TokenSettings, Builder> {
 
 		private Builder() {
 		}

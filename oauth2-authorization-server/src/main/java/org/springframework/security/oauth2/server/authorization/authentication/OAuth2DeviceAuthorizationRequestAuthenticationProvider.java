@@ -50,8 +50,6 @@ import org.springframework.security.oauth2.server.authorization.token.OAuth2Toke
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 
-import static org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthenticationProviderUtils.getAuthenticatedClientElseThrowInvalidClient;
-
 /**
  * An {@link AuthenticationProvider} implementation for the Device Authorization Request
  * used in the OAuth 2.0 Device Authorization Grant.
@@ -98,8 +96,8 @@ public final class OAuth2DeviceAuthorizationRequestAuthenticationProvider implem
 	public Authentication authenticate(Authentication authentication) throws AuthenticationException {
 		OAuth2DeviceAuthorizationRequestAuthenticationToken deviceAuthorizationRequestAuthentication = (OAuth2DeviceAuthorizationRequestAuthenticationToken) authentication;
 
-		OAuth2ClientAuthenticationToken clientPrincipal = getAuthenticatedClientElseThrowInvalidClient(
-				deviceAuthorizationRequestAuthentication);
+		OAuth2ClientAuthenticationToken clientPrincipal = OAuth2AuthenticationProviderUtils
+			.getAuthenticatedClientElseThrowInvalidClient(deviceAuthorizationRequestAuthentication);
 		RegisteredClient registeredClient = clientPrincipal.getRegisteredClient();
 
 		if (this.logger.isTraceEnabled()) {

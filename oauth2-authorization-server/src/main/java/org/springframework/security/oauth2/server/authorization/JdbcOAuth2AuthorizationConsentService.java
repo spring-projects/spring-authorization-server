@@ -71,17 +71,6 @@ import org.springframework.util.StringUtils;
 @ImportRuntimeHints(JdbcOAuth2AuthorizationConsentService.JdbcOAuth2AuthorizationConsentServiceRuntimeHintsRegistrar.class)
 public class JdbcOAuth2AuthorizationConsentService implements OAuth2AuthorizationConsentService {
 
-	static class JdbcOAuth2AuthorizationConsentServiceRuntimeHintsRegistrar implements RuntimeHintsRegistrar {
-
-		@Override
-		public void registerHints(RuntimeHints hints, ClassLoader classLoader) {
-			hints.resources()
-				.registerResource(new ClassPathResource(
-						"org/springframework/security/oauth2/server/authorization/oauth2-authorization-consent-schema.sql"));
-		}
-
-	}
-
 	// @formatter:off
 	private static final String COLUMN_NAMES = "registered_client_id, "
 			+ "principal_name, "
@@ -284,6 +273,17 @@ public class JdbcOAuth2AuthorizationConsentService implements OAuth2Authorizatio
 			parameters
 				.add(new SqlParameterValue(Types.VARCHAR, StringUtils.collectionToDelimitedString(authorities, ",")));
 			return parameters;
+		}
+
+	}
+
+	static class JdbcOAuth2AuthorizationConsentServiceRuntimeHintsRegistrar implements RuntimeHintsRegistrar {
+
+		@Override
+		public void registerHints(RuntimeHints hints, ClassLoader classLoader) {
+			hints.resources()
+				.registerResource(new ClassPathResource(
+						"org/springframework/security/oauth2/server/authorization/oauth2-authorization-consent-schema.sql"));
 		}
 
 	}

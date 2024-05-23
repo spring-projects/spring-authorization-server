@@ -61,7 +61,7 @@ public class OAuth2DeviceVerificationAuthenticationToken extends AbstractAuthent
 		this.principal = principal;
 		this.userCode = userCode;
 		this.additionalParameters = Collections.unmodifiableMap(
-				additionalParameters != null ? new HashMap<>(additionalParameters) : Collections.emptyMap());
+				(additionalParameters != null) ? new HashMap<>(additionalParameters) : Collections.emptyMap());
 		this.clientId = null;
 	}
 

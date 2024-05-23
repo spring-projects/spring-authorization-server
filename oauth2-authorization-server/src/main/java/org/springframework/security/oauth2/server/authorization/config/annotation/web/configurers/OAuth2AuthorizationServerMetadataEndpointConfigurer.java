@@ -45,6 +45,7 @@ public final class OAuth2AuthorizationServerMetadataEndpointConfigurer extends A
 
 	/**
 	 * Restrict for internal use only.
+	 * @param objectPostProcessor an {@code ObjectPostProcessor}
 	 */
 	OAuth2AuthorizationServerMetadataEndpointConfigurer(ObjectPostProcessor<Object> objectPostProcessor) {
 		super(objectPostProcessor);
@@ -67,7 +68,7 @@ public final class OAuth2AuthorizationServerMetadataEndpointConfigurer extends A
 
 	void addDefaultAuthorizationServerMetadataCustomizer(
 			Consumer<OAuth2AuthorizationServerMetadata.Builder> defaultAuthorizationServerMetadataCustomizer) {
-		this.defaultAuthorizationServerMetadataCustomizer = this.defaultAuthorizationServerMetadataCustomizer == null
+		this.defaultAuthorizationServerMetadataCustomizer = (this.defaultAuthorizationServerMetadataCustomizer == null)
 				? defaultAuthorizationServerMetadataCustomizer : this.defaultAuthorizationServerMetadataCustomizer
 					.andThen(defaultAuthorizationServerMetadataCustomizer);
 	}
@@ -101,9 +102,9 @@ public final class OAuth2AuthorizationServerMetadataEndpointConfigurer extends A
 				authorizationServerMetadataCustomizer = this.defaultAuthorizationServerMetadataCustomizer;
 			}
 			if (this.authorizationServerMetadataCustomizer != null) {
-				authorizationServerMetadataCustomizer = authorizationServerMetadataCustomizer == null
-						? this.authorizationServerMetadataCustomizer
-						: authorizationServerMetadataCustomizer.andThen(this.authorizationServerMetadataCustomizer);
+				authorizationServerMetadataCustomizer = (authorizationServerMetadataCustomizer != null)
+						? authorizationServerMetadataCustomizer.andThen(this.authorizationServerMetadataCustomizer)
+						: this.authorizationServerMetadataCustomizer;
 			}
 		}
 		return authorizationServerMetadataCustomizer;

@@ -60,11 +60,11 @@ import org.springframework.security.oauth2.server.authorization.token.OAuth2Toke
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 /**
  * Tests for {@link OAuth2ClientCredentialsAuthenticationProvider}.
@@ -159,7 +159,7 @@ public class OAuth2ClientCredentialsAuthenticationProviderTests {
 
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 			.isInstanceOf(OAuth2AuthenticationException.class)
-			.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+			.extracting((ex) -> ((OAuth2AuthenticationException) ex).getError())
 			.extracting("errorCode")
 			.isEqualTo(OAuth2ErrorCodes.INVALID_CLIENT);
 	}
@@ -175,7 +175,7 @@ public class OAuth2ClientCredentialsAuthenticationProviderTests {
 
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 			.isInstanceOf(OAuth2AuthenticationException.class)
-			.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+			.extracting((ex) -> ((OAuth2AuthenticationException) ex).getError())
 			.extracting("errorCode")
 			.isEqualTo(OAuth2ErrorCodes.INVALID_CLIENT);
 	}
@@ -183,7 +183,7 @@ public class OAuth2ClientCredentialsAuthenticationProviderTests {
 	@Test
 	public void authenticateWhenClientNotAuthorizedToRequestTokenThenThrowOAuth2AuthenticationException() {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient2()
-			.authorizationGrantTypes(grantTypes -> grantTypes.remove(AuthorizationGrantType.CLIENT_CREDENTIALS))
+			.authorizationGrantTypes((grantTypes) -> grantTypes.remove(AuthorizationGrantType.CLIENT_CREDENTIALS))
 			.build();
 		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient,
 				ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
@@ -192,7 +192,7 @@ public class OAuth2ClientCredentialsAuthenticationProviderTests {
 
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 			.isInstanceOf(OAuth2AuthenticationException.class)
-			.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+			.extracting((ex) -> ((OAuth2AuthenticationException) ex).getError())
 			.extracting("errorCode")
 			.isEqualTo(OAuth2ErrorCodes.UNAUTHORIZED_CLIENT);
 	}
@@ -207,7 +207,7 @@ public class OAuth2ClientCredentialsAuthenticationProviderTests {
 
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 			.isInstanceOf(OAuth2AuthenticationException.class)
-			.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+			.extracting((ex) -> ((OAuth2AuthenticationException) ex).getError())
 			.extracting("errorCode")
 			.isEqualTo(OAuth2ErrorCodes.INVALID_SCOPE);
 	}
@@ -221,7 +221,7 @@ public class OAuth2ClientCredentialsAuthenticationProviderTests {
 		OAuth2ClientCredentialsAuthenticationToken authentication = new OAuth2ClientCredentialsAuthenticationToken(
 				clientPrincipal, requestedScope, null);
 
-		when(this.jwtEncoder.encode(any())).thenReturn(createJwt(Collections.singleton("mapped-scoped")));
+		given(this.jwtEncoder.encode(any())).willReturn(createJwt(Collections.singleton("mapped-scoped")));
 
 		OAuth2AccessTokenAuthenticationToken accessTokenAuthentication = (OAuth2AccessTokenAuthenticationToken) this.authenticationProvider
 			.authenticate(authentication);
@@ -236,7 +236,7 @@ public class OAuth2ClientCredentialsAuthenticationProviderTests {
 		OAuth2ClientCredentialsAuthenticationToken authentication = new OAuth2ClientCredentialsAuthenticationToken(
 				clientPrincipal, null, null);
 
-		when(this.jwtEncoder.encode(any())).thenReturn(createJwt(Collections.singleton("mapped-scoped")));
+		given(this.jwtEncoder.encode(any())).willReturn(createJwt(Collections.singleton("mapped-scoped")));
 
 		OAuth2AccessTokenAuthenticationToken accessTokenAuthentication = (OAuth2AccessTokenAuthenticationToken) this.authenticationProvider
 			.authenticate(authentication);
@@ -255,8 +255,8 @@ public class OAuth2ClientCredentialsAuthenticationProviderTests {
 
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 			.isInstanceOf(OAuth2AuthenticationException.class)
-			.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
-			.satisfies(error -> {
+			.extracting((ex) -> ((OAuth2AuthenticationException) ex).getError())
+			.satisfies((error) -> {
 				assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.SERVER_ERROR);
 				assertThat(error.getDescription()).contains("The token generator failed to generate the access token.");
 			});
@@ -270,7 +270,7 @@ public class OAuth2ClientCredentialsAuthenticationProviderTests {
 		OAuth2ClientCredentialsAuthenticationToken authentication = new OAuth2ClientCredentialsAuthenticationToken(
 				clientPrincipal, null, null);
 
-		when(this.jwtEncoder.encode(any())).thenReturn(createJwt(registeredClient.getScopes()));
+		given(this.jwtEncoder.encode(any())).willReturn(createJwt(registeredClient.getScopes()));
 
 		OAuth2AccessTokenAuthenticationToken accessTokenAuthentication = (OAuth2AccessTokenAuthenticationToken) this.authenticationProvider
 			.authenticate(authentication);

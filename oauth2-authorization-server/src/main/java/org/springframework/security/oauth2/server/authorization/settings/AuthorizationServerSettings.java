@@ -178,13 +178,13 @@ public final class AuthorizationServerSettings extends AbstractSettings {
 	 */
 	public static Builder withSettings(Map<String, Object> settings) {
 		Assert.notEmpty(settings, "settings cannot be empty");
-		return new Builder().settings(s -> s.putAll(settings));
+		return new Builder().settings((s) -> s.putAll(settings));
 	}
 
 	/**
 	 * A builder for {@link AuthorizationServerSettings}.
 	 */
-	public final static class Builder extends AbstractBuilder<AuthorizationServerSettings, Builder> {
+	public static final class Builder extends AbstractBuilder<AuthorizationServerSettings, Builder> {
 
 		private Builder() {
 		}

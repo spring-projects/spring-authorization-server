@@ -78,6 +78,7 @@ public final class OidcClientRegistrationEndpointConfigurer extends AbstractOAut
 
 	/**
 	 * Restrict for internal use only.
+	 * @param objectPostProcessor an {@code ObjectPostProcessor}
 	 */
 	OidcClientRegistrationEndpointConfigurer(ObjectPostProcessor<Object> objectPostProcessor) {
 		super(objectPostProcessor);
@@ -205,7 +206,7 @@ public final class OidcClientRegistrationEndpointConfigurer extends AbstractOAut
 		}
 		this.authenticationProvidersConsumer.accept(authenticationProviders);
 		authenticationProviders.forEach(
-				authenticationProvider -> httpSecurity.authenticationProvider(postProcess(authenticationProvider)));
+				(authenticationProvider) -> httpSecurity.authenticationProvider(postProcess(authenticationProvider)));
 	}
 
 	@Override

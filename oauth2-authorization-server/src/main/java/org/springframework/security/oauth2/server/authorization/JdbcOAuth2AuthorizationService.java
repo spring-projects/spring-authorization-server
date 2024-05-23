@@ -97,17 +97,6 @@ import org.springframework.util.StringUtils;
 @ImportRuntimeHints(JdbcOAuth2AuthorizationService.JdbcOAuth2AuthorizationServiceRuntimeHintsRegistrar.class)
 public class JdbcOAuth2AuthorizationService implements OAuth2AuthorizationService {
 
-	static class JdbcOAuth2AuthorizationServiceRuntimeHintsRegistrar implements RuntimeHintsRegistrar {
-
-		@Override
-		public void registerHints(RuntimeHints hints, ClassLoader classLoader) {
-			hints.resources()
-				.registerResource(new ClassPathResource(
-						"org/springframework/security/oauth2/server/authorization/oauth2-authorization-schema.sql"));
-		}
-
-	}
-
 	// @formatter:off
 	private static final String COLUMN_NAMES = "id, "
 			+ "registered_client_id, "
@@ -377,6 +366,70 @@ public class JdbcOAuth2AuthorizationService implements OAuth2AuthorizationServic
 
 	protected final Function<OAuth2Authorization, List<SqlParameterValue>> getAuthorizationParametersMapper() {
 		return this.authorizationParametersMapper;
+	}
+
+	private static void initColumnMetadata(JdbcOperations jdbcOperations) {
+		columnMetadataMap = new HashMap<>();
+		ColumnMetadata columnMetadata;
+
+		columnMetadata = getColumnMetadata(jdbcOperations, "attributes", Types.BLOB);
+		columnMetadataMap.put(columnMetadata.getColumnName(), columnMetadata);
+		columnMetadata = getColumnMetadata(jdbcOperations, "authorization_code_value", Types.BLOB);
+		columnMetadataMap.put(columnMetadata.getColumnName(), columnMetadata);
+		columnMetadata = getColumnMetadata(jdbcOperations, "authorization_code_metadata", Types.BLOB);
+		columnMetadataMap.put(columnMetadata.getColumnName(), columnMetadata);
+		columnMetadata = getColumnMetadata(jdbcOperations, "access_token_value", Types.BLOB);
+		columnMetadataMap.put(columnMetadata.getColumnName(), columnMetadata);
+		columnMetadata = getColumnMetadata(jdbcOperations, "access_token_metadata", Types.BLOB);
+		columnMetadataMap.put(columnMetadata.getColumnName(), columnMetadata);
+		columnMetadata = getColumnMetadata(jdbcOperations, "oidc_id_token_value", Types.BLOB);
+		columnMetadataMap.put(columnMetadata.getColumnName(), columnMetadata);
+		columnMetadata = getColumnMetadata(jdbcOperations, "oidc_id_token_metadata", Types.BLOB);
+		columnMetadataMap.put(columnMetadata.getColumnName(), columnMetadata);
+		columnMetadata = getColumnMetadata(jdbcOperations, "refresh_token_value", Types.BLOB);
+		columnMetadataMap.put(columnMetadata.getColumnName(), columnMetadata);
+		columnMetadata = getColumnMetadata(jdbcOperations, "refresh_token_metadata", Types.BLOB);
+		columnMetadataMap.put(columnMetadata.getColumnName(), columnMetadata);
+		columnMetadata = getColumnMetadata(jdbcOperations, "user_code_value", Types.BLOB);
+		columnMetadataMap.put(columnMetadata.getColumnName(), columnMetadata);
+		columnMetadata = getColumnMetadata(jdbcOperations, "user_code_metadata", Types.BLOB);
+		columnMetadataMap.put(columnMetadata.getColumnName(), columnMetadata);
+		columnMetadata = getColumnMetadata(jdbcOperations, "device_code_value", Types.BLOB);
+		columnMetadataMap.put(columnMetadata.getColumnName(), columnMetadata);
+		columnMetadata = getColumnMetadata(jdbcOperations, "device_code_metadata", Types.BLOB);
+		columnMetadataMap.put(columnMetadata.getColumnName(), columnMetadata);
+	}
+
+	private static ColumnMetadata getColumnMetadata(JdbcOperations jdbcOperations, String columnName,
+			int defaultDataType) {
+		Integer dataType = jdbcOperations.execute((ConnectionCallback<Integer>) (conn) -> {
+			DatabaseMetaData databaseMetaData = conn.getMetaData();
+			ResultSet rs = databaseMetaData.getColumns(null, null, TABLE_NAME, columnName);
+			if (rs.next()) {
+				return rs.getInt("DATA_TYPE");
+			}
+			// NOTE: (Applies to HSQL)
+			// When a database object is created with one of the CREATE statements or
+			// renamed with the ALTER statement,
+			// if the name is enclosed in double quotes, the exact name is used as the
+			// case-normal form.
+			// But if it is not enclosed in double quotes,
+			// the name is converted to uppercase and this uppercase version is stored in
+			// the database as the case-normal form.
+			rs = databaseMetaData.getColumns(null, null, TABLE_NAME.toUpperCase(), columnName.toUpperCase());
+			if (rs.next()) {
+				return rs.getInt("DATA_TYPE");
+			}
+			return null;
+		});
+		return new ColumnMetadata(columnName, (dataType != null) ? dataType : defaultDataType);
+	}
+
+	private static SqlParameterValue mapToSqlParameter(String columnName, String value) {
+		ColumnMetadata columnMetadata = columnMetadataMap.get(columnName);
+		return (Types.BLOB == columnMetadata.getDataType() && StringUtils.hasText(value))
+				? new SqlParameterValue(Types.BLOB, value.getBytes(StandardCharsets.UTF_8))
+				: new SqlParameterValue(columnMetadata.getDataType(), value);
 	}
 
 	/**
@@ -758,68 +811,15 @@ public class JdbcOAuth2AuthorizationService implements OAuth2AuthorizationServic
 
 	}
 
-	private static void initColumnMetadata(JdbcOperations jdbcOperations) {
-		columnMetadataMap = new HashMap<>();
-		ColumnMetadata columnMetadata;
+	static class JdbcOAuth2AuthorizationServiceRuntimeHintsRegistrar implements RuntimeHintsRegistrar {
 
-		columnMetadata = getColumnMetadata(jdbcOperations, "attributes", Types.BLOB);
-		columnMetadataMap.put(columnMetadata.getColumnName(), columnMetadata);
-		columnMetadata = getColumnMetadata(jdbcOperations, "authorization_code_value", Types.BLOB);
-		columnMetadataMap.put(columnMetadata.getColumnName(), columnMetadata);
-		columnMetadata = getColumnMetadata(jdbcOperations, "authorization_code_metadata", Types.BLOB);
-		columnMetadataMap.put(columnMetadata.getColumnName(), columnMetadata);
-		columnMetadata = getColumnMetadata(jdbcOperations, "access_token_value", Types.BLOB);
-		columnMetadataMap.put(columnMetadata.getColumnName(), columnMetadata);
-		columnMetadata = getColumnMetadata(jdbcOperations, "access_token_metadata", Types.BLOB);
-		columnMetadataMap.put(columnMetadata.getColumnName(), columnMetadata);
-		columnMetadata = getColumnMetadata(jdbcOperations, "oidc_id_token_value", Types.BLOB);
-		columnMetadataMap.put(columnMetadata.getColumnName(), columnMetadata);
-		columnMetadata = getColumnMetadata(jdbcOperations, "oidc_id_token_metadata", Types.BLOB);
-		columnMetadataMap.put(columnMetadata.getColumnName(), columnMetadata);
-		columnMetadata = getColumnMetadata(jdbcOperations, "refresh_token_value", Types.BLOB);
-		columnMetadataMap.put(columnMetadata.getColumnName(), columnMetadata);
-		columnMetadata = getColumnMetadata(jdbcOperations, "refresh_token_metadata", Types.BLOB);
-		columnMetadataMap.put(columnMetadata.getColumnName(), columnMetadata);
-		columnMetadata = getColumnMetadata(jdbcOperations, "user_code_value", Types.BLOB);
-		columnMetadataMap.put(columnMetadata.getColumnName(), columnMetadata);
-		columnMetadata = getColumnMetadata(jdbcOperations, "user_code_metadata", Types.BLOB);
-		columnMetadataMap.put(columnMetadata.getColumnName(), columnMetadata);
-		columnMetadata = getColumnMetadata(jdbcOperations, "device_code_value", Types.BLOB);
-		columnMetadataMap.put(columnMetadata.getColumnName(), columnMetadata);
-		columnMetadata = getColumnMetadata(jdbcOperations, "device_code_metadata", Types.BLOB);
-		columnMetadataMap.put(columnMetadata.getColumnName(), columnMetadata);
-	}
+		@Override
+		public void registerHints(RuntimeHints hints, ClassLoader classLoader) {
+			hints.resources()
+				.registerResource(new ClassPathResource(
+						"org/springframework/security/oauth2/server/authorization/oauth2-authorization-schema.sql"));
+		}
 
-	private static ColumnMetadata getColumnMetadata(JdbcOperations jdbcOperations, String columnName,
-			int defaultDataType) {
-		Integer dataType = jdbcOperations.execute((ConnectionCallback<Integer>) conn -> {
-			DatabaseMetaData databaseMetaData = conn.getMetaData();
-			ResultSet rs = databaseMetaData.getColumns(null, null, TABLE_NAME, columnName);
-			if (rs.next()) {
-				return rs.getInt("DATA_TYPE");
-			}
-			// NOTE: (Applies to HSQL)
-			// When a database object is created with one of the CREATE statements or
-			// renamed with the ALTER statement,
-			// if the name is enclosed in double quotes, the exact name is used as the
-			// case-normal form.
-			// But if it is not enclosed in double quotes,
-			// the name is converted to uppercase and this uppercase version is stored in
-			// the database as the case-normal form.
-			rs = databaseMetaData.getColumns(null, null, TABLE_NAME.toUpperCase(), columnName.toUpperCase());
-			if (rs.next()) {
-				return rs.getInt("DATA_TYPE");
-			}
-			return null;
-		});
-		return new ColumnMetadata(columnName, dataType != null ? dataType : defaultDataType);
-	}
-
-	private static SqlParameterValue mapToSqlParameter(String columnName, String value) {
-		ColumnMetadata columnMetadata = columnMetadataMap.get(columnName);
-		return Types.BLOB == columnMetadata.getDataType() && StringUtils.hasText(value)
-				? new SqlParameterValue(Types.BLOB, value.getBytes(StandardCharsets.UTF_8))
-				: new SqlParameterValue(columnMetadata.getDataType(), value);
 	}
 
 }

@@ -24,13 +24,12 @@ import java.util.Base64;
 import java.util.List;
 import java.util.function.Consumer;
 
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -112,11 +111,11 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.x509;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -196,8 +195,8 @@ public class OAuth2ClientCredentialsGrantTests {
 
 	@AfterEach
 	public void tearDown() {
-		jdbcOperations.update("truncate table oauth2_authorization");
-		jdbcOperations.update("truncate table oauth2_registered_client");
+		this.jdbcOperations.update("truncate table oauth2_authorization");
+		this.jdbcOperations.update("truncate table oauth2_registered_client");
 	}
 
 	@AfterAll
@@ -321,14 +320,14 @@ public class OAuth2ClientCredentialsGrantTests {
 				ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
 		OAuth2ClientCredentialsAuthenticationToken clientCredentialsAuthentication = new OAuth2ClientCredentialsAuthenticationToken(
 				clientPrincipal, null, null);
-		when(authenticationConverter.convert(any())).thenReturn(clientCredentialsAuthentication);
+		given(authenticationConverter.convert(any())).willReturn(clientCredentialsAuthentication);
 
 		OAuth2AccessToken accessToken = new OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER, "token",
 				Instant.now(), Instant.now().plus(Duration.ofHours(1)));
 		OAuth2AccessTokenAuthenticationToken accessTokenAuthentication = new OAuth2AccessTokenAuthenticationToken(
 				registeredClient, clientPrincipal, accessToken);
-		when(authenticationProvider.supports(eq(OAuth2ClientCredentialsAuthenticationToken.class))).thenReturn(true);
-		when(authenticationProvider.authenticate(any())).thenReturn(accessTokenAuthentication);
+		given(authenticationProvider.supports(eq(OAuth2ClientCredentialsAuthenticationToken.class))).willReturn(true);
+		given(authenticationProvider.authenticate(any())).willReturn(accessTokenAuthentication);
 
 		this.mvc
 			.perform(post(DEFAULT_TOKEN_ENDPOINT_URI)
@@ -377,9 +376,9 @@ public class OAuth2ClientCredentialsGrantTests {
 
 		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient,
 				new ClientAuthenticationMethod("custom"), null);
-		when(authenticationConverter.convert(any())).thenReturn(clientPrincipal);
-		when(authenticationProvider.supports(eq(OAuth2ClientAuthenticationToken.class))).thenReturn(true);
-		when(authenticationProvider.authenticate(any())).thenReturn(clientPrincipal);
+		given(authenticationConverter.convert(any())).willReturn(clientPrincipal);
+		given(authenticationProvider.supports(eq(OAuth2ClientAuthenticationToken.class))).willReturn(true);
+		given(authenticationProvider.authenticate(any())).willReturn(clientPrincipal);
 
 		this.mvc
 			.perform(post(DEFAULT_TOKEN_ENDPOINT_URI).param(OAuth2ParameterNames.GRANT_TYPE,
@@ -518,11 +517,11 @@ public class OAuth2ClientCredentialsGrantTests {
 
 		// @formatter:off
 		@Bean
-		public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
+		SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
 			OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
 					new OAuth2AuthorizationServerConfigurer();
 			authorizationServerConfigurer
-					.tokenEndpoint(tokenEndpoint ->
+					.tokenEndpoint((tokenEndpoint) ->
 							tokenEndpoint
 									.accessTokenRequestConverter(authenticationConverter)
 									.accessTokenRequestConverters(authenticationConvertersConsumer)
@@ -534,10 +533,10 @@ public class OAuth2ClientCredentialsGrantTests {
 
 			http
 					.securityMatcher(endpointsMatcher)
-					.authorizeHttpRequests(authorize ->
+					.authorizeHttpRequests((authorize) ->
 							authorize.anyRequest().authenticated()
 					)
-					.csrf(csrf -> csrf.ignoringRequestMatchers(endpointsMatcher))
+					.csrf((csrf) -> csrf.ignoringRequestMatchers(endpointsMatcher))
 					.apply(authorizationServerConfigurer);
 			return http.build();
 		}
@@ -562,13 +561,13 @@ public class OAuth2ClientCredentialsGrantTests {
 
 		// @formatter:off
 		@Bean
-		public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
+		SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
 			authenticationSuccessHandler = spy(authenticationSuccessHandler());
 
 			OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
 					new OAuth2AuthorizationServerConfigurer();
 			authorizationServerConfigurer
-					.clientAuthentication(clientAuthentication ->
+					.clientAuthentication((clientAuthentication) ->
 							clientAuthentication
 									.authenticationConverter(authenticationConverter)
 									.authenticationConverters(authenticationConvertersConsumer)
@@ -580,10 +579,10 @@ public class OAuth2ClientCredentialsGrantTests {
 
 			http
 					.securityMatcher(endpointsMatcher)
-					.authorizeHttpRequests(authorize ->
+					.authorizeHttpRequests((authorize) ->
 							authorize.anyRequest().authenticated()
 					)
-					.csrf(csrf -> csrf.ignoringRequestMatchers(endpointsMatcher))
+					.csrf((csrf) -> csrf.ignoringRequestMatchers(endpointsMatcher))
 					.apply(authorizationServerConfigurer);
 			return http.build();
 		}

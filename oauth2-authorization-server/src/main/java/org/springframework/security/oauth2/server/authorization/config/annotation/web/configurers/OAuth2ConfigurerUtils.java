@@ -240,7 +240,7 @@ final class OAuth2ConfigurerUtils {
 		if (names.length > 1) {
 			throw new NoUniqueBeanDefinitionException(type, names);
 		}
-		return names.length == 1 ? (T) context.getBean(names[0]) : null;
+		return (names.length == 1) ? (T) context.getBean(names[0]) : null;
 	}
 
 }

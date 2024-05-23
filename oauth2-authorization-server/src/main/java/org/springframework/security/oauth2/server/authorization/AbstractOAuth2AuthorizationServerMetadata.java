@@ -36,8 +36,8 @@ import org.springframework.util.Assert;
  *
  * @author Daniel Garnier-Moiroux
  * @author Joe Grandja
- * @see OAuth2AuthorizationServerMetadataClaimAccessor
  * @since 0.1.1
+ * @see OAuth2AuthorizationServerMetadataClaimAccessor
  * @see <a target="_blank" href="https://tools.ietf.org/html/rfc8414#section-3.2">3.2.
  * Authorization Server Metadata Response</a>
  * @see <a target="_blank" href=
@@ -72,8 +72,11 @@ public abstract class AbstractOAuth2AuthorizationServerMetadata
 
 	/**
 	 * A builder for subclasses of {@link AbstractOAuth2AuthorizationServerMetadata}.
+	 *
+	 * @param <T> the type of object
+	 * @param <B> the type of the builder
 	 */
-	protected static abstract class AbstractBuilder<T extends AbstractOAuth2AuthorizationServerMetadata, B extends AbstractBuilder<T, B>> {
+	protected abstract static class AbstractBuilder<T extends AbstractOAuth2AuthorizationServerMetadata, B extends AbstractBuilder<T, B>> {
 
 		private final Map<String, Object> claims = new LinkedHashMap<>();
 
@@ -509,7 +512,7 @@ public abstract class AbstractOAuth2AuthorizationServerMetadata
 		private void addClaimToClaimList(String name, String value) {
 			Assert.hasText(name, "name cannot be empty");
 			Assert.notNull(value, "value cannot be null");
-			getClaims().computeIfAbsent(name, k -> new LinkedList<String>());
+			getClaims().computeIfAbsent(name, (k) -> new LinkedList<String>());
 			((List<String>) getClaims().get(name)).add(value);
 		}
 
@@ -517,7 +520,7 @@ public abstract class AbstractOAuth2AuthorizationServerMetadata
 		private void acceptClaimValues(String name, Consumer<List<String>> valuesConsumer) {
 			Assert.hasText(name, "name cannot be empty");
 			Assert.notNull(valuesConsumer, "valuesConsumer cannot be null");
-			getClaims().computeIfAbsent(name, k -> new LinkedList<String>());
+			getClaims().computeIfAbsent(name, (k) -> new LinkedList<String>());
 			List<String> values = (List<String>) getClaims().get(name);
 			valuesConsumer.accept(values);
 		}

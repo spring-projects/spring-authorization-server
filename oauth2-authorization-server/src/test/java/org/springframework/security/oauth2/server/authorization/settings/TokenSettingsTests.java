@@ -161,7 +161,7 @@ public class TokenSettingsTests {
 	public void settingWhenCustomThenSet() {
 		TokenSettings tokenSettings = TokenSettings.builder()
 			.setting("name1", "value1")
-			.settings(settings -> settings.put("name2", "value2"))
+			.settings((settings) -> settings.put("name2", "value2"))
 			.build();
 		assertThat(tokenSettings.getSettings()).hasSize(10);
 		assertThat(tokenSettings.<String>getSetting("name1")).isEqualTo("value1");

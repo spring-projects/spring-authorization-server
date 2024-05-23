@@ -88,6 +88,7 @@ public final class OAuth2AuthorizationEndpointConfigurer extends AbstractOAuth2C
 
 	/**
 	 * Restrict for internal use only.
+	 * @param objectPostProcessor an {@code ObjectPostProcessor}
 	 */
 	OAuth2AuthorizationEndpointConfigurer(ObjectPostProcessor<Object> objectPostProcessor) {
 		super(objectPostProcessor);
@@ -225,7 +226,7 @@ public final class OAuth2AuthorizationEndpointConfigurer extends AbstractOAuth2C
 
 	void addAuthorizationCodeRequestAuthenticationValidator(
 			Consumer<OAuth2AuthorizationCodeRequestAuthenticationContext> authenticationValidator) {
-		this.authorizationCodeRequestAuthenticationValidator = this.authorizationCodeRequestAuthenticationValidator == null
+		this.authorizationCodeRequestAuthenticationValidator = (this.authorizationCodeRequestAuthenticationValidator == null)
 				? authenticationValidator
 				: this.authorizationCodeRequestAuthenticationValidator.andThen(authenticationValidator);
 	}
@@ -251,7 +252,7 @@ public final class OAuth2AuthorizationEndpointConfigurer extends AbstractOAuth2C
 		}
 		this.authenticationProvidersConsumer.accept(authenticationProviders);
 		authenticationProviders.forEach(
-				authenticationProvider -> httpSecurity.authenticationProvider(postProcess(authenticationProvider)));
+				(authenticationProvider) -> httpSecurity.authenticationProvider(postProcess(authenticationProvider)));
 	}
 
 	@Override

@@ -82,7 +82,7 @@ public class OAuth2DeviceAuthorizationConsentAuthenticationToken extends OAuth2A
 		Assert.hasText(userCode, "userCode cannot be empty");
 		this.userCode = userCode;
 		this.requestedScopes = Collections
-			.unmodifiableSet(requestedScopes != null ? new HashSet<>(requestedScopes) : Collections.emptySet());
+			.unmodifiableSet((requestedScopes != null) ? new HashSet<>(requestedScopes) : Collections.emptySet());
 		setAuthenticated(true);
 	}
 

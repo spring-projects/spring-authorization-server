@@ -24,7 +24,6 @@ import java.util.function.Consumer;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -57,10 +56,10 @@ import org.springframework.security.web.authentication.AuthenticationSuccessHand
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
 
 /**
  * Tests for {@link OAuth2TokenRevocationEndpointFilter}.
@@ -153,21 +152,21 @@ public class OAuth2TokenRevocationEndpointFilterTests {
 	@Test
 	public void doFilterWhenTokenRevocationRequestMissingTokenThenInvalidRequestError() throws Exception {
 		doFilterWhenTokenRevocationRequestInvalidParameterThenError(OAuth2ParameterNames.TOKEN,
-				OAuth2ErrorCodes.INVALID_REQUEST, request -> request.removeParameter(OAuth2ParameterNames.TOKEN));
+				OAuth2ErrorCodes.INVALID_REQUEST, (request) -> request.removeParameter(OAuth2ParameterNames.TOKEN));
 	}
 
 	@Test
 	public void doFilterWhenTokenRevocationRequestMultipleTokenThenInvalidRequestError() throws Exception {
 		doFilterWhenTokenRevocationRequestInvalidParameterThenError(OAuth2ParameterNames.TOKEN,
 				OAuth2ErrorCodes.INVALID_REQUEST,
-				request -> request.addParameter(OAuth2ParameterNames.TOKEN, "token-2"));
+				(request) -> request.addParameter(OAuth2ParameterNames.TOKEN, "token-2"));
 	}
 
 	@Test
 	public void doFilterWhenTokenRevocationRequestMultipleTokenTypeHintThenInvalidRequestError() throws Exception {
 		doFilterWhenTokenRevocationRequestInvalidParameterThenError(OAuth2ParameterNames.TOKEN_TYPE_HINT,
-				OAuth2ErrorCodes.INVALID_REQUEST, request -> request.addParameter(OAuth2ParameterNames.TOKEN_TYPE_HINT,
-						OAuth2TokenType.ACCESS_TOKEN.getValue()));
+				OAuth2ErrorCodes.INVALID_REQUEST, (request) -> request
+					.addParameter(OAuth2ParameterNames.TOKEN_TYPE_HINT, OAuth2TokenType.ACCESS_TOKEN.getValue()));
 	}
 
 	@Test
@@ -181,7 +180,7 @@ public class OAuth2TokenRevocationEndpointFilterTests {
 		OAuth2TokenRevocationAuthenticationToken tokenRevocationAuthentication = new OAuth2TokenRevocationAuthenticationToken(
 				accessToken, clientPrincipal);
 
-		when(this.authenticationManager.authenticate(any())).thenReturn(tokenRevocationAuthentication);
+		given(this.authenticationManager.authenticate(any())).willReturn(tokenRevocationAuthentication);
 
 		SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
 		securityContext.setAuthentication(clientPrincipal);
@@ -211,10 +210,10 @@ public class OAuth2TokenRevocationEndpointFilterTests {
 				accessToken, clientPrincipal);
 
 		AuthenticationConverter authenticationConverter = mock(AuthenticationConverter.class);
-		when(authenticationConverter.convert(any())).thenReturn(tokenRevocationAuthentication);
+		given(authenticationConverter.convert(any())).willReturn(tokenRevocationAuthentication);
 		this.filter.setAuthenticationConverter(authenticationConverter);
 
-		when(this.authenticationManager.authenticate(any())).thenReturn(tokenRevocationAuthentication);
+		given(this.authenticationManager.authenticate(any())).willReturn(tokenRevocationAuthentication);
 
 		SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
 		securityContext.setAuthentication(clientPrincipal);
@@ -243,7 +242,7 @@ public class OAuth2TokenRevocationEndpointFilterTests {
 		AuthenticationSuccessHandler authenticationSuccessHandler = mock(AuthenticationSuccessHandler.class);
 		this.filter.setAuthenticationSuccessHandler(authenticationSuccessHandler);
 
-		when(this.authenticationManager.authenticate(any())).thenReturn(tokenRevocationAuthentication);
+		given(this.authenticationManager.authenticate(any())).willReturn(tokenRevocationAuthentication);
 
 		SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
 		securityContext.setAuthentication(clientPrincipal);
@@ -267,7 +266,7 @@ public class OAuth2TokenRevocationEndpointFilterTests {
 		AuthenticationFailureHandler authenticationFailureHandler = mock(AuthenticationFailureHandler.class);
 		this.filter.setAuthenticationFailureHandler(authenticationFailureHandler);
 
-		when(this.authenticationManager.authenticate(any())).thenThrow(OAuth2AuthenticationException.class);
+		given(this.authenticationManager.authenticate(any())).willThrow(OAuth2AuthenticationException.class);
 
 		SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
 		securityContext.setAuthentication(clientPrincipal);

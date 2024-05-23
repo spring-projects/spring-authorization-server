@@ -148,7 +148,7 @@ public class OAuth2AuthorizationServerMetadataHttpMessageConverterTests {
 	@Test
 	public void readInternalWhenFailingConverterThenThrowException() {
 		String errorMessage = "this is not a valid converter";
-		this.messageConverter.setAuthorizationServerMetadataConverter(source -> {
+		this.messageConverter.setAuthorizationServerMetadataConverter((source) -> {
 			throw new RuntimeException(errorMessage);
 		});
 		MockClientHttpResponse response = new MockClientHttpResponse("{}".getBytes(), HttpStatus.OK);
@@ -224,7 +224,7 @@ public class OAuth2AuthorizationServerMetadataHttpMessageConverterTests {
 	@Test
 	public void writeInternalWhenWriteFailsThenThrowException() {
 		String errorMessage = "this is not a valid converter";
-		Converter<OAuth2AuthorizationServerMetadata, Map<String, Object>> failingConverter = source -> {
+		Converter<OAuth2AuthorizationServerMetadata, Map<String, Object>> failingConverter = (source) -> {
 			throw new RuntimeException(errorMessage);
 		};
 		this.messageConverter.setAuthorizationServerMetadataParametersConverter(failingConverter);

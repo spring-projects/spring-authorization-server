@@ -75,7 +75,7 @@ public class ClientSettingsTests {
 	public void settingWhenCustomThenSet() {
 		ClientSettings clientSettings = ClientSettings.builder()
 			.setting("name1", "value1")
-			.settings(settings -> settings.put("name2", "value2"))
+			.settings((settings) -> settings.put("name2", "value2"))
 			.build();
 		assertThat(clientSettings.getSettings()).hasSize(4);
 		assertThat(clientSettings.<String>getSetting("name1")).isEqualTo("value1");

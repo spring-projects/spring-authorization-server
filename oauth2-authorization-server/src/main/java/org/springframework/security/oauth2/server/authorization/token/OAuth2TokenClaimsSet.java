@@ -156,6 +156,7 @@ public final class OAuth2TokenClaimsSet implements OAuth2TokenClaimAccessor {
 		 * A {@code Consumer} to be provided access to the claims allowing the ability to
 		 * add, replace, or remove.
 		 * @param claimsConsumer a {@code Consumer} of the claims
+		 * @return the {@link Builder}
 		 */
 		public Builder claims(Consumer<Map<String, Object>> claimsConsumer) {
 			claimsConsumer.accept(this.claims);

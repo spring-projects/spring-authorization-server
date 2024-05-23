@@ -29,8 +29,6 @@ import org.springframework.security.oauth2.server.authorization.OAuth2Authorizat
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.util.Assert;
 
-import static org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthenticationProviderUtils.getAuthenticatedClientElseThrowInvalidClient;
-
 /**
  * An {@link AuthenticationProvider} implementation for OAuth 2.0 Token Revocation.
  *
@@ -62,8 +60,8 @@ public final class OAuth2TokenRevocationAuthenticationProvider implements Authen
 	public Authentication authenticate(Authentication authentication) throws AuthenticationException {
 		OAuth2TokenRevocationAuthenticationToken tokenRevocationAuthentication = (OAuth2TokenRevocationAuthenticationToken) authentication;
 
-		OAuth2ClientAuthenticationToken clientPrincipal = getAuthenticatedClientElseThrowInvalidClient(
-				tokenRevocationAuthentication);
+		OAuth2ClientAuthenticationToken clientPrincipal = OAuth2AuthenticationProviderUtils
+			.getAuthenticatedClientElseThrowInvalidClient(tokenRevocationAuthentication);
 		RegisteredClient registeredClient = clientPrincipal.getRegisteredClient();
 
 		OAuth2Authorization authorization = this.authorizationService

@@ -66,7 +66,7 @@ public class ClientSecretBasicAuthenticationConverterTests {
 		MockHttpServletRequest request = new MockHttpServletRequest();
 		request.addHeader(HttpHeaders.AUTHORIZATION, "Basic ");
 		assertThatThrownBy(() -> this.converter.convert(request)).isInstanceOf(OAuth2AuthenticationException.class)
-			.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+			.extracting((ex) -> ((OAuth2AuthenticationException) ex).getError())
 			.extracting("errorCode")
 			.isEqualTo(OAuth2ErrorCodes.INVALID_REQUEST);
 	}
@@ -76,7 +76,7 @@ public class ClientSecretBasicAuthenticationConverterTests {
 		MockHttpServletRequest request = new MockHttpServletRequest();
 		request.addHeader(HttpHeaders.AUTHORIZATION, "Basic clientId:secret");
 		assertThatThrownBy(() -> this.converter.convert(request)).isInstanceOf(OAuth2AuthenticationException.class)
-			.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+			.extracting((ex) -> ((OAuth2AuthenticationException) ex).getError())
 			.extracting("errorCode")
 			.isEqualTo(OAuth2ErrorCodes.INVALID_REQUEST);
 	}
@@ -87,7 +87,7 @@ public class ClientSecretBasicAuthenticationConverterTests {
 		MockHttpServletRequest request = new MockHttpServletRequest();
 		request.addHeader(HttpHeaders.AUTHORIZATION, "Basic " + encodeBasicAuth("clientId", ""));
 		assertThatThrownBy(() -> this.converter.convert(request)).isInstanceOf(OAuth2AuthenticationException.class)
-			.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+			.extracting((ex) -> ((OAuth2AuthenticationException) ex).getError())
 			.extracting("errorCode")
 			.isEqualTo(OAuth2ErrorCodes.INVALID_REQUEST);
 	}

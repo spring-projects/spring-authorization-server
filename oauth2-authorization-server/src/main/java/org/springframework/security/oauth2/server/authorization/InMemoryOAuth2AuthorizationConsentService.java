@@ -63,7 +63,7 @@ public final class InMemoryOAuth2AuthorizationConsentService implements OAuth2Au
 	 */
 	public InMemoryOAuth2AuthorizationConsentService(List<OAuth2AuthorizationConsent> authorizationConsents) {
 		Assert.notNull(authorizationConsents, "authorizationConsents cannot be null");
-		authorizationConsents.forEach(authorizationConsent -> {
+		authorizationConsents.forEach((authorizationConsent) -> {
 			Assert.notNull(authorizationConsent, "authorizationConsent cannot be null");
 			int id = getId(authorizationConsent);
 			Assert.isTrue(!this.authorizationConsents.containsKey(id),

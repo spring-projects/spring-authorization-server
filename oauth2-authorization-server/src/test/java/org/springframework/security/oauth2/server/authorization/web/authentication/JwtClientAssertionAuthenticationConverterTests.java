@@ -124,7 +124,7 @@ public class JwtClientAssertionAuthenticationConverterTests {
 
 	private void assertThrown(MockHttpServletRequest request, String errorCode) {
 		assertThatThrownBy(() -> this.converter.convert(request)).isInstanceOf(OAuth2AuthenticationException.class)
-			.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+			.extracting((ex) -> ((OAuth2AuthenticationException) ex).getError())
 			.extracting("errorCode")
 			.isEqualTo(errorCode);
 	}

@@ -46,9 +46,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 /**
  * Tests for {@link OAuth2TokenIntrospectionAuthenticationProvider}.
@@ -103,7 +103,7 @@ public class OAuth2TokenIntrospectionAuthenticationProviderTests {
 
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 			.isInstanceOf(OAuth2AuthenticationException.class)
-			.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+			.extracting((ex) -> ((OAuth2AuthenticationException) ex).getError())
 			.extracting("errorCode")
 			.isEqualTo(OAuth2ErrorCodes.INVALID_CLIENT);
 	}
@@ -120,7 +120,7 @@ public class OAuth2TokenIntrospectionAuthenticationProviderTests {
 
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 			.isInstanceOf(OAuth2AuthenticationException.class)
-			.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+			.extracting((ex) -> ((OAuth2AuthenticationException) ex).getError())
 			.extracting("errorCode")
 			.isEqualTo(OAuth2ErrorCodes.INVALID_CLIENT);
 	}
@@ -148,8 +148,8 @@ public class OAuth2TokenIntrospectionAuthenticationProviderTests {
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();
 		OAuth2AccessToken accessToken = authorization.getAccessToken().getToken();
 		authorization = OAuth2AuthenticationProviderUtils.invalidate(authorization, accessToken);
-		when(this.authorizationService.findByToken(eq(accessToken.getTokenValue()), isNull()))
-			.thenReturn(authorization);
+		given(this.authorizationService.findByToken(eq(accessToken.getTokenValue()), isNull()))
+			.willReturn(authorization);
 		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient,
 				ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
 
@@ -174,8 +174,8 @@ public class OAuth2TokenIntrospectionAuthenticationProviderTests {
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient)
 			.token(accessToken)
 			.build();
-		when(this.authorizationService.findByToken(eq(accessToken.getTokenValue()), isNull()))
-			.thenReturn(authorization);
+		given(this.authorizationService.findByToken(eq(accessToken.getTokenValue()), isNull()))
+			.willReturn(authorization);
 		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient,
 				ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
 
@@ -202,8 +202,8 @@ public class OAuth2TokenIntrospectionAuthenticationProviderTests {
 		OAuth2Authorization authorization = TestOAuth2Authorizations
 			.authorization(registeredClient, accessToken, accessTokenClaims)
 			.build();
-		when(this.authorizationService.findByToken(eq(accessToken.getTokenValue()), isNull()))
-			.thenReturn(authorization);
+		given(this.authorizationService.findByToken(eq(accessToken.getTokenValue()), isNull()))
+			.willReturn(authorization);
 		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient,
 				ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
 
@@ -243,9 +243,9 @@ public class OAuth2TokenIntrospectionAuthenticationProviderTests {
 		OAuth2Authorization authorization = TestOAuth2Authorizations
 			.authorization(authorizedClient, accessToken, claimsSet.getClaims())
 			.build();
-		when(this.authorizationService.findByToken(eq(accessToken.getTokenValue()), isNull()))
-			.thenReturn(authorization);
-		when(this.registeredClientRepository.findById(eq(authorizedClient.getId()))).thenReturn(authorizedClient);
+		given(this.authorizationService.findByToken(eq(accessToken.getTokenValue()), isNull()))
+			.willReturn(authorization);
+		given(this.registeredClientRepository.findById(eq(authorizedClient.getId()))).willReturn(authorizedClient);
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient2().build();
 		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient,
 				ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
@@ -278,9 +278,9 @@ public class OAuth2TokenIntrospectionAuthenticationProviderTests {
 		RegisteredClient authorizedClient = TestRegisteredClients.registeredClient().build();
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization().build();
 		OAuth2RefreshToken refreshToken = authorization.getRefreshToken().getToken();
-		when(this.authorizationService.findByToken(eq(refreshToken.getTokenValue()), isNull()))
-			.thenReturn(authorization);
-		when(this.registeredClientRepository.findById(eq(authorizedClient.getId()))).thenReturn(authorizedClient);
+		given(this.authorizationService.findByToken(eq(refreshToken.getTokenValue()), isNull()))
+			.willReturn(authorization);
+		given(this.registeredClientRepository.findById(eq(authorizedClient.getId()))).willReturn(authorizedClient);
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient2().build();
 		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient,
 				ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());

@@ -154,7 +154,7 @@ public final class OAuth2AuthorizationConsentAuthenticationProvider implements A
 
 		OAuth2AuthorizationConsent currentAuthorizationConsent = this.authorizationConsentService
 			.findById(authorization.getRegisteredClientId(), authorization.getPrincipalName());
-		Set<String> currentAuthorizedScopes = currentAuthorizationConsent != null
+		Set<String> currentAuthorizedScopes = (currentAuthorizationConsent != null)
 				? currentAuthorizationConsent.getScopes() : Collections.emptySet();
 
 		if (!currentAuthorizedScopes.isEmpty()) {
@@ -242,9 +242,7 @@ public final class OAuth2AuthorizationConsentAuthenticationProvider implements A
 		OAuth2Authorization updatedAuthorization = OAuth2Authorization.from(authorization)
 			.authorizedScopes(authorizedScopes)
 			.token(authorizationCode)
-			.attributes(attrs -> {
-				attrs.remove(OAuth2ParameterNames.STATE);
-			})
+			.attributes((attrs) -> attrs.remove(OAuth2ParameterNames.STATE))
 			.build();
 		this.authorizationService.save(updatedAuthorization);
 
@@ -353,9 +351,9 @@ public final class OAuth2AuthorizationConsentAuthenticationProvider implements A
 			redirectUri = null; // Prevent redirects
 		}
 
-		String state = authorizationRequest != null ? authorizationRequest.getState()
+		String state = (authorizationRequest != null) ? authorizationRequest.getState()
 				: authorizationConsentAuthentication.getState();
-		Set<String> requestedScopes = authorizationRequest != null ? authorizationRequest.getScopes()
+		Set<String> requestedScopes = (authorizationRequest != null) ? authorizationRequest.getScopes()
 				: authorizationConsentAuthentication.getScopes();
 
 		OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthenticationResult = new OAuth2AuthorizationCodeRequestAuthenticationToken(

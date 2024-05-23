@@ -137,7 +137,7 @@ public class OidcProviderConfigurationHttpMessageConverterTests {
 	@Test
 	public void readInternalWhenFailingConverterThenThrowException() {
 		String errorMessage = "this is not a valid converter";
-		this.messageConverter.setProviderConfigurationConverter(source -> {
+		this.messageConverter.setProviderConfigurationConverter((source) -> {
 			throw new RuntimeException(errorMessage);
 		});
 		MockClientHttpResponse response = new MockClientHttpResponse("{}".getBytes(), HttpStatus.OK);
@@ -204,7 +204,7 @@ public class OidcProviderConfigurationHttpMessageConverterTests {
 	@Test
 	public void writeInternalWhenWriteFailsThenThrowsException() {
 		String errorMessage = "this is not a valid converter";
-		Converter<OidcProviderConfiguration, Map<String, Object>> failingConverter = source -> {
+		Converter<OidcProviderConfiguration, Map<String, Object>> failingConverter = (source) -> {
 			throw new RuntimeException(errorMessage);
 		};
 		this.messageConverter.setProviderConfigurationParametersConverter(failingConverter);

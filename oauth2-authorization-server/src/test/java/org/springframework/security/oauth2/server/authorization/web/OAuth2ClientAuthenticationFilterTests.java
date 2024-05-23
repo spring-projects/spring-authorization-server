@@ -20,7 +20,7 @@ import java.nio.charset.StandardCharsets;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-
+import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -51,12 +51,11 @@ import org.springframework.security.web.util.matcher.RequestMatcher;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.assertj.core.api.InstanceOfAssertFactories.type;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
 
 /**
  * Tests for {@link OAuth2ClientAuthenticationFilter}.
@@ -156,8 +155,8 @@ public class OAuth2ClientAuthenticationFilterTests {
 
 	@Test
 	public void doFilterWhenRequestMatchesAndInvalidCredentialsThenInvalidRequestError() throws Exception {
-		when(this.authenticationConverter.convert(any(HttpServletRequest.class))).thenThrow(
-				new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_REQUEST));
+		given(this.authenticationConverter.convert(any(HttpServletRequest.class)))
+			.willThrow(new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_REQUEST));
 
 		MockHttpServletRequest request = new MockHttpServletRequest("POST", this.filterProcessesUrl);
 		request.setServletPath(this.filterProcessesUrl);
@@ -196,8 +195,9 @@ public class OAuth2ClientAuthenticationFilterTests {
 	}
 
 	private void assertWhenInvalidClientIdThenInvalidRequestError(String clientId) throws Exception {
-		when(this.authenticationConverter.convert(any(HttpServletRequest.class))).thenReturn(
-				new OAuth2ClientAuthenticationToken(clientId, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, "secret", null));
+		given(this.authenticationConverter.convert(any(HttpServletRequest.class)))
+			.willReturn(new OAuth2ClientAuthenticationToken(clientId, ClientAuthenticationMethod.CLIENT_SECRET_BASIC,
+					"secret", null));
 
 		MockHttpServletRequest request = new MockHttpServletRequest("POST", this.filterProcessesUrl);
 		request.setServletPath(this.filterProcessesUrl);
@@ -217,10 +217,11 @@ public class OAuth2ClientAuthenticationFilterTests {
 
 	@Test
 	public void doFilterWhenRequestMatchesAndBadCredentialsThenInvalidClientError() throws Exception {
-		when(this.authenticationConverter.convert(any(HttpServletRequest.class))).thenReturn(
-				new OAuth2ClientAuthenticationToken("clientId", ClientAuthenticationMethod.CLIENT_SECRET_BASIC, "invalid-secret", null));
-		when(this.authenticationManager.authenticate(any(Authentication.class))).thenThrow(
-				new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_CLIENT));
+		given(this.authenticationConverter.convert(any(HttpServletRequest.class)))
+			.willReturn(new OAuth2ClientAuthenticationToken("clientId", ClientAuthenticationMethod.CLIENT_SECRET_BASIC,
+					"invalid-secret", null));
+		given(this.authenticationManager.authenticate(any(Authentication.class)))
+			.willThrow(new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_CLIENT));
 
 		MockHttpServletRequest request = new MockHttpServletRequest("POST", this.filterProcessesUrl);
 		request.setServletPath(this.filterProcessesUrl);
@@ -243,11 +244,11 @@ public class OAuth2ClientAuthenticationFilterTests {
 		final String remoteAddress = "remote-address";
 
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
-		when(this.authenticationConverter.convert(any(HttpServletRequest.class)))
-			.thenReturn(new OAuth2ClientAuthenticationToken(registeredClient.getClientId(),
+		given(this.authenticationConverter.convert(any(HttpServletRequest.class)))
+			.willReturn(new OAuth2ClientAuthenticationToken(registeredClient.getClientId(),
 					ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret(), null));
-		when(this.authenticationManager.authenticate(any(Authentication.class)))
-			.thenReturn(new OAuth2ClientAuthenticationToken(registeredClient,
+		given(this.authenticationManager.authenticate(any(Authentication.class)))
+			.willReturn(new OAuth2ClientAuthenticationToken(registeredClient,
 					ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret()));
 
 		MockHttpServletRequest request = new MockHttpServletRequest("POST", this.filterProcessesUrl);
@@ -270,7 +271,7 @@ public class OAuth2ClientAuthenticationFilterTests {
 		verify(this.authenticationManager).authenticate(authenticationRequestCaptor.capture());
 		assertThat(authenticationRequestCaptor).extracting(ArgumentCaptor::getValue)
 			.extracting(OAuth2ClientAuthenticationToken::getDetails)
-			.asInstanceOf(type(WebAuthenticationDetails.class))
+			.asInstanceOf(InstanceOfAssertFactories.type(WebAuthenticationDetails.class))
 			.extracting(WebAuthenticationDetails::getRemoteAddress)
 			.isEqualTo(remoteAddress);
 	}

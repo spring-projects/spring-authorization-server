@@ -152,9 +152,9 @@ public class OAuth2DeviceCodeGrantTests {
 
 	@AfterEach
 	public void tearDown() {
-		jdbcOperations.update("truncate table oauth2_authorization");
-		jdbcOperations.update("truncate table oauth2_authorization_consent");
-		jdbcOperations.update("truncate table oauth2_registered_client");
+		this.jdbcOperations.update("truncate table oauth2_authorization");
+		this.jdbcOperations.update("truncate table oauth2_authorization_consent");
+		this.jdbcOperations.update("truncate table oauth2_registered_client");
 	}
 
 	@AfterAll

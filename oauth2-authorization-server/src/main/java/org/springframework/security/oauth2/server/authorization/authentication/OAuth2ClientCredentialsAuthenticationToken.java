@@ -47,7 +47,7 @@ public class OAuth2ClientCredentialsAuthenticationToken extends OAuth2Authorizat
 	public OAuth2ClientCredentialsAuthenticationToken(Authentication clientPrincipal, @Nullable Set<String> scopes,
 			@Nullable Map<String, Object> additionalParameters) {
 		super(AuthorizationGrantType.CLIENT_CREDENTIALS, clientPrincipal, additionalParameters);
-		this.scopes = Collections.unmodifiableSet(scopes != null ? new HashSet<>(scopes) : Collections.emptySet());
+		this.scopes = Collections.unmodifiableSet((scopes != null) ? new HashSet<>(scopes) : Collections.emptySet());
 	}
 
 	/**

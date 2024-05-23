@@ -24,13 +24,13 @@ import org.springframework.security.oauth2.server.authorization.OAuth2Authorizat
  * Implementations of this interface are responsible for generating an {@link OAuth2Token}
  * using the attributes contained in the {@link OAuth2TokenContext}.
  *
+ * @param <T> the type of the OAuth 2.0 Token
  * @author Joe Grandja
  * @since 0.2.3
  * @see OAuth2Token
  * @see OAuth2TokenContext
  * @see OAuth2TokenClaimsSet
  * @see ClaimAccessor
- * @param <T> the type of the OAuth 2.0 Token
  */
 @FunctionalInterface
 public interface OAuth2TokenGenerator<T extends OAuth2Token> {

@@ -74,9 +74,9 @@ public class OAuth2AuthorizationConsentAuthenticationToken extends AbstractAuthe
 		this.clientId = clientId;
 		this.principal = principal;
 		this.state = state;
-		this.scopes = Collections.unmodifiableSet(scopes != null ? new HashSet<>(scopes) : Collections.emptySet());
+		this.scopes = Collections.unmodifiableSet((scopes != null) ? new HashSet<>(scopes) : Collections.emptySet());
 		this.additionalParameters = Collections.unmodifiableMap(
-				additionalParameters != null ? new HashMap<>(additionalParameters) : Collections.emptyMap());
+				(additionalParameters != null) ? new HashMap<>(additionalParameters) : Collections.emptyMap());
 		setAuthenticated(true);
 	}
 

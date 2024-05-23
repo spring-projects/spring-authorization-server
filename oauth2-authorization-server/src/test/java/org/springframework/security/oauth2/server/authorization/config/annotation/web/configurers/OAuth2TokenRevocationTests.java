@@ -85,9 +85,9 @@ import org.springframework.util.MultiValueMap;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -152,8 +152,8 @@ public class OAuth2TokenRevocationTests {
 
 	@AfterEach
 	public void tearDown() {
-		jdbcOperations.update("truncate table oauth2_authorization");
-		jdbcOperations.update("truncate table oauth2_registered_client");
+		this.jdbcOperations.update("truncate table oauth2_authorization");
+		this.jdbcOperations.update("truncate table oauth2_registered_client");
 	}
 
 	@AfterAll
@@ -259,9 +259,9 @@ public class OAuth2TokenRevocationTests {
 		OAuth2TokenRevocationAuthenticationToken tokenRevocationAuthentication = new OAuth2TokenRevocationAuthenticationToken(
 				token, clientPrincipal);
 
-		when(authenticationConverter.convert(any())).thenReturn(tokenRevocationAuthentication);
-		when(authenticationProvider.supports(eq(OAuth2TokenRevocationAuthenticationToken.class))).thenReturn(true);
-		when(authenticationProvider.authenticate(any())).thenReturn(tokenRevocationAuthentication);
+		given(authenticationConverter.convert(any())).willReturn(tokenRevocationAuthentication);
+		given(authenticationProvider.supports(eq(OAuth2TokenRevocationAuthenticationToken.class))).willReturn(true);
+		given(authenticationProvider.authenticate(any())).willReturn(tokenRevocationAuthentication);
 
 		this.mvc
 			.perform(post(DEFAULT_TOKEN_REVOCATION_ENDPOINT_URI)
@@ -374,11 +374,11 @@ public class OAuth2TokenRevocationTests {
 
 		// @formatter:off
 		@Bean
-		public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
+		SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
 			OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
 					new OAuth2AuthorizationServerConfigurer();
 			authorizationServerConfigurer
-					.tokenRevocationEndpoint(tokenRevocationEndpoint ->
+					.tokenRevocationEndpoint((tokenRevocationEndpoint) ->
 							tokenRevocationEndpoint
 									.revocationRequestConverter(authenticationConverter)
 									.revocationRequestConverters(authenticationConvertersConsumer)
@@ -390,10 +390,10 @@ public class OAuth2TokenRevocationTests {
 
 			http
 					.securityMatcher(endpointsMatcher)
-					.authorizeHttpRequests(authorize ->
+					.authorizeHttpRequests((authorize) ->
 							authorize.anyRequest().authenticated()
 					)
-					.csrf(csrf -> csrf.ignoringRequestMatchers(endpointsMatcher))
+					.csrf((csrf) -> csrf.ignoringRequestMatchers(endpointsMatcher))
 					.apply(authorizationServerConfigurer);
 			return http.build();
 		}

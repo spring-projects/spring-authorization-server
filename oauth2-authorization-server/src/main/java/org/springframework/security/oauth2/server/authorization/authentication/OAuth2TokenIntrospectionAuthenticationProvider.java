@@ -39,8 +39,6 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 
-import static org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthenticationProviderUtils.getAuthenticatedClientElseThrowInvalidClient;
-
 /**
  * An {@link AuthenticationProvider} implementation for OAuth 2.0 Token Introspection.
  *
@@ -84,8 +82,8 @@ public final class OAuth2TokenIntrospectionAuthenticationProvider implements Aut
 	public Authentication authenticate(Authentication authentication) throws AuthenticationException {
 		OAuth2TokenIntrospectionAuthenticationToken tokenIntrospectionAuthentication = (OAuth2TokenIntrospectionAuthenticationToken) authentication;
 
-		OAuth2ClientAuthenticationToken clientPrincipal = getAuthenticatedClientElseThrowInvalidClient(
-				tokenIntrospectionAuthentication);
+		OAuth2ClientAuthenticationToken clientPrincipal = OAuth2AuthenticationProviderUtils
+			.getAuthenticatedClientElseThrowInvalidClient(tokenIntrospectionAuthentication);
 
 		OAuth2Authorization authorization = this.authorizationService
 			.findByToken(tokenIntrospectionAuthentication.getToken(), null);

@@ -62,7 +62,7 @@ public class OAuth2AuthorizationGrantAuthenticationToken extends AbstractAuthent
 		this.authorizationGrantType = authorizationGrantType;
 		this.clientPrincipal = clientPrincipal;
 		this.additionalParameters = Collections.unmodifiableMap(
-				additionalParameters != null ? new HashMap<>(additionalParameters) : Collections.emptyMap());
+				(additionalParameters != null) ? new HashMap<>(additionalParameters) : Collections.emptyMap());
 	}
 
 	/**

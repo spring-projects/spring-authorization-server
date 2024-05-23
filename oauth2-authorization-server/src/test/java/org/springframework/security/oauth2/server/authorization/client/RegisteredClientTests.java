@@ -59,8 +59,8 @@ public class RegisteredClientTests {
 		assertThatThrownBy(() -> RegisteredClient.withId(ID)
 			.clientId(CLIENT_ID)
 			.clientSecret(CLIENT_SECRET)
-			.redirectUris(redirectUris -> redirectUris.addAll(REDIRECT_URIS))
-			.scopes(scopes -> scopes.addAll(SCOPES))
+			.redirectUris((redirectUris) -> redirectUris.addAll(REDIRECT_URIS))
+			.scopes((scopes) -> scopes.addAll(SCOPES))
 			.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
 			.build()).isInstanceOf(IllegalArgumentException.class);
 	}
@@ -77,9 +77,10 @@ public class RegisteredClientTests {
 			.clientName("client-name")
 			.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
 			.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
-			.redirectUris(redirectUris -> redirectUris.addAll(REDIRECT_URIS))
-			.postLogoutRedirectUris(postLogoutRedirectUris -> postLogoutRedirectUris.addAll(POST_LOGOUT_REDIRECT_URIS))
-			.scopes(scopes -> scopes.addAll(SCOPES))
+			.redirectUris((redirectUris) -> redirectUris.addAll(REDIRECT_URIS))
+			.postLogoutRedirectUris(
+					(postLogoutRedirectUris) -> postLogoutRedirectUris.addAll(POST_LOGOUT_REDIRECT_URIS))
+			.scopes((scopes) -> scopes.addAll(SCOPES))
 			.build();
 
 		assertThat(registration.getId()).isEqualTo(ID);
@@ -108,8 +109,8 @@ public class RegisteredClientTests {
 			.clientSecret(CLIENT_SECRET)
 			.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
 			.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
-			.redirectUris(redirectUris -> redirectUris.addAll(REDIRECT_URIS))
-			.scopes(scopes -> scopes.addAll(SCOPES))
+			.redirectUris((redirectUris) -> redirectUris.addAll(REDIRECT_URIS))
+			.scopes((scopes) -> scopes.addAll(SCOPES))
 			.build()).isInstanceOf(IllegalArgumentException.class);
 	}
 
@@ -120,7 +121,7 @@ public class RegisteredClientTests {
 			.clientSecret(CLIENT_SECRET)
 			.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
 			.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
-			.scopes(scopes -> scopes.addAll(SCOPES))
+			.scopes((scopes) -> scopes.addAll(SCOPES))
 			.build()).isInstanceOf(IllegalArgumentException.class);
 	}
 
@@ -133,7 +134,7 @@ public class RegisteredClientTests {
 			.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
 			.redirectUri("https://example.com")
 			.redirectUris(Set::clear)
-			.scopes(scopes -> scopes.addAll(SCOPES))
+			.scopes((scopes) -> scopes.addAll(SCOPES))
 			.build()).isInstanceOf(IllegalArgumentException.class);
 	}
 
@@ -143,8 +144,8 @@ public class RegisteredClientTests {
 			.clientId(CLIENT_ID)
 			.clientSecret(CLIENT_SECRET)
 			.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-			.redirectUris(redirectUris -> redirectUris.addAll(REDIRECT_URIS))
-			.scopes(scopes -> scopes.addAll(SCOPES))
+			.redirectUris((redirectUris) -> redirectUris.addAll(REDIRECT_URIS))
+			.scopes((scopes) -> scopes.addAll(SCOPES))
 			.build();
 
 		assertThat(registration.getClientAuthenticationMethods())
@@ -158,7 +159,7 @@ public class RegisteredClientTests {
 			.clientSecret(CLIENT_SECRET)
 			.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
 			.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
-			.redirectUris(redirectUris -> redirectUris.addAll(REDIRECT_URIS))
+			.redirectUris((redirectUris) -> redirectUris.addAll(REDIRECT_URIS))
 			.build();
 	}
 
@@ -169,8 +170,8 @@ public class RegisteredClientTests {
 			.clientSecret(CLIENT_SECRET)
 			.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
 			.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
-			.redirectUris(redirectUris -> redirectUris.addAll(REDIRECT_URIS))
-			.scopes(scopes -> scopes.addAll(SCOPES))
+			.redirectUris((redirectUris) -> redirectUris.addAll(REDIRECT_URIS))
+			.scopes((scopes) -> scopes.addAll(SCOPES))
 			.build();
 
 		assertThat(registration.getScopes()).isEqualTo(SCOPES);
@@ -182,7 +183,7 @@ public class RegisteredClientTests {
 			.clientId(CLIENT_ID)
 			.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
 			.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
-			.redirectUris(redirectUris -> redirectUris.addAll(REDIRECT_URIS))
+			.redirectUris((redirectUris) -> redirectUris.addAll(REDIRECT_URIS))
 			.scope("openid profile")
 			.build()).isInstanceOf(IllegalArgumentException.class);
 	}
@@ -194,7 +195,7 @@ public class RegisteredClientTests {
 			.clientSecret(CLIENT_SECRET)
 			.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
 			.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
-			.redirectUris(redirectUris -> redirectUris.addAll(REDIRECT_URIS))
+			.redirectUris((redirectUris) -> redirectUris.addAll(REDIRECT_URIS))
 			.scope("an\"invalid\"scope")
 			.build()).isInstanceOf(IllegalArgumentException.class);
 	}
@@ -207,7 +208,7 @@ public class RegisteredClientTests {
 			.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
 			.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
 			.redirectUri("invalid URI")
-			.scopes(scopes -> scopes.addAll(SCOPES))
+			.scopes((scopes) -> scopes.addAll(SCOPES))
 			.build()).isInstanceOf(IllegalArgumentException.class);
 	}
 
@@ -219,7 +220,7 @@ public class RegisteredClientTests {
 			.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
 			.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
 			.redirectUri("https://example.com/page#fragment")
-			.scopes(scopes -> scopes.addAll(SCOPES))
+			.scopes((scopes) -> scopes.addAll(SCOPES))
 			.build()).isInstanceOf(IllegalArgumentException.class);
 	}
 
@@ -230,7 +231,7 @@ public class RegisteredClientTests {
 			.clientSecret(CLIENT_SECRET)
 			.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
 			.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
-			.redirectUris(redirectUris -> redirectUris.addAll(REDIRECT_URIS))
+			.redirectUris((redirectUris) -> redirectUris.addAll(REDIRECT_URIS))
 			.postLogoutRedirectUri("invalid URI")
 			.build()).isInstanceOf(IllegalArgumentException.class);
 	}
@@ -244,7 +245,7 @@ public class RegisteredClientTests {
 			.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
 			.redirectUri("https://example.com")
 			.postLogoutRedirectUri("https://example.com/index#fragment")
-			.scopes(scopes -> scopes.addAll(SCOPES))
+			.scopes((scopes) -> scopes.addAll(SCOPES))
 			.build()).isInstanceOf(IllegalArgumentException.class);
 	}
 
@@ -256,8 +257,8 @@ public class RegisteredClientTests {
 			.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
 			.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
 			.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
-			.redirectUris(redirectUris -> redirectUris.addAll(REDIRECT_URIS))
-			.scopes(scopes -> scopes.addAll(SCOPES))
+			.redirectUris((redirectUris) -> redirectUris.addAll(REDIRECT_URIS))
+			.scopes((scopes) -> scopes.addAll(SCOPES))
 			.build();
 
 		assertThat(registration.getAuthorizationGrantTypes()).containsExactlyInAnyOrder(
@@ -269,13 +270,13 @@ public class RegisteredClientTests {
 		RegisteredClient registration = RegisteredClient.withId(ID)
 			.clientId(CLIENT_ID)
 			.clientSecret(CLIENT_SECRET)
-			.authorizationGrantTypes(authorizationGrantTypes -> {
+			.authorizationGrantTypes((authorizationGrantTypes) -> {
 				authorizationGrantTypes.add(AuthorizationGrantType.AUTHORIZATION_CODE);
 				authorizationGrantTypes.add(AuthorizationGrantType.CLIENT_CREDENTIALS);
 			})
 			.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
-			.redirectUris(redirectUris -> redirectUris.addAll(REDIRECT_URIS))
-			.scopes(scopes -> scopes.addAll(SCOPES))
+			.redirectUris((redirectUris) -> redirectUris.addAll(REDIRECT_URIS))
+			.scopes((scopes) -> scopes.addAll(SCOPES))
 			.build();
 
 		assertThat(registration.getAuthorizationGrantTypes()).containsExactlyInAnyOrder(
@@ -284,17 +285,15 @@ public class RegisteredClientTests {
 
 	@Test
 	public void buildWhenAuthorizationGrantTypesConsumerClearsSetThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> {
-			RegisteredClient.withId(ID)
-				.clientId(CLIENT_ID)
-				.clientSecret(CLIENT_SECRET)
-				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-				.authorizationGrantTypes(Set::clear)
-				.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
-				.redirectUris(redirectUris -> redirectUris.addAll(REDIRECT_URIS))
-				.scopes(scopes -> scopes.addAll(SCOPES))
-				.build();
-		}).isInstanceOf(IllegalArgumentException.class);
+		assertThatThrownBy(() -> RegisteredClient.withId(ID)
+			.clientId(CLIENT_ID)
+			.clientSecret(CLIENT_SECRET)
+			.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+			.authorizationGrantTypes(Set::clear)
+			.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
+			.redirectUris((redirectUris) -> redirectUris.addAll(REDIRECT_URIS))
+			.scopes((scopes) -> scopes.addAll(SCOPES))
+			.build()).isInstanceOf(IllegalArgumentException.class);
 	}
 
 	@Test
@@ -305,8 +304,8 @@ public class RegisteredClientTests {
 			.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
 			.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
 			.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_POST)
-			.redirectUris(redirectUris -> redirectUris.addAll(REDIRECT_URIS))
-			.scopes(scopes -> scopes.addAll(SCOPES))
+			.redirectUris((redirectUris) -> redirectUris.addAll(REDIRECT_URIS))
+			.scopes((scopes) -> scopes.addAll(SCOPES))
 			.build();
 
 		assertThat(registration.getClientAuthenticationMethods()).containsExactlyInAnyOrder(
@@ -319,12 +318,12 @@ public class RegisteredClientTests {
 			.clientId(CLIENT_ID)
 			.clientSecret(CLIENT_SECRET)
 			.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-			.clientAuthenticationMethods(clientAuthenticationMethods -> {
+			.clientAuthenticationMethods((clientAuthenticationMethods) -> {
 				clientAuthenticationMethods.add(ClientAuthenticationMethod.CLIENT_SECRET_BASIC);
 				clientAuthenticationMethods.add(ClientAuthenticationMethod.CLIENT_SECRET_POST);
 			})
-			.redirectUris(redirectUris -> redirectUris.addAll(REDIRECT_URIS))
-			.scopes(scopes -> scopes.addAll(SCOPES))
+			.redirectUris((redirectUris) -> redirectUris.addAll(REDIRECT_URIS))
+			.scopes((scopes) -> scopes.addAll(SCOPES))
 			.build();
 
 		assertThat(registration.getClientAuthenticationMethods()).containsExactlyInAnyOrder(
@@ -340,8 +339,8 @@ public class RegisteredClientTests {
 			.clientSecret(CLIENT_SECRET)
 			.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
 			.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
-			.redirectUris(redirectUris -> redirectUris.addAll(REDIRECT_URIS))
-			.scopes(scopes -> scopes.addAll(SCOPES))
+			.redirectUris((redirectUris) -> redirectUris.addAll(REDIRECT_URIS))
+			.scopes((scopes) -> scopes.addAll(SCOPES))
 			.build();
 
 		assertThat(registration.getId()).isEqualTo(overriddenId);
@@ -385,15 +384,15 @@ public class RegisteredClientTests {
 		RegisteredClient updated = RegisteredClient.from(registration)
 			.clientName(newName)
 			.clientSecret(newSecret)
-			.scopes(scopes -> {
+			.scopes((scopes) -> {
 				scopes.clear();
 				scopes.add(newScope);
 			})
-			.redirectUris(redirectUris -> {
+			.redirectUris((redirectUris) -> {
 				redirectUris.clear();
 				redirectUris.add(newRedirectUri);
 			})
-			.postLogoutRedirectUris(postLogoutRedirectUris -> {
+			.postLogoutRedirectUris((postLogoutRedirectUris) -> {
 				postLogoutRedirectUris.clear();
 				postLogoutRedirectUris.add(newPostLogoutRedirectUri);
 			})
@@ -420,8 +419,8 @@ public class RegisteredClientTests {
 			.clientName("client-name")
 			.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
 			.clientAuthenticationMethod(ClientAuthenticationMethod.NONE)
-			.redirectUris(redirectUris -> redirectUris.addAll(REDIRECT_URIS))
-			.scopes(scopes -> scopes.addAll(SCOPES))
+			.redirectUris((redirectUris) -> redirectUris.addAll(REDIRECT_URIS))
+			.scopes((scopes) -> scopes.addAll(SCOPES))
 			.build();
 
 		assertThat(registration.getId()).isEqualTo(ID);

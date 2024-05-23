@@ -73,7 +73,7 @@ public class OAuth2ClientAuthenticationToken extends AbstractAuthenticationToken
 		this.clientAuthenticationMethod = clientAuthenticationMethod;
 		this.credentials = credentials;
 		this.additionalParameters = Collections
-			.unmodifiableMap(additionalParameters != null ? additionalParameters : Collections.emptyMap());
+			.unmodifiableMap((additionalParameters != null) ? additionalParameters : Collections.emptyMap());
 	}
 
 	/**

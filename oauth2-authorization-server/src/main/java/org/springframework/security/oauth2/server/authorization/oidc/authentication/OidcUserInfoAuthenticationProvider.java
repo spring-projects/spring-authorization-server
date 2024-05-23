@@ -217,7 +217,7 @@ public final class OidcUserInfoAuthenticationProvider implements AuthenticationP
 			}
 
 			Map<String, Object> requestedClaims = new HashMap<>(claims);
-			requestedClaims.keySet().removeIf(claimName -> !scopeRequestedClaimNames.contains(claimName));
+			requestedClaims.keySet().removeIf((claimName) -> !scopeRequestedClaimNames.contains(claimName));
 
 			return requestedClaims;
 		}

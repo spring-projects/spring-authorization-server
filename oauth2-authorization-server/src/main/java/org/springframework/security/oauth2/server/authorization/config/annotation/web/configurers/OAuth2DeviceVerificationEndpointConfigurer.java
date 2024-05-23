@@ -83,6 +83,7 @@ public final class OAuth2DeviceVerificationEndpointConfigurer extends AbstractOA
 
 	/**
 	 * Restrict for internal use only.
+	 * @param objectPostProcessor an {@code ObjectPostProcessor}
 	 */
 	OAuth2DeviceVerificationEndpointConfigurer(ObjectPostProcessor<Object> objectPostProcessor) {
 		super(objectPostProcessor);
@@ -247,7 +248,7 @@ public final class OAuth2DeviceVerificationEndpointConfigurer extends AbstractOA
 		}
 		this.authenticationProvidersConsumer.accept(authenticationProviders);
 		authenticationProviders
-			.forEach(authenticationProvider -> builder.authenticationProvider(postProcess(authenticationProvider)));
+			.forEach((authenticationProvider) -> builder.authenticationProvider(postProcess(authenticationProvider)));
 	}
 
 	@Override

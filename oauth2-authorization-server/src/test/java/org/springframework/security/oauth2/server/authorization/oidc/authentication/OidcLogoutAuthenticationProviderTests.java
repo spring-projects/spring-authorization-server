@@ -54,9 +54,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 /**
  * Tests for {@link OidcLogoutAuthenticationProvider}.
@@ -132,8 +132,8 @@ public class OidcLogoutAuthenticationProviderTests {
 
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 			.isInstanceOf(OAuth2AuthenticationException.class)
-			.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
-			.satisfies(error -> {
+			.extracting((ex) -> ((OAuth2AuthenticationException) ex).getError())
+			.satisfies((error) -> {
 				assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_TOKEN);
 				assertThat(error.getDescription()).contains("id_token_hint");
 			});
@@ -158,16 +158,16 @@ public class OidcLogoutAuthenticationProviderTests {
 				metadata.put(OAuth2Authorization.Token.INVALIDATED_METADATA_NAME, true);
 			})
 			.build();
-		when(this.authorizationService.findByToken(eq(idToken.getTokenValue()), eq(ID_TOKEN_TOKEN_TYPE)))
-			.thenReturn(authorization);
+		given(this.authorizationService.findByToken(eq(idToken.getTokenValue()), eq(ID_TOKEN_TOKEN_TYPE)))
+			.willReturn(authorization);
 
 		OidcLogoutAuthenticationToken authentication = new OidcLogoutAuthenticationToken(idToken.getTokenValue(),
 				principal, "session-1", null, null, null);
 
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 			.isInstanceOf(OAuth2AuthenticationException.class)
-			.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
-			.satisfies(error -> {
+			.extracting((ex) -> ((OAuth2AuthenticationException) ex).getError())
+			.satisfies((error) -> {
 				assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_TOKEN);
 				assertThat(error.getDescription()).contains("id_token_hint");
 			});
@@ -190,18 +190,18 @@ public class OidcLogoutAuthenticationProviderTests {
 			.token(idToken,
 					(metadata) -> metadata.put(OAuth2Authorization.Token.CLAIMS_METADATA_NAME, idToken.getClaims()))
 			.build();
-		when(this.authorizationService.findByToken(eq(idToken.getTokenValue()), eq(ID_TOKEN_TOKEN_TYPE)))
-			.thenReturn(authorization);
-		when(this.registeredClientRepository.findById(eq(authorization.getRegisteredClientId())))
-			.thenReturn(registeredClient);
+		given(this.authorizationService.findByToken(eq(idToken.getTokenValue()), eq(ID_TOKEN_TOKEN_TYPE)))
+			.willReturn(authorization);
+		given(this.registeredClientRepository.findById(eq(authorization.getRegisteredClientId())))
+			.willReturn(registeredClient);
 
 		OidcLogoutAuthenticationToken authentication = new OidcLogoutAuthenticationToken(idToken.getTokenValue(),
 				principal, "session-1", null, null, null);
 
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 			.isInstanceOf(OAuth2AuthenticationException.class)
-			.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
-			.satisfies(error -> {
+			.extracting((ex) -> ((OAuth2AuthenticationException) ex).getError())
+			.satisfies((error) -> {
 				assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_TOKEN);
 				assertThat(error.getDescription()).contains(IdTokenClaimNames.AUD);
 			});
@@ -225,18 +225,18 @@ public class OidcLogoutAuthenticationProviderTests {
 			.token(idToken,
 					(metadata) -> metadata.put(OAuth2Authorization.Token.CLAIMS_METADATA_NAME, idToken.getClaims()))
 			.build();
-		when(this.authorizationService.findByToken(eq(idToken.getTokenValue()), eq(ID_TOKEN_TOKEN_TYPE)))
-			.thenReturn(authorization);
-		when(this.registeredClientRepository.findById(eq(authorization.getRegisteredClientId())))
-			.thenReturn(registeredClient);
+		given(this.authorizationService.findByToken(eq(idToken.getTokenValue()), eq(ID_TOKEN_TOKEN_TYPE)))
+			.willReturn(authorization);
+		given(this.registeredClientRepository.findById(eq(authorization.getRegisteredClientId())))
+			.willReturn(registeredClient);
 
 		OidcLogoutAuthenticationToken authentication = new OidcLogoutAuthenticationToken(idToken.getTokenValue(),
 				principal, "session-1", null, null, null);
 
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 			.isInstanceOf(OAuth2AuthenticationException.class)
-			.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
-			.satisfies(error -> {
+			.extracting((ex) -> ((OAuth2AuthenticationException) ex).getError())
+			.satisfies((error) -> {
 				assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_TOKEN);
 				assertThat(error.getDescription()).contains(IdTokenClaimNames.AUD);
 			});
@@ -260,18 +260,18 @@ public class OidcLogoutAuthenticationProviderTests {
 			.token(idToken,
 					(metadata) -> metadata.put(OAuth2Authorization.Token.CLAIMS_METADATA_NAME, idToken.getClaims()))
 			.build();
-		when(this.authorizationService.findByToken(eq(idToken.getTokenValue()), eq(ID_TOKEN_TOKEN_TYPE)))
-			.thenReturn(authorization);
-		when(this.registeredClientRepository.findById(eq(authorization.getRegisteredClientId())))
-			.thenReturn(registeredClient);
+		given(this.authorizationService.findByToken(eq(idToken.getTokenValue()), eq(ID_TOKEN_TOKEN_TYPE)))
+			.willReturn(authorization);
+		given(this.registeredClientRepository.findById(eq(authorization.getRegisteredClientId())))
+			.willReturn(registeredClient);
 
 		OidcLogoutAuthenticationToken authentication = new OidcLogoutAuthenticationToken(idToken.getTokenValue(),
 				principal, "session-1", registeredClient.getClientId() + "-invalid", null, null);
 
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 			.isInstanceOf(OAuth2AuthenticationException.class)
-			.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
-			.satisfies(error -> {
+			.extracting((ex) -> ((OAuth2AuthenticationException) ex).getError())
+			.satisfies((error) -> {
 				assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_REQUEST);
 				assertThat(error.getDescription()).contains(OAuth2ParameterNames.CLIENT_ID);
 			});
@@ -295,18 +295,18 @@ public class OidcLogoutAuthenticationProviderTests {
 			.token(idToken,
 					(metadata) -> metadata.put(OAuth2Authorization.Token.CLAIMS_METADATA_NAME, idToken.getClaims()))
 			.build();
-		when(this.authorizationService.findByToken(eq(idToken.getTokenValue()), eq(ID_TOKEN_TOKEN_TYPE)))
-			.thenReturn(authorization);
-		when(this.registeredClientRepository.findById(eq(authorization.getRegisteredClientId())))
-			.thenReturn(registeredClient);
+		given(this.authorizationService.findByToken(eq(idToken.getTokenValue()), eq(ID_TOKEN_TOKEN_TYPE)))
+			.willReturn(authorization);
+		given(this.registeredClientRepository.findById(eq(authorization.getRegisteredClientId())))
+			.willReturn(registeredClient);
 
 		OidcLogoutAuthenticationToken authentication = new OidcLogoutAuthenticationToken(idToken.getTokenValue(),
 				principal, "session-1", registeredClient.getClientId(), "https://example.com/callback-1-invalid", null);
 
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 			.isInstanceOf(OAuth2AuthenticationException.class)
-			.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
-			.satisfies(error -> {
+			.extracting((ex) -> ((OAuth2AuthenticationException) ex).getError())
+			.satisfies((error) -> {
 				assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_REQUEST);
 				assertThat(error.getDescription()).contains("post_logout_redirect_uri");
 			});
@@ -329,10 +329,10 @@ public class OidcLogoutAuthenticationProviderTests {
 			.token(idToken,
 					(metadata) -> metadata.put(OAuth2Authorization.Token.CLAIMS_METADATA_NAME, idToken.getClaims()))
 			.build();
-		when(this.authorizationService.findByToken(eq(idToken.getTokenValue()), eq(ID_TOKEN_TOKEN_TYPE)))
-			.thenReturn(authorization);
-		when(this.registeredClientRepository.findById(eq(authorization.getRegisteredClientId())))
-			.thenReturn(registeredClient);
+		given(this.authorizationService.findByToken(eq(idToken.getTokenValue()), eq(ID_TOKEN_TOKEN_TYPE)))
+			.willReturn(authorization);
+		given(this.registeredClientRepository.findById(eq(authorization.getRegisteredClientId())))
+			.willReturn(registeredClient);
 
 		principal.setAuthenticated(true);
 
@@ -341,8 +341,8 @@ public class OidcLogoutAuthenticationProviderTests {
 
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 			.isInstanceOf(OAuth2AuthenticationException.class)
-			.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
-			.satisfies(error -> {
+			.extracting((ex) -> ((OAuth2AuthenticationException) ex).getError())
+			.satisfies((error) -> {
 				assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_TOKEN);
 				assertThat(error.getDescription()).contains("sub");
 			});
@@ -367,10 +367,10 @@ public class OidcLogoutAuthenticationProviderTests {
 			.token(idToken,
 					(metadata) -> metadata.put(OAuth2Authorization.Token.CLAIMS_METADATA_NAME, idToken.getClaims()))
 			.build();
-		when(this.authorizationService.findByToken(eq(idToken.getTokenValue()), eq(ID_TOKEN_TOKEN_TYPE)))
-			.thenReturn(authorization);
-		when(this.registeredClientRepository.findById(eq(authorization.getRegisteredClientId())))
-			.thenReturn(registeredClient);
+		given(this.authorizationService.findByToken(eq(idToken.getTokenValue()), eq(ID_TOKEN_TOKEN_TYPE)))
+			.willReturn(authorization);
+		given(this.registeredClientRepository.findById(eq(authorization.getRegisteredClientId())))
+			.willReturn(registeredClient);
 
 		principal.setAuthenticated(true);
 
@@ -382,8 +382,8 @@ public class OidcLogoutAuthenticationProviderTests {
 
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 			.isInstanceOf(OAuth2AuthenticationException.class)
-			.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
-			.satisfies(error -> {
+			.extracting((ex) -> ((OAuth2AuthenticationException) ex).getError())
+			.satisfies((error) -> {
 				assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_TOKEN);
 				assertThat(error.getDescription()).contains("sub");
 			});
@@ -407,15 +407,15 @@ public class OidcLogoutAuthenticationProviderTests {
 			.token(idToken,
 					(metadata) -> metadata.put(OAuth2Authorization.Token.CLAIMS_METADATA_NAME, idToken.getClaims()))
 			.build();
-		when(this.authorizationService.findByToken(eq(idToken.getTokenValue()), eq(ID_TOKEN_TOKEN_TYPE)))
-			.thenReturn(authorization);
-		when(this.registeredClientRepository.findById(eq(authorization.getRegisteredClientId())))
-			.thenReturn(registeredClient);
+		given(this.authorizationService.findByToken(eq(idToken.getTokenValue()), eq(ID_TOKEN_TOKEN_TYPE)))
+			.willReturn(authorization);
+		given(this.registeredClientRepository.findById(eq(authorization.getRegisteredClientId())))
+			.willReturn(registeredClient);
 
 		String sessionId = "session-1";
 		List<SessionInformation> sessions = Collections
 			.singletonList(new SessionInformation(principal.getPrincipal(), sessionId, Date.from(Instant.now())));
-		when(this.sessionRegistry.getAllSessions(eq(principal.getPrincipal()), eq(true))).thenReturn(sessions);
+		given(this.sessionRegistry.getAllSessions(eq(principal.getPrincipal()), eq(true))).willReturn(sessions);
 
 		principal.setAuthenticated(true);
 
@@ -424,8 +424,8 @@ public class OidcLogoutAuthenticationProviderTests {
 
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 			.isInstanceOf(OAuth2AuthenticationException.class)
-			.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
-			.satisfies(error -> {
+			.extracting((ex) -> ((OAuth2AuthenticationException) ex).getError())
+			.satisfies((error) -> {
 				assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_TOKEN);
 				assertThat(error.getDescription()).contains("sid");
 			});
@@ -450,15 +450,15 @@ public class OidcLogoutAuthenticationProviderTests {
 			.token(idToken,
 					(metadata) -> metadata.put(OAuth2Authorization.Token.CLAIMS_METADATA_NAME, idToken.getClaims()))
 			.build();
-		when(this.authorizationService.findByToken(eq(idToken.getTokenValue()), eq(ID_TOKEN_TOKEN_TYPE)))
-			.thenReturn(authorization);
-		when(this.registeredClientRepository.findById(eq(authorization.getRegisteredClientId())))
-			.thenReturn(registeredClient);
+		given(this.authorizationService.findByToken(eq(idToken.getTokenValue()), eq(ID_TOKEN_TOKEN_TYPE)))
+			.willReturn(authorization);
+		given(this.registeredClientRepository.findById(eq(authorization.getRegisteredClientId())))
+			.willReturn(registeredClient);
 
 		String sessionId = "session-1";
 		List<SessionInformation> sessions = Collections
 			.singletonList(new SessionInformation(principal.getPrincipal(), sessionId, Date.from(Instant.now())));
-		when(this.sessionRegistry.getAllSessions(eq(principal.getPrincipal()), eq(true))).thenReturn(sessions);
+		given(this.sessionRegistry.getAllSessions(eq(principal.getPrincipal()), eq(true))).willReturn(sessions);
 
 		principal.setAuthenticated(true);
 
@@ -467,8 +467,8 @@ public class OidcLogoutAuthenticationProviderTests {
 
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 			.isInstanceOf(OAuth2AuthenticationException.class)
-			.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
-			.satisfies(error -> {
+			.extracting((ex) -> ((OAuth2AuthenticationException) ex).getError())
+			.satisfies((error) -> {
 				assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_TOKEN);
 				assertThat(error.getDescription()).contains("sid");
 			});
@@ -516,15 +516,15 @@ public class OidcLogoutAuthenticationProviderTests {
 			.token(idToken,
 					(metadata) -> metadata.put(OAuth2Authorization.Token.CLAIMS_METADATA_NAME, idToken.getClaims()))
 			.build();
-		when(this.authorizationService.findByToken(eq(idToken.getTokenValue()), eq(ID_TOKEN_TOKEN_TYPE)))
-			.thenReturn(authorization);
-		when(this.registeredClientRepository.findById(eq(authorization.getRegisteredClientId())))
-			.thenReturn(registeredClient);
+		given(this.authorizationService.findByToken(eq(idToken.getTokenValue()), eq(ID_TOKEN_TOKEN_TYPE)))
+			.willReturn(authorization);
+		given(this.registeredClientRepository.findById(eq(authorization.getRegisteredClientId())))
+			.willReturn(registeredClient);
 
 		SessionInformation sessionInformation = new SessionInformation(principal.getPrincipal(), sessionId,
 				Date.from(Instant.now()));
 		List<SessionInformation> sessions = Collections.singletonList(sessionInformation);
-		when(this.sessionRegistry.getAllSessions(eq(principal.getPrincipal()), eq(true))).thenReturn(sessions);
+		given(this.sessionRegistry.getAllSessions(eq(principal.getPrincipal()), eq(true))).willReturn(sessions);
 
 		principal.setAuthenticated(true);
 		String postLogoutRedirectUri = registeredClient.getPostLogoutRedirectUris().toArray(new String[0])[0];

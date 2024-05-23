@@ -149,7 +149,7 @@ public final class OAuth2DeviceVerificationAuthenticationProvider implements Aut
 				this.logger.trace("Saved authorization");
 			}
 
-			Set<String> currentAuthorizedScopes = currentAuthorizationConsent != null
+			Set<String> currentAuthorizedScopes = (currentAuthorizationConsent != null)
 					? currentAuthorizationConsent.getScopes() : null;
 
 			AuthorizationServerSettings authorizationServerSettings = AuthorizationServerContextHolder.getContext()
@@ -166,10 +166,10 @@ public final class OAuth2DeviceVerificationAuthenticationProvider implements Aut
 		authorization = OAuth2Authorization.from(authorization)
 				.principalName(principal.getName())
 				.authorizedScopes(requestedScopes)
-				.token(userCode.getToken(), metadata -> metadata
+				.token(userCode.getToken(), (metadata) -> metadata
 						.put(OAuth2Authorization.Token.INVALIDATED_METADATA_NAME, true))
 				.attribute(Principal.class.getName(), principal)
-				.attributes(attributes -> attributes.remove(OAuth2ParameterNames.SCOPE))
+				.attributes((attributes) -> attributes.remove(OAuth2ParameterNames.SCOPE))
 				.build();
 		// @formatter:on
 		this.authorizationService.save(authorization);

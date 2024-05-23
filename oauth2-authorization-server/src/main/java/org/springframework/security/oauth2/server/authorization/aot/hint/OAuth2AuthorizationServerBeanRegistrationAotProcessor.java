@@ -69,10 +69,10 @@ class OAuth2AuthorizationServerBeanRegistrationAotProcessor implements BeanRegis
 		// @formatter:off
 		if ((beanClassName.equals("org.springframework.security.oauth2.server.authorization.JdbcOAuth2AuthorizationService") ||
 				beanClassName.equals("org.springframework.security.oauth2.server.authorization.client.JdbcRegisteredClientRepository")) &&
-				!jackson2Contributed) {
+				!this.jackson2Contributed) {
 			Jackson2ConfigurationBeanRegistrationAotContribution jackson2Contribution =
 					new Jackson2ConfigurationBeanRegistrationAotContribution();
-			jackson2Contributed = true;
+			this.jackson2Contributed = true;
 			return jackson2Contribution;
 		}
 		// @formatter:on
@@ -113,7 +113,7 @@ class OAuth2AuthorizationServerBeanRegistrationAotProcessor implements BeanRegis
 						TypeReference.of(AuthorizationGrantType.class),
 						TypeReference.of(OAuth2AuthorizationResponseType.class),
 						TypeReference.of(OAuth2TokenFormat.class)),
-						builder -> builder.withMembers(MemberCategory.DECLARED_FIELDS,
+						(builder) -> builder.withMembers(MemberCategory.DECLARED_FIELDS,
 								MemberCategory.INVOKE_DECLARED_CONSTRUCTORS, MemberCategory.INVOKE_DECLARED_METHODS));
 
 			// Jackson Modules - Spring Security and Spring Authorization Server
@@ -122,7 +122,7 @@ class OAuth2AuthorizationServerBeanRegistrationAotProcessor implements BeanRegis
 						Arrays.asList(TypeReference.of(CoreJackson2Module.class),
 								TypeReference.of(WebServletJackson2Module.class),
 								TypeReference.of(OAuth2AuthorizationServerJackson2Module.class)),
-						builder -> builder.withMembers(MemberCategory.DECLARED_FIELDS,
+						(builder) -> builder.withMembers(MemberCategory.DECLARED_FIELDS,
 								MemberCategory.INVOKE_DECLARED_CONSTRUCTORS, MemberCategory.INVOKE_DECLARED_METHODS));
 
 			// Jackson Mixins - Spring Security and Spring Authorization Server
@@ -162,7 +162,7 @@ class OAuth2AuthorizationServerBeanRegistrationAotProcessor implements BeanRegis
 								.of("org.springframework.security.oauth2.client.jackson2.OAuth2ClientJackson2Module"),
 							TypeReference
 								.of("org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken")),
-							builder -> builder.withMembers(MemberCategory.DECLARED_FIELDS,
+							(builder) -> builder.withMembers(MemberCategory.DECLARED_FIELDS,
 									MemberCategory.INVOKE_DECLARED_CONSTRUCTORS,
 									MemberCategory.INVOKE_DECLARED_METHODS));
 

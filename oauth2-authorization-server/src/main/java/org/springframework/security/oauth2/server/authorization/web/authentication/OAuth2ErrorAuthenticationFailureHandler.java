@@ -20,7 +20,6 @@ import java.io.IOException;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -40,9 +39,9 @@ import org.springframework.util.Assert;
  * Error Response}.
  *
  * @author Dmitriy Dubson
+ * @since 1.2
  * @see AuthenticationFailureHandler
  * @see OAuth2ErrorHttpMessageConverter
- * @since 1.2
  */
 public final class OAuth2ErrorAuthenticationFailureHandler implements AuthenticationFailureHandler {
 

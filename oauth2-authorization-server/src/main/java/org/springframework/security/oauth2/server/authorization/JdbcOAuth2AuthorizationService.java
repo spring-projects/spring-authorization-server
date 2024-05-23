@@ -97,17 +97,6 @@ import org.springframework.util.StringUtils;
 @ImportRuntimeHints(JdbcOAuth2AuthorizationService.JdbcOAuth2AuthorizationServiceRuntimeHintsRegistrar.class)
 public class JdbcOAuth2AuthorizationService implements OAuth2AuthorizationService {
 
-	static class JdbcOAuth2AuthorizationServiceRuntimeHintsRegistrar implements RuntimeHintsRegistrar {
-
-		@Override
-		public void registerHints(RuntimeHints hints, ClassLoader classLoader) {
-			hints.resources()
-				.registerResource(new ClassPathResource(
-						"org/springframework/security/oauth2/server/authorization/oauth2-authorization-schema.sql"));
-		}
-
-	}
-
 	// @formatter:off
 	private static final String COLUMN_NAMES = "id, "
 			+ "registered_client_id, "
@@ -818,6 +807,17 @@ public class JdbcOAuth2AuthorizationService implements OAuth2AuthorizationServic
 
 		private int getDataType() {
 			return this.dataType;
+		}
+
+	}
+
+	static class JdbcOAuth2AuthorizationServiceRuntimeHintsRegistrar implements RuntimeHintsRegistrar {
+
+		@Override
+		public void registerHints(RuntimeHints hints, ClassLoader classLoader) {
+			hints.resources()
+				.registerResource(new ClassPathResource(
+						"org/springframework/security/oauth2/server/authorization/oauth2-authorization-schema.sql"));
 		}
 
 	}

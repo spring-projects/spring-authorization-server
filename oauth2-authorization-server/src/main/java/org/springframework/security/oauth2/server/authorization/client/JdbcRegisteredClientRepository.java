@@ -82,17 +82,6 @@ import org.springframework.util.StringUtils;
 @ImportRuntimeHints(JdbcRegisteredClientRepository.JdbcRegisteredClientRepositoryRuntimeHintsRegistrar.class)
 public class JdbcRegisteredClientRepository implements RegisteredClientRepository {
 
-	static class JdbcRegisteredClientRepositoryRuntimeHintsRegistrar implements RuntimeHintsRegistrar {
-
-		@Override
-		public void registerHints(RuntimeHints hints, ClassLoader classLoader) {
-			hints.resources()
-				.registerResource(new ClassPathResource(
-						"org/springframework/security/oauth2/server/authorization/client/oauth2-registered-client-schema.sql"));
-		}
-
-	}
-
 	// @formatter:off
 	private static final String COLUMN_NAMES = "id, "
 			+ "client_id, "
@@ -427,6 +416,17 @@ public class JdbcRegisteredClientRepository implements RegisteredClientRepositor
 			catch (Exception ex) {
 				throw new IllegalArgumentException(ex.getMessage(), ex);
 			}
+		}
+
+	}
+
+	static class JdbcRegisteredClientRepositoryRuntimeHintsRegistrar implements RuntimeHintsRegistrar {
+
+		@Override
+		public void registerHints(RuntimeHints hints, ClassLoader classLoader) {
+			hints.resources()
+				.registerResource(new ClassPathResource(
+						"org/springframework/security/oauth2/server/authorization/client/oauth2-registered-client-schema.sql"));
 		}
 
 	}

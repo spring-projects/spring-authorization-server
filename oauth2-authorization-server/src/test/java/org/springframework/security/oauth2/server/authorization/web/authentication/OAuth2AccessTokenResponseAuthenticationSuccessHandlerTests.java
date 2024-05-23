@@ -108,7 +108,7 @@ public class OAuth2AccessTokenResponseAuthenticationSuccessHandlerTests {
 		assertThatThrownBy(() -> this.authenticationSuccessHandler.onAuthenticationSuccess(request, response,
 				new TestingAuthenticationToken(this.clientPrincipal, null)))
 			.isInstanceOf(OAuth2AuthenticationException.class)
-			.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+			.extracting((ex) -> ((OAuth2AuthenticationException) ex).getError())
 			.extracting("errorCode")
 			.isEqualTo(OAuth2ErrorCodes.SERVER_ERROR);
 	}

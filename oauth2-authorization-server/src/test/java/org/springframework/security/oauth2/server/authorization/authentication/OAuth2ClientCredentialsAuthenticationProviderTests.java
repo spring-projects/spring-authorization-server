@@ -334,7 +334,7 @@ public class OAuth2ClientCredentialsAuthenticationProviderTests {
 		Consumer<OAuth2ClientCredentialsAuthenticationContext> authenticationValidator = mock(Consumer.class);
 		this.authenticationProvider.setAuthenticationValidator(authenticationValidator);
 
-		when(this.jwtEncoder.encode(any())).thenReturn(createJwt(registeredClient.getScopes()));
+		given(this.jwtEncoder.encode(any())).willReturn(createJwt(registeredClient.getScopes()));
 
 		this.authenticationProvider.authenticate(authentication);
 

@@ -491,12 +491,12 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 		this.authenticationProvider.setAuthorizationConsentRequired(authorizationConsentRequired);
 
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
-		when(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
-			.thenReturn(registeredClient);
+		given(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
+			.willReturn(registeredClient);
 
 		String redirectUri = registeredClient.getRedirectUris().toArray(new String[0])[1];
 		OAuth2AuthorizationCodeRequestAuthenticationToken authentication = new OAuth2AuthorizationCodeRequestAuthenticationToken(
-				AUTHORIZATION_URI, registeredClient.getClientId(), principal, redirectUri, STATE,
+				AUTHORIZATION_URI, registeredClient.getClientId(), this.principal, redirectUri, STATE,
 				registeredClient.getScopes(), null);
 
 		OAuth2AuthorizationCodeRequestAuthenticationToken authenticationResult = (OAuth2AuthorizationCodeRequestAuthenticationToken) this.authenticationProvider

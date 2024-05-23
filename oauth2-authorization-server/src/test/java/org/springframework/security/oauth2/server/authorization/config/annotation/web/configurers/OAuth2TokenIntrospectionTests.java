@@ -442,9 +442,9 @@ public class OAuth2TokenIntrospectionTests {
 		OAuth2TokenIntrospectionAuthenticationToken tokenIntrospectionAuthentication = new OAuth2TokenIntrospectionAuthenticationToken(
 				accessToken.getTokenValue(), clientPrincipal, null, null);
 
-		when(authenticationConverter.convert(any())).thenReturn(tokenIntrospectionAuthentication);
-		when(authenticationProvider.supports(eq(OAuth2TokenIntrospectionAuthenticationToken.class))).thenReturn(true);
-		when(authenticationProvider.authenticate(any())).thenReturn(tokenIntrospectionAuthentication);
+		given(authenticationConverter.convert(any())).willReturn(tokenIntrospectionAuthentication);
+		given(authenticationProvider.supports(eq(OAuth2TokenIntrospectionAuthenticationToken.class))).willReturn(true);
+		given(authenticationProvider.authenticate(any())).willReturn(tokenIntrospectionAuthentication);
 
 		String issuer = "https://example.com:8443/issuer1";
 

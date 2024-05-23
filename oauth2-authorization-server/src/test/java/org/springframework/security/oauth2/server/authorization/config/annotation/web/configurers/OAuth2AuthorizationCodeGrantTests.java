@@ -947,7 +947,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 			.andReturn();
 
 		ArgumentCaptor<OAuth2TokenContext> tokenContextCaptor = ArgumentCaptor.forClass(OAuth2TokenContext.class);
-		verify(tokenGenerator).generate(tokenContextCaptor.capture());
+		verify(this.tokenGenerator).generate(tokenContextCaptor.capture());
 		OAuth2TokenContext tokenContext = tokenContextCaptor.getValue();
 		assertThat(tokenContext.getAuthorizationServerContext().getIssuer()).isEqualTo(issuer);
 	}

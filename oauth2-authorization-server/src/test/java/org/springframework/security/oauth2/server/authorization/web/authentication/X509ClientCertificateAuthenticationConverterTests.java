@@ -63,7 +63,7 @@ public class X509ClientCertificateAuthenticationConverterTests {
 		request.setAttribute("jakarta.servlet.request.X509Certificate",
 				TestX509Certificates.DEMO_CLIENT_PKI_CERTIFICATE);
 		assertThatThrownBy(() -> this.converter.convert(request)).isInstanceOf(OAuth2AuthenticationException.class)
-			.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+			.extracting((ex) -> ((OAuth2AuthenticationException) ex).getError())
 			.extracting("errorCode")
 			.isEqualTo(OAuth2ErrorCodes.INVALID_REQUEST);
 	}
@@ -76,7 +76,7 @@ public class X509ClientCertificateAuthenticationConverterTests {
 		request.addParameter(OAuth2ParameterNames.CLIENT_ID, "client-1");
 		request.addParameter(OAuth2ParameterNames.CLIENT_ID, "client-2");
 		assertThatThrownBy(() -> this.converter.convert(request)).isInstanceOf(OAuth2AuthenticationException.class)
-			.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+			.extracting((ex) -> ((OAuth2AuthenticationException) ex).getError())
 			.extracting("errorCode")
 			.isEqualTo(OAuth2ErrorCodes.INVALID_REQUEST);
 	}

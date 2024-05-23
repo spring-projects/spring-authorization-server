@@ -45,8 +45,8 @@ import org.springframework.security.oauth2.server.authorization.util.TestX509Cer
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.entry;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 /**
  * Tests for {@link DefaultOAuth2TokenCustomizers}.
@@ -98,7 +98,7 @@ class DefaultOAuth2TokenCustomizersTests {
 	void customizeWhenTokenExchangeGrantAndResourcesThenNoClaimsAdded() {
 		OAuth2TokenExchangeAuthenticationToken tokenExchangeAuthentication = mock(
 				OAuth2TokenExchangeAuthenticationToken.class);
-		when(tokenExchangeAuthentication.getResources()).thenReturn(Set.of("resource1", "resource2"));
+		given(tokenExchangeAuthentication.getResources()).willReturn(Set.of("resource1", "resource2"));
 		// @formatter:off
 		JwtEncodingContext tokenContext = JwtEncodingContext.with(this.jwsHeaderBuilder, this.jwtClaimsBuilder)
 				.tokenType(OAuth2TokenType.ACCESS_TOKEN)
@@ -115,7 +115,7 @@ class DefaultOAuth2TokenCustomizersTests {
 	void customizeWhenTokenExchangeGrantAndAudiencesThenNoClaimsAdded() {
 		OAuth2TokenExchangeAuthenticationToken tokenExchangeAuthentication = mock(
 				OAuth2TokenExchangeAuthenticationToken.class);
-		when(tokenExchangeAuthentication.getAudiences()).thenReturn(Set.of("audience1", "audience2"));
+		given(tokenExchangeAuthentication.getAudiences()).willReturn(Set.of("audience1", "audience2"));
 		// @formatter:off
 		JwtEncodingContext tokenContext = JwtEncodingContext.with(this.jwsHeaderBuilder, this.jwtClaimsBuilder)
 				.tokenType(OAuth2TokenType.ACCESS_TOKEN)
@@ -132,7 +132,7 @@ class DefaultOAuth2TokenCustomizersTests {
 	void customizeWhenTokenExchangeGrantAndDelegationThenActClaimAdded() {
 		OAuth2TokenExchangeAuthenticationToken tokenExchangeAuthentication = mock(
 				OAuth2TokenExchangeAuthenticationToken.class);
-		when(tokenExchangeAuthentication.getAudiences()).thenReturn(Collections.emptySet());
+		given(tokenExchangeAuthentication.getAudiences()).willReturn(Collections.emptySet());
 
 		Authentication subject = new TestingAuthenticationToken("subject", null);
 		OAuth2TokenExchangeActor actor1 = new OAuth2TokenExchangeActor(

@@ -113,7 +113,7 @@ public class JwkSetTests {
 	public void requestWhenJwkSetCustomEndpointThenReturnKeys() throws Exception {
 		this.spring.register(AuthorizationServerConfigurationCustomEndpoints.class).autowire();
 
-		assertJwkSetRequestThenReturnKeys(authorizationServerSettings.getJwkSetEndpoint());
+		assertJwkSetRequestThenReturnKeys(this.authorizationServerSettings.getJwkSetEndpoint());
 	}
 
 	@Test
@@ -121,7 +121,7 @@ public class JwkSetTests {
 		this.spring.register(AuthorizationServerConfigurationCustomEndpoints.class).autowire();
 
 		String issuer = "https://example.com:8443/issuer1";
-		assertJwkSetRequestThenReturnKeys(issuer.concat(authorizationServerSettings.getJwkSetEndpoint()));
+		assertJwkSetRequestThenReturnKeys(issuer.concat(this.authorizationServerSettings.getJwkSetEndpoint()));
 	}
 
 	private void assertJwkSetRequestThenReturnKeys(String jwkSetEndpointUri) throws Exception {

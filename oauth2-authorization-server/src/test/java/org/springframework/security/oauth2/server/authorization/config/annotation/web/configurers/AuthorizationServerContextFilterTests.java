@@ -21,7 +21,6 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 import jakarta.servlet.FilterChain;
-
 import org.junit.jupiter.api.Test;
 
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -49,7 +48,7 @@ class AuthorizationServerContextFilterTests {
 	private AuthorizationServerContextFilter filter;
 
 	@Test
-	public void doFilterWhenDefaultEndpointsThenIssuerResolved() throws Exception {
+	void doFilterWhenDefaultEndpointsThenIssuerResolved() throws Exception {
 		AuthorizationServerSettings authorizationServerSettings = AuthorizationServerSettings.builder().build();
 		this.filter = new AuthorizationServerContextFilter(authorizationServerSettings);
 
@@ -63,7 +62,7 @@ class AuthorizationServerContextFilterTests {
 	}
 
 	@Test
-	public void doFilterWhenCustomEndpointsThenIssuerResolved() throws Exception {
+	void doFilterWhenCustomEndpointsThenIssuerResolved() throws Exception {
 		AuthorizationServerSettings authorizationServerSettings = AuthorizationServerSettings.builder()
 			.authorizationEndpoint("/oauth2/v1/authorize")
 			.deviceAuthorizationEndpoint("/oauth2/v1/device_authorization")
@@ -88,7 +87,7 @@ class AuthorizationServerContextFilterTests {
 	}
 
 	@Test
-	public void doFilterWhenIssuerHasMultiplePathsThenIssuerResolved() throws Exception {
+	void doFilterWhenIssuerHasMultiplePathsThenIssuerResolved() throws Exception {
 		AuthorizationServerSettings authorizationServerSettings = AuthorizationServerSettings.builder().build();
 		this.filter = new AuthorizationServerContextFilter(authorizationServerSettings);
 

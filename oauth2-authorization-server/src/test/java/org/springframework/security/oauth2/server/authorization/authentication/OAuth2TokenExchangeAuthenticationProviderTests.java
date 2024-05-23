@@ -58,11 +58,11 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.when;
 
 /**
  * Tests for {@link OAuth2TokenExchangeAuthenticationProvider}.
@@ -180,7 +180,7 @@ public class OAuth2TokenExchangeAuthenticationProviderTests {
 			.authorizationGrantType(AuthorizationGrantType.TOKEN_EXCHANGE)
 			.build();
 		OAuth2TokenExchangeAuthenticationToken authentication = createDelegationRequest(registeredClient);
-		when(this.authorizationService.findByToken(anyString(), any(OAuth2TokenType.class))).thenReturn(null);
+		given(this.authorizationService.findByToken(anyString(), any(OAuth2TokenType.class))).willReturn(null);
 		// @formatter:off
 		assertThatExceptionOfType(OAuth2AuthenticationException.class)
 				.isThrownBy(() -> this.authenticationProvider.authenticate(authentication))
@@ -203,7 +203,7 @@ public class OAuth2TokenExchangeAuthenticationProviderTests {
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient)
 			.token(createExpiredAccessToken(SUBJECT_TOKEN))
 			.build();
-		when(this.authorizationService.findByToken(anyString(), any(OAuth2TokenType.class))).thenReturn(authorization);
+		given(this.authorizationService.findByToken(anyString(), any(OAuth2TokenType.class))).willReturn(authorization);
 		// @formatter:off
 		assertThatExceptionOfType(OAuth2AuthenticationException.class)
 				.isThrownBy(() -> this.authenticationProvider.authenticate(authentication))
@@ -226,7 +226,7 @@ public class OAuth2TokenExchangeAuthenticationProviderTests {
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient)
 			.token(createAccessToken(SUBJECT_TOKEN), withTokenFormat(OAuth2TokenFormat.REFERENCE))
 			.build();
-		when(this.authorizationService.findByToken(anyString(), any(OAuth2TokenType.class))).thenReturn(authorization);
+		given(this.authorizationService.findByToken(anyString(), any(OAuth2TokenType.class))).willReturn(authorization);
 		// @formatter:off
 		assertThatExceptionOfType(OAuth2AuthenticationException.class)
 				.isThrownBy(() -> this.authenticationProvider.authenticate(authentication))
@@ -252,7 +252,7 @@ public class OAuth2TokenExchangeAuthenticationProviderTests {
 				.attributes((attributes) -> attributes.remove(Principal.class.getName()))
 				.build();
 		// @formatter:on
-		when(this.authorizationService.findByToken(anyString(), any(OAuth2TokenType.class))).thenReturn(authorization);
+		given(this.authorizationService.findByToken(anyString(), any(OAuth2TokenType.class))).willReturn(authorization);
 		// @formatter:off
 		assertThatExceptionOfType(OAuth2AuthenticationException.class)
 				.isThrownBy(() -> this.authenticationProvider.authenticate(authentication))
@@ -275,8 +275,8 @@ public class OAuth2TokenExchangeAuthenticationProviderTests {
 		OAuth2Authorization subjectAuthorization = TestOAuth2Authorizations.authorization(registeredClient)
 			.token(createAccessToken(SUBJECT_TOKEN))
 			.build();
-		when(this.authorizationService.findByToken(anyString(), any(OAuth2TokenType.class)))
-			.thenReturn(subjectAuthorization, (OAuth2Authorization) null);
+		given(this.authorizationService.findByToken(anyString(), any(OAuth2TokenType.class)))
+			.willReturn(subjectAuthorization, (OAuth2Authorization) null);
 		// @formatter:off
 		assertThatExceptionOfType(OAuth2AuthenticationException.class)
 				.isThrownBy(() -> this.authenticationProvider.authenticate(authentication))
@@ -303,8 +303,8 @@ public class OAuth2TokenExchangeAuthenticationProviderTests {
 		OAuth2Authorization actorAuthorization = TestOAuth2Authorizations.authorization(registeredClient)
 			.token(createExpiredAccessToken(ACTOR_TOKEN))
 			.build();
-		when(this.authorizationService.findByToken(anyString(), any(OAuth2TokenType.class)))
-			.thenReturn(subjectAuthorization, actorAuthorization);
+		given(this.authorizationService.findByToken(anyString(), any(OAuth2TokenType.class)))
+			.willReturn(subjectAuthorization, actorAuthorization);
 		// @formatter:off
 		assertThatExceptionOfType(OAuth2AuthenticationException.class)
 				.isThrownBy(() -> this.authenticationProvider.authenticate(authentication))
@@ -331,8 +331,8 @@ public class OAuth2TokenExchangeAuthenticationProviderTests {
 		OAuth2Authorization actorAuthorization = TestOAuth2Authorizations.authorization(registeredClient)
 			.token(createAccessToken(ACTOR_TOKEN), withTokenFormat(OAuth2TokenFormat.REFERENCE))
 			.build();
-		when(this.authorizationService.findByToken(anyString(), any(OAuth2TokenType.class)))
-			.thenReturn(subjectAuthorization, actorAuthorization);
+		given(this.authorizationService.findByToken(anyString(), any(OAuth2TokenType.class)))
+			.willReturn(subjectAuthorization, actorAuthorization);
 		// @formatter:off
 		assertThatExceptionOfType(OAuth2AuthenticationException.class)
 				.isThrownBy(() -> this.authenticationProvider.authenticate(authentication))
@@ -365,8 +365,8 @@ public class OAuth2TokenExchangeAuthenticationProviderTests {
 		OAuth2Authorization actorAuthorization = TestOAuth2Authorizations.authorization(registeredClient)
 			.token(createAccessToken(ACTOR_TOKEN), withClaims(actorTokenClaims))
 			.build();
-		when(this.authorizationService.findByToken(anyString(), any(OAuth2TokenType.class)))
-			.thenReturn(subjectAuthorization, actorAuthorization);
+		given(this.authorizationService.findByToken(anyString(), any(OAuth2TokenType.class)))
+			.willReturn(subjectAuthorization, actorAuthorization);
 		// @formatter:off
 		assertThatExceptionOfType(OAuth2AuthenticationException.class)
 				.isThrownBy(() -> this.authenticationProvider.authenticate(authentication))
@@ -399,8 +399,8 @@ public class OAuth2TokenExchangeAuthenticationProviderTests {
 		OAuth2Authorization actorAuthorization = TestOAuth2Authorizations.authorization(registeredClient)
 			.token(createAccessToken(ACTOR_TOKEN), withClaims(actorTokenClaims))
 			.build();
-		when(this.authorizationService.findByToken(anyString(), any(OAuth2TokenType.class)))
-			.thenReturn(subjectAuthorization, actorAuthorization);
+		given(this.authorizationService.findByToken(anyString(), any(OAuth2TokenType.class)))
+			.willReturn(subjectAuthorization, actorAuthorization);
 		// @formatter:off
 		assertThatExceptionOfType(OAuth2AuthenticationException.class)
 				.isThrownBy(() -> this.authenticationProvider.authenticate(authentication))
@@ -428,8 +428,8 @@ public class OAuth2TokenExchangeAuthenticationProviderTests {
 				.token(createAccessToken(SUBJECT_TOKEN), withClaims(Map.of("may_act", authorizedActorClaims)))
 				.build();
 		// @formatter:on
-		when(this.authorizationService.findByToken(anyString(), any(OAuth2TokenType.class)))
-			.thenReturn(subjectAuthorization);
+		given(this.authorizationService.findByToken(anyString(), any(OAuth2TokenType.class)))
+			.willReturn(subjectAuthorization);
 		// @formatter:off
 		assertThatExceptionOfType(OAuth2AuthenticationException.class)
 				.isThrownBy(() -> this.authenticationProvider.authenticate(authentication))
@@ -456,8 +456,8 @@ public class OAuth2TokenExchangeAuthenticationProviderTests {
 		OAuth2Authorization actorAuthorization = TestOAuth2Authorizations.authorization(registeredClient)
 			.token(createAccessToken(ACTOR_TOKEN))
 			.build();
-		when(this.authorizationService.findByToken(anyString(), any(OAuth2TokenType.class)))
-			.thenReturn(subjectAuthorization, actorAuthorization);
+		given(this.authorizationService.findByToken(anyString(), any(OAuth2TokenType.class)))
+			.willReturn(subjectAuthorization, actorAuthorization);
 		// @formatter:off
 		assertThatExceptionOfType(OAuth2AuthenticationException.class)
 				.isThrownBy(() -> this.authenticationProvider.authenticate(authentication))
@@ -485,8 +485,8 @@ public class OAuth2TokenExchangeAuthenticationProviderTests {
 		OAuth2Authorization actorAuthorization = TestOAuth2Authorizations.authorization(registeredClient)
 			.token(createAccessToken(ACTOR_TOKEN))
 			.build();
-		when(this.authorizationService.findByToken(anyString(), any(OAuth2TokenType.class)))
-			.thenReturn(subjectAuthorization, actorAuthorization);
+		given(this.authorizationService.findByToken(anyString(), any(OAuth2TokenType.class)))
+			.willReturn(subjectAuthorization, actorAuthorization);
 		// @formatter:off
 		assertThatExceptionOfType(OAuth2AuthenticationException.class)
 				.isThrownBy(() -> this.authenticationProvider.authenticate(authentication))
@@ -514,10 +514,10 @@ public class OAuth2TokenExchangeAuthenticationProviderTests {
 				.attribute(Principal.class.getName(), userPrincipal)
 				.build();
 		// @formatter:on
-		when(this.authorizationService.findByToken(anyString(), any(OAuth2TokenType.class)))
-			.thenReturn(subjectAuthorization);
+		given(this.authorizationService.findByToken(anyString(), any(OAuth2TokenType.class)))
+			.willReturn(subjectAuthorization);
 		OAuth2AccessToken accessToken = createAccessToken("token-value");
-		when(this.tokenGenerator.generate(any(OAuth2TokenContext.class))).thenReturn(accessToken);
+		given(this.tokenGenerator.generate(any(OAuth2TokenContext.class))).willReturn(accessToken);
 		OAuth2AccessTokenAuthenticationToken authenticationResult = (OAuth2AccessTokenAuthenticationToken) this.authenticationProvider
 			.authenticate(authentication);
 		assertThat(authenticationResult.getRegisteredClient()).isEqualTo(registeredClient);
@@ -571,10 +571,10 @@ public class OAuth2TokenExchangeAuthenticationProviderTests {
 				.attribute(Principal.class.getName(), subjectPrincipal)
 				.build();
 		// @formatter:on
-		when(this.authorizationService.findByToken(anyString(), any(OAuth2TokenType.class)))
-			.thenReturn(subjectAuthorization);
+		given(this.authorizationService.findByToken(anyString(), any(OAuth2TokenType.class)))
+			.willReturn(subjectAuthorization);
 		OAuth2AccessToken accessToken = createAccessToken("token-value");
-		when(this.tokenGenerator.generate(any(OAuth2TokenContext.class))).thenReturn(accessToken);
+		given(this.tokenGenerator.generate(any(OAuth2TokenContext.class))).willReturn(accessToken);
 		OAuth2AccessTokenAuthenticationToken authenticationResult = (OAuth2AccessTokenAuthenticationToken) this.authenticationProvider
 			.authenticate(authentication);
 		assertThat(authenticationResult.getRegisteredClient()).isEqualTo(registeredClient);
@@ -634,10 +634,10 @@ public class OAuth2TokenExchangeAuthenticationProviderTests {
 				.token(createAccessToken(ACTOR_TOKEN), withClaims(actor2.getClaims()))
 				.build();
 		// @formatter:on
-		when(this.authorizationService.findByToken(anyString(), any(OAuth2TokenType.class)))
-			.thenReturn(subjectAuthorization, actorAuthorization);
+		given(this.authorizationService.findByToken(anyString(), any(OAuth2TokenType.class)))
+			.willReturn(subjectAuthorization, actorAuthorization);
 		OAuth2AccessToken accessToken = createAccessToken("token-value");
-		when(this.tokenGenerator.generate(any(OAuth2TokenContext.class))).thenReturn(accessToken);
+		given(this.tokenGenerator.generate(any(OAuth2TokenContext.class))).willReturn(accessToken);
 		OAuth2AccessTokenAuthenticationToken authenticationResult = (OAuth2AccessTokenAuthenticationToken) this.authenticationProvider
 			.authenticate(authentication);
 		assertThat(authenticationResult.getRegisteredClient()).isEqualTo(registeredClient);

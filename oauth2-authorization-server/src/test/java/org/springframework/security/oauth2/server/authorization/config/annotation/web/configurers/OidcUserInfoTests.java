@@ -24,12 +24,11 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import jakarta.servlet.http.HttpServletResponse;
-
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
+import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

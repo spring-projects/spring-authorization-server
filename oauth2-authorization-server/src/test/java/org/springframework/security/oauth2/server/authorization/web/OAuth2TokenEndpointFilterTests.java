@@ -68,13 +68,11 @@ import org.springframework.util.StringUtils;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.entry;
-import static org.assertj.core.api.InstanceOfAssertFactories.type;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
 
 /**
  * Tests for {@link OAuth2TokenEndpointFilter}.
@@ -280,7 +278,7 @@ public class OAuth2TokenEndpointFilterTests {
 				entry("custom-param-1", "custom-value-1"),
 				entry("custom-param-2", new String[] { "custom-value-1", "custom-value-2" }));
 		assertThat(authorizationCodeAuthentication.getDetails())
-			.asInstanceOf(type(WebAuthenticationDetails.class))
+			.asInstanceOf(InstanceOfAssertFactories.type(WebAuthenticationDetails.class))
 			.extracting(WebAuthenticationDetails::getRemoteAddress)
 			.isEqualTo(REMOTE_ADDRESS);
 
@@ -345,7 +343,7 @@ public class OAuth2TokenEndpointFilterTests {
 				entry("custom-param-1", "custom-value-1"),
 				entry("custom-param-2", new String[] { "custom-value-1", "custom-value-2" }));
 		assertThat(clientCredentialsAuthentication.getDetails())
-			.asInstanceOf(type(WebAuthenticationDetails.class))
+			.asInstanceOf(InstanceOfAssertFactories.type(WebAuthenticationDetails.class))
 			.extracting(WebAuthenticationDetails::getRemoteAddress)
 			.isEqualTo(REMOTE_ADDRESS);
 
@@ -434,7 +432,7 @@ public class OAuth2TokenEndpointFilterTests {
 				entry("custom-param-1", "custom-value-1"),
 				entry("custom-param-2", new String[] { "custom-value-1", "custom-value-2" }));
 		assertThat(refreshTokenAuthenticationToken.getDetails())
-			.asInstanceOf(type(WebAuthenticationDetails.class))
+			.asInstanceOf(InstanceOfAssertFactories.type(WebAuthenticationDetails.class))
 			.extracting(WebAuthenticationDetails::getRemoteAddress)
 			.isEqualTo(REMOTE_ADDRESS);
 
@@ -468,7 +466,7 @@ public class OAuth2TokenEndpointFilterTests {
 		OAuth2AccessTokenAuthenticationToken accessTokenAuthentication = new OAuth2AccessTokenAuthenticationToken(
 				registeredClient, clientPrincipal, accessToken, refreshToken);
 
-		when(this.authenticationManager.authenticate(any())).thenReturn(accessTokenAuthentication);
+		given(this.authenticationManager.authenticate(any())).willReturn(accessTokenAuthentication);
 
 		SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
 		securityContext.setAuthentication(clientPrincipal);
@@ -495,7 +493,8 @@ public class OAuth2TokenEndpointFilterTests {
 		assertThat(tokenExchangeAuthenticationToken.getAdditionalParameters()).containsExactly(
 				entry("custom-param-1", "custom-value-1"),
 				entry("custom-param-2", new String[] { "custom-value-1", "custom-value-2" }));
-		assertThat(tokenExchangeAuthenticationToken.getDetails()).asInstanceOf(type(WebAuthenticationDetails.class))
+		assertThat(tokenExchangeAuthenticationToken.getDetails())
+			.asInstanceOf(InstanceOfAssertFactories.type(WebAuthenticationDetails.class))
 			.extracting(WebAuthenticationDetails::getRemoteAddress)
 			.isEqualTo(REMOTE_ADDRESS);
 

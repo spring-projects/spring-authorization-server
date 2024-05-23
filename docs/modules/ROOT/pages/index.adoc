@@ -13,6 +13,6 @@ xref:how-to.adoc[How-to Guides] :: Guides to get the most from Spring Authorizat
 
 Joe Grandja, Steve Riesenberg
 
-Copyright © 2020 - 2023
+Copyright © 2020 - 2024
 
 Copies of this document may be made for your own use and for distribution to others, provided that you do not charge any fee for such copies and further provided that each copy contains this Copyright Notice, whether distributed in print or electronically.

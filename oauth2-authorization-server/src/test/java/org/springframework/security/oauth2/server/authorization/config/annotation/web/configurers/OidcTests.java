@@ -737,7 +737,7 @@ public class OidcTests {
 
 		// @formatter:off
 		@Bean
-		public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
+		SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
 			OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
 					new OAuth2AuthorizationServerConfigurer();
 			http.apply(authorizationServerConfigurer);
@@ -750,10 +750,10 @@ public class OidcTests {
 
 			http
 					.securityMatcher(endpointsMatcher)
-					.authorizeHttpRequests(authorize ->
+					.authorizeHttpRequests((authorize) ->
 							authorize.anyRequest().authenticated()
 					)
-					.csrf(csrf -> csrf.ignoringRequestMatchers(endpointsMatcher));
+					.csrf((csrf) -> csrf.ignoringRequestMatchers(endpointsMatcher));
 
 			return http.build();
 		}

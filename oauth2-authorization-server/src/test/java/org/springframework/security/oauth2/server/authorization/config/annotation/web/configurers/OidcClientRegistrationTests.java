@@ -25,11 +25,10 @@ import java.util.function.Consumer;
 
 import javax.crypto.spec.SecretKeySpec;
 
-import jakarta.servlet.http.HttpServletResponse;
-
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
+import jakarta.servlet.http.HttpServletResponse;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.junit.jupiter.api.AfterAll;
@@ -685,7 +684,7 @@ public class OidcClientRegistrationTests {
 		private Consumer<List<AuthenticationProvider>> configureClientRegistrationConverters() {
 			// @formatter:off
 			return (authenticationProviders) ->
-					authenticationProviders.forEach(authenticationProvider -> {
+					authenticationProviders.forEach((authenticationProvider) -> {
 						List<String> supportedCustomClientMetadata = List.of("custom-metadata-name-1", "custom-metadata-name-2");
 						if (authenticationProvider instanceof OidcClientRegistrationAuthenticationProvider provider) {
 							provider.setRegisteredClientConverter(new CustomRegisteredClientConverter(supportedCustomClientMetadata));
@@ -769,7 +768,7 @@ public class OidcClientRegistrationTests {
 
 	}
 
-	private static class CustomRegisteredClientConverter
+	private static final class CustomRegisteredClientConverter
 			implements Converter<OidcClientRegistration, RegisteredClient> {
 
 		private final OidcClientRegistrationRegisteredClientConverter delegate = new OidcClientRegistrationRegisteredClientConverter();
@@ -799,7 +798,7 @@ public class OidcClientRegistrationTests {
 
 	}
 
-	private static class CustomClientRegistrationConverter
+	private static final class CustomClientRegistrationConverter
 			implements Converter<RegisteredClient, OidcClientRegistration> {
 
 		private final RegisteredClientOidcClientRegistrationConverter delegate = new RegisteredClientOidcClientRegistrationConverter();

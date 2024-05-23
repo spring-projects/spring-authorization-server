@@ -23,11 +23,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import jakarta.servlet.http.HttpServletRequest;
-
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
+import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -376,7 +375,7 @@ public class OAuth2RefreshTokenGrantTests {
 			OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
 					new OAuth2AuthorizationServerConfigurer();
 			authorizationServerConfigurer
-					.clientAuthentication(clientAuthentication ->
+					.clientAuthentication((clientAuthentication) ->
 							clientAuthentication
 									.authenticationConverter(
 											new PublicClientRefreshTokenAuthenticationConverter())
@@ -387,10 +386,10 @@ public class OAuth2RefreshTokenGrantTests {
 
 			http
 					.securityMatcher(endpointsMatcher)
-					.authorizeHttpRequests(authorize ->
+					.authorizeHttpRequests((authorize) ->
 							authorize.anyRequest().authenticated()
 					)
-					.csrf(csrf -> csrf.ignoringRequestMatchers(endpointsMatcher))
+					.csrf((csrf) -> csrf.ignoringRequestMatchers(endpointsMatcher))
 					.apply(authorizationServerConfigurer);
 			return http.build();
 		}

@@ -184,7 +184,7 @@ public class OidcClientRegistrationHttpMessageConverter extends AbstractHttpMess
 		}
 
 		private static Converter<Object, ?> getConverter(TypeDescriptor targetDescriptor) {
-			return source -> CLAIM_CONVERSION_SERVICE.convert(source, OBJECT_TYPE_DESCRIPTOR, targetDescriptor);
+			return (source) -> CLAIM_CONVERSION_SERVICE.convert(source, OBJECT_TYPE_DESCRIPTOR, targetDescriptor);
 		}
 
 		private static Instant convertClientSecretExpiresAt(Object clientSecretExpiresAt) {

@@ -181,9 +181,9 @@ public class OidcTests {
 
 	@AfterEach
 	public void tearDown() {
-		if (jdbcOperations != null) {
-			jdbcOperations.update("truncate table oauth2_authorization");
-			jdbcOperations.update("truncate table oauth2_registered_client");
+		if (this.jdbcOperations != null) {
+			this.jdbcOperations.update("truncate table oauth2_authorization");
+			this.jdbcOperations.update("truncate table oauth2_registered_client");
 		}
 	}
 
@@ -637,7 +637,7 @@ public class OidcTests {
 
 		@Bean
 		OAuth2TokenCustomizer<JwtEncodingContext> jwtCustomizer() {
-			return context -> {
+			return (context) -> {
 				if (context.getTokenType().getValue().equals(OidcParameterNames.ID_TOKEN)) {
 					Authentication principal = context.getPrincipal();
 					Set<String> authorities = new HashSet<>();
@@ -690,7 +690,7 @@ public class OidcTests {
 
 		// @formatter:off
 		@Bean
-		public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
+		SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
 			OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
 					new OAuth2AuthorizationServerConfigurer();
 			http.apply(authorizationServerConfigurer);
@@ -704,10 +704,10 @@ public class OidcTests {
 
 			http
 					.securityMatcher(endpointsMatcher)
-					.authorizeHttpRequests(authorize ->
+					.authorizeHttpRequests((authorize) ->
 							authorize.anyRequest().authenticated()
 					)
-					.csrf(csrf -> csrf.ignoringRequestMatchers(endpointsMatcher));
+					.csrf((csrf) -> csrf.ignoringRequestMatchers(endpointsMatcher));
 
 			return http.build();
 		}

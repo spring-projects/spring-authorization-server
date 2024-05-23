@@ -31,8 +31,10 @@ import org.springframework.security.oauth2.core.oidc.OidcScopes;
 
 /**
  * For internal use only.
+ *
+ * @author Joe Grandja
  */
-class DefaultConsentPage {
+final class DefaultConsentPage {
 
 	private static final MediaType TEXT_HTML_UTF8 = new MediaType("text", "html", StandardCharsets.UTF_8);
 

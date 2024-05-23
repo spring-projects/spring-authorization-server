@@ -107,7 +107,7 @@ public class OAuth2AuthorizationConsentAuthenticationContextTests {
 			.authorization(this.authorization)
 			.authorizationRequest(this.authorizationRequest)
 			.put("custom-key-1", "custom-value-1")
-			.context(ctx -> ctx.put("custom-key-2", "custom-value-2"))
+			.context((ctx) -> ctx.put("custom-key-2", "custom-value-2"))
 			.build();
 
 		assertThat(context.<Authentication>getAuthentication()).isEqualTo(this.authorizationConsentAuthentication);

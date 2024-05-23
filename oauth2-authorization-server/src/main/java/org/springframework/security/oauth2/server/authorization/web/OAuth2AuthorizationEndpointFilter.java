@@ -151,12 +151,12 @@ public final class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilte
 				HttpMethod.GET.name());
 		RequestMatcher authorizationRequestPostMatcher = new AntPathRequestMatcher(authorizationEndpointUri,
 				HttpMethod.POST.name());
-		RequestMatcher openidScopeMatcher = request -> {
+		RequestMatcher openidScopeMatcher = (request) -> {
 			String scope = request.getParameter(OAuth2ParameterNames.SCOPE);
 			return StringUtils.hasText(scope) && scope.contains(OidcScopes.OPENID);
 		};
-		RequestMatcher responseTypeParameterMatcher = request -> request
-			.getParameter(OAuth2ParameterNames.RESPONSE_TYPE) != null;
+		RequestMatcher responseTypeParameterMatcher = (
+				request) -> request.getParameter(OAuth2ParameterNames.RESPONSE_TYPE) != null;
 
 		RequestMatcher authorizationRequestMatcher = new OrRequestMatcher(authorizationRequestGetMatcher,
 				new AndRequestMatcher(authorizationRequestPostMatcher, responseTypeParameterMatcher,

@@ -85,16 +85,17 @@ public final class OidcClientRegistration implements OidcClientMetadataClaimAcce
 	/**
 	 * Constructs a new {@link Builder} with the provided claims.
 	 * @param claims the claims to initialize the builder
+	 * @return the {@link Builder}
 	 */
 	public static Builder withClaims(Map<String, Object> claims) {
 		Assert.notEmpty(claims, "claims cannot be empty");
-		return new Builder().claims(c -> c.putAll(claims));
+		return new Builder().claims((c) -> c.putAll(claims));
 	}
 
 	/**
 	 * Helps configure an {@link OidcClientRegistration}.
 	 */
-	public static class Builder {
+	public static final class Builder {
 
 		private final Map<String, Object> claims = new LinkedHashMap<>();
 
@@ -434,7 +435,7 @@ public final class OidcClientRegistration implements OidcClientMetadataClaimAcce
 		private void addClaimToClaimList(String name, String value) {
 			Assert.hasText(name, "name cannot be empty");
 			Assert.notNull(value, "value cannot be null");
-			this.claims.computeIfAbsent(name, k -> new LinkedList<String>());
+			this.claims.computeIfAbsent(name, (k) -> new LinkedList<String>());
 			((List<String>) this.claims.get(name)).add(value);
 		}
 
@@ -442,7 +443,7 @@ public final class OidcClientRegistration implements OidcClientMetadataClaimAcce
 		private void acceptClaimValues(String name, Consumer<List<String>> valuesConsumer) {
 			Assert.hasText(name, "name cannot be empty");
 			Assert.notNull(valuesConsumer, "valuesConsumer cannot be null");
-			this.claims.computeIfAbsent(name, k -> new LinkedList<String>());
+			this.claims.computeIfAbsent(name, (k) -> new LinkedList<String>());
 			List<String> values = (List<String>) this.claims.get(name);
 			valuesConsumer.accept(values);
 		}

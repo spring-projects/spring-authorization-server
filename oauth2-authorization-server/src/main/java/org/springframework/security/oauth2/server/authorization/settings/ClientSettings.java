@@ -95,13 +95,13 @@ public final class ClientSettings extends AbstractSettings {
 	 */
 	public static Builder withSettings(Map<String, Object> settings) {
 		Assert.notEmpty(settings, "settings cannot be empty");
-		return new Builder().settings(s -> s.putAll(settings));
+		return new Builder().settings((s) -> s.putAll(settings));
 	}
 
 	/**
 	 * A builder for {@link ClientSettings}.
 	 */
-	public final static class Builder extends AbstractBuilder<ClientSettings, Builder> {
+	public static final class Builder extends AbstractBuilder<ClientSettings, Builder> {
 
 		private Builder() {
 		}

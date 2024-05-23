@@ -123,7 +123,7 @@ public final class OidcClientRegistrationEndpointFilter extends OncePerRequestFi
 		RequestMatcher clientConfigurationGetMatcher = new AntPathRequestMatcher(clientRegistrationEndpointUri,
 				HttpMethod.GET.name());
 
-		RequestMatcher clientIdMatcher = request -> {
+		RequestMatcher clientIdMatcher = (request) -> {
 			String clientId = request.getParameter(OAuth2ParameterNames.CLIENT_ID);
 			return StringUtils.hasText(clientId);
 		};
@@ -190,7 +190,7 @@ public final class OidcClientRegistrationEndpointFilter extends OncePerRequestFi
 	 * {@link OidcClientRegistration Client Registration Response}.
 	 * @param authenticationSuccessHandler the {@link AuthenticationSuccessHandler} used
 	 * for handling an {@link OidcClientRegistrationAuthenticationToken}
-	 * @see 0.4.0
+	 * @since 0.4.0
 	 */
 	public void setAuthenticationSuccessHandler(AuthenticationSuccessHandler authenticationSuccessHandler) {
 		Assert.notNull(authenticationSuccessHandler, "authenticationSuccessHandler cannot be null");

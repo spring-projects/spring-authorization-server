@@ -84,7 +84,7 @@ public class AuthorizationServerSettingsTests {
 	public void settingWhenCustomThenSet() {
 		AuthorizationServerSettings authorizationServerSettings = AuthorizationServerSettings.builder()
 			.setting("name1", "value1")
-			.settings(settings -> settings.put("name2", "value2"))
+			.settings((settings) -> settings.put("name2", "value2"))
 			.build();
 
 		assertThat(authorizationServerSettings.getSettings()).hasSize(12);

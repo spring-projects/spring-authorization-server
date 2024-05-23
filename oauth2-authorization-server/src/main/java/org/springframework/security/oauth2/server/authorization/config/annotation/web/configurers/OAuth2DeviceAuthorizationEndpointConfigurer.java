@@ -76,6 +76,7 @@ public final class OAuth2DeviceAuthorizationEndpointConfigurer extends AbstractO
 
 	/**
 	 * Restrict for internal use only.
+	 * @param objectPostProcessor an {@code ObjectPostProcessor}
 	 */
 	OAuth2DeviceAuthorizationEndpointConfigurer(ObjectPostProcessor<Object> objectPostProcessor) {
 		super(objectPostProcessor);
@@ -206,7 +207,7 @@ public final class OAuth2DeviceAuthorizationEndpointConfigurer extends AbstractO
 		}
 		this.authenticationProvidersConsumer.accept(authenticationProviders);
 		authenticationProviders
-			.forEach(authenticationProvider -> builder.authenticationProvider(postProcess(authenticationProvider)));
+			.forEach((authenticationProvider) -> builder.authenticationProvider(postProcess(authenticationProvider)));
 	}
 
 	@Override

@@ -45,10 +45,10 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 /**
  * Tests for {@link JdbcOAuth2AuthorizationConsentService}.
@@ -150,7 +150,8 @@ public class JdbcOAuth2AuthorizationConsentServiceTests {
 
 		RegisteredClient newRegisteredClient = TestRegisteredClients.registeredClient().id("new-client").build();
 
-		when(this.registeredClientRepository.findById(eq(newRegisteredClient.getId()))).thenReturn(newRegisteredClient);
+		given(this.registeredClientRepository.findById(eq(newRegisteredClient.getId())))
+			.willReturn(newRegisteredClient);
 
 		this.authorizationConsentService.save(expectedAuthorizationConsent);
 
@@ -164,7 +165,7 @@ public class JdbcOAuth2AuthorizationConsentServiceTests {
 		OAuth2AuthorizationConsent expectedAuthorizationConsent = OAuth2AuthorizationConsent.from(AUTHORIZATION_CONSENT)
 			.authority(new SimpleGrantedAuthority("new.authority"))
 			.build();
-		when(this.registeredClientRepository.findById(eq(REGISTERED_CLIENT.getId()))).thenReturn(REGISTERED_CLIENT);
+		given(this.registeredClientRepository.findById(eq(REGISTERED_CLIENT.getId()))).willReturn(REGISTERED_CLIENT);
 
 		this.authorizationConsentService.save(expectedAuthorizationConsent);
 
@@ -176,8 +177,7 @@ public class JdbcOAuth2AuthorizationConsentServiceTests {
 
 	@Test
 	public void saveLoadAuthorizationConsentWhenCustomStrategiesSetThenCalled() throws Exception {
-		when(this.registeredClientRepository.findById(eq(REGISTERED_CLIENT.getId())))
-				.thenReturn(REGISTERED_CLIENT);
+		given(this.registeredClientRepository.findById(eq(REGISTERED_CLIENT.getId()))).willReturn(REGISTERED_CLIENT);
 
 		JdbcOAuth2AuthorizationConsentService.OAuth2AuthorizationConsentRowMapper authorizationConsentRowMapper = spy(
 				new JdbcOAuth2AuthorizationConsentService.OAuth2AuthorizationConsentRowMapper(
@@ -188,8 +188,8 @@ public class JdbcOAuth2AuthorizationConsentServiceTests {
 		this.authorizationConsentService.setAuthorizationConsentParametersMapper(authorizationConsentParametersMapper);
 
 		this.authorizationConsentService.save(AUTHORIZATION_CONSENT);
-		OAuth2AuthorizationConsent authorizationConsent = this.authorizationConsentService.findById(
-				AUTHORIZATION_CONSENT.getRegisteredClientId(), AUTHORIZATION_CONSENT.getPrincipalName());
+		OAuth2AuthorizationConsent authorizationConsent = this.authorizationConsentService
+			.findById(AUTHORIZATION_CONSENT.getRegisteredClientId(), AUTHORIZATION_CONSENT.getPrincipalName());
 		assertThat(authorizationConsent).isEqualTo(AUTHORIZATION_CONSENT);
 		verify(authorizationConsentRowMapper).mapRow(any(), anyInt());
 		verify(authorizationConsentParametersMapper).apply(any());
@@ -225,12 +225,11 @@ public class JdbcOAuth2AuthorizationConsentServiceTests {
 
 	@Test
 	public void findByIdWhenAuthorizationConsentExistsThenFound() {
-		when(this.registeredClientRepository.findById(eq(REGISTERED_CLIENT.getId())))
-				.thenReturn(REGISTERED_CLIENT);
+		given(this.registeredClientRepository.findById(eq(REGISTERED_CLIENT.getId()))).willReturn(REGISTERED_CLIENT);
 
 		this.authorizationConsentService.save(AUTHORIZATION_CONSENT);
-		OAuth2AuthorizationConsent authorizationConsent = this.authorizationConsentService.findById(
-				AUTHORIZATION_CONSENT.getRegisteredClientId(), AUTHORIZATION_CONSENT.getPrincipalName());
+		OAuth2AuthorizationConsent authorizationConsent = this.authorizationConsentService
+			.findById(AUTHORIZATION_CONSENT.getRegisteredClientId(), AUTHORIZATION_CONSENT.getPrincipalName());
 		assertThat(authorizationConsent).isNotNull();
 	}
 
@@ -243,19 +242,18 @@ public class JdbcOAuth2AuthorizationConsentServiceTests {
 
 	@Test
 	public void tableDefinitionWhenCustomThenAbleToOverride() {
-		when(this.registeredClientRepository.findById(eq(REGISTERED_CLIENT.getId())))
-				.thenReturn(REGISTERED_CLIENT);
+		given(this.registeredClientRepository.findById(eq(REGISTERED_CLIENT.getId()))).willReturn(REGISTERED_CLIENT);
 
 		EmbeddedDatabase db = createDb(CUSTOM_OAUTH2_AUTHORIZATION_CONSENT_SCHEMA_SQL_RESOURCE);
-		OAuth2AuthorizationConsentService authorizationConsentService =
-				new CustomJdbcOAuth2AuthorizationConsentService(new JdbcTemplate(db), this.registeredClientRepository);
+		OAuth2AuthorizationConsentService authorizationConsentService = new CustomJdbcOAuth2AuthorizationConsentService(
+				new JdbcTemplate(db), this.registeredClientRepository);
 		authorizationConsentService.save(AUTHORIZATION_CONSENT);
-		OAuth2AuthorizationConsent foundAuthorizationConsent1 = authorizationConsentService.findById(
-				AUTHORIZATION_CONSENT.getRegisteredClientId(), AUTHORIZATION_CONSENT.getPrincipalName());
+		OAuth2AuthorizationConsent foundAuthorizationConsent1 = authorizationConsentService
+			.findById(AUTHORIZATION_CONSENT.getRegisteredClientId(), AUTHORIZATION_CONSENT.getPrincipalName());
 		assertThat(foundAuthorizationConsent1).isEqualTo(AUTHORIZATION_CONSENT);
 		authorizationConsentService.remove(AUTHORIZATION_CONSENT);
-		OAuth2AuthorizationConsent foundAuthorizationConsent2 = authorizationConsentService.findById(
-				AUTHORIZATION_CONSENT.getRegisteredClientId(), AUTHORIZATION_CONSENT.getPrincipalName());
+		OAuth2AuthorizationConsent foundAuthorizationConsent2 = authorizationConsentService
+			.findById(AUTHORIZATION_CONSENT.getRegisteredClientId(), AUTHORIZATION_CONSENT.getPrincipalName());
 		assertThat(foundAuthorizationConsent2).isNull();
 		db.shutdown();
 	}

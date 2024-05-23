@@ -36,7 +36,10 @@ import org.springframework.util.CollectionUtils;
  * @author Joe Grandja
  * @author Daniel Garnier-Moiroux
  */
-public class TestOAuth2Authorizations {
+public final class TestOAuth2Authorizations {
+
+	private TestOAuth2Authorizations() {
+	}
 
 	public static OAuth2Authorization.Builder authorization() {
 		return authorization(TestRegisteredClients.registeredClient().build());

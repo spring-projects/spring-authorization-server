@@ -226,14 +226,14 @@ public class OidcProviderConfigurationTests {
 
 		// @formatter:off
 		@Bean
-		public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
+		SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
 			OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
 					new OAuth2AuthorizationServerConfigurer();
 			http.apply(authorizationServerConfigurer);
 
 			authorizationServerConfigurer
-					.oidc(oidc ->
-							oidc.providerConfigurationEndpoint(providerConfigurationEndpoint ->
+					.oidc((oidc) ->
+							oidc.providerConfigurationEndpoint((providerConfigurationEndpoint) ->
 									providerConfigurationEndpoint
 											.providerConfigurationCustomizer(providerConfigurationCustomizer())));
 
@@ -241,10 +241,10 @@ public class OidcProviderConfigurationTests {
 
 			http
 					.securityMatcher(endpointsMatcher)
-					.authorizeHttpRequests(authorize ->
+					.authorizeHttpRequests((authorize) ->
 							authorize.anyRequest().authenticated()
 					)
-					.csrf(csrf -> csrf.ignoringRequestMatchers(endpointsMatcher));
+					.csrf((csrf) -> csrf.ignoringRequestMatchers(endpointsMatcher));
 
 			return http.build();
 		}
@@ -269,7 +269,7 @@ public class OidcProviderConfigurationTests {
 			http.apply(authorizationServerConfigurer);
 
 			authorizationServerConfigurer
-					.oidc(oidc ->
+					.oidc((oidc) ->
 							oidc.clientRegistrationEndpoint(Customizer.withDefaults())
 					);
 

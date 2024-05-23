@@ -37,7 +37,7 @@ public class TestAuthorizationServerContext implements AuthorizationServerContex
 
 	@Override
 	public String getIssuer() {
-		return this.issuerSupplier != null ? this.issuerSupplier.get() : getAuthorizationServerSettings().getIssuer();
+		return (this.issuerSupplier != null) ? this.issuerSupplier.get() : getAuthorizationServerSettings().getIssuer();
 	}
 
 	@Override

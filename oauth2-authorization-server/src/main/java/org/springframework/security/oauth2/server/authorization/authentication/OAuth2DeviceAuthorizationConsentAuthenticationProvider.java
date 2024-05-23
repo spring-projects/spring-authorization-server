@@ -133,7 +133,7 @@ public final class OAuth2DeviceAuthorizationConsentAuthenticationProvider implem
 
 		OAuth2AuthorizationConsent currentAuthorizationConsent = this.authorizationConsentService
 			.findById(authorization.getRegisteredClientId(), principal.getName());
-		Set<String> currentAuthorizedScopes = currentAuthorizationConsent != null
+		Set<String> currentAuthorizedScopes = (currentAuthorizationConsent != null)
 				? currentAuthorizationConsent.getScopes() : Collections.emptySet();
 
 		if (!currentAuthorizedScopes.isEmpty()) {
@@ -187,11 +187,11 @@ public final class OAuth2DeviceAuthorizationConsentAuthenticationProvider implem
 				}
 			}
 			authorization = OAuth2Authorization.from(authorization)
-				.token(deviceCodeToken.getToken(),
-						metadata -> metadata.put(OAuth2Authorization.Token.INVALIDATED_METADATA_NAME, true))
-				.token(userCodeToken.getToken(),
-						metadata -> metadata.put(OAuth2Authorization.Token.INVALIDATED_METADATA_NAME, true))
-				.attributes(attrs -> attrs.remove(OAuth2ParameterNames.STATE))
+				.token((deviceCodeToken.getToken()),
+						(metadata) -> metadata.put(OAuth2Authorization.Token.INVALIDATED_METADATA_NAME, true))
+				.token((userCodeToken.getToken()),
+						(metadata) -> metadata.put(OAuth2Authorization.Token.INVALIDATED_METADATA_NAME, true))
+				.attributes((attrs) -> attrs.remove(OAuth2ParameterNames.STATE))
 				.build();
 			this.authorizationService.save(authorization);
 			if (this.logger.isTraceEnabled()) {
@@ -210,10 +210,10 @@ public final class OAuth2DeviceAuthorizationConsentAuthenticationProvider implem
 
 		authorization = OAuth2Authorization.from(authorization)
 			.authorizedScopes(authorizedScopes)
-			.token(userCodeToken.getToken(),
-					metadata -> metadata.put(OAuth2Authorization.Token.INVALIDATED_METADATA_NAME, true))
-			.attributes(attrs -> attrs.remove(OAuth2ParameterNames.STATE))
-			.attributes(attrs -> attrs.remove(OAuth2ParameterNames.SCOPE))
+			.token((userCodeToken.getToken()),
+					(metadata) -> metadata.put(OAuth2Authorization.Token.INVALIDATED_METADATA_NAME, true))
+			.attributes((attrs) -> attrs.remove(OAuth2ParameterNames.STATE))
+			.attributes((attrs) -> attrs.remove(OAuth2ParameterNames.SCOPE))
 			.build();
 		this.authorizationService.save(authorization);
 

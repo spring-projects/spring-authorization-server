@@ -114,12 +114,12 @@ import org.springframework.web.util.UriComponentsBuilder;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doAnswer;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.willAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -217,14 +217,14 @@ public class OidcClientRegistrationTests {
 				.setBody(clientJwkSet.toString());
 		// @formatter:on
 		this.server.enqueue(response);
-		when(authenticationProvider.supports(OidcClientRegistrationAuthenticationToken.class)).thenReturn(true);
+		given(authenticationProvider.supports(OidcClientRegistrationAuthenticationToken.class)).willReturn(true);
 	}
 
 	@AfterEach
 	public void tearDown() throws Exception {
 		this.server.shutdown();
-		jdbcOperations.update("truncate table oauth2_authorization");
-		jdbcOperations.update("truncate table oauth2_registered_client");
+		this.jdbcOperations.update("truncate table oauth2_authorization");
+		this.jdbcOperations.update("truncate table oauth2_registered_client");
 		reset(authenticationConverter);
 		reset(authenticationConvertersConsumer);
 		reset(authenticationProvider);
@@ -344,13 +344,13 @@ public class OidcClientRegistrationTests {
 				.build();
 		// @formatter:on
 
-		doAnswer(invocation -> {
+		willAnswer((invocation) -> {
 			HttpServletResponse response = invocation.getArgument(1, HttpServletResponse.class);
 			ServletServerHttpResponse httpResponse = new ServletServerHttpResponse(response);
 			httpResponse.setStatusCode(HttpStatus.CREATED);
 			new OidcClientRegistrationHttpMessageConverter().write(clientRegistration, null, httpResponse);
 			return null;
-		}).when(authenticationSuccessHandler).onAuthenticationSuccess(any(), any(), any());
+		}).given(authenticationSuccessHandler).onAuthenticationSuccess(any(), any(), any());
 
 		registerClient(clientRegistration);
 
@@ -360,7 +360,7 @@ public class OidcClientRegistrationTests {
 		verify(authenticationConvertersConsumer).accept(authenticationConvertersCaptor.capture());
 		List<AuthenticationConverter> authenticationConverters = authenticationConvertersCaptor.getValue();
 		assertThat(authenticationConverters).hasSize(2)
-			.allMatch(converter -> converter == authenticationConverter
+			.allMatch((converter) -> converter == authenticationConverter
 					|| converter instanceof OidcClientRegistrationAuthenticationConverter);
 
 		verify(authenticationProvider).authenticate(any());
@@ -369,7 +369,7 @@ public class OidcClientRegistrationTests {
 		verify(authenticationProvidersConsumer).accept(authenticationProvidersCaptor.capture());
 		List<AuthenticationProvider> authenticationProviders = authenticationProvidersCaptor.getValue();
 		assertThat(authenticationProviders).hasSize(3)
-			.allMatch(provider -> provider == authenticationProvider
+			.allMatch((provider) -> provider == authenticationProvider
 					|| provider instanceof OidcClientRegistrationAuthenticationProvider
 					|| provider instanceof OidcClientConfigurationAuthenticationProvider);
 
@@ -382,7 +382,7 @@ public class OidcClientRegistrationTests {
 			throws Exception {
 		this.spring.register(CustomClientRegistrationConfiguration.class).autowire();
 
-		when(authenticationProvider.authenticate(any())).thenThrow(new OAuth2AuthenticationException("error"));
+		given(authenticationProvider.authenticate(any())).willThrow(new OAuth2AuthenticationException("error"));
 
 		this.mvc
 			.perform(get(DEFAULT_OIDC_CLIENT_REGISTRATION_ENDPOINT_URI).param(OAuth2ParameterNames.CLIENT_ID, "invalid")
@@ -618,9 +618,9 @@ public class OidcClientRegistrationTests {
 			OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
 					new OAuth2AuthorizationServerConfigurer();
 			authorizationServerConfigurer
-				.oidc(oidc ->
+				.oidc((oidc) ->
 					oidc
-						.clientRegistrationEndpoint(clientRegistration ->
+						.clientRegistrationEndpoint((clientRegistration) ->
 							clientRegistration
 								.clientRegistrationRequestConverter(authenticationConverter)
 								.clientRegistrationRequestConverters(authenticationConvertersConsumer)
@@ -634,11 +634,11 @@ public class OidcClientRegistrationTests {
 
 			http
 					.securityMatcher(endpointsMatcher)
-					.authorizeHttpRequests(authorize ->
+					.authorizeHttpRequests((authorize) ->
 							authorize.anyRequest().authenticated()
 					)
-					.csrf(csrf -> csrf.ignoringRequestMatchers(endpointsMatcher))
-					.oauth2ResourceServer(resourceServer ->
+					.csrf((csrf) -> csrf.ignoringRequestMatchers(endpointsMatcher))
+					.oauth2ResourceServer((resourceServer) ->
 						resourceServer.jwt(Customizer.withDefaults())
 					)
 					.apply(authorizationServerConfigurer);
@@ -659,9 +659,9 @@ public class OidcClientRegistrationTests {
 			OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
 					new OAuth2AuthorizationServerConfigurer();
 			authorizationServerConfigurer
-				.oidc(oidc ->
+				.oidc((oidc) ->
 					oidc
-						.clientRegistrationEndpoint(clientRegistration ->
+						.clientRegistrationEndpoint((clientRegistration) ->
 							clientRegistration
 								.authenticationProviders(configureClientRegistrationConverters())
 						)
@@ -670,11 +670,11 @@ public class OidcClientRegistrationTests {
 
 			http
 					.securityMatcher(endpointsMatcher)
-					.authorizeHttpRequests(authorize ->
+					.authorizeHttpRequests((authorize) ->
 							authorize.anyRequest().authenticated()
 					)
-					.csrf(csrf -> csrf.ignoringRequestMatchers(endpointsMatcher))
-					.oauth2ResourceServer(resourceServer ->
+					.csrf((csrf) -> csrf.ignoringRequestMatchers(endpointsMatcher))
+					.oauth2ResourceServer((resourceServer) ->
 							resourceServer.jwt(Customizer.withDefaults())
 					)
 					.apply(authorizationServerConfigurer);
@@ -703,21 +703,21 @@ public class OidcClientRegistrationTests {
 
 		// @formatter:off
 		@Bean
-		public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
+		SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
 			OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
 					new OAuth2AuthorizationServerConfigurer();
 			authorizationServerConfigurer
-					.oidc(oidc ->
+					.oidc((oidc) ->
 							oidc.clientRegistrationEndpoint(Customizer.withDefaults()));
 			RequestMatcher endpointsMatcher = authorizationServerConfigurer.getEndpointsMatcher();
 
 			http
 					.securityMatcher(endpointsMatcher)
-					.authorizeHttpRequests(authorize ->
+					.authorizeHttpRequests((authorize) ->
 							authorize.anyRequest().authenticated()
 					)
-					.csrf(csrf -> csrf.ignoringRequestMatchers(endpointsMatcher))
-					.oauth2ResourceServer(resourceServer ->
+					.csrf((csrf) -> csrf.ignoringRequestMatchers(endpointsMatcher))
+					.oauth2ResourceServer((resourceServer) ->
 							resourceServer.jwt(Customizer.withDefaults())
 					)
 					.apply(authorizationServerConfigurer);

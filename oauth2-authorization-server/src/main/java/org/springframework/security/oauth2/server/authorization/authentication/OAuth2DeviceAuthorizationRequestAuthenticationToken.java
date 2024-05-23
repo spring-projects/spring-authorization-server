@@ -70,9 +70,9 @@ public class OAuth2DeviceAuthorizationRequestAuthenticationToken extends Abstrac
 		Assert.hasText(authorizationUri, "authorizationUri cannot be empty");
 		this.clientPrincipal = clientPrincipal;
 		this.authorizationUri = authorizationUri;
-		this.scopes = Collections.unmodifiableSet(scopes != null ? new HashSet<>(scopes) : Collections.emptySet());
+		this.scopes = Collections.unmodifiableSet((scopes != null) ? new HashSet<>(scopes) : Collections.emptySet());
 		this.additionalParameters = Collections.unmodifiableMap(
-				additionalParameters != null ? new HashMap<>(additionalParameters) : Collections.emptyMap());
+				(additionalParameters != null) ? new HashMap<>(additionalParameters) : Collections.emptyMap());
 		this.deviceCode = null;
 		this.userCode = null;
 	}
@@ -92,7 +92,7 @@ public class OAuth2DeviceAuthorizationRequestAuthenticationToken extends Abstrac
 		Assert.notNull(deviceCode, "deviceCode cannot be null");
 		Assert.notNull(userCode, "userCode cannot be null");
 		this.clientPrincipal = clientPrincipal;
-		this.scopes = Collections.unmodifiableSet(scopes != null ? new HashSet<>(scopes) : Collections.emptySet());
+		this.scopes = Collections.unmodifiableSet((scopes != null) ? new HashSet<>(scopes) : Collections.emptySet());
 		this.deviceCode = deviceCode;
 		this.userCode = userCode;
 		this.authorizationUri = null;

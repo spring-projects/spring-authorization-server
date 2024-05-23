@@ -96,8 +96,8 @@ public class OAuth2AuthorizationServerMetadataTests {
 
 	@AfterEach
 	public void tearDown() {
-		jdbcOperations.update("truncate table oauth2_authorization");
-		jdbcOperations.update("truncate table oauth2_registered_client");
+		this.jdbcOperations.update("truncate table oauth2_authorization");
+		this.jdbcOperations.update("truncate table oauth2_registered_client");
 	}
 
 	@AfterAll
@@ -173,13 +173,13 @@ public class OAuth2AuthorizationServerMetadataTests {
 
 		// @formatter:off
 		@Bean
-		public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
+		SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
 			OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
 					new OAuth2AuthorizationServerConfigurer();
 			http.apply(authorizationServerConfigurer);
 
 			authorizationServerConfigurer
-					.authorizationServerMetadataEndpoint(authorizationServerMetadataEndpoint ->
+					.authorizationServerMetadataEndpoint((authorizationServerMetadataEndpoint) ->
 							authorizationServerMetadataEndpoint
 									.authorizationServerMetadataCustomizer(authorizationServerMetadataCustomizer()));
 
@@ -187,10 +187,10 @@ public class OAuth2AuthorizationServerMetadataTests {
 
 			http
 					.securityMatcher(endpointsMatcher)
-					.authorizeHttpRequests(authorize ->
+					.authorizeHttpRequests((authorize) ->
 							authorize.anyRequest().authenticated()
 					)
-					.csrf(csrf -> csrf.ignoringRequestMatchers(endpointsMatcher));
+					.csrf((csrf) -> csrf.ignoringRequestMatchers(endpointsMatcher));
 
 			return http.build();
 		}

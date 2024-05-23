@@ -26,7 +26,7 @@ import org.springframework.util.ClassUtils;
  * Utility methods for {@link HttpMessageConverter}'s.
  *
  * @author Joe Grandja
- * @author luamas
+ * @author l uamas
  * @since 0.1.1
  */
 final class HttpMessageConverters {

@@ -80,6 +80,7 @@ public final class OidcUserInfoEndpointConfigurer extends AbstractOAuth2Configur
 
 	/**
 	 * Restrict for internal use only.
+	 * @param objectPostProcessor an {@code ObjectPostProcessor}
 	 */
 	OidcUserInfoEndpointConfigurer(ObjectPostProcessor<Object> objectPostProcessor) {
 		super(objectPostProcessor);
@@ -219,7 +220,7 @@ public final class OidcUserInfoEndpointConfigurer extends AbstractOAuth2Configur
 		}
 		this.authenticationProvidersConsumer.accept(authenticationProviders);
 		authenticationProviders.forEach(
-				authenticationProvider -> httpSecurity.authenticationProvider(postProcess(authenticationProvider)));
+				(authenticationProvider) -> httpSecurity.authenticationProvider(postProcess(authenticationProvider)));
 	}
 
 	@Override

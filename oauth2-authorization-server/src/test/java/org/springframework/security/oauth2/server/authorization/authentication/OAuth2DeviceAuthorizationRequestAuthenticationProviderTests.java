@@ -48,13 +48,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.when;
-import static org.springframework.security.oauth2.server.authorization.authentication.OAuth2DeviceAuthorizationRequestAuthenticationProvider.DEVICE_CODE_TOKEN_TYPE;
-import static org.springframework.security.oauth2.server.authorization.authentication.OAuth2DeviceAuthorizationRequestAuthenticationProvider.USER_CODE_TOKEN_TYPE;
 
 /**
  * Tests for {@link OAuth2DeviceAuthorizationRequestAuthenticationProvider}.
@@ -171,7 +169,7 @@ public class OAuth2DeviceAuthorizationRequestAuthenticationProviderTests {
 	public void authenticateWhenDeviceCodeIsNullThenThrowOAuth2AuthenticationException() {
 		@SuppressWarnings("unchecked")
 		OAuth2TokenGenerator<OAuth2DeviceCode> deviceCodeGenerator = mock(OAuth2TokenGenerator.class);
-		when(deviceCodeGenerator.generate(any(OAuth2TokenContext.class))).thenReturn(null);
+		given(deviceCodeGenerator.generate(any(OAuth2TokenContext.class))).willReturn(null);
 		this.authenticationProvider.setDeviceCodeGenerator(deviceCodeGenerator);
 
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
@@ -196,7 +194,7 @@ public class OAuth2DeviceAuthorizationRequestAuthenticationProviderTests {
 	public void authenticateWhenUserCodeIsNullThenThrowOAuth2AuthenticationException() {
 		@SuppressWarnings("unchecked")
 		OAuth2TokenGenerator<OAuth2UserCode> userCodeGenerator = mock(OAuth2TokenGenerator.class);
-		when(userCodeGenerator.generate(any(OAuth2TokenContext.class))).thenReturn(null);
+		given(userCodeGenerator.generate(any(OAuth2TokenContext.class))).willReturn(null);
 		this.authenticationProvider.setUserCodeGenerator(userCodeGenerator);
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
 			.authorizationGrantType(AuthorizationGrantType.DEVICE_CODE)
@@ -277,7 +275,7 @@ public class OAuth2DeviceAuthorizationRequestAuthenticationProviderTests {
 	public void authenticateWhenDeviceCodeGeneratorSetThenUsed() {
 		@SuppressWarnings("unchecked")
 		OAuth2TokenGenerator<OAuth2DeviceCode> deviceCodeGenerator = mock(OAuth2TokenGenerator.class);
-		when(deviceCodeGenerator.generate(any(OAuth2TokenContext.class))).thenReturn(createDeviceCode());
+		given(deviceCodeGenerator.generate(any(OAuth2TokenContext.class))).willReturn(createDeviceCode());
 		this.authenticationProvider.setDeviceCodeGenerator(deviceCodeGenerator);
 
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
@@ -303,14 +301,15 @@ public class OAuth2DeviceAuthorizationRequestAuthenticationProviderTests {
 		assertThat(tokenContext.getAuthorizationServerContext()).isNotNull();
 		assertThat(tokenContext.getAuthorizationGrantType()).isEqualTo(AuthorizationGrantType.DEVICE_CODE);
 		assertThat(tokenContext.<Authentication>getAuthorizationGrant()).isEqualTo(authentication);
-		assertThat(tokenContext.getTokenType()).isEqualTo(DEVICE_CODE_TOKEN_TYPE);
+		assertThat(tokenContext.getTokenType())
+			.isEqualTo(OAuth2DeviceAuthorizationRequestAuthenticationProvider.DEVICE_CODE_TOKEN_TYPE);
 	}
 
 	@Test
 	public void authenticateWhenUserCodeGeneratorSetThenUsed() {
 		@SuppressWarnings("unchecked")
 		OAuth2TokenGenerator<OAuth2UserCode> userCodeGenerator = mock(OAuth2TokenGenerator.class);
-		when(userCodeGenerator.generate(any(OAuth2TokenContext.class))).thenReturn(createUserCode());
+		given(userCodeGenerator.generate(any(OAuth2TokenContext.class))).willReturn(createUserCode());
 		this.authenticationProvider.setUserCodeGenerator(userCodeGenerator);
 
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
@@ -335,7 +334,8 @@ public class OAuth2DeviceAuthorizationRequestAuthenticationProviderTests {
 		assertThat(tokenContext.getAuthorizationServerContext()).isNotNull();
 		assertThat(tokenContext.getAuthorizationGrantType()).isEqualTo(AuthorizationGrantType.DEVICE_CODE);
 		assertThat(tokenContext.<Authentication>getAuthorizationGrant()).isEqualTo(authentication);
-		assertThat(tokenContext.getTokenType()).isEqualTo(USER_CODE_TOKEN_TYPE);
+		assertThat(tokenContext.getTokenType())
+			.isEqualTo(OAuth2DeviceAuthorizationRequestAuthenticationProvider.USER_CODE_TOKEN_TYPE);
 	}
 
 	private static void mockAuthorizationServerContext() {

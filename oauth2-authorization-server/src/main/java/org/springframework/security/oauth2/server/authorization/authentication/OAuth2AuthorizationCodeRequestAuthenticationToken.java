@@ -81,9 +81,9 @@ public class OAuth2AuthorizationCodeRequestAuthenticationToken extends AbstractA
 		this.principal = principal;
 		this.redirectUri = redirectUri;
 		this.state = state;
-		this.scopes = Collections.unmodifiableSet(scopes != null ? new HashSet<>(scopes) : Collections.emptySet());
+		this.scopes = Collections.unmodifiableSet((scopes != null) ? new HashSet<>(scopes) : Collections.emptySet());
 		this.additionalParameters = Collections.unmodifiableMap(
-				additionalParameters != null ? new HashMap<>(additionalParameters) : Collections.emptyMap());
+				(additionalParameters != null) ? new HashMap<>(additionalParameters) : Collections.emptyMap());
 		this.authorizationCode = null;
 	}
 
@@ -113,7 +113,7 @@ public class OAuth2AuthorizationCodeRequestAuthenticationToken extends AbstractA
 		this.authorizationCode = authorizationCode;
 		this.redirectUri = redirectUri;
 		this.state = state;
-		this.scopes = Collections.unmodifiableSet(scopes != null ? new HashSet<>(scopes) : Collections.emptySet());
+		this.scopes = Collections.unmodifiableSet((scopes != null) ? new HashSet<>(scopes) : Collections.emptySet());
 		this.additionalParameters = Collections.emptyMap();
 		setAuthenticated(true);
 	}

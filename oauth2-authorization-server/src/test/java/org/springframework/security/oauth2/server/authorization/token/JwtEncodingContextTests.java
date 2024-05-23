@@ -94,7 +94,7 @@ public class JwtEncodingContextTests {
 			.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
 			.authorizationGrant(authorizationGrant)
 			.put("custom-key-1", "custom-value-1")
-			.context(ctx -> ctx.put("custom-key-2", "custom-value-2"))
+			.context((ctx) -> ctx.put("custom-key-2", "custom-value-2"))
 			.build();
 
 		assertThat(context.getJwsHeader()).isEqualTo(headers);

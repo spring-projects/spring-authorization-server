@@ -92,31 +92,31 @@ public class OidcClientRegistrationHttpMessageConverterTests {
 	public void readInternalWhenValidParametersThenSuccess() throws Exception {
 		// @formatter:off
 		String clientRegistrationRequest = "{\n"
-				+"		\"client_id\": \"client-id\",\n"
-				+"		\"client_id_issued_at\": 1607633867,\n"
-				+"		\"client_secret\": \"client-secret\",\n"
-				+"		\"client_secret_expires_at\": 1607637467,\n"
-				+"		\"client_name\": \"client-name\",\n"
-				+"		\"redirect_uris\": [\n"
+				+ "		\"client_id\": \"client-id\",\n"
+				+ "		\"client_id_issued_at\": 1607633867,\n"
+				+ "		\"client_secret\": \"client-secret\",\n"
+				+ "		\"client_secret_expires_at\": 1607637467,\n"
+				+ "		\"client_name\": \"client-name\",\n"
+				+ "		\"redirect_uris\": [\n"
 				+ "			\"https://client.example.com\"\n"
 				+ "		],\n"
-				+"		\"post_logout_redirect_uris\": [\n"
+				+ "		\"post_logout_redirect_uris\": [\n"
 				+ "			\"https://client.example.com/oidc-post-logout\"\n"
 				+ "		],\n"
-				+"		\"token_endpoint_auth_method\": \"client_secret_jwt\",\n"
-				+"		\"token_endpoint_auth_signing_alg\": \"HS256\",\n"
-				+"		\"grant_types\": [\n"
-				+"			\"authorization_code\",\n"
-				+"			\"client_credentials\"\n"
-				+"		],\n"
-				+"		\"response_types\":[\n"
-				+"			\"code\"\n"
-				+"		],\n"
-				+"		\"scope\": \"scope1 scope2\",\n"
-				+"		\"jwks_uri\": \"https://client.example.com/jwks\",\n"
-				+"		\"id_token_signed_response_alg\": \"RS256\",\n"
-				+"		\"a-claim\": \"a-value\"\n"
-				+"}\n";
+				+ "		\"token_endpoint_auth_method\": \"client_secret_jwt\",\n"
+				+ "		\"token_endpoint_auth_signing_alg\": \"HS256\",\n"
+				+ "		\"grant_types\": [\n"
+				+ "			\"authorization_code\",\n"
+				+ "			\"client_credentials\"\n"
+				+ "		],\n"
+				+ "		\"response_types\":[\n"
+				+ "			\"code\"\n"
+				+ "		],\n"
+				+ "		\"scope\": \"scope1 scope2\",\n"
+				+ "		\"jwks_uri\": \"https://client.example.com/jwks\",\n"
+				+ "		\"id_token_signed_response_alg\": \"RS256\",\n"
+				+ "		\"a-claim\": \"a-value\"\n"
+				+ "}\n";
 		// @formatter:on
 		MockClientHttpResponse response = new MockClientHttpResponse(clientRegistrationRequest.getBytes(),
 				HttpStatus.OK);
@@ -148,13 +148,13 @@ public class OidcClientRegistrationHttpMessageConverterTests {
 	public void readInternalWhenClientSecretNoExpiryThenSuccess() {
 		// @formatter:off
 		String clientRegistrationRequest = "{\n"
-				+"		\"client_id\": \"client-id\",\n"
-				+"		\"client_secret\": \"client-secret\",\n"
-				+"		\"client_secret_expires_at\": 0,\n"
-				+"		\"redirect_uris\": [\n"
+				+ "		\"client_id\": \"client-id\",\n"
+				+ "		\"client_secret\": \"client-secret\",\n"
+				+ "		\"client_secret_expires_at\": 0,\n"
+				+ "		\"redirect_uris\": [\n"
 				+ "			\"https://client.example.com\"\n"
 				+ "		]\n"
-				+"}\n";
+				+ "}\n";
 		// @formatter:on
 		MockClientHttpResponse response = new MockClientHttpResponse(clientRegistrationRequest.getBytes(),
 				HttpStatus.OK);
@@ -171,7 +171,7 @@ public class OidcClientRegistrationHttpMessageConverterTests {
 	@Test
 	public void readInternalWhenFailingConverterThenThrowException() {
 		String errorMessage = "this is not a valid converter";
-		this.messageConverter.setClientRegistrationConverter(source -> {
+		this.messageConverter.setClientRegistrationConverter((source) -> {
 			throw new RuntimeException(errorMessage);
 		});
 		MockClientHttpResponse response = new MockClientHttpResponse("{}".getBytes(), HttpStatus.OK);
@@ -257,7 +257,7 @@ public class OidcClientRegistrationHttpMessageConverterTests {
 	@Test
 	public void writeInternalWhenWriteFailsThenThrowException() {
 		String errorMessage = "this is not a valid converter";
-		Converter<OidcClientRegistration, Map<String, Object>> failingConverter = source -> {
+		Converter<OidcClientRegistration, Map<String, Object>> failingConverter = (source) -> {
 			throw new RuntimeException(errorMessage);
 		};
 		this.messageConverter.setClientRegistrationParametersConverter(failingConverter);

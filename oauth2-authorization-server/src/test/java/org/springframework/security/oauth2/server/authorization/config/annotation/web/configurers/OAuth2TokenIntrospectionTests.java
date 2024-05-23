@@ -106,9 +106,9 @@ import org.springframework.util.MultiValueMap;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -180,8 +180,8 @@ public class OAuth2TokenIntrospectionTests {
 
 	@AfterEach
 	public void tearDown() {
-		jdbcOperations.update("truncate table oauth2_authorization");
-		jdbcOperations.update("truncate table oauth2_registered_client");
+		this.jdbcOperations.update("truncate table oauth2_authorization");
+		this.jdbcOperations.update("truncate table oauth2_registered_client");
 	}
 
 	@AfterAll
@@ -375,9 +375,9 @@ public class OAuth2TokenIntrospectionTests {
 		OAuth2TokenIntrospectionAuthenticationToken tokenIntrospectionAuthentication = new OAuth2TokenIntrospectionAuthenticationToken(
 				accessToken.getTokenValue(), clientPrincipal, null, null);
 
-		when(authenticationConverter.convert(any())).thenReturn(tokenIntrospectionAuthentication);
-		when(authenticationProvider.supports(eq(OAuth2TokenIntrospectionAuthenticationToken.class))).thenReturn(true);
-		when(authenticationProvider.authenticate(any())).thenReturn(tokenIntrospectionAuthentication);
+		given(authenticationConverter.convert(any())).willReturn(tokenIntrospectionAuthentication);
+		given(authenticationProvider.supports(eq(OAuth2TokenIntrospectionAuthenticationToken.class))).willReturn(true);
+		given(authenticationProvider.authenticate(any())).willReturn(tokenIntrospectionAuthentication);
 
 		// @formatter:off
 		this.mvc.perform(post(authorizationServerSettings.getTokenIntrospectionEndpoint())
@@ -528,11 +528,11 @@ public class OAuth2TokenIntrospectionTests {
 
 		// @formatter:off
 		@Bean
-		public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
+		SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
 			OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
 					new OAuth2AuthorizationServerConfigurer();
 			authorizationServerConfigurer
-					.tokenIntrospectionEndpoint(tokenIntrospectionEndpoint ->
+					.tokenIntrospectionEndpoint((tokenIntrospectionEndpoint) ->
 							tokenIntrospectionEndpoint
 									.introspectionRequestConverter(authenticationConverter)
 									.introspectionRequestConverters(authenticationConvertersConsumer)
@@ -544,10 +544,10 @@ public class OAuth2TokenIntrospectionTests {
 
 			http
 					.securityMatcher(endpointsMatcher)
-					.authorizeHttpRequests(authorize ->
+					.authorizeHttpRequests((authorize) ->
 							authorize.anyRequest().authenticated()
 					)
-					.csrf(csrf -> csrf.ignoringRequestMatchers(endpointsMatcher))
+					.csrf((csrf) -> csrf.ignoringRequestMatchers(endpointsMatcher))
 					.apply(authorizationServerConfigurer);
 			return http.build();
 		}

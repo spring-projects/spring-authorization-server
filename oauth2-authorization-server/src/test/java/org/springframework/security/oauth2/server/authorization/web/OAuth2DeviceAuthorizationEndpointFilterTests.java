@@ -18,9 +18,11 @@ package org.springframework.security.oauth2.server.authorization.web;
 import java.io.IOException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Map;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
+import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -56,15 +58,13 @@ import org.springframework.security.web.authentication.AuthenticationFailureHand
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.WebAuthenticationDetails;
 
-import static java.util.Map.entry;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
-import static org.assertj.core.api.InstanceOfAssertFactories.type;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
 
 /**
  * Tests for {@link OAuth2DeviceAuthorizationEndpointFilter}.
@@ -195,7 +195,7 @@ public class OAuth2DeviceAuthorizationEndpointFilterTests {
 	@Test
 	public void doFilterWhenDeviceAuthorizationRequestThenDeviceAuthorizationResponse() throws Exception {
 		Authentication authenticationResult = createAuthentication();
-		when(this.authenticationManager.authenticate(any(Authentication.class))).thenReturn(authenticationResult);
+		given(this.authenticationManager.authenticate(any(Authentication.class))).willReturn(authenticationResult);
 
 		Authentication clientPrincipal = (Authentication) authenticationResult.getPrincipal();
 		mockSecurityContext(clientPrincipal);
@@ -219,11 +219,11 @@ public class OAuth2DeviceAuthorizationEndpointFilterTests {
 		assertThat(deviceAuthorizationRequestAuthentication.getPrincipal()).isEqualTo(clientPrincipal);
 		assertThat(deviceAuthorizationRequestAuthentication.getScopes()).isEmpty();
 		assertThat(deviceAuthorizationRequestAuthentication.getAdditionalParameters()).containsExactly(
-				entry("custom-param-1", "custom-value-1"),
-				entry("custom-param-2", new String[] { "custom-value-1", "custom-value-2" }));
+				Map.entry("custom-param-1", "custom-value-1"),
+				Map.entry("custom-param-2", new String[] { "custom-value-1", "custom-value-2" }));
 		// @formatter:off
 		assertThat(deviceAuthorizationRequestAuthentication.getDetails())
-				.asInstanceOf(type(WebAuthenticationDetails.class))
+				.asInstanceOf(InstanceOfAssertFactories.type(WebAuthenticationDetails.class))
 				.extracting(WebAuthenticationDetails::getRemoteAddress)
 				.isEqualTo(REMOTE_ADDRESS);
 		// @formatter:on
@@ -246,7 +246,7 @@ public class OAuth2DeviceAuthorizationEndpointFilterTests {
 		AuthenticationConverter authenticationConverter = mock(AuthenticationConverter.class);
 		OAuth2AuthenticationException authenticationException = new OAuth2AuthenticationException(
 				new OAuth2Error(OAuth2ErrorCodes.INVALID_REQUEST, "Invalid request", "error-uri"));
-		when(authenticationConverter.convert(any(HttpServletRequest.class))).thenThrow(authenticationException);
+		given(authenticationConverter.convert(any(HttpServletRequest.class))).willThrow(authenticationException);
 		this.filter.setAuthenticationConverter(authenticationConverter);
 
 		MockHttpServletRequest request = createRequest();
@@ -267,7 +267,7 @@ public class OAuth2DeviceAuthorizationEndpointFilterTests {
 	@Test
 	public void doFilterWhenCustomDeviceAuthorizationEndpointUriThenUsed() throws Exception {
 		Authentication authenticationResult = createAuthentication();
-		when(this.authenticationManager.authenticate(any(Authentication.class))).thenReturn(authenticationResult);
+		given(this.authenticationManager.authenticate(any(Authentication.class))).willReturn(authenticationResult);
 
 		Authentication clientPrincipal = (Authentication) authenticationResult.getPrincipal();
 		mockSecurityContext(clientPrincipal);
@@ -288,7 +288,7 @@ public class OAuth2DeviceAuthorizationEndpointFilterTests {
 	@Test
 	public void doFilterWhenAuthenticationConverterSetThenUsed() throws Exception {
 		Authentication authenticationResult = createAuthentication();
-		when(this.authenticationManager.authenticate(any(Authentication.class))).thenReturn(authenticationResult);
+		given(this.authenticationManager.authenticate(any(Authentication.class))).willReturn(authenticationResult);
 
 		Authentication clientPrincipal = (Authentication) authenticationResult.getPrincipal();
 		mockSecurityContext(clientPrincipal);
@@ -296,7 +296,7 @@ public class OAuth2DeviceAuthorizationEndpointFilterTests {
 		AuthenticationConverter authenticationConverter = mock(AuthenticationConverter.class);
 		OAuth2DeviceAuthorizationRequestAuthenticationToken authenticationRequest = new OAuth2DeviceAuthorizationRequestAuthenticationToken(
 				clientPrincipal, AUTHORIZATION_URI, null, null);
-		when(authenticationConverter.convert(any(HttpServletRequest.class))).thenReturn(authenticationRequest);
+		given(authenticationConverter.convert(any(HttpServletRequest.class))).willReturn(authenticationRequest);
 		this.filter.setAuthenticationConverter(authenticationConverter);
 
 		MockHttpServletRequest request = createRequest();
@@ -313,7 +313,7 @@ public class OAuth2DeviceAuthorizationEndpointFilterTests {
 	@Test
 	public void doFilterWhenAuthenticationDetailsSourceSetThenUsed() throws Exception {
 		Authentication authenticationResult = createAuthentication();
-		when(this.authenticationManager.authenticate(any(Authentication.class))).thenReturn(authenticationResult);
+		given(this.authenticationManager.authenticate(any(Authentication.class))).willReturn(authenticationResult);
 
 		Authentication clientPrincipal = (Authentication) authenticationResult.getPrincipal();
 		mockSecurityContext(clientPrincipal);
@@ -325,8 +325,8 @@ public class OAuth2DeviceAuthorizationEndpointFilterTests {
 		@SuppressWarnings("unchecked")
 		AuthenticationDetailsSource<HttpServletRequest, WebAuthenticationDetails> authenticationDetailsSource = mock(
 				AuthenticationDetailsSource.class);
-		when(authenticationDetailsSource.buildDetails(any(HttpServletRequest.class)))
-			.thenReturn(new WebAuthenticationDetails(request));
+		given(authenticationDetailsSource.buildDetails(any(HttpServletRequest.class)))
+			.willReturn(new WebAuthenticationDetails(request));
 		this.filter.setAuthenticationDetailsSource(authenticationDetailsSource);
 
 		this.filter.doFilter(request, response, filterChain);
@@ -340,7 +340,7 @@ public class OAuth2DeviceAuthorizationEndpointFilterTests {
 	@Test
 	public void doFilterWhenAuthenticationSuccessHandlerSetThenUsed() throws Exception {
 		Authentication authenticationResult = createAuthentication();
-		when(this.authenticationManager.authenticate(any(Authentication.class))).thenReturn(authenticationResult);
+		given(this.authenticationManager.authenticate(any(Authentication.class))).willReturn(authenticationResult);
 
 		Authentication clientPrincipal = (Authentication) authenticationResult.getPrincipal();
 		mockSecurityContext(clientPrincipal);
@@ -363,7 +363,7 @@ public class OAuth2DeviceAuthorizationEndpointFilterTests {
 	public void doFilterWhenAuthenticationFailureHandlerSetThenUsed() throws Exception {
 		OAuth2AuthenticationException authenticationException = new OAuth2AuthenticationException(
 				OAuth2ErrorCodes.INVALID_REQUEST);
-		when(this.authenticationManager.authenticate(any(Authentication.class))).thenThrow(authenticationException);
+		given(this.authenticationManager.authenticate(any(Authentication.class))).willThrow(authenticationException);
 
 		Authentication clientPrincipal = (Authentication) createAuthentication().getPrincipal();
 		mockSecurityContext(clientPrincipal);

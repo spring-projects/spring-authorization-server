@@ -294,7 +294,7 @@ public class OAuth2AuthorizationServerMetadataTests {
 	public void buildWhenTokenEndpointAuthenticationMethodsAddingOrRemovingThenCorrectValues() {
 		OAuth2AuthorizationServerMetadata authorizationServerMetadata = this.minimalBuilder
 			.tokenEndpointAuthenticationMethod("should-be-removed")
-			.tokenEndpointAuthenticationMethods(authMethods -> {
+			.tokenEndpointAuthenticationMethods((authMethods) -> {
 				authMethods.clear();
 				authMethods.add("some-authentication-method");
 			})
@@ -332,7 +332,7 @@ public class OAuth2AuthorizationServerMetadataTests {
 	@Test
 	public void buildWhenScopesAddingOrRemovingThenCorrectValues() {
 		OAuth2AuthorizationServerMetadata authorizationServerMetadata = this.minimalBuilder.scope("should-be-removed")
-			.scopes(scopes -> {
+			.scopes((scopes) -> {
 				scopes.clear();
 				scopes.add("some-scope");
 			})
@@ -370,7 +370,7 @@ public class OAuth2AuthorizationServerMetadataTests {
 	public void buildWhenResponseTypesAddingOrRemovingThenCorrectValues() {
 		OAuth2AuthorizationServerMetadata authorizationServerMetadata = this.minimalBuilder
 			.responseType("should-be-removed")
-			.responseTypes(responseTypes -> {
+			.responseTypes((responseTypes) -> {
 				responseTypes.clear();
 				responseTypes.add("some-response-type");
 			})
@@ -382,8 +382,8 @@ public class OAuth2AuthorizationServerMetadataTests {
 	@Test
 	public void buildWhenResponseTypesNotPresentAndAddingThenCorrectValues() {
 		OAuth2AuthorizationServerMetadata authorizationServerMetadata = this.minimalBuilder
-			.claims(claims -> claims.remove(OAuth2AuthorizationServerMetadataClaimNames.RESPONSE_TYPES_SUPPORTED))
-			.responseTypes(responseTypes -> responseTypes.add("some-response-type"))
+			.claims((claims) -> claims.remove(OAuth2AuthorizationServerMetadataClaimNames.RESPONSE_TYPES_SUPPORTED))
+			.responseTypes((responseTypes) -> responseTypes.add("some-response-type"))
 			.build();
 
 		assertThat(authorizationServerMetadata.getResponseTypes()).containsExactly("some-response-type");
@@ -410,7 +410,7 @@ public class OAuth2AuthorizationServerMetadataTests {
 	public void buildWhenGrantTypesAddingOrRemovingThenCorrectValues() {
 		OAuth2AuthorizationServerMetadata authorizationServerMetadata = this.minimalBuilder
 			.grantType("should-be-removed")
-			.grantTypes(grantTypes -> {
+			.grantTypes((grantTypes) -> {
 				grantTypes.clear();
 				grantTypes.add("some-grant-type");
 			})
@@ -450,7 +450,7 @@ public class OAuth2AuthorizationServerMetadataTests {
 	public void buildWhenTokenRevocationEndpointAuthenticationMethodsAddingOrRemovingThenCorrectValues() {
 		OAuth2AuthorizationServerMetadata authorizationServerMetadata = this.minimalBuilder
 			.tokenRevocationEndpointAuthenticationMethod("should-be-removed")
-			.tokenRevocationEndpointAuthenticationMethods(authMethods -> {
+			.tokenRevocationEndpointAuthenticationMethods((authMethods) -> {
 				authMethods.clear();
 				authMethods.add("some-authentication-method");
 			})
@@ -492,7 +492,7 @@ public class OAuth2AuthorizationServerMetadataTests {
 	public void buildWhenTokenIntrospectionEndpointAuthenticationMethodsAddingOrRemovingThenCorrectValues() {
 		OAuth2AuthorizationServerMetadata authorizationServerMetadata = this.minimalBuilder
 			.tokenIntrospectionEndpointAuthenticationMethod("should-be-removed")
-			.tokenIntrospectionEndpointAuthenticationMethods(authMethods -> {
+			.tokenIntrospectionEndpointAuthenticationMethods((authMethods) -> {
 				authMethods.clear();
 				authMethods.add("some-authentication-method");
 			})
@@ -525,7 +525,7 @@ public class OAuth2AuthorizationServerMetadataTests {
 	public void buildWhenCodeChallengeMethodsAddingOrRemovingThenCorrectValues() {
 		OAuth2AuthorizationServerMetadata authorizationServerMetadata = this.minimalBuilder
 			.codeChallengeMethod("should-be-removed")
-			.codeChallengeMethods(codeChallengeMethods -> {
+			.codeChallengeMethods((codeChallengeMethods) -> {
 				codeChallengeMethods.clear();
 				codeChallengeMethods.add("some-authentication-method");
 			})

@@ -52,7 +52,7 @@ public class OAuth2RefreshTokenAuthenticationToken extends OAuth2AuthorizationGr
 		super(AuthorizationGrantType.REFRESH_TOKEN, clientPrincipal, additionalParameters);
 		Assert.hasText(refreshToken, "refreshToken cannot be empty");
 		this.refreshToken = refreshToken;
-		this.scopes = Collections.unmodifiableSet(scopes != null ? new HashSet<>(scopes) : Collections.emptySet());
+		this.scopes = Collections.unmodifiableSet((scopes != null) ? new HashSet<>(scopes) : Collections.emptySet());
 	}
 
 	/**

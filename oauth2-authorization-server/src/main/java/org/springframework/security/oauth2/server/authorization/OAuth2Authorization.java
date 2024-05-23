@@ -144,7 +144,7 @@ public class OAuth2Authorization implements Serializable {
 	public <T extends OAuth2Token> Token<T> getToken(Class<T> tokenType) {
 		Assert.notNull(tokenType, "tokenType cannot be null");
 		Token<?> token = this.tokens.get(tokenType);
-		return token != null ? (Token<T>) token : null;
+		return (token != null) ? (Token<T>) token : null;
 	}
 
 	/**
@@ -234,12 +234,13 @@ public class OAuth2Authorization implements Serializable {
 			.authorizationGrantType(authorization.getAuthorizationGrantType())
 			.authorizedScopes(authorization.getAuthorizedScopes())
 			.tokens(authorization.tokens)
-			.attributes(attrs -> attrs.putAll(authorization.getAttributes()));
+			.attributes((attrs) -> attrs.putAll(authorization.getAttributes()));
 	}
 
 	/**
 	 * A holder of an OAuth 2.0 Token and it's associated metadata.
 	 *
+	 * @param <T> the type of the {@link OAuth2Token}
 	 * @author Joe Grandja
 	 * @since 0.1.0
 	 */

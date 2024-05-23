@@ -279,15 +279,15 @@ public class JdbcRegisteredClientRepository implements RegisteredClientRepositor
 			// @formatter:off
 			RegisteredClient.Builder builder = RegisteredClient.withId(rs.getString("id"))
 					.clientId(rs.getString("client_id"))
-					.clientIdIssuedAt(clientIdIssuedAt != null ? clientIdIssuedAt.toInstant() : null)
+					.clientIdIssuedAt((clientIdIssuedAt != null) ? clientIdIssuedAt.toInstant() : null)
 					.clientSecret(rs.getString("client_secret"))
-					.clientSecretExpiresAt(clientSecretExpiresAt != null ? clientSecretExpiresAt.toInstant() : null)
+					.clientSecretExpiresAt((clientSecretExpiresAt != null) ? clientSecretExpiresAt.toInstant() : null)
 					.clientName(rs.getString("client_name"))
 					.clientAuthenticationMethods((authenticationMethods) ->
-							clientAuthenticationMethods.forEach(authenticationMethod ->
+							clientAuthenticationMethods.forEach((authenticationMethod) ->
 									authenticationMethods.add(resolveClientAuthenticationMethod(authenticationMethod))))
 					.authorizationGrantTypes((grantTypes) ->
-							authorizationGrantTypes.forEach(grantType ->
+							authorizationGrantTypes.forEach((grantType) ->
 									grantTypes.add(resolveAuthorizationGrantType(grantType))))
 					.redirectUris((uris) -> uris.addAll(redirectUris))
 					.postLogoutRedirectUris((uris) -> uris.addAll(postLogoutRedirectUris))
@@ -374,22 +374,22 @@ public class JdbcRegisteredClientRepository implements RegisteredClientRepositor
 
 		@Override
 		public List<SqlParameterValue> apply(RegisteredClient registeredClient) {
-			Timestamp clientIdIssuedAt = registeredClient.getClientIdIssuedAt() != null
+			Timestamp clientIdIssuedAt = (registeredClient.getClientIdIssuedAt() != null)
 					? Timestamp.from(registeredClient.getClientIdIssuedAt()) : Timestamp.from(Instant.now());
 
-			Timestamp clientSecretExpiresAt = registeredClient.getClientSecretExpiresAt() != null
+			Timestamp clientSecretExpiresAt = (registeredClient.getClientSecretExpiresAt() != null)
 					? Timestamp.from(registeredClient.getClientSecretExpiresAt()) : null;
 
 			List<String> clientAuthenticationMethods = new ArrayList<>(
 					registeredClient.getClientAuthenticationMethods().size());
 			registeredClient.getClientAuthenticationMethods()
-				.forEach(clientAuthenticationMethod -> clientAuthenticationMethods
+				.forEach((clientAuthenticationMethod) -> clientAuthenticationMethods
 					.add(clientAuthenticationMethod.getValue()));
 
 			List<String> authorizationGrantTypes = new ArrayList<>(
 					registeredClient.getAuthorizationGrantTypes().size());
 			registeredClient.getAuthorizationGrantTypes()
-				.forEach(authorizationGrantType -> authorizationGrantTypes.add(authorizationGrantType.getValue()));
+				.forEach((authorizationGrantType) -> authorizationGrantTypes.add(authorizationGrantType.getValue()));
 
 			return Arrays.asList(new SqlParameterValue(Types.VARCHAR, registeredClient.getId()),
 					new SqlParameterValue(Types.VARCHAR, registeredClient.getClientId()),

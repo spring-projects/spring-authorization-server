@@ -73,12 +73,12 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.entry;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doAnswer;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.willAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 /**
  * Tests for {@link OAuth2RefreshTokenAuthenticationProvider}.
@@ -106,7 +106,7 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 	public void setUp() {
 		this.authorizationService = mock(OAuth2AuthorizationService.class);
 		this.jwtEncoder = mock(JwtEncoder.class);
-		when(this.jwtEncoder.encode(any())).thenReturn(createJwt(Collections.singleton("scope1")));
+		given(this.jwtEncoder.encode(any())).willReturn(createJwt(Collections.singleton("scope1")));
 		this.jwtCustomizer = mock(OAuth2TokenCustomizer.class);
 		JwtGenerator jwtGenerator = new JwtGenerator(this.jwtEncoder);
 		jwtGenerator.setJwtCustomizer(this.jwtCustomizer);
@@ -165,9 +165,9 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 	public void authenticateWhenValidRefreshTokenThenReturnAccessToken() {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();
-		when(this.authorizationService.findByToken(eq(authorization.getRefreshToken().getToken().getTokenValue()),
+		given(this.authorizationService.findByToken(eq(authorization.getRefreshToken().getToken().getTokenValue()),
 				eq(OAuth2TokenType.REFRESH_TOKEN)))
-			.thenReturn(authorization);
+			.willReturn(authorization);
 
 		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient,
 				ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
@@ -222,9 +222,9 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient)
 			.token(authorizedIdToken)
 			.build();
-		when(this.authorizationService.findByToken(eq(authorization.getRefreshToken().getToken().getTokenValue()),
+		given(this.authorizationService.findByToken(eq(authorization.getRefreshToken().getToken().getTokenValue()),
 				eq(OAuth2TokenType.REFRESH_TOKEN)))
-			.thenReturn(authorization);
+			.willReturn(authorization);
 
 		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient,
 				ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
@@ -296,9 +296,9 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 			.tokenSettings(TokenSettings.builder().reuseRefreshTokens(false).build())
 			.build();
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();
-		when(this.authorizationService.findByToken(eq(authorization.getRefreshToken().getToken().getTokenValue()),
+		given(this.authorizationService.findByToken(eq(authorization.getRefreshToken().getToken().getTokenValue()),
 				eq(OAuth2TokenType.REFRESH_TOKEN)))
-			.thenReturn(authorization);
+			.willReturn(authorization);
 
 		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient,
 				ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
@@ -324,9 +324,9 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 			.scope("scope3")
 			.build();
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();
-		when(this.authorizationService.findByToken(eq(authorization.getRefreshToken().getToken().getTokenValue()),
+		given(this.authorizationService.findByToken(eq(authorization.getRefreshToken().getToken().getTokenValue()),
 				eq(OAuth2TokenType.REFRESH_TOKEN)))
-			.thenReturn(authorization);
+			.willReturn(authorization);
 
 		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient,
 				ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
@@ -346,9 +346,9 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 	public void authenticateWhenRequestedScopesNotAuthorizedThenThrowOAuth2AuthenticationException() {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();
-		when(this.authorizationService.findByToken(eq(authorization.getRefreshToken().getToken().getTokenValue()),
+		given(this.authorizationService.findByToken(eq(authorization.getRefreshToken().getToken().getTokenValue()),
 				eq(OAuth2TokenType.REFRESH_TOKEN)))
-			.thenReturn(authorization);
+			.willReturn(authorization);
 
 		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient,
 				ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
@@ -360,7 +360,7 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 			.isInstanceOf(OAuth2AuthenticationException.class)
-			.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+			.extracting((ex) -> ((OAuth2AuthenticationException) ex).getError())
 			.extracting("errorCode")
 			.isEqualTo(OAuth2ErrorCodes.INVALID_SCOPE);
 	}
@@ -375,7 +375,7 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 			.isInstanceOf(OAuth2AuthenticationException.class)
-			.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+			.extracting((ex) -> ((OAuth2AuthenticationException) ex).getError())
 			.extracting("errorCode")
 			.isEqualTo(OAuth2ErrorCodes.INVALID_GRANT);
 	}
@@ -390,7 +390,7 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 			.isInstanceOf(OAuth2AuthenticationException.class)
-			.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+			.extracting((ex) -> ((OAuth2AuthenticationException) ex).getError())
 			.extracting("errorCode")
 			.isEqualTo(OAuth2ErrorCodes.INVALID_CLIENT);
 	}
@@ -406,7 +406,7 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 			.isInstanceOf(OAuth2AuthenticationException.class)
-			.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+			.extracting((ex) -> ((OAuth2AuthenticationException) ex).getError())
 			.extracting("errorCode")
 			.isEqualTo(OAuth2ErrorCodes.INVALID_CLIENT);
 	}
@@ -415,9 +415,9 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 	public void authenticateWhenRefreshTokenIssuedToAnotherClientThenThrowOAuth2AuthenticationException() {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();
-		when(this.authorizationService.findByToken(eq(authorization.getRefreshToken().getToken().getTokenValue()),
+		given(this.authorizationService.findByToken(eq(authorization.getRefreshToken().getToken().getTokenValue()),
 				eq(OAuth2TokenType.REFRESH_TOKEN)))
-			.thenReturn(authorization);
+			.willReturn(authorization);
 
 		RegisteredClient registeredClient2 = TestRegisteredClients.registeredClient2().build();
 		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient2,
@@ -427,7 +427,7 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 			.isInstanceOf(OAuth2AuthenticationException.class)
-			.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+			.extracting((ex) -> ((OAuth2AuthenticationException) ex).getError())
 			.extracting("errorCode")
 			.isEqualTo(OAuth2ErrorCodes.INVALID_GRANT);
 	}
@@ -435,12 +435,12 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 	@Test
 	public void authenticateWhenClientNotAuthorizedToRefreshTokenThenThrowOAuth2AuthenticationException() {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
-			.authorizationGrantTypes(grantTypes -> grantTypes.remove(AuthorizationGrantType.REFRESH_TOKEN))
+			.authorizationGrantTypes((grantTypes) -> grantTypes.remove(AuthorizationGrantType.REFRESH_TOKEN))
 			.build();
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();
-		when(this.authorizationService.findByToken(eq(authorization.getRefreshToken().getToken().getTokenValue()),
+		given(this.authorizationService.findByToken(eq(authorization.getRefreshToken().getToken().getTokenValue()),
 				eq(OAuth2TokenType.REFRESH_TOKEN)))
-			.thenReturn(authorization);
+			.willReturn(authorization);
 
 		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient,
 				ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
@@ -449,7 +449,7 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 			.isInstanceOf(OAuth2AuthenticationException.class)
-			.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+			.extracting((ex) -> ((OAuth2AuthenticationException) ex).getError())
 			.extracting("errorCode")
 			.isEqualTo(OAuth2ErrorCodes.UNAUTHORIZED_CLIENT);
 	}
@@ -461,9 +461,9 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 		OAuth2RefreshToken expiredRefreshToken = new OAuth2RefreshToken("expired-refresh-token",
 				Instant.now().minusSeconds(120), Instant.now().minusSeconds(60));
 		authorization = OAuth2Authorization.from(authorization).token(expiredRefreshToken).build();
-		when(this.authorizationService.findByToken(eq(authorization.getRefreshToken().getToken().getTokenValue()),
+		given(this.authorizationService.findByToken(eq(authorization.getRefreshToken().getToken().getTokenValue()),
 				eq(OAuth2TokenType.REFRESH_TOKEN)))
-			.thenReturn(authorization);
+			.willReturn(authorization);
 
 		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient,
 				ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
@@ -472,7 +472,7 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 			.isInstanceOf(OAuth2AuthenticationException.class)
-			.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+			.extracting((ex) -> ((OAuth2AuthenticationException) ex).getError())
 			.extracting("errorCode")
 			.isEqualTo(OAuth2ErrorCodes.INVALID_GRANT);
 	}
@@ -485,9 +485,9 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient)
 			.token(refreshToken, (metadata) -> metadata.put(OAuth2Authorization.Token.INVALIDATED_METADATA_NAME, true))
 			.build();
-		when(this.authorizationService.findByToken(eq(authorization.getRefreshToken().getToken().getTokenValue()),
+		given(this.authorizationService.findByToken(eq(authorization.getRefreshToken().getToken().getTokenValue()),
 				eq(OAuth2TokenType.REFRESH_TOKEN)))
-			.thenReturn(authorization);
+			.willReturn(authorization);
 
 		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient,
 				ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
@@ -496,7 +496,7 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 			.isInstanceOf(OAuth2AuthenticationException.class)
-			.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
+			.extracting((ex) -> ((OAuth2AuthenticationException) ex).getError())
 			.extracting("errorCode")
 			.isEqualTo(OAuth2ErrorCodes.INVALID_GRANT);
 	}
@@ -505,16 +505,16 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 	public void authenticateWhenAccessTokenNotGeneratedThenThrowOAuth2AuthenticationException() {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();
-		when(this.authorizationService.findByToken(eq(authorization.getRefreshToken().getToken().getTokenValue()),
+		given(this.authorizationService.findByToken(eq(authorization.getRefreshToken().getToken().getTokenValue()),
 				eq(OAuth2TokenType.REFRESH_TOKEN)))
-			.thenReturn(authorization);
+			.willReturn(authorization);
 
 		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient,
 				ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
 		OAuth2RefreshTokenAuthenticationToken authentication = new OAuth2RefreshTokenAuthenticationToken(
 				authorization.getRefreshToken().getToken().getTokenValue(), clientPrincipal, null, null);
 
-		doAnswer(answer -> {
+		willAnswer((answer) -> {
 			OAuth2TokenContext context = answer.getArgument(0);
 			if (OAuth2TokenType.ACCESS_TOKEN.equals(context.getTokenType())) {
 				return null;
@@ -522,12 +522,12 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 			else {
 				return answer.callRealMethod();
 			}
-		}).when(this.tokenGenerator).generate(any());
+		}).given(this.tokenGenerator).generate(any());
 
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 			.isInstanceOf(OAuth2AuthenticationException.class)
-			.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
-			.satisfies(error -> {
+			.extracting((ex) -> ((OAuth2AuthenticationException) ex).getError())
+			.satisfies((error) -> {
 				assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.SERVER_ERROR);
 				assertThat(error.getDescription()).contains("The token generator failed to generate the access token.");
 			});
@@ -539,16 +539,16 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 			.tokenSettings(TokenSettings.builder().reuseRefreshTokens(false).build())
 			.build();
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();
-		when(this.authorizationService.findByToken(eq(authorization.getRefreshToken().getToken().getTokenValue()),
+		given(this.authorizationService.findByToken(eq(authorization.getRefreshToken().getToken().getTokenValue()),
 				eq(OAuth2TokenType.REFRESH_TOKEN)))
-			.thenReturn(authorization);
+			.willReturn(authorization);
 
 		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient,
 				ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
 		OAuth2RefreshTokenAuthenticationToken authentication = new OAuth2RefreshTokenAuthenticationToken(
 				authorization.getRefreshToken().getToken().getTokenValue(), clientPrincipal, null, null);
 
-		doAnswer(answer -> {
+		willAnswer((answer) -> {
 			OAuth2TokenContext context = answer.getArgument(0);
 			if (OAuth2TokenType.REFRESH_TOKEN.equals(context.getTokenType())) {
 				return null;
@@ -556,12 +556,12 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 			else {
 				return answer.callRealMethod();
 			}
-		}).when(this.tokenGenerator).generate(any());
+		}).given(this.tokenGenerator).generate(any());
 
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 			.isInstanceOf(OAuth2AuthenticationException.class)
-			.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
-			.satisfies(error -> {
+			.extracting((ex) -> ((OAuth2AuthenticationException) ex).getError())
+			.satisfies((error) -> {
 				assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.SERVER_ERROR);
 				assertThat(error.getDescription())
 					.contains("The token generator failed to generate the refresh token.");
@@ -572,16 +572,16 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 	public void authenticateWhenIdTokenNotGeneratedThenThrowOAuth2AuthenticationException() {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().scope(OidcScopes.OPENID).build();
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();
-		when(this.authorizationService.findByToken(eq(authorization.getRefreshToken().getToken().getTokenValue()),
+		given(this.authorizationService.findByToken(eq(authorization.getRefreshToken().getToken().getTokenValue()),
 				eq(OAuth2TokenType.REFRESH_TOKEN)))
-			.thenReturn(authorization);
+			.willReturn(authorization);
 
 		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient,
 				ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
 		OAuth2RefreshTokenAuthenticationToken authentication = new OAuth2RefreshTokenAuthenticationToken(
 				authorization.getRefreshToken().getToken().getTokenValue(), clientPrincipal, null, null);
 
-		doAnswer(answer -> {
+		willAnswer((answer) -> {
 			OAuth2TokenContext context = answer.getArgument(0);
 			if (OidcParameterNames.ID_TOKEN.equals(context.getTokenType().getValue())) {
 				return null;
@@ -589,12 +589,12 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 			else {
 				return answer.callRealMethod();
 			}
-		}).when(this.tokenGenerator).generate(any());
+		}).given(this.tokenGenerator).generate(any());
 
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 			.isInstanceOf(OAuth2AuthenticationException.class)
-			.extracting(ex -> ((OAuth2AuthenticationException) ex).getError())
-			.satisfies(error -> {
+			.extracting((ex) -> ((OAuth2AuthenticationException) ex).getError())
+			.satisfies((error) -> {
 				assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.SERVER_ERROR);
 				assertThat(error.getDescription()).contains("The token generator failed to generate the ID token.");
 			});
@@ -610,9 +610,9 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 				.build();
 		// @formatter:on
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();
-		when(this.authorizationService.findByToken(eq(authorization.getRefreshToken().getToken().getTokenValue()),
+		given(this.authorizationService.findByToken(eq(authorization.getRefreshToken().getToken().getTokenValue()),
 				eq(OAuth2TokenType.REFRESH_TOKEN)))
-			.thenReturn(authorization);
+			.willReturn(authorization);
 
 		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient,
 				ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());

@@ -25,7 +25,10 @@ import org.springframework.security.oauth2.server.authorization.settings.ClientS
 /**
  * @author Anoop Garlapati
  */
-public class TestRegisteredClients {
+public final class TestRegisteredClients {
+
+	private TestRegisteredClients() {
+	}
 
 	public static RegisteredClient.Builder registeredClient() {
 		return RegisteredClient.withId("registration-1")

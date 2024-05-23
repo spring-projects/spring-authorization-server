@@ -73,6 +73,7 @@ public final class OAuth2TokenIntrospectionEndpointConfigurer extends AbstractOA
 
 	/**
 	 * Restrict for internal use only.
+	 * @param objectPostProcessor an {@code ObjectPostProcessor}
 	 */
 	OAuth2TokenIntrospectionEndpointConfigurer(ObjectPostProcessor<Object> objectPostProcessor) {
 		super(objectPostProcessor);
@@ -189,7 +190,7 @@ public final class OAuth2TokenIntrospectionEndpointConfigurer extends AbstractOA
 		}
 		this.authenticationProvidersConsumer.accept(authenticationProviders);
 		authenticationProviders.forEach(
-				authenticationProvider -> httpSecurity.authenticationProvider(postProcess(authenticationProvider)));
+				(authenticationProvider) -> httpSecurity.authenticationProvider(postProcess(authenticationProvider)));
 	}
 
 	@Override

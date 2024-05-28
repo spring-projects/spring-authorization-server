@@ -151,11 +151,11 @@ class OAuth2AuthorizationServerBeanRegistrationAotProcessor implements BeanRegis
 			this.reflectionHintsRegistrar.registerReflectionHints(hints.reflection(),
 					loadClass("org.springframework.security.jackson2.SimpleGrantedAuthorityMixin"));
 			this.reflectionHintsRegistrar.registerReflectionHints(hints.reflection(), loadClass(
-					"org.springframework.security.oauth2.server.authorization.jackson2.OAuth2ActorAuthenticationTokenMixin"));
+					"org.springframework.security.oauth2.server.authorization.jackson2.OAuth2TokenExchangeActorMixin"));
 			this.reflectionHintsRegistrar.registerReflectionHints(hints.reflection(), loadClass(
 					"org.springframework.security.oauth2.server.authorization.jackson2.OAuth2AuthorizationRequestMixin"));
 			this.reflectionHintsRegistrar.registerReflectionHints(hints.reflection(), loadClass(
-					"org.springframework.security.oauth2.server.authorization.jackson2.OAuth2CompositeAuthenticationTokenMixin"));
+					"org.springframework.security.oauth2.server.authorization.jackson2.OAuth2TokenExchangeCompositeAuthenticationTokenMixin"));
 			this.reflectionHintsRegistrar.registerReflectionHints(hints.reflection(), loadClass(
 					"org.springframework.security.oauth2.server.authorization.jackson2.OAuth2TokenFormatMixin"));
 

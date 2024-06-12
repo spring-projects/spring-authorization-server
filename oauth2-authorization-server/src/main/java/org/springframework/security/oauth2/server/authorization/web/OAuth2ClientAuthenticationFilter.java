@@ -114,10 +114,10 @@ public final class OAuth2ClientAuthenticationFilter extends OncePerRequestFilter
 		this.authenticationConverter = new DelegatingAuthenticationConverter(
 				Arrays.asList(
 						new JwtClientAssertionAuthenticationConverter(),
-						new X509ClientCertificateAuthenticationConverter(),
 						new ClientSecretBasicAuthenticationConverter(),
 						new ClientSecretPostAuthenticationConverter(),
-						new PublicClientAuthenticationConverter()));
+						new PublicClientAuthenticationConverter(),
+						new X509ClientCertificateAuthenticationConverter()));
 		// @formatter:on
 	}
 

@@ -58,14 +58,12 @@ public class X509ClientCertificateAuthenticationConverterTests {
 	}
 
 	@Test
-	public void convertWhenMissingClientIdThenInvalidRequestError() {
+	public void convertWhenMissingClientIdThenReturnNull() {
 		MockHttpServletRequest request = new MockHttpServletRequest();
 		request.setAttribute("jakarta.servlet.request.X509Certificate",
 				TestX509Certificates.DEMO_CLIENT_PKI_CERTIFICATE);
-		assertThatThrownBy(() -> this.converter.convert(request)).isInstanceOf(OAuth2AuthenticationException.class)
-			.extracting((ex) -> ((OAuth2AuthenticationException) ex).getError())
-			.extracting("errorCode")
-			.isEqualTo(OAuth2ErrorCodes.INVALID_REQUEST);
+		Authentication authentication = this.converter.convert(request);
+		assertThat(authentication).isNull();
 	}
 
 	@Test

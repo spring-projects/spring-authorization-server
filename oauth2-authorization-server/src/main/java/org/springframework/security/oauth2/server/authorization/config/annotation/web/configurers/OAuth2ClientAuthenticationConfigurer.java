@@ -240,10 +240,10 @@ public final class OAuth2ClientAuthenticationConfigurer extends AbstractOAuth2Co
 		List<AuthenticationConverter> authenticationConverters = new ArrayList<>();
 
 		authenticationConverters.add(new JwtClientAssertionAuthenticationConverter());
-		authenticationConverters.add(new X509ClientCertificateAuthenticationConverter());
 		authenticationConverters.add(new ClientSecretBasicAuthenticationConverter());
 		authenticationConverters.add(new ClientSecretPostAuthenticationConverter());
 		authenticationConverters.add(new PublicClientAuthenticationConverter());
+		authenticationConverters.add(new X509ClientCertificateAuthenticationConverter());
 
 		return authenticationConverters;
 	}

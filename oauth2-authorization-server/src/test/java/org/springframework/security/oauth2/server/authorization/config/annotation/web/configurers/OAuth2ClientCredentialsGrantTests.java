@@ -309,6 +309,28 @@ public class OAuth2ClientCredentialsGrantTests {
 		verify(jwtCustomizer).customize(any());
 	}
 
+	// gh-1635
+	@Test
+	public void requestWhenTokenRequestIncludesBasicClientCredentialsAndX509ClientCertificateThenTokenResponse()
+			throws Exception {
+		this.spring.register(AuthorizationServerConfiguration.class).autowire();
+
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient2().build();
+		this.registeredClientRepository.save(registeredClient);
+
+		this.mvc
+			.perform(post(DEFAULT_TOKEN_ENDPOINT_URI).with(x509(TestX509Certificates.DEMO_CLIENT_PKI_CERTIFICATE))
+				.param(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
+				.param(OAuth2ParameterNames.SCOPE, "scope1 scope2")
+				.header(HttpHeaders.AUTHORIZATION,
+						"Basic " + encodeBasicAuth(registeredClient.getClientId(), registeredClient.getClientSecret())))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.access_token").isNotEmpty())
+			.andExpect(jsonPath("$.scope").value("scope1 scope2"));
+
+		verify(jwtCustomizer).customize(any());
+	}
+
 	@Test
 	public void requestWhenTokenEndpointCustomizedThenUsed() throws Exception {
 		this.spring.register(AuthorizationServerConfigurationCustomTokenEndpoint.class).autowire();
@@ -394,10 +416,10 @@ public class OAuth2ClientCredentialsGrantTests {
 		List<AuthenticationConverter> authenticationConverters = authenticationConvertersCaptor.getValue();
 		assertThat(authenticationConverters).allMatch((converter) -> converter == authenticationConverter
 				|| converter instanceof JwtClientAssertionAuthenticationConverter
-				|| converter instanceof X509ClientCertificateAuthenticationConverter
 				|| converter instanceof ClientSecretBasicAuthenticationConverter
 				|| converter instanceof ClientSecretPostAuthenticationConverter
-				|| converter instanceof PublicClientAuthenticationConverter);
+				|| converter instanceof PublicClientAuthenticationConverter
+				|| converter instanceof X509ClientCertificateAuthenticationConverter);
 
 		verify(authenticationProvider).authenticate(eq(clientPrincipal));
 

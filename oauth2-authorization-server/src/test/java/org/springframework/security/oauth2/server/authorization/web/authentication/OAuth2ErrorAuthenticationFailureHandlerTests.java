@@ -15,6 +15,7 @@
  */
 package org.springframework.security.oauth2.server.authorization.web.authentication;
 
+import jakarta.servlet.ServletException;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.http.HttpStatus;
@@ -27,6 +28,8 @@ import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
+
+import java.io.IOException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -64,6 +67,27 @@ public class OAuth2ErrorAuthenticationFailureHandlerTests {
 		assertThat(response.getContentAsString()).contains("invalid_request");
 		assertThat(response.getContentAsString()).contains("error description");
 		assertThat(response.getContentAsString()).contains("error uri");
+	}
+
+	@Test
+	public void onAuthenticationFailureWhenValidExceptionSpecificHTTPStatusCodes() throws Exception {
+		assertHttpStatusCode(OAuth2ErrorCodes.UNAUTHORIZED_CLIENT, HttpStatus.UNAUTHORIZED);
+		assertHttpStatusCode(OAuth2ErrorCodes.ACCESS_DENIED, HttpStatus.FORBIDDEN);
+		assertHttpStatusCode(OAuth2ErrorCodes.SERVER_ERROR, HttpStatus.INTERNAL_SERVER_ERROR);
+		assertHttpStatusCode(OAuth2ErrorCodes.TEMPORARILY_UNAVAILABLE, HttpStatus.SERVICE_UNAVAILABLE);
+		assertHttpStatusCode("fallback", HttpStatus.BAD_REQUEST);
+	}
+
+	private void assertHttpStatusCode(String oAuthErrorCode, HttpStatus expectedHttpStatus) throws ServletException, IOException {
+		MockHttpServletRequest request = new MockHttpServletRequest();
+		MockHttpServletResponse response = new MockHttpServletResponse();
+
+		OAuth2Error error = new OAuth2Error(oAuthErrorCode, "error description", "error uri");
+		AuthenticationException authenticationException = new OAuth2AuthenticationException(error);
+
+		this.authenticationFailureHandler.onAuthenticationFailure(request, response, authenticationException);
+
+		assertThat(response.getStatus()).isEqualTo(expectedHttpStatus.value());
 	}
 
 	@Test

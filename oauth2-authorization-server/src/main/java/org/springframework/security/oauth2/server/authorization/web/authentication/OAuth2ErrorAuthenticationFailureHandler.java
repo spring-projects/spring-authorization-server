@@ -29,6 +29,7 @@ import org.springframework.http.server.ServletServerHttpResponse;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
+import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.http.converter.OAuth2ErrorHttpMessageConverter;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.util.Assert;
@@ -53,18 +54,34 @@ public final class OAuth2ErrorAuthenticationFailureHandler implements Authentica
 	public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response,
 			AuthenticationException authenticationException) throws IOException, ServletException {
 		ServletServerHttpResponse httpResponse = new ServletServerHttpResponse(response);
-		httpResponse.setStatusCode(HttpStatus.BAD_REQUEST);
 
 		if (authenticationException instanceof OAuth2AuthenticationException) {
 			OAuth2Error error = ((OAuth2AuthenticationException) authenticationException).getError();
+			httpResponse.setStatusCode(httpStatusForOAuth2ErrorCode(error.getErrorCode()));
 			this.errorResponseConverter.write(error, null, httpResponse);
 		}
 		else {
+			httpResponse.setStatusCode(HttpStatus.BAD_REQUEST);
 			if (this.logger.isWarnEnabled()) {
 				this.logger.warn(AuthenticationException.class.getSimpleName() + " must be of type "
 						+ OAuth2AuthenticationException.class.getName() + " but was "
 						+ authenticationException.getClass().getName());
 			}
+		}
+	}
+
+	private HttpStatus httpStatusForOAuth2ErrorCode(String errorCode) {
+		switch (errorCode) {
+			case OAuth2ErrorCodes.UNAUTHORIZED_CLIENT:
+				return HttpStatus.UNAUTHORIZED;
+			case OAuth2ErrorCodes.ACCESS_DENIED:
+				return HttpStatus.FORBIDDEN;
+			case OAuth2ErrorCodes.SERVER_ERROR:
+				return HttpStatus.INTERNAL_SERVER_ERROR;
+			case OAuth2ErrorCodes.TEMPORARILY_UNAVAILABLE:
+				return HttpStatus.SERVICE_UNAVAILABLE;
+			default:
+				return HttpStatus.BAD_REQUEST;
 		}
 	}
 

@@ -36,8 +36,7 @@ Be sure to read the https://docs.spring.io/spring-authorization-server/reference
 JavaDoc is also available for the https://docs.spring.io/spring-authorization-server/docs/current/api/[Spring Authorization Server API] and https://docs.spring.io/spring-security/site/docs/current/api/[Spring Security API].
 
 == Code of Conduct
-This project adheres to the Contributor Covenant link:CODE_OF_CONDUCT.adoc[code of conduct].
-By participating, you are expected to uphold this code. Please report unacceptable behavior to spring-code-of-conduct@pivotal.io.
+Please see our https://github.com/spring-projects/.github/blob/main/CODE_OF_CONDUCT.md[code of conduct].
 
 == Downloading Artifacts
 See https://github.com/spring-projects/spring-framework/wiki/Spring-Framework-Artifacts[downloading Spring artifacts] for Maven repository information.

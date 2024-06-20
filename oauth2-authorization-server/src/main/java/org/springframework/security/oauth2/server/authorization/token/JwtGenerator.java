@@ -127,26 +127,28 @@ public final class JwtGenerator implements OAuth2TokenGenerator<Jwt> {
 		}
 		else if (OidcParameterNames.ID_TOKEN.equals(context.getTokenType().getValue())) {
 			claimsBuilder.claim(IdTokenClaimNames.AZP, registeredClient.getClientId());
-			if (AuthorizationGrantType.AUTHORIZATION_CODE.equals(context.getAuthorizationGrantType())) {
-				OAuth2AuthorizationRequest authorizationRequest = context.getAuthorization().getAttribute(
-						OAuth2AuthorizationRequest.class.getName());
-				String nonce = (String) authorizationRequest.getAdditionalParameters().get(OidcParameterNames.NONCE);
-				if (StringUtils.hasText(nonce)) {
-					claimsBuilder.claim(IdTokenClaimNames.NONCE, nonce);
-				}
-				SessionInformation sessionInformation = context.get(SessionInformation.class);
-				if (sessionInformation != null) {
-					claimsBuilder.claim("sid", sessionInformation.getSessionId());
-					claimsBuilder.claim(IdTokenClaimNames.AUTH_TIME, sessionInformation.getLastRequest());
-				}
-			}
-			else if (AuthorizationGrantType.REFRESH_TOKEN.equals(context.getAuthorizationGrantType())) {
+			if (AuthorizationGrantType.REFRESH_TOKEN.equals(context.getAuthorizationGrantType())) {
 				OidcIdToken currentIdToken = context.getAuthorization().getToken(OidcIdToken.class).getToken();
 				if (currentIdToken.hasClaim("sid")) {
 					claimsBuilder.claim("sid", currentIdToken.getClaim("sid"));
 				}
 				if (currentIdToken.hasClaim(IdTokenClaimNames.AUTH_TIME)) {
 					claimsBuilder.claim(IdTokenClaimNames.AUTH_TIME, currentIdToken.<Date>getClaim(IdTokenClaimNames.AUTH_TIME));
+				}
+			}
+			else {
+				OAuth2AuthorizationRequest authorizationRequest = context.getAuthorization().getAttribute(
+						OAuth2AuthorizationRequest.class.getName());
+				if(authorizationRequest != null){
+					String nonce = (String) authorizationRequest.getAdditionalParameters().get(OidcParameterNames.NONCE);
+					if (StringUtils.hasText(nonce)) {
+						claimsBuilder.claim(IdTokenClaimNames.NONCE, nonce);
+					}
+				}
+				SessionInformation sessionInformation = context.get(SessionInformation.class);
+				if (sessionInformation != null) {
+					claimsBuilder.claim("sid", sessionInformation.getSessionId());
+					claimsBuilder.claim(IdTokenClaimNames.AUTH_TIME, sessionInformation.getLastRequest());
 				}
 			}
 		}

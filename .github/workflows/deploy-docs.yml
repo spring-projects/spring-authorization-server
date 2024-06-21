@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       build-refname:
-        description: Enter git refname to build (e.g., 5.7.x).
+        description: Enter git refname to build (e.g., 1.2.x).
         required: false
   push:
     branches: docs-build
@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         fetch-depth: 5
     - name: Set Up Gradle
@@ -37,14 +37,14 @@ jobs:
     - name: Copy the cache to be included in the site
       run: cp -rf build/antora/inject-collector-cache-config-extension/.cache build/site/
     - name: Publish Docs
-      uses: spring-io/spring-doc-actions/rsync-antora-reference@v0.0.15
+      uses: spring-io/spring-doc-actions/rsync-antora-reference@v0.0.17
       with:
         docs-username: ${{ secrets.DOCS_USERNAME }}
         docs-host: ${{ secrets.DOCS_HOST }}
         docs-ssh-key: ${{ secrets.DOCS_SSH_KEY }}
         docs-ssh-host-key: ${{ secrets.DOCS_SSH_HOST_KEY }}
     - name: Bust Clouflare Cache
-      uses: spring-io/spring-doc-actions/bust-cloudflare-antora-cache@v0.0.15
+      uses: spring-io/spring-doc-actions/bust-cloudflare-antora-cache@v0.0.17
       with:
         context-root: spring-authorization-server
         cloudflare-zone-id: ${{ secrets.CLOUDFLARE_ZONE_ID }}

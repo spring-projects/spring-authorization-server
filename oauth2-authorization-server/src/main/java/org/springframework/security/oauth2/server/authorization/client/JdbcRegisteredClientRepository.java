@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 the original author or authors.
+ * Copyright 2020-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -174,11 +174,13 @@ public class JdbcRegisteredClientRepository implements RegisteredClientRepositor
 			throw new IllegalArgumentException("Registered client must be unique. "
 					+ "Found duplicate client identifier: " + registeredClient.getClientId());
 		}
-		count = this.jdbcOperations.queryForObject(COUNT_REGISTERED_CLIENT_SQL + "client_secret = ?", Integer.class,
-				registeredClient.getClientSecret());
-		if (count != null && count > 0) {
-			throw new IllegalArgumentException("Registered client must be unique. "
-					+ "Found duplicate client secret for identifier: " + registeredClient.getId());
+		if (StringUtils.hasText(registeredClient.getClientSecret())) {
+			count = this.jdbcOperations.queryForObject(COUNT_REGISTERED_CLIENT_SQL + "client_secret = ?", Integer.class,
+					registeredClient.getClientSecret());
+			if (count != null && count > 0) {
+				throw new IllegalArgumentException("Registered client must be unique. "
+						+ "Found duplicate client secret for identifier: " + registeredClient.getId());
+			}
 		}
 	}
 

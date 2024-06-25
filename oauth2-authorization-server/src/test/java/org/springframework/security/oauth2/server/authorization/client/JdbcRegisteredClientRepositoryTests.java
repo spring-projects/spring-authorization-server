@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 the original author or authors.
+ * Copyright 2020-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -166,6 +166,23 @@ public class JdbcRegisteredClientRepositoryTests {
 		this.registeredClientRepository.save(expectedRegisteredClient);
 		RegisteredClient registeredClient = this.registeredClientRepository.findById(expectedRegisteredClient.getId());
 		assertThat(registeredClient).isEqualTo(expectedRegisteredClient);
+	}
+
+	// gh-1641
+	@Test
+	public void saveWhenMultipleWithClientSecretEmptyThenSaved() {
+		RegisteredClient registeredClient1 = TestRegisteredClients.registeredClient()
+			.id("registration-1")
+			.clientId("client-1")
+			.clientSecret("")
+			.build();
+		this.registeredClientRepository.save(registeredClient1);
+		RegisteredClient registeredClient2 = TestRegisteredClients.registeredClient()
+			.id("registration-2")
+			.clientId("client-2")
+			.clientSecret("")
+			.build();
+		this.registeredClientRepository.save(registeredClient2);
 	}
 
 	@Test

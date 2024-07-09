@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 the original author or authors.
+ * Copyright 2020-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.core.log.LogMessage;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.authentication.AbstractAuthenticationToken;
+import org.springframework.security.authentication.AuthenticationDetailsSource;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -37,6 +39,7 @@ import org.springframework.security.oauth2.server.authorization.web.authenticati
 import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
@@ -65,6 +68,8 @@ public final class OAuth2TokenRevocationEndpointFilter extends OncePerRequestFil
 	private final AuthenticationManager authenticationManager;
 
 	private final RequestMatcher tokenRevocationEndpointMatcher;
+
+	private AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource = new WebAuthenticationDetailsSource();
 
 	private AuthenticationConverter authenticationConverter;
 
@@ -109,6 +114,11 @@ public final class OAuth2TokenRevocationEndpointFilter extends OncePerRequestFil
 
 		try {
 			Authentication tokenRevocationAuthentication = this.authenticationConverter.convert(request);
+			if (tokenRevocationAuthentication instanceof AbstractAuthenticationToken) {
+				((AbstractAuthenticationToken) tokenRevocationAuthentication)
+						.setDetails(this.authenticationDetailsSource.buildDetails(request));
+			}
+
 			Authentication tokenRevocationAuthenticationResult = this.authenticationManager
 				.authenticate(tokenRevocationAuthentication);
 			this.authenticationSuccessHandler.onAuthenticationSuccess(request, response,
@@ -121,6 +131,19 @@ public final class OAuth2TokenRevocationEndpointFilter extends OncePerRequestFil
 			}
 			this.authenticationFailureHandler.onAuthenticationFailure(request, response, ex);
 		}
+	}
+
+	/**
+	 * Sets the {@link AuthenticationDetailsSource} used for building an authentication
+	 * details instance from {@link HttpServletRequest}.
+	 * @param authenticationDetailsSource the {@link AuthenticationDetailsSource} used for
+	 * building an authentication details instance from {@link HttpServletRequest}
+	 * @since 1.4
+	 */
+	public void setAuthenticationDetailsSource(
+			AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource) {
+		Assert.notNull(authenticationDetailsSource, "authenticationDetailsSource cannot be null");
+		this.authenticationDetailsSource = authenticationDetailsSource;
 	}
 
 	/**

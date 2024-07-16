@@ -114,14 +114,13 @@ public final class OAuth2TokenRevocationEndpointFilter extends OncePerRequestFil
 
 		try {
 			Authentication tokenRevocationAuthentication = this.authenticationConverter.convert(request);
-			Authentication tokenRevocationAuthenticationResult = this.authenticationManager
-				.authenticate(tokenRevocationAuthentication);
-
-			if (tokenRevocationAuthenticationResult instanceof AbstractAuthenticationToken) {
-				((AbstractAuthenticationToken) tokenRevocationAuthenticationResult)
+			if (tokenRevocationAuthentication instanceof AbstractAuthenticationToken) {
+				((AbstractAuthenticationToken) tokenRevocationAuthentication)
 						.setDetails(this.authenticationDetailsSource.buildDetails(request));
 			}
 
+			Authentication tokenRevocationAuthenticationResult = this.authenticationManager
+				.authenticate(tokenRevocationAuthentication);
 			this.authenticationSuccessHandler.onAuthenticationSuccess(request, response,
 					tokenRevocationAuthenticationResult);
 		}
@@ -139,6 +138,7 @@ public final class OAuth2TokenRevocationEndpointFilter extends OncePerRequestFil
 	 * details instance from {@link HttpServletRequest}.
 	 * @param authenticationDetailsSource the {@link AuthenticationDetailsSource} used for
 	 * building an authentication details instance from {@link HttpServletRequest}
+	 * @since 1.4
 	 */
 	public void setAuthenticationDetailsSource(
 			AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource) {

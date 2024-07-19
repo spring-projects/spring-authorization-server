@@ -241,10 +241,13 @@ public final class OAuth2AuthorizationEndpointConfigurer extends AbstractOAuth2C
 				? OAuth2ConfigurerUtils
 					.withMultipleIssuersPattern(authorizationServerSettings.getAuthorizationEndpoint())
 				: authorizationServerSettings.getAuthorizationEndpoint();
-		this.requestMatcher = new OrRequestMatcher(
-				new AntPathRequestMatcher(authorizationEndpointUri, HttpMethod.GET.name()),
-				new AntPathRequestMatcher(authorizationEndpointUri, HttpMethod.POST.name()));
-
+		List<RequestMatcher> requestMatchers = new ArrayList<>();
+		requestMatchers.add(new AntPathRequestMatcher(authorizationEndpointUri, HttpMethod.GET.name()));
+		requestMatchers.add(new AntPathRequestMatcher(authorizationEndpointUri, HttpMethod.POST.name()));
+		if (StringUtils.hasText(this.consentPage)) {
+			requestMatchers.add(new AntPathRequestMatcher(this.consentPage));
+		}
+		this.requestMatcher = new OrRequestMatcher(requestMatchers);
 		List<AuthenticationProvider> authenticationProviders = createDefaultAuthenticationProviders(httpSecurity);
 		if (!this.authenticationProviders.isEmpty()) {
 			authenticationProviders.addAll(0, this.authenticationProviders);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 the original author or authors.
+ * Copyright 2020-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -237,15 +237,12 @@ public final class OAuth2AuthorizationEndpointConfigurer extends AbstractOAuth2C
 	void init(HttpSecurity httpSecurity) {
 		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils
 			.getAuthorizationServerSettings(httpSecurity);
-		List<RequestMatcher> requestMatchers = new ArrayList<>();
-		requestMatchers.add(new AntPathRequestMatcher(authorizationServerSettings.getAuthorizationEndpoint(),
-				HttpMethod.GET.name()));
-		requestMatchers.add(new AntPathRequestMatcher(authorizationServerSettings.getAuthorizationEndpoint(),
-				HttpMethod.POST.name()));
-		if (StringUtils.hasText(this.consentPage)) {
-			requestMatchers.add(new AntPathRequestMatcher(this.consentPage));
-		}
-		this.requestMatcher = new OrRequestMatcher(requestMatchers);
+		this.requestMatcher = new OrRequestMatcher(
+				new AntPathRequestMatcher(authorizationServerSettings.getAuthorizationEndpoint(),
+						HttpMethod.GET.name()),
+				new AntPathRequestMatcher(authorizationServerSettings.getAuthorizationEndpoint(),
+						HttpMethod.POST.name()));
+
 		List<AuthenticationProvider> authenticationProviders = createDefaultAuthenticationProviders(httpSecurity);
 		if (!this.authenticationProviders.isEmpty()) {
 			authenticationProviders.addAll(0, this.authenticationProviders);

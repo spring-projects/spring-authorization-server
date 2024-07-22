@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 the original author or authors.
+ * Copyright 2020-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,8 @@ import org.springframework.security.oauth2.server.authorization.authentication.O
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2DeviceAuthorizationConsentAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2DeviceVerificationAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2DeviceVerificationAuthenticationToken;
+import org.springframework.security.oauth2.server.authorization.context.AuthorizationServerContext;
+import org.springframework.security.oauth2.server.authorization.context.AuthorizationServerContextHolder;
 import org.springframework.security.oauth2.server.authorization.web.authentication.DelegatingAuthenticationConverter;
 import org.springframework.security.oauth2.server.authorization.web.authentication.OAuth2DeviceAuthorizationConsentAuthenticationConverter;
 import org.springframework.security.oauth2.server.authorization.web.authentication.OAuth2DeviceVerificationAuthenticationConverter;
@@ -289,6 +291,13 @@ public final class OAuth2DeviceVerificationEndpointFilter extends OncePerRequest
 		if (UrlUtils.isAbsoluteUrl(this.consentPage)) {
 			return this.consentPage;
 		}
+
+		AuthorizationServerContext authorizationServerContext = AuthorizationServerContextHolder.getContext();
+		if (authorizationServerContext.getAuthorizationServerSettings().isMultipleIssuersAllowed()) {
+			String issuer = authorizationServerContext.getIssuer();
+			return UriComponentsBuilder.fromUriString(issuer).path(this.consentPage).build().toUriString();
+		}
+
 		RedirectUrlBuilder urlBuilder = new RedirectUrlBuilder();
 		urlBuilder.setScheme(request.getScheme());
 		urlBuilder.setServerName(request.getServerName());

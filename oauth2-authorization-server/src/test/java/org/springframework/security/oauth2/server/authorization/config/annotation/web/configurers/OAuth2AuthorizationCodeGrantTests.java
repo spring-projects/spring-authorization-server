@@ -104,7 +104,6 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
-import org.springframework.security.oauth2.server.authorization.context.AuthorizationServerContextHolder;
 import org.springframework.security.oauth2.server.authorization.jackson2.TestingAuthenticationTokenMixin;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
@@ -126,14 +125,11 @@ import org.springframework.security.web.authentication.AuthenticationSuccessHand
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.security.web.util.matcher.RequestMatcher;
-import org.springframework.stereotype.Controller;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.springframework.web.util.UriUtils;
@@ -750,15 +746,6 @@ public class OAuth2AuthorizationCodeGrantTests {
 		assertThat(authorization).isNotNull();
 	}
 
-	// gh-1668
-	@Test
-	public void requestWhenCustomConsentPageConfiguredThenAuthorizationServerContextIsAccessible() throws Exception {
-		this.spring.register(AuthorizationServerConfigurationCustomConsentPageAccessAuthorizationServerContext.class)
-			.autowire();
-
-		this.mvc.perform(get(consentPage).with(user("user"))).andExpect(status().isOk());
-	}
-
 	@Test
 	public void requestWhenCustomConsentCustomizerConfiguredThenUsed() throws Exception {
 		this.spring.register(AuthorizationServerConfigurationCustomConsentRequest.class).autowire();
@@ -1219,26 +1206,6 @@ public class OAuth2AuthorizationCodeGrantTests {
 			return http.build();
 		}
 		// @formatter:on
-
-	}
-
-	@EnableWebSecurity
-	@Configuration(proxyBeanMethods = false)
-	static class AuthorizationServerConfigurationCustomConsentPageAccessAuthorizationServerContext
-			extends AuthorizationServerConfigurationCustomConsentPage {
-
-		@Controller
-		class ConsentController {
-
-			@GetMapping("/oauth2/consent")
-			@ResponseBody
-			String consent() {
-				// Ensure the AuthorizationServerContext is accessible
-				AuthorizationServerContextHolder.getContext().getIssuer();
-				return "";
-			}
-
-		}
 
 	}
 

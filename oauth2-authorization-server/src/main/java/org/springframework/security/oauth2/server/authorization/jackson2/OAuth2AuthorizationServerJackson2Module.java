@@ -82,6 +82,7 @@ public class OAuth2AuthorizationServerJackson2Module extends SimpleModule {
 		context.setMixInAnnotations(SignatureAlgorithm.class, JwsAlgorithmMixin.class);
 		context.setMixInAnnotations(MacAlgorithm.class, JwsAlgorithmMixin.class);
 		context.setMixInAnnotations(OAuth2TokenFormat.class, OAuth2TokenFormatMixin.class);
+		context.setMixInAnnotations(String[].class, StringArrayMixin.class);
 	}
 
 }

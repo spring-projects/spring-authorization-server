@@ -140,7 +140,8 @@ final class CodeVerifierAuthenticator {
 		// @formatter:off
 		return AuthorizationGrantType.AUTHORIZATION_CODE.getValue().equals(
 				parameters.get(OAuth2ParameterNames.GRANT_TYPE)) &&
-				parameters.get(OAuth2ParameterNames.CODE) != null;
+				parameters.get(OAuth2ParameterNames.CODE) != null &&
+				!parameters.get(OAuth2ParameterNames.CODE).toString().isBlank();
 		// @formatter:on
 	}
 

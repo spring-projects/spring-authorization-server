@@ -46,6 +46,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 /**
@@ -276,6 +277,29 @@ public class ClientSecretAuthenticationProviderTests {
 
 		verify(this.passwordEncoder).matches(any(), any());
 		verify(this.authorizationService).findByToken(eq(AUTHORIZATION_CODE), eq(AUTHORIZATION_CODE_TOKEN_TYPE));
+		assertThat(authenticationResult.isAuthenticated()).isTrue();
+		assertThat(authenticationResult.getPrincipal().toString()).isEqualTo(registeredClient.getClientId());
+		assertThat(authenticationResult.getCredentials().toString()).isEqualTo(registeredClient.getClientSecret());
+		assertThat(authenticationResult.getRegisteredClient()).isEqualTo(registeredClient);
+	}
+
+	@Test
+	public void authenticateWhenAuthorizationCodeGrantAndPkceAndValidCodeVerifierAndMissingCodeThenAuthenticated() {
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+		given(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
+				.willReturn(registeredClient);
+
+		Map<String, Object> parameters = createPkceTokenParameters(S256_CODE_VERIFIER);
+		parameters.put(OAuth2ParameterNames.CODE, "");
+
+		OAuth2ClientAuthenticationToken authentication = new OAuth2ClientAuthenticationToken(
+				registeredClient.getClientId(), ClientAuthenticationMethod.CLIENT_SECRET_BASIC,
+				registeredClient.getClientSecret(), parameters);
+		OAuth2ClientAuthenticationToken authenticationResult = (OAuth2ClientAuthenticationToken) this.authenticationProvider
+				.authenticate(authentication);
+
+		verify(this.passwordEncoder).matches(any(), any());
+		verify(this.authorizationService, times(0)).findByToken(any(), any());
 		assertThat(authenticationResult.isAuthenticated()).isTrue();
 		assertThat(authenticationResult.getPrincipal().toString()).isEqualTo(registeredClient.getClientId());
 		assertThat(authenticationResult.getCredentials().toString()).isEqualTo(registeredClient.getClientSecret());

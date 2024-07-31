@@ -43,6 +43,7 @@ import org.springframework.security.oauth2.server.authorization.settings.OAuth2T
  * <li>{@link DurationMixin}</li>
  * <li>{@link JwsAlgorithmMixin}</li>
  * <li>{@link OAuth2TokenFormatMixin}</li>
+ * <li>{@link StringArrayMixin}</li>
  * </ul>
  *
  * If not already enabled, default typing will be automatically enabled as type info is
@@ -66,6 +67,7 @@ import org.springframework.security.oauth2.server.authorization.settings.OAuth2T
  * @see DurationMixin
  * @see JwsAlgorithmMixin
  * @see OAuth2TokenFormatMixin
+ * @see StringArrayMixin
  */
 public class OAuth2AuthorizationServerJackson2Module extends SimpleModule {
 
@@ -88,6 +90,7 @@ public class OAuth2AuthorizationServerJackson2Module extends SimpleModule {
 		context.setMixInAnnotations(SignatureAlgorithm.class, JwsAlgorithmMixin.class);
 		context.setMixInAnnotations(MacAlgorithm.class, JwsAlgorithmMixin.class);
 		context.setMixInAnnotations(OAuth2TokenFormat.class, OAuth2TokenFormatMixin.class);
+		context.setMixInAnnotations(String[].class, StringArrayMixin.class);
 	}
 
 }

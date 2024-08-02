@@ -137,15 +137,13 @@ final class CodeVerifierAuthenticator {
 	}
 
 	private static boolean authorizationCodeGrant(Map<String, Object> parameters) {
-
-		if (!AuthorizationGrantType.AUTHORIZATION_CODE.getValue().equals(parameters.get(OAuth2ParameterNames.GRANT_TYPE))) {
+		if (!AuthorizationGrantType.AUTHORIZATION_CODE.getValue()
+			.equals(parameters.get(OAuth2ParameterNames.GRANT_TYPE))) {
 			return false;
 		}
-
 		if (!StringUtils.hasText((String) parameters.get(OAuth2ParameterNames.CODE))) {
 			throwInvalidGrant(OAuth2ParameterNames.CODE);
 		}
-
 		return true;
 	}
 

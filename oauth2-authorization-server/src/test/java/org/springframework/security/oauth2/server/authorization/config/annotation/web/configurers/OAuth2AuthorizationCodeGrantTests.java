@@ -515,6 +515,28 @@ public class OAuth2AuthorizationCodeGrantTests {
 			.isEqualTo(true);
 	}
 
+	// gh-1680
+	@Test
+	public void requestWhenPublicClientWithPkceAndEmptyCodeThenBadRequest() throws Exception {
+		this.spring.register(AuthorizationServerConfiguration.class).autowire();
+
+		RegisteredClient registeredClient = TestRegisteredClients.registeredPublicClient().build();
+		this.registeredClientRepository.save(registeredClient);
+
+		MultiValueMap<String, String> tokenRequestParameters = new LinkedMultiValueMap<>();
+		tokenRequestParameters.set(OAuth2ParameterNames.GRANT_TYPE,
+				AuthorizationGrantType.AUTHORIZATION_CODE.getValue());
+		tokenRequestParameters.set(OAuth2ParameterNames.CODE, "");
+		tokenRequestParameters.set(OAuth2ParameterNames.REDIRECT_URI,
+				registeredClient.getRedirectUris().iterator().next());
+
+		this.mvc
+			.perform(post(DEFAULT_TOKEN_ENDPOINT_URI).params(tokenRequestParameters)
+				.param(OAuth2ParameterNames.CLIENT_ID, registeredClient.getClientId())
+				.param(PkceParameterNames.CODE_VERIFIER, S256_CODE_VERIFIER))
+			.andExpect(status().isBadRequest());
+	}
+
 	@Test
 	public void requestWhenConfidentialClientWithPkceAndMissingCodeVerifierThenBadRequest() throws Exception {
 		this.spring.register(AuthorizationServerConfiguration.class).autowire();

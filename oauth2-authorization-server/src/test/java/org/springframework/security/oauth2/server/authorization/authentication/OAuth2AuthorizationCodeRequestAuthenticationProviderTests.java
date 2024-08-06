@@ -367,6 +367,59 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 	}
 
 	@Test
+	public void authenticateWhenAuthenticationRequestWithPromptNoneLoginThenThrowOAuth2AuthorizationCodeRequestAuthenticationException() {
+		assertWhenAuthenticationRequestWithPromptThenThrowOAuth2AuthorizationCodeRequestAuthenticationException(
+				"none login");
+	}
+
+	@Test
+	public void authenticateWhenAuthenticationRequestWithPromptNoneConsentThenThrowOAuth2AuthorizationCodeRequestAuthenticationException() {
+		assertWhenAuthenticationRequestWithPromptThenThrowOAuth2AuthorizationCodeRequestAuthenticationException(
+				"none consent");
+	}
+
+	@Test
+	public void authenticateWhenAuthenticationRequestWithPromptNoneSelectAccountThenThrowOAuth2AuthorizationCodeRequestAuthenticationException() {
+		assertWhenAuthenticationRequestWithPromptThenThrowOAuth2AuthorizationCodeRequestAuthenticationException(
+				"none select_account");
+	}
+
+	private void assertWhenAuthenticationRequestWithPromptThenThrowOAuth2AuthorizationCodeRequestAuthenticationException(
+			String prompt) {
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().scope(OidcScopes.OPENID).build();
+		given(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
+			.willReturn(registeredClient);
+		String redirectUri = registeredClient.getRedirectUris().toArray(new String[0])[2];
+		Map<String, Object> additionalParameters = new HashMap<>();
+		additionalParameters.put("prompt", prompt);
+		OAuth2AuthorizationCodeRequestAuthenticationToken authentication = new OAuth2AuthorizationCodeRequestAuthenticationToken(
+				AUTHORIZATION_URI, registeredClient.getClientId(), this.principal, redirectUri, STATE,
+				registeredClient.getScopes(), additionalParameters);
+		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
+			.isInstanceOf(OAuth2AuthorizationCodeRequestAuthenticationException.class)
+			.satisfies((ex) -> assertAuthenticationException((OAuth2AuthorizationCodeRequestAuthenticationException) ex,
+					OAuth2ErrorCodes.INVALID_REQUEST, "prompt", authentication.getRedirectUri()));
+	}
+
+	@Test
+	public void authenticateWhenPrincipalNotAuthenticatedAndPromptNoneThenThrowOAuth2AuthorizationCodeRequestAuthenticationException() {
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().scope(OidcScopes.OPENID).build();
+		given(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
+			.willReturn(registeredClient);
+		this.principal.setAuthenticated(false);
+		String redirectUri = registeredClient.getRedirectUris().toArray(new String[0])[2];
+		Map<String, Object> additionalParameters = new HashMap<>();
+		additionalParameters.put("prompt", "none");
+		OAuth2AuthorizationCodeRequestAuthenticationToken authentication = new OAuth2AuthorizationCodeRequestAuthenticationToken(
+				AUTHORIZATION_URI, registeredClient.getClientId(), this.principal, redirectUri, STATE,
+				registeredClient.getScopes(), additionalParameters);
+		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
+			.isInstanceOf(OAuth2AuthorizationCodeRequestAuthenticationException.class)
+			.satisfies((ex) -> assertAuthenticationException((OAuth2AuthorizationCodeRequestAuthenticationException) ex,
+					"login_required", "prompt", authentication.getRedirectUri()));
+	}
+
+	@Test
 	public void authenticateWhenPrincipalNotAuthenticatedThenReturnAuthorizationCodeRequest() {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 		given(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
@@ -383,6 +436,26 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 
 		assertThat(authenticationResult).isSameAs(authentication);
 		assertThat(authenticationResult.isAuthenticated()).isFalse();
+	}
+
+	@Test
+	public void authenticateWhenRequireAuthorizationConsentAndPromptNoneThenThrowOAuth2AuthorizationCodeRequestAuthenticationException() {
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
+			.scope(OidcScopes.OPENID)
+			.clientSettings(ClientSettings.builder().requireAuthorizationConsent(true).build())
+			.build();
+		given(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
+			.willReturn(registeredClient);
+		String redirectUri = registeredClient.getRedirectUris().toArray(new String[0])[2];
+		Map<String, Object> additionalParameters = new HashMap<>();
+		additionalParameters.put("prompt", "none");
+		OAuth2AuthorizationCodeRequestAuthenticationToken authentication = new OAuth2AuthorizationCodeRequestAuthenticationToken(
+				AUTHORIZATION_URI, registeredClient.getClientId(), this.principal, redirectUri, STATE,
+				registeredClient.getScopes(), additionalParameters);
+		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
+			.isInstanceOf(OAuth2AuthorizationCodeRequestAuthenticationException.class)
+			.satisfies((ex) -> assertAuthenticationException((OAuth2AuthorizationCodeRequestAuthenticationException) ex,
+					"consent_required", "prompt", authentication.getRedirectUri()));
 	}
 
 	@Test

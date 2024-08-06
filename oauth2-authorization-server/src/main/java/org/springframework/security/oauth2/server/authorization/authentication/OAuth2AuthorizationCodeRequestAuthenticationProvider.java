@@ -16,7 +16,10 @@
 package org.springframework.security.oauth2.server.authorization.authentication;
 
 import java.security.Principal;
+import java.util.Arrays;
 import java.util.Base64;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -70,6 +73,9 @@ import org.springframework.util.StringUtils;
  * @see <a target="_blank" href=
  * "https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.1">Section 4.1.1
  * Authorization Request</a>
+ * @see <a target="_blank" href=
+ * "https://openid.net/specs/openid-connect-core-1_0.html#AuthRequest">Section 3.1.2.1
+ * Authentication Request</a>
  */
 public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implements AuthenticationProvider {
 
@@ -158,6 +164,22 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 					authorizationCodeRequestAuthentication, registeredClient, null);
 		}
 
+		// prompt (OPTIONAL for OpenID Connect 1.0 Authentication Request)
+		Set<String> promptValues = Collections.emptySet();
+		if (authorizationCodeRequestAuthentication.getScopes().contains(OidcScopes.OPENID)) {
+			String prompt = (String) authorizationCodeRequestAuthentication.getAdditionalParameters().get("prompt");
+			if (StringUtils.hasText(prompt)) {
+				promptValues = new HashSet<>(Arrays.asList(StringUtils.delimitedListToStringArray(prompt, " ")));
+				if (promptValues.contains(OidcPrompts.NONE)) {
+					if (promptValues.contains(OidcPrompts.LOGIN) || promptValues.contains(OidcPrompts.CONSENT)
+							|| promptValues.contains(OidcPrompts.SELECT_ACCOUNT)) {
+						throwError(OAuth2ErrorCodes.INVALID_REQUEST, "prompt", authorizationCodeRequestAuthentication,
+								registeredClient);
+					}
+				}
+			}
+		}
+
 		if (this.logger.isTraceEnabled()) {
 			this.logger.trace("Validated authorization code request parameters");
 		}
@@ -168,6 +190,11 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 
 		Authentication principal = (Authentication) authorizationCodeRequestAuthentication.getPrincipal();
 		if (!isPrincipalAuthenticated(principal)) {
+			if (promptValues.contains(OidcPrompts.NONE)) {
+				// Return an error instead of displaying the login page (via the
+				// configured AuthenticationEntryPoint)
+				throwError("login_required", "prompt", authorizationCodeRequestAuthentication, registeredClient);
+			}
 			if (this.logger.isTraceEnabled()) {
 				this.logger.trace("Did not authenticate authorization code request since principal not authenticated");
 			}
@@ -192,6 +219,11 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 		}
 
 		if (this.authorizationConsentRequired.test(authenticationContextBuilder.build())) {
+			if (promptValues.contains(OidcPrompts.NONE)) {
+				// Return an error instead of displaying the consent page
+				throwError("consent_required", "prompt", authorizationCodeRequestAuthentication, registeredClient);
+			}
+
 			String state = DEFAULT_STATE_GENERATOR.generateKey();
 			OAuth2Authorization authorization = authorizationBuilder(registeredClient, principal, authorizationRequest)
 				.attribute(OAuth2ParameterNames.STATE, state)
@@ -423,6 +455,25 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 			return registeredClient.getRedirectUris().iterator().next();
 		}
 		return null;
+	}
+
+	/*
+	 * The values defined for the "prompt" parameter for the OpenID Connect 1.0
+	 * Authentication Request.
+	 */
+	private static final class OidcPrompts {
+
+		private static final String NONE = "none";
+
+		private static final String LOGIN = "login";
+
+		private static final String CONSENT = "consent";
+
+		private static final String SELECT_ACCOUNT = "select_account";
+
+		private OidcPrompts() {
+		}
+
 	}
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 the original author or authors.
+ * Copyright 2020-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ import org.springframework.security.oauth2.server.authorization.web.OAuth2Author
 import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.security.web.util.matcher.AndRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
 
@@ -129,6 +130,14 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationConverter impleme
 		if (StringUtils.hasText(codeChallengeMethod)
 				&& parameters.get(PkceParameterNames.CODE_CHALLENGE_METHOD).size() != 1) {
 			throwError(OAuth2ErrorCodes.INVALID_REQUEST, PkceParameterNames.CODE_CHALLENGE_METHOD, PKCE_ERROR_URI);
+		}
+
+		// prompt (OPTIONAL for OpenID Connect 1.0 Authentication Request)
+		if (!CollectionUtils.isEmpty(scopes) && scopes.contains(OidcScopes.OPENID)) {
+			String prompt = parameters.getFirst("prompt");
+			if (StringUtils.hasText(prompt) && parameters.get("prompt").size() != 1) {
+				throwError(OAuth2ErrorCodes.INVALID_REQUEST, "prompt");
+			}
 		}
 
 		Map<String, Object> additionalParameters = new HashMap<>();

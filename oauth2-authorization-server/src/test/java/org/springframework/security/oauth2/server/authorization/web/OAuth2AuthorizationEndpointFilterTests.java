@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 the original author or authors.
+ * Copyright 2020-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -284,6 +284,21 @@ public class OAuth2AuthorizationEndpointFilterTests {
 				PkceParameterNames.CODE_CHALLENGE_METHOD, OAuth2ErrorCodes.INVALID_REQUEST, (request) -> {
 					request.addParameter(PkceParameterNames.CODE_CHALLENGE_METHOD, "S256");
 					request.addParameter(PkceParameterNames.CODE_CHALLENGE_METHOD, "S256");
+					updateQueryString(request);
+				});
+	}
+
+	@Test
+	public void doFilterWhenAuthenticationRequestMultiplePromptThenInvalidRequestError() throws Exception {
+		// Setup OpenID Connect request
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().scopes((scopes) -> {
+			scopes.clear();
+			scopes.add(OidcScopes.OPENID);
+		}).build();
+		doFilterWhenAuthorizationRequestInvalidParameterThenError(registeredClient, "prompt",
+				OAuth2ErrorCodes.INVALID_REQUEST, (request) -> {
+					request.addParameter("prompt", "none");
+					request.addParameter("prompt", "login");
 					updateQueryString(request);
 				});
 	}

@@ -545,7 +545,7 @@ public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity h
 
 * `*AuthenticationConverter*` -- An `OidcLogoutAuthenticationConverter`.
 * `*AuthenticationManager*` -- An `AuthenticationManager` composed of `OidcLogoutAuthenticationProvider`.
-* `*AuthenticationSuccessHandler*` -- An internal implementation that handles an "`authenticated`" `OidcLogoutAuthenticationToken` and performs the logout.
+* `*AuthenticationSuccessHandler*` -- An `OidcLogoutAuthenticationSuccessHandler`.
 * `*AuthenticationFailureHandler*` -- An internal implementation that uses the `OAuth2Error` associated with the `OAuth2AuthenticationException` and returns the `OAuth2Error` response.
 
 [NOTE]

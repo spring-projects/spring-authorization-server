@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 the original author or authors.
+ * Copyright 2020-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package org.springframework.security.oauth2.server.authorization.oidc.web;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -32,27 +31,18 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
-import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.server.authorization.oidc.authentication.OidcLogoutAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.oidc.authentication.OidcLogoutAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.oidc.web.authentication.OidcLogoutAuthenticationConverter;
-import org.springframework.security.web.DefaultRedirectStrategy;
-import org.springframework.security.web.RedirectStrategy;
+import org.springframework.security.oauth2.server.authorization.oidc.web.authentication.OidcLogoutAuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
-import org.springframework.security.web.authentication.logout.LogoutHandler;
-import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
-import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
-import org.springframework.security.web.authentication.logout.SimpleUrlLogoutSuccessHandler;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.OrRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
-import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
-import org.springframework.web.util.UriComponentsBuilder;
-import org.springframework.web.util.UriUtils;
 
 /**
  * A {@code Filter} that processes OpenID Connect 1.0 RP-Initiated Logout Requests.
@@ -60,6 +50,7 @@ import org.springframework.web.util.UriUtils;
  * @author Joe Grandja
  * @since 1.1
  * @see OidcLogoutAuthenticationConverter
+ * @see OidcLogoutAuthenticationSuccessHandler
  * @see OidcLogoutAuthenticationProvider
  * @see <a href="https://openid.net/specs/openid-connect-rpinitiated-1_0.html#RPLogout">2.
  * RP-Initiated Logout</a>
@@ -76,15 +67,9 @@ public final class OidcLogoutEndpointFilter extends OncePerRequestFilter {
 
 	private final RequestMatcher logoutEndpointMatcher;
 
-	private final LogoutHandler logoutHandler;
-
-	private final LogoutSuccessHandler logoutSuccessHandler;
-
-	private final RedirectStrategy redirectStrategy = new DefaultRedirectStrategy();
-
 	private AuthenticationConverter authenticationConverter;
 
-	private AuthenticationSuccessHandler authenticationSuccessHandler = this::performLogout;
+	private AuthenticationSuccessHandler authenticationSuccessHandler = new OidcLogoutAuthenticationSuccessHandler();
 
 	private AuthenticationFailureHandler authenticationFailureHandler = this::sendErrorResponse;
 
@@ -109,10 +94,6 @@ public final class OidcLogoutEndpointFilter extends OncePerRequestFilter {
 		this.logoutEndpointMatcher = new OrRequestMatcher(
 				new AntPathRequestMatcher(logoutEndpointUri, HttpMethod.GET.name()),
 				new AntPathRequestMatcher(logoutEndpointUri, HttpMethod.POST.name()));
-		this.logoutHandler = new SecurityContextLogoutHandler();
-		SimpleUrlLogoutSuccessHandler urlLogoutSuccessHandler = new SimpleUrlLogoutSuccessHandler();
-		urlLogoutSuccessHandler.setDefaultTargetUrl("/");
-		this.logoutSuccessHandler = urlLogoutSuccessHandler;
 		this.authenticationConverter = new OidcLogoutAuthenticationConverter();
 	}
 
@@ -185,39 +166,6 @@ public final class OidcLogoutEndpointFilter extends OncePerRequestFilter {
 	public void setAuthenticationFailureHandler(AuthenticationFailureHandler authenticationFailureHandler) {
 		Assert.notNull(authenticationFailureHandler, "authenticationFailureHandler cannot be null");
 		this.authenticationFailureHandler = authenticationFailureHandler;
-	}
-
-	private void performLogout(HttpServletRequest request, HttpServletResponse response, Authentication authentication)
-			throws IOException, ServletException {
-
-		OidcLogoutAuthenticationToken oidcLogoutAuthentication = (OidcLogoutAuthenticationToken) authentication;
-
-		// Check for active user session
-		if (oidcLogoutAuthentication.isPrincipalAuthenticated()
-				&& StringUtils.hasText(oidcLogoutAuthentication.getSessionId())) {
-			// Perform logout
-			this.logoutHandler.logout(request, response, (Authentication) oidcLogoutAuthentication.getPrincipal());
-		}
-
-		if (oidcLogoutAuthentication.isAuthenticated()
-				&& StringUtils.hasText(oidcLogoutAuthentication.getPostLogoutRedirectUri())) {
-			// Perform post-logout redirect
-			UriComponentsBuilder uriBuilder = UriComponentsBuilder
-				.fromUriString(oidcLogoutAuthentication.getPostLogoutRedirectUri());
-			String redirectUri;
-			if (StringUtils.hasText(oidcLogoutAuthentication.getState())) {
-				uriBuilder.queryParam(OAuth2ParameterNames.STATE,
-						UriUtils.encode(oidcLogoutAuthentication.getState(), StandardCharsets.UTF_8));
-			}
-			// build(true) -> Components are explicitly encoded
-			redirectUri = uriBuilder.build(true).toUriString();
-			this.redirectStrategy.sendRedirect(request, response, redirectUri);
-		}
-		else {
-			// Perform default redirect
-			this.logoutSuccessHandler.onLogoutSuccess(request, response,
-					(Authentication) oidcLogoutAuthentication.getPrincipal());
-		}
 	}
 
 	private void sendErrorResponse(HttpServletRequest request, HttpServletResponse response,

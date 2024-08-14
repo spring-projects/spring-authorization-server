@@ -25,6 +25,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
  * The names for all the configuration settings.
  *
  * @author Joe Grandja
+ * @author Shyngys Sapraliyev
  * @since 0.2.0
  */
 public final class ConfigurationSettingNames {
@@ -222,6 +223,11 @@ public final class ConfigurationSettingNames {
 		 */
 		public static final String ID_TOKEN_SIGNATURE_ALGORITHM = TOKEN_SETTINGS_NAMESPACE
 			.concat("id-token-signature-algorithm");
+
+		/**
+		 * Set the time-to-live for the {@link OidcIdToken ID Token}.
+		 */
+		public static final String ID_TOKEN_TIME_TO_LIVE = TOKEN_SETTINGS_NAMESPACE.concat("id-token-time-to-live");
 
 		/**
 		 * Set to {@code true} if access tokens must be bound to the client

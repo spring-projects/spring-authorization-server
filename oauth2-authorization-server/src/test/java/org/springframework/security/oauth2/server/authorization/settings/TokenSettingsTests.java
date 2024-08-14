@@ -28,13 +28,14 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * Tests for {@link TokenSettings}.
  *
  * @author Joe Grandja
+ * @author Shyngys Sapraliyev
  */
 public class TokenSettingsTests {
 
 	@Test
 	public void buildWhenDefaultThenDefaultsAreSet() {
 		TokenSettings tokenSettings = TokenSettings.builder().build();
-		assertThat(tokenSettings.getSettings()).hasSize(8);
+		assertThat(tokenSettings.getSettings()).hasSize(9);
 		assertThat(tokenSettings.getAuthorizationCodeTimeToLive()).isEqualTo(Duration.ofMinutes(5));
 		assertThat(tokenSettings.getAccessTokenTimeToLive()).isEqualTo(Duration.ofMinutes(5));
 		assertThat(tokenSettings.getAccessTokenFormat()).isEqualTo(OAuth2TokenFormat.SELF_CONTAINED);
@@ -42,6 +43,7 @@ public class TokenSettingsTests {
 		assertThat(tokenSettings.isReuseRefreshTokens()).isTrue();
 		assertThat(tokenSettings.getRefreshTokenTimeToLive()).isEqualTo(Duration.ofMinutes(60));
 		assertThat(tokenSettings.getIdTokenSignatureAlgorithm()).isEqualTo(SignatureAlgorithm.RS256);
+		assertThat(tokenSettings.getIdTokenTimeToLive()).isEqualTo(Duration.ofMinutes(30));
 		assertThat(tokenSettings.isX509CertificateBoundAccessTokens()).isFalse();
 	}
 
@@ -143,6 +145,31 @@ public class TokenSettingsTests {
 	}
 
 	@Test
+	public void idTokenTimeToLiveWhenProvidedThenSet() {
+		Duration idTokenTimeToLive = Duration.ofMinutes(15);
+		TokenSettings tokenSettings = TokenSettings.builder().idTokenTimeToLive(idTokenTimeToLive).build();
+		assertThat(tokenSettings.getIdTokenTimeToLive()).isEqualTo(idTokenTimeToLive);
+	}
+
+	@Test
+	public void idTokenTimeToLiveWhenNullOrZeroOrNegativeThenThrowIllegalArgumentException() {
+		assertThatThrownBy(() -> TokenSettings.builder().idTokenTimeToLive(null))
+			.isInstanceOf(IllegalArgumentException.class)
+			.extracting(Throwable::getMessage)
+			.isEqualTo("idTokenTimeToLive cannot be null");
+
+		assertThatThrownBy(() -> TokenSettings.builder().idTokenTimeToLive(Duration.ZERO))
+			.isInstanceOf(IllegalArgumentException.class)
+			.extracting(Throwable::getMessage)
+			.isEqualTo("idTokenTimeToLive must be greater than Duration.ZERO");
+
+		assertThatThrownBy(() -> TokenSettings.builder().idTokenTimeToLive(Duration.ofSeconds(-10)))
+			.isInstanceOf(IllegalArgumentException.class)
+			.extracting(Throwable::getMessage)
+			.isEqualTo("idTokenTimeToLive must be greater than Duration.ZERO");
+	}
+
+	@Test
 	public void idTokenSignatureAlgorithmWhenProvidedThenSet() {
 		SignatureAlgorithm idTokenSignatureAlgorithm = SignatureAlgorithm.RS512;
 		TokenSettings tokenSettings = TokenSettings.builder()
@@ -163,7 +190,7 @@ public class TokenSettingsTests {
 			.setting("name1", "value1")
 			.settings((settings) -> settings.put("name2", "value2"))
 			.build();
-		assertThat(tokenSettings.getSettings()).hasSize(10);
+		assertThat(tokenSettings.getSettings()).hasSize(11);
 		assertThat(tokenSettings.<String>getSetting("name1")).isEqualTo("value1");
 		assertThat(tokenSettings.<String>getSetting("name2")).isEqualTo("value2");
 	}

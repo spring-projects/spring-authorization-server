@@ -26,6 +26,7 @@ import org.springframework.util.Assert;
  * A facility for token configuration settings.
  *
  * @author Joe Grandja
+ * @author Shyngys Sapraliyev
  * @since 0.0.2
  * @see AbstractSettings
  * @see ConfigurationSettingNames.Token
@@ -103,6 +104,15 @@ public final class TokenSettings extends AbstractSettings {
 	}
 
 	/**
+	 * Returns the time-to-live for the {@link OidcIdToken ID Token}. The default is 30
+	 * minutes.
+	 * @return the time-to-live for the {@link OidcIdToken ID Token}
+	 */
+	public Duration getIdTokenTimeToLive() {
+		return getSetting(ConfigurationSettingNames.Token.ID_TOKEN_TIME_TO_LIVE);
+	}
+
+	/**
 	 * Returns {@code true} if access tokens must be bound to the client
 	 * {@code X509Certificate} received during client authentication when using the
 	 * {@code tls_client_auth} or {@code self_signed_tls_client_auth} method. The default
@@ -127,6 +137,7 @@ public final class TokenSettings extends AbstractSettings {
 			.reuseRefreshTokens(true)
 			.refreshTokenTimeToLive(Duration.ofMinutes(60))
 			.idTokenSignatureAlgorithm(SignatureAlgorithm.RS256)
+			.idTokenTimeToLive(Duration.ofMinutes(30))
 			.x509CertificateBoundAccessTokens(false);
 	}
 
@@ -236,6 +247,18 @@ public final class TokenSettings extends AbstractSettings {
 		public Builder idTokenSignatureAlgorithm(SignatureAlgorithm idTokenSignatureAlgorithm) {
 			Assert.notNull(idTokenSignatureAlgorithm, "idTokenSignatureAlgorithm cannot be null");
 			return setting(ConfigurationSettingNames.Token.ID_TOKEN_SIGNATURE_ALGORITHM, idTokenSignatureAlgorithm);
+		}
+
+		/**
+		 * Set the time-to-live for the {@link OidcIdToken ID Token}. Must be greater than
+		 * {@code Duration.ZERO}.
+		 * @param idTokenTimeToLive the time-to-live for the {@link OidcIdToken ID Token}
+		 * @return the {@link Builder} for further configuration
+		 */
+		public Builder idTokenTimeToLive(Duration idTokenTimeToLive) {
+			Assert.notNull(idTokenTimeToLive, "idTokenTimeToLive cannot be null");
+			Assert.isTrue(idTokenTimeToLive.getSeconds() > 0, "idTokenTimeToLive must be greater than Duration.ZERO");
+			return setting(ConfigurationSettingNames.Token.ID_TOKEN_TIME_TO_LIVE, idTokenTimeToLive);
 		}
 
 		/**

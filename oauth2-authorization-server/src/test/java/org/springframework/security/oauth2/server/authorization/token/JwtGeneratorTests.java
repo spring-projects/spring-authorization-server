@@ -65,6 +65,7 @@ import static org.mockito.Mockito.verify;
  * Tests for {@link JwtGenerator}.
  *
  * @author Joe Grandja
+ * @author Shyngys Sapraliyev
  */
 public class JwtGeneratorTests {
 
@@ -322,7 +323,7 @@ public class JwtGeneratorTests {
 			expiresAt = issuedAt.plus(tokenContext.getRegisteredClient().getTokenSettings().getAccessTokenTimeToLive());
 		}
 		else {
-			expiresAt = issuedAt.plus(30, ChronoUnit.MINUTES);
+			expiresAt = issuedAt.plus(tokenContext.getRegisteredClient().getTokenSettings().getIdTokenTimeToLive());
 		}
 		assertThat(jwtClaimsSet.getIssuedAt()).isBetween(issuedAt.minusSeconds(1), issuedAt.plusSeconds(1));
 		assertThat(jwtClaimsSet.getExpiresAt()).isBetween(expiresAt.minusSeconds(1), expiresAt.plusSeconds(1));

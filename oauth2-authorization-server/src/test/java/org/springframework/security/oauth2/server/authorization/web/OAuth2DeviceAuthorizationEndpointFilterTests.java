@@ -73,7 +73,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
  */
 public class OAuth2DeviceAuthorizationEndpointFilterTests {
 
-	private static final String ISSUER_URI = "https://provider.com";
+	private static final String ISSUER_URI = "https://provider.com:8090";
 
 	private static final String REMOTE_ADDRESS = "remote-address";
 
@@ -417,7 +417,7 @@ public class OAuth2DeviceAuthorizationEndpointFilterTests {
 		request.setRemoteAddr(REMOTE_ADDRESS);
 		request.setScheme("https");
 		request.setServerName("provider.com");
-		request.setServerPort(-1);
+		request.setServerPort(8090);
 		return request;
 	}
 

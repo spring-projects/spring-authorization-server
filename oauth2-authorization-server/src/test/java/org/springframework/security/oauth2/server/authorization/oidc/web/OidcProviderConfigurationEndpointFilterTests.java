@@ -27,9 +27,9 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.oauth2.server.authorization.context.AuthorizationServerContextHolder;
 import org.springframework.security.oauth2.server.authorization.context.TestAuthorizationServerContext;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
+import org.springframework.web.util.InvalidUrlException;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -171,8 +171,8 @@ public class OidcProviderConfigurationEndpointFilterTests {
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		FilterChain filterChain = mock(FilterChain.class);
 
-		assertThatIllegalArgumentException().isThrownBy(() -> this.filter.doFilter(request, response, filterChain))
-			.withMessage("issuer must be a valid URL");
+		assertThatThrownBy(() -> this.filter.doFilter(request, response, filterChain))
+			.isInstanceOf(InvalidUrlException.class);
 	}
 
 }

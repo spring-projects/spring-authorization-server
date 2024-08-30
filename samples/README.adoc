@@ -14,6 +14,11 @@ The demo sample provides custom configuration for various features implemented b
 === Run the Sample
 
 * Run Authorization Server -> `./gradlew -b samples/demo-authorizationserver/samples-demo-authorizationserver.gradle bootRun`
+
+NOTE: The default configuration registers the JDBC implementations of the core components: `RegisteredClientRepository`, `OAuth2AuthorizationService` and `OAuth2AuthorizationConsentService`.
+Alternatively, the custom Redis implementations are registered when the `redis` profile is activated, for example, when `--spring.profiles.active=redis` is passed into the command line.
+See the https://redis.io/docs/latest/operate/oss_and_stack/install/install-redis/[installation guide] for setting up Redis in your development environment and `application-redis.yml` for configuring the location of the Redis server host and port.
+
 * Run Client -> `./gradlew -b samples/demo-client/samples-demo-client.gradle bootRun`
 * Run Resource Server -> `./gradlew -b samples/messages-resource/samples-messages-resource.gradle bootRun`
 * Go to `http://127.0.0.1:8080`

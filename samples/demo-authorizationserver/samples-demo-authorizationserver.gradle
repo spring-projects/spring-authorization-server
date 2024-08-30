@@ -11,6 +11,10 @@ java {
 	sourceCompatibility = JavaVersion.VERSION_17
 }
 
+compileJava {
+	options.compilerArgs << '-parameters'
+}
+
 repositories {
 	mavenCentral()
 	maven { url "https://repo.spring.io/milestone" }
@@ -23,6 +27,10 @@ dependencies {
 	implementation "org.springframework.boot:spring-boot-starter-security"
 	implementation "org.springframework.boot:spring-boot-starter-oauth2-client"
 	implementation "org.springframework.boot:spring-boot-starter-jdbc"
+	implementation ("org.springframework.boot:spring-boot-starter-data-redis") {
+		exclude group: "io.lettuce", module: "lettuce-core"
+	}
+	implementation "redis.clients:jedis"
 	implementation project(":spring-security-oauth2-authorization-server")
 	runtimeOnly "com.h2database:h2"
 

@@ -1,0 +1,9 @@
+spring:
+  data:
+    redis:
+      # Redis server host, default localhost
+      host: localhost
+      # Redis server port, default 6379
+      port: 6379
+      repositories:
+        enabled: true

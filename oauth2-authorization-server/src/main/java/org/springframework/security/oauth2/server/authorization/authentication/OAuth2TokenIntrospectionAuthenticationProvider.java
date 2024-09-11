@@ -111,7 +111,7 @@ public final class OAuth2TokenIntrospectionAuthenticationProvider implements Aut
 
 		RegisteredClient authorizedClient = this.registeredClientRepository
 			.findById(authorization.getRegisteredClientId());
-		OAuth2TokenIntrospection tokenClaims = withActiveTokenClaims(authorizedToken, authorizedClient);
+		OAuth2TokenIntrospection tokenClaims = withActiveTokenClaims(authorization, authorizedToken, authorizedClient);
 
 		if (this.logger.isTraceEnabled()) {
 			this.logger.trace("Authenticated token introspection request");
@@ -126,7 +126,7 @@ public final class OAuth2TokenIntrospectionAuthenticationProvider implements Aut
 		return OAuth2TokenIntrospectionAuthenticationToken.class.isAssignableFrom(authentication);
 	}
 
-	private static OAuth2TokenIntrospection withActiveTokenClaims(
+	private static OAuth2TokenIntrospection withActiveTokenClaims(OAuth2Authorization authorization,
 			OAuth2Authorization.Token<OAuth2Token> authorizedToken, RegisteredClient authorizedClient) {
 
 		OAuth2TokenIntrospection.Builder tokenClaims;
@@ -141,6 +141,7 @@ public final class OAuth2TokenIntrospectionAuthenticationProvider implements Aut
 		tokenClaims.clientId(authorizedClient.getClientId());
 
 		// TODO Set "username"
+		tokenClaims.username(authorization.getPrincipalName());
 
 		OAuth2Token token = authorizedToken.getToken();
 		if (token.getIssuedAt() != null) {

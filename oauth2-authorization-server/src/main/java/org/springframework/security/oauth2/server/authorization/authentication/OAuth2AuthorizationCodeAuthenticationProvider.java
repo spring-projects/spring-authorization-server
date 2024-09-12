@@ -144,8 +144,9 @@ public final class OAuth2AuthorizationCodeAuthenticationProvider implements Auth
 			if (!authorizationCode.isInvalidated()) {
 				// Invalidate the authorization code given that a different client is
 				// attempting to use it
-				authorization = OAuth2AuthenticationProviderUtils.invalidate(authorization,
-						authorizationCode.getToken());
+				authorization = OAuth2Authorization.from(authorization)
+					.invalidate(authorizationCode.getToken())
+					.build();
 				this.authorizationService.save(authorization);
 				if (this.logger.isWarnEnabled()) {
 					this.logger.warn(LogMessage.format("Invalidated authorization code used by registered client '%s'",
@@ -172,7 +173,7 @@ public final class OAuth2AuthorizationCodeAuthenticationProvider implements Auth
 				if (token != null) {
 					// Invalidate the access (and refresh) token as the client is
 					// attempting to use the authorization code more than once
-					authorization = OAuth2AuthenticationProviderUtils.invalidate(authorization, token.getToken());
+					authorization = OAuth2Authorization.from(authorization).invalidate(token.getToken()).build();
 					this.authorizationService.save(authorization);
 					if (this.logger.isWarnEnabled()) {
 						this.logger.warn(LogMessage.format(
@@ -284,10 +285,10 @@ public final class OAuth2AuthorizationCodeAuthenticationProvider implements Auth
 			idToken = null;
 		}
 
-		authorization = authorizationBuilder.build();
-
 		// Invalidate the authorization code as it can only be used once
-		authorization = OAuth2AuthenticationProviderUtils.invalidate(authorization, authorizationCode.getToken());
+		authorizationBuilder.invalidate(authorizationCode.getToken());
+
+		authorization = authorizationBuilder.build();
 
 		this.authorizationService.save(authorization);
 

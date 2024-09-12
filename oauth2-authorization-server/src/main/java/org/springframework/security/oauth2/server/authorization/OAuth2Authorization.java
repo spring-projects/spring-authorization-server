@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -479,7 +479,6 @@ public class OAuth2Authorization implements Serializable {
 		 * @return the {@link Builder}
 		 */
 		public <T extends OAuth2Token> Builder token(T token, Consumer<Map<String, Object>> metadataConsumer) {
-
 			Assert.notNull(token, "token cannot be null");
 			Map<String, Object> metadata = Token.defaultMetadata();
 			Token<?> existingToken = this.tokens.get(token.getClass());
@@ -489,6 +488,33 @@ public class OAuth2Authorization implements Serializable {
 			metadataConsumer.accept(metadata);
 			Class<? extends OAuth2Token> tokenClass = token.getClass();
 			this.tokens.put(tokenClass, new Token<>(token, metadata));
+			return this;
+		}
+
+		/**
+		 * Invalidates the {@link OAuth2Token token}.
+		 * @param token the token
+		 * @param <T> the type of the token
+		 * @return the {@link Builder}
+		 * @since 1.4
+		 */
+		public <T extends OAuth2Token> Builder invalidate(T token) {
+			Assert.notNull(token, "token cannot be null");
+			if (this.tokens.get(token.getClass()) == null) {
+				return this;
+			}
+			token(token, (metadata) -> metadata.put(OAuth2Authorization.Token.INVALIDATED_METADATA_NAME, true));
+			if (OAuth2RefreshToken.class.isAssignableFrom(token.getClass())) {
+				Token<?> accessToken = this.tokens.get(OAuth2AccessToken.class);
+				token(accessToken.getToken(),
+						(metadata) -> metadata.put(OAuth2Authorization.Token.INVALIDATED_METADATA_NAME, true));
+
+				Token<?> authorizationCode = this.tokens.get(OAuth2AuthorizationCode.class);
+				if (authorizationCode != null && !authorizationCode.isInvalidated()) {
+					token(authorizationCode.getToken(),
+							(metadata) -> metadata.put(OAuth2Authorization.Token.INVALIDATED_METADATA_NAME, true));
+				}
+			}
 			return this;
 		}
 

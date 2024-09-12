@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -147,7 +147,7 @@ public class OAuth2TokenIntrospectionAuthenticationProviderTests {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();
 		OAuth2AccessToken accessToken = authorization.getAccessToken().getToken();
-		authorization = OAuth2AuthenticationProviderUtils.invalidate(authorization, accessToken);
+		authorization = OAuth2Authorization.from(authorization).invalidate(accessToken).build();
 		given(this.authorizationService.findByToken(eq(accessToken.getTokenValue()), isNull()))
 			.willReturn(authorization);
 		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient,

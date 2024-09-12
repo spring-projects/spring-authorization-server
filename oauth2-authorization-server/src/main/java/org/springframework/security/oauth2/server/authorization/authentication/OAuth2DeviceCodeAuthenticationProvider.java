@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 the original author or authors.
+ * Copyright 2020-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -124,7 +124,7 @@ public final class OAuth2DeviceCodeAuthenticationProvider implements Authenticat
 			if (!deviceCode.isInvalidated()) {
 				// Invalidate the device code given that a different client is attempting
 				// to use it
-				authorization = OAuth2AuthenticationProviderUtils.invalidate(authorization, deviceCode.getToken());
+				authorization = OAuth2Authorization.from(authorization).invalidate(deviceCode.getToken()).build();
 				this.authorizationService.save(authorization);
 				if (this.logger.isWarnEnabled()) {
 					this.logger.warn(LogMessage.format("Invalidated device code used by registered client '%s'",
@@ -172,7 +172,7 @@ public final class OAuth2DeviceCodeAuthenticationProvider implements Authenticat
 		// restarting to avoid unnecessary polling.
 		if (deviceCode.isExpired()) {
 			// Invalidate the device code
-			authorization = OAuth2AuthenticationProviderUtils.invalidate(authorization, deviceCode.getToken());
+			authorization = OAuth2Authorization.from(authorization).invalidate(deviceCode.getToken()).build();
 			this.authorizationService.save(authorization);
 			if (this.logger.isWarnEnabled()) {
 				this.logger.warn(LogMessage.format("Invalidated device code used by registered client '%s'",
@@ -200,8 +200,7 @@ public final class OAuth2DeviceCodeAuthenticationProvider implements Authenticat
 		// @formatter:off
 		OAuth2Authorization.Builder authorizationBuilder = OAuth2Authorization.from(authorization)
 				// Invalidate the device code as it can only be used (successfully) once
-				.token(deviceCode.getToken(), (metadata) ->
-						metadata.put(OAuth2Authorization.Token.INVALIDATED_METADATA_NAME, true));
+				.invalidate(deviceCode.getToken());
 		// @formatter:on
 
 		// ----- Access token -----

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -133,8 +133,9 @@ public class OidcUserInfoAuthenticationProviderTests {
 	public void authenticateWhenAccessTokenNotActiveThenThrowOAuth2AuthenticationException() {
 		String tokenValue = "token";
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization().build();
-		authorization = OidcAuthenticationProviderUtils.invalidate(authorization,
-				authorization.getAccessToken().getToken());
+		authorization = OAuth2Authorization.from(authorization)
+			.invalidate(authorization.getAccessToken().getToken())
+			.build();
 		given(this.authorizationService.findByToken(eq(tokenValue), eq(OAuth2TokenType.ACCESS_TOKEN)))
 			.willReturn(authorization);
 

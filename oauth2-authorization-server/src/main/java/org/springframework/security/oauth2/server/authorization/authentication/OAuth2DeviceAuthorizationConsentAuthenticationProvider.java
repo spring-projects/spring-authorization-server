@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 the original author or authors.
+ * Copyright 2020-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -187,10 +187,8 @@ public final class OAuth2DeviceAuthorizationConsentAuthenticationProvider implem
 				}
 			}
 			authorization = OAuth2Authorization.from(authorization)
-				.token((deviceCodeToken.getToken()),
-						(metadata) -> metadata.put(OAuth2Authorization.Token.INVALIDATED_METADATA_NAME, true))
-				.token((userCodeToken.getToken()),
-						(metadata) -> metadata.put(OAuth2Authorization.Token.INVALIDATED_METADATA_NAME, true))
+				.invalidate(deviceCodeToken.getToken())
+				.invalidate(userCodeToken.getToken())
 				.attributes((attrs) -> attrs.remove(OAuth2ParameterNames.STATE))
 				.build();
 			this.authorizationService.save(authorization);
@@ -210,8 +208,7 @@ public final class OAuth2DeviceAuthorizationConsentAuthenticationProvider implem
 
 		authorization = OAuth2Authorization.from(authorization)
 			.authorizedScopes(authorizedScopes)
-			.token((userCodeToken.getToken()),
-					(metadata) -> metadata.put(OAuth2Authorization.Token.INVALIDATED_METADATA_NAME, true))
+			.invalidate(userCodeToken.getToken())
 			.attributes((attrs) -> attrs.remove(OAuth2ParameterNames.STATE))
 			.attributes((attrs) -> attrs.remove(OAuth2ParameterNames.SCOPE))
 			.build();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 the original author or authors.
+ * Copyright 2020-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -260,12 +260,12 @@ public final class OidcClientRegistrationAuthenticationProvider implements Authe
 		OAuth2Authorization registeredClientAuthorization = registerAccessToken(registeredClient);
 
 		// Invalidate the "initial" access token as it can only be used once
-		authorization = OidcAuthenticationProviderUtils.invalidate(authorization,
-				authorization.getAccessToken().getToken());
+		OAuth2Authorization.Builder builder = OAuth2Authorization.from(authorization)
+			.invalidate(authorization.getAccessToken().getToken());
 		if (authorization.getRefreshToken() != null) {
-			authorization = OidcAuthenticationProviderUtils.invalidate(authorization,
-					authorization.getRefreshToken().getToken());
+			builder.invalidate(authorization.getRefreshToken().getToken());
 		}
+		authorization = builder.build();
 		this.authorizationService.save(authorization);
 
 		if (this.logger.isTraceEnabled()) {

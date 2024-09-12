@@ -1,0 +1,225 @@
+
+[[how-to-redis]]
+= How-to: Implement core services with Redis
+:index-link: ../how-to.html
+:docs-dir: ..
+
+This guide shows how to implement the xref:core-model-components.adoc[core services] of xref:index.adoc[Spring Authorization Server] with https://redis.io/[Redis].
+The purpose of this guide is to provide a starting point for implementing these services yourself, with the intention that you can make modifications to suit your needs.
+
+* xref:guides/how-to-redis.adoc#define-entity-model[Define the entity model]
+* xref:guides/how-to-redis.adoc#create-spring-data-repositories[Create Spring Data repositories]
+* xref:guides/how-to-redis.adoc#implement-core-services[Implement core services]
+* xref:guides/how-to-redis.adoc#configure-core-services[Configure core services]
+
+TIP: The code samples provided in this guide are located in the https://github.com/spring-projects/spring-authorization-server/tree/main/docs/src/main/java/sample[documentation samples] directory under the *_redis_* subdirectory.
+
+[[define-entity-model]]
+== Define the entity model
+
+The following defines the entity model representation for the `RegisteredClient`, `OAuth2Authorization` and `OAuth2AuthorizationConsent` domain classes.
+
+* xref:guides/how-to-redis.adoc#registered-client-entity[Registered Client Entity]
+* xref:guides/how-to-redis.adoc#authorization-grant-entity[Authorization Grant _Base_ Entity]
+* xref:guides/how-to-redis.adoc#oauth2-authorization-code-grant-entity[Authorization Code Grant Entity (OAuth 2.0)]
+* xref:guides/how-to-redis.adoc#oidc-authorization-code-grant-entity[Authorization Code Grant Entity (OpenID Connect 1.0)]
+* xref:guides/how-to-redis.adoc#client-credentials-grant-entity[Client Credentials Grant Entity]
+* xref:guides/how-to-redis.adoc#device-code-grant-entity[Device Code Grant Entity]
+* xref:guides/how-to-redis.adoc#token-exchange-grant-entity[Token Exchange Grant Entity]
+* xref:guides/how-to-redis.adoc#authorization-consent-entity[Authorization Consent Entity]
+
+[[registered-client-entity]]
+=== Registered Client Entity
+
+The following listing shows the `OAuth2RegisteredClient` entity, which is used to persist information mapped from the xref:core-model-components.adoc#registered-client[`RegisteredClient`] domain class.
+
+.OAuth2RegisteredClient Entity
+[source,java]
+----
+include::{examples-dir}/main/java/sample/redis/entity/OAuth2RegisteredClient.java[]
+----
+
+TIP: Click on the "Expand folded text" icon in the code sample above to display the full example.
+
+[[authorization-grant-entity]]
+=== Authorization Grant _Base_ Entity
+
+The entity model for the xref:core-model-components.adoc#oauth2-authorization[`OAuth2Authorization`] domain class is designed with a class hierarchy based on authorization grant type.
+
+The following listing shows the `OAuth2AuthorizationGrantAuthorization` _base_ entity, which defines common attributes for each authorization grant type.
+
+.OAuth2AuthorizationGrantAuthorization _Base_ Entity
+[source,java]
+----
+include::{examples-dir}/main/java/sample/redis/entity/OAuth2AuthorizationGrantAuthorization.java[]
+----
+
+[[oauth2-authorization-code-grant-entity]]
+=== Authorization Code Grant Entity (OAuth 2.0)
+
+The following listing shows the `OAuth2AuthorizationCodeGrantAuthorization` entity, which extends `OAuth2AuthorizationGrantAuthorization`, and defines additional attributes for the OAuth 2.0 `authorization_code` grant type.
+
+.OAuth2AuthorizationCodeGrantAuthorization Entity
+[source,java]
+----
+include::{examples-dir}/main/java/sample/redis/entity/OAuth2AuthorizationCodeGrantAuthorization.java[]
+----
+
+[[oidc-authorization-code-grant-entity]]
+=== Authorization Code Grant Entity (OpenID Connect 1.0)
+
+The following listing shows the `OidcAuthorizationCodeGrantAuthorization` entity, which extends `OAuth2AuthorizationCodeGrantAuthorization`, and defines additional attributes for the OpenID Connect 1.0 `authorization_code` grant type.
+
+.OidcAuthorizationCodeGrantAuthorization Entity
+[source,java]
+----
+include::{examples-dir}/main/java/sample/redis/entity/OidcAuthorizationCodeGrantAuthorization.java[]
+----
+
+[[client-credentials-grant-entity]]
+=== Client Credentials Grant Entity
+
+The following listing shows the `OAuth2ClientCredentialsGrantAuthorization` entity, which extends `OAuth2AuthorizationGrantAuthorization`, for the `client_credentials` grant type.
+
+.OAuth2ClientCredentialsGrantAuthorization Entity
+[source,java]
+----
+include::{examples-dir}/main/java/sample/redis/entity/OAuth2ClientCredentialsGrantAuthorization.java[]
+----
+
+[[device-code-grant-entity]]
+=== Device Code Grant Entity
+
+The following listing shows the `OAuth2DeviceCodeGrantAuthorization` entity, which extends `OAuth2AuthorizationGrantAuthorization`, and defines additional attributes for the `urn:ietf:params:oauth:grant-type:device_code` grant type.
+
+.OAuth2DeviceCodeGrantAuthorization Entity
+[source,java]
+----
+include::{examples-dir}/main/java/sample/redis/entity/OAuth2DeviceCodeGrantAuthorization.java[]
+----
+
+[[token-exchange-grant-entity]]
+=== Token Exchange Grant Entity
+
+The following listing shows the `OAuth2TokenExchangeGrantAuthorization` entity, which extends `OAuth2AuthorizationGrantAuthorization`, for the `urn:ietf:params:oauth:grant-type:token-exchange` grant type.
+
+.OAuth2TokenExchangeGrantAuthorization Entity
+[source,java]
+----
+include::{examples-dir}/main/java/sample/redis/entity/OAuth2TokenExchangeGrantAuthorization.java[]
+----
+
+[[authorization-consent-entity]]
+=== Authorization Consent Entity
+
+The following listing shows the `OAuth2UserConsent` entity, which is used to persist information mapped from the xref:core-model-components.adoc#oauth2-authorization-consent[`OAuth2AuthorizationConsent`] domain class.
+
+.OAuth2UserConsent Entity
+[source,java]
+----
+include::{examples-dir}/main/java/sample/redis/entity/OAuth2UserConsent.java[]
+----
+
+[[create-spring-data-repositories]]
+== Create Spring Data repositories
+
+By closely examining the interfaces of each core service and reviewing the `Jdbc` implementations, we can derive a minimal set of queries needed for supporting a Redis version of each interface.
+
+* xref:guides/how-to-redis.adoc#registered-client-repository[Registered Client Repository]
+* xref:guides/how-to-redis.adoc#authorization-grant-repository[Authorization Grant Repository]
+* xref:guides/how-to-redis.adoc#authorization-consent-repository[Authorization Consent Repository]
+
+[[registered-client-repository]]
+=== Registered Client Repository
+
+The following listing shows the `OAuth2RegisteredClientRepository`, which is able to find a xref:guides/how-to-redis.adoc#registered-client-entity[`OAuth2RegisteredClient`] by the `id` and `clientId` fields.
+
+.OAuth2RegisteredClientRepository
+[source,java]
+----
+include::{examples-dir}/main/java/sample/redis/repository/OAuth2RegisteredClientRepository.java[]
+----
+
+[[authorization-grant-repository]]
+=== Authorization Grant Repository
+
+The following listing shows the `OAuth2AuthorizationGrantAuthorizationRepository`, which is able to find an xref:guides/how-to-redis.adoc#authorization-grant-entity[`OAuth2AuthorizationGrantAuthorization`] by the `id` field as well as by `state`, `authorizationCode`, `accessToken`, `refreshToken`, `idToken`, `deviceState`, `userCode` and `deviceCode` values.
+
+.OAuth2AuthorizationGrantAuthorizationRepository
+[source,java]
+----
+include::{examples-dir}/main/java/sample/redis/repository/OAuth2AuthorizationGrantAuthorizationRepository.java[]
+----
+
+[[authorization-consent-repository]]
+=== Authorization Consent Repository
+
+The following listing shows the `OAuth2UserConsentRepository`, which is able to find and delete an xref:guides/how-to-redis.adoc#authorization-consent-entity[`OAuth2UserConsent`] by the `registeredClientId` and `principalName` fields that form the composite primary key.
+
+.OAuth2UserConsentRepository
+[source,java]
+----
+include::{examples-dir}/main/java/sample/redis/repository/OAuth2UserConsentRepository.java[]
+----
+
+[[implement-core-services]]
+== Implement core services
+
+With the above xref:guides/how-to-redis.adoc#define-entity-model[entities] and xref:guides/how-to-redis.adoc#create-spring-data-repositories[repositories], we can begin implementing the core services.
+
+TIP: The core services make use of the `ModelMapper` utility class for converting to and from the domain object (e.g. `RegisteredClient`) to the entity model representation (e.g. `OAuth2RegisteredClient`).
+
+* xref:guides/how-to-redis.adoc#redis-registered-client-repository[Registered Client Repository]
+* xref:guides/how-to-redis.adoc#redis-authorization-service[Authorization Service]
+* xref:guides/how-to-redis.adoc#redis-authorization-consent-service[Authorization Consent Service]
+
+[[redis-registered-client-repository]]
+=== Registered Client Repository
+
+The following listing shows the `RedisRegisteredClientRepository`, which uses an xref:guides/how-to-redis.adoc#registered-client-repository[`OAuth2RegisteredClientRepository`] for persisting an xref:guides/how-to-redis.adoc#registered-client-entity[`OAuth2RegisteredClient`] and maps to and from the xref:core-model-components.adoc#registered-client[`RegisteredClient`] domain object, using the `ModelMapper` utility class.
+
+.RedisRegisteredClientRepository
+[source,java]
+----
+include::{examples-dir}/main/java/sample/redis/service/RedisRegisteredClientRepository.java[]
+----
+
+[[redis-authorization-service]]
+=== Authorization Service
+
+The following listing shows the `RedisOAuth2AuthorizationService`, which uses an xref:guides/how-to-redis.adoc#authorization-grant-repository[`OAuth2AuthorizationGrantAuthorizationRepository`] for persisting an xref:guides/how-to-redis.adoc#authorization-grant-entity[`OAuth2AuthorizationGrantAuthorization`] and maps to and from the xref:core-model-components.adoc#oauth2-authorization[`OAuth2Authorization`] domain object, using the `ModelMapper` utility class.
+
+.RedisOAuth2AuthorizationService
+[source,java]
+----
+include::{examples-dir}/main/java/sample/redis/service/RedisOAuth2AuthorizationService.java[]
+----
+
+[[redis-authorization-consent-service]]
+=== Authorization Consent Service
+
+The following listing shows the `RedisOAuth2AuthorizationConsentService`, which uses an xref:guides/how-to-redis.adoc#authorization-consent-repository[`OAuth2UserConsentRepository`] for persisting an xref:guides/how-to-redis.adoc#authorization-consent-entity[`OAuth2UserConsent`] and maps to and from the xref:core-model-components.adoc#oauth2-authorization-consent[`OAuth2AuthorizationConsent`] domain object, using the `ModelMapper` utility class.
+
+.RedisOAuth2AuthorizationConsentService
+[source,java]
+----
+include::{examples-dir}/main/java/sample/redis/service/RedisOAuth2AuthorizationConsentService.java[]
+----
+
+[[configure-core-services]]
+== Configure core services
+
+The following example shows how to configure the core services:
+
+.RedisConfig
+[source,java]
+----
+include::{examples-dir}/main/java/sample/redis/config/RedisConfig.java[]
+----
+
+<1> Activate the Spring Data Redis repositories under the `sample.redis.repository` base package.
+<2> Use the https://docs.spring.io/spring-data/redis/reference/redis/drivers.html#redis:connectors:jedis[Jedis] Connector.
+<3> Register the custom ``Converter``'s that perform the Object-to-Hash conversion before persisting to Redis.
+<4> Register the `RedisRegisteredClientRepository` with the activated `OAuth2RegisteredClientRepository`.
+<5> Register the `RedisOAuth2AuthorizationService` with the activated `OAuth2AuthorizationGrantAuthorizationRepository`.
+<6> Register the `RedisOAuth2AuthorizationConsentService` with the activated `OAuth2UserConsentRepository`.

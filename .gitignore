@@ -38,3 +38,5 @@ out/
 ### Mac ###
 .DS_Store
 cached-antora-playbook.yml
+
+node_modules

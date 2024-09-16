@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 the original author or authors.
+ * Copyright 2020-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
 import java.util.Base64;
 import java.util.List;
+import java.util.function.Consumer;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -69,6 +70,8 @@ public final class OidcLogoutAuthenticationProvider implements AuthenticationPro
 	private final OAuth2AuthorizationService authorizationService;
 
 	private final SessionRegistry sessionRegistry;
+
+	private Consumer<OidcLogoutAuthenticationContext> authenticationValidator = new OidcLogoutAuthenticationValidator();
 
 	/**
 	 * Constructs an {@code OidcLogoutAuthenticationProvider} using the provided
@@ -126,11 +129,11 @@ public final class OidcLogoutAuthenticationProvider implements AuthenticationPro
 				&& !oidcLogoutAuthentication.getClientId().equals(registeredClient.getClientId())) {
 			throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.CLIENT_ID);
 		}
-		if (StringUtils.hasText(oidcLogoutAuthentication.getPostLogoutRedirectUri())
-				&& !registeredClient.getPostLogoutRedirectUris()
-					.contains(oidcLogoutAuthentication.getPostLogoutRedirectUri())) {
-			throwError(OAuth2ErrorCodes.INVALID_REQUEST, "post_logout_redirect_uri");
-		}
+
+		OidcLogoutAuthenticationContext context = OidcLogoutAuthenticationContext.with(oidcLogoutAuthentication)
+			.registeredClient(registeredClient)
+			.build();
+		this.authenticationValidator.accept(context);
 
 		if (this.logger.isTraceEnabled()) {
 			this.logger.trace("Validated logout request parameters");
@@ -180,6 +183,26 @@ public final class OidcLogoutAuthenticationProvider implements AuthenticationPro
 	@Override
 	public boolean supports(Class<?> authentication) {
 		return OidcLogoutAuthenticationToken.class.isAssignableFrom(authentication);
+	}
+
+	/**
+	 * Sets the {@code Consumer} providing access to the
+	 * {@link OidcLogoutAuthenticationContext} and is responsible for validating specific
+	 * Open ID Connect RP-Initiated Logout Request parameters associated in the
+	 * {@link OidcLogoutAuthenticationToken}. The default authentication validator is
+	 * {@link OidcLogoutAuthenticationValidator}.
+	 *
+	 * <p>
+	 * <b>NOTE:</b> The authentication validator MUST throw
+	 * {@link OAuth2AuthenticationException} if validation fails.
+	 * @param authenticationValidator the {@code Consumer} providing access to the
+	 * {@link OidcLogoutAuthenticationContext} and is responsible for validating specific
+	 * Open ID Connect RP-Initiated Logout Request parameters
+	 * @since 1.4
+	 */
+	public void setAuthenticationValidator(Consumer<OidcLogoutAuthenticationContext> authenticationValidator) {
+		Assert.notNull(authenticationValidator, "authenticationValidator cannot be null");
+		this.authenticationValidator = authenticationValidator;
 	}
 
 	private SessionInformation findSessionInformation(Authentication principal, String sessionId) {

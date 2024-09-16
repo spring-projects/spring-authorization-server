@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 the original author or authors.
+ * Copyright 2020-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import java.util.Base64;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.function.Consumer;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -53,6 +54,7 @@ import org.springframework.security.oauth2.server.authorization.settings.Authori
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
@@ -312,6 +314,35 @@ public class OidcLogoutAuthenticationProviderTests {
 			});
 		verify(this.authorizationService).findByToken(eq(authentication.getIdTokenHint()), eq(ID_TOKEN_TOKEN_TYPE));
 		verify(this.registeredClientRepository).findById(eq(authorization.getRegisteredClientId()));
+	}
+
+	@Test
+	void setAuthenticationValidatorWhenNullThenThrowIllegalArgumentException() {
+		assertThatThrownBy(() -> this.authenticationProvider.setAuthenticationValidator(null))
+			.isInstanceOf(IllegalArgumentException.class)
+			.hasMessage("authenticationValidator cannot be null");
+	}
+
+	@Test
+	public void authenticateWhenCustomAuthenticationValidatorThenUsed() throws NoSuchAlgorithmException {
+		TestingAuthenticationToken principal = new TestingAuthenticationToken("principal", "credentials");
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+		String sessionId = "session-1";
+		OidcIdToken idToken = OidcIdToken.withTokenValue("id-token")
+			.issuer("https://provider.com")
+			.subject(principal.getName())
+			.audience(Collections.singleton(registeredClient.getClientId()))
+			.issuedAt(Instant.now().minusSeconds(60).truncatedTo(ChronoUnit.MILLIS))
+			.expiresAt(Instant.now().plusSeconds(60).truncatedTo(ChronoUnit.MILLIS))
+			.claim("sid", createHash(sessionId))
+			.build();
+
+		@SuppressWarnings("unchecked")
+		Consumer<OidcLogoutAuthenticationContext> authenticationValidator = mock(Consumer.class);
+		this.authenticationProvider.setAuthenticationValidator(authenticationValidator);
+
+		authenticateValidIdToken(principal, registeredClient, sessionId, idToken);
+		verify(authenticationValidator).accept(any());
 	}
 
 	@Test

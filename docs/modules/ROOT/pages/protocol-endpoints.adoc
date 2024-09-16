@@ -554,6 +554,18 @@ public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity h
 [TIP]
 `OidcClientInitiatedLogoutSuccessHandler` is the corresponding configuration in Spring Security’s OAuth2 Client support for configuring {spring-security-reference-base-url}/servlet/oauth2/login/advanced.html#oauth2login-advanced-oidc-logout[OpenID Connect 1.0 RP-Initiated Logout].
 
+[[oidc-logout-endpoint-customizing-logout-request-validation]]
+=== Customizing Logout Request Validation
+
+`OidcLogoutAuthenticationValidator` is the default validator used for validating specific OpenID Connect Logout request parameters used in the RP-Initiated Logout flow.
+The default implementation validates the `post_logout_redirect_uri` parameter.
+If validation fails, an `OAuth2AuthenticationException` is thrown.
+
+`OidcLogoutAuthenticationProvider` provides the ability to override the default logout request validation by supplying a custom authentication validator of type `Consumer<OidcLogoutAuthenticationContext>` to `setAuthenticationValidator()`.
+
+[IMPORTANT]
+If validation fails, the authentication validator *MUST* throw `OAuth2AuthenticationException`.
+
 [[oidc-user-info-endpoint]]
 == OpenID Connect 1.0 UserInfo Endpoint
 

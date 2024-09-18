@@ -91,7 +91,6 @@ import org.springframework.security.oauth2.server.authorization.token.JwtEncodin
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationConverter;
-import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.util.Assert;
@@ -373,24 +372,21 @@ public class OAuth2RefreshTokenGrantTests {
 				HttpSecurity http, RegisteredClientRepository registeredClientRepository) throws Exception {
 
 			OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
-					new OAuth2AuthorizationServerConfigurer();
-			authorizationServerConfigurer
-					.clientAuthentication((clientAuthentication) ->
-							clientAuthentication
-									.authenticationConverter(
-											new PublicClientRefreshTokenAuthenticationConverter())
-									.authenticationProvider(
-											new PublicClientRefreshTokenAuthenticationProvider(registeredClientRepository))
-					);
-			RequestMatcher endpointsMatcher = authorizationServerConfigurer.getEndpointsMatcher();
-
+					OAuth2AuthorizationServerConfigurer.authorizationServer();
 			http
-					.securityMatcher(endpointsMatcher)
+					.securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
+					.with(authorizationServerConfigurer, (authorizationServer) ->
+							authorizationServer
+									.clientAuthentication((clientAuthentication) ->
+											clientAuthentication
+													.authenticationConverter(
+															new PublicClientRefreshTokenAuthenticationConverter())
+													.authenticationProvider(
+															new PublicClientRefreshTokenAuthenticationProvider(registeredClientRepository)))
+					)
 					.authorizeHttpRequests((authorize) ->
 							authorize.anyRequest().authenticated()
-					)
-					.csrf((csrf) -> csrf.ignoringRequestMatchers(endpointsMatcher))
-					.apply(authorizationServerConfigurer);
+					);
 			return http.build();
 		}
 		// @formatter:on

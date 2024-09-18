@@ -79,7 +79,6 @@ import org.springframework.security.web.authentication.AuthenticationFailureHand
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
-import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultMatcher;
@@ -405,33 +404,29 @@ public class OidcUserInfoTests {
 		@Bean
 		@Override
 		SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-			OAuth2AuthorizationServerConfigurer authorizationServerConfigurer = new OAuth2AuthorizationServerConfigurer();
-			RequestMatcher endpointsMatcher = authorizationServerConfigurer.getEndpointsMatcher();
-
 			// @formatter:off
+			OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
+					OAuth2AuthorizationServerConfigurer.authorizationServer();
 			http
-				.securityMatcher(endpointsMatcher)
-				.authorizeHttpRequests((authorize) ->
-					authorize.anyRequest().authenticated()
-				)
-				.csrf((csrf) -> csrf.ignoringRequestMatchers(endpointsMatcher))
-				.oauth2ResourceServer((resourceServer) ->
-					resourceServer.jwt(Customizer.withDefaults())
-				)
-				.apply(authorizationServerConfigurer)
-					.oidc((oidc) -> oidc
-						.userInfoEndpoint((userInfo) -> userInfo
-							.userInfoRequestConverter(authenticationConverter)
-							.userInfoRequestConverters(authenticationConvertersConsumer)
-							.authenticationProvider(authenticationProvider)
-							.authenticationProviders(authenticationProvidersConsumer)
-							.userInfoResponseHandler(authenticationSuccessHandler)
-							.errorResponseHandler(authenticationFailureHandler)
-							.userInfoMapper(userInfoMapper)
-						)
+					.securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
+					.with(authorizationServerConfigurer, (authorizationServer) ->
+							authorizationServer
+									.oidc((oidc) ->
+											oidc
+													.userInfoEndpoint((userInfo) ->
+															userInfo
+																	.userInfoRequestConverter(authenticationConverter)
+																	.userInfoRequestConverters(authenticationConvertersConsumer)
+																	.authenticationProvider(authenticationProvider)
+																	.authenticationProviders(authenticationProvidersConsumer)
+																	.userInfoResponseHandler(authenticationSuccessHandler)
+																	.errorResponseHandler(authenticationFailureHandler)
+																	.userInfoMapper(userInfoMapper)))
+					)
+					.authorizeHttpRequests((authorize) ->
+							authorize.anyRequest().authenticated()
 					);
 			// @formatter:on
-
 			return http.build();
 		}
 
@@ -445,24 +440,20 @@ public class OidcUserInfoTests {
 		@Bean
 		@Override
 		SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-			OAuth2AuthorizationServerConfigurer authorizationServerConfigurer = new OAuth2AuthorizationServerConfigurer();
-			// Enable OpenID Connect 1.0
-			authorizationServerConfigurer.oidc(Customizer.withDefaults());
-			RequestMatcher endpointsMatcher = authorizationServerConfigurer.getEndpointsMatcher();
-
 			// @formatter:off
+			OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
+					OAuth2AuthorizationServerConfigurer.authorizationServer();
 			http
-				.securityMatcher(endpointsMatcher)
-				.authorizeHttpRequests((authorize) ->
-					authorize.anyRequest().authenticated()
-				)
-				.csrf((csrf) -> csrf.ignoringRequestMatchers(endpointsMatcher))
-				.oauth2ResourceServer((resourceServer) ->
-					resourceServer.jwt(Customizer.withDefaults())
-				)
-				.securityContext((securityContext) ->
-					securityContext.securityContextRepository(securityContextRepository))
-				.apply(authorizationServerConfigurer);
+					.securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
+					.with(authorizationServerConfigurer, (authorizationServer) ->
+							authorizationServer
+									.oidc(Customizer.withDefaults())
+					)
+					.authorizeHttpRequests((authorize) ->
+							authorize.anyRequest().authenticated()
+					)
+					.securityContext((securityContext) ->
+							securityContext.securityContextRepository(securityContextRepository));
 			// @formatter:on
 
 			return http.build();
@@ -476,22 +467,18 @@ public class OidcUserInfoTests {
 
 		@Bean
 		SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-			OAuth2AuthorizationServerConfigurer authorizationServerConfigurer = new OAuth2AuthorizationServerConfigurer();
-			// Enable OpenID Connect 1.0
-			authorizationServerConfigurer.oidc(Customizer.withDefaults());
-			RequestMatcher endpointsMatcher = authorizationServerConfigurer.getEndpointsMatcher();
-
 			// @formatter:off
+			OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
+					OAuth2AuthorizationServerConfigurer.authorizationServer();
 			http
-				.securityMatcher(endpointsMatcher)
-				.authorizeHttpRequests((authorize) ->
-					authorize.anyRequest().authenticated()
-				)
-				.csrf((csrf) -> csrf.ignoringRequestMatchers(endpointsMatcher))
-				.oauth2ResourceServer((resourceServer) ->
-					resourceServer.jwt(Customizer.withDefaults())
-				)
-				.apply(authorizationServerConfigurer);
+					.securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
+					.with(authorizationServerConfigurer, (authorizationServer) ->
+							authorizationServer
+									.oidc(Customizer.withDefaults())
+					)
+					.authorizeHttpRequests((authorize) ->
+							authorize.anyRequest().authenticated()
+					);
 			// @formatter:on
 
 			return http.build();

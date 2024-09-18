@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 the original author or authors.
+ * Copyright 2020-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,6 @@ import org.springframework.security.oauth2.server.authorization.token.OAuth2Acce
 import org.springframework.security.oauth2.server.authorization.token.OAuth2RefreshTokenGenerator;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenGenerator;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.util.matcher.RequestMatcher;
 
 @Configuration
 @EnableWebSecurity
@@ -53,29 +52,24 @@ public class SecurityConfig {
 			OAuth2TokenGenerator<?> tokenGenerator) throws Exception {
 
 		OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
-				new OAuth2AuthorizationServerConfigurer();
-
-		authorizationServerConfigurer
-			.tokenEndpoint(tokenEndpoint ->
-				tokenEndpoint
-					.accessTokenRequestConverter( // <1>
-						new CustomCodeGrantAuthenticationConverter())
-					.authenticationProvider( // <2>
-						new CustomCodeGrantAuthenticationProvider(
-							authorizationService, tokenGenerator)));
-
-		// @fold:on
-		RequestMatcher endpointsMatcher = authorizationServerConfigurer.getEndpointsMatcher();
+				OAuth2AuthorizationServerConfigurer.authorizationServer();
 
 		http
-			.securityMatcher(endpointsMatcher)
+			.securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
+			.with(authorizationServerConfigurer, (authorizationServer) ->
+				authorizationServer
+					.tokenEndpoint(tokenEndpoint ->
+						tokenEndpoint
+							.accessTokenRequestConverter(	// <1>
+								new CustomCodeGrantAuthenticationConverter())
+							.authenticationProvider(	// <2>
+								new CustomCodeGrantAuthenticationProvider(
+									authorizationService, tokenGenerator)))
+			)
 			.authorizeHttpRequests(authorize ->
 				authorize
 					.anyRequest().authenticated()
-			)
-			.csrf(csrf -> csrf.ignoringRequestMatchers(endpointsMatcher))
-			.apply(authorizationServerConfigurer);
-		// @fold:off
+			);
 
 		return http.build();
 	}

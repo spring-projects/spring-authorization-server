@@ -61,6 +61,7 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.core.Authentication;
@@ -124,7 +125,6 @@ import org.springframework.security.web.authentication.AuthenticationFailureHand
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
-import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.util.LinkedMultiValueMap;
@@ -1149,18 +1149,15 @@ public class OAuth2AuthorizationCodeGrantTests {
 		@Bean
 		SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
 			OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
-					new OAuth2AuthorizationServerConfigurer();
-			RequestMatcher endpointsMatcher = authorizationServerConfigurer.getEndpointsMatcher();
-
+					OAuth2AuthorizationServerConfigurer.authorizationServer();
 			http
-					.securityMatcher(endpointsMatcher)
+					.securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
+					.with(authorizationServerConfigurer, Customizer.withDefaults())
 					.authorizeHttpRequests((authorize) ->
 							authorize.anyRequest().authenticated()
 					)
-					.csrf((csrf) -> csrf.ignoringRequestMatchers(endpointsMatcher))
 					.securityContext((securityContext) ->
-							securityContext.securityContextRepository(securityContextRepository))
-					.apply(authorizationServerConfigurer);
+							securityContext.securityContextRepository(securityContextRepository));
 			return http.build();
 		}
 		// @formatter:on
@@ -1212,19 +1209,17 @@ public class OAuth2AuthorizationCodeGrantTests {
 		@Bean
 		SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
 			OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
-					new OAuth2AuthorizationServerConfigurer();
-			authorizationServerConfigurer
-					.authorizationEndpoint((authorizationEndpoint) ->
-							authorizationEndpoint.consentPage(consentPage));
-			RequestMatcher endpointsMatcher = authorizationServerConfigurer.getEndpointsMatcher();
-
+					OAuth2AuthorizationServerConfigurer.authorizationServer();
 			http
-					.securityMatcher(endpointsMatcher)
+					.securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
+					.with(authorizationServerConfigurer, (authorizationServer) ->
+							authorizationServer
+									.authorizationEndpoint((authorizationEndpoint) ->
+											authorizationEndpoint.consentPage(consentPage))
+					)
 					.authorizeHttpRequests((authorize) ->
 							authorize.anyRequest().authenticated()
-					)
-					.csrf((csrf) -> csrf.ignoringRequestMatchers(endpointsMatcher))
-					.apply(authorizationServerConfigurer);
+					);
 			return http.build();
 		}
 		// @formatter:on
@@ -1242,19 +1237,17 @@ public class OAuth2AuthorizationCodeGrantTests {
 		@Bean
 		SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
 			OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
-					new OAuth2AuthorizationServerConfigurer();
-			authorizationServerConfigurer
-					.authorizationEndpoint((authorizationEndpoint) ->
-							authorizationEndpoint.authenticationProviders(configureAuthenticationProviders()));
-			RequestMatcher endpointsMatcher = authorizationServerConfigurer.getEndpointsMatcher();
-
+					OAuth2AuthorizationServerConfigurer.authorizationServer();
 			http
-					.securityMatcher(endpointsMatcher)
+					.securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
+					.with(authorizationServerConfigurer, (authorizationServer) ->
+							authorizationServer
+									.authorizationEndpoint((authorizationEndpoint) ->
+											authorizationEndpoint.authenticationProviders(configureAuthenticationProviders()))
+					)
 					.authorizeHttpRequests((authorize) ->
 							authorize.anyRequest().authenticated()
-					)
-					.csrf((csrf) -> csrf.ignoringRequestMatchers(endpointsMatcher))
-					.apply(authorizationServerConfigurer);
+					);
 			return http.build();
 		}
 		// @formatter:on
@@ -1331,25 +1324,23 @@ public class OAuth2AuthorizationCodeGrantTests {
 		@Bean
 		SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
 			OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
-					new OAuth2AuthorizationServerConfigurer();
-			authorizationServerConfigurer
-					.authorizationEndpoint((authorizationEndpoint) ->
-							authorizationEndpoint
-									.authorizationRequestConverter(authorizationRequestConverter)
-									.authorizationRequestConverters(authorizationRequestConvertersConsumer)
-									.authenticationProvider(authorizationRequestAuthenticationProvider)
-									.authenticationProviders(authorizationRequestAuthenticationProvidersConsumer)
-									.authorizationResponseHandler(authorizationResponseHandler)
-									.errorResponseHandler(authorizationErrorResponseHandler));
-			RequestMatcher endpointsMatcher = authorizationServerConfigurer.getEndpointsMatcher();
-
+					OAuth2AuthorizationServerConfigurer.authorizationServer();
 			http
-					.securityMatcher(endpointsMatcher)
+					.securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
+					.with(authorizationServerConfigurer, (authorizationServer) ->
+							authorizationServer
+									.authorizationEndpoint((authorizationEndpoint) ->
+											authorizationEndpoint
+													.authorizationRequestConverter(authorizationRequestConverter)
+													.authorizationRequestConverters(authorizationRequestConvertersConsumer)
+													.authenticationProvider(authorizationRequestAuthenticationProvider)
+													.authenticationProviders(authorizationRequestAuthenticationProvidersConsumer)
+													.authorizationResponseHandler(authorizationResponseHandler)
+													.errorResponseHandler(authorizationErrorResponseHandler))
+					)
 					.authorizeHttpRequests((authorize) ->
 							authorize.anyRequest().authenticated()
-					)
-					.csrf((csrf) -> csrf.ignoringRequestMatchers(endpointsMatcher))
-					.apply(authorizationServerConfigurer);
+					);
 			return http.build();
 		}
 		// @formatter:on

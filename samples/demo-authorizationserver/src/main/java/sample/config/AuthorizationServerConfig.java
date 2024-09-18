@@ -57,6 +57,8 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
 
+import static org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer.authorizationServer;
+
 /**
  * @author Joe Grandja
  * @author Daniel Garnier-Moiroux
@@ -72,8 +74,6 @@ public class AuthorizationServerConfig {
 	public SecurityFilterChain authorizationServerSecurityFilterChain(
 			HttpSecurity http, RegisteredClientRepository registeredClientRepository,
 			AuthorizationServerSettings authorizationServerSettings) throws Exception {
-
-		OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http);
 
 		/*
 		 * This sample demonstrates the use of a public client that does not
@@ -97,34 +97,39 @@ public class AuthorizationServerConfig {
 		DeviceClientAuthenticationProvider deviceClientAuthenticationProvider =
 				new DeviceClientAuthenticationProvider(registeredClientRepository);
 
-		// @formatter:off
-		http.getConfigurer(OAuth2AuthorizationServerConfigurer.class)
-			.deviceAuthorizationEndpoint(deviceAuthorizationEndpoint ->
-				deviceAuthorizationEndpoint.verificationUri("/activate")
-			)
-			.deviceVerificationEndpoint(deviceVerificationEndpoint ->
-				deviceVerificationEndpoint.consentPage(CUSTOM_CONSENT_PAGE_URI)
-			)
-			.clientAuthentication(clientAuthentication ->
-				clientAuthentication
-					.authenticationConverter(deviceClientAuthenticationConverter)
-					.authenticationProvider(deviceClientAuthenticationProvider)
-			)
-			.authorizationEndpoint(authorizationEndpoint ->
-				authorizationEndpoint.consentPage(CUSTOM_CONSENT_PAGE_URI))
-			.oidc(Customizer.withDefaults());	// Enable OpenID Connect 1.0
-		// @formatter:on
+		OAuth2AuthorizationServerConfigurer authorizationServerConfigurer = authorizationServer();
 
 		// @formatter:off
 		http
+			.securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
+			.with(authorizationServerConfigurer, (authorizationServer) ->
+				authorizationServer
+					.deviceAuthorizationEndpoint(deviceAuthorizationEndpoint ->
+						deviceAuthorizationEndpoint.verificationUri("/activate")
+					)
+					.deviceVerificationEndpoint(deviceVerificationEndpoint ->
+						deviceVerificationEndpoint.consentPage(CUSTOM_CONSENT_PAGE_URI)
+					)
+					.clientAuthentication(clientAuthentication ->
+						clientAuthentication
+							.authenticationConverter(deviceClientAuthenticationConverter)
+							.authenticationProvider(deviceClientAuthenticationProvider)
+					)
+					.authorizationEndpoint(authorizationEndpoint ->
+						authorizationEndpoint.consentPage(CUSTOM_CONSENT_PAGE_URI))
+					.oidc(Customizer.withDefaults())	// Enable OpenID Connect 1.0
+			)
+			.authorizeHttpRequests((authorize) ->
+				authorize.anyRequest().authenticated()
+			)
+			// Redirect to the /login page when not authenticated from the authorization endpoint
+			// NOTE: DefaultSecurityConfig is configured with formLogin.loginPage("/login")
 			.exceptionHandling((exceptions) -> exceptions
 				.defaultAuthenticationEntryPointFor(
 					new LoginUrlAuthenticationEntryPoint("/login"),
 					new MediaTypeRequestMatcher(MediaType.TEXT_HTML)
 				)
-			)
-			.oauth2ResourceServer(oauth2ResourceServer ->
-				oauth2ResourceServer.jwt(Customizer.withDefaults()));
+			);
 		// @formatter:on
 		return http.build();
 	}

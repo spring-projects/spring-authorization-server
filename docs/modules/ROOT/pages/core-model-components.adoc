@@ -123,13 +123,15 @@ Alternatively, you can configure the `RegisteredClientRepository` through the xr
 @Bean
 public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
 	OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
-		new OAuth2AuthorizationServerConfigurer();
-	http.apply(authorizationServerConfigurer);
+			OAuth2AuthorizationServerConfigurer.authorizationServer();
 
-	authorizationServerConfigurer
-		.registeredClientRepository(registeredClientRepository);
-
-	...
+	http
+		.securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
+		.with(authorizationServerConfigurer, (authorizationServer) ->
+			authorizationServer
+				.registeredClientRepository(registeredClientRepository)
+		)
+	    ...
 
 	return http.build();
 }
@@ -218,13 +220,15 @@ Alternatively, you can configure the `OAuth2AuthorizationService` through the xr
 @Bean
 public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
 	OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
-		new OAuth2AuthorizationServerConfigurer();
-	http.apply(authorizationServerConfigurer);
+			OAuth2AuthorizationServerConfigurer.authorizationServer();
 
-	authorizationServerConfigurer
-		.authorizationService(authorizationService);
-
-	...
+	http
+		.securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
+		.with(authorizationServerConfigurer, (authorizationServer) ->
+			authorizationServer
+				.authorizationService(authorizationService)
+		)
+	    ...
 
 	return http.build();
 }
@@ -290,13 +294,15 @@ Alternatively, you can configure the `OAuth2AuthorizationConsentService` through
 @Bean
 public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
 	OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
-		new OAuth2AuthorizationServerConfigurer();
-	http.apply(authorizationServerConfigurer);
+			OAuth2AuthorizationServerConfigurer.authorizationServer();
 
-	authorizationServerConfigurer
-		.authorizationConsentService(authorizationConsentService);
-
-	...
+	http
+		.securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
+		.with(authorizationServerConfigurer, (authorizationServer) ->
+			authorizationServer
+				.authorizationConsentService(authorizationConsentService)
+		)
+	    ...
 
 	return http.build();
 }
@@ -401,13 +407,15 @@ Alternatively, you can configure the `OAuth2TokenGenerator` through the xref:con
 @Bean
 public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
 	OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
-		new OAuth2AuthorizationServerConfigurer();
-	http.apply(authorizationServerConfigurer);
+			OAuth2AuthorizationServerConfigurer.authorizationServer();
 
-	authorizationServerConfigurer
-		.tokenGenerator(tokenGenerator);
-
-	...
+	http
+		.securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
+		.with(authorizationServerConfigurer, (authorizationServer) ->
+			authorizationServer
+				.tokenGenerator(tokenGenerator)
+		)
+	    ...
 
 	return http.build();
 }

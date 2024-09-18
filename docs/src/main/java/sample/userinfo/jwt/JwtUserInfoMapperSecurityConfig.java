@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,50 +57,44 @@ import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
-import org.springframework.security.web.util.matcher.RequestMatcher;
 
 @Configuration(proxyBeanMethods = false)
 @EnableWebSecurity
 public class JwtUserInfoMapperSecurityConfig {
 
-	@Bean // <1>
+	@Bean	// <1>
 	@Order(1)
 	public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
-		OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
-				new OAuth2AuthorizationServerConfigurer();
-		RequestMatcher endpointsMatcher = authorizationServerConfigurer
-				.getEndpointsMatcher();
-
-		Function<OidcUserInfoAuthenticationContext, OidcUserInfo> userInfoMapper = (context) -> { // <2>
+		Function<OidcUserInfoAuthenticationContext, OidcUserInfo> userInfoMapper = (context) -> {	// <2>
 			OidcUserInfoAuthenticationToken authentication = context.getAuthentication();
 			JwtAuthenticationToken principal = (JwtAuthenticationToken) authentication.getPrincipal();
 
 			return new OidcUserInfo(principal.getToken().getClaims());
 		};
 
+		OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
+				OAuth2AuthorizationServerConfigurer.authorizationServer();
+
 		// @formatter:off
-		authorizationServerConfigurer
-			.oidc((oidc) -> oidc
-				.userInfoEndpoint((userInfo) -> userInfo
-					.userInfoMapper(userInfoMapper) // <3>
-				)
-			);
 		http
-			.securityMatcher(endpointsMatcher)
+			.securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
+			.with(authorizationServerConfigurer, (authorizationServer) ->
+				authorizationServer
+					.oidc((oidc) -> oidc	// <3>
+						.userInfoEndpoint((userInfo) -> userInfo
+							.userInfoMapper(userInfoMapper)	// <4>
+						)
+					)
+			)
 			.authorizeHttpRequests((authorize) -> authorize
 				.anyRequest().authenticated()
-			)
-			.csrf(csrf -> csrf.ignoringRequestMatchers(endpointsMatcher))
-			.oauth2ResourceServer(resourceServer -> resourceServer
-				.jwt(Customizer.withDefaults()) // <4>
 			)
 			.exceptionHandling((exceptions) -> exceptions
 				.defaultAuthenticationEntryPointFor(
 					new LoginUrlAuthenticationEntryPoint("/login"),
 					new MediaTypeRequestMatcher(MediaType.TEXT_HTML)
 				)
-			)
-			.apply(authorizationServerConfigurer); // <5>
+			);
 		// @formatter:on
 
 		return http.build();

@@ -98,7 +98,6 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
-import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.util.LinkedMultiValueMap;
@@ -576,25 +575,23 @@ public class OAuth2TokenIntrospectionTests {
 		@Bean
 		SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
 			OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
-					new OAuth2AuthorizationServerConfigurer();
-			authorizationServerConfigurer
-					.tokenIntrospectionEndpoint((tokenIntrospectionEndpoint) ->
-							tokenIntrospectionEndpoint
-									.introspectionRequestConverter(authenticationConverter)
-									.introspectionRequestConverters(authenticationConvertersConsumer)
-									.authenticationProvider(authenticationProvider)
-									.authenticationProviders(authenticationProvidersConsumer)
-									.introspectionResponseHandler(authenticationSuccessHandler)
-									.errorResponseHandler(authenticationFailureHandler));
-			RequestMatcher endpointsMatcher = authorizationServerConfigurer.getEndpointsMatcher();
-
+					OAuth2AuthorizationServerConfigurer.authorizationServer();
 			http
-					.securityMatcher(endpointsMatcher)
+					.securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
+					.with(authorizationServerConfigurer, (authorizationServer) ->
+							authorizationServer
+									.tokenIntrospectionEndpoint((tokenIntrospectionEndpoint) ->
+											tokenIntrospectionEndpoint
+													.introspectionRequestConverter(authenticationConverter)
+													.introspectionRequestConverters(authenticationConvertersConsumer)
+													.authenticationProvider(authenticationProvider)
+													.authenticationProviders(authenticationProvidersConsumer)
+													.introspectionResponseHandler(authenticationSuccessHandler)
+													.errorResponseHandler(authenticationFailureHandler))
+					)
 					.authorizeHttpRequests((authorize) ->
 							authorize.anyRequest().authenticated()
-					)
-					.csrf((csrf) -> csrf.ignoringRequestMatchers(endpointsMatcher))
-					.apply(authorizationServerConfigurer);
+					);
 			return http.build();
 		}
 		// @formatter:on

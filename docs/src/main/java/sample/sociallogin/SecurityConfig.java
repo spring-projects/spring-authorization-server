@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import org.springframework.http.MediaType;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
@@ -36,11 +35,16 @@ public class SecurityConfig {
 	@Order(1)
 	public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http)
 			throws Exception {
-		OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http);
-		http.getConfigurer(OAuth2AuthorizationServerConfigurer.class)
-			.oidc(Customizer.withDefaults());	// Enable OpenID Connect 1.0
+		OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
+				OAuth2AuthorizationServerConfigurer.authorizationServer();
+
 		// @formatter:off
 		http
+			.securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
+			.with(authorizationServerConfigurer, (authorizationServer) ->
+				authorizationServer
+					.oidc(Customizer.withDefaults())	// Enable OpenID Connect 1.0
+			)
 			// Redirect to the OAuth 2.0 Login endpoint when not authenticated
 			// from the authorization endpoint
 			.exceptionHandling((exceptions) -> exceptions
@@ -48,9 +52,7 @@ public class SecurityConfig {
 					new LoginUrlAuthenticationEntryPoint("/oauth2/authorization/my-client"),
 					new MediaTypeRequestMatcher(MediaType.TEXT_HTML)
 				)
-			)
-			// Accept access tokens for User Info and/or Client Registration
-			.oauth2ResourceServer((oauth2) -> oauth2.jwt(Customizer.withDefaults()));
+			);
 		// @formatter:on
 
 		return http.build();

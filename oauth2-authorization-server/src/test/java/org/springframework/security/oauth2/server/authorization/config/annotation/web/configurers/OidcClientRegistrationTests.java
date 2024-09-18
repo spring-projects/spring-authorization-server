@@ -104,7 +104,6 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
-import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.util.CollectionUtils;
@@ -615,32 +614,27 @@ public class OidcClientRegistrationTests {
 		@Override
 		public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
 			OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
-					new OAuth2AuthorizationServerConfigurer();
-			authorizationServerConfigurer
-				.oidc((oidc) ->
-					oidc
-						.clientRegistrationEndpoint((clientRegistration) ->
-							clientRegistration
-								.clientRegistrationRequestConverter(authenticationConverter)
-								.clientRegistrationRequestConverters(authenticationConvertersConsumer)
-								.authenticationProvider(authenticationProvider)
-								.authenticationProviders(authenticationProvidersConsumer)
-								.clientRegistrationResponseHandler(authenticationSuccessHandler)
-								.errorResponseHandler(authenticationFailureHandler)
-						)
-				);
-			RequestMatcher endpointsMatcher = authorizationServerConfigurer.getEndpointsMatcher();
-
+					OAuth2AuthorizationServerConfigurer.authorizationServer();
 			http
-					.securityMatcher(endpointsMatcher)
+					.securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
+					.with(authorizationServerConfigurer, (authorizationServer) ->
+							authorizationServer
+									.oidc((oidc) ->
+											oidc
+													.clientRegistrationEndpoint((clientRegistration) ->
+															clientRegistration
+																	.clientRegistrationRequestConverter(authenticationConverter)
+																	.clientRegistrationRequestConverters(authenticationConvertersConsumer)
+																	.authenticationProvider(authenticationProvider)
+																	.authenticationProviders(authenticationProvidersConsumer)
+																	.clientRegistrationResponseHandler(authenticationSuccessHandler)
+																	.errorResponseHandler(authenticationFailureHandler)
+													)
+									)
+					)
 					.authorizeHttpRequests((authorize) ->
 							authorize.anyRequest().authenticated()
-					)
-					.csrf((csrf) -> csrf.ignoringRequestMatchers(endpointsMatcher))
-					.oauth2ResourceServer((resourceServer) ->
-						resourceServer.jwt(Customizer.withDefaults())
-					)
-					.apply(authorizationServerConfigurer);
+					);
 			return http.build();
 		}
 		// @formatter:on
@@ -656,27 +650,22 @@ public class OidcClientRegistrationTests {
 		@Override
 		public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
 			OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
-					new OAuth2AuthorizationServerConfigurer();
-			authorizationServerConfigurer
-				.oidc((oidc) ->
-					oidc
-						.clientRegistrationEndpoint((clientRegistration) ->
-							clientRegistration
-								.authenticationProviders(configureClientRegistrationConverters())
-						)
-				);
-			RequestMatcher endpointsMatcher = authorizationServerConfigurer.getEndpointsMatcher();
-
+					OAuth2AuthorizationServerConfigurer.authorizationServer();
 			http
-					.securityMatcher(endpointsMatcher)
+					.securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
+					.with(authorizationServerConfigurer, (authorizationServer) ->
+							authorizationServer
+									.oidc((oidc) ->
+											oidc
+													.clientRegistrationEndpoint((clientRegistration) ->
+															clientRegistration
+																	.authenticationProviders(configureClientRegistrationConverters())
+													)
+									)
+					)
 					.authorizeHttpRequests((authorize) ->
 							authorize.anyRequest().authenticated()
-					)
-					.csrf((csrf) -> csrf.ignoringRequestMatchers(endpointsMatcher))
-					.oauth2ResourceServer((resourceServer) ->
-							resourceServer.jwt(Customizer.withDefaults())
-					)
-					.apply(authorizationServerConfigurer);
+					);
 			return http.build();
 		}
 		// @formatter:on
@@ -704,22 +693,19 @@ public class OidcClientRegistrationTests {
 		@Bean
 		SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
 			OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
-					new OAuth2AuthorizationServerConfigurer();
-			authorizationServerConfigurer
-					.oidc((oidc) ->
-							oidc.clientRegistrationEndpoint(Customizer.withDefaults()));
-			RequestMatcher endpointsMatcher = authorizationServerConfigurer.getEndpointsMatcher();
-
+					OAuth2AuthorizationServerConfigurer.authorizationServer();
 			http
-					.securityMatcher(endpointsMatcher)
+					.securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
+					.with(authorizationServerConfigurer, (authorizationServer) ->
+							authorizationServer
+									.oidc((oidc) ->
+											oidc
+													.clientRegistrationEndpoint(Customizer.withDefaults())
+									)
+					)
 					.authorizeHttpRequests((authorize) ->
 							authorize.anyRequest().authenticated()
-					)
-					.csrf((csrf) -> csrf.ignoringRequestMatchers(endpointsMatcher))
-					.oauth2ResourceServer((resourceServer) ->
-							resourceServer.jwt(Customizer.withDefaults())
-					)
-					.apply(authorizationServerConfigurer);
+					);
 			return http.build();
 		}
 		// @formatter:on

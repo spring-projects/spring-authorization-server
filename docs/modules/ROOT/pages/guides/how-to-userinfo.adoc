@@ -31,7 +31,7 @@ TIP: Click on the "Expand folded text" icon in the code sample above to display 
 This configuration provides the following:
 
 <1> A Spring Security filter chain for the xref:{docs-dir}/protocol-endpoints.adoc[Protocol Endpoints].
-<2> Resource server support that allows User Info requests to be authenticated with access tokens.
+<2> Enabling OpenID Connect 1.0 will autoconfigure resource server support that allows User Info requests to be authenticated with access tokens.
 <3> An instance of `JwtDecoder` used to validate access tokens.
 
 [[customize-user-info]]
@@ -87,9 +87,8 @@ This configuration maps claims from the access token (which is a JWT when using 
 
 <1> A Spring Security filter chain for the xref:{docs-dir}/protocol-endpoints.adoc[Protocol Endpoints].
 <2> A user info mapper that maps claims in a domain-specific way.
-<3> An example showing the configuration option for customizing the user info mapper.
-<4> Resource server support that allows User Info requests to be authenticated with access tokens.
-<5> An example showing how to apply the `OAuth2AuthorizationServerConfigurer` to the Spring Security configuration.
+<3> Enabling OpenID Connect 1.0 will autoconfigure resource server support that allows User Info requests to be authenticated with access tokens.
+<4> An example showing the configuration option for customizing the user info mapper.
 
 The user info mapper is not limited to mapping claims from a JWT, but this is a simple example that demonstrates the customization option.
 Similar to the xref:guides/how-to-userinfo.adoc#customize-id-token[example shown earlier] where we customize claims of the ID token, you can customize claims of the access token itself ahead of time, as in the following example:

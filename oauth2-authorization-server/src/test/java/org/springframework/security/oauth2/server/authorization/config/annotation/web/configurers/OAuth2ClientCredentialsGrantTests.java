@@ -104,7 +104,6 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
-import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
@@ -541,25 +540,23 @@ public class OAuth2ClientCredentialsGrantTests {
 		@Bean
 		SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
 			OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
-					new OAuth2AuthorizationServerConfigurer();
-			authorizationServerConfigurer
-					.tokenEndpoint((tokenEndpoint) ->
-							tokenEndpoint
-									.accessTokenRequestConverter(authenticationConverter)
-									.accessTokenRequestConverters(authenticationConvertersConsumer)
-									.authenticationProvider(authenticationProvider)
-									.authenticationProviders(authenticationProvidersConsumer)
-									.accessTokenResponseHandler(authenticationSuccessHandler)
-									.errorResponseHandler(authenticationFailureHandler));
-			RequestMatcher endpointsMatcher = authorizationServerConfigurer.getEndpointsMatcher();
-
+					OAuth2AuthorizationServerConfigurer.authorizationServer();
 			http
-					.securityMatcher(endpointsMatcher)
+					.securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
+					.with(authorizationServerConfigurer, (authorizationServer) ->
+							authorizationServer
+									.tokenEndpoint((tokenEndpoint) ->
+											tokenEndpoint
+													.accessTokenRequestConverter(authenticationConverter)
+													.accessTokenRequestConverters(authenticationConvertersConsumer)
+													.authenticationProvider(authenticationProvider)
+													.authenticationProviders(authenticationProvidersConsumer)
+													.accessTokenResponseHandler(authenticationSuccessHandler)
+													.errorResponseHandler(authenticationFailureHandler))
+					)
 					.authorizeHttpRequests((authorize) ->
 							authorize.anyRequest().authenticated()
-					)
-					.csrf((csrf) -> csrf.ignoringRequestMatchers(endpointsMatcher))
-					.apply(authorizationServerConfigurer);
+					);
 			return http.build();
 		}
 		// @formatter:on
@@ -587,25 +584,23 @@ public class OAuth2ClientCredentialsGrantTests {
 			authenticationSuccessHandler = spy(authenticationSuccessHandler());
 
 			OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
-					new OAuth2AuthorizationServerConfigurer();
-			authorizationServerConfigurer
-					.clientAuthentication((clientAuthentication) ->
-							clientAuthentication
-									.authenticationConverter(authenticationConverter)
-									.authenticationConverters(authenticationConvertersConsumer)
-									.authenticationProvider(authenticationProvider)
-									.authenticationProviders(authenticationProvidersConsumer)
-									.authenticationSuccessHandler(authenticationSuccessHandler)
-									.errorResponseHandler(authenticationFailureHandler));
-			RequestMatcher endpointsMatcher = authorizationServerConfigurer.getEndpointsMatcher();
-
+					OAuth2AuthorizationServerConfigurer.authorizationServer();
 			http
-					.securityMatcher(endpointsMatcher)
+					.securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
+					.with(authorizationServerConfigurer, (authorizationServer) ->
+							authorizationServer
+									.clientAuthentication((clientAuthentication) ->
+											clientAuthentication
+													.authenticationConverter(authenticationConverter)
+													.authenticationConverters(authenticationConvertersConsumer)
+													.authenticationProvider(authenticationProvider)
+													.authenticationProviders(authenticationProvidersConsumer)
+													.authenticationSuccessHandler(authenticationSuccessHandler)
+													.errorResponseHandler(authenticationFailureHandler))
+					)
 					.authorizeHttpRequests((authorize) ->
 							authorize.anyRequest().authenticated()
-					)
-					.csrf((csrf) -> csrf.ignoringRequestMatchers(endpointsMatcher))
-					.apply(authorizationServerConfigurer);
+					);
 			return http.build();
 		}
 		// @formatter:on

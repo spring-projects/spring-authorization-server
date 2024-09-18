@@ -49,7 +49,6 @@ import org.springframework.security.oauth2.server.authorization.settings.Authori
 import org.springframework.security.oauth2.server.authorization.test.SpringTestContext;
 import org.springframework.security.oauth2.server.authorization.test.SpringTestContextExtension;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.hamcrest.CoreMatchers.hasItems;
@@ -194,23 +193,18 @@ public class OAuth2AuthorizationServerMetadataTests {
 		@Bean
 		SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
 			OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
-					new OAuth2AuthorizationServerConfigurer();
-			http.apply(authorizationServerConfigurer);
-
-			authorizationServerConfigurer
-					.authorizationServerMetadataEndpoint((authorizationServerMetadataEndpoint) ->
-							authorizationServerMetadataEndpoint
-									.authorizationServerMetadataCustomizer(authorizationServerMetadataCustomizer()));
-
-			RequestMatcher endpointsMatcher = authorizationServerConfigurer.getEndpointsMatcher();
-
+					OAuth2AuthorizationServerConfigurer.authorizationServer();
 			http
-					.securityMatcher(endpointsMatcher)
+					.securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
+					.with(authorizationServerConfigurer, (authorizationServer) ->
+							authorizationServer
+									.authorizationServerMetadataEndpoint((authorizationServerMetadataEndpoint) ->
+											authorizationServerMetadataEndpoint
+													.authorizationServerMetadataCustomizer(authorizationServerMetadataCustomizer()))
+					)
 					.authorizeHttpRequests((authorize) ->
 							authorize.anyRequest().authenticated()
-					)
-					.csrf((csrf) -> csrf.ignoringRequestMatchers(endpointsMatcher));
-
+					);
 			return http.build();
 		}
 		// @formatter:on

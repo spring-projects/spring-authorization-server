@@ -17,6 +17,10 @@ package org.springframework.security.oauth2.server.authorization.config.annotati
 
 import java.util.function.Consumer;
 
+import com.nimbusds.jose.jwk.JWKSet;
+import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
+import com.nimbusds.jose.jwk.source.JWKSource;
+import com.nimbusds.jose.proc.SecurityContext;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -30,7 +34,9 @@ import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationResponseType;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
+import org.springframework.security.oauth2.jose.TestJwks;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationServerMetadataClaimNames;
 import org.springframework.security.oauth2.server.authorization.client.InMemoryRegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
@@ -42,7 +48,6 @@ import org.springframework.security.oauth2.server.authorization.settings.Authori
 import org.springframework.security.oauth2.server.authorization.test.SpringTestContext;
 import org.springframework.security.oauth2.server.authorization.test.SpringTestContextExtension;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultMatcher;
 
@@ -222,9 +227,16 @@ public class OidcProviderConfigurationTests {
 
 		@Bean
 		SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
-			OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http);
-			// Enable OpenID Connect 1.0
-			http.getConfigurer(OAuth2AuthorizationServerConfigurer.class).oidc(Customizer.withDefaults());
+			OAuth2AuthorizationServerConfigurer authorizationServerConfigurer = OAuth2AuthorizationServerConfigurer
+				.authorizationServer();
+			// @formatter:off
+			http
+				.securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
+				.with(authorizationServerConfigurer, (authorizationServer) ->
+					authorizationServer
+						.oidc(Customizer.withDefaults())	// Enable OpenID Connect 1.0
+				);
+			// @formatter:on
 			return http.build();
 		}
 
@@ -232,6 +244,16 @@ public class OidcProviderConfigurationTests {
 		RegisteredClientRepository registeredClientRepository() {
 			RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 			return new InMemoryRegisteredClientRepository(registeredClient);
+		}
+
+		@Bean
+		JWKSource<SecurityContext> jwkSource() {
+			return new ImmutableJWKSet<>(new JWKSet(TestJwks.DEFAULT_RSA_JWK));
+		}
+
+		@Bean
+		JwtDecoder jwtDecoder(JWKSource<SecurityContext> jwkSource) {
+			return OAuth2AuthorizationServerConfiguration.jwtDecoder(jwkSource);
 		}
 
 		@Bean
@@ -261,24 +283,19 @@ public class OidcProviderConfigurationTests {
 		@Bean
 		SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
 			OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
-					new OAuth2AuthorizationServerConfigurer();
-			http.apply(authorizationServerConfigurer);
-
-			authorizationServerConfigurer
-					.oidc((oidc) ->
-							oidc.providerConfigurationEndpoint((providerConfigurationEndpoint) ->
-									providerConfigurationEndpoint
-											.providerConfigurationCustomizer(providerConfigurationCustomizer())));
-
-			RequestMatcher endpointsMatcher = authorizationServerConfigurer.getEndpointsMatcher();
-
+					OAuth2AuthorizationServerConfigurer.authorizationServer();
 			http
-					.securityMatcher(endpointsMatcher)
+					.securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
+					.with(authorizationServerConfigurer, (authorizationServer) ->
+							authorizationServer
+									.oidc((oidc) ->
+											oidc.providerConfigurationEndpoint((providerConfigurationEndpoint) ->
+													providerConfigurationEndpoint
+															.providerConfigurationCustomizer(providerConfigurationCustomizer())))
+					)
 					.authorizeHttpRequests((authorize) ->
 							authorize.anyRequest().authenticated()
-					)
-					.csrf((csrf) -> csrf.ignoringRequestMatchers(endpointsMatcher));
-
+					);
 			return http.build();
 		}
 		// @formatter:on
@@ -298,14 +315,15 @@ public class OidcProviderConfigurationTests {
 		@Bean
 		SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
 			OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
-					new OAuth2AuthorizationServerConfigurer();
-			http.apply(authorizationServerConfigurer);
-
-			authorizationServerConfigurer
-					.oidc((oidc) ->
-							oidc.clientRegistrationEndpoint(Customizer.withDefaults())
+					OAuth2AuthorizationServerConfigurer.authorizationServer();
+			http
+					.securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
+					.with(authorizationServerConfigurer, (authorizationServer) ->
+							authorizationServer
+									.oidc((oidc) ->
+											oidc.clientRegistrationEndpoint(Customizer.withDefaults())
+									)
 					);
-
 			return http.build();
 		}
 		// @formatter:on

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,11 +61,16 @@ public class SecurityConfig {
 	@Order(1)
 	public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http)
 			throws Exception {
-		OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http);
-		http.getConfigurer(OAuth2AuthorizationServerConfigurer.class)
-			.oidc(Customizer.withDefaults());	// Enable OpenID Connect 1.0
+		OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
+				OAuth2AuthorizationServerConfigurer.authorizationServer();
+
 		// @formatter:off
 		http
+			.securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
+			.with(authorizationServerConfigurer, (authorizationServer) ->
+				authorizationServer
+					.oidc(Customizer.withDefaults())	// Enable OpenID Connect 1.0
+			)
 			// Redirect to the login page when not authenticated from the
 			// authorization endpoint
 			.exceptionHandling((exceptions) -> exceptions
@@ -73,10 +78,7 @@ public class SecurityConfig {
 					new LoginUrlAuthenticationEntryPoint("/login"),
 					new MediaTypeRequestMatcher(MediaType.TEXT_HTML)
 				)
-			)
-			// Accept access tokens for User Info and/or Client Registration
-			.oauth2ResourceServer((resourceServer) -> resourceServer
-				.jwt(Customizer.withDefaults()));
+			);
 		// @formatter:on
 
 		return http.build();

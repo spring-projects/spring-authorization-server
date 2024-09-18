@@ -14,19 +14,22 @@ It defines extension points that let you customize the pre-processing, main proc
 @Bean
 public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
 	OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
-		new OAuth2AuthorizationServerConfigurer();
-	http.apply(authorizationServerConfigurer);
+			OAuth2AuthorizationServerConfigurer.authorizationServer();
 
-	authorizationServerConfigurer
-		.authorizationEndpoint(authorizationEndpoint ->
-			authorizationEndpoint
-				.authorizationRequestConverter(authorizationRequestConverter)   <1>
-				.authorizationRequestConverters(authorizationRequestConvertersConsumer) <2>
-				.authenticationProvider(authenticationProvider) <3>
-				.authenticationProviders(authenticationProvidersConsumer)   <4>
-				.authorizationResponseHandler(authorizationResponseHandler) <5>
-				.errorResponseHandler(errorResponseHandler) <6>
-				.consentPage("/oauth2/v1/authorize")    <7>
+	http
+		.securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
+		.with(authorizationServerConfigurer, (authorizationServer) ->
+			authorizationServer
+				.authorizationEndpoint(authorizationEndpoint ->
+					authorizationEndpoint
+        				.authorizationRequestConverter(authorizationRequestConverter)   <1>
+                        .authorizationRequestConverters(authorizationRequestConvertersConsumer) <2>
+                        .authenticationProvider(authenticationProvider) <3>
+                        .authenticationProviders(authenticationProvidersConsumer)   <4>
+                        .authorizationResponseHandler(authorizationResponseHandler) <5>
+                        .errorResponseHandler(errorResponseHandler) <6>
+                        .consentPage("/oauth2/v1/authorize")    <7>
+				)
 		);
 
 	return http.build();
@@ -74,13 +77,16 @@ The following example shows how to configure `OAuth2AuthorizationCodeRequestAuth
 @Bean
 public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
 	OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
-		new OAuth2AuthorizationServerConfigurer();
-	http.apply(authorizationServerConfigurer);
+			OAuth2AuthorizationServerConfigurer.authorizationServer();
 
-	authorizationServerConfigurer
-		.authorizationEndpoint(authorizationEndpoint ->
-			authorizationEndpoint
-				.authenticationProviders(configureAuthenticationValidator())
+	http
+		.securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
+		.with(authorizationServerConfigurer, (authorizationServer) ->
+			authorizationServer
+				.authorizationEndpoint(authorizationEndpoint ->
+					authorizationEndpoint
+                        .authenticationProviders(configureAuthenticationValidator())
+				)
 		);
 
 	return http.build();
@@ -133,19 +139,22 @@ It defines extension points that let you customize the pre-processing, main proc
 @Bean
 public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
 	OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
-		new OAuth2AuthorizationServerConfigurer();
-	http.apply(authorizationServerConfigurer);
+			OAuth2AuthorizationServerConfigurer.authorizationServer();
 
-	authorizationServerConfigurer
-		.deviceAuthorizationEndpoint(deviceAuthorizationEndpoint ->
-			deviceAuthorizationEndpoint
-				.deviceAuthorizationRequestConverter(deviceAuthorizationRequestConverter) <1>
-				.deviceAuthorizationRequestConverters(deviceAuthorizationRequestConvertersConsumer) <2>
-				.authenticationProvider(authenticationProvider) <3>
-				.authenticationProviders(authenticationProvidersConsumer) <4>
-				.deviceAuthorizationResponseHandler(deviceAuthorizationResponseHandler) <5>
-				.errorResponseHandler(errorResponseHandler) <6>
-				.verificationUri("/oauth2/v1/device_verification") <7>
+	http
+		.securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
+		.with(authorizationServerConfigurer, (authorizationServer) ->
+			authorizationServer
+				.deviceAuthorizationEndpoint(deviceAuthorizationEndpoint ->
+                    deviceAuthorizationEndpoint
+                        .deviceAuthorizationRequestConverter(deviceAuthorizationRequestConverter)   <1>
+                        .deviceAuthorizationRequestConverters(deviceAuthorizationRequestConvertersConsumer) <2>
+                        .authenticationProvider(authenticationProvider) <3>
+                        .authenticationProviders(authenticationProvidersConsumer)   <4>
+                        .deviceAuthorizationResponseHandler(deviceAuthorizationResponseHandler) <5>
+                        .errorResponseHandler(errorResponseHandler) <6>
+                        .verificationUri("/oauth2/v1/device_verification")  <7>
+				)
 		);
 
 	return http.build();
@@ -182,19 +191,22 @@ It defines extension points that let you customize the pre-processing, main proc
 @Bean
 public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
 	OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
-		new OAuth2AuthorizationServerConfigurer();
-	http.apply(authorizationServerConfigurer);
+			OAuth2AuthorizationServerConfigurer.authorizationServer();
 
-	authorizationServerConfigurer
-		.deviceVerificationEndpoint(deviceVerificationEndpoint ->
-			deviceVerificationEndpoint
-				.deviceVerificationRequestConverter(deviceVerificationRequestConverter) <1>
-				.deviceVerificationRequestConverters(deviceVerificationRequestConvertersConsumer) <2>
-				.authenticationProvider(authenticationProvider) <3>
-				.authenticationProviders(authenticationProvidersConsumer) <4>
-				.deviceVerificationResponseHandler(deviceVerificationResponseHandler) <5>
-				.errorResponseHandler(errorResponseHandler) <6>
-				.consentPage("/oauth2/v1/consent") <7>
+	http
+		.securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
+		.with(authorizationServerConfigurer, (authorizationServer) ->
+			authorizationServer
+				.deviceVerificationEndpoint(deviceVerificationEndpoint ->
+                    deviceVerificationEndpoint
+                        .deviceVerificationRequestConverter(deviceVerificationRequestConverter) <1>
+                        .deviceVerificationRequestConverters(deviceVerificationRequestConvertersConsumer)   <2>
+                        .authenticationProvider(authenticationProvider) <3>
+                        .authenticationProviders(authenticationProvidersConsumer)   <4>
+                        .deviceVerificationResponseHandler(deviceVerificationResponseHandler)   <5>
+                        .errorResponseHandler(errorResponseHandler) <6>
+                        .consentPage("/oauth2/v1/consent")  <7>
+				)
 		);
 
 	return http.build();
@@ -230,18 +242,21 @@ It defines extension points that let you customize the pre-processing, main proc
 @Bean
 public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
 	OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
-		new OAuth2AuthorizationServerConfigurer();
-	http.apply(authorizationServerConfigurer);
+			OAuth2AuthorizationServerConfigurer.authorizationServer();
 
-	authorizationServerConfigurer
-		.tokenEndpoint(tokenEndpoint ->
-			tokenEndpoint
-				.accessTokenRequestConverter(accessTokenRequestConverter)   <1>
-				.accessTokenRequestConverters(accessTokenRequestConvertersConsumer) <2>
-				.authenticationProvider(authenticationProvider) <3>
-				.authenticationProviders(authenticationProvidersConsumer)   <4>
-				.accessTokenResponseHandler(accessTokenResponseHandler) <5>
-				.errorResponseHandler(errorResponseHandler) <6>
+	http
+		.securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
+		.with(authorizationServerConfigurer, (authorizationServer) ->
+			authorizationServer
+				.tokenEndpoint(tokenEndpoint ->
+                    tokenEndpoint
+                        .accessTokenRequestConverter(accessTokenRequestConverter)   <1>
+                        .accessTokenRequestConverters(accessTokenRequestConvertersConsumer) <2>
+                        .authenticationProvider(authenticationProvider) <3>
+                        .authenticationProviders(authenticationProvidersConsumer)   <4>
+                        .accessTokenResponseHandler(accessTokenResponseHandler) <5>
+                        .errorResponseHandler(errorResponseHandler) <6>
+				)
 		);
 
 	return http.build();
@@ -288,13 +303,16 @@ The following example shows how to configure `OAuth2ClientCredentialsAuthenticat
 @Bean
 public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
 	OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
-		new OAuth2AuthorizationServerConfigurer();
-	http.apply(authorizationServerConfigurer);
+			OAuth2AuthorizationServerConfigurer.authorizationServer();
 
-	authorizationServerConfigurer
-		.tokenEndpoint(tokenEndpoint ->
-			tokenEndpoint
-				.authenticationProviders(configureAuthenticationValidator())
+	http
+		.securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
+		.with(authorizationServerConfigurer, (authorizationServer) ->
+			authorizationServer
+				.tokenEndpoint(tokenEndpoint ->
+                    tokenEndpoint
+                        .authenticationProviders(configureAuthenticationValidator())
+				)
 		);
 
 	return http.build();
@@ -344,18 +362,21 @@ It defines extension points that let you customize the pre-processing, main proc
 @Bean
 public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
 	OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
-		new OAuth2AuthorizationServerConfigurer();
-	http.apply(authorizationServerConfigurer);
+			OAuth2AuthorizationServerConfigurer.authorizationServer();
 
-	authorizationServerConfigurer
-		.tokenIntrospectionEndpoint(tokenIntrospectionEndpoint ->
-			tokenIntrospectionEndpoint
-				.introspectionRequestConverter(introspectionRequestConverter)   <1>
-				.introspectionRequestConverters(introspectionRequestConvertersConsumer) <2>
-				.authenticationProvider(authenticationProvider) <3>
-				.authenticationProviders(authenticationProvidersConsumer)   <4>
-				.introspectionResponseHandler(introspectionResponseHandler) <5>
-				.errorResponseHandler(errorResponseHandler) <6>
+	http
+		.securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
+		.with(authorizationServerConfigurer, (authorizationServer) ->
+			authorizationServer
+				.tokenIntrospectionEndpoint(tokenIntrospectionEndpoint ->
+                    tokenIntrospectionEndpoint
+                        .introspectionRequestConverter(introspectionRequestConverter)   <1>
+                        .introspectionRequestConverters(introspectionRequestConvertersConsumer) <2>
+                        .authenticationProvider(authenticationProvider) <3>
+                        .authenticationProviders(authenticationProvidersConsumer)   <4>
+                        .introspectionResponseHandler(introspectionResponseHandler) <5>
+                        .errorResponseHandler(errorResponseHandler) <6>
+				)
 		);
 
 	return http.build();
@@ -391,18 +412,21 @@ It defines extension points that let you customize the pre-processing, main proc
 @Bean
 public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
 	OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
-		new OAuth2AuthorizationServerConfigurer();
-	http.apply(authorizationServerConfigurer);
+			OAuth2AuthorizationServerConfigurer.authorizationServer();
 
-	authorizationServerConfigurer
-		.tokenRevocationEndpoint(tokenRevocationEndpoint ->
-			tokenRevocationEndpoint
-				.revocationRequestConverter(revocationRequestConverter) <1>
-				.revocationRequestConverters(revocationRequestConvertersConsumer)   <2>
-				.authenticationProvider(authenticationProvider) <3>
-				.authenticationProviders(authenticationProvidersConsumer)   <4>
-				.revocationResponseHandler(revocationResponseHandler)   <5>
-				.errorResponseHandler(errorResponseHandler) <6>
+	http
+		.securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
+		.with(authorizationServerConfigurer, (authorizationServer) ->
+			authorizationServer
+				.tokenRevocationEndpoint(tokenRevocationEndpoint ->
+                    tokenRevocationEndpoint
+                        .revocationRequestConverter(revocationRequestConverter) <1>
+                        .revocationRequestConverters(revocationRequestConvertersConsumer)   <2>
+                        .authenticationProvider(authenticationProvider) <3>
+                        .authenticationProviders(authenticationProvidersConsumer)   <4>
+                        .revocationResponseHandler(revocationResponseHandler)   <5>
+                        .errorResponseHandler(errorResponseHandler) <6>
+				)
 		);
 
 	return http.build();
@@ -438,13 +462,17 @@ It defines an extension point that lets you customize the https://datatracker.ie
 @Bean
 public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
 	OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
-		new OAuth2AuthorizationServerConfigurer();
-	http.apply(authorizationServerConfigurer);
+			OAuth2AuthorizationServerConfigurer.authorizationServer();
 
-	authorizationServerConfigurer
-		.authorizationServerMetadataEndpoint(authorizationServerMetadataEndpoint ->
-			authorizationServerMetadataEndpoint
-				.authorizationServerMetadataCustomizer(authorizationServerMetadataCustomizer));   <1>
+	http
+		.securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
+		.with(authorizationServerConfigurer, (authorizationServer) ->
+			authorizationServer
+				.authorizationServerMetadataEndpoint(authorizationServerMetadataEndpoint ->
+                    authorizationServerMetadataEndpoint
+                        .authorizationServerMetadataCustomizer(authorizationServerMetadataCustomizer)   <1>
+				)
+		);
 
 	return http.build();
 }
@@ -478,16 +506,19 @@ It defines an extension point that lets you customize the https://openid.net/spe
 @Bean
 public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
 	OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
-		new OAuth2AuthorizationServerConfigurer();
-	http.apply(authorizationServerConfigurer);
+			OAuth2AuthorizationServerConfigurer.authorizationServer();
 
-	authorizationServerConfigurer
-		.oidc(oidc ->
-			oidc
-				.providerConfigurationEndpoint(providerConfigurationEndpoint ->
-					providerConfigurationEndpoint
-						.providerConfigurationCustomizer(providerConfigurationCustomizer)   <1>
-				)
+	http
+		.securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
+		.with(authorizationServerConfigurer, (authorizationServer) ->
+			authorizationServer
+                .oidc(oidc ->
+                    oidc
+                        .providerConfigurationEndpoint(providerConfigurationEndpoint ->
+                            providerConfigurationEndpoint
+                                .providerConfigurationCustomizer(providerConfigurationCustomizer)   <1>
+                        )
+                )
 		);
 
 	return http.build();
@@ -511,21 +542,24 @@ It defines extension points that let you customize the pre-processing, main proc
 @Bean
 public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
 	OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
-		new OAuth2AuthorizationServerConfigurer();
-	http.apply(authorizationServerConfigurer);
+			OAuth2AuthorizationServerConfigurer.authorizationServer();
 
-	authorizationServerConfigurer
-		.oidc(oidc ->
-			oidc
-				.logoutEndpoint(logoutEndpoint ->
-					logoutEndpoint
-						.logoutRequestConverter(logoutRequestConverter) <1>
-						.logoutRequestConverters(logoutRequestConvertersConsumer)   <2>
-						.authenticationProvider(authenticationProvider) <3>
-						.authenticationProviders(authenticationProvidersConsumer)   <4>
-						.logoutResponseHandler(logoutResponseHandler)   <5>
-						.errorResponseHandler(errorResponseHandler) <6>
-				)
+	http
+		.securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
+		.with(authorizationServerConfigurer, (authorizationServer) ->
+			authorizationServer
+                .oidc(oidc ->
+                    oidc
+                        .logoutEndpoint(logoutEndpoint ->
+                            logoutEndpoint
+                                .logoutRequestConverter(logoutRequestConverter) <1>
+                                .logoutRequestConverters(logoutRequestConvertersConsumer)   <2>
+                                .authenticationProvider(authenticationProvider) <3>
+                                .authenticationProviders(authenticationProvidersConsumer)   <4>
+                                .logoutResponseHandler(logoutResponseHandler)   <5>
+                                .errorResponseHandler(errorResponseHandler) <6>
+                        )
+                )
 		);
 
 	return http.build();
@@ -576,14 +610,19 @@ The following example shows how to configure `OidcLogoutAuthenticationProvider` 
 @Bean
 public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
 	OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
-			new OAuth2AuthorizationServerConfigurer();
-	http.apply(authorizationServerConfigurer);
+			OAuth2AuthorizationServerConfigurer.authorizationServer();
 
-	authorizationServerConfigurer
-		.oidc(oidc ->
-			oidc
-				.logoutEndpoint(logoutEndpoint ->
-					logoutEndpoint.authenticationProviders(configureAuthenticationValidator()))
+	http
+		.securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
+		.with(authorizationServerConfigurer, (authorizationServer) ->
+			authorizationServer
+                .oidc(oidc ->
+                    oidc
+                        .logoutEndpoint(logoutEndpoint ->
+                            logoutEndpoint
+                                .authenticationProviders(configureAuthenticationValidator())
+                        )
+                )
 		);
 
 	return http.build();
@@ -626,22 +665,25 @@ It defines extension points that let you customize the pre-processing, main proc
 @Bean
 public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
 	OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
-		new OAuth2AuthorizationServerConfigurer();
-	http.apply(authorizationServerConfigurer);
+			OAuth2AuthorizationServerConfigurer.authorizationServer();
 
-	authorizationServerConfigurer
-		.oidc(oidc ->
-			oidc
-				.userInfoEndpoint(userInfoEndpoint ->
-					userInfoEndpoint
-						.userInfoRequestConverter(userInfoRequestConverter) <1>
-						.userInfoRequestConverters(userInfoRequestConvertersConsumer) <2>
-						.authenticationProvider(authenticationProvider) <3>
-						.authenticationProviders(authenticationProvidersConsumer) <4>
-						.userInfoResponseHandler(userInfoResponseHandler) <5>
-						.errorResponseHandler(errorResponseHandler) <6>
-						.userInfoMapper(userInfoMapper) <7>
-				)
+	http
+		.securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
+		.with(authorizationServerConfigurer, (authorizationServer) ->
+			authorizationServer
+                .oidc(oidc ->
+                    oidc
+                        .userInfoEndpoint(userInfoEndpoint ->
+                            userInfoEndpoint
+                                .userInfoRequestConverter(userInfoRequestConverter) <1>
+                                .userInfoRequestConverters(userInfoRequestConvertersConsumer)   <2>
+                                .authenticationProvider(authenticationProvider) <3>
+                                .authenticationProviders(authenticationProvidersConsumer)   <4>
+                                .userInfoResponseHandler(userInfoResponseHandler)   <5>
+                                .errorResponseHandler(errorResponseHandler) <6>
+                                .userInfoMapper(userInfoMapper) <7>
+                        )
+                )
 		);
 
 	return http.build();
@@ -669,31 +711,9 @@ public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity h
 You can customize the ID Token by providing an xref:core-model-components.adoc#oauth2-token-customizer[`OAuth2TokenCustomizer<JwtEncodingContext>`] `@Bean`.
 
 The OpenID Connect 1.0 UserInfo endpoint is an OAuth2 protected resource, which *REQUIRES* an access token to be sent as a bearer token in the https://openid.net/specs/openid-connect-core-1_0.html#UserInfoRequest[UserInfo request].
-The following example shows how to enable the OAuth2 resource server configuration:
-
-[source,java]
-----
-@Bean
-public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
-	OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
-		new OAuth2AuthorizationServerConfigurer();
-	http.apply(authorizationServerConfigurer);
-
-	...
-
-	http.oauth2ResourceServer(resourceServer -> resourceServer.jwt(Customizer.withDefaults()));
-
-	return http.build();
-}
-
-@Bean
-public JwtDecoder jwtDecoder(JWKSource<SecurityContext> jwkSource) {
-	return OAuth2AuthorizationServerConfiguration.jwtDecoder(jwkSource);
-}
-----
 
 [NOTE]
-A `JwtDecoder` `@Bean` is *REQUIRED* for the OpenID Connect 1.0 UserInfo endpoint.
+OAuth2 resource server support is autoconfigured, however, a `JwtDecoder` `@Bean` is *REQUIRED* for the OpenID Connect 1.0 UserInfo endpoint.
 
 [TIP]
 The guide xref:guides/how-to-userinfo.adoc[How-to: Customize the OpenID Connect 1.0 UserInfo response] contains examples of customizing the UserInfo endpoint.
@@ -711,21 +731,24 @@ It defines extension points that let you customize the pre-processing, main proc
 @Bean
 public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
 	OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
-		new OAuth2AuthorizationServerConfigurer();
-	http.apply(authorizationServerConfigurer);
+			OAuth2AuthorizationServerConfigurer.authorizationServer();
 
-	authorizationServerConfigurer
-		.oidc(oidc ->
-			oidc
-				.clientRegistrationEndpoint(clientRegistrationEndpoint ->
-					clientRegistrationEndpoint
-						.clientRegistrationRequestConverter(clientRegistrationRequestConverter) <1>
-						.clientRegistrationRequestConverters(clientRegistrationRequestConvertersConsumers) <2>
-						.authenticationProvider(authenticationProvider) <3>
-						.authenticationProviders(authenticationProvidersConsumer) <4>
-						.clientRegistrationResponseHandler(clientRegistrationResponseHandler) <5>
-						.errorResponseHandler(errorResponseHandler) <6>
-				)
+	http
+		.securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
+		.with(authorizationServerConfigurer, (authorizationServer) ->
+			authorizationServer
+                .oidc(oidc ->
+                    oidc
+                        .clientRegistrationEndpoint(clientRegistrationEndpoint ->
+                            clientRegistrationEndpoint
+                                .clientRegistrationRequestConverter(clientRegistrationRequestConverter) <1>
+                                .clientRegistrationRequestConverters(clientRegistrationRequestConvertersConsumers)  <2>
+                                .authenticationProvider(authenticationProvider) <3>
+                                .authenticationProviders(authenticationProvidersConsumer)   <4>
+                                .clientRegistrationResponseHandler(clientRegistrationResponseHandler)   <5>
+                                .errorResponseHandler(errorResponseHandler) <6>
+                        )
+                )
 		);
 
 	return http.build();
@@ -756,34 +779,11 @@ The OpenID Connect 1.0 Client Registration endpoint is disabled by default becau
 
 The OpenID Connect 1.0 Client Registration endpoint is an https://openid.net/specs/openid-connect-registration-1_0.html#ClientRegistration[OAuth2 protected resource], which *REQUIRES* an access token to be sent as a bearer token in the Client Registration (or Client Read) request.
 
+[NOTE]
+OAuth2 resource server support is autoconfigured, however, a `JwtDecoder` `@Bean` is *REQUIRED* for the OpenID Connect 1.0 Client Registration endpoint.
+
 [IMPORTANT]
 The access token in a Client Registration request *REQUIRES* the OAuth2 scope `client.create`.
 
 [IMPORTANT]
 The access token in a Client Read request *REQUIRES* the OAuth2 scope `client.read`.
-
-The following example shows how to enable the OAuth2 resource server configuration:
-
-[source,java]
-----
-@Bean
-public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
-	OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
-		new OAuth2AuthorizationServerConfigurer();
-	http.apply(authorizationServerConfigurer);
-
-	...
-
-	http.oauth2ResourceServer(resourceServer -> resourceServer.jwt(Customizer.withDefaults()));
-
-	return http.build();
-}
-
-@Bean
-public JwtDecoder jwtDecoder(JWKSource<SecurityContext> jwkSource) {
-	return OAuth2AuthorizationServerConfiguration.jwtDecoder(jwkSource);
-}
-----
-
-[NOTE]
-A `JwtDecoder` `@Bean` is *REQUIRED* for the OpenID Connect 1.0 Client Registration endpoint.

@@ -96,7 +96,6 @@ import org.springframework.security.oauth2.server.authorization.token.OAuth2Toke
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenGenerator;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.util.LinkedMultiValueMap;
@@ -599,9 +598,16 @@ public class OidcTests {
 
 		@Bean
 		SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
-			OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http);
-			// Enable OpenID Connect 1.0
-			http.getConfigurer(OAuth2AuthorizationServerConfigurer.class).oidc(Customizer.withDefaults());
+			// @formatter:off
+			OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
+					OAuth2AuthorizationServerConfigurer.authorizationServer();
+			http
+				.securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
+				.with(authorizationServerConfigurer, (authorizationServer) ->
+					authorizationServer
+						.oidc(Customizer.withDefaults())	// Enable OpenID Connect 1.0
+				);
+			// @formatter:on
 			return http.build();
 		}
 
@@ -696,23 +702,17 @@ public class OidcTests {
 		@Bean
 		SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
 			OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
-					new OAuth2AuthorizationServerConfigurer();
-			http.apply(authorizationServerConfigurer);
-
-			// Enable OpenID Connect 1.0
-			authorizationServerConfigurer
-					.tokenGenerator(tokenGenerator())
-					.oidc(Customizer.withDefaults());
-
-			RequestMatcher endpointsMatcher = authorizationServerConfigurer.getEndpointsMatcher();
-
+					OAuth2AuthorizationServerConfigurer.authorizationServer();
 			http
-					.securityMatcher(endpointsMatcher)
+					.securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
+					.with(authorizationServerConfigurer, (authorizationServer) ->
+							authorizationServer
+									.tokenGenerator(tokenGenerator())
+									.oidc(Customizer.withDefaults())
+					)
 					.authorizeHttpRequests((authorize) ->
 							authorize.anyRequest().authenticated()
-					)
-					.csrf((csrf) -> csrf.ignoringRequestMatchers(endpointsMatcher));
-
+					);
 			return http.build();
 		}
 		// @formatter:on
@@ -743,22 +743,17 @@ public class OidcTests {
 		@Bean
 		SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
 			OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
-					new OAuth2AuthorizationServerConfigurer();
-			http.apply(authorizationServerConfigurer);
-
-			authorizationServerConfigurer
-					.tokenGenerator(tokenGenerator())
-					.oidc(Customizer.withDefaults());	// Enable OpenID Connect 1.0
-
-			RequestMatcher endpointsMatcher = authorizationServerConfigurer.getEndpointsMatcher();
-
+					OAuth2AuthorizationServerConfigurer.authorizationServer();
 			http
-					.securityMatcher(endpointsMatcher)
+					.securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
+					.with(authorizationServerConfigurer, (authorizationServer) ->
+							authorizationServer
+									.tokenGenerator(tokenGenerator())
+									.oidc(Customizer.withDefaults())
+					)
 					.authorizeHttpRequests((authorize) ->
 							authorize.anyRequest().authenticated()
-					)
-					.csrf((csrf) -> csrf.ignoringRequestMatchers(endpointsMatcher));
-
+					);
 			return http.build();
 		}
 		// @formatter:on

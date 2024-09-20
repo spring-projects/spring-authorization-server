@@ -73,8 +73,19 @@ public class RedisOAuth2AuthorizationService implements OAuth2AuthorizationServi
 		OAuth2AuthorizationGrantAuthorization authorizationGrantAuthorization = null;
 		if (tokenType == null) {
 			authorizationGrantAuthorization = this.authorizationGrantAuthorizationRepository
-				.findByStateOrAuthorizationCode_TokenValueOrAccessToken_TokenValueOrRefreshToken_TokenValueOrIdToken_TokenValueOrDeviceStateOrDeviceCode_TokenValueOrUserCode_TokenValue(
-						token, token, token, token, token, token, token, token);
+				.findByStateOrAuthorizationCode_TokenValue(token, token);
+			if (authorizationGrantAuthorization == null) {
+				authorizationGrantAuthorization = this.authorizationGrantAuthorizationRepository
+						.findByAccessToken_TokenValueOrRefreshToken_TokenValue(token, token);
+			}
+			if (authorizationGrantAuthorization == null) {
+				authorizationGrantAuthorization = this.authorizationGrantAuthorizationRepository
+						.findByIdToken_TokenValue(token);
+			}
+			if (authorizationGrantAuthorization == null) {
+				authorizationGrantAuthorization = this.authorizationGrantAuthorizationRepository
+						.findByDeviceStateOrDeviceCode_TokenValueOrUserCode_TokenValue(token, token, token);
+			}
 		}
 		else if (OAuth2ParameterNames.STATE.equals(tokenType.getValue())) {
 			authorizationGrantAuthorization = this.authorizationGrantAuthorizationRepository.findByState(token);

@@ -52,6 +52,7 @@ import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.util.UriComponentsBuilder;
+import org.springframework.web.util.UrlPathHelper;
 
 /**
  * A {@code Filter} for the OAuth 2.0 Device Authorization endpoint, which handles the
@@ -219,10 +220,15 @@ public final class OAuth2DeviceAuthorizationEndpointFilter extends OncePerReques
 		OAuth2DeviceCode deviceCode = deviceAuthorizationRequestAuthentication.getDeviceCode();
 		OAuth2UserCode userCode = deviceAuthorizationRequestAuthentication.getUserCode();
 
+		String relativeVerificationPath = this.verificationUri.startsWith("/")
+			? this.verificationUri.substring(1)
+			: this.verificationUri;
+
 		// Generate the fully-qualified verification URI
 		UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder
 			.fromHttpUrl(UrlUtils.buildFullRequestUrl(request))
-			.replacePath(this.verificationUri);
+			.replacePath(UrlPathHelper.defaultInstance.getContextPath(request))
+			.pathSegment(relativeVerificationPath);
 		String verificationUri = uriComponentsBuilder.build().toUriString();
 		// @formatter:off
 		String verificationUriComplete = uriComponentsBuilder

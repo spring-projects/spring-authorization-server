@@ -15,9 +15,9 @@
  */
 package org.springframework.security.oauth2.server.authorization.web.authentication;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.net.URLDecoder;
+import java.nio.charset.Charset;
+import java.util.*;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -48,12 +48,24 @@ final class OAuth2EndpointUtils {
 	static MultiValueMap<String, String> getFormParameters(HttpServletRequest request) {
 		Map<String, String[]> parameterMap = request.getParameterMap();
 		MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+		MultiValueMap<String, String> queryMap = getQueryParameters(request);
 		parameterMap.forEach((key, values) -> {
 			String queryString = StringUtils.hasText(request.getQueryString()) ? request.getQueryString() : "";
 			// If not query parameter then it's a form parameter
 			if (!queryString.contains(key) && values.length > 0) {
 				for (String value : values) {
 					parameters.add(key, value);
+				}
+			}
+			// If query parameter then delete the query parameter, the remaining is a form parameter
+			if (queryString.contains(key) && values.length > 0) {
+				for (String value : values) {
+					List<String> queryValues = queryMap.get(key);
+					if(queryValues.contains(value)) {
+						queryValues.remove(value);
+					} else {
+						parameters.add(key, value);
+					}
 				}
 			}
 		});
@@ -67,7 +79,9 @@ final class OAuth2EndpointUtils {
 			String queryString = StringUtils.hasText(request.getQueryString()) ? request.getQueryString() : "";
 			if (queryString.contains(key) && values.length > 0) {
 				for (String value : values) {
-					parameters.add(key, value);
+					if (URLDecoder.decode(queryString, Charset.forName(request.getCharacterEncoding())).contains(value) && !parameters.containsKey(key)) {
+						parameters.add(key, value);
+					}
 				}
 			}
 		});

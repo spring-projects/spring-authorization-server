@@ -46,6 +46,7 @@ import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+import org.springframework.security.web.util.RedirectUrlBuilder;
 import org.springframework.security.web.util.UrlUtils;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
@@ -220,9 +221,7 @@ public final class OAuth2DeviceAuthorizationEndpointFilter extends OncePerReques
 		OAuth2UserCode userCode = deviceAuthorizationRequestAuthentication.getUserCode();
 
 		// Generate the fully-qualified verification URI
-		UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder
-			.fromHttpUrl(UrlUtils.buildFullRequestUrl(request))
-			.replacePath(this.verificationUri);
+		UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromUriString(resolveVerificationUri(request));
 		String verificationUri = uriComponentsBuilder.build().toUriString();
 		// @formatter:off
 		String verificationUriComplete = uriComponentsBuilder
@@ -240,6 +239,19 @@ public final class OAuth2DeviceAuthorizationEndpointFilter extends OncePerReques
 
 		ServletServerHttpResponse httpResponse = new ServletServerHttpResponse(response);
 		this.deviceAuthorizationHttpResponseConverter.write(deviceAuthorizationResponse, null, httpResponse);
+	}
+
+	private String resolveVerificationUri(HttpServletRequest request) {
+		if (UrlUtils.isAbsoluteUrl(this.verificationUri)) {
+			return this.verificationUri;
+		}
+		RedirectUrlBuilder urlBuilder = new RedirectUrlBuilder();
+		urlBuilder.setScheme(request.getScheme());
+		urlBuilder.setServerName(request.getServerName());
+		urlBuilder.setPort(request.getServerPort());
+		urlBuilder.setContextPath(request.getContextPath());
+		urlBuilder.setPathInfo(this.verificationUri);
+		return urlBuilder.getUrl();
 	}
 
 }

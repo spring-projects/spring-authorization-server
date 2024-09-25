@@ -228,6 +228,7 @@ public final class OAuth2DeviceAuthorizationEndpointFilter extends OncePerReques
 		UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder
 			.fromHttpUrl(UrlUtils.buildFullRequestUrl(request))
 			.replacePath(UrlPathHelper.defaultInstance.getContextPath(request))
+			.replaceQuery(null)
 			.pathSegment(relativeVerificationPath);
 		String verificationUri = uriComponentsBuilder.build().toUriString();
 		// @formatter:off

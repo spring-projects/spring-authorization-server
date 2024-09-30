@@ -15,7 +15,7 @@ The Spring Authorization Server project provides software support through the ht
 https://tanzu.vmware.com/spring-runtime[Commercial support], which offers an extended support period, is also available from VMware.
 
 == Getting Started
-The first place to start is to read the https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-07[OAuth 2.1 Authorization Framework] to gain an in-depth understanding on how to build an Authorization Server.
+The first place to start is to read the https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-11[OAuth 2.1 Authorization Framework] to gain an in-depth understanding on how to build an Authorization Server.
 It is a critically important first step as the implementation must conform to the specification defined in the OAuth 2.1 Authorization Framework and the https://github.com/spring-projects/spring-authorization-server/wiki/OAuth-2.0-Specifications[related specifications].
 
 The second place to start is to become very familiar with the codebase in the following Spring Security modules:

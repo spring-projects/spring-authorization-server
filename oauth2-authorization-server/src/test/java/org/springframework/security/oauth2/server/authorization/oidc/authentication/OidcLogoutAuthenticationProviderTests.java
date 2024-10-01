@@ -317,7 +317,7 @@ public class OidcLogoutAuthenticationProviderTests {
 	}
 
 	@Test
-	void setAuthenticationValidatorWhenNullThenThrowIllegalArgumentException() {
+	public void setAuthenticationValidatorWhenNullThenThrowIllegalArgumentException() {
 		assertThatThrownBy(() -> this.authenticationProvider.setAuthenticationValidator(null))
 			.isInstanceOf(IllegalArgumentException.class)
 			.hasMessage("authenticationValidator cannot be null");
@@ -342,7 +342,7 @@ public class OidcLogoutAuthenticationProviderTests {
 		this.authenticationProvider.setAuthenticationValidator(authenticationValidator);
 
 		authenticateValidIdToken(principal, registeredClient, sessionId, idToken);
-		verify(authenticationValidator).accept(any());
+		verify(authenticationValidator).accept(any(OidcLogoutAuthenticationContext.class));
 	}
 
 	@Test

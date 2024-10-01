@@ -557,14 +557,61 @@ public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity h
 [[oidc-logout-endpoint-customizing-logout-request-validation]]
 === Customizing Logout Request Validation
 
-`OidcLogoutAuthenticationValidator` is the default validator used for validating specific OpenID Connect Logout request parameters used in the RP-Initiated Logout flow.
+`OidcLogoutAuthenticationValidator` is the default validator used for validating specific OpenID Connect RP-Initiated Logout Request parameters.
 The default implementation validates the `post_logout_redirect_uri` parameter.
 If validation fails, an `OAuth2AuthenticationException` is thrown.
 
 `OidcLogoutAuthenticationProvider` provides the ability to override the default logout request validation by supplying a custom authentication validator of type `Consumer<OidcLogoutAuthenticationContext>` to `setAuthenticationValidator()`.
 
+[TIP]
+`OidcLogoutAuthenticationContext` holds the `OidcLogoutAuthenticationToken`, which contains the logout request parameters.
+
 [IMPORTANT]
 If validation fails, the authentication validator *MUST* throw `OAuth2AuthenticationException`.
+
+The following example shows how to configure `OidcLogoutAuthenticationProvider` with a custom authentication validator:
+
+[source,java]
+----
+@Bean
+public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
+	OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
+			new OAuth2AuthorizationServerConfigurer();
+	http.apply(authorizationServerConfigurer);
+
+	authorizationServerConfigurer
+		.oidc(oidc ->
+			oidc
+				.logoutEndpoint(logoutEndpoint ->
+					logoutEndpoint.authenticationProviders(configureAuthenticationValidator()))
+		);
+
+	return http.build();
+}
+
+private Consumer<List<AuthenticationProvider>> configureAuthenticationValidator() {
+	return (authenticationProviders) ->
+			authenticationProviders.forEach((authenticationProvider) -> {
+				if (authenticationProvider instanceof OidcLogoutAuthenticationProvider oidcLogoutAuthenticationProvider) {
+					Consumer<OidcLogoutAuthenticationContext> authenticationValidator = new CustomPostLogoutRedirectUriValidator();
+					oidcLogoutAuthenticationProvider.setAuthenticationValidator(authenticationValidator);
+				}
+			});
+}
+
+static class CustomPostLogoutRedirectUriValidator implements Consumer<OidcLogoutAuthenticationContext> {
+
+	@Override
+	public void accept(OidcLogoutAuthenticationContext authenticationContext) {
+		OidcLogoutAuthenticationToken oidcLogoutAuthentication =
+				authenticationContext.getAuthentication();
+		RegisteredClient registeredClient = authenticationContext.getRegisteredClient();
+
+		// TODO
+
+	}
+}
+----
 
 [[oidc-user-info-endpoint]]
 == OpenID Connect 1.0 UserInfo Endpoint

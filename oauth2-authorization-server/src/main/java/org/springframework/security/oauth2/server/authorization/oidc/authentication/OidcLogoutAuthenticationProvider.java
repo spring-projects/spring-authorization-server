@@ -188,7 +188,7 @@ public final class OidcLogoutAuthenticationProvider implements AuthenticationPro
 	/**
 	 * Sets the {@code Consumer} providing access to the
 	 * {@link OidcLogoutAuthenticationContext} and is responsible for validating specific
-	 * Open ID Connect RP-Initiated Logout Request parameters associated in the
+	 * OpenID Connect RP-Initiated Logout Request parameters associated in the
 	 * {@link OidcLogoutAuthenticationToken}. The default authentication validator is
 	 * {@link OidcLogoutAuthenticationValidator}.
 	 *
@@ -197,7 +197,7 @@ public final class OidcLogoutAuthenticationProvider implements AuthenticationPro
 	 * {@link OAuth2AuthenticationException} if validation fails.
 	 * @param authenticationValidator the {@code Consumer} providing access to the
 	 * {@link OidcLogoutAuthenticationContext} and is responsible for validating specific
-	 * Open ID Connect RP-Initiated Logout Request parameters
+	 * OpenID Connect RP-Initiated Logout Request parameters
 	 * @since 1.4
 	 */
 	public void setAuthenticationValidator(Consumer<OidcLogoutAuthenticationContext> authenticationValidator) {

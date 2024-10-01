@@ -20,7 +20,6 @@ import java.util.function.Consumer;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
-import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.util.StringUtils;
 
@@ -29,10 +28,10 @@ import org.springframework.util.StringUtils;
  * containing an {@link OidcLogoutAuthenticationToken} and is the default
  * {@link OidcLogoutAuthenticationProvider#setAuthenticationValidator(Consumer)
  * authentication validator} used for validating specific OpenID Connect RP-Initiated
- * Logout parameters used in the Authorization Code Grant.
+ * Logout Request parameters.
  *
  * <p>
- * The default implementation first validates {@link OidcIdToken#getAudience()}, and then
+ * The default implementation validates
  * {@link OidcLogoutAuthenticationToken#getPostLogoutRedirectUri()}. If validation fails,
  * an {@link OAuth2AuthenticationException} is thrown.
  *

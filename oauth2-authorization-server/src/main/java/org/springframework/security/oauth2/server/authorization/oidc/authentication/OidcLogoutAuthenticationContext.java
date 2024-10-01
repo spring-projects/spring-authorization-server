@@ -15,11 +15,12 @@
  */
 package org.springframework.security.oauth2.server.authorization.oidc.authentication;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 
 import org.springframework.lang.Nullable;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthenticationContext;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.util.Assert;
@@ -40,7 +41,7 @@ public final class OidcLogoutAuthenticationContext implements OAuth2Authenticati
 	private final Map<Object, Object> context;
 
 	private OidcLogoutAuthenticationContext(Map<Object, Object> context) {
-		this.context = context;
+		this.context = Collections.unmodifiableMap(new HashMap<>(context));
 	}
 
 	@SuppressWarnings("unchecked")
@@ -79,7 +80,7 @@ public final class OidcLogoutAuthenticationContext implements OAuth2Authenticati
 	 */
 	public static final class Builder extends AbstractBuilder<OidcLogoutAuthenticationContext, Builder> {
 
-		private Builder(Authentication authentication) {
+		private Builder(OidcLogoutAuthenticationToken authentication) {
 			super(authentication);
 		}
 
@@ -98,6 +99,7 @@ public final class OidcLogoutAuthenticationContext implements OAuth2Authenticati
 		 */
 		@Override
 		public OidcLogoutAuthenticationContext build() {
+			Assert.notNull(get(RegisteredClient.class), "registeredClient cannot be null");
 			return new OidcLogoutAuthenticationContext(getContext());
 		}
 

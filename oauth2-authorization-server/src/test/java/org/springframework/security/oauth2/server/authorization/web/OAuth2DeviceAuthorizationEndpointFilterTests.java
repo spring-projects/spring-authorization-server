@@ -242,6 +242,39 @@ public class OAuth2DeviceAuthorizationEndpointFilterTests {
 	}
 
 	@Test
+	public void doFilterWhenDeviceAuthorizationRequestWithContextPathThenDeviceAuthorizationResponse() throws Exception {
+		Authentication authenticationResult = createAuthentication();
+		given(this.authenticationManager.authenticate(any(Authentication.class))).willReturn(authenticationResult);
+
+		Authentication clientPrincipal = (Authentication) authenticationResult.getPrincipal();
+		mockSecurityContext(clientPrincipal);
+
+		MockHttpServletRequest request = createRequest();
+		request.setContextPath("/contextPath");
+		MockHttpServletResponse response = new MockHttpServletResponse();
+		FilterChain filterChain = mock(FilterChain.class);
+		this.filter.doFilter(request, response, filterChain);
+		assertThat(response.getStatus()).isEqualTo(HttpStatus.OK.value());
+
+		ArgumentCaptor<OAuth2DeviceAuthorizationRequestAuthenticationToken> deviceAuthorizationRequestAuthenticationCaptor = ArgumentCaptor
+				.forClass(OAuth2DeviceAuthorizationRequestAuthenticationToken.class);
+		verify(this.authenticationManager).authenticate(deviceAuthorizationRequestAuthenticationCaptor.capture());
+		verifyNoInteractions(filterChain);
+
+		OAuth2DeviceAuthorizationResponse deviceAuthorizationResponse = readDeviceAuthorizationResponse(response);
+		String verificationUri = ISSUER_URI + "/contextPath" + VERIFICATION_URI;
+		assertThat(deviceAuthorizationResponse.getVerificationUri()).isEqualTo(verificationUri);
+		assertThat(deviceAuthorizationResponse.getVerificationUriComplete())
+				.isEqualTo("%s?%s=%s".formatted(verificationUri, OAuth2ParameterNames.USER_CODE, USER_CODE));
+		OAuth2DeviceCode deviceCode = deviceAuthorizationResponse.getDeviceCode();
+		assertThat(deviceCode.getTokenValue()).isEqualTo(DEVICE_CODE);
+		assertThat(deviceCode.getExpiresAt()).isAfter(deviceCode.getIssuedAt());
+		OAuth2UserCode userCode = deviceAuthorizationResponse.getUserCode();
+		assertThat(userCode.getTokenValue()).isEqualTo(USER_CODE);
+		assertThat(deviceCode.getExpiresAt()).isAfter(deviceCode.getIssuedAt());
+	}
+
+	@Test
 	public void doFilterWhenInvalidRequestErrorThenBadRequest() throws Exception {
 		AuthenticationConverter authenticationConverter = mock(AuthenticationConverter.class);
 		OAuth2AuthenticationException authenticationException = new OAuth2AuthenticationException(

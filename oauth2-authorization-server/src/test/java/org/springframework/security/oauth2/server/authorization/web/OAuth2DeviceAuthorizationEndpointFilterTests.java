@@ -241,6 +241,33 @@ public class OAuth2DeviceAuthorizationEndpointFilterTests {
 		assertThat(deviceCode.getExpiresAt()).isAfter(deviceCode.getIssuedAt());
 	}
 
+	// gh-1714
+	@Test
+	public void doFilterWhenDeviceAuthorizationRequestWithContextPathThenVerificationUriIncludesContextPath()
+			throws Exception {
+		Authentication authenticationResult = createAuthentication();
+		given(this.authenticationManager.authenticate(any(Authentication.class))).willReturn(authenticationResult);
+
+		Authentication clientPrincipal = (Authentication) authenticationResult.getPrincipal();
+		mockSecurityContext(clientPrincipal);
+
+		MockHttpServletRequest request = createRequest();
+		request.setContextPath("/contextPath");
+		MockHttpServletResponse response = new MockHttpServletResponse();
+		FilterChain filterChain = mock(FilterChain.class);
+		this.filter.doFilter(request, response, filterChain);
+		assertThat(response.getStatus()).isEqualTo(HttpStatus.OK.value());
+
+		verify(this.authenticationManager).authenticate(any(OAuth2DeviceAuthorizationRequestAuthenticationToken.class));
+		verifyNoInteractions(filterChain);
+
+		OAuth2DeviceAuthorizationResponse deviceAuthorizationResponse = readDeviceAuthorizationResponse(response);
+		String verificationUri = ISSUER_URI + "/contextPath" + VERIFICATION_URI;
+		assertThat(deviceAuthorizationResponse.getVerificationUri()).isEqualTo(verificationUri);
+		assertThat(deviceAuthorizationResponse.getVerificationUriComplete())
+			.isEqualTo("%s?%s=%s".formatted(verificationUri, OAuth2ParameterNames.USER_CODE, USER_CODE));
+	}
+
 	@Test
 	public void doFilterWhenInvalidRequestErrorThenBadRequest() throws Exception {
 		AuthenticationConverter authenticationConverter = mock(AuthenticationConverter.class);

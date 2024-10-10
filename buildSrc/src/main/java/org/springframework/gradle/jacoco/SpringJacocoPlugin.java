@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2022 the original author or authors.
+ * Copyright 2002-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,6 @@
 
 package org.springframework.gradle.jacoco;
 
-import java.util.Objects;
-
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.plugins.JavaPlugin;
@@ -31,8 +29,6 @@ import org.gradle.testing.jacoco.plugins.JacocoPluginExtension;
  * @author Steve Riesenberg
  */
 public class SpringJacocoPlugin implements Plugin<Project> {
-	private static final String JACOCO_TOOL_VERSION_PROPERTY = "jacocoToolVersion";
-	private static final String DEFAULT_JACOCO_TOOL_VERSION = "0.8.7";
 
 	@Override
 	public void apply(Project project) {
@@ -41,16 +37,8 @@ public class SpringJacocoPlugin implements Plugin<Project> {
 			project.getTasks().getByName("check").dependsOn(project.getTasks().getByName("jacocoTestReport"));
 
 			JacocoPluginExtension jacoco = project.getExtensions().getByType(JacocoPluginExtension.class);
-			// NOTE: See gradle.properties#jacocoToolVersion for actual version number
-			jacoco.setToolVersion(getJacocoToolVersion(project));
+			jacoco.setToolVersion("0.8.7");
 		});
 	}
 
-	private static String getJacocoToolVersion(Project project) {
-		String jacocoToolVersion = DEFAULT_JACOCO_TOOL_VERSION;
-		if (project.hasProperty(JACOCO_TOOL_VERSION_PROPERTY)) {
-			jacocoToolVersion = Objects.requireNonNull(project.findProperty(JACOCO_TOOL_VERSION_PROPERTY)).toString();
-		}
-		return jacocoToolVersion;
-	}
 }

@@ -1,0 +1,39 @@
+[versions]
+org-springframework = "6.1.12"
+org-springframework-security = "6.2.6"
+com-fasterxml-jackson = "2.15.4"
+nimbus-jose-jwt = "9.37.3"
+com-squareup-okhttp3 = "4.12.0"
+io-spring-javaformat = "0.0.41"
+io-spring-nohttp = "0.0.11"
+
+[libraries]
+org-springframework-spring-framework-bom = { module = "org.springframework:spring-framework-bom", version.ref = "org-springframework" }
+org-springframework-security-spring-security-bom = { module = "org.springframework.security:spring-security-bom", version.ref = "org-springframework-security" }
+com-fasterxml-jackson-jackson-bom = { module = "com.fasterxml.jackson:jackson-bom", version.ref = "com-fasterxml-jackson" }
+com-nimbusds-nimbus-jose-jwt = { module = "com.nimbusds:nimbus-jose-jwt", version.ref = "nimbus-jose-jwt" }
+jakarta-servlet-jakarta-servlet-api = "jakarta.servlet:jakarta.servlet-api:6.0.0"
+org-junit-jupiter-junit-jupiter = "org.junit.jupiter:junit-jupiter:5.10.3"
+org-assertj-assertj-core = "org.assertj:assertj-core:3.24.2"
+org-mockito-mockito-core = "org.mockito:mockito-core:4.11.0"
+com-squareup-okhttp3-mockwebserver = { module = "com.squareup.okhttp3:mockwebserver", version.ref = "com-squareup-okhttp3" }
+com-squareup-okhttp3-okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "com-squareup-okhttp3" }
+com-jayway-jsonpath-json-path = "com.jayway.jsonpath:json-path:2.8.0"
+org-hsqldb-hsqldb = "org.hsqldb:hsqldb:2.7.3"
+
+# buildSrc dependencies
+com-github-ben-manes-gradle-versions-plugin = "com.github.ben-manes:gradle-versions-plugin:0.38.0"
+io-github-gradle-nexus-publish-plugin = "io.github.gradle-nexus:publish-plugin:1.1.0"
+io-spring-javaformat-spring-javaformat-checkstyle = { module = "io.spring.javaformat:spring-javaformat-checkstyle", version.ref = "io-spring-javaformat" }
+io-spring-javaformat-spring-javaformat-gradle-plugin = { module = "io.spring.javaformat:spring-javaformat-gradle-plugin", version.ref = "io-spring-javaformat" }
+io-spring-nohttp-nohttp-checkstyle = { module = "io.spring.nohttp:nohttp-checkstyle", version.ref = "io-spring-nohttp" }
+io-spring-nohttp-nohttp-gradle = { module = "io.spring.nohttp:nohttp-gradle", version.ref = "io-spring-nohttp" }
+org-asciidoctor-asciidoctor-gradle-jvm-plugin = "org.asciidoctor:asciidoctor-gradle-jvm:3.3.2"
+org-asciidoctor-asciidoctor-gradle-jvm-pdf-plugin = "org.asciidoctor:asciidoctor-gradle-jvm-pdf:3.3.2"
+org-jetbrains-kotlin-kotlin-gradle-plugin = "org.jetbrains.kotlin:kotlin-gradle-plugin:1.6.10"
+org-hidetake-gradle-ssh-plugin = "org.hidetake:gradle-ssh-plugin:2.10.1"
+org-jfrog-buildinfo-build-info-extractor-gradle = "org.jfrog.buildinfo:build-info-extractor-gradle:4.29.4"
+org-sonarsource-scanner-gradle-sonarqube-gradle-plugin = "org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:2.7.1"
+
+[plugins]
+org-gradle-wrapper-upgrade = "org.gradle.wrapper-upgrade:0.11.4"

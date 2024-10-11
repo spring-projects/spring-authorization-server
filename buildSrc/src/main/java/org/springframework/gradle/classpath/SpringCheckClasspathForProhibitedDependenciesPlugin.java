@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2022 the original author or authors.
+ * Copyright 2012-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,8 +24,6 @@ import org.gradle.api.plugins.JavaBasePlugin;
 import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.api.tasks.TaskProvider;
 import org.gradle.language.base.plugins.LifecycleBasePlugin;
-
-import org.springframework.util.StringUtils;
 
 /**
  * @author Andy Wilkinson
@@ -55,7 +53,7 @@ public class SpringCheckClasspathForProhibitedDependenciesPlugin implements Plug
 	}
 
 	private void createProhibitedDependenciesCheck(Configuration classpath, Project project) {
-		String taskName = "check" + StringUtils.capitalize(classpath.getName() + "ForProhibitedDependencies");
+		String taskName = "check" + capitalize(classpath.getName() + "ForProhibitedDependencies");
 		TaskProvider<CheckClasspathForProhibitedDependencies> checkClasspathTask = project.getTasks().register(taskName,
 				CheckClasspathForProhibitedDependencies.class, (checkClasspath) -> {
 					checkClasspath.setGroup(LifecycleBasePlugin.CHECK_TASK_NAME);
@@ -64,4 +62,25 @@ public class SpringCheckClasspathForProhibitedDependenciesPlugin implements Plug
 				});
 		project.getTasks().named(SpringCheckProhibitedDependenciesLifecyclePlugin.CHECK_PROHIBITED_DEPENDENCIES_TASK_NAME, (checkProhibitedTask) -> checkProhibitedTask.dependsOn(checkClasspathTask));
 	}
+
+	private static String capitalize(String str) {
+		if (!hasLength(str)) {
+			return str;
+		} else {
+			char baseChar = str.charAt(0);
+			char updatedChar = Character.toUpperCase(baseChar);
+			if (baseChar == updatedChar) {
+				return str;
+			} else {
+				char[] chars = str.toCharArray();
+				chars[0] = updatedChar;
+				return new String(chars);
+			}
+		}
+	}
+
+	private static boolean hasLength(String str) {
+		return str != null && !str.isEmpty();
+	}
+
 }

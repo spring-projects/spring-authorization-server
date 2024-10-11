@@ -15,15 +15,14 @@ repositories {
 }
 
 dependencies {
-	implementation "com.github.ben-manes:gradle-versions-plugin:0.38.0"
-	implementation "io.github.gradle-nexus:publish-plugin:1.1.0"
-	implementation "io.spring.javaformat:spring-javaformat-gradle-plugin:0.0.41"
-	implementation "io.spring.nohttp:nohttp-gradle:0.0.11"
-	implementation "org.asciidoctor:asciidoctor-gradle-jvm:3.3.2"
-	implementation "org.asciidoctor:asciidoctor-gradle-jvm-pdf:3.3.2"
-	implementation "org.jetbrains.kotlin:kotlin-gradle-plugin:1.6.10"
-	implementation "org.hidetake:gradle-ssh-plugin:2.10.1"
-	implementation "org.jfrog.buildinfo:build-info-extractor-gradle:5.2.0"
-	implementation "org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:2.7.1"
-	implementation "org.springframework:spring-core:6.1.9"
+	implementation libs.com.github.ben.manes.gradle.versions.plugin
+	implementation libs.io.github.gradle.nexus.publish.plugin
+	implementation libs.io.spring.javaformat.spring.javaformat.gradle.plugin
+	implementation libs.io.spring.nohttp.nohttp.gradle
+	implementation libs.org.asciidoctor.asciidoctor.gradle.jvm.plugin
+	implementation libs.org.asciidoctor.asciidoctor.gradle.jvm.pdf.plugin
+	implementation libs.org.jetbrains.kotlin.kotlin.gradle.plugin
+	implementation libs.org.hidetake.gradle.ssh.plugin
+	implementation libs.org.jfrog.buildinfo.build.info.extractor.gradle
+	implementation libs.org.sonarsource.scanner.gradle.sonarqube.gradle.plugin
 }

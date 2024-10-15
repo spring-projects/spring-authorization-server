@@ -1,0 +1,116 @@
+version: 2
+
+registries:
+  spring-milestones:
+    type: maven-repository
+    url: https://repo.spring.io/milestone
+
+updates:
+  # Gradle
+  - package-ecosystem: gradle
+    target-branch: 1.2.x
+    directory: /
+    schedule:
+      interval: daily
+      time: '03:00'
+      timezone: Etc/UTC
+    labels:
+      - 'type: dependency-upgrade'
+    registries:
+      - spring-milestones
+    ignore:
+      - dependency-name: '*'
+        update-types:
+          - version-update:semver-major
+          - version-update:semver-minor
+  - package-ecosystem: gradle
+    target-branch: 1.3.x
+    directory: /
+    schedule:
+      interval: daily
+      time: '03:00'
+      timezone: Etc/UTC
+    labels:
+      - 'type: dependency-upgrade'
+    registries:
+      - spring-milestones
+    ignore:
+      - dependency-name: '*'
+        update-types:
+          - version-update:semver-major
+          - version-update:semver-minor
+  - package-ecosystem: gradle
+    target-branch: main
+    directory: /
+    schedule:
+      interval: daily
+      time: '03:00'
+      timezone: Etc/UTC
+    labels:
+      - 'type: dependency-upgrade'
+    registries:
+      - spring-milestones
+    ignore:
+      - dependency-name: '*'
+        update-types:
+          - version-update:semver-major
+
+  # GitHub Actions
+  - package-ecosystem: github-actions
+    target-branch: 1.2.x
+    directory: /
+    schedule:
+      interval: weekly
+    labels:
+      - 'type: task'
+  - package-ecosystem: github-actions
+    target-branch: 1.3.x
+    directory: /
+    schedule:
+      interval: weekly
+    labels:
+      - 'type: task'
+  - package-ecosystem: github-actions
+    target-branch: main
+    directory: /
+    schedule:
+      interval: weekly
+    labels:
+      - 'type: task'
+  - package-ecosystem: github-actions
+    target-branch: docs-build
+    directory: /
+    schedule:
+      interval: weekly
+    labels:
+      - 'type: task'
+
+  # NPM
+  - package-ecosystem: npm
+    target-branch: 1.2.x
+    directory: /docs
+    schedule:
+      interval: weekly
+    labels:
+      - 'type: task'
+  - package-ecosystem: npm
+    target-branch: 1.3.x
+    directory: /docs
+    schedule:
+      interval: weekly
+    labels:
+      - 'type: task'
+  - package-ecosystem: npm
+    target-branch: main
+    directory: /docs
+    schedule:
+      interval: weekly
+    labels:
+      - 'type: task'
+  - package-ecosystem: npm
+    target-branch: docs-build
+    directory: /
+    schedule:
+      interval: weekly
+    labels:
+      - 'type: task'

@@ -13,7 +13,7 @@ org-springframework-security-spring-security-bom = { module = "org.springframewo
 com-fasterxml-jackson-jackson-bom = { module = "com.fasterxml.jackson:jackson-bom", version.ref = "com-fasterxml-jackson" }
 com-nimbusds-nimbus-jose-jwt = { module = "com.nimbusds:nimbus-jose-jwt", version.ref = "nimbus-jose-jwt" }
 jakarta-servlet-jakarta-servlet-api = "jakarta.servlet:jakarta.servlet-api:6.0.0"
-org-junit-jupiter-junit-jupiter = "org.junit.jupiter:junit-jupiter:5.10.3"
+org-junit-jupiter-junit-jupiter = "org.junit.jupiter:junit-jupiter:5.10.5"
 org-assertj-assertj-core = "org.assertj:assertj-core:3.24.2"
 org-mockito-mockito-core = "org.mockito:mockito-core:4.11.0"
 com-squareup-okhttp3-mockwebserver = { module = "com.squareup.okhttp3:mockwebserver", version.ref = "com-squareup-okhttp3" }

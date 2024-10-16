@@ -45,13 +45,13 @@ import org.springframework.security.oauth2.server.authorization.authentication.P
 import org.springframework.security.oauth2.server.authorization.authentication.X509ClientCertificateAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.web.authentication.ClientSecretBasicAuthenticationConverter;
 import org.springframework.security.oauth2.server.authorization.web.authentication.ClientSecretPostAuthenticationConverter;
-import org.springframework.security.oauth2.server.authorization.web.authentication.DelegatingAuthenticationConverter;
 import org.springframework.security.oauth2.server.authorization.web.authentication.JwtClientAssertionAuthenticationConverter;
 import org.springframework.security.oauth2.server.authorization.web.authentication.PublicClientAuthenticationConverter;
 import org.springframework.security.oauth2.server.authorization.web.authentication.X509ClientCertificateAuthenticationConverter;
 import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.security.web.authentication.DelegatingAuthenticationConverter;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;

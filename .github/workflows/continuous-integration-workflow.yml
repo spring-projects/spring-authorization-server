@@ -8,6 +8,9 @@ on:
     - cron: '0 10 * * *' # Once per day at 10am UTC
   workflow_dispatch:
 
+env:
+  DEVELOCITY_ACCESS_KEY: ${{ secrets.GRADLE_ENTERPRISE_SECRET_ACCESS_KEY }}
+
 jobs:
   build:
     name: Build

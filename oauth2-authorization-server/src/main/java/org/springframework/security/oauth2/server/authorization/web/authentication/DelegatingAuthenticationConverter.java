@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,10 @@ import org.springframework.util.Assert;
  * @author Joe Grandja
  * @since 0.0.2
  * @see AuthenticationConverter
+ * @deprecated For removal in 2.0. Use
+ * {@link org.springframework.security.web.authentication.DelegatingAuthenticationConverter}
  */
+@Deprecated(since = "1.4", forRemoval = true)
 public final class DelegatingAuthenticationConverter implements AuthenticationConverter {
 
 	private final List<AuthenticationConverter> converters;

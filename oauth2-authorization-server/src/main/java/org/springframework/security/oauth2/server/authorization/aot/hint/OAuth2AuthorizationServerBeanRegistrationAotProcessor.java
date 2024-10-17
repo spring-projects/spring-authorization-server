@@ -43,8 +43,10 @@ import org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser;
 import org.springframework.security.oauth2.core.oidc.user.OidcUserAuthority;
 import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 import org.springframework.security.oauth2.core.user.OAuth2UserAuthority;
+import org.springframework.security.oauth2.server.authorization.JdbcOAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2TokenExchangeActor;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2TokenExchangeCompositeAuthenticationToken;
+import org.springframework.security.oauth2.server.authorization.client.JdbcRegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.jackson2.OAuth2AuthorizationServerJackson2Module;
 import org.springframework.security.oauth2.server.authorization.settings.OAuth2TokenFormat;
 import org.springframework.security.web.authentication.WebAuthenticationDetails;
@@ -67,11 +69,15 @@ class OAuth2AuthorizationServerBeanRegistrationAotProcessor implements BeanRegis
 
 	@Override
 	public BeanRegistrationAotContribution processAheadOfTime(RegisteredBean registeredBean) {
-		String beanClassName = registeredBean.getBeanClass().getName();
+		boolean isJdbcBasedOAuth2AuthorizationService = JdbcOAuth2AuthorizationService.class
+			.isAssignableFrom(registeredBean.getBeanClass());
+
+		boolean isJdbcBasedRegisteredClientRepository = JdbcRegisteredClientRepository.class
+			.isAssignableFrom(registeredBean.getBeanClass());
+
 		// @formatter:off
-		if ((beanClassName.equals("org.springframework.security.oauth2.server.authorization.JdbcOAuth2AuthorizationService") ||
-				beanClassName.equals("org.springframework.security.oauth2.server.authorization.client.JdbcRegisteredClientRepository")) &&
-				!this.jackson2Contributed) {
+		if ((isJdbcBasedOAuth2AuthorizationService || isJdbcBasedRegisteredClientRepository)
+				&& !this.jackson2Contributed) {
 			Jackson2ConfigurationBeanRegistrationAotContribution jackson2Contribution =
 					new Jackson2ConfigurationBeanRegistrationAotContribution();
 			this.jackson2Contributed = true;

@@ -1,5 +1,5 @@
 [versions]
-org-springframework = "6.2.0-RC1"
+org-springframework = "6.2.0-RC2"
 org-springframework-security = "6.4.0-M4"
 com-fasterxml-jackson = "2.18.0"
 nimbus-jose-jwt = "9.41.2"

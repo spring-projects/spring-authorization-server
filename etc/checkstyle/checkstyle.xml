@@ -15,4 +15,22 @@
 		<property name="excludes" value="io.spring.javaformat.checkstyle.check.SpringHeaderCheck" />
 		<property name="excludes" value="com.puppycrawl.tools.checkstyle.checks.javadoc.JavadocPackageCheck" />
 	</module>
+	<module name="com.puppycrawl.tools.checkstyle.TreeWalker">
+		<module name="com.puppycrawl.tools.checkstyle.checks.regexp.RegexpSinglelineJavaCheck">
+			<property name="id" value="toLowerCaseWithoutLocale"/>
+			<property name="format" value="\.toLowerCase\(\)"/>
+			<property name="maximum" value="0"/>
+			<property name="message"
+					  value="String.toLowerCase() should be String.toLowerCase(Locale.ROOT) or String.toLowerCase(Locale.ENGLISH)"/>
+			<property name="ignoreComments" value="true"/>
+		</module>
+		<module name="com.puppycrawl.tools.checkstyle.checks.regexp.RegexpSinglelineJavaCheck">
+			<property name="id" value="toUpperCaseWithoutLocale"/>
+			<property name="format" value="\.toUpperCase\(\)"/>
+			<property name="maximum" value="0"/>
+			<property name="message"
+					  value="String.toUpperCase() should be String.toUpperCase(Locale.ROOT) or String.toUpperCase(Locale.ENGLISH)"/>
+			<property name="ignoreComments" value="true"/>
+		</module>
+	</module>
 </module>

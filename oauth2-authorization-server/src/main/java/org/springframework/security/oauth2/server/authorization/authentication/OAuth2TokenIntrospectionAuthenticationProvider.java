@@ -110,7 +110,7 @@ public final class OAuth2TokenIntrospectionAuthenticationProvider implements Aut
 		}
 
 		RegisteredClient authorizedClient = this.registeredClientRepository
-			.findById(authorization.getRegisteredClientId());
+			.findByClientId(authorization.getRegisteredClientId());
 		OAuth2TokenIntrospection tokenClaims = withActiveTokenClaims(authorizedToken, authorizedClient);
 
 		if (this.logger.isTraceEnabled()) {

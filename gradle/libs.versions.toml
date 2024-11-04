@@ -22,7 +22,7 @@ org-mockito-mockito-core = "org.mockito:mockito-core:4.11.0"
 com-squareup-okhttp3-mockwebserver = { module = "com.squareup.okhttp3:mockwebserver", version.ref = "com-squareup-okhttp3" }
 com-squareup-okhttp3-okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "com-squareup-okhttp3" }
 com-jayway-jsonpath-json-path = "com.jayway.jsonpath:json-path:2.9.0"
-org-hsqldb-hsqldb = "org.hsqldb:hsqldb:2.7.3"
+org-hsqldb-hsqldb = "org.hsqldb:hsqldb:2.7.4"
 
 # buildSrc dependencies
 com-github-ben-manes-gradle-versions-plugin = "com.github.ben-manes:gradle-versions-plugin:0.38.0"

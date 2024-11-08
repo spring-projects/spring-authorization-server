@@ -1,0 +1,58 @@
+<div>
+  <nav class="navbar navbar-expand-lg bg-light">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="#">
+        <img src="/spring-security.svg" width="40" height="32">
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+          <li class="nav-item">
+            <a class="nav-link active" aria-current="page" href="/">Home</a>
+          </li>
+          <li *ngIf="isAuthenticated" class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Authorize</a>
+            <ul class="dropdown-menu">
+              <li><a class="dropdown-item" href="#" (click)="authorizeMessages()">Messages</a></li>
+            </ul>
+          </li>
+        </ul>
+        <div class="d-flex">
+          @if (isAuthenticated) {
+            <div>
+              <span class="fs-6 px-3">{{ userName }}</span>
+              <button class="btn btn-outline-dark" (click)="logout()">Logout</button>
+            </div>
+          } @else {
+            <div>
+              <button class="btn btn-outline-dark" (click)="login()">Login</button>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </nav>
+</div>
+<div class="container">
+  <div *ngIf="messages.length > 0" class="row py-5 justify-content-start">
+    <div class="col">
+      <table class="table table-striped caption-top">
+        <caption>Messages</caption>
+        <thead>
+        <tr>
+          <th scope="col">#</th>
+          <th scope="col">Message</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr *ngFor="let message of messages; let index = index">
+          <th scope="row">{{ index + 1 }}</th>
+          <td>{{ message }}</td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

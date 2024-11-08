@@ -5,6 +5,26 @@
 
 The default sample provides the minimal configuration to get started with Spring Authorization Server.
 
+[[spa-sample]]
+== SPA (Single Page Application) Sample
+
+The SPA sample provides a reference implementation of the https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps-19#name-backend-for-frontend-bff[Backend For Frontend (BFF)] application architecture pattern.
+The *spa-client* is the _frontend_ SPA implemented with Angular and the *backend-for-spa-client* is the _backend_ application.
+The *backend-for-spa-client* uses https://spring.io/projects/spring-cloud-gateway[Spring Cloud Gateway] to route `/userinfo` (UserInfo Endpoint) requests to *demo-authorizationserver* and `/messages` requests to *messages-resource*.
+The *backend-for-spa-client* performs the authorization flows and stores the access tokens.
+The *spa-client* is never exposed the access tokens and directly communicates with the *backend-for-spa-client* via an authenticated session cookie.
+
+[[run-spa-sample]]
+=== Run the Sample
+
+* Run Authorization Server -> `./gradlew -b samples/demo-authorizationserver/samples-demo-authorizationserver.gradle bootRun`
+* Run Resource Server -> `./gradlew -b samples/messages-resource/samples-messages-resource.gradle bootRun`
+* Run Backend -> `./gradlew -b samples/backend-for-spa-client/samples-backend-for-spa-client.gradle bootRun`
+* Run Frontend -> `ng serve` (from `samples/spa-client` directory)
+** *NOTE:* Angular must be installed locally before running `ng serve`. See https://angular.dev/installation[installation instructions].
+* Go to `http://127.0.0.1:4200`
+** Login with credentials -> user1 \ password
+
 [[demo-sample]]
 == Demo Sample
 

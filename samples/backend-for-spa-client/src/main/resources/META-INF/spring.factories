@@ -1,0 +1,2 @@
+org.springframework.cloud.gateway.server.mvc.filter.FilterSupplier=\
+  sample.config.GatewayFilterFunctions.FilterSupplier

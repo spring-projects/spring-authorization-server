@@ -1,0 +1,35 @@
+plugins {
+	id "org.springframework.boot" version "3.2.2"
+	id "io.spring.dependency-management" version "1.1.0"
+	id "java"
+}
+
+group = project.rootProject.group
+version = project.rootProject.version
+
+java {
+	sourceCompatibility = JavaVersion.VERSION_17
+}
+
+repositories {
+	mavenCentral()
+	maven { url "https://repo.spring.io/milestone" }
+	maven { url "https://repo.spring.io/snapshot" }
+}
+
+ext {
+	set("springCloudVersion", "2023.0.2")
+}
+
+dependencyManagement {
+	imports {
+		mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+	}
+}
+
+dependencies {
+	implementation "org.springframework.boot:spring-boot-starter-web"
+	implementation "org.springframework.boot:spring-boot-starter-security"
+	implementation "org.springframework.boot:spring-boot-starter-oauth2-client"
+	implementation "org.springframework.cloud:spring-cloud-starter-gateway-mvc"
+}

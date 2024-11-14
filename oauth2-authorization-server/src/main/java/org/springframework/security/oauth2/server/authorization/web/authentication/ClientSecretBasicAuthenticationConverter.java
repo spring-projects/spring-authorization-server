@@ -15,7 +15,6 @@
  */
 package org.springframework.security.oauth2.server.authorization.web.authentication;
 
-import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
@@ -78,18 +77,8 @@ public final class ClientSecretBasicAuthenticationConverter implements Authentic
 			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_REQUEST);
 		}
 
-		String clientID;
-		String clientSecret;
-		try {
-			clientID = URLDecoder.decode(credentials[0], StandardCharsets.UTF_8.name());
-			clientSecret = URLDecoder.decode(credentials[1], StandardCharsets.UTF_8.name());
-		}
-		catch (Exception ex) {
-			throw new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_REQUEST), ex);
-		}
-
-		return new OAuth2ClientAuthenticationToken(clientID, ClientAuthenticationMethod.CLIENT_SECRET_BASIC,
-				clientSecret, OAuth2EndpointUtils.getParametersIfMatchesAuthorizationCodeGrantRequest(request));
+		return new OAuth2ClientAuthenticationToken(credentials[0], ClientAuthenticationMethod.CLIENT_SECRET_BASIC,
+				credentials[1], OAuth2EndpointUtils.getParametersIfMatchesAuthorizationCodeGrantRequest(request));
 	}
 
 }

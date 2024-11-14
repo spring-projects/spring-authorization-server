@@ -15,7 +15,6 @@
  */
 package org.springframework.security.oauth2.server.authorization.web.authentication;
 
-import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
@@ -96,11 +95,11 @@ public class ClientSecretBasicAuthenticationConverterTests {
 	public void convertWhenAuthorizationHeaderBasicWithValidCredentialsThenReturnClientAuthenticationToken()
 			throws Exception {
 		MockHttpServletRequest request = new MockHttpServletRequest();
-		request.addHeader(HttpHeaders.AUTHORIZATION, "Basic " + encodeBasicAuth("clientId", "secret"));
+		request.addHeader(HttpHeaders.AUTHORIZATION, "Basic " + encodeBasicAuth("clientId", "secret+%"));
 		OAuth2ClientAuthenticationToken authentication = (OAuth2ClientAuthenticationToken) this.converter
 			.convert(request);
 		assertThat(authentication.getPrincipal()).isEqualTo("clientId");
-		assertThat(authentication.getCredentials()).isEqualTo("secret");
+		assertThat(authentication.getCredentials()).isEqualTo("secret+%");
 		assertThat(authentication.getClientAuthenticationMethod())
 			.isEqualTo(ClientAuthenticationMethod.CLIENT_SECRET_BASIC);
 	}
@@ -123,8 +122,6 @@ public class ClientSecretBasicAuthenticationConverterTests {
 	}
 
 	private static String encodeBasicAuth(String clientId, String secret) throws Exception {
-		clientId = URLEncoder.encode(clientId, StandardCharsets.UTF_8.name());
-		secret = URLEncoder.encode(secret, StandardCharsets.UTF_8.name());
 		String credentialsString = clientId + ":" + secret;
 		byte[] encodedBytes = Base64.getEncoder().encode(credentialsString.getBytes(StandardCharsets.UTF_8));
 		return new String(encodedBytes, StandardCharsets.UTF_8);

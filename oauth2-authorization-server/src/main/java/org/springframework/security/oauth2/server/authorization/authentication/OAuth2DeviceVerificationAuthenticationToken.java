@@ -80,7 +80,7 @@ public class OAuth2DeviceVerificationAuthenticationToken extends AbstractAuthent
 		this.principal = principal;
 		this.userCode = userCode;
 		this.clientId = clientId;
-		this.additionalParameters = null;
+		this.additionalParameters = Collections.emptyMap();
 		setAuthenticated(true);
 	}
 

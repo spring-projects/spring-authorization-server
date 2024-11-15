@@ -96,7 +96,7 @@ public class OAuth2DeviceAuthorizationRequestAuthenticationToken extends Abstrac
 		this.deviceCode = deviceCode;
 		this.userCode = userCode;
 		this.authorizationUri = null;
-		this.additionalParameters = null;
+		this.additionalParameters = Collections.emptyMap();
 		setAuthenticated(true);
 	}
 

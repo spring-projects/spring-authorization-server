@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 the original author or authors.
+ * Copyright 2020-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,7 +80,7 @@ public class OAuth2DeviceVerificationAuthenticationToken extends AbstractAuthent
 		this.principal = principal;
 		this.userCode = userCode;
 		this.clientId = clientId;
-		this.additionalParameters = null;
+		this.additionalParameters = Collections.emptyMap();
 		setAuthenticated(true);
 	}
 

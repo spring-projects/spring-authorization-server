@@ -78,8 +78,7 @@ public class OAuth2AuthorizationServerJackson2Module extends SimpleModule {
 	@Override
 	public void setupModule(SetupContext context) {
 		SecurityJackson2Modules.enableDefaultTyping(context.getOwner());
-		context.setMixInAnnotations(Collections.unmodifiableMap(Collections.emptyMap()).getClass(),
-				UnmodifiableMapMixin.class);
+		context.setMixInAnnotations(Collections.emptyMap().getClass(), UnmodifiableMapMixin.class);
 		context.setMixInAnnotations(HashSet.class, HashSetMixin.class);
 		context.setMixInAnnotations(LinkedHashSet.class, HashSetMixin.class);
 		context.setMixInAnnotations(OAuth2TokenExchangeActor.class, OAuth2TokenExchangeActorMixin.class);

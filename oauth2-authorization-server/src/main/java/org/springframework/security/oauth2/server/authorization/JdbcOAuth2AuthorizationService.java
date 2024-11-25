@@ -766,8 +766,7 @@ public class JdbcOAuth2AuthorizationService implements OAuth2AuthorizationServic
 
 		@Override
 		protected void doSetValue(PreparedStatement ps, int parameterPosition, Object argValue) throws SQLException {
-			if (argValue instanceof SqlParameterValue) {
-				SqlParameterValue paramValue = (SqlParameterValue) argValue;
+			if (argValue instanceof SqlParameterValue paramValue) {
 				if (paramValue.getSqlType() == Types.BLOB) {
 					if (paramValue.getValue() != null) {
 						Assert.isInstanceOf(byte[].class, paramValue.getValue(),

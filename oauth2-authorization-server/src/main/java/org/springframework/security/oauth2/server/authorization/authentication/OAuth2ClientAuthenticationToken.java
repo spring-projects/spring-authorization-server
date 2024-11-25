@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -92,7 +92,7 @@ public class OAuth2ClientAuthenticationToken extends AbstractAuthenticationToken
 		this.registeredClient = registeredClient;
 		this.clientAuthenticationMethod = clientAuthenticationMethod;
 		this.credentials = credentials;
-		this.additionalParameters = Collections.unmodifiableMap(Collections.emptyMap());
+		this.additionalParameters = Collections.emptyMap();
 		setAuthenticated(true);
 	}
 

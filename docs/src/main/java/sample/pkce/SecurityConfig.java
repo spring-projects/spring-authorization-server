@@ -49,6 +49,10 @@ public class SecurityConfig {
 				authorizationServer
 					.oidc(Customizer.withDefaults())	// Enable OpenID Connect 1.0
 			)
+			.authorizeHttpRequests((authorize) ->
+				authorize
+					.anyRequest().authenticated()
+			)
 			// Redirect to the login page when not authenticated from the
 			// authorization endpoint
 			.exceptionHandling((exceptions) -> exceptions

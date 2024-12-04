@@ -44,6 +44,10 @@ public class SecurityConfig {
 								.authenticationProviders(configureCustomClientMetadataConverters())	// <2>
 						)
 					)
+			)
+			.authorizeHttpRequests((authorize) ->
+				authorize
+					.anyRequest().authenticated()
 			);
 		// @formatter:on
 

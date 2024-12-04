@@ -206,6 +206,10 @@ public class JpaTests {
 					authorizationServer
 						.oidc(Customizer.withDefaults())	// Enable OpenID Connect 1.0
 				)
+				.authorizeHttpRequests((authorize) ->
+					authorize
+						.anyRequest().authenticated()
+				)
 				.exceptionHandling((exceptions) -> exceptions
 					.defaultAuthenticationEntryPointFor(
 						new LoginUrlAuthenticationEntryPoint("/login"),

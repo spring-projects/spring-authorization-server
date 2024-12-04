@@ -70,6 +70,10 @@ public class EnableUserInfoSecurityConfig {
 				authorizationServer
 					.oidc(Customizer.withDefaults())	// <2>
 			)
+			.authorizeHttpRequests((authorize) ->
+				authorize
+					.anyRequest().authenticated()
+			)
 			.exceptionHandling((exceptions) -> exceptions
 				.defaultAuthenticationEntryPointFor(
 					new LoginUrlAuthenticationEntryPoint("/login"),

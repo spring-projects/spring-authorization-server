@@ -37,13 +37,13 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 public class OAuth2AuthorizationServerJackson2ModuleTests {
 
-	private static final TypeReference<Map<String, Object>> STRING_OBJECT_MAP = new TypeReference<Map<String, Object>>() {
+	private static final TypeReference<Map<String, Object>> STRING_OBJECT_MAP = new TypeReference<>() {
 	};
 
-	private static final TypeReference<Set<String>> STRING_SET = new TypeReference<Set<String>>() {
+	private static final TypeReference<Set<String>> STRING_SET = new TypeReference<>() {
 	};
 
-	private static final TypeReference<String[]> STRING_ARRAY = new TypeReference<String[]>() {
+	private static final TypeReference<String[]> STRING_ARRAY = new TypeReference<>() {
 	};
 
 	private ObjectMapper objectMapper;

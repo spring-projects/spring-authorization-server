@@ -309,7 +309,7 @@ public class JdbcRegisteredClientRepository implements RegisteredClientRepositor
 
 		private Map<String, Object> parseMap(String data) {
 			try {
-				return this.objectMapper.readValue(data, new TypeReference<Map<String, Object>>() {
+				return this.objectMapper.readValue(data, new TypeReference<>() {
 				});
 			}
 			catch (Exception ex) {

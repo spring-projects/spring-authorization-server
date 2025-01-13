@@ -39,7 +39,6 @@ import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationResponse;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
-import org.springframework.security.oauth2.core.oidc.OidcScopes;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeRequestAuthenticationException;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeRequestAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeRequestAuthenticationToken;
@@ -57,9 +56,7 @@ import org.springframework.security.web.authentication.WebAuthenticationDetailsS
 import org.springframework.security.web.authentication.session.SessionAuthenticationStrategy;
 import org.springframework.security.web.util.RedirectUrlBuilder;
 import org.springframework.security.web.util.UrlUtils;
-import org.springframework.security.web.util.matcher.AndRequestMatcher;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
-import org.springframework.security.web.util.matcher.NegatedRequestMatcher;
 import org.springframework.security.web.util.matcher.OrRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
@@ -151,20 +148,8 @@ public final class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilte
 				HttpMethod.GET.name());
 		RequestMatcher authorizationRequestPostMatcher = new AntPathRequestMatcher(authorizationEndpointUri,
 				HttpMethod.POST.name());
-		RequestMatcher openidScopeMatcher = (request) -> {
-			String scope = request.getParameter(OAuth2ParameterNames.SCOPE);
-			return StringUtils.hasText(scope) && scope.contains(OidcScopes.OPENID);
-		};
-		RequestMatcher responseTypeParameterMatcher = (
-				request) -> request.getParameter(OAuth2ParameterNames.RESPONSE_TYPE) != null;
 
-		RequestMatcher authorizationRequestMatcher = new OrRequestMatcher(authorizationRequestGetMatcher,
-				new AndRequestMatcher(authorizationRequestPostMatcher, responseTypeParameterMatcher,
-						openidScopeMatcher));
-		RequestMatcher authorizationConsentMatcher = new AndRequestMatcher(authorizationRequestPostMatcher,
-				new NegatedRequestMatcher(responseTypeParameterMatcher));
-
-		return new OrRequestMatcher(authorizationRequestMatcher, authorizationConsentMatcher);
+		return new OrRequestMatcher(authorizationRequestGetMatcher, authorizationRequestPostMatcher);
 	}
 
 	@Override

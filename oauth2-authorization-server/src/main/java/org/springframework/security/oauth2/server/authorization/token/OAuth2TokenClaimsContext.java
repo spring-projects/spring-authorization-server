@@ -84,6 +84,7 @@ public final class OAuth2TokenClaimsContext implements OAuth2TokenContext {
 		 * Builds a new {@link OAuth2TokenClaimsContext}.
 		 * @return the {@link OAuth2TokenClaimsContext}
 		 */
+		@Override
 		public OAuth2TokenClaimsContext build() {
 			return new OAuth2TokenClaimsContext(getContext());
 		}

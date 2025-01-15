@@ -96,6 +96,7 @@ public final class OAuth2ClientCredentialsAuthenticationContext implements OAuth
 		 * Builds a new {@link OAuth2ClientCredentialsAuthenticationContext}.
 		 * @return the {@link OAuth2ClientCredentialsAuthenticationContext}
 		 */
+		@Override
 		public OAuth2ClientCredentialsAuthenticationContext build() {
 			Assert.notNull(get(RegisteredClient.class), "registeredClient cannot be null");
 			return new OAuth2ClientCredentialsAuthenticationContext(getContext());

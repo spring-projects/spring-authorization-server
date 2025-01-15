@@ -116,6 +116,7 @@ public final class OidcUserInfoAuthenticationContext implements OAuth2Authentica
 		 * Builds a new {@link OidcUserInfoAuthenticationContext}.
 		 * @return the {@link OidcUserInfoAuthenticationContext}
 		 */
+		@Override
 		public OidcUserInfoAuthenticationContext build() {
 			Assert.notNull(get(OAuth2AccessToken.class), "accessToken cannot be null");
 			Assert.notNull(get(OAuth2Authorization.class), "authorization cannot be null");

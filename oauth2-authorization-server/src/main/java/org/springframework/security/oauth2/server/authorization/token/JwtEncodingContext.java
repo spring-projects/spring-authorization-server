@@ -102,6 +102,7 @@ public final class JwtEncodingContext implements OAuth2TokenContext {
 		 * Builds a new {@link JwtEncodingContext}.
 		 * @return the {@link JwtEncodingContext}
 		 */
+		@Override
 		public JwtEncodingContext build() {
 			return new JwtEncodingContext(getContext());
 		}

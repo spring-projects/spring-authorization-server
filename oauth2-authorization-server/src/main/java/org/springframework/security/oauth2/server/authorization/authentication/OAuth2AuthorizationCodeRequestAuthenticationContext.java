@@ -142,6 +142,7 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationContext implement
 		 * Builds a new {@link OAuth2AuthorizationCodeRequestAuthenticationContext}.
 		 * @return the {@link OAuth2AuthorizationCodeRequestAuthenticationContext}
 		 */
+		@Override
 		public OAuth2AuthorizationCodeRequestAuthenticationContext build() {
 			Assert.notNull(get(RegisteredClient.class), "registeredClient cannot be null");
 			return new OAuth2AuthorizationCodeRequestAuthenticationContext(getContext());

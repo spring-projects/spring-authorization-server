@@ -117,7 +117,7 @@ final class AuthorizationServerContextFilter extends OncePerRequestFilter {
 			}
 
 			// @formatter:off
-			return UriComponentsBuilder.fromHttpUrl(UrlUtils.buildFullRequestUrl(request))
+			return UriComponentsBuilder.fromUriString(UrlUtils.buildFullRequestUrl(request))
 					.replacePath(path)
 					.replaceQuery(null)
 					.fragment(null)

@@ -18,6 +18,8 @@ Ideally, that would include a https://stackoverflow.com/help/minimal-reproducibl
 This project uses https://help.github.com/en/github/collaborating-with-issues-and-pull-requests/about-pull-requests[pull requests] for the community to suggest changes to the project.
 There are a few important things to keep in mind when submitting a pull request:
 
+* All commits must include a __Signed-off-by__ trailer at the end of each commit message to indicate that the contributor agrees to the Developer Certificate of Origin.
+For additional details, please refer to the blog post https://spring.io/blog/2025/01/06/hello-dco-goodbye-cla-simplifying-contributions-to-spring[Hello DCO, Goodbye CLA: Simplifying Contributions to Spring].
 * Expect feedback and to make changes to your contributions.
 * Unless it is a minor change:
 ** It is best to discuss pull requests on an issue before doing work
@@ -31,11 +33,6 @@ That may mean using an external library directly in a `Filter`.
 == Reporting Security Vulnerabilities
 If you think you have found a security vulnerability please *DO NOT* disclose it publicly until we've had a chance to fix it.
 Please don't report security vulnerabilities using GitHub issues, instead head over to https://spring.io/security-policy and learn how to disclose them responsibly.
-
-== Sign the Contributor License Agreement
-Before we accept a non-trivial patch or pull request we will need you to https://cla.pivotal.io/sign/spring[sign the Contributor License Agreement].
-Signing the contributor's agreement does not grant anyone commit rights to the main repository, but it does mean that we can accept your contributions, and you will get an author credit if we do.
-Active contributors might be asked to join the core team, and given the ability to merge pull requests.
 
 == Apache License header
 

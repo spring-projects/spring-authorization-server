@@ -64,11 +64,11 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationConverter impleme
 	private static final Authentication ANONYMOUS_AUTHENTICATION = new AnonymousAuthenticationToken("anonymous",
 			"anonymousUser", AuthorityUtils.createAuthorityList("ROLE_ANONYMOUS"));
 
-	private static final RequestMatcher OIDC_REQUEST_MATCHER = createOidcRequestMatcher();
+	private static final RequestMatcher POST_WITH_RESPONSE_TYPE_REQUEST_MATCHER = createPostWithResponseTypeRequestMatcher();
 
 	@Override
 	public Authentication convert(HttpServletRequest request) {
-		if (!"GET".equals(request.getMethod()) && !OIDC_REQUEST_MATCHER.matches(request)) {
+		if (!"GET".equals(request.getMethod()) && !POST_WITH_RESPONSE_TYPE_REQUEST_MATCHER.matches(request)) {
 			return null;
 		}
 
@@ -153,15 +153,11 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationConverter impleme
 				state, scopes, additionalParameters);
 	}
 
-	private static RequestMatcher createOidcRequestMatcher() {
+	private static RequestMatcher createPostWithResponseTypeRequestMatcher() {
 		RequestMatcher postMethodMatcher = (request) -> "POST".equals(request.getMethod());
 		RequestMatcher responseTypeParameterMatcher = (
 				request) -> request.getParameter(OAuth2ParameterNames.RESPONSE_TYPE) != null;
-		RequestMatcher openidScopeMatcher = (request) -> {
-			String scope = request.getParameter(OAuth2ParameterNames.SCOPE);
-			return StringUtils.hasText(scope) && scope.contains(OidcScopes.OPENID);
-		};
-		return new AndRequestMatcher(postMethodMatcher, responseTypeParameterMatcher, openidScopeMatcher);
+		return new AndRequestMatcher(postMethodMatcher, responseTypeParameterMatcher);
 	}
 
 	private static void throwError(String errorCode, String parameterName) {

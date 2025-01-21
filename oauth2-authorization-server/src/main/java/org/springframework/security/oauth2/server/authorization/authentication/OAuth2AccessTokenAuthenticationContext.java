@@ -100,6 +100,7 @@ public final class OAuth2AccessTokenAuthenticationContext implements OAuth2Authe
 		 * Builds a new {@link OAuth2AccessTokenAuthenticationContext}.
 		 * @return the {@link OAuth2AccessTokenAuthenticationContext}
 		 */
+		@Override
 		public OAuth2AccessTokenAuthenticationContext build() {
 			Assert.notNull(get(OAuth2AccessTokenResponse.Builder.class), "accessTokenResponse cannot be null");
 			return new OAuth2AccessTokenAuthenticationContext(getContext());

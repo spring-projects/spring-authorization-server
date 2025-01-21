@@ -155,6 +155,7 @@ public final class OAuth2AuthorizationConsentAuthenticationContext implements OA
 		 * Builds a new {@link OAuth2AuthorizationConsentAuthenticationContext}.
 		 * @return the {@link OAuth2AuthorizationConsentAuthenticationContext}
 		 */
+		@Override
 		public OAuth2AuthorizationConsentAuthenticationContext build() {
 			Assert.notNull(get(OAuth2AuthorizationConsent.Builder.class), "authorizationConsentBuilder cannot be null");
 			Assert.notNull(get(RegisteredClient.class), "registeredClient cannot be null");

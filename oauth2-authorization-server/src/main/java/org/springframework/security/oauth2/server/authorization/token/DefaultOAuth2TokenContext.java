@@ -70,6 +70,7 @@ public final class DefaultOAuth2TokenContext implements OAuth2TokenContext {
 		 * Builds a new {@link DefaultOAuth2TokenContext}.
 		 * @return the {@link DefaultOAuth2TokenContext}
 		 */
+		@Override
 		public DefaultOAuth2TokenContext build() {
 			return new DefaultOAuth2TokenContext(getContext());
 		}

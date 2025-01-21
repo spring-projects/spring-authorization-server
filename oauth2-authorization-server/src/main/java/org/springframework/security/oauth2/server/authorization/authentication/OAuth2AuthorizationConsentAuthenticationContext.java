@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 the original author or authors.
+ * Copyright 2020-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -155,6 +155,7 @@ public final class OAuth2AuthorizationConsentAuthenticationContext implements OA
 		 * Builds a new {@link OAuth2AuthorizationConsentAuthenticationContext}.
 		 * @return the {@link OAuth2AuthorizationConsentAuthenticationContext}
 		 */
+		@Override
 		public OAuth2AuthorizationConsentAuthenticationContext build() {
 			Assert.notNull(get(OAuth2AuthorizationConsent.Builder.class), "authorizationConsentBuilder cannot be null");
 			Assert.notNull(get(RegisteredClient.class), "registeredClient cannot be null");

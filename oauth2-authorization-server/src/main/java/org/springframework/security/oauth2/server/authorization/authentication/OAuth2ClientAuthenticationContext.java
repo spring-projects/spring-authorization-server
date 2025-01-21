@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 the original author or authors.
+ * Copyright 2020-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -96,6 +96,7 @@ public final class OAuth2ClientAuthenticationContext implements OAuth2Authentica
 		 * Builds a new {@link OAuth2ClientAuthenticationContext}.
 		 * @return the {@link OAuth2ClientAuthenticationContext}
 		 */
+		@Override
 		public OAuth2ClientAuthenticationContext build() {
 			Assert.notNull(get(RegisteredClient.class), "registeredClient cannot be null");
 			return new OAuth2ClientAuthenticationContext(getContext());

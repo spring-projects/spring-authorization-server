@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -116,6 +116,7 @@ public final class OidcUserInfoAuthenticationContext implements OAuth2Authentica
 		 * Builds a new {@link OidcUserInfoAuthenticationContext}.
 		 * @return the {@link OidcUserInfoAuthenticationContext}
 		 */
+		@Override
 		public OidcUserInfoAuthenticationContext build() {
 			Assert.notNull(get(OAuth2AccessToken.class), "accessToken cannot be null");
 			Assert.notNull(get(OAuth2Authorization.class), "authorization cannot be null");

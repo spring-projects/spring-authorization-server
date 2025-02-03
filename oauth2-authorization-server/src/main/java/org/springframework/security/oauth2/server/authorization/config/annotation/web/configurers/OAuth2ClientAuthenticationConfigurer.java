@@ -79,6 +79,8 @@ public final class OAuth2ClientAuthenticationConfigurer extends AbstractOAuth2Co
 
 	private AuthenticationFailureHandler errorResponseHandler;
 
+	private String realmName = "oauth";
+
 	/**
 	 * Restrict for internal use only.
 	 * @param objectPostProcessor an {@code ObjectPostProcessor}
@@ -99,6 +101,18 @@ public final class OAuth2ClientAuthenticationConfigurer extends AbstractOAuth2Co
 			AuthenticationConverter authenticationConverter) {
 		Assert.notNull(authenticationConverter, "authenticationConverter cannot be null");
 		this.authenticationConverters.add(authenticationConverter);
+		return this;
+	}
+
+	/**
+	 * Sets the realm name for Http Basic when returning a WWW-Authenticate header on
+	 * client authentication failure.
+	 * @param realmName the Http Basic realm name
+	 * @return the {@link OAuth2ClientAuthenticationConfigurer} for further configuration
+	 */
+	public OAuth2ClientAuthenticationConfigurer realmName(String realmName) {
+		Assert.hasText(realmName, "realmName cannot be empty");
+		this.realmName = realmName;
 		return this;
 	}
 
@@ -213,7 +227,7 @@ public final class OAuth2ClientAuthenticationConfigurer extends AbstractOAuth2Co
 	void configure(HttpSecurity httpSecurity) {
 		AuthenticationManager authenticationManager = httpSecurity.getSharedObject(AuthenticationManager.class);
 		OAuth2ClientAuthenticationFilter clientAuthenticationFilter = new OAuth2ClientAuthenticationFilter(
-				authenticationManager, this.requestMatcher);
+				authenticationManager, this.requestMatcher, this.realmName);
 		List<AuthenticationConverter> authenticationConverters = createDefaultAuthenticationConverters();
 		if (!this.authenticationConverters.isEmpty()) {
 			authenticationConverters.addAll(0, this.authenticationConverters);

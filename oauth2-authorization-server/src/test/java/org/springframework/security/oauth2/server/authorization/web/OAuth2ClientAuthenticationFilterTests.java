@@ -81,7 +81,7 @@ public class OAuth2ClientAuthenticationFilterTests {
 	public void setUp() {
 		this.authenticationManager = mock(AuthenticationManager.class);
 		this.requestMatcher = new AntPathRequestMatcher(this.filterProcessesUrl, HttpMethod.POST.name());
-		this.filter = new OAuth2ClientAuthenticationFilter(this.authenticationManager, this.requestMatcher);
+		this.filter = new OAuth2ClientAuthenticationFilter(this.authenticationManager, this.requestMatcher, "realm");
 		this.authenticationConverter = mock(AuthenticationConverter.class);
 		this.filter.setAuthenticationConverter(this.authenticationConverter);
 	}
@@ -93,14 +93,14 @@ public class OAuth2ClientAuthenticationFilterTests {
 
 	@Test
 	public void constructorWhenAuthenticationManagerNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> new OAuth2ClientAuthenticationFilter(null, this.requestMatcher))
+		assertThatThrownBy(() -> new OAuth2ClientAuthenticationFilter(null, this.requestMatcher, "realm"))
 			.isInstanceOf(IllegalArgumentException.class)
 			.hasMessage("authenticationManager cannot be null");
 	}
 
 	@Test
 	public void constructorWhenRequestMatcherNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> new OAuth2ClientAuthenticationFilter(this.authenticationManager, null))
+		assertThatThrownBy(() -> new OAuth2ClientAuthenticationFilter(this.authenticationManager, null, "realm"))
 			.isInstanceOf(IllegalArgumentException.class)
 			.hasMessage("requestMatcher cannot be null");
 	}

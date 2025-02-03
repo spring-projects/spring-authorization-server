@@ -26,6 +26,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageConverter;
@@ -149,8 +150,10 @@ public class OAuth2ClientAuthenticationFilterTests {
 
 		this.filter.doFilter(request, response, filterChain);
 
-		verify(filterChain).doFilter(any(HttpServletRequest.class), any(HttpServletResponse.class));
-		verifyNoInteractions(this.authenticationManager);
+		verifyNoInteractions(this.authenticationManager, filterChain);
+		assertThat(response.getStatus()).isEqualTo(HttpStatus.UNAUTHORIZED.value());
+		OAuth2Error error = readError(response);
+		assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_CLIENT);
 	}
 
 	@Test
@@ -225,6 +228,7 @@ public class OAuth2ClientAuthenticationFilterTests {
 
 		MockHttpServletRequest request = new MockHttpServletRequest("POST", this.filterProcessesUrl);
 		request.setServletPath(this.filterProcessesUrl);
+		request.addHeader(HttpHeaders.AUTHORIZATION, "Basic invalid-secret");
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		FilterChain filterChain = mock(FilterChain.class);
 

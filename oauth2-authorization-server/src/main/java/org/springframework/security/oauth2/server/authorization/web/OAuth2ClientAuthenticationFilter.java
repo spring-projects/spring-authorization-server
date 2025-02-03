@@ -24,6 +24,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import org.springframework.core.log.LogMessage;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.server.ServletServerHttpResponse;
@@ -97,6 +98,14 @@ public final class OAuth2ClientAuthenticationFilter extends OncePerRequestFilter
 	private AuthenticationFailureHandler authenticationFailureHandler = this::onAuthenticationFailure;
 
 	/**
+	 * Internal error code used to distinguish missing authentication from invalid
+	 * authentication in order to display a WWW-Authenticate header when appropriate The
+	 * default failure handler will convert this to the spec-compliant 'invalid_client'
+	 * before returning to the caller.
+	 */
+	private static final String MISSING_CLIENT_AUTH_ERROR_CODE = "missing_client_auth";
+
+	/**
 	 * Constructs an {@code OAuth2ClientAuthenticationFilter} using the provided
 	 * parameters.
 	 * @param authenticationManager the {@link AuthenticationManager} used for
@@ -140,9 +149,12 @@ public final class OAuth2ClientAuthenticationFilter extends OncePerRequestFilter
 				validateClientIdentifier(authenticationRequest);
 				Authentication authenticationResult = this.authenticationManager.authenticate(authenticationRequest);
 				this.authenticationSuccessHandler.onAuthenticationSuccess(request, response, authenticationResult);
+				filterChain.doFilter(request, response);
 			}
-			filterChain.doFilter(request, response);
-
+			else {
+				this.authenticationFailureHandler.onAuthenticationFailure(request, response,
+						new OAuth2AuthenticationException(MISSING_CLIENT_AUTH_ERROR_CODE));
+			}
 		}
 		catch (OAuth2AuthenticationException ex) {
 			if (this.logger.isTraceEnabled()) {
@@ -204,27 +216,23 @@ public final class OAuth2ClientAuthenticationFilter extends OncePerRequestFilter
 
 		SecurityContextHolder.clearContext();
 
-		// TODO
-		// The authorization server MAY return an HTTP 401 (Unauthorized) status code
-		// to indicate which HTTP authentication schemes are supported.
-		// If the client attempted to authenticate via the "Authorization" request header
-		// field,
-		// the authorization server MUST respond with an HTTP 401 (Unauthorized) status
-		// code and
-		// include the "WWW-Authenticate" response header field
-		// matching the authentication scheme used by the client.
-
 		OAuth2Error error = ((OAuth2AuthenticationException) exception).getError();
 		ServletServerHttpResponse httpResponse = new ServletServerHttpResponse(response);
-		if (OAuth2ErrorCodes.INVALID_CLIENT.equals(error.getErrorCode())) {
+		String errorCode = error.getErrorCode();
+		String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
+
+		if (MISSING_CLIENT_AUTH_ERROR_CODE.equals(errorCode) || (OAuth2ErrorCodes.INVALID_CLIENT.equals(errorCode)
+				&& authHeader != null && authHeader.trim().startsWith("Basic"))) {
+			errorCode = OAuth2ErrorCodes.INVALID_CLIENT;
 			httpResponse.setStatusCode(HttpStatus.UNAUTHORIZED);
+			httpResponse.getHeaders().set("WWW-Authenticate", "Basic");
 		}
 		else {
 			httpResponse.setStatusCode(HttpStatus.BAD_REQUEST);
 		}
 		// We don't want to reveal too much information to the caller so just return the
 		// error code
-		OAuth2Error errorResponse = new OAuth2Error(error.getErrorCode());
+		OAuth2Error errorResponse = new OAuth2Error(errorCode);
 		this.errorHttpResponseConverter.write(errorResponse, null, httpResponse);
 	}
 

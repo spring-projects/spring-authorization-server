@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import org.springframework.security.crypto.keygen.StringKeyGenerator;
 import org.springframework.security.oauth2.core.ClaimAccessor;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenType;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.settings.OAuth2TokenFormat;
@@ -104,6 +105,12 @@ public final class OAuth2AccessTokenGenerator implements OAuth2TokenGenerator<OA
 			}
 			if (context.getAuthorizationGrant() != null) {
 				accessTokenContextBuilder.authorizationGrant(context.getAuthorizationGrant());
+			}
+			if (OAuth2TokenType.ACCESS_TOKEN.equals(context.getTokenType())) {
+				Jwt dPoPProofJwt = context.get(OAuth2TokenContext.DPOP_PROOF_KEY);
+				if (dPoPProofJwt != null) {
+					accessTokenContextBuilder.put(OAuth2TokenContext.DPOP_PROOF_KEY, dPoPProofJwt);
+				}
 			}
 			// @formatter:on
 

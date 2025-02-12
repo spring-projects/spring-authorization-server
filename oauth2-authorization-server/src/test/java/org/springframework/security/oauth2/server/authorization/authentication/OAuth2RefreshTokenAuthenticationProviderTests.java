@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 the original author or authors.
+ * Copyright 2020-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,11 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
+import com.nimbusds.jose.jwk.JWKSet;
+import com.nimbusds.jose.jwk.source.JWKSource;
+import com.nimbusds.jose.proc.SecurityContext;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -43,10 +47,15 @@ import org.springframework.security.oauth2.core.oidc.IdTokenClaimNames;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
 import org.springframework.security.oauth2.core.oidc.endpoint.OidcParameterNames;
+import org.springframework.security.oauth2.jose.TestJwks;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 import org.springframework.security.oauth2.jwt.JoseHeaderNames;
+import org.springframework.security.oauth2.jwt.JwsHeader;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
+import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
+import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenType;
@@ -100,6 +109,8 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 
 	private OAuth2TokenGenerator<?> tokenGenerator;
 
+	private JwtEncoder dPoPProofJwtEncoder;
+
 	private OAuth2RefreshTokenAuthenticationProvider authenticationProvider;
 
 	@BeforeEach
@@ -122,6 +133,9 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 				return delegatingTokenGenerator.generate(context);
 			}
 		});
+		JWKSet clientJwkSet = new JWKSet(TestJwks.DEFAULT_EC_JWK);
+		JWKSource<SecurityContext> clientJwkSource = (jwkSelector, securityContext) -> jwkSelector.select(clientJwkSet);
+		this.dPoPProofJwtEncoder = new NimbusJwtEncoder(clientJwkSource);
 		this.authenticationProvider = new OAuth2RefreshTokenAuthenticationProvider(this.authorizationService,
 				this.tokenGenerator);
 		AuthorizationServerSettings authorizationServerSettings = AuthorizationServerSettings.builder()
@@ -171,8 +185,13 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 
 		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient,
 				ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
+		Map<String, Object> additionalParameters = new HashMap<>();
+		additionalParameters.put("dpop_proof", generateDPoPProof("http://localhost/oauth2/token"));
+		additionalParameters.put("dpop_method", "POST");
+		additionalParameters.put("dpop_target_uri", "http://localhost/oauth2/token");
 		OAuth2RefreshTokenAuthenticationToken authentication = new OAuth2RefreshTokenAuthenticationToken(
-				authorization.getRefreshToken().getToken().getTokenValue(), clientPrincipal, null, null);
+				authorization.getRefreshToken().getToken().getTokenValue(), clientPrincipal, null,
+				additionalParameters);
 
 		OAuth2AccessTokenAuthenticationToken accessTokenAuthentication = (OAuth2AccessTokenAuthenticationToken) this.authenticationProvider
 			.authenticate(authentication);
@@ -191,6 +210,7 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 			.isEqualTo(authentication);
 		assertThat(jwtEncodingContext.getJwsHeader()).isNotNull();
 		assertThat(jwtEncodingContext.getClaims()).isNotNull();
+		assertThat(jwtEncodingContext.<Jwt>get(OAuth2TokenContext.DPOP_PROOF_KEY)).isNotNull();
 
 		ArgumentCaptor<OAuth2Authorization> authorizationCaptor = ArgumentCaptor.forClass(OAuth2Authorization.class);
 		verify(this.authorizationService).save(authorizationCaptor.capture());
@@ -633,6 +653,26 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 			.expiresAt(expiresAt)
 			.claim(OAuth2ParameterNames.SCOPE, scope)
 			.build();
+	}
+
+	private String generateDPoPProof(String tokenEndpointUri) {
+		// @formatter:off
+		Map<String, Object> publicJwk = TestJwks.DEFAULT_EC_JWK
+				.toPublicJWK()
+				.toJSONObject();
+		JwsHeader jwsHeader = JwsHeader.with(SignatureAlgorithm.ES256)
+				.type("dpop+jwt")
+				.jwk(publicJwk)
+				.build();
+		JwtClaimsSet claims = JwtClaimsSet.builder()
+				.issuedAt(Instant.now())
+				.claim("htm", "POST")
+				.claim("htu", tokenEndpointUri)
+				.id(UUID.randomUUID().toString())
+				.build();
+		// @formatter:on
+		Jwt jwt = this.dPoPProofJwtEncoder.encode(JwtEncoderParameters.from(jwsHeader, claims));
+		return jwt.getTokenValue();
 	}
 
 }

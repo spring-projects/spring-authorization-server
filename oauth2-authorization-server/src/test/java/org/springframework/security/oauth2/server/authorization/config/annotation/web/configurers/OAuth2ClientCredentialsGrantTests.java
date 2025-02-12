@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 the original author or authors.
+ * Copyright 2020-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,8 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.function.Consumer;
 
 import com.nimbusds.jose.jwk.JWKSet;
@@ -62,6 +64,12 @@ import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.jose.TestJwks;
+import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
+import org.springframework.security.oauth2.jwt.JwsHeader;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtClaimsSet;
+import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
+import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.security.oauth2.server.authorization.JdbcOAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.authentication.ClientSecretAuthenticationProvider;
@@ -137,6 +145,8 @@ public class OAuth2ClientCredentialsGrantTests {
 
 	private static OAuth2TokenCustomizer<JwtEncodingContext> jwtCustomizer;
 
+	private static NimbusJwtEncoder dPoPProofJwtEncoder;
+
 	private static AuthenticationConverter authenticationConverter;
 
 	private static Consumer<List<AuthenticationConverter>> authenticationConvertersConsumer;
@@ -165,6 +175,9 @@ public class OAuth2ClientCredentialsGrantTests {
 		JWKSet jwkSet = new JWKSet(TestJwks.DEFAULT_RSA_JWK);
 		jwkSource = (jwkSelector, securityContext) -> jwkSelector.select(jwkSet);
 		jwtCustomizer = mock(OAuth2TokenCustomizer.class);
+		JWKSet clientJwkSet = new JWKSet(TestJwks.DEFAULT_EC_JWK);
+		JWKSource<SecurityContext> clientJwkSource = (jwkSelector, securityContext) -> jwkSelector.select(clientJwkSet);
+		dPoPProofJwtEncoder = new NimbusJwtEncoder(clientJwkSource);
 		authenticationConverter = mock(AuthenticationConverter.class);
 		authenticationConvertersConsumer = mock(Consumer.class);
 		authenticationProvider = mock(AuthenticationProvider.class);
@@ -459,6 +472,47 @@ public class OAuth2ClientCredentialsGrantTests {
 		verify(jwtCustomizer).customize(jwtEncodingContextCaptor.capture());
 		JwtEncodingContext jwtEncodingContext = jwtEncodingContextCaptor.getValue();
 		assertThat(jwtEncodingContext.getAuthorizationServerContext().getIssuer()).isEqualTo(issuer);
+	}
+
+	@Test
+	public void requestWhenTokenRequestWithDPoPProofThenReturnDPoPBoundAccessToken() throws Exception {
+		this.spring.register(AuthorizationServerConfiguration.class).autowire();
+
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient2().build();
+		this.registeredClientRepository.save(registeredClient);
+
+		String tokenEndpointUri = "http://localhost" + DEFAULT_TOKEN_ENDPOINT_URI;
+		String dPoPProof = generateDPoPProof(tokenEndpointUri);
+
+		this.mvc
+			.perform(post(DEFAULT_TOKEN_ENDPOINT_URI)
+				.param(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
+				.param(OAuth2ParameterNames.SCOPE, "scope1 scope2")
+				.header(HttpHeaders.AUTHORIZATION,
+						"Basic " + encodeBasicAuth(registeredClient.getClientId(), registeredClient.getClientSecret()))
+				.header(OAuth2AccessToken.TokenType.DPOP.getValue(), dPoPProof))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.token_type").value(OAuth2AccessToken.TokenType.DPOP.getValue()));
+	}
+
+	private static String generateDPoPProof(String tokenEndpointUri) {
+		// @formatter:off
+		Map<String, Object> publicJwk = TestJwks.DEFAULT_EC_JWK
+				.toPublicJWK()
+				.toJSONObject();
+		JwsHeader jwsHeader = JwsHeader.with(SignatureAlgorithm.ES256)
+				.type("dpop+jwt")
+				.jwk(publicJwk)
+				.build();
+		JwtClaimsSet claims = JwtClaimsSet.builder()
+				.issuedAt(Instant.now())
+				.claim("htm", "POST")
+				.claim("htu", tokenEndpointUri)
+				.id(UUID.randomUUID().toString())
+				.build();
+		// @formatter:on
+		Jwt jwt = dPoPProofJwtEncoder.encode(JwtEncoderParameters.from(jwsHeader, claims));
+		return jwt.getTokenValue();
 	}
 
 	private static String encodeBasicAuth(String clientId, String secret) throws Exception {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 the original author or authors.
+ * Copyright 2020-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package org.springframework.security.oauth2.server.authorization.authentication;
 
+import java.util.Map;
+
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.ClaimAccessor;
@@ -25,6 +27,7 @@ import org.springframework.security.oauth2.core.OAuth2Token;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.settings.OAuth2TokenFormat;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenContext;
+import org.springframework.util.CollectionUtils;
 
 /**
  * Utility methods for the OAuth 2.0 {@link AuthenticationProvider}'s.
@@ -51,8 +54,15 @@ final class OAuth2AuthenticationProviderUtils {
 	static <T extends OAuth2Token> OAuth2AccessToken accessToken(OAuth2Authorization.Builder builder, T token,
 			OAuth2TokenContext accessTokenContext) {
 
-		OAuth2AccessToken accessToken = new OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER, token.getTokenValue(),
-				token.getIssuedAt(), token.getExpiresAt(), accessTokenContext.getAuthorizedScopes());
+		OAuth2AccessToken.TokenType tokenType = OAuth2AccessToken.TokenType.BEARER;
+		if (token instanceof ClaimAccessor claimAccessor) {
+			Map<String, Object> cnfClaims = claimAccessor.getClaimAsMap("cnf");
+			if (!CollectionUtils.isEmpty(cnfClaims) && cnfClaims.containsKey("jkt")) {
+				tokenType = OAuth2AccessToken.TokenType.DPOP;
+			}
+		}
+		OAuth2AccessToken accessToken = new OAuth2AccessToken(tokenType, token.getTokenValue(), token.getIssuedAt(),
+				token.getExpiresAt(), accessTokenContext.getAuthorizedScopes());
 		OAuth2TokenFormat accessTokenFormat = accessTokenContext.getRegisteredClient()
 			.getTokenSettings()
 			.getAccessTokenFormat();

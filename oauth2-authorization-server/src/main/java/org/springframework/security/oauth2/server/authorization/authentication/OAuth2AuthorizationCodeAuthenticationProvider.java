@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 the original author or authors.
+ * Copyright 2020-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -185,6 +185,9 @@ public final class OAuth2AuthorizationCodeAuthenticationProvider implements Auth
 			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_GRANT);
 		}
 
+		// Verify the DPoP Proof (if available)
+		Jwt dPoPProof = DPoPProofVerifier.verifyIfAvailable(authorizationCodeAuthentication);
+
 		if (this.logger.isTraceEnabled()) {
 			this.logger.trace("Validated token request parameters");
 		}
@@ -201,6 +204,9 @@ public final class OAuth2AuthorizationCodeAuthenticationProvider implements Auth
 				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
 				.authorizationGrant(authorizationCodeAuthentication);
 		// @formatter:on
+		if (dPoPProof != null) {
+			tokenContextBuilder.put(OAuth2TokenContext.DPOP_PROOF_KEY, dPoPProof);
+		}
 
 		OAuth2Authorization.Builder authorizationBuilder = OAuth2Authorization.from(authorization);
 

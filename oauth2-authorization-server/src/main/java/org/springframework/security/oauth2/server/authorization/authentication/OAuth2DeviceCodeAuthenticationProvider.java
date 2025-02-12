@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 the original author or authors.
+ * Copyright 2020-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import org.springframework.security.oauth2.core.OAuth2RefreshToken;
 import org.springframework.security.oauth2.core.OAuth2Token;
 import org.springframework.security.oauth2.core.OAuth2UserCode;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenType;
@@ -182,6 +183,9 @@ public final class OAuth2DeviceCodeAuthenticationProvider implements Authenticat
 			throw new OAuth2AuthenticationException(error);
 		}
 
+		// Verify the DPoP Proof (if available)
+		Jwt dPoPProof = DPoPProofVerifier.verifyIfAvailable(deviceCodeAuthentication);
+
 		if (this.logger.isTraceEnabled()) {
 			this.logger.trace("Validated device token request parameters");
 		}
@@ -196,6 +200,9 @@ public final class OAuth2DeviceCodeAuthenticationProvider implements Authenticat
 				.authorizationGrantType(AuthorizationGrantType.DEVICE_CODE)
 				.authorizationGrant(deviceCodeAuthentication);
 		// @formatter:on
+		if (dPoPProof != null) {
+			tokenContextBuilder.put(OAuth2TokenContext.DPOP_PROOF_KEY, dPoPProof);
+		}
 
 		// @formatter:off
 		OAuth2Authorization.Builder authorizationBuilder = OAuth2Authorization.from(authorization)

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 the original author or authors.
+ * Copyright 2020-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers;
 
 import java.security.MessageDigest;
+import java.security.PublicKey;
 import java.security.cert.X509Certificate;
 import java.util.Base64;
 import java.util.Collections;
@@ -23,10 +24,14 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import com.nimbusds.jose.jwk.AsymmetricJWK;
+import com.nimbusds.jose.jwk.JWK;
+
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenType;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2TokenExchangeActor;
@@ -36,6 +41,7 @@ import org.springframework.security.oauth2.server.authorization.token.OAuth2Toke
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenClaimsContext;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenContext;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer;
+import org.springframework.util.CollectionUtils;
 
 /**
  * @author Joe Grandja
@@ -56,6 +62,8 @@ final class DefaultOAuth2TokenCustomizers {
 	}
 
 	private static void customize(OAuth2TokenContext tokenContext, Map<String, Object> claims) {
+		Map<String, Object> cnfClaims = null;
+
 		// Add 'cnf' claim for Mutual-TLS Client Certificate-Bound Access Tokens
 		if (OAuth2TokenType.ACCESS_TOKEN.equals(tokenContext.getTokenType())
 				&& tokenContext.getAuthorizationGrant() != null && tokenContext.getAuthorizationGrant()
@@ -69,9 +77,8 @@ final class DefaultOAuth2TokenCustomizers {
 				X509Certificate[] clientCertificateChain = (X509Certificate[]) clientAuthentication.getCredentials();
 				try {
 					String sha256Thumbprint = computeSHA256Thumbprint(clientCertificateChain[0]);
-					Map<String, Object> x5tClaim = new HashMap<>();
-					x5tClaim.put("x5t#S256", sha256Thumbprint);
-					claims.put("cnf", x5tClaim);
+					cnfClaims = new HashMap<>();
+					cnfClaims.put("x5t#S256", sha256Thumbprint);
 				}
 				catch (Exception ex) {
 					OAuth2Error error = new OAuth2Error(OAuth2ErrorCodes.SERVER_ERROR,
@@ -79,6 +86,44 @@ final class DefaultOAuth2TokenCustomizers {
 					throw new OAuth2AuthenticationException(error, ex);
 				}
 			}
+		}
+
+		// Add 'cnf' claim for OAuth 2.0 Demonstrating Proof of Possession (DPoP)
+		Jwt dPoPProofJwt = tokenContext.get(OAuth2TokenContext.DPOP_PROOF_KEY);
+		if (OAuth2TokenType.ACCESS_TOKEN.equals(tokenContext.getTokenType()) && dPoPProofJwt != null) {
+			PublicKey publicKey = null;
+			@SuppressWarnings("unchecked")
+			Map<String, Object> jwkJson = (Map<String, Object>) dPoPProofJwt.getHeaders().get("jwk");
+			try {
+				JWK jwk = JWK.parse(jwkJson);
+				if (jwk instanceof AsymmetricJWK) {
+					publicKey = ((AsymmetricJWK) jwk).toPublicKey();
+				}
+			}
+			catch (Exception ignored) {
+			}
+			if (publicKey == null) {
+				OAuth2Error error = new OAuth2Error(OAuth2ErrorCodes.INVALID_DPOP_PROOF,
+						"jwk header is missing or invalid.", null);
+				throw new OAuth2AuthenticationException(error);
+			}
+
+			try {
+				String sha256Thumbprint = computeSHA256Thumbprint(publicKey);
+				if (cnfClaims == null) {
+					cnfClaims = new HashMap<>();
+				}
+				cnfClaims.put("jkt", sha256Thumbprint);
+			}
+			catch (Exception ex) {
+				OAuth2Error error = new OAuth2Error(OAuth2ErrorCodes.SERVER_ERROR,
+						"Failed to compute SHA-256 Thumbprint for DPoP Proof PublicKey.", null);
+				throw new OAuth2AuthenticationException(error, ex);
+			}
+		}
+
+		if (!CollectionUtils.isEmpty(cnfClaims)) {
+			claims.put("cnf", cnfClaims);
 		}
 
 		// Add 'act' claim for delegation use case of Token Exchange Grant.
@@ -101,6 +146,12 @@ final class DefaultOAuth2TokenCustomizers {
 	private static String computeSHA256Thumbprint(X509Certificate x509Certificate) throws Exception {
 		MessageDigest md = MessageDigest.getInstance("SHA-256");
 		byte[] digest = md.digest(x509Certificate.getEncoded());
+		return Base64.getUrlEncoder().withoutPadding().encodeToString(digest);
+	}
+
+	private static String computeSHA256Thumbprint(PublicKey publicKey) throws Exception {
+		MessageDigest md = MessageDigest.getInstance("SHA-256");
+		byte[] digest = md.digest(publicKey.getEncoded());
 		return Base64.getUrlEncoder().withoutPadding().encodeToString(digest);
 	}
 

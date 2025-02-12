@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 the original author or authors.
+ * Copyright 2020-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,10 @@ import java.util.Map;
 import jakarta.servlet.http.HttpServletRequest;
 
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
+import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
+import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.endpoint.PkceParameterNames;
 import org.springframework.util.Assert;
@@ -102,6 +104,22 @@ final class OAuth2EndpointUtils {
 	static boolean matchesPkceTokenRequest(HttpServletRequest request) {
 		return matchesAuthorizationCodeGrantRequest(request)
 				&& request.getParameter(PkceParameterNames.CODE_VERIFIER) != null;
+	}
+
+	static void validateAndAddDPoPParametersIfAvailable(HttpServletRequest request,
+			Map<String, Object> additionalParameters) {
+		final String dPoPProofHeaderName = OAuth2AccessToken.TokenType.DPOP.getValue();
+		String dPoPProof = request.getHeader(dPoPProofHeaderName);
+		if (StringUtils.hasText(dPoPProof)) {
+			if (Collections.list(request.getHeaders(dPoPProofHeaderName)).size() != 1) {
+				throwError(OAuth2ErrorCodes.INVALID_REQUEST, dPoPProofHeaderName, ACCESS_TOKEN_REQUEST_ERROR_URI);
+			}
+			else {
+				additionalParameters.put("dpop_proof", dPoPProof);
+				additionalParameters.put("dpop_method", request.getMethod());
+				additionalParameters.put("dpop_target_uri", request.getRequestURL().toString());
+			}
+		}
 	}
 
 	static void throwError(String errorCode, String parameterName, String errorUri) {

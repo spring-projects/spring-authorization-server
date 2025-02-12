@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import java.util.function.Consumer;
 import org.springframework.lang.Nullable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenType;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
@@ -42,6 +43,11 @@ import org.springframework.util.Assert;
  * @see OAuth2TokenCustomizer
  */
 public interface OAuth2TokenContext extends Context {
+
+	/**
+	 * @since 1.5
+	 */
+	String DPOP_PROOF_KEY = Jwt.class.getName().concat(".DPOP_PROOF");
 
 	/**
 	 * Returns the {@link RegisteredClient registered client}.

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 the original author or authors.
+ * Copyright 2020-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
+import com.nimbusds.jose.jwk.JWKSet;
+import com.nimbusds.jose.jwk.source.JWKSource;
+import com.nimbusds.jose.proc.SecurityContext;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -51,12 +55,15 @@ import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
 import org.springframework.security.oauth2.core.oidc.endpoint.OidcParameterNames;
+import org.springframework.security.oauth2.jose.TestJwks;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 import org.springframework.security.oauth2.jwt.JoseHeaderNames;
+import org.springframework.security.oauth2.jwt.JwsHeader;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
+import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationCode;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
@@ -114,6 +121,8 @@ public class OAuth2AuthorizationCodeAuthenticationProviderTests {
 
 	private OAuth2TokenGenerator<?> tokenGenerator;
 
+	private JwtEncoder dPoPProofJwtEncoder;
+
 	private SessionRegistry sessionRegistry;
 
 	private OAuth2AuthorizationCodeAuthenticationProvider authenticationProvider;
@@ -137,6 +146,9 @@ public class OAuth2AuthorizationCodeAuthenticationProviderTests {
 				return delegatingTokenGenerator.generate(context);
 			}
 		});
+		JWKSet clientJwkSet = new JWKSet(TestJwks.DEFAULT_EC_JWK);
+		JWKSource<SecurityContext> clientJwkSource = (jwkSelector, securityContext) -> jwkSelector.select(clientJwkSet);
+		this.dPoPProofJwtEncoder = new NimbusJwtEncoder(clientJwkSource);
 		this.sessionRegistry = mock(SessionRegistry.class);
 		this.authenticationProvider = new OAuth2AuthorizationCodeAuthenticationProvider(this.authorizationService,
 				this.tokenGenerator);
@@ -470,8 +482,12 @@ public class OAuth2AuthorizationCodeAuthenticationProviderTests {
 				ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
 		OAuth2AuthorizationRequest authorizationRequest = authorization
 			.getAttribute(OAuth2AuthorizationRequest.class.getName());
+		Map<String, Object> additionalParameters = new HashMap<>();
+		additionalParameters.put("dpop_proof", generateDPoPProof("http://localhost/oauth2/token"));
+		additionalParameters.put("dpop_method", "POST");
+		additionalParameters.put("dpop_target_uri", "http://localhost/oauth2/token");
 		OAuth2AuthorizationCodeAuthenticationToken authentication = new OAuth2AuthorizationCodeAuthenticationToken(
-				AUTHORIZATION_CODE, clientPrincipal, authorizationRequest.getRedirectUri(), null);
+				AUTHORIZATION_CODE, clientPrincipal, authorizationRequest.getRedirectUri(), additionalParameters);
 
 		given(this.jwtEncoder.encode(any())).willReturn(createJwt());
 
@@ -492,6 +508,7 @@ public class OAuth2AuthorizationCodeAuthenticationProviderTests {
 			.isEqualTo(authentication);
 		assertThat(jwtEncodingContext.getJwsHeader()).isNotNull();
 		assertThat(jwtEncodingContext.getClaims()).isNotNull();
+		assertThat(jwtEncodingContext.<Jwt>get(OAuth2TokenContext.DPOP_PROOF_KEY)).isNotNull();
 
 		ArgumentCaptor<JwtEncoderParameters> jwtEncoderParametersCaptor = ArgumentCaptor
 			.forClass(JwtEncoderParameters.class);
@@ -796,6 +813,26 @@ public class OAuth2AuthorizationCodeAuthenticationProviderTests {
 		MessageDigest md = MessageDigest.getInstance("SHA-256");
 		byte[] digest = md.digest(value.getBytes(StandardCharsets.US_ASCII));
 		return Base64.getUrlEncoder().withoutPadding().encodeToString(digest);
+	}
+
+	private String generateDPoPProof(String tokenEndpointUri) {
+		// @formatter:off
+		Map<String, Object> publicJwk = TestJwks.DEFAULT_EC_JWK
+				.toPublicJWK()
+				.toJSONObject();
+		JwsHeader jwsHeader = JwsHeader.with(SignatureAlgorithm.ES256)
+				.type("dpop+jwt")
+				.jwk(publicJwk)
+				.build();
+		JwtClaimsSet claims = JwtClaimsSet.builder()
+				.issuedAt(Instant.now())
+				.claim("htm", "POST")
+				.claim("htu", tokenEndpointUri)
+				.id(UUID.randomUUID().toString())
+				.build();
+		// @formatter:on
+		Jwt jwt = this.dPoPProofJwtEncoder.encode(JwtEncoderParameters.from(jwsHeader, claims));
+		return jwt.getTokenValue();
 	}
 
 }

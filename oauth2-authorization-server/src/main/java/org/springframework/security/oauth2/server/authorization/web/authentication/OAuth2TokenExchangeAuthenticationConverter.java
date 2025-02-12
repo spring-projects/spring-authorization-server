@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 the original author or authors.
+ * Copyright 2020-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -175,6 +175,9 @@ public final class OAuth2TokenExchangeAuthenticationConverter implements Authent
 				additionalParameters.put(key, (value.size() == 1) ? value.get(0) : value.toArray(new String[0]));
 			}
 		});
+
+		// Validate DPoP Proof HTTP Header (if available)
+		OAuth2EndpointUtils.validateAndAddDPoPParametersIfAvailable(request, additionalParameters);
 
 		return new OAuth2TokenExchangeAuthenticationToken(requestedTokenType, subjectToken, subjectTokenType,
 				clientPrincipal, actorToken, actorTokenType, new LinkedHashSet<>(resources),

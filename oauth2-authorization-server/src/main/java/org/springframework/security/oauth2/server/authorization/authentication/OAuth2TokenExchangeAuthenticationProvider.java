@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 the original author or authors.
+ * Copyright 2020-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@ import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.OAuth2Token;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenType;
@@ -203,6 +204,9 @@ public final class OAuth2TokenExchangeAuthenticationProvider implements Authenti
 			authorizedScopes = validateRequestedScopes(registeredClient, subjectAuthorization.getAuthorizedScopes());
 		}
 
+		// Verify the DPoP Proof (if available)
+		Jwt dPoPProof = DPoPProofVerifier.verifyIfAvailable(tokenExchangeAuthentication);
+
 		if (this.logger.isTraceEnabled()) {
 			this.logger.trace("Validated token request parameters");
 		}
@@ -220,6 +224,9 @@ public final class OAuth2TokenExchangeAuthenticationProvider implements Authenti
 				.authorizationGrantType(AuthorizationGrantType.TOKEN_EXCHANGE)
 				.authorizationGrant(tokenExchangeAuthentication);
 		// @formatter:on
+		if (dPoPProof != null) {
+			tokenContextBuilder.put(OAuth2TokenContext.DPOP_PROOF_KEY, dPoPProof);
+		}
 
 		// ----- Access token -----
 		OAuth2TokenContext tokenContext = tokenContextBuilder.build();

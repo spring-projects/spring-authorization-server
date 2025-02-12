@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 the original author or authors.
+ * Copyright 2020-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -173,6 +173,12 @@ public final class JwtGenerator implements OAuth2TokenGenerator<Jwt> {
 				SessionInformation sessionInformation = context.get(SessionInformation.class);
 				if (sessionInformation != null) {
 					jwtContextBuilder.put(SessionInformation.class, sessionInformation);
+				}
+			}
+			if (OAuth2TokenType.ACCESS_TOKEN.equals(context.getTokenType())) {
+				Jwt dPoPProofJwt = context.get(OAuth2TokenContext.DPOP_PROOF_KEY);
+				if (dPoPProofJwt != null) {
+					jwtContextBuilder.put(OAuth2TokenContext.DPOP_PROOF_KEY, dPoPProofJwt);
 				}
 			}
 			// @formatter:on

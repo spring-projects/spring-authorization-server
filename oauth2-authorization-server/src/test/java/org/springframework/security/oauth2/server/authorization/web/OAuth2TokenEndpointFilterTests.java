@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 the original author or authors.
+ * Copyright 2020-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.springframework.security.oauth2.server.authorization.web;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 
@@ -67,7 +68,6 @@ import org.springframework.util.StringUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.assertj.core.api.Assertions.entry;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
@@ -237,6 +237,17 @@ public class OAuth2TokenEndpointFilterTests {
 	}
 
 	@Test
+	public void doFilterWhenTokenRequestMultipleDPoPHeaderThenInvalidRequestError() throws Exception {
+		MockHttpServletRequest request = createAuthorizationCodeTokenRequest(
+				TestRegisteredClients.registeredClient().build());
+		request.addHeader(OAuth2AccessToken.TokenType.DPOP.getValue(), "dpop-proof-jwt");
+		request.addHeader(OAuth2AccessToken.TokenType.DPOP.getValue(), "dpop-proof-jwt-2");
+
+		doFilterWhenTokenRequestInvalidParameterThenError(OAuth2AccessToken.TokenType.DPOP.getValue(),
+				OAuth2ErrorCodes.INVALID_REQUEST, request);
+	}
+
+	@Test
 	public void doFilterWhenAuthorizationCodeTokenRequestThenAccessTokenResponse() throws Exception {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 		Authentication clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient,
@@ -256,6 +267,7 @@ public class OAuth2TokenEndpointFilterTests {
 		SecurityContextHolder.setContext(securityContext);
 
 		MockHttpServletRequest request = createAuthorizationCodeTokenRequest(registeredClient);
+		request.addHeader(OAuth2AccessToken.TokenType.DPOP.getValue(), "dpop-proof-jwt");
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		FilterChain filterChain = mock(FilterChain.class);
 
@@ -274,9 +286,14 @@ public class OAuth2TokenEndpointFilterTests {
 		assertThat(authorizationCodeAuthentication.getPrincipal()).isEqualTo(clientPrincipal);
 		assertThat(authorizationCodeAuthentication.getRedirectUri())
 			.isEqualTo(request.getParameter(OAuth2ParameterNames.REDIRECT_URI));
-		assertThat(authorizationCodeAuthentication.getAdditionalParameters()).containsExactly(
-				entry("custom-param-1", "custom-value-1"),
-				entry("custom-param-2", new String[] { "custom-value-1", "custom-value-2" }));
+		Map<String, Object> expectedAdditionalParameters = new HashMap<>();
+		expectedAdditionalParameters.put("custom-param-1", "custom-value-1");
+		expectedAdditionalParameters.put("custom-param-2", new String[] { "custom-value-1", "custom-value-2" });
+		expectedAdditionalParameters.put("dpop_proof", "dpop-proof-jwt");
+		expectedAdditionalParameters.put("dpop_method", "POST");
+		expectedAdditionalParameters.put("dpop_target_uri", "http://localhost/oauth2/token");
+		assertThat(authorizationCodeAuthentication.getAdditionalParameters())
+			.containsExactlyInAnyOrderEntriesOf(expectedAdditionalParameters);
 		assertThat(authorizationCodeAuthentication.getDetails())
 			.asInstanceOf(InstanceOfAssertFactories.type(WebAuthenticationDetails.class))
 			.extracting(WebAuthenticationDetails::getRemoteAddress)
@@ -324,6 +341,7 @@ public class OAuth2TokenEndpointFilterTests {
 		SecurityContextHolder.setContext(securityContext);
 
 		MockHttpServletRequest request = createClientCredentialsTokenRequest(registeredClient);
+		request.addHeader(OAuth2AccessToken.TokenType.DPOP.getValue(), "dpop-proof-jwt");
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		FilterChain filterChain = mock(FilterChain.class);
 
@@ -339,9 +357,14 @@ public class OAuth2TokenEndpointFilterTests {
 			.getValue();
 		assertThat(clientCredentialsAuthentication.getPrincipal()).isEqualTo(clientPrincipal);
 		assertThat(clientCredentialsAuthentication.getScopes()).isEqualTo(registeredClient.getScopes());
-		assertThat(clientCredentialsAuthentication.getAdditionalParameters()).containsExactly(
-				entry("custom-param-1", "custom-value-1"),
-				entry("custom-param-2", new String[] { "custom-value-1", "custom-value-2" }));
+		Map<String, Object> expectedAdditionalParameters = new HashMap<>();
+		expectedAdditionalParameters.put("custom-param-1", "custom-value-1");
+		expectedAdditionalParameters.put("custom-param-2", new String[] { "custom-value-1", "custom-value-2" });
+		expectedAdditionalParameters.put("dpop_proof", "dpop-proof-jwt");
+		expectedAdditionalParameters.put("dpop_method", "POST");
+		expectedAdditionalParameters.put("dpop_target_uri", "http://localhost/oauth2/token");
+		assertThat(clientCredentialsAuthentication.getAdditionalParameters())
+			.containsExactlyInAnyOrderEntriesOf(expectedAdditionalParameters);
 		assertThat(clientCredentialsAuthentication.getDetails())
 			.asInstanceOf(InstanceOfAssertFactories.type(WebAuthenticationDetails.class))
 			.extracting(WebAuthenticationDetails::getRemoteAddress)
@@ -412,6 +435,7 @@ public class OAuth2TokenEndpointFilterTests {
 		SecurityContextHolder.setContext(securityContext);
 
 		MockHttpServletRequest request = createRefreshTokenTokenRequest(registeredClient);
+		request.addHeader(OAuth2AccessToken.TokenType.DPOP.getValue(), "dpop-proof-jwt");
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		FilterChain filterChain = mock(FilterChain.class);
 
@@ -428,9 +452,14 @@ public class OAuth2TokenEndpointFilterTests {
 		assertThat(refreshTokenAuthenticationToken.getRefreshToken()).isEqualTo(refreshToken.getTokenValue());
 		assertThat(refreshTokenAuthenticationToken.getPrincipal()).isEqualTo(clientPrincipal);
 		assertThat(refreshTokenAuthenticationToken.getScopes()).isEqualTo(registeredClient.getScopes());
-		assertThat(refreshTokenAuthenticationToken.getAdditionalParameters()).containsExactly(
-				entry("custom-param-1", "custom-value-1"),
-				entry("custom-param-2", new String[] { "custom-value-1", "custom-value-2" }));
+		Map<String, Object> expectedAdditionalParameters = new HashMap<>();
+		expectedAdditionalParameters.put("custom-param-1", "custom-value-1");
+		expectedAdditionalParameters.put("custom-param-2", new String[] { "custom-value-1", "custom-value-2" });
+		expectedAdditionalParameters.put("dpop_proof", "dpop-proof-jwt");
+		expectedAdditionalParameters.put("dpop_method", "POST");
+		expectedAdditionalParameters.put("dpop_target_uri", "http://localhost/oauth2/token");
+		assertThat(refreshTokenAuthenticationToken.getAdditionalParameters())
+			.containsExactlyInAnyOrderEntriesOf(expectedAdditionalParameters);
 		assertThat(refreshTokenAuthenticationToken.getDetails())
 			.asInstanceOf(InstanceOfAssertFactories.type(WebAuthenticationDetails.class))
 			.extracting(WebAuthenticationDetails::getRemoteAddress)
@@ -473,6 +502,7 @@ public class OAuth2TokenEndpointFilterTests {
 		SecurityContextHolder.setContext(securityContext);
 
 		MockHttpServletRequest request = createTokenExchangeTokenRequest(registeredClient);
+		request.addHeader(OAuth2AccessToken.TokenType.DPOP.getValue(), "dpop-proof-jwt");
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		FilterChain filterChain = mock(FilterChain.class);
 
@@ -490,9 +520,14 @@ public class OAuth2TokenEndpointFilterTests {
 		assertThat(tokenExchangeAuthenticationToken.getSubjectTokenType()).isEqualTo(ACCESS_TOKEN_TYPE);
 		assertThat(tokenExchangeAuthenticationToken.getPrincipal()).isEqualTo(clientPrincipal);
 		assertThat(tokenExchangeAuthenticationToken.getScopes()).isEqualTo(registeredClient.getScopes());
-		assertThat(tokenExchangeAuthenticationToken.getAdditionalParameters()).containsExactly(
-				entry("custom-param-1", "custom-value-1"),
-				entry("custom-param-2", new String[] { "custom-value-1", "custom-value-2" }));
+		Map<String, Object> expectedAdditionalParameters = new HashMap<>();
+		expectedAdditionalParameters.put("custom-param-1", "custom-value-1");
+		expectedAdditionalParameters.put("custom-param-2", new String[] { "custom-value-1", "custom-value-2" });
+		expectedAdditionalParameters.put("dpop_proof", "dpop-proof-jwt");
+		expectedAdditionalParameters.put("dpop_method", "POST");
+		expectedAdditionalParameters.put("dpop_target_uri", "http://localhost/oauth2/token");
+		assertThat(tokenExchangeAuthenticationToken.getAdditionalParameters())
+			.containsExactlyInAnyOrderEntriesOf(expectedAdditionalParameters);
 		assertThat(tokenExchangeAuthenticationToken.getDetails())
 			.asInstanceOf(InstanceOfAssertFactories.type(WebAuthenticationDetails.class))
 			.extracting(WebAuthenticationDetails::getRemoteAddress)

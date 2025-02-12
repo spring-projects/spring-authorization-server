@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 the original author or authors.
+ * Copyright 2020-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.OAuth2Token;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenType;
@@ -116,21 +117,27 @@ public final class OAuth2ClientCredentialsAuthenticationProvider implements Auth
 
 		Set<String> authorizedScopes = new LinkedHashSet<>(clientCredentialsAuthentication.getScopes());
 
+		// Verify the DPoP Proof (if available)
+		Jwt dPoPProof = DPoPProofVerifier.verifyIfAvailable(clientCredentialsAuthentication);
+
 		if (this.logger.isTraceEnabled()) {
 			this.logger.trace("Validated token request parameters");
 		}
 
 		// @formatter:off
-		OAuth2TokenContext tokenContext = DefaultOAuth2TokenContext.builder()
+		DefaultOAuth2TokenContext.Builder tokenContextBuilder = DefaultOAuth2TokenContext.builder()
 				.registeredClient(registeredClient)
 				.principal(clientPrincipal)
 				.authorizationServerContext(AuthorizationServerContextHolder.getContext())
 				.authorizedScopes(authorizedScopes)
 				.tokenType(OAuth2TokenType.ACCESS_TOKEN)
 				.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
-				.authorizationGrant(clientCredentialsAuthentication)
-				.build();
+				.authorizationGrant(clientCredentialsAuthentication);
 		// @formatter:on
+		if (dPoPProof != null) {
+			tokenContextBuilder.put(OAuth2TokenContext.DPOP_PROOF_KEY, dPoPProof);
+		}
+		OAuth2TokenContext tokenContext = tokenContextBuilder.build();
 
 		OAuth2Token generatedAccessToken = this.tokenGenerator.generate(tokenContext);
 		if (generatedAccessToken == null) {

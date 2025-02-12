@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 the original author or authors.
+ * Copyright 2020-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.springframework.security.oauth2.server.authorization.web.authentication;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import org.junit.jupiter.api.AfterEach;
@@ -28,6 +29,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.context.SecurityContextImpl;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
+import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
@@ -107,6 +109,7 @@ public class OAuth2DeviceCodeAuthenticationConverterTests {
 		request.addParameter(OAuth2ParameterNames.DEVICE_CODE, DEVICE_CODE);
 		request.addParameter("param-1", "value-1");
 		request.addParameter("param-2", "value-1", "value-2");
+		request.addHeader(OAuth2AccessToken.TokenType.DPOP.getValue(), "dpop-proof-jwt");
 
 		SecurityContextImpl securityContext = new SecurityContextImpl();
 		securityContext.setAuthentication(new TestingAuthenticationToken(CLIENT_ID, null));
@@ -117,8 +120,14 @@ public class OAuth2DeviceCodeAuthenticationConverterTests {
 		assertThat(authentication).isNotNull();
 		assertThat(authentication.getDeviceCode()).isEqualTo(DEVICE_CODE);
 		assertThat(authentication.getPrincipal()).isInstanceOf(TestingAuthenticationToken.class);
-		assertThat(authentication.getAdditionalParameters()).containsExactly(Map.entry("param-1", "value-1"),
-				Map.entry("param-2", new String[] { "value-1", "value-2" }));
+		Map<String, Object> expectedAdditionalParameters = new HashMap<>();
+		expectedAdditionalParameters.put("param-1", "value-1");
+		expectedAdditionalParameters.put("param-2", new String[] { "value-1", "value-2" });
+		expectedAdditionalParameters.put("dpop_proof", "dpop-proof-jwt");
+		expectedAdditionalParameters.put("dpop_method", "POST");
+		expectedAdditionalParameters.put("dpop_target_uri", "http://localhost/oauth2/token");
+		assertThat(authentication.getAdditionalParameters())
+			.containsExactlyInAnyOrderEntriesOf(expectedAdditionalParameters);
 	}
 
 	private static MockHttpServletRequest createRequest() {

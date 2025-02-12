@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 the original author or authors.
+ * Copyright 2020-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -511,6 +511,10 @@ public class JdbcOAuth2AuthorizationService implements OAuth2AuthorizationServic
 				OAuth2AccessToken.TokenType tokenType = null;
 				if (OAuth2AccessToken.TokenType.BEARER.getValue().equalsIgnoreCase(rs.getString("access_token_type"))) {
 					tokenType = OAuth2AccessToken.TokenType.BEARER;
+				}
+				else if (OAuth2AccessToken.TokenType.DPOP.getValue()
+					.equalsIgnoreCase(rs.getString("access_token_type"))) {
+					tokenType = OAuth2AccessToken.TokenType.DPOP;
 				}
 
 				Set<String> scopes = Collections.emptySet();

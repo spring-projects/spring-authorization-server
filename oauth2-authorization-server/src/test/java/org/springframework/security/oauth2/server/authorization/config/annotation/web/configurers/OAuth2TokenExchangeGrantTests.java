@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 the original author or authors.
+ * Copyright 2020-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,6 +60,12 @@ import org.springframework.security.oauth2.core.endpoint.OAuth2AccessTokenRespon
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.http.converter.OAuth2AccessTokenResponseHttpMessageConverter;
 import org.springframework.security.oauth2.jose.TestJwks;
+import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
+import org.springframework.security.oauth2.jwt.JwsHeader;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtClaimsSet;
+import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
+import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.security.oauth2.server.authorization.JdbcOAuth2AuthorizationConsentService;
 import org.springframework.security.oauth2.server.authorization.JdbcOAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
@@ -109,6 +115,8 @@ public class OAuth2TokenExchangeGrantTests {
 
 	private static final String JWT_TOKEN_TYPE_VALUE = "urn:ietf:params:oauth:token-type:jwt";
 
+	private static NimbusJwtEncoder dPoPProofJwtEncoder;
+
 	public final SpringTestContext spring = new SpringTestContext();
 
 	private final HttpMessageConverter<OAuth2AccessTokenResponse> accessTokenResponseHttpMessageConverter = new OAuth2AccessTokenResponseHttpMessageConverter();
@@ -129,6 +137,9 @@ public class OAuth2TokenExchangeGrantTests {
 	public static void init() {
 		JWKSet jwkSet = new JWKSet(TestJwks.DEFAULT_RSA_JWK);
 		AuthorizationServerConfiguration.JWK_SOURCE = (jwkSelector, securityContext) -> jwkSelector.select(jwkSet);
+		JWKSet clientJwkSet = new JWKSet(TestJwks.DEFAULT_EC_JWK);
+		JWKSource<SecurityContext> clientJwkSource = (jwkSelector, securityContext) -> jwkSelector.select(clientJwkSet);
+		dPoPProofJwtEncoder = new NimbusJwtEncoder(clientJwkSource);
 		// @formatter:off
 		AuthorizationServerConfiguration.DB = new EmbeddedDatabaseBuilder()
 				.generateUniqueName(true)
@@ -313,6 +324,63 @@ public class OAuth2TokenExchangeGrantTests {
 			.isInstanceOf(OAuth2TokenExchangeCompositeAuthenticationToken.class);
 	}
 
+	@Test
+	public void requestWhenAccessTokenRequestWithDPoPProofThenReturnDPoPBoundAccessToken() throws Exception {
+		this.spring.register(AuthorizationServerConfiguration.class).autowire();
+
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
+			.authorizationGrantType(AuthorizationGrantType.TOKEN_EXCHANGE)
+			.build();
+		this.registeredClientRepository.save(registeredClient);
+
+		UsernamePasswordAuthenticationToken userPrincipal = createUserPrincipal("user");
+		UsernamePasswordAuthenticationToken adminPrincipal = createUserPrincipal("admin");
+		Map<String, Object> actorTokenClaims = new HashMap<>();
+		actorTokenClaims.put(OAuth2TokenClaimNames.ISS, "issuer2");
+		actorTokenClaims.put(OAuth2TokenClaimNames.SUB, "admin");
+		Map<String, Object> subjectTokenClaims = new HashMap<>();
+		subjectTokenClaims.put(OAuth2TokenClaimNames.ISS, "issuer1");
+		subjectTokenClaims.put(OAuth2TokenClaimNames.SUB, "user");
+		subjectTokenClaims.put("may_act", actorTokenClaims);
+		OAuth2AccessToken subjectToken = createAccessToken(SUBJECT_TOKEN);
+		OAuth2AccessToken actorToken = createAccessToken(ACTOR_TOKEN);
+		// @formatter:off
+		OAuth2Authorization subjectAuthorization = TestOAuth2Authorizations.authorization(registeredClient, subjectToken, subjectTokenClaims)
+				.id(UUID.randomUUID().toString())
+				.attribute(Principal.class.getName(), userPrincipal)
+				.build();
+		OAuth2Authorization actorAuthorization = TestOAuth2Authorizations.authorization(registeredClient, actorToken, actorTokenClaims)
+				.id(UUID.randomUUID().toString())
+				.attribute(Principal.class.getName(), adminPrincipal)
+				.build();
+		// @formatter:on
+		this.authorizationService.save(subjectAuthorization);
+		this.authorizationService.save(actorAuthorization);
+
+		MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+		parameters.set(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.TOKEN_EXCHANGE.getValue());
+		parameters.set(OAuth2ParameterNames.CLIENT_ID, registeredClient.getClientId());
+		parameters.set(OAuth2ParameterNames.REQUESTED_TOKEN_TYPE, JWT_TOKEN_TYPE_VALUE);
+		parameters.set(OAuth2ParameterNames.SUBJECT_TOKEN, SUBJECT_TOKEN);
+		parameters.set(OAuth2ParameterNames.SUBJECT_TOKEN_TYPE, JWT_TOKEN_TYPE_VALUE);
+		parameters.set(OAuth2ParameterNames.ACTOR_TOKEN, ACTOR_TOKEN);
+		parameters.set(OAuth2ParameterNames.ACTOR_TOKEN_TYPE, ACCESS_TOKEN_TYPE_VALUE);
+		parameters.set(OAuth2ParameterNames.SCOPE,
+				StringUtils.collectionToDelimitedString(registeredClient.getScopes(), " "));
+
+		String tokenEndpointUri = "http://localhost" + DEFAULT_TOKEN_ENDPOINT_URI;
+		String dPoPProof = generateDPoPProof(tokenEndpointUri);
+
+		// @formatter:off
+		this.mvc.perform(post(DEFAULT_TOKEN_ENDPOINT_URI)
+						.params(parameters)
+						.headers(withClientAuth(registeredClient))
+						.header(OAuth2AccessToken.TokenType.DPOP.getValue(), dPoPProof))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.token_type").value(OAuth2AccessToken.TokenType.DPOP.getValue()));
+		// @formatter:on
+	}
+
 	private static OAuth2AccessToken createAccessToken(String tokenValue) {
 		Instant issuedAt = Instant.now();
 		Instant expiresAt = issuedAt.plusSeconds(300);
@@ -336,6 +404,26 @@ public class OAuth2TokenExchangeGrantTests {
 
 	private static Function<OAuth2Authorization.Token<? extends OAuth2Token>, Boolean> isInvalidated() {
 		return (token) -> token.getMetadata(OAuth2Authorization.Token.INVALIDATED_METADATA_NAME);
+	}
+
+	private static String generateDPoPProof(String tokenEndpointUri) {
+		// @formatter:off
+		Map<String, Object> publicJwk = TestJwks.DEFAULT_EC_JWK
+				.toPublicJWK()
+				.toJSONObject();
+		JwsHeader jwsHeader = JwsHeader.with(SignatureAlgorithm.ES256)
+				.type("dpop+jwt")
+				.jwk(publicJwk)
+				.build();
+		JwtClaimsSet claims = JwtClaimsSet.builder()
+				.issuedAt(Instant.now())
+				.claim("htm", "POST")
+				.claim("htu", tokenEndpointUri)
+				.id(UUID.randomUUID().toString())
+				.build();
+		// @formatter:on
+		Jwt jwt = dPoPProofJwtEncoder.encode(JwtEncoderParameters.from(jwsHeader, claims));
+		return jwt.getTokenValue();
 	}
 
 	@EnableWebSecurity

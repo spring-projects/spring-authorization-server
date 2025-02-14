@@ -134,10 +134,6 @@ public final class OAuth2DeviceCodeAuthenticationProvider implements Authenticat
 			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_GRANT);
 		}
 
-		if (deviceCode.isInvalidated() && !userCode.isInvalidated()) {
-			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_GRANT);
-		}
-
 		// In https://www.rfc-editor.org/rfc/rfc8628.html#section-3.5,
 		// the following error codes are defined:
 
@@ -147,12 +143,14 @@ public final class OAuth2DeviceCodeAuthenticationProvider implements Authenticat
 		// authorization request but SHOULD wait for user interaction before
 		// restarting to avoid unnecessary polling.
 		if (deviceCode.isExpired()) {
-			// Invalidate the device code
-			authorization = OAuth2AuthenticationProviderUtils.invalidate(authorization, deviceCode.getToken());
-			this.authorizationService.save(authorization);
-			if (this.logger.isWarnEnabled()) {
-				this.logger.warn(LogMessage.format("Invalidated device code used by registered client '%s'",
-						authorization.getRegisteredClientId()));
+			if (!deviceCode.isInvalidated()) {
+				// Invalidate the device code
+				authorization = OAuth2AuthenticationProviderUtils.invalidate(authorization, deviceCode.getToken());
+				this.authorizationService.save(authorization);
+				if (this.logger.isWarnEnabled()) {
+					this.logger.warn(LogMessage.format("Invalidated device code used by registered client '%s'",
+							authorization.getRegisteredClientId()));
+				}
 			}
 			OAuth2Error error = new OAuth2Error(EXPIRED_TOKEN, null, DEVICE_ERROR_URI);
 			throw new OAuth2AuthenticationException(error);

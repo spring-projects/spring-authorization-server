@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 the original author or authors.
+ * Copyright 2020-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -224,29 +224,6 @@ public class OAuth2DeviceCodeAuthenticationProviderTests {
 				.extracting(OAuth2AuthenticationException::getError)
 				.extracting(OAuth2Error::getErrorCode)
 				.isEqualTo(OAuth2ErrorCodes.ACCESS_DENIED);
-		// @formatter:on
-
-		verify(this.authorizationService).findByToken(DEVICE_CODE,
-				OAuth2DeviceCodeAuthenticationProvider.DEVICE_CODE_TOKEN_TYPE);
-		verifyNoMoreInteractions(this.authorizationService);
-		verifyNoInteractions(this.tokenGenerator);
-	}
-
-	@Test
-	public void authenticateWhenDeviceCodeIsInvalidatedThenThrowOAuth2AuthenticationException() {
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
-		Authentication authentication = createAuthentication(registeredClient);
-		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient)
-			.token(createDeviceCode(), withInvalidated())
-			.token(createUserCode())
-			.build();
-		given(this.authorizationService.findByToken(anyString(), any(OAuth2TokenType.class))).willReturn(authorization);
-		// @formatter:off
-		assertThatExceptionOfType(OAuth2AuthenticationException.class)
-				.isThrownBy(() -> this.authenticationProvider.authenticate(authentication))
-				.extracting(OAuth2AuthenticationException::getError)
-				.extracting(OAuth2Error::getErrorCode)
-				.isEqualTo(OAuth2ErrorCodes.INVALID_GRANT);
 		// @formatter:on
 
 		verify(this.authorizationService).findByToken(DEVICE_CODE,

@@ -132,8 +132,8 @@ public final class OAuth2ClientAuthenticationFilter extends OncePerRequestFilter
 
 		try {
 			Authentication authenticationRequest = this.authenticationConverter.convert(request);
-			if (authenticationRequest instanceof AbstractAuthenticationToken) {
-				((AbstractAuthenticationToken) authenticationRequest)
+			if (authenticationRequest instanceof AbstractAuthenticationToken abstractAuthenticationToken) {
+				abstractAuthenticationToken
 					.setDetails(this.authenticationDetailsSource.buildDetails(request));
 			}
 			if (authenticationRequest != null) {

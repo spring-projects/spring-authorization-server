@@ -114,8 +114,8 @@ public final class OAuth2TokenRevocationEndpointFilter extends OncePerRequestFil
 
 		try {
 			Authentication tokenRevocationAuthentication = this.authenticationConverter.convert(request);
-			if (tokenRevocationAuthentication instanceof AbstractAuthenticationToken) {
-				((AbstractAuthenticationToken) tokenRevocationAuthentication)
+			if (tokenRevocationAuthentication instanceof AbstractAuthenticationToken abstractAuthenticationToken) {
+				abstractAuthenticationToken
 					.setDetails(this.authenticationDetailsSource.buildDetails(request));
 			}
 

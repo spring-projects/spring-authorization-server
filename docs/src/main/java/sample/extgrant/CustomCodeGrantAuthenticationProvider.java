@@ -91,11 +91,11 @@ public class CustomCodeGrantAuthenticationProvider implements AuthenticationProv
 		OAuth2Authorization.Builder authorizationBuilder = OAuth2Authorization.withRegisteredClient(registeredClient)
 				.principalName(clientPrincipal.getName())
 				.authorizationGrantType(customCodeGrantAuthentication.getGrantType());
-		if (generatedAccessToken instanceof ClaimAccessor) {
+		if (generatedAccessToken instanceof ClaimAccessor claimAccessor) {
 			authorizationBuilder.token(accessToken, (metadata) ->
 				metadata.put(
 					OAuth2Authorization.Token.CLAIMS_METADATA_NAME,
-					((ClaimAccessor) generatedAccessToken).getClaims())
+					claimAccessor.getClaims())
 			);
 		} else {
 			authorizationBuilder.accessToken(accessToken);

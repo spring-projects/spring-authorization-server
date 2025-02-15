@@ -129,8 +129,8 @@ public final class OAuth2DeviceAuthorizationEndpointFilter extends OncePerReques
 
 		try {
 			Authentication deviceAuthorizationRequestAuthentication = this.authenticationConverter.convert(request);
-			if (deviceAuthorizationRequestAuthentication instanceof AbstractAuthenticationToken) {
-				((AbstractAuthenticationToken) deviceAuthorizationRequestAuthentication)
+			if (deviceAuthorizationRequestAuthentication instanceof AbstractAuthenticationToken abstractAuthenticationToken) {
+				abstractAuthenticationToken
 					.setDetails(this.authenticationDetailsSource.buildDetails(request));
 			}
 

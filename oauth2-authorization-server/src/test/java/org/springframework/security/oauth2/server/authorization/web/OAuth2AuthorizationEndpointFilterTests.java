@@ -611,11 +611,7 @@ public class OAuth2AuthorizationEndpointFilterTests {
 
 	@Test
 	public void doFilterWhenAuthenticationRequestAuthenticatedThenAuthorizationResponse() throws Exception {
-		// Setup OpenID Connect request
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().scopes((scopes) -> {
-			scopes.clear();
-			scopes.add(OidcScopes.OPENID);
-		}).build();
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().scopes(Set::clear).build();
 		OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthenticationResult = new OAuth2AuthorizationCodeRequestAuthenticationToken(
 				AUTHORIZATION_URI, registeredClient.getClientId(), this.principal, this.authorizationCode,
 				registeredClient.getRedirectUris().iterator().next(), STATE, registeredClient.getScopes());
@@ -623,7 +619,7 @@ public class OAuth2AuthorizationEndpointFilterTests {
 		given(this.authenticationManager.authenticate(any())).willReturn(authorizationCodeRequestAuthenticationResult);
 
 		MockHttpServletRequest request = createAuthorizationRequest(registeredClient);
-		request.setMethod("POST"); // OpenID Connect supports POST method
+		request.setMethod("POST");
 		request.setQueryString(null);
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		FilterChain filterChain = mock(FilterChain.class);

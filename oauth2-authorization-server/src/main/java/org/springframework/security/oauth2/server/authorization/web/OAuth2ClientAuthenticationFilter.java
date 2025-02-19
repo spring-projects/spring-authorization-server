@@ -90,6 +90,8 @@ public final class OAuth2ClientAuthenticationFilter extends OncePerRequestFilter
 
 	private final AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource = new WebAuthenticationDetailsSource();
 
+	private final String realmName;
+
 	private AuthenticationConverter authenticationConverter;
 
 	private AuthenticationSuccessHandler authenticationSuccessHandler = this::onAuthenticationSuccess;
@@ -104,10 +106,12 @@ public final class OAuth2ClientAuthenticationFilter extends OncePerRequestFilter
 	 * @param requestMatcher the {@link RequestMatcher} used for matching against the
 	 * {@code HttpServletRequest}
 	 */
-	public OAuth2ClientAuthenticationFilter(AuthenticationManager authenticationManager,
-			RequestMatcher requestMatcher) {
+	public OAuth2ClientAuthenticationFilter(AuthenticationManager authenticationManager, RequestMatcher requestMatcher,
+			String realmName) {
+		this.realmName = realmName;
 		Assert.notNull(authenticationManager, "authenticationManager cannot be null");
 		Assert.notNull(requestMatcher, "requestMatcher cannot be null");
+		Assert.notNull(realmName, "realmName cannot be null");
 		this.authenticationManager = authenticationManager;
 		this.requestMatcher = requestMatcher;
 		// @formatter:off
@@ -140,9 +144,12 @@ public final class OAuth2ClientAuthenticationFilter extends OncePerRequestFilter
 				validateClientIdentifier(authenticationRequest);
 				Authentication authenticationResult = this.authenticationManager.authenticate(authenticationRequest);
 				this.authenticationSuccessHandler.onAuthenticationSuccess(request, response, authenticationResult);
+				filterChain.doFilter(request, response);
 			}
-			filterChain.doFilter(request, response);
-
+			else {
+				this.authenticationFailureHandler.onAuthenticationFailure(request, response,
+						new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_CLIENT));
+			}
 		}
 		catch (OAuth2AuthenticationException ex) {
 			if (this.logger.isTraceEnabled()) {
@@ -204,20 +211,11 @@ public final class OAuth2ClientAuthenticationFilter extends OncePerRequestFilter
 
 		SecurityContextHolder.clearContext();
 
-		// TODO
-		// The authorization server MAY return an HTTP 401 (Unauthorized) status code
-		// to indicate which HTTP authentication schemes are supported.
-		// If the client attempted to authenticate via the "Authorization" request header
-		// field,
-		// the authorization server MUST respond with an HTTP 401 (Unauthorized) status
-		// code and
-		// include the "WWW-Authenticate" response header field
-		// matching the authentication scheme used by the client.
-
 		OAuth2Error error = ((OAuth2AuthenticationException) exception).getError();
 		ServletServerHttpResponse httpResponse = new ServletServerHttpResponse(response);
 		if (OAuth2ErrorCodes.INVALID_CLIENT.equals(error.getErrorCode())) {
 			httpResponse.setStatusCode(HttpStatus.UNAUTHORIZED);
+			httpResponse.getHeaders().set("WWW-Authenticate", "Basic realm=\"" + this.realmName + "\"");
 		}
 		else {
 			httpResponse.setStatusCode(HttpStatus.BAD_REQUEST);

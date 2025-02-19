@@ -96,8 +96,8 @@ final class DefaultOAuth2TokenCustomizers {
 			Map<String, Object> jwkJson = (Map<String, Object>) dPoPProofJwt.getHeaders().get("jwk");
 			try {
 				JWK jwk = JWK.parse(jwkJson);
-				if (jwk instanceof AsymmetricJWK) {
-					publicKey = ((AsymmetricJWK) jwk).toPublicKey();
+				if (jwk instanceof AsymmetricJWK asymmetricJWK) {
+					publicKey = asymmetricJWK.toPublicKey();
 				}
 			}
 			catch (Exception ignored) {

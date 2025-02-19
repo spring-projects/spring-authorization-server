@@ -161,8 +161,8 @@ public final class OAuth2TokenEndpointFilter extends OncePerRequestFilter {
 			if (authorizationGrantAuthentication == null) {
 				throwError(OAuth2ErrorCodes.UNSUPPORTED_GRANT_TYPE, OAuth2ParameterNames.GRANT_TYPE);
 			}
-			if (authorizationGrantAuthentication instanceof AbstractAuthenticationToken) {
-				((AbstractAuthenticationToken) authorizationGrantAuthentication)
+			if (authorizationGrantAuthentication instanceof AbstractAuthenticationToken abstractAuthenticationToken) {
+				abstractAuthenticationToken
 					.setDetails(this.authenticationDetailsSource.buildDetails(request));
 			}
 

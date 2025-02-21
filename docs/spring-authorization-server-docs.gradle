@@ -35,10 +35,10 @@ def generateAttributes() {
 		.version
 	String springSecurityVersion = libs.org.springframework.security.spring.security.bom.get().versionConstraint.displayName
 	return [
-			"spring-authorization-server-version": project.version,
-			"spring-security-reference-base-url": "https://docs.spring.io/spring-security/reference/${generateVersionWithoutPatch(springSecurityVersion)}".toString(),
-			"javadoc-location-org-springframework-security": "https://docs.spring.io/spring-security/site/docs/$springSecurityVersion/api".toString(),
-			"spring-boot-reference-base-url": "https://docs.spring.io/spring-boot/docs/${generateVersionWithoutPatch(springBootVersion)}/reference/html".toString()
+			'spring-authorization-server-version': project.version,
+			'spring-security-reference-base-url': "https://docs.spring.io/spring-security/reference/${generateVersionWithoutPatch(springSecurityVersion)}".toString(),
+			'javadoc-location-org-springframework-security': "https://docs.spring.io/spring-security/site/docs/$springSecurityVersion/api".toString(),
+			'spring-boot-reference-base-url': "https://docs.spring.io/spring-boot/docs/${generateVersionWithoutPatch(springBootVersion)}/reference/html".toString()
 	]
 }
 

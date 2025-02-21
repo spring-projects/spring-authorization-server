@@ -86,13 +86,5 @@ tasks.named("test") {
 
 static String generateVersionWithoutPatch(String version) {
 
-	def matcher = version =~ /^(\d+.\d+).\d+(-SNAPSHOT|-M\d+)?$/
-	if(matcher) {
-
-		return matcher[0][2] == null || matcher[0][2].startsWith("-M")
-			? matcher[0][1]
-			: matcher[0][1] + matcher[0][2]
-	}
-
-	return version
+	return version.split('\\.')[0, 1].join('.') + (version.endsWith('-SNAPSHOT') ? '-SNAPSHOT' : '')
 }

@@ -30,8 +30,15 @@ tasks.named("generateAntoraYml") {
 
 
 def generateAttributes() {
+	def springBootVersion = project.configurations.named("implementation").get()
+		.dependencies.find {it -> ("spring-boot-dependencies" == it.name) }
+		.version
+	String springSecurityVersion = libs.org.springframework.security.spring.security.bom.get().versionConstraint.displayName
 	return [
-			"spring-authorization-server-version": project.version
+			"spring-authorization-server-version": project.version,
+			"spring-security-reference-base-url": "https://docs.spring.io/spring-security/reference/${generateVersionWithoutPatch(springSecurityVersion)}".toString(),
+			"javadoc-location-org-springframework-security": "https://docs.spring.io/spring-security/site/docs/$springSecurityVersion/api".toString(),
+			"spring-boot-reference-base-url": "https://docs.spring.io/spring-boot/docs/${generateVersionWithoutPatch(springBootVersion)}/reference/html".toString()
 	]
 }
 
@@ -75,4 +82,17 @@ dependencies {
 
 tasks.named("test") {
 	useJUnitPlatform()
+}
+
+static String generateVersionWithoutPatch(String version) {
+
+	def matcher = version =~ /^(\d+.\d+).\d+(-SNAPSHOT|-M\d+)?$/
+	if(matcher) {
+
+		return matcher[0][2] == null || matcher[0][2].startsWith("-M")
+			? matcher[0][1]
+			: matcher[0][1] + matcher[0][2]
+	}
+
+	return version
 }

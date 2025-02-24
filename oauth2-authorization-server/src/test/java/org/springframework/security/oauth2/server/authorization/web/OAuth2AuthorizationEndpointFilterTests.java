@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 the original author or authors.
+ * Copyright 2020-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -610,8 +610,40 @@ public class OAuth2AuthorizationEndpointFilterTests {
 	}
 
 	@Test
+	public void doFilterWhenPostAuthorizationRequestAuthenticatedThenAuthorizationResponse() throws Exception {
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().redirectUris((redirectUris) -> {
+			redirectUris.clear();
+			redirectUris.add("https://example.com?param=encoded%20parameter%20value");
+		}).build();
+		OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthenticationResult = new OAuth2AuthorizationCodeRequestAuthenticationToken(
+				AUTHORIZATION_URI, registeredClient.getClientId(), this.principal, this.authorizationCode,
+				registeredClient.getRedirectUris().iterator().next(), "client state", registeredClient.getScopes());
+		authorizationCodeRequestAuthenticationResult.setAuthenticated(true);
+		given(this.authenticationManager.authenticate(any())).willReturn(authorizationCodeRequestAuthenticationResult);
+
+		MockHttpServletRequest request = createAuthorizationRequest(registeredClient);
+		request.setMethod("POST");
+		request.setQueryString(null);
+		MockHttpServletResponse response = new MockHttpServletResponse();
+		FilterChain filterChain = mock(FilterChain.class);
+
+		this.filter.doFilter(request, response, filterChain);
+
+		verify(this.authenticationManager).authenticate(any());
+		verifyNoInteractions(filterChain);
+
+		assertThat(response.getStatus()).isEqualTo(HttpStatus.FOUND.value());
+		assertThat(response.getRedirectedUrl())
+			.isEqualTo("https://example.com?param=encoded%20parameter%20value&code=code&state=client%20state");
+	}
+
+	@Test
 	public void doFilterWhenAuthenticationRequestAuthenticatedThenAuthorizationResponse() throws Exception {
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().scopes(Set::clear).build();
+		// Setup OpenID Connect request
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().scopes((scopes) -> {
+			scopes.clear();
+			scopes.add(OidcScopes.OPENID);
+		}).build();
 		OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthenticationResult = new OAuth2AuthorizationCodeRequestAuthenticationToken(
 				AUTHORIZATION_URI, registeredClient.getClientId(), this.principal, this.authorizationCode,
 				registeredClient.getRedirectUris().iterator().next(), STATE, registeredClient.getScopes());
@@ -619,7 +651,7 @@ public class OAuth2AuthorizationEndpointFilterTests {
 		given(this.authenticationManager.authenticate(any())).willReturn(authorizationCodeRequestAuthenticationResult);
 
 		MockHttpServletRequest request = createAuthorizationRequest(registeredClient);
-		request.setMethod("POST");
+		request.setMethod("POST"); // OpenID Connect supports POST method
 		request.setQueryString(null);
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		FilterChain filterChain = mock(FilterChain.class);

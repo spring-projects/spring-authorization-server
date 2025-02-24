@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 the original author or authors.
+ * Copyright 2020-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@ import org.springframework.security.oauth2.server.authorization.authentication.O
 import org.springframework.security.oauth2.server.authorization.web.OAuth2AuthorizationEndpointFilter;
 import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.security.web.util.matcher.AndRequestMatcher;
+import org.springframework.security.web.util.matcher.OrRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.MultiValueMap;
@@ -64,11 +65,11 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationConverter impleme
 	private static final Authentication ANONYMOUS_AUTHENTICATION = new AnonymousAuthenticationToken("anonymous",
 			"anonymousUser", AuthorityUtils.createAuthorityList("ROLE_ANONYMOUS"));
 
-	private static final RequestMatcher POST_WITH_RESPONSE_TYPE_REQUEST_MATCHER = createPostWithResponseTypeRequestMatcher();
+	private final RequestMatcher requestMatcher = createDefaultRequestMatcher();
 
 	@Override
 	public Authentication convert(HttpServletRequest request) {
-		if (!"GET".equals(request.getMethod()) && !POST_WITH_RESPONSE_TYPE_REQUEST_MATCHER.matches(request)) {
+		if (!this.requestMatcher.matches(request)) {
 			return null;
 		}
 
@@ -153,11 +154,13 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationConverter impleme
 				state, scopes, additionalParameters);
 	}
 
-	private static RequestMatcher createPostWithResponseTypeRequestMatcher() {
+	private static RequestMatcher createDefaultRequestMatcher() {
+		RequestMatcher getMethodMatcher = (request) -> "GET".equals(request.getMethod());
 		RequestMatcher postMethodMatcher = (request) -> "POST".equals(request.getMethod());
 		RequestMatcher responseTypeParameterMatcher = (
 				request) -> request.getParameter(OAuth2ParameterNames.RESPONSE_TYPE) != null;
-		return new AndRequestMatcher(postMethodMatcher, responseTypeParameterMatcher);
+		return new OrRequestMatcher(getMethodMatcher,
+				new AndRequestMatcher(postMethodMatcher, responseTypeParameterMatcher));
 	}
 
 	private static void throwError(String errorCode, String parameterName) {

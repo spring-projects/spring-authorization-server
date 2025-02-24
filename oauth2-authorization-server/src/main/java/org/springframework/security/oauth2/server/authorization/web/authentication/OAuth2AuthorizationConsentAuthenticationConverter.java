@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 the original author or authors.
+ * Copyright 2020-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,9 @@ import org.springframework.security.oauth2.server.authorization.authentication.O
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationConsentAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.web.OAuth2AuthorizationEndpointFilter;
 import org.springframework.security.web.authentication.AuthenticationConverter;
+import org.springframework.security.web.util.matcher.AndRequestMatcher;
+import org.springframework.security.web.util.matcher.NegatedRequestMatcher;
+import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
 
@@ -55,13 +58,15 @@ public final class OAuth2AuthorizationConsentAuthenticationConverter implements 
 	private static final Authentication ANONYMOUS_AUTHENTICATION = new AnonymousAuthenticationToken("anonymous",
 			"anonymousUser", AuthorityUtils.createAuthorityList("ROLE_ANONYMOUS"));
 
+	private final RequestMatcher requestMatcher = createDefaultRequestMatcher();
+
 	@Override
 	public Authentication convert(HttpServletRequest request) {
-		MultiValueMap<String, String> parameters = OAuth2EndpointUtils.getFormParameters(request);
-
-		if (!"POST".equals(request.getMethod()) || parameters.getFirst(OAuth2ParameterNames.RESPONSE_TYPE) != null) {
+		if (!this.requestMatcher.matches(request)) {
 			return null;
 		}
+
+		MultiValueMap<String, String> parameters = OAuth2EndpointUtils.getFormParameters(request);
 
 		String authorizationUri = request.getRequestURL().toString();
 
@@ -98,6 +103,13 @@ public final class OAuth2AuthorizationConsentAuthenticationConverter implements 
 
 		return new OAuth2AuthorizationConsentAuthenticationToken(authorizationUri, clientId, principal, state, scopes,
 				additionalParameters);
+	}
+
+	private static RequestMatcher createDefaultRequestMatcher() {
+		RequestMatcher postMethodMatcher = (request) -> "POST".equals(request.getMethod());
+		RequestMatcher responseTypeParameterMatcher = (
+				request) -> request.getParameter(OAuth2ParameterNames.RESPONSE_TYPE) != null;
+		return new AndRequestMatcher(postMethodMatcher, new NegatedRequestMatcher(responseTypeParameterMatcher));
 	}
 
 	private static void throwError(String errorCode, String parameterName) {

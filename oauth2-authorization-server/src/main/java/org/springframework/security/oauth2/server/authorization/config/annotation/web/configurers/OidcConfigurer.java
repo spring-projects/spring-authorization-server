@@ -15,11 +15,6 @@
  */
 package org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.ObjectPostProcessor;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -29,6 +24,11 @@ import org.springframework.security.oauth2.server.authorization.settings.Authori
 import org.springframework.security.web.util.matcher.OrRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.web.util.UriComponentsBuilder;
+
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Configurer for OpenID Connect 1.0 support.
@@ -73,6 +73,11 @@ public final class OidcConfigurer extends AbstractOAuth2Configurer {
 		return this;
 	}
 
+	public OidcConfigurer disableProviderConfigurationEndpoint() {
+		removeConfigurer(OidcProviderConfigurationEndpointConfigurer.class);
+		return this;
+	}
+
 	/**
 	 * Configures the OpenID Connect 1.0 RP-Initiated Logout Endpoint.
 	 * @param logoutEndpointCustomizer the {@link Customizer} providing access to the
@@ -82,6 +87,11 @@ public final class OidcConfigurer extends AbstractOAuth2Configurer {
 	 */
 	public OidcConfigurer logoutEndpoint(Customizer<OidcLogoutEndpointConfigurer> logoutEndpointCustomizer) {
 		logoutEndpointCustomizer.customize(getConfigurer(OidcLogoutEndpointConfigurer.class));
+		return this;
+	}
+
+	public OidcConfigurer disableLogoutEndpoint() {
+		removeConfigurer(OidcLogoutEndpointConfigurer.class);
 		return this;
 	}
 
@@ -112,6 +122,11 @@ public final class OidcConfigurer extends AbstractOAuth2Configurer {
 	 */
 	public OidcConfigurer userInfoEndpoint(Customizer<OidcUserInfoEndpointConfigurer> userInfoEndpointCustomizer) {
 		userInfoEndpointCustomizer.customize(getConfigurer(OidcUserInfoEndpointConfigurer.class));
+		return this;
+	}
+
+	public OidcConfigurer disableUserInfoEndpoint() {
+		removeConfigurer(OidcUserInfoEndpointConfigurer.class);
 		return this;
 	}
 
@@ -165,4 +180,7 @@ public final class OidcConfigurer extends AbstractOAuth2Configurer {
 		this.configurers.put(configurerType, configurer);
 	}
 
+	private void removeConfigurer(Class<?> configurerType) {
+		this.configurers.remove(configurerType);
+	}
 }

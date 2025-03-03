@@ -32,6 +32,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
 
+import com.jayway.jsonpath.JsonPath;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
@@ -1012,6 +1013,67 @@ public class OAuth2AuthorizationCodeGrantTests {
 		assertThat(cnfClaims).containsKey("jkt");
 	}
 
+	@Test
+	public void requestWhenPushedAuthorizationRequestThenReturnAccessTokenResponse() throws Exception {
+		this.spring.register(AuthorizationServerConfigurationWithPushedAuthorizationRequests.class).autowire();
+
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+		this.registeredClientRepository.save(registeredClient);
+
+		MvcResult mvcResult = this.mvc
+			.perform(post("/oauth2/par").params(getAuthorizationRequestParameters(registeredClient))
+				.param(PkceParameterNames.CODE_CHALLENGE, S256_CODE_CHALLENGE)
+				.param(PkceParameterNames.CODE_CHALLENGE_METHOD, "S256")
+				.header(HttpHeaders.AUTHORIZATION, getAuthorizationHeader(registeredClient)))
+			.andExpect(header().string(HttpHeaders.CACHE_CONTROL, containsString("no-store")))
+			.andExpect(header().string(HttpHeaders.PRAGMA, containsString("no-cache")))
+			.andExpect(status().isCreated())
+			.andExpect(jsonPath("$.request_uri").isNotEmpty())
+			.andExpect(jsonPath("$.expires_in").isNotEmpty())
+			.andReturn();
+
+		String requestUri = JsonPath.read(mvcResult.getResponse().getContentAsString(), "$.request_uri");
+
+		mvcResult = this.mvc
+			.perform(get(DEFAULT_AUTHORIZATION_ENDPOINT_URI)
+				.queryParam(OAuth2ParameterNames.CLIENT_ID, registeredClient.getClientId())
+				.queryParam("request_uri", requestUri)
+				.with(user("user")))
+			.andExpect(status().is3xxRedirection())
+			.andReturn();
+
+		String authorizationCode = extractParameterFromRedirectUri(mvcResult.getResponse().getRedirectedUrl(), "code");
+		OAuth2Authorization authorizationCodeAuthorization = this.authorizationService.findByToken(authorizationCode,
+				AUTHORIZATION_CODE_TOKEN_TYPE);
+
+		this.mvc
+			.perform(post(DEFAULT_TOKEN_ENDPOINT_URI)
+				.params(getTokenRequestParameters(registeredClient, authorizationCodeAuthorization))
+				.param(OAuth2ParameterNames.CLIENT_ID, registeredClient.getClientId())
+				.param(PkceParameterNames.CODE_VERIFIER, S256_CODE_VERIFIER)
+				.header(HttpHeaders.AUTHORIZATION, getAuthorizationHeader(registeredClient)))
+			.andExpect(header().string(HttpHeaders.CACHE_CONTROL, containsString("no-store")))
+			.andExpect(header().string(HttpHeaders.PRAGMA, containsString("no-cache")))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.access_token").isNotEmpty())
+			.andExpect(jsonPath("$.token_type").isNotEmpty())
+			.andExpect(jsonPath("$.expires_in").isNotEmpty())
+			.andExpect(jsonPath("$.refresh_token").isNotEmpty())
+			.andExpect(jsonPath("$.scope").isNotEmpty())
+			.andReturn();
+
+		OAuth2Authorization accessTokenAuthorization = this.authorizationService
+			.findById(authorizationCodeAuthorization.getId());
+		assertThat(accessTokenAuthorization).isNotNull();
+		assertThat(accessTokenAuthorization.getAccessToken()).isNotNull();
+
+		OAuth2Authorization.Token<OAuth2AuthorizationCode> authorizationCodeToken = accessTokenAuthorization
+			.getToken(OAuth2AuthorizationCode.class);
+		assertThat(authorizationCodeToken).isNotNull();
+		assertThat(authorizationCodeToken.getMetadata().get(OAuth2Authorization.Token.INVALIDATED_METADATA_NAME))
+			.isEqualTo(true);
+	}
+
 	private static String generateDPoPProof(String tokenEndpointUri) {
 		// @formatter:off
 		Map<String, Object> publicJwk = TestJwks.DEFAULT_EC_JWK
@@ -1414,6 +1476,31 @@ public class OAuth2AuthorizationCodeGrantTests {
 		AuthorizationServerSettings authorizationServerSettings() {
 			return AuthorizationServerSettings.builder().multipleIssuersAllowed(true).build();
 		}
+
+	}
+
+	@EnableWebSecurity
+	@Configuration(proxyBeanMethods = false)
+	static class AuthorizationServerConfigurationWithPushedAuthorizationRequests
+			extends AuthorizationServerConfiguration {
+
+		// @formatter:off
+		@Bean
+		SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
+			OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
+					OAuth2AuthorizationServerConfigurer.authorizationServer();
+			http
+					.securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
+					.with(authorizationServerConfigurer, (authorizationServer) ->
+							authorizationServer
+									.pushedAuthorizationRequestEndpoint(Customizer.withDefaults())
+					)
+					.authorizeHttpRequests((authorize) ->
+							authorize.anyRequest().authenticated()
+					);
+			return http.build();
+		}
+		// @formatter:on
 
 	}
 

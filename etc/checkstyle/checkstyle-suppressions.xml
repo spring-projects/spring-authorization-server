@@ -7,4 +7,5 @@
 	<suppress files="SpringAuthorizationServerVersion\.java" checks="HideUtilityClassConstructor"/>
 	<suppress files="[\\/]src[\\/]test[\\/]" checks="RegexpSinglelineJava" id="toLowerCaseWithoutLocale"/>
 	<suppress files="[\\/]src[\\/]test[\\/]" checks="RegexpSinglelineJava" id="toUpperCaseWithoutLocale"/>
+	<suppress files="AbstractOAuth2AuthorizationCodeRequestAuthenticationToken\.java" checks="SpringMethodVisibility"/>
 </suppressions>

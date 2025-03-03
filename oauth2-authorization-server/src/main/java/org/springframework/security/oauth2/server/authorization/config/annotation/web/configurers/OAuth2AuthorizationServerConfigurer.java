@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 the original author or authors.
+ * Copyright 2020-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 import com.nimbusds.jose.jwk.source.JWKSource;
 
@@ -42,6 +43,7 @@ import org.springframework.security.oauth2.core.OAuth2Token;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsentService;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
+import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeRequestAuthenticationContext;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeRequestAuthenticationException;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeRequestAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
@@ -69,6 +71,7 @@ import org.springframework.util.Assert;
  * @see OAuth2ClientAuthenticationConfigurer
  * @see OAuth2AuthorizationServerMetadataEndpointConfigurer
  * @see OAuth2AuthorizationEndpointConfigurer
+ * @see OAuth2PushedAuthorizationRequestEndpointConfigurer
  * @see OAuth2TokenEndpointConfigurer
  * @see OAuth2TokenIntrospectionEndpointConfigurer
  * @see OAuth2TokenRevocationEndpointConfigurer
@@ -197,6 +200,27 @@ public final class OAuth2AuthorizationServerConfigurer
 	}
 
 	/**
+	 * Configures the OAuth 2.0 Pushed Authorization Request Endpoint.
+	 * @param pushedAuthorizationRequestEndpointCustomizer the {@link Customizer}
+	 * providing access to the {@link OAuth2PushedAuthorizationRequestEndpointConfigurer}
+	 * @return the {@link OAuth2AuthorizationServerConfigurer} for further configuration
+	 * @since 1.5
+	 */
+	public OAuth2AuthorizationServerConfigurer pushedAuthorizationRequestEndpoint(
+			Customizer<OAuth2PushedAuthorizationRequestEndpointConfigurer> pushedAuthorizationRequestEndpointCustomizer) {
+		OAuth2PushedAuthorizationRequestEndpointConfigurer pushedAuthorizationRequestEndpointConfigurer = getConfigurer(
+				OAuth2PushedAuthorizationRequestEndpointConfigurer.class);
+		if (pushedAuthorizationRequestEndpointConfigurer == null) {
+			addConfigurer(OAuth2PushedAuthorizationRequestEndpointConfigurer.class,
+					new OAuth2PushedAuthorizationRequestEndpointConfigurer(this::postProcess));
+			pushedAuthorizationRequestEndpointConfigurer = getConfigurer(
+					OAuth2PushedAuthorizationRequestEndpointConfigurer.class);
+		}
+		pushedAuthorizationRequestEndpointCustomizer.customize(pushedAuthorizationRequestEndpointConfigurer);
+		return this;
+	}
+
+	/**
 	 * Configures the OAuth 2.0 Token Endpoint.
 	 * @param tokenEndpointCustomizer the {@link Customizer} providing access to the
 	 * {@link OAuth2TokenEndpointConfigurer}
@@ -314,20 +338,28 @@ public final class OAuth2AuthorizationServerConfigurer
 		else {
 			// OpenID Connect is disabled.
 			// Add an authentication validator that rejects authentication requests.
+			Consumer<OAuth2AuthorizationCodeRequestAuthenticationContext> oidcAuthenticationRequestValidator = (
+					authenticationContext) -> {
+				OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthentication = authenticationContext
+					.getAuthentication();
+				if (authorizationCodeRequestAuthentication.getScopes().contains(OidcScopes.OPENID)) {
+					OAuth2Error error = new OAuth2Error(OAuth2ErrorCodes.INVALID_SCOPE,
+							"OpenID Connect 1.0 authentication requests are restricted.",
+							"https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.2.1");
+					throw new OAuth2AuthorizationCodeRequestAuthenticationException(error,
+							authorizationCodeRequestAuthentication);
+				}
+			};
 			OAuth2AuthorizationEndpointConfigurer authorizationEndpointConfigurer = getConfigurer(
 					OAuth2AuthorizationEndpointConfigurer.class);
 			authorizationEndpointConfigurer
-				.addAuthorizationCodeRequestAuthenticationValidator((authenticationContext) -> {
-					OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthentication = authenticationContext
-						.getAuthentication();
-					if (authorizationCodeRequestAuthentication.getScopes().contains(OidcScopes.OPENID)) {
-						OAuth2Error error = new OAuth2Error(OAuth2ErrorCodes.INVALID_SCOPE,
-								"OpenID Connect 1.0 authentication requests are restricted.",
-								"https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.2.1");
-						throw new OAuth2AuthorizationCodeRequestAuthenticationException(error,
-								authorizationCodeRequestAuthentication);
-					}
-				});
+				.addAuthorizationCodeRequestAuthenticationValidator(oidcAuthenticationRequestValidator);
+			OAuth2PushedAuthorizationRequestEndpointConfigurer pushedAuthorizationRequestEndpointConfigurer = getConfigurer(
+					OAuth2PushedAuthorizationRequestEndpointConfigurer.class);
+			if (pushedAuthorizationRequestEndpointConfigurer != null) {
+				pushedAuthorizationRequestEndpointConfigurer
+					.addAuthorizationCodeRequestAuthenticationValidator(oidcAuthenticationRequestValidator);
+			}
 		}
 
 		List<RequestMatcher> requestMatchers = new ArrayList<>();
@@ -344,11 +376,18 @@ public final class OAuth2AuthorizationServerConfigurer
 		ExceptionHandlingConfigurer<HttpSecurity> exceptionHandling = httpSecurity
 			.getConfigurer(ExceptionHandlingConfigurer.class);
 		if (exceptionHandling != null) {
+			List<RequestMatcher> preferredMatchers = new ArrayList<>();
+			preferredMatchers.add(getRequestMatcher(OAuth2TokenEndpointConfigurer.class));
+			preferredMatchers.add(getRequestMatcher(OAuth2TokenIntrospectionEndpointConfigurer.class));
+			preferredMatchers.add(getRequestMatcher(OAuth2TokenRevocationEndpointConfigurer.class));
+			preferredMatchers.add(getRequestMatcher(OAuth2DeviceAuthorizationEndpointConfigurer.class));
+			RequestMatcher preferredMatcher = getRequestMatcher(
+					OAuth2PushedAuthorizationRequestEndpointConfigurer.class);
+			if (preferredMatcher != null) {
+				preferredMatchers.add(preferredMatcher);
+			}
 			exceptionHandling.defaultAuthenticationEntryPointFor(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED),
-					new OrRequestMatcher(getRequestMatcher(OAuth2TokenEndpointConfigurer.class),
-							getRequestMatcher(OAuth2TokenIntrospectionEndpointConfigurer.class),
-							getRequestMatcher(OAuth2TokenRevocationEndpointConfigurer.class),
-							getRequestMatcher(OAuth2DeviceAuthorizationEndpointConfigurer.class)));
+					new OrRequestMatcher(preferredMatchers));
 		}
 
 		httpSecurity.csrf((csrf) -> csrf.ignoringRequestMatchers(this.endpointsMatcher));

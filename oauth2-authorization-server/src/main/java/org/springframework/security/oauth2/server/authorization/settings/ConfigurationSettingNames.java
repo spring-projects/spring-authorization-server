@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 the original author or authors.
+ * Copyright 2020-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -111,6 +111,13 @@ public final class ConfigurationSettingNames {
 		 */
 		public static final String AUTHORIZATION_ENDPOINT = AUTHORIZATION_SERVER_SETTINGS_NAMESPACE
 			.concat("authorization-endpoint");
+
+		/**
+		 * Set the OAuth 2.0 Pushed Authorization Request endpoint.
+		 * @since 1.5
+		 */
+		public static final String PUSHED_AUTHORIZATION_REQUEST_ENDPOINT = AUTHORIZATION_SERVER_SETTINGS_NAMESPACE
+			.concat("pushed-authorization-request-endpoint");
 
 		/**
 		 * Set the OAuth 2.0 Device Authorization endpoint.

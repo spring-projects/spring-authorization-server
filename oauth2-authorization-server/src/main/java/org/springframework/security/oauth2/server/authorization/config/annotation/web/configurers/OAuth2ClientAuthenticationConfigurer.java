@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 the original author or authors.
+ * Copyright 2020-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -196,10 +196,15 @@ public final class OAuth2ClientAuthenticationConfigurer extends AbstractOAuth2Co
 				? OAuth2ConfigurerUtils
 					.withMultipleIssuersPattern(authorizationServerSettings.getDeviceAuthorizationEndpoint())
 				: authorizationServerSettings.getDeviceAuthorizationEndpoint();
+		String pushedAuthorizationRequestEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed()
+				? OAuth2ConfigurerUtils
+					.withMultipleIssuersPattern(authorizationServerSettings.getPushedAuthorizationRequestEndpoint())
+				: authorizationServerSettings.getPushedAuthorizationRequestEndpoint();
 		this.requestMatcher = new OrRequestMatcher(new AntPathRequestMatcher(tokenEndpointUri, HttpMethod.POST.name()),
 				new AntPathRequestMatcher(tokenIntrospectionEndpointUri, HttpMethod.POST.name()),
 				new AntPathRequestMatcher(tokenRevocationEndpointUri, HttpMethod.POST.name()),
-				new AntPathRequestMatcher(deviceAuthorizationEndpointUri, HttpMethod.POST.name()));
+				new AntPathRequestMatcher(deviceAuthorizationEndpointUri, HttpMethod.POST.name()),
+				new AntPathRequestMatcher(pushedAuthorizationRequestEndpointUri, HttpMethod.POST.name()));
 		List<AuthenticationProvider> authenticationProviders = createDefaultAuthenticationProviders(httpSecurity);
 		if (!this.authenticationProviders.isEmpty()) {
 			authenticationProviders.addAll(0, this.authenticationProviders);

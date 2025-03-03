@@ -18,6 +18,7 @@ package org.springframework.security.oauth2.server.authorization.web.authenticat
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -35,7 +36,12 @@ import org.springframework.security.oauth2.core.endpoint.PkceParameterNames;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeRequestAuthenticationException;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeRequestAuthenticationToken;
+import org.springframework.security.oauth2.server.authorization.authentication.OAuth2PushedAuthorizationRequestAuthenticationToken;
+import org.springframework.security.oauth2.server.authorization.context.AuthorizationServerContext;
+import org.springframework.security.oauth2.server.authorization.context.AuthorizationServerContextHolder;
+import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.web.OAuth2AuthorizationEndpointFilter;
+import org.springframework.security.oauth2.server.authorization.web.OAuth2PushedAuthorizationRequestEndpointFilter;
 import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.security.web.util.matcher.AndRequestMatcher;
 import org.springframework.security.web.util.matcher.OrRequestMatcher;
@@ -47,14 +53,17 @@ import org.springframework.util.StringUtils;
 /**
  * Attempts to extract an Authorization Request from {@link HttpServletRequest} for the
  * OAuth 2.0 Authorization Code Grant and then converts it to an
- * {@link OAuth2AuthorizationCodeRequestAuthenticationToken} used for authenticating the
+ * {@link OAuth2AuthorizationCodeRequestAuthenticationToken} OR
+ * {@link OAuth2PushedAuthorizationRequestAuthenticationToken} used for authenticating the
  * request.
  *
  * @author Joe Grandja
  * @since 0.1.2
  * @see AuthenticationConverter
  * @see OAuth2AuthorizationCodeRequestAuthenticationToken
+ * @see OAuth2PushedAuthorizationRequestAuthenticationToken
  * @see OAuth2AuthorizationEndpointFilter
+ * @see OAuth2PushedAuthorizationRequestEndpointFilter
  */
 public final class OAuth2AuthorizationCodeRequestAuthenticationConverter implements AuthenticationConverter {
 
@@ -76,13 +85,30 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationConverter impleme
 		MultiValueMap<String, String> parameters = "GET".equals(request.getMethod())
 				? OAuth2EndpointUtils.getQueryParameters(request) : OAuth2EndpointUtils.getFormParameters(request);
 
-		// response_type (REQUIRED)
-		String responseType = parameters.getFirst(OAuth2ParameterNames.RESPONSE_TYPE);
-		if (!StringUtils.hasText(responseType) || parameters.get(OAuth2ParameterNames.RESPONSE_TYPE).size() != 1) {
-			throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.RESPONSE_TYPE);
+		boolean pushedAuthorizationRequest = isPushedAuthorizationRequest(request);
+
+		// request_uri (OPTIONAL) - provided if an authorization request was previously
+		// pushed (RFC 9126 OAuth 2.0 Pushed Authorization Requests)
+		String requestUri = parameters.getFirst("request_uri");
+		if (StringUtils.hasText(requestUri)) {
+			if (pushedAuthorizationRequest) {
+				throwError(OAuth2ErrorCodes.INVALID_REQUEST, "request_uri");
+			}
+			else if (parameters.get("request_uri").size() != 1) {
+				// Authorization Request
+				throwError(OAuth2ErrorCodes.INVALID_REQUEST, "request_uri");
+			}
 		}
-		else if (!responseType.equals(OAuth2AuthorizationResponseType.CODE.getValue())) {
-			throwError(OAuth2ErrorCodes.UNSUPPORTED_RESPONSE_TYPE, OAuth2ParameterNames.RESPONSE_TYPE);
+
+		if (!StringUtils.hasText(requestUri)) {
+			// response_type (REQUIRED)
+			String responseType = parameters.getFirst(OAuth2ParameterNames.RESPONSE_TYPE);
+			if (!StringUtils.hasText(responseType) || parameters.get(OAuth2ParameterNames.RESPONSE_TYPE).size() != 1) {
+				throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.RESPONSE_TYPE);
+			}
+			else if (!responseType.equals(OAuth2AuthorizationResponseType.CODE.getValue())) {
+				throwError(OAuth2ErrorCodes.UNSUPPORTED_RESPONSE_TYPE, OAuth2ParameterNames.RESPONSE_TYPE);
+			}
 		}
 
 		String authorizationUri = request.getRequestURL().toString();
@@ -150,8 +176,24 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationConverter impleme
 			}
 		});
 
-		return new OAuth2AuthorizationCodeRequestAuthenticationToken(authorizationUri, clientId, principal, redirectUri,
-				state, scopes, additionalParameters);
+		if (pushedAuthorizationRequest) {
+			return new OAuth2PushedAuthorizationRequestAuthenticationToken(authorizationUri, clientId, principal,
+					redirectUri, state, scopes, additionalParameters);
+		}
+		else {
+			return new OAuth2AuthorizationCodeRequestAuthenticationToken(authorizationUri, clientId, principal,
+					redirectUri, state, scopes, additionalParameters);
+		}
+	}
+
+	private boolean isPushedAuthorizationRequest(HttpServletRequest request) {
+		AuthorizationServerContext authorizationServerContext = AuthorizationServerContextHolder.getContext();
+		AuthorizationServerSettings authorizationServerSettings = authorizationServerContext
+			.getAuthorizationServerSettings();
+		return request.getRequestURL()
+			.toString()
+			.toLowerCase(Locale.ROOT)
+			.endsWith(authorizationServerSettings.getPushedAuthorizationRequestEndpoint().toLowerCase(Locale.ROOT));
 	}
 
 	private static RequestMatcher createDefaultRequestMatcher() {

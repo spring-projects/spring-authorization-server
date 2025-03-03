@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 the original author or authors.
+ * Copyright 2020-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import java.util.function.Predicate;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.springframework.core.log.LogMessage;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
@@ -39,7 +38,6 @@ import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
-import org.springframework.security.oauth2.core.endpoint.PkceParameterNames;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationCode;
@@ -81,7 +79,7 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 
 	private static final String ERROR_URI = "https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.2.1";
 
-	private static final String PKCE_ERROR_URI = "https://datatracker.ietf.org/doc/html/rfc7636#section-4.4.1";
+	private static final OAuth2TokenType STATE_TOKEN_TYPE = new OAuth2TokenType(OAuth2ParameterNames.STATE);
 
 	private static final StringKeyGenerator DEFAULT_STATE_GENERATOR = new Base64StringKeyGenerator(
 			Base64.getUrlEncoder());
@@ -122,6 +120,13 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 	public Authentication authenticate(Authentication authentication) throws AuthenticationException {
 		OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthentication = (OAuth2AuthorizationCodeRequestAuthenticationToken) authentication;
 
+		String requestUri = (String) authorizationCodeRequestAuthentication.getAdditionalParameters()
+			.get("request_uri");
+		if (StringUtils.hasText(requestUri)) {
+			authorizationCodeRequestAuthentication = fromPushedAuthorizationRequest(
+					authorizationCodeRequestAuthentication);
+		}
+
 		RegisteredClient registeredClient = this.registeredClientRepository
 			.findByClientId(authorizationCodeRequestAuthentication.getClientId());
 		if (registeredClient == null) {
@@ -136,47 +141,28 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 		OAuth2AuthorizationCodeRequestAuthenticationContext.Builder authenticationContextBuilder = OAuth2AuthorizationCodeRequestAuthenticationContext
 			.with(authorizationCodeRequestAuthentication)
 			.registeredClient(registeredClient);
-		this.authenticationValidator.accept(authenticationContextBuilder.build());
+		OAuth2AuthorizationCodeRequestAuthenticationContext authenticationContext = authenticationContextBuilder
+			.build();
 
-		if (!registeredClient.getAuthorizationGrantTypes().contains(AuthorizationGrantType.AUTHORIZATION_CODE)) {
-			if (this.logger.isDebugEnabled()) {
-				this.logger.debug(LogMessage.format(
-						"Invalid request: requested grant_type is not allowed" + " for registered client '%s'",
-						registeredClient.getId()));
-			}
-			throwError(OAuth2ErrorCodes.UNAUTHORIZED_CLIENT, OAuth2ParameterNames.CLIENT_ID,
-					authorizationCodeRequestAuthentication, registeredClient);
-		}
+		// grant_type
+		OAuth2AuthorizationCodeRequestAuthenticationValidator.DEFAULT_AUTHORIZATION_GRANT_TYPE_VALIDATOR
+			.accept(authenticationContext);
+
+		// redirect_uri and scope
+		this.authenticationValidator.accept(authenticationContext);
 
 		// code_challenge (REQUIRED for public clients) - RFC 7636 (PKCE)
-		String codeChallenge = (String) authorizationCodeRequestAuthentication.getAdditionalParameters()
-			.get(PkceParameterNames.CODE_CHALLENGE);
-		if (StringUtils.hasText(codeChallenge)) {
-			String codeChallengeMethod = (String) authorizationCodeRequestAuthentication.getAdditionalParameters()
-				.get(PkceParameterNames.CODE_CHALLENGE_METHOD);
-			if (!StringUtils.hasText(codeChallengeMethod) || !"S256".equals(codeChallengeMethod)) {
-				throwError(OAuth2ErrorCodes.INVALID_REQUEST, PkceParameterNames.CODE_CHALLENGE_METHOD, PKCE_ERROR_URI,
-						authorizationCodeRequestAuthentication, registeredClient, null);
-			}
-		}
-		else if (registeredClient.getClientSettings().isRequireProofKey()) {
-			throwError(OAuth2ErrorCodes.INVALID_REQUEST, PkceParameterNames.CODE_CHALLENGE, PKCE_ERROR_URI,
-					authorizationCodeRequestAuthentication, registeredClient, null);
-		}
+		OAuth2AuthorizationCodeRequestAuthenticationValidator.DEFAULT_CODE_CHALLENGE_VALIDATOR
+			.accept(authenticationContext);
 
 		// prompt (OPTIONAL for OpenID Connect 1.0 Authentication Request)
 		Set<String> promptValues = Collections.emptySet();
 		if (authorizationCodeRequestAuthentication.getScopes().contains(OidcScopes.OPENID)) {
 			String prompt = (String) authorizationCodeRequestAuthentication.getAdditionalParameters().get("prompt");
 			if (StringUtils.hasText(prompt)) {
+				OAuth2AuthorizationCodeRequestAuthenticationValidator.DEFAULT_PROMPT_VALIDATOR
+					.accept(authenticationContext);
 				promptValues = new HashSet<>(Arrays.asList(StringUtils.delimitedListToStringArray(prompt, " ")));
-				if (promptValues.contains(OidcPrompts.NONE)) {
-					if (promptValues.contains(OidcPrompts.LOGIN) || promptValues.contains(OidcPrompts.CONSENT)
-							|| promptValues.contains(OidcPrompts.SELECT_ACCOUNT)) {
-						throwError(OAuth2ErrorCodes.INVALID_REQUEST, "prompt", authorizationCodeRequestAuthentication,
-								registeredClient);
-					}
-				}
 			}
 		}
 
@@ -190,7 +176,7 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 
 		Authentication principal = (Authentication) authorizationCodeRequestAuthentication.getPrincipal();
 		if (!isPrincipalAuthenticated(principal)) {
-			if (promptValues.contains(OidcPrompts.NONE)) {
+			if (promptValues.contains(OidcPrompt.NONE)) {
 				// Return an error instead of displaying the login page (via the
 				// configured AuthenticationEntryPoint)
 				throwError("login_required", "prompt", authorizationCodeRequestAuthentication, registeredClient);
@@ -219,7 +205,7 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 		}
 
 		if (this.authorizationConsentRequired.test(authenticationContextBuilder.build())) {
-			if (promptValues.contains(OidcPrompts.NONE)) {
+			if (promptValues.contains(OidcPrompt.NONE)) {
 				// Return an error instead of displaying the consent page
 				throwError("consent_required", "prompt", authorizationCodeRequestAuthentication, registeredClient);
 			}
@@ -347,6 +333,37 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 		this.authorizationConsentRequired = authorizationConsentRequired;
 	}
 
+	private OAuth2AuthorizationCodeRequestAuthenticationToken fromPushedAuthorizationRequest(
+			OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthentication) {
+
+		String requestUri = (String) authorizationCodeRequestAuthentication.getAdditionalParameters()
+			.get("request_uri");
+
+		OAuth2PushedAuthorizationRequestUri pushedAuthorizationRequestUri = null;
+		try {
+			pushedAuthorizationRequestUri = OAuth2PushedAuthorizationRequestUri.parse(requestUri);
+		}
+		catch (Exception ex) {
+			throwError(OAuth2ErrorCodes.INVALID_REQUEST, "request_uri", authorizationCodeRequestAuthentication, null);
+		}
+
+		OAuth2Authorization authorization = this.authorizationService
+			.findByToken(pushedAuthorizationRequestUri.getState(), STATE_TOKEN_TYPE);
+		if (authorization == null) {
+			throwError(OAuth2ErrorCodes.INVALID_REQUEST, "request_uri", authorizationCodeRequestAuthentication, null);
+		}
+
+		OAuth2AuthorizationRequest authorizationRequest = authorization
+			.getAttribute(OAuth2AuthorizationRequest.class.getName());
+
+		return new OAuth2AuthorizationCodeRequestAuthenticationToken(
+				authorizationCodeRequestAuthentication.getAuthorizationUri(),
+				authorizationCodeRequestAuthentication.getClientId(),
+				(Authentication) authorizationCodeRequestAuthentication.getPrincipal(),
+				authorizationRequest.getRedirectUri(), authorizationRequest.getState(),
+				authorizationRequest.getScopes(), authorizationRequest.getAdditionalParameters());
+	}
+
 	private static boolean isAuthorizationConsentRequired(
 			OAuth2AuthorizationCodeRequestAuthenticationContext authenticationContext) {
 		if (!authenticationContext.getRegisteredClient().getClientSettings().isRequireAuthorizationConsent()) {
@@ -455,25 +472,6 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 			return registeredClient.getRedirectUris().iterator().next();
 		}
 		return null;
-	}
-
-	/*
-	 * The values defined for the "prompt" parameter for the OpenID Connect 1.0
-	 * Authentication Request.
-	 */
-	private static final class OidcPrompts {
-
-		private static final String NONE = "none";
-
-		private static final String LOGIN = "login";
-
-		private static final String CONSENT = "consent";
-
-		private static final String SELECT_ACCOUNT = "select_account";
-
-		private OidcPrompts() {
-		}
-
 	}
 
 }

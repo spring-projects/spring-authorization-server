@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 the original author or authors.
+ * Copyright 2020-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,8 @@ import org.springframework.security.oauth2.server.authorization.OAuth2Authorizat
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsent;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsentService;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
+import org.springframework.security.oauth2.server.authorization.OAuth2TokenType;
+import org.springframework.security.oauth2.server.authorization.TestOAuth2Authorizations;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
@@ -50,6 +52,7 @@ import org.springframework.security.oauth2.server.authorization.context.TestAuth
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenGenerator;
+import org.springframework.util.StringUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -70,6 +73,8 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 	private static final String AUTHORIZATION_URI = "https://provider.com/oauth2/authorize";
 
 	private static final String STATE = "state";
+
+	private static final OAuth2TokenType STATE_TOKEN_TYPE = new OAuth2TokenType(OAuth2ParameterNames.STATE);
 
 	private RegisteredClientRepository registeredClientRepository;
 
@@ -603,6 +608,59 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 	}
 
 	@Test
+	public void authenticateWhenAuthorizationCodeRequestWithRequestUriThenReturnAuthorizationCode() {
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+		given(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
+			.willReturn(registeredClient);
+
+		OAuth2PushedAuthorizationRequestUri pushedAuthorizationRequestUri = OAuth2PushedAuthorizationRequestUri
+			.create();
+		Map<String, Object> additionalParameters = new HashMap<>();
+		additionalParameters.put("request_uri", pushedAuthorizationRequestUri.getRequestUri());
+		OAuth2Authorization authorization = TestOAuth2Authorizations
+			.authorization(registeredClient, additionalParameters)
+			.build();
+		given(this.authorizationService.findByToken(eq(pushedAuthorizationRequestUri.getState()), eq(STATE_TOKEN_TYPE)))
+			.willReturn(authorization);
+
+		OAuth2AuthorizationCodeRequestAuthenticationToken authentication = new OAuth2AuthorizationCodeRequestAuthenticationToken(
+				AUTHORIZATION_URI, registeredClient.getClientId(), this.principal, null, null, null,
+				additionalParameters);
+
+		OAuth2AuthorizationCodeRequestAuthenticationToken authenticationResult = (OAuth2AuthorizationCodeRequestAuthenticationToken) this.authenticationProvider
+			.authenticate(authentication);
+
+		assertAuthorizationCodeRequestWithAuthorizationCodeResult(registeredClient, authentication,
+				authenticationResult);
+	}
+
+	@Test
+	public void authenticateWhenAuthorizationCodeRequestWithInvalidRequestUriThenThrowOAuth2AuthorizationCodeRequestAuthenticationException() {
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+		given(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
+			.willReturn(registeredClient);
+
+		OAuth2PushedAuthorizationRequestUri pushedAuthorizationRequestUri = OAuth2PushedAuthorizationRequestUri
+			.create();
+		Map<String, Object> additionalParameters = new HashMap<>();
+		additionalParameters.put("request_uri", pushedAuthorizationRequestUri.getRequestUri());
+		OAuth2Authorization authorization = TestOAuth2Authorizations
+			.authorization(registeredClient, additionalParameters)
+			.build();
+		given(this.authorizationService.findByToken(eq(pushedAuthorizationRequestUri.getState()), eq(STATE_TOKEN_TYPE)))
+			.willReturn(authorization);
+
+		OAuth2AuthorizationCodeRequestAuthenticationToken authentication = new OAuth2AuthorizationCodeRequestAuthenticationToken(
+				AUTHORIZATION_URI, registeredClient.getClientId(), this.principal, null, null, null,
+				Collections.singletonMap("request_uri", "invalid_request_uri"));
+
+		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
+			.isInstanceOf(OAuth2AuthorizationCodeRequestAuthenticationException.class)
+			.satisfies((ex) -> assertAuthenticationException((OAuth2AuthorizationCodeRequestAuthenticationException) ex,
+					OAuth2ErrorCodes.INVALID_REQUEST, "request_uri", null));
+	}
+
+	@Test
 	public void authenticateWhenAuthorizationCodeNotGeneratedThenThrowOAuth2AuthorizationCodeRequestAuthenticationException() {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 		given(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
@@ -665,11 +723,15 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 		assertThat(authorizationRequest.getResponseType()).isEqualTo(OAuth2AuthorizationResponseType.CODE);
 		assertThat(authorizationRequest.getAuthorizationUri()).isEqualTo(authentication.getAuthorizationUri());
 		assertThat(authorizationRequest.getClientId()).isEqualTo(registeredClient.getClientId());
-		assertThat(authorizationRequest.getRedirectUri()).isEqualTo(authentication.getRedirectUri());
-		assertThat(authorizationRequest.getScopes()).isEqualTo(authentication.getScopes());
-		assertThat(authorizationRequest.getState()).isEqualTo(authentication.getState());
-		assertThat(authorizationRequest.getAdditionalParameters()).isEqualTo(authentication.getAdditionalParameters());
 
+		String requestUri = (String) authentication.getAdditionalParameters().get("request_uri");
+		if (!StringUtils.hasText(requestUri)) {
+			assertThat(authorizationRequest.getRedirectUri()).isEqualTo(authentication.getRedirectUri());
+			assertThat(authorizationRequest.getScopes()).isEqualTo(authentication.getScopes());
+			assertThat(authorizationRequest.getState()).isEqualTo(authentication.getState());
+		}
+
+		assertThat(authorizationRequest.getAdditionalParameters()).isEqualTo(authentication.getAdditionalParameters());
 		assertThat(authorization.getRegisteredClientId()).isEqualTo(registeredClient.getId());
 		assertThat(authorization.getPrincipalName()).isEqualTo(this.principal.getName());
 		assertThat(authorization.getAuthorizationGrantType()).isEqualTo(AuthorizationGrantType.AUTHORIZATION_CODE);

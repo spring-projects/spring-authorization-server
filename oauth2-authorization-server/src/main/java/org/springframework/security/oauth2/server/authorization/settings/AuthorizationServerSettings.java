@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 the original author or authors.
+ * Copyright 2020-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,6 +70,16 @@ public final class AuthorizationServerSettings extends AbstractSettings {
 	 */
 	public String getAuthorizationEndpoint() {
 		return getSetting(ConfigurationSettingNames.AuthorizationServer.AUTHORIZATION_ENDPOINT);
+	}
+
+	/**
+	 * Returns the OAuth 2.0 Pushed Authorization Request endpoint. The default is
+	 * {@code /oauth2/par}.
+	 * @return the Pushed Authorization Request endpoint
+	 * @since 1.5
+	 */
+	public String getPushedAuthorizationRequestEndpoint() {
+		return getSetting(ConfigurationSettingNames.AuthorizationServer.PUSHED_AUTHORIZATION_REQUEST_ENDPOINT);
 	}
 
 	/**
@@ -160,6 +170,7 @@ public final class AuthorizationServerSettings extends AbstractSettings {
 	public static Builder builder() {
 		return new Builder().multipleIssuersAllowed(false)
 			.authorizationEndpoint("/oauth2/authorize")
+			.pushedAuthorizationRequestEndpoint("/oauth2/par")
 			.deviceAuthorizationEndpoint("/oauth2/device_authorization")
 			.deviceVerificationEndpoint("/oauth2/device_verification")
 			.tokenEndpoint("/oauth2/token")
@@ -234,6 +245,18 @@ public final class AuthorizationServerSettings extends AbstractSettings {
 		 */
 		public Builder authorizationEndpoint(String authorizationEndpoint) {
 			return setting(ConfigurationSettingNames.AuthorizationServer.AUTHORIZATION_ENDPOINT, authorizationEndpoint);
+		}
+
+		/**
+		 * Sets the OAuth 2.0 Pushed Authorization Request endpoint.
+		 * @param pushedAuthorizationRequestEndpoint the Pushed Authorization Request
+		 * endpoint
+		 * @return the {@link Builder} for further configuration
+		 * @since 1.5
+		 */
+		public Builder pushedAuthorizationRequestEndpoint(String pushedAuthorizationRequestEndpoint) {
+			return setting(ConfigurationSettingNames.AuthorizationServer.PUSHED_AUTHORIZATION_REQUEST_ENDPOINT,
+					pushedAuthorizationRequestEndpoint);
 		}
 
 		/**

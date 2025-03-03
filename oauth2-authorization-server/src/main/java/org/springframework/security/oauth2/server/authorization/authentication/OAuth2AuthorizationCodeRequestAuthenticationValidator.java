@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 the original author or authors.
+ * Copyright 2020-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package org.springframework.security.oauth2.server.authorization.authentication;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Consumer;
 
@@ -23,9 +25,11 @@ import org.apache.commons.logging.LogFactory;
 
 import org.springframework.core.log.LogMessage;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
+import org.springframework.security.oauth2.core.endpoint.PkceParameterNames;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.util.StringUtils;
@@ -51,25 +55,34 @@ import org.springframework.web.util.UriComponentsBuilder;
  * @see OAuth2AuthorizationCodeRequestAuthenticationContext
  * @see OAuth2AuthorizationCodeRequestAuthenticationToken
  * @see OAuth2AuthorizationCodeRequestAuthenticationProvider#setAuthenticationValidator(Consumer)
+ * @see OAuth2PushedAuthorizationRequestAuthenticationProvider#setAuthenticationValidator(Consumer)
  */
 public final class OAuth2AuthorizationCodeRequestAuthenticationValidator
 		implements Consumer<OAuth2AuthorizationCodeRequestAuthenticationContext> {
 
 	private static final String ERROR_URI = "https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.2.1";
 
+	private static final String PKCE_ERROR_URI = "https://datatracker.ietf.org/doc/html/rfc7636#section-4.4.1";
+
 	private static final Log LOGGER = LogFactory.getLog(OAuth2AuthorizationCodeRequestAuthenticationValidator.class);
 
-	/**
-	 * The default validator for
-	 * {@link OAuth2AuthorizationCodeRequestAuthenticationToken#getScopes()}.
-	 */
-	public static final Consumer<OAuth2AuthorizationCodeRequestAuthenticationContext> DEFAULT_SCOPE_VALIDATOR = OAuth2AuthorizationCodeRequestAuthenticationValidator::validateScope;
+	static final Consumer<OAuth2AuthorizationCodeRequestAuthenticationContext> DEFAULT_AUTHORIZATION_GRANT_TYPE_VALIDATOR = OAuth2AuthorizationCodeRequestAuthenticationValidator::validateAuthorizationGrantType;
+
+	static final Consumer<OAuth2AuthorizationCodeRequestAuthenticationContext> DEFAULT_CODE_CHALLENGE_VALIDATOR = OAuth2AuthorizationCodeRequestAuthenticationValidator::validateCodeChallenge;
+
+	static final Consumer<OAuth2AuthorizationCodeRequestAuthenticationContext> DEFAULT_PROMPT_VALIDATOR = OAuth2AuthorizationCodeRequestAuthenticationValidator::validatePrompt;
 
 	/**
 	 * The default validator for
 	 * {@link OAuth2AuthorizationCodeRequestAuthenticationToken#getRedirectUri()}.
 	 */
 	public static final Consumer<OAuth2AuthorizationCodeRequestAuthenticationContext> DEFAULT_REDIRECT_URI_VALIDATOR = OAuth2AuthorizationCodeRequestAuthenticationValidator::validateRedirectUri;
+
+	/**
+	 * The default validator for
+	 * {@link OAuth2AuthorizationCodeRequestAuthenticationToken#getScopes()}.
+	 */
+	public static final Consumer<OAuth2AuthorizationCodeRequestAuthenticationContext> DEFAULT_SCOPE_VALIDATOR = OAuth2AuthorizationCodeRequestAuthenticationValidator::validateScope;
 
 	private final Consumer<OAuth2AuthorizationCodeRequestAuthenticationContext> authenticationValidator = DEFAULT_REDIRECT_URI_VALIDATOR
 		.andThen(DEFAULT_SCOPE_VALIDATOR);
@@ -79,20 +92,18 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationValidator
 		this.authenticationValidator.accept(authenticationContext);
 	}
 
-	private static void validateScope(OAuth2AuthorizationCodeRequestAuthenticationContext authenticationContext) {
+	private static void validateAuthorizationGrantType(
+			OAuth2AuthorizationCodeRequestAuthenticationContext authenticationContext) {
 		OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthentication = authenticationContext
 			.getAuthentication();
 		RegisteredClient registeredClient = authenticationContext.getRegisteredClient();
-
-		Set<String> requestedScopes = authorizationCodeRequestAuthentication.getScopes();
-		Set<String> allowedScopes = registeredClient.getScopes();
-		if (!requestedScopes.isEmpty() && !allowedScopes.containsAll(requestedScopes)) {
+		if (!registeredClient.getAuthorizationGrantTypes().contains(AuthorizationGrantType.AUTHORIZATION_CODE)) {
 			if (LOGGER.isDebugEnabled()) {
 				LOGGER.debug(LogMessage.format(
-						"Invalid request: requested scope is not allowed" + " for registered client '%s'",
+						"Invalid request: requested grant_type is not allowed for registered client '%s'",
 						registeredClient.getId()));
 			}
-			throwError(OAuth2ErrorCodes.INVALID_SCOPE, OAuth2ParameterNames.SCOPE,
+			throwError(OAuth2ErrorCodes.UNAUTHORIZED_CLIENT, OAuth2ParameterNames.CLIENT_ID,
 					authorizationCodeRequestAuthentication, registeredClient);
 		}
 	}
@@ -151,7 +162,7 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationValidator
 				if (!validRedirectUri) {
 					if (LOGGER.isDebugEnabled()) {
 						LOGGER.debug(LogMessage.format(
-								"Invalid request: redirect_uri does not match" + " for registered client '%s'",
+								"Invalid request: redirect_uri does not match for registered client '%s'",
 								registeredClient.getId()));
 					}
 					throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.REDIRECT_URI,
@@ -168,6 +179,69 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationValidator
 				// redirect_uri is REQUIRED for OpenID Connect
 				throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.REDIRECT_URI,
 						authorizationCodeRequestAuthentication, registeredClient);
+			}
+		}
+	}
+
+	private static void validateScope(OAuth2AuthorizationCodeRequestAuthenticationContext authenticationContext) {
+		OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthentication = authenticationContext
+			.getAuthentication();
+		RegisteredClient registeredClient = authenticationContext.getRegisteredClient();
+
+		Set<String> requestedScopes = authorizationCodeRequestAuthentication.getScopes();
+		Set<String> allowedScopes = registeredClient.getScopes();
+		if (!requestedScopes.isEmpty() && !allowedScopes.containsAll(requestedScopes)) {
+			if (LOGGER.isDebugEnabled()) {
+				LOGGER.debug(
+						LogMessage.format("Invalid request: requested scope is not allowed for registered client '%s'",
+								registeredClient.getId()));
+			}
+			throwError(OAuth2ErrorCodes.INVALID_SCOPE, OAuth2ParameterNames.SCOPE,
+					authorizationCodeRequestAuthentication, registeredClient);
+		}
+	}
+
+	private static void validateCodeChallenge(
+			OAuth2AuthorizationCodeRequestAuthenticationContext authenticationContext) {
+		OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthentication = authenticationContext
+			.getAuthentication();
+		RegisteredClient registeredClient = authenticationContext.getRegisteredClient();
+
+		// code_challenge (REQUIRED for public clients) - RFC 7636 (PKCE)
+		String codeChallenge = (String) authorizationCodeRequestAuthentication.getAdditionalParameters()
+			.get(PkceParameterNames.CODE_CHALLENGE);
+		if (StringUtils.hasText(codeChallenge)) {
+			String codeChallengeMethod = (String) authorizationCodeRequestAuthentication.getAdditionalParameters()
+				.get(PkceParameterNames.CODE_CHALLENGE_METHOD);
+			if (!StringUtils.hasText(codeChallengeMethod) || !"S256".equals(codeChallengeMethod)) {
+				throwError(OAuth2ErrorCodes.INVALID_REQUEST, PkceParameterNames.CODE_CHALLENGE_METHOD, PKCE_ERROR_URI,
+						authorizationCodeRequestAuthentication, registeredClient);
+			}
+		}
+		else if (registeredClient.getClientSettings().isRequireProofKey()) {
+			throwError(OAuth2ErrorCodes.INVALID_REQUEST, PkceParameterNames.CODE_CHALLENGE, PKCE_ERROR_URI,
+					authorizationCodeRequestAuthentication, registeredClient);
+		}
+	}
+
+	private static void validatePrompt(OAuth2AuthorizationCodeRequestAuthenticationContext authenticationContext) {
+		OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthentication = authenticationContext
+			.getAuthentication();
+		RegisteredClient registeredClient = authenticationContext.getRegisteredClient();
+
+		// prompt (OPTIONAL for OpenID Connect 1.0 Authentication Request)
+		if (authorizationCodeRequestAuthentication.getScopes().contains(OidcScopes.OPENID)) {
+			String prompt = (String) authorizationCodeRequestAuthentication.getAdditionalParameters().get("prompt");
+			if (StringUtils.hasText(prompt)) {
+				Set<String> promptValues = new HashSet<>(
+						Arrays.asList(StringUtils.delimitedListToStringArray(prompt, " ")));
+				if (promptValues.contains(OidcPrompt.NONE)) {
+					if (promptValues.contains(OidcPrompt.LOGIN) || promptValues.contains(OidcPrompt.CONSENT)
+							|| promptValues.contains(OidcPrompt.SELECT_ACCOUNT)) {
+						throwError(OAuth2ErrorCodes.INVALID_REQUEST, "prompt", authorizationCodeRequestAuthentication,
+								registeredClient);
+					}
+				}
 			}
 		}
 	}
@@ -201,7 +275,13 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationValidator
 	private static void throwError(String errorCode, String parameterName,
 			OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthentication,
 			RegisteredClient registeredClient) {
-		OAuth2Error error = new OAuth2Error(errorCode, "OAuth 2.0 Parameter: " + parameterName, ERROR_URI);
+		throwError(errorCode, parameterName, ERROR_URI, authorizationCodeRequestAuthentication, registeredClient);
+	}
+
+	private static void throwError(String errorCode, String parameterName, String errorUri,
+			OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthentication,
+			RegisteredClient registeredClient) {
+		OAuth2Error error = new OAuth2Error(errorCode, "OAuth 2.0 Parameter: " + parameterName, errorUri);
 		throwError(error, parameterName, authorizationCodeRequestAuthentication, registeredClient);
 	}
 

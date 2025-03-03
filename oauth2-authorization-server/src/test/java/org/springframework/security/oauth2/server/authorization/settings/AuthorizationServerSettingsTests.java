@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 the original author or authors.
+ * Copyright 2020-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ public class AuthorizationServerSettingsTests {
 		assertThat(authorizationServerSettings.getIssuer()).isNull();
 		assertThat(authorizationServerSettings.isMultipleIssuersAllowed()).isFalse();
 		assertThat(authorizationServerSettings.getAuthorizationEndpoint()).isEqualTo("/oauth2/authorize");
+		assertThat(authorizationServerSettings.getPushedAuthorizationRequestEndpoint()).isEqualTo("/oauth2/par");
 		assertThat(authorizationServerSettings.getTokenEndpoint()).isEqualTo("/oauth2/token");
 		assertThat(authorizationServerSettings.getJwkSetEndpoint()).isEqualTo("/oauth2/jwks");
 		assertThat(authorizationServerSettings.getTokenRevocationEndpoint()).isEqualTo("/oauth2/revoke");
@@ -47,6 +48,7 @@ public class AuthorizationServerSettingsTests {
 	@Test
 	public void buildWhenSettingsProvidedThenSet() {
 		String authorizationEndpoint = "/oauth2/v1/authorize";
+		String pushedAuthorizationRequestEndpoint = "/oauth2/v1/par";
 		String tokenEndpoint = "/oauth2/v1/token";
 		String jwkSetEndpoint = "/oauth2/v1/jwks";
 		String tokenRevocationEndpoint = "/oauth2/v1/revoke";
@@ -59,6 +61,7 @@ public class AuthorizationServerSettingsTests {
 		AuthorizationServerSettings authorizationServerSettings = AuthorizationServerSettings.builder()
 			.issuer(issuer)
 			.authorizationEndpoint(authorizationEndpoint)
+			.pushedAuthorizationRequestEndpoint(pushedAuthorizationRequestEndpoint)
 			.tokenEndpoint(tokenEndpoint)
 			.jwkSetEndpoint(jwkSetEndpoint)
 			.tokenRevocationEndpoint(tokenRevocationEndpoint)
@@ -72,6 +75,8 @@ public class AuthorizationServerSettingsTests {
 		assertThat(authorizationServerSettings.getIssuer()).isEqualTo(issuer);
 		assertThat(authorizationServerSettings.isMultipleIssuersAllowed()).isFalse();
 		assertThat(authorizationServerSettings.getAuthorizationEndpoint()).isEqualTo(authorizationEndpoint);
+		assertThat(authorizationServerSettings.getPushedAuthorizationRequestEndpoint())
+			.isEqualTo(pushedAuthorizationRequestEndpoint);
 		assertThat(authorizationServerSettings.getTokenEndpoint()).isEqualTo(tokenEndpoint);
 		assertThat(authorizationServerSettings.getJwkSetEndpoint()).isEqualTo(jwkSetEndpoint);
 		assertThat(authorizationServerSettings.getTokenRevocationEndpoint()).isEqualTo(tokenRevocationEndpoint);
@@ -100,6 +105,7 @@ public class AuthorizationServerSettingsTests {
 		assertThat(authorizationServerSettings.getIssuer()).isNull();
 		assertThat(authorizationServerSettings.isMultipleIssuersAllowed()).isTrue();
 		assertThat(authorizationServerSettings.getAuthorizationEndpoint()).isEqualTo("/oauth2/authorize");
+		assertThat(authorizationServerSettings.getPushedAuthorizationRequestEndpoint()).isEqualTo("/oauth2/par");
 		assertThat(authorizationServerSettings.getTokenEndpoint()).isEqualTo("/oauth2/token");
 		assertThat(authorizationServerSettings.getJwkSetEndpoint()).isEqualTo("/oauth2/jwks");
 		assertThat(authorizationServerSettings.getTokenRevocationEndpoint()).isEqualTo("/oauth2/revoke");
@@ -116,7 +122,7 @@ public class AuthorizationServerSettingsTests {
 			.settings((settings) -> settings.put("name2", "value2"))
 			.build();
 
-		assertThat(authorizationServerSettings.getSettings()).hasSize(13);
+		assertThat(authorizationServerSettings.getSettings()).hasSize(14);
 		assertThat(authorizationServerSettings.<String>getSetting("name1")).isEqualTo("value1");
 		assertThat(authorizationServerSettings.<String>getSetting("name2")).isEqualTo("value2");
 	}
@@ -131,6 +137,13 @@ public class AuthorizationServerSettingsTests {
 	public void authorizationEndpointWhenNullThenThrowIllegalArgumentException() {
 		assertThatIllegalArgumentException()
 			.isThrownBy(() -> AuthorizationServerSettings.builder().authorizationEndpoint(null))
+			.withMessage("value cannot be null");
+	}
+
+	@Test
+	public void pushedAuthorizationRequestEndpointWhenNullThenThrowIllegalArgumentException() {
+		assertThatIllegalArgumentException()
+			.isThrownBy(() -> AuthorizationServerSettings.builder().pushedAuthorizationRequestEndpoint(null))
 			.withMessage("value cannot be null");
 	}
 

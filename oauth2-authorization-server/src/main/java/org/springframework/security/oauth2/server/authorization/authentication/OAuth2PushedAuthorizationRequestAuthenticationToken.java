@@ -15,75 +15,80 @@
  */
 package org.springframework.security.oauth2.server.authorization.authentication;
 
+import java.time.Instant;
 import java.util.Map;
 import java.util.Set;
 
 import org.springframework.lang.Nullable;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationCode;
 import org.springframework.util.Assert;
 
 /**
- * An {@link Authentication} implementation for the OAuth 2.0 Authorization Request used
- * in the Authorization Code Grant.
+ * An {@link Authentication} implementation for the OAuth 2.0 Pushed Authorization Request
+ * used in the Authorization Code Grant.
  *
  * @author Joe Grandja
- * @since 0.1.2
- * @see OAuth2AuthorizationCodeRequestAuthenticationProvider
- * @see OAuth2AuthorizationConsentAuthenticationProvider
+ * @since 1.5
+ * @see OAuth2PushedAuthorizationRequestAuthenticationProvider
  */
-public class OAuth2AuthorizationCodeRequestAuthenticationToken
+public class OAuth2PushedAuthorizationRequestAuthenticationToken
 		extends AbstractOAuth2AuthorizationCodeRequestAuthenticationToken {
 
-	private final OAuth2AuthorizationCode authorizationCode;
+	private final String requestUri;
+
+	private final Instant requestUriExpiresAt;
 
 	/**
-	 * Constructs an {@code OAuth2AuthorizationCodeRequestAuthenticationToken} using the
+	 * Constructs an {@code OAuth2PushedAuthorizationRequestAuthenticationToken} using the
 	 * provided parameters.
 	 * @param authorizationUri the authorization URI
 	 * @param clientId the client identifier
-	 * @param principal the {@code Principal} (Resource Owner)
+	 * @param principal the authenticated client principal
 	 * @param redirectUri the redirect uri
 	 * @param state the state
 	 * @param scopes the requested scope(s)
 	 * @param additionalParameters the additional parameters
-	 * @since 0.4.0
 	 */
-	public OAuth2AuthorizationCodeRequestAuthenticationToken(String authorizationUri, String clientId,
+	public OAuth2PushedAuthorizationRequestAuthenticationToken(String authorizationUri, String clientId,
 			Authentication principal, @Nullable String redirectUri, @Nullable String state,
 			@Nullable Set<String> scopes, @Nullable Map<String, Object> additionalParameters) {
 		super(authorizationUri, clientId, principal, redirectUri, state, scopes, additionalParameters);
-		this.authorizationCode = null;
+		this.requestUri = null;
+		this.requestUriExpiresAt = null;
 	}
 
 	/**
-	 * Constructs an {@code OAuth2AuthorizationCodeRequestAuthenticationToken} using the
+	 * Constructs an {@code OAuth2PushedAuthorizationRequestAuthenticationToken} using the
 	 * provided parameters.
 	 * @param authorizationUri the authorization URI
 	 * @param clientId the client identifier
-	 * @param principal the {@code Principal} (Resource Owner)
-	 * @param authorizationCode the {@link OAuth2AuthorizationCode}
+	 * @param principal the authenticated client principal
+	 * @param requestUri the request URI corresponding to the authorization request posted
+	 * @param requestUriExpiresAt the expiration time on or after which the
+	 * {@code requestUri} MUST NOT be accepted
 	 * @param redirectUri the redirect uri
 	 * @param state the state
 	 * @param scopes the authorized scope(s)
-	 * @since 0.4.0
 	 */
-	public OAuth2AuthorizationCodeRequestAuthenticationToken(String authorizationUri, String clientId,
-			Authentication principal, OAuth2AuthorizationCode authorizationCode, @Nullable String redirectUri,
+	public OAuth2PushedAuthorizationRequestAuthenticationToken(String authorizationUri, String clientId,
+			Authentication principal, String requestUri, Instant requestUriExpiresAt, @Nullable String redirectUri,
 			@Nullable String state, @Nullable Set<String> scopes) {
 		super(authorizationUri, clientId, principal, redirectUri, state, scopes, null);
-		Assert.notNull(authorizationCode, "authorizationCode cannot be null");
-		this.authorizationCode = authorizationCode;
+		Assert.hasText(requestUri, "requestUri cannot be empty");
+		Assert.notNull(requestUriExpiresAt, "requestUriExpiresAt cannot be null");
+		this.requestUri = requestUri;
+		this.requestUriExpiresAt = requestUriExpiresAt;
 		setAuthenticated(true);
 	}
 
-	/**
-	 * Returns the {@link OAuth2AuthorizationCode}.
-	 * @return the {@link OAuth2AuthorizationCode}
-	 */
 	@Nullable
-	public OAuth2AuthorizationCode getAuthorizationCode() {
-		return this.authorizationCode;
+	public String getRequestUri() {
+		return this.requestUri;
+	}
+
+	@Nullable
+	public Instant getRequestUriExpiresAt() {
+		return this.requestUriExpiresAt;
 	}
 
 }

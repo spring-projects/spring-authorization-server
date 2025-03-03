@@ -54,6 +54,9 @@ import org.springframework.security.oauth2.server.authorization.authentication.O
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationConsentAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
+import org.springframework.security.oauth2.server.authorization.context.AuthorizationServerContextHolder;
+import org.springframework.security.oauth2.server.authorization.context.TestAuthorizationServerContext;
+import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
@@ -112,11 +115,14 @@ public class OAuth2AuthorizationEndpointFilterTests {
 		Instant issuedAt = Instant.now();
 		Instant expiresAt = issuedAt.plus(5, ChronoUnit.MINUTES);
 		this.authorizationCode = new OAuth2AuthorizationCode("code", issuedAt, expiresAt);
+		AuthorizationServerContextHolder
+			.setContext(new TestAuthorizationServerContext(AuthorizationServerSettings.builder().build(), null));
 	}
 
 	@AfterEach
 	public void cleanup() {
 		SecurityContextHolder.clearContext();
+		AuthorizationServerContextHolder.resetContext();
 	}
 
 	@Test
@@ -179,6 +185,16 @@ public class OAuth2AuthorizationEndpointFilterTests {
 		this.filter.doFilter(request, response, filterChain);
 
 		verify(filterChain).doFilter(any(HttpServletRequest.class), any(HttpServletResponse.class));
+	}
+
+	@Test
+	public void doFilterWhenAuthorizationRequestMultipleRequestUriThenInvalidRequestError() throws Exception {
+		doFilterWhenAuthorizationRequestInvalidParameterThenError(TestRegisteredClients.registeredClient().build(),
+				"request_uri", OAuth2ErrorCodes.INVALID_REQUEST, (request) -> {
+					request.addParameter("request_uri", "request_uri");
+					request.addParameter("request_uri", "request_uri_2");
+					updateQueryString(request);
+				});
 	}
 
 	@Test

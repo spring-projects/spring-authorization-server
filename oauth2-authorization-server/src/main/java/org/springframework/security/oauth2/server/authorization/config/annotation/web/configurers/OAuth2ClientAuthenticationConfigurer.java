@@ -15,43 +15,37 @@
  */
 package org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.function.Consumer;
-
 import jakarta.servlet.http.HttpServletRequest;
-
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.ObjectPostProcessor;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.ExceptionHandlingConfigurer;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
-import org.springframework.security.oauth2.server.authorization.authentication.ClientSecretAuthenticationProvider;
-import org.springframework.security.oauth2.server.authorization.authentication.JwtClientAssertionAuthenticationProvider;
-import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientAuthenticationToken;
-import org.springframework.security.oauth2.server.authorization.authentication.PublicClientAuthenticationProvider;
-import org.springframework.security.oauth2.server.authorization.authentication.X509ClientCertificateAuthenticationProvider;
+import org.springframework.security.oauth2.server.authorization.authentication.*;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
+import org.springframework.security.oauth2.server.authorization.settings.ConfigurationSettingNames;
 import org.springframework.security.oauth2.server.authorization.web.OAuth2ClientAuthenticationFilter;
-import org.springframework.security.oauth2.server.authorization.web.authentication.ClientSecretBasicAuthenticationConverter;
-import org.springframework.security.oauth2.server.authorization.web.authentication.ClientSecretPostAuthenticationConverter;
-import org.springframework.security.oauth2.server.authorization.web.authentication.JwtClientAssertionAuthenticationConverter;
-import org.springframework.security.oauth2.server.authorization.web.authentication.PublicClientAuthenticationConverter;
-import org.springframework.security.oauth2.server.authorization.web.authentication.X509ClientCertificateAuthenticationConverter;
-import org.springframework.security.web.authentication.AuthenticationConverter;
-import org.springframework.security.web.authentication.AuthenticationFailureHandler;
-import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.security.oauth2.server.authorization.web.authentication.*;
 import org.springframework.security.web.authentication.DelegatingAuthenticationConverter;
+import org.springframework.security.web.authentication.*;
 import org.springframework.security.web.authentication.preauth.AbstractPreAuthenticatedProcessingFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.OrRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
+
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Consumer;
 
 /**
  * Configurer for OAuth 2.0 Client Authentication.
@@ -62,6 +56,8 @@ import org.springframework.util.Assert;
  * @see OAuth2ClientAuthenticationFilter
  */
 public final class OAuth2ClientAuthenticationConfigurer extends AbstractOAuth2Configurer {
+
+	private final Map<Class<? extends AbstractOAuth2Configurer>, String> endPointUriSettingNames = createEndPointUriSettingNames();
 
 	private RequestMatcher requestMatcher;
 
@@ -180,26 +176,31 @@ public final class OAuth2ClientAuthenticationConfigurer extends AbstractOAuth2Co
 	@Override
 	void init(HttpSecurity httpSecurity) {
 		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils
-			.getAuthorizationServerSettings(httpSecurity);
-		String tokenEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed()
-				? OAuth2ConfigurerUtils.withMultipleIssuersPattern(authorizationServerSettings.getTokenEndpoint())
-				: authorizationServerSettings.getTokenEndpoint();
-		String tokenIntrospectionEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed()
-				? OAuth2ConfigurerUtils
-					.withMultipleIssuersPattern(authorizationServerSettings.getTokenIntrospectionEndpoint())
-				: authorizationServerSettings.getTokenIntrospectionEndpoint();
-		String tokenRevocationEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed()
-				? OAuth2ConfigurerUtils
-					.withMultipleIssuersPattern(authorizationServerSettings.getTokenRevocationEndpoint())
-				: authorizationServerSettings.getTokenRevocationEndpoint();
-		String deviceAuthorizationEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed()
-				? OAuth2ConfigurerUtils
-					.withMultipleIssuersPattern(authorizationServerSettings.getDeviceAuthorizationEndpoint())
-				: authorizationServerSettings.getDeviceAuthorizationEndpoint();
-		this.requestMatcher = new OrRequestMatcher(new AntPathRequestMatcher(tokenEndpointUri, HttpMethod.POST.name()),
-				new AntPathRequestMatcher(tokenIntrospectionEndpointUri, HttpMethod.POST.name()),
-				new AntPathRequestMatcher(tokenRevocationEndpointUri, HttpMethod.POST.name()),
-				new AntPathRequestMatcher(deviceAuthorizationEndpointUri, HttpMethod.POST.name()));
+				.getAuthorizationServerSettings(httpSecurity);
+
+		List<RequestMatcher> requestMatchers = new ArrayList<>();
+		this.endPointUriSettingNames.values().forEach((settingName) ->
+				requestMatchers.add(
+						new AntPathRequestMatcher(
+								authorizationServerSettings.isMultipleIssuersAllowed() ?
+										OAuth2ConfigurerUtils.withMultipleIssuersPattern(authorizationServerSettings.getSetting(settingName)) :
+										authorizationServerSettings.getSetting(settingName),
+								HttpMethod.POST.name()
+						)
+				)
+		);
+
+		this.requestMatcher = new OrRequestMatcher(requestMatchers);
+
+		ExceptionHandlingConfigurer<HttpSecurity> exceptionHandling = httpSecurity
+				.getConfigurer(ExceptionHandlingConfigurer.class);
+		if (exceptionHandling != null) {
+			exceptionHandling.defaultAuthenticationEntryPointFor(
+					new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED),
+					this.requestMatcher
+			);
+		}
+
 		List<AuthenticationProvider> authenticationProviders = createDefaultAuthenticationProviders(httpSecurity);
 		if (!this.authenticationProviders.isEmpty()) {
 			authenticationProviders.addAll(0, this.authenticationProviders);
@@ -278,4 +279,17 @@ public final class OAuth2ClientAuthenticationConfigurer extends AbstractOAuth2Co
 		return authenticationProviders;
 	}
 
+	private Map<Class<? extends AbstractOAuth2Configurer>, String> createEndPointUriSettingNames() {
+		Map<Class<? extends AbstractOAuth2Configurer>, String> endPointUriSettingNames = new LinkedHashMap<>();
+		endPointUriSettingNames.put(OAuth2TokenEndpointConfigurer.class, ConfigurationSettingNames.AuthorizationServer.TOKEN_ENDPOINT);
+		endPointUriSettingNames.put(OAuth2TokenIntrospectionEndpointConfigurer.class, ConfigurationSettingNames.AuthorizationServer.TOKEN_INTROSPECTION_ENDPOINT);
+		endPointUriSettingNames.put(OAuth2TokenRevocationEndpointConfigurer.class, ConfigurationSettingNames.AuthorizationServer.TOKEN_REVOCATION_ENDPOINT);
+		endPointUriSettingNames.put(OAuth2DeviceAuthorizationEndpointConfigurer.class, ConfigurationSettingNames.AuthorizationServer.DEVICE_AUTHORIZATION_ENDPOINT);
+
+		return endPointUriSettingNames;
+	}
+
+	public void removeEndPointUriSettingName(Class<?> type) {
+		this.endPointUriSettingNames.remove(type);
+	}
 }

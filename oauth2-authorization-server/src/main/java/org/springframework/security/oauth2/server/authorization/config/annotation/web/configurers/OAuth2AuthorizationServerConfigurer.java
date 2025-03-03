@@ -15,23 +15,14 @@
  */
 package org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers;
 
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-
 import com.nimbusds.jose.jwk.source.JWKSource;
-
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.GenericApplicationListenerAdapter;
 import org.springframework.context.event.SmartApplicationListener;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.config.annotation.web.configurers.ExceptionHandlingConfigurer;
 import org.springframework.security.context.DelegatingApplicationListener;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.session.SessionRegistry;
@@ -48,13 +39,18 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenGenerator;
 import org.springframework.security.oauth2.server.authorization.web.NimbusJwkSetEndpointFilter;
-import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.preauth.AbstractPreAuthenticatedProcessingFilter;
 import org.springframework.security.web.context.SecurityContextHolderFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.OrRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
+
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * An {@link AbstractHttpConfigurer} for OAuth 2.0 Authorization Server support.
@@ -170,6 +166,11 @@ public final class OAuth2AuthorizationServerConfigurer
 		return this;
 	}
 
+	public OAuth2AuthorizationServerConfigurer disableClientAuthentication() {
+		removeConfigurer(OAuth2ClientAuthenticationConfigurer.class);
+		return this;
+	}
+
 	/**
 	 * Configures the OAuth 2.0 Authorization Server Metadata Endpoint.
 	 * @param authorizationServerMetadataEndpointCustomizer the {@link Customizer}
@@ -181,6 +182,11 @@ public final class OAuth2AuthorizationServerConfigurer
 			Customizer<OAuth2AuthorizationServerMetadataEndpointConfigurer> authorizationServerMetadataEndpointCustomizer) {
 		authorizationServerMetadataEndpointCustomizer
 			.customize(getConfigurer(OAuth2AuthorizationServerMetadataEndpointConfigurer.class));
+		return this;
+	}
+
+	public OAuth2AuthorizationServerConfigurer disableAuthorizationServerMetadataEndpoint() {
+		removeConfigurer(OAuth2AuthorizationServerMetadataEndpointConfigurer.class);
 		return this;
 	}
 
@@ -196,6 +202,11 @@ public final class OAuth2AuthorizationServerConfigurer
 		return this;
 	}
 
+	public OAuth2AuthorizationServerConfigurer disableAuthorizationEndpoint() {
+		removeConfigurer(OAuth2AuthorizationEndpointConfigurer.class);
+		return this;
+	}
+
 	/**
 	 * Configures the OAuth 2.0 Token Endpoint.
 	 * @param tokenEndpointCustomizer the {@link Customizer} providing access to the
@@ -205,6 +216,13 @@ public final class OAuth2AuthorizationServerConfigurer
 	public OAuth2AuthorizationServerConfigurer tokenEndpoint(
 			Customizer<OAuth2TokenEndpointConfigurer> tokenEndpointCustomizer) {
 		tokenEndpointCustomizer.customize(getConfigurer(OAuth2TokenEndpointConfigurer.class));
+		return this;
+	}
+
+	public OAuth2AuthorizationServerConfigurer disableTokenEndpoint() {
+		removeConfigurer(OAuth2TokenEndpointConfigurer.class);
+		getConfigurer(OAuth2ClientAuthenticationConfigurer.class)
+				.removeEndPointUriSettingName(OAuth2TokenEndpointConfigurer.class);
 		return this;
 	}
 
@@ -221,6 +239,13 @@ public final class OAuth2AuthorizationServerConfigurer
 		return this;
 	}
 
+	public OAuth2AuthorizationServerConfigurer disableTokenIntrospectionEndpoint() {
+		removeConfigurer(OAuth2TokenIntrospectionEndpointConfigurer.class);
+		getConfigurer(OAuth2ClientAuthenticationConfigurer.class)
+				.removeEndPointUriSettingName(OAuth2TokenIntrospectionEndpointConfigurer.class);
+		return this;
+	}
+
 	/**
 	 * Configures the OAuth 2.0 Token Revocation Endpoint.
 	 * @param tokenRevocationEndpointCustomizer the {@link Customizer} providing access to
@@ -231,6 +256,13 @@ public final class OAuth2AuthorizationServerConfigurer
 	public OAuth2AuthorizationServerConfigurer tokenRevocationEndpoint(
 			Customizer<OAuth2TokenRevocationEndpointConfigurer> tokenRevocationEndpointCustomizer) {
 		tokenRevocationEndpointCustomizer.customize(getConfigurer(OAuth2TokenRevocationEndpointConfigurer.class));
+		return this;
+	}
+
+	public OAuth2AuthorizationServerConfigurer disableTokenRevocationEndpoint() {
+		removeConfigurer(OAuth2TokenRevocationEndpointConfigurer.class);
+		getConfigurer(OAuth2ClientAuthenticationConfigurer.class)
+				.removeEndPointUriSettingName(OAuth2TokenRevocationEndpointConfigurer.class);
 		return this;
 	}
 
@@ -248,6 +280,13 @@ public final class OAuth2AuthorizationServerConfigurer
 		return this;
 	}
 
+	public OAuth2AuthorizationServerConfigurer disableDeviceAuthorizationEndpoint() {
+		removeConfigurer(OAuth2DeviceAuthorizationEndpointConfigurer.class);
+		getConfigurer(OAuth2ClientAuthenticationConfigurer.class)
+				.removeEndPointUriSettingName(OAuth2DeviceAuthorizationEndpointConfigurer.class);
+		return this;
+	}
+
 	/**
 	 * Configures the OAuth 2.0 Device Verification Endpoint.
 	 * @param deviceVerificationEndpointCustomizer the {@link Customizer} providing access
@@ -258,6 +297,11 @@ public final class OAuth2AuthorizationServerConfigurer
 	public OAuth2AuthorizationServerConfigurer deviceVerificationEndpoint(
 			Customizer<OAuth2DeviceVerificationEndpointConfigurer> deviceVerificationEndpointCustomizer) {
 		deviceVerificationEndpointCustomizer.customize(getConfigurer(OAuth2DeviceVerificationEndpointConfigurer.class));
+		return this;
+	}
+
+	public OAuth2AuthorizationServerConfigurer disableDeviceVerificationEndpoint() {
+		removeConfigurer(OAuth2DeviceVerificationEndpointConfigurer.class);
 		return this;
 	}
 
@@ -335,21 +379,12 @@ public final class OAuth2AuthorizationServerConfigurer
 			configurer.init(httpSecurity);
 			requestMatchers.add(configurer.getRequestMatcher());
 		});
+		// TODO: ability to disable jwk set uri
 		String jwkSetEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed()
 				? OAuth2ConfigurerUtils.withMultipleIssuersPattern(authorizationServerSettings.getJwkSetEndpoint())
 				: authorizationServerSettings.getJwkSetEndpoint();
 		requestMatchers.add(new AntPathRequestMatcher(jwkSetEndpointUri, HttpMethod.GET.name()));
 		this.endpointsMatcher = new OrRequestMatcher(requestMatchers);
-
-		ExceptionHandlingConfigurer<HttpSecurity> exceptionHandling = httpSecurity
-			.getConfigurer(ExceptionHandlingConfigurer.class);
-		if (exceptionHandling != null) {
-			exceptionHandling.defaultAuthenticationEntryPointFor(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED),
-					new OrRequestMatcher(getRequestMatcher(OAuth2TokenEndpointConfigurer.class),
-							getRequestMatcher(OAuth2TokenIntrospectionEndpointConfigurer.class),
-							getRequestMatcher(OAuth2TokenRevocationEndpointConfigurer.class),
-							getRequestMatcher(OAuth2DeviceAuthorizationEndpointConfigurer.class)));
-		}
 
 		httpSecurity.csrf((csrf) -> csrf.ignoringRequestMatchers(this.endpointsMatcher));
 
@@ -420,6 +455,10 @@ public final class OAuth2AuthorizationServerConfigurer
 
 	private <T extends AbstractOAuth2Configurer> void addConfigurer(Class<T> configurerType, T configurer) {
 		this.configurers.put(configurerType, configurer);
+	}
+
+	private void removeConfigurer(Class<?> type) {
+		this.configurers.remove(type);
 	}
 
 	private <T extends AbstractOAuth2Configurer> RequestMatcher getRequestMatcher(Class<T> configurerType) {

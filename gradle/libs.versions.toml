@@ -1,7 +1,7 @@
 [versions]
 org-springframework = "6.2.3"
 org-springframework-security = "6.4.3"
-com-fasterxml-jackson = "2.18.2"
+com-fasterxml-jackson = "2.18.3"
 nimbus-jose-jwt = "9.47"
 org-bouncycastle = "1.79"
 com-squareup-okhttp3 = "4.12.0"

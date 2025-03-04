@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 the original author or authors.
+ * Copyright 2020-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,8 +55,8 @@ public final class OAuth2ErrorAuthenticationFailureHandler implements Authentica
 		ServletServerHttpResponse httpResponse = new ServletServerHttpResponse(response);
 		httpResponse.setStatusCode(HttpStatus.BAD_REQUEST);
 
-		if (authenticationException instanceof OAuth2AuthenticationException oAuth2AuthenticationException) {
-			OAuth2Error error = oAuth2AuthenticationException.getError();
+		if (authenticationException instanceof OAuth2AuthenticationException oauth2AuthenticationException) {
+			OAuth2Error error = oauth2AuthenticationException.getError();
 			this.errorResponseConverter.write(error, null, httpResponse);
 		}
 		else {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 the original author or authors.
+ * Copyright 2020-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -161,9 +161,8 @@ public final class OAuth2TokenEndpointFilter extends OncePerRequestFilter {
 			if (authorizationGrantAuthentication == null) {
 				throwError(OAuth2ErrorCodes.UNSUPPORTED_GRANT_TYPE, OAuth2ParameterNames.GRANT_TYPE);
 			}
-			if (authorizationGrantAuthentication instanceof AbstractAuthenticationToken abstractAuthenticationToken) {
-				abstractAuthenticationToken
-					.setDetails(this.authenticationDetailsSource.buildDetails(request));
+			if (authorizationGrantAuthentication instanceof AbstractAuthenticationToken authenticationToken) {
+				authenticationToken.setDetails(this.authenticationDetailsSource.buildDetails(request));
 			}
 
 			OAuth2AccessTokenAuthenticationToken accessTokenAuthentication = (OAuth2AccessTokenAuthenticationToken) this.authenticationManager

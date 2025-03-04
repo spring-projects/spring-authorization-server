@@ -173,9 +173,8 @@ public final class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilte
 
 		try {
 			Authentication authentication = this.authenticationConverter.convert(request);
-			if (authentication instanceof AbstractAuthenticationToken abstractAuthenticationToken) {
-				abstractAuthenticationToken
-					.setDetails(this.authenticationDetailsSource.buildDetails(request));
+			if (authentication instanceof AbstractAuthenticationToken authenticationToken) {
+				authenticationToken.setDetails(this.authenticationDetailsSource.buildDetails(request));
 			}
 			Authentication authenticationResult = this.authenticationManager.authenticate(authentication);
 
@@ -188,13 +187,13 @@ public final class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilte
 				return;
 			}
 
-			if (authenticationResult instanceof OAuth2AuthorizationConsentAuthenticationToken oAuth2AuthorizationConsentAuthenticationToken) {
+			if (authenticationResult instanceof OAuth2AuthorizationConsentAuthenticationToken authorizationConsentAuthenticationToken) {
 				if (this.logger.isTraceEnabled()) {
 					this.logger.trace("Authorization consent is required");
 				}
 				sendAuthorizationConsent(request, response,
 						(OAuth2AuthorizationCodeRequestAuthenticationToken) authentication,
-						oAuth2AuthorizationConsentAuthenticationToken);
+						authorizationConsentAuthenticationToken);
 				return;
 			}
 

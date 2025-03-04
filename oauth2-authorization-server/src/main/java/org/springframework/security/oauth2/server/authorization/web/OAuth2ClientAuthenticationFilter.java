@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 the original author or authors.
+ * Copyright 2020-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -132,9 +132,8 @@ public final class OAuth2ClientAuthenticationFilter extends OncePerRequestFilter
 
 		try {
 			Authentication authenticationRequest = this.authenticationConverter.convert(request);
-			if (authenticationRequest instanceof AbstractAuthenticationToken abstractAuthenticationToken) {
-				abstractAuthenticationToken
-					.setDetails(this.authenticationDetailsSource.buildDetails(request));
+			if (authenticationRequest instanceof AbstractAuthenticationToken authenticationToken) {
+				authenticationToken.setDetails(this.authenticationDetailsSource.buildDetails(request));
 			}
 			if (authenticationRequest != null) {
 				validateClientIdentifier(authenticationRequest);

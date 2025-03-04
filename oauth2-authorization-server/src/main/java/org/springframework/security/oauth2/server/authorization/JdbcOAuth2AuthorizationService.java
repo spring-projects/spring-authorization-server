@@ -99,16 +99,27 @@ import org.springframework.util.StringUtils;
 public class JdbcOAuth2AuthorizationService implements OAuth2AuthorizationService {
 
 	private static final String REFRESH_TOKEN_VALUE = "refresh_token_value";
+
 	private static final String AUTHORIZATION_CODE_VALUE = "authorization_code_value";
+
 	private static final String ACCESS_TOKEN_VALUE = "access_token_value";
+
 	private static final String OIDC_ID_TOKEN_VALUE = "oidc_id_token_value";
+
 	private static final String USER_CODE_VALUE = "user_code_value";
+
 	private static final String DEVICE_CODE_VALUE = "device_code_value";
+
 	private static final String AUTHORIZATION_CODE_METADATA = "authorization_code_metadata";
+
 	private static final String ACCESS_TOKEN_METADATA = "access_token_metadata";
+
 	private static final String OIDC_ID_TOKEN_METADATA = "oidc_id_token_metadata";
+
 	private static final String REFRESH_TOKEN_METADATA = "refresh_token_metadata";
+
 	private static final String USER_CODE_METADATA = "user_code_metadata";
+
 	private static final String DEVICE_CODE_METADATA = "device_code_metadata";
 
 	// @formatter:off
@@ -508,8 +519,7 @@ public class JdbcOAuth2AuthorizationService implements OAuth2AuthorizationServic
 			if (StringUtils.hasText(authorizationCodeValue)) {
 				tokenIssuedAt = rs.getTimestamp("authorization_code_issued_at").toInstant();
 				tokenExpiresAt = rs.getTimestamp("authorization_code_expires_at").toInstant();
-				Map<String, Object> authorizationCodeMetadata = parseMap(
-						getLobValue(rs, AUTHORIZATION_CODE_METADATA));
+				Map<String, Object> authorizationCodeMetadata = parseMap(getLobValue(rs, AUTHORIZATION_CODE_METADATA));
 
 				OAuth2AuthorizationCode authorizationCode = new OAuth2AuthorizationCode(authorizationCodeValue,
 						tokenIssuedAt, tokenExpiresAt);

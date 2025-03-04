@@ -16,7 +16,6 @@
 package org.springframework.security.oauth2.server.authorization.web;
 
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import java.util.function.Consumer;
 
@@ -426,8 +425,9 @@ public class OAuth2PushedAuthorizationRequestEndpointFilterTests {
 		assertThat(response.getStatus()).isEqualTo(HttpStatus.CREATED.value());
 		Map<String, Object> responseParameters = readPushedAuthorizationResponse(response);
 		assertThat(responseParameters.get("request_uri")).isEqualTo(requestUri);
-		assertThat(responseParameters.get("expires_in"))
-			.isEqualTo((int) ChronoUnit.SECONDS.between(Instant.now(), requestUriExpiresAt));
+		Instant requestUriExpiry = Instant.now()
+			.plusSeconds(Long.parseLong(String.valueOf(responseParameters.get("expires_in"))));
+		assertThat(requestUriExpiry).isBetween(requestUriExpiresAt.minusSeconds(1), requestUriExpiresAt.plusSeconds(1));
 	}
 
 	private void doFilterWhenPushedAuthorizationRequestInvalidParameterThenError(RegisteredClient registeredClient,

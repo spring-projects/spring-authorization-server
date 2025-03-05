@@ -391,18 +391,18 @@ public final class OAuth2AuthorizationServerConfigurer
 		}
 
 		httpSecurity.csrf((csrf) -> csrf.ignoringRequestMatchers(this.endpointsMatcher));
+		// oauth2ResourceServer should be configured externally, along with JWTs and Opaque Tokens.
+		// OidcConfigurer oidcConfigurer = getConfigurer(OidcConfigurer.class);
+		// if (oidcConfigurer != null) {
+		// 	if (oidcConfigurer.getConfigurer(OidcUserInfoEndpointConfigurer.class) != null
+		// 			|| oidcConfigurer.getConfigurer(OidcClientRegistrationEndpointConfigurer.class) != null) {
+		// 		httpSecurity
+		// 			// Accept access tokens for User Info and/or Client Registration
+		// 			.oauth2ResourceServer(
+		// 					(oauth2ResourceServer) -> oauth2ResourceServer.jwt(Customizer.withDefaults()));
 
-		OidcConfigurer oidcConfigurer = getConfigurer(OidcConfigurer.class);
-		if (oidcConfigurer != null) {
-			if (oidcConfigurer.getConfigurer(OidcUserInfoEndpointConfigurer.class) != null
-					|| oidcConfigurer.getConfigurer(OidcClientRegistrationEndpointConfigurer.class) != null) {
-				httpSecurity
-					// Accept access tokens for User Info and/or Client Registration
-					.oauth2ResourceServer(
-							(oauth2ResourceServer) -> oauth2ResourceServer.jwt(Customizer.withDefaults()));
-
-			}
-		}
+		// 	}
+		// }
 	}
 
 	@Override

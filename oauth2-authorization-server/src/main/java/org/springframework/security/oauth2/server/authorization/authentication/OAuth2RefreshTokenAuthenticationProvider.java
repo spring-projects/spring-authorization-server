@@ -15,12 +15,17 @@
  */
 package org.springframework.security.oauth2.server.authorization.authentication;
 
+import java.security.MessageDigest;
 import java.security.Principal;
+import java.security.PublicKey;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import com.nimbusds.jose.jwk.AsymmetricJWK;
+import com.nimbusds.jose.jwk.JWK;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -29,6 +34,8 @@ import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
+import org.springframework.security.oauth2.core.ClaimAccessor;
+import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
@@ -48,6 +55,7 @@ import org.springframework.security.oauth2.server.authorization.token.DefaultOAu
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenContext;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenGenerator;
 import org.springframework.util.Assert;
+import org.springframework.util.CollectionUtils;
 
 /**
  * An {@link AuthenticationProvider} implementation for the OAuth 2.0 Refresh Token Grant.
@@ -159,6 +167,14 @@ public final class OAuth2RefreshTokenAuthenticationProvider implements Authentic
 
 		// Verify the DPoP Proof (if available)
 		Jwt dPoPProof = DPoPProofVerifier.verifyIfAvailable(refreshTokenAuthentication);
+
+		if (dPoPProof != null
+				& clientPrincipal.getClientAuthenticationMethod().equals(ClientAuthenticationMethod.NONE)) {
+			// For public clients, verify the DPoP Proof public key is same as (current)
+			// access token public key binding
+			Map<String, Object> accessTokenClaims = authorization.getAccessToken().getClaims();
+			verifyDPoPProofPublicKey(dPoPProof, () -> accessTokenClaims);
+		}
 
 		if (this.logger.isTraceEnabled()) {
 			this.logger.trace("Validated token request parameters");
@@ -273,6 +289,56 @@ public final class OAuth2RefreshTokenAuthenticationProvider implements Authentic
 	@Override
 	public boolean supports(Class<?> authentication) {
 		return OAuth2RefreshTokenAuthenticationToken.class.isAssignableFrom(authentication);
+	}
+
+	private static void verifyDPoPProofPublicKey(Jwt dPoPProof, ClaimAccessor accessTokenClaims) {
+		PublicKey publicKey = null;
+		@SuppressWarnings("unchecked")
+		Map<String, Object> jwkJson = (Map<String, Object>) dPoPProof.getHeaders().get("jwk");
+		try {
+			JWK jwk = JWK.parse(jwkJson);
+			if (jwk instanceof AsymmetricJWK) {
+				publicKey = ((AsymmetricJWK) jwk).toPublicKey();
+			}
+		}
+		catch (Exception ignored) {
+		}
+		if (publicKey == null) {
+			OAuth2Error error = new OAuth2Error(OAuth2ErrorCodes.INVALID_DPOP_PROOF,
+					"jwk header is missing or invalid.", null);
+			throw new OAuth2AuthenticationException(error);
+		}
+
+		String jwkThumbprint;
+		try {
+			jwkThumbprint = computeSHA256(publicKey);
+		}
+		catch (Exception ex) {
+			OAuth2Error error = new OAuth2Error(OAuth2ErrorCodes.INVALID_DPOP_PROOF,
+					"Failed to compute SHA-256 Thumbprint for jwk.", null);
+			throw new OAuth2AuthenticationException(error);
+		}
+
+		String jwkThumbprintClaim = null;
+		Map<String, Object> confirmationMethodClaim = accessTokenClaims.getClaimAsMap("cnf");
+		if (!CollectionUtils.isEmpty(confirmationMethodClaim) && confirmationMethodClaim.containsKey("jkt")) {
+			jwkThumbprintClaim = (String) confirmationMethodClaim.get("jkt");
+		}
+		if (jwkThumbprintClaim == null) {
+			OAuth2Error error = new OAuth2Error(OAuth2ErrorCodes.INVALID_DPOP_PROOF, "jkt claim is missing.", null);
+			throw new OAuth2AuthenticationException(error);
+		}
+
+		if (!jwkThumbprint.equals(jwkThumbprintClaim)) {
+			OAuth2Error error = new OAuth2Error(OAuth2ErrorCodes.INVALID_DPOP_PROOF, "jwk header is invalid.", null);
+			throw new OAuth2AuthenticationException(error);
+		}
+	}
+
+	private static String computeSHA256(PublicKey publicKey) throws Exception {
+		MessageDigest md = MessageDigest.getInstance("SHA-256");
+		byte[] digest = md.digest(publicKey.getEncoded());
+		return Base64.getUrlEncoder().withoutPadding().encodeToString(digest);
 	}
 
 }

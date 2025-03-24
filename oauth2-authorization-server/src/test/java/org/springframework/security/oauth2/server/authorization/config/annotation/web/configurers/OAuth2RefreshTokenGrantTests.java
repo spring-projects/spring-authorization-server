@@ -17,9 +17,12 @@ package org.springframework.security.oauth2.server.authorization.config.annotati
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.security.Principal;
+import java.security.PublicKey;
 import java.time.Instant;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -280,6 +283,105 @@ public class OAuth2RefreshTokenGrantTests {
 	}
 
 	@Test
+	public void requestWhenRefreshTokenRequestWithPublicClientAndDPoPProofThenReturnDPoPBoundAccessToken()
+			throws Exception {
+		this.spring.register(AuthorizationServerConfigurationWithPublicClientAuthentication.class).autowire();
+
+		RegisteredClient registeredClient = TestRegisteredClients.registeredPublicClient()
+			.authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
+			.build();
+		this.registeredClientRepository.save(registeredClient);
+
+		OAuth2AccessToken accessToken = new OAuth2AccessToken(OAuth2AccessToken.TokenType.DPOP,
+				"dpop-bound-access-token", Instant.now(), Instant.now().plusSeconds(300));
+		Map<String, Object> accessTokenClaims = new HashMap<>();
+		PublicKey publicKey = TestJwks.DEFAULT_EC_JWK.toPublicKey();
+		Map<String, Object> cnfClaim = new HashMap<>();
+		cnfClaim.put("jkt", computeSHA256(publicKey));
+		accessTokenClaims.put("cnf", cnfClaim);
+		OAuth2Authorization authorization = TestOAuth2Authorizations
+			.authorization(registeredClient, accessToken, accessTokenClaims)
+			.build();
+		this.authorizationService.save(authorization);
+
+		String tokenEndpointUri = "http://localhost" + DEFAULT_TOKEN_ENDPOINT_URI;
+		String dPoPProof = generateDPoPProof(tokenEndpointUri);
+
+		this.mvc
+			.perform(post(DEFAULT_TOKEN_ENDPOINT_URI).params(getRefreshTokenRequestParameters(authorization))
+				.param(OAuth2ParameterNames.CLIENT_ID, registeredClient.getClientId())
+				.header(OAuth2AccessToken.TokenType.DPOP.getValue(), dPoPProof))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.token_type").value(OAuth2AccessToken.TokenType.DPOP.getValue()));
+
+		authorization = this.authorizationService.findById(authorization.getId());
+		assertThat(authorization.getAccessToken().getClaims()).containsKey("cnf");
+		@SuppressWarnings("unchecked")
+		Map<String, Object> cnfClaims = (Map<String, Object>) authorization.getAccessToken().getClaims().get("cnf");
+		assertThat(cnfClaims).containsKey("jkt");
+	}
+
+	@Test
+	public void requestWhenRefreshTokenRequestWithPublicClientAndDPoPProofAndAccessTokenNotBoundThenBadRequest()
+			throws Exception {
+		this.spring.register(AuthorizationServerConfigurationWithPublicClientAuthentication.class).autowire();
+
+		RegisteredClient registeredClient = TestRegisteredClients.registeredPublicClient()
+			.authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
+			.build();
+		this.registeredClientRepository.save(registeredClient);
+
+		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();
+		this.authorizationService.save(authorization);
+
+		String tokenEndpointUri = "http://localhost" + DEFAULT_TOKEN_ENDPOINT_URI;
+		String dPoPProof = generateDPoPProof(tokenEndpointUri);
+
+		this.mvc
+			.perform(post(DEFAULT_TOKEN_ENDPOINT_URI).params(getRefreshTokenRequestParameters(authorization))
+				.param(OAuth2ParameterNames.CLIENT_ID, registeredClient.getClientId())
+				.header(OAuth2AccessToken.TokenType.DPOP.getValue(), dPoPProof))
+			.andExpect(status().isBadRequest())
+			.andExpect(jsonPath("$.error").value(OAuth2ErrorCodes.INVALID_DPOP_PROOF))
+			.andExpect(jsonPath("$.error_description").value("jkt claim is missing."));
+	}
+
+	@Test
+	public void requestWhenRefreshTokenRequestWithPublicClientAndDPoPProofAndDifferentPublicKeyThenBadRequest()
+			throws Exception {
+		this.spring.register(AuthorizationServerConfigurationWithPublicClientAuthentication.class).autowire();
+
+		RegisteredClient registeredClient = TestRegisteredClients.registeredPublicClient()
+			.authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
+			.build();
+		this.registeredClientRepository.save(registeredClient);
+
+		OAuth2AccessToken accessToken = new OAuth2AccessToken(OAuth2AccessToken.TokenType.DPOP,
+				"dpop-bound-access-token", Instant.now(), Instant.now().plusSeconds(300));
+		Map<String, Object> accessTokenClaims = new HashMap<>();
+		// Bind access token to different public key
+		PublicKey publicKey = TestJwks.DEFAULT_RSA_JWK.toPublicKey();
+		Map<String, Object> cnfClaim = new HashMap<>();
+		cnfClaim.put("jkt", computeSHA256(publicKey));
+		accessTokenClaims.put("cnf", cnfClaim);
+		OAuth2Authorization authorization = TestOAuth2Authorizations
+			.authorization(registeredClient, accessToken, accessTokenClaims)
+			.build();
+		this.authorizationService.save(authorization);
+
+		String tokenEndpointUri = "http://localhost" + DEFAULT_TOKEN_ENDPOINT_URI;
+		String dPoPProof = generateDPoPProof(tokenEndpointUri);
+
+		this.mvc
+			.perform(post(DEFAULT_TOKEN_ENDPOINT_URI).params(getRefreshTokenRequestParameters(authorization))
+				.param(OAuth2ParameterNames.CLIENT_ID, registeredClient.getClientId())
+				.header(OAuth2AccessToken.TokenType.DPOP.getValue(), dPoPProof))
+			.andExpect(status().isBadRequest())
+			.andExpect(jsonPath("$.error").value(OAuth2ErrorCodes.INVALID_DPOP_PROOF))
+			.andExpect(jsonPath("$.error_description").value("jwk header is invalid."));
+	}
+
+	@Test
 	public void requestWhenRefreshTokenRequestWithDPoPProofThenReturnDPoPBoundAccessToken() throws Exception {
 		this.spring.register(AuthorizationServerConfiguration.class).autowire();
 
@@ -325,6 +427,12 @@ public class OAuth2RefreshTokenGrantTests {
 		// @formatter:on
 		Jwt jwt = dPoPProofJwtEncoder.encode(JwtEncoderParameters.from(jwsHeader, claims));
 		return jwt.getTokenValue();
+	}
+
+	private static String computeSHA256(PublicKey publicKey) throws Exception {
+		MessageDigest md = MessageDigest.getInstance("SHA-256");
+		byte[] digest = md.digest(publicKey.getEncoded());
+		return Base64.getUrlEncoder().withoutPadding().encodeToString(digest);
 	}
 
 	private static MultiValueMap<String, String> getRefreshTokenRequestParameters(OAuth2Authorization authorization) {

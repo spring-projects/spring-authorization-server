@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 the original author or authors.
+ * Copyright 2020-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 package org.springframework.security.oauth2.server.authorization;
+
+import org.springframework.security.oauth2.jose.jws.JwsAlgorithms;
 
 /**
  * The names of the "claims" an Authorization Server describes about its configuration,
@@ -32,6 +34,9 @@ package org.springframework.security.oauth2.server.authorization;
  * @see <a target="_blank" href=
  * "https://datatracker.ietf.org/doc/html/rfc8705#section-3.3">3.3 Mutual-TLS Client
  * Certificate-Bound Access Tokens Metadata</a>
+ * @see <a target="_blank" href=
+ * "https://datatracker.ietf.org/doc/html/rfc9449#section-5.1">5.1 OAuth 2.0 Demonstrating
+ * Proof of Possession (DPoP) Metadata</a>
  */
 public class OAuth2AuthorizationServerMetadataClaimNames {
 
@@ -129,6 +134,13 @@ public class OAuth2AuthorizationServerMetadataClaimNames {
 	 * @since 1.3
 	 */
 	public static final String TLS_CLIENT_CERTIFICATE_BOUND_ACCESS_TOKENS = "tls_client_certificate_bound_access_tokens";
+
+	/**
+	 * {@code dpop_signing_alg_values_supported} - the {@link JwsAlgorithms JSON Web
+	 * Signature (JWS) algorithms} supported for DPoP Proof JWTs
+	 * @since 1.5
+	 */
+	public static final String DPOP_SIGNING_ALG_VALUES_SUPPORTED = "dpop_signing_alg_values_supported";
 
 	protected OAuth2AuthorizationServerMetadataClaimNames() {
 	}

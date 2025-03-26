@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 the original author or authors.
+ * Copyright 2020-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import org.springframework.http.server.ServletServerHttpResponse;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationResponseType;
+import org.springframework.security.oauth2.jose.jws.JwsAlgorithms;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationServerMetadata;
 import org.springframework.security.oauth2.server.authorization.context.AuthorizationServerContext;
 import org.springframework.security.oauth2.server.authorization.context.AuthorizationServerContextHolder;
@@ -115,7 +116,8 @@ public final class OAuth2AuthorizationServerMetadataEndpointFilter extends OnceP
 			.tokenIntrospectionEndpoint(asUrl(issuer, authorizationServerSettings.getTokenIntrospectionEndpoint()))
 			.tokenIntrospectionEndpointAuthenticationMethods(clientAuthenticationMethods())
 			.codeChallengeMethod("S256")
-			.tlsClientCertificateBoundAccessTokens(true);
+			.tlsClientCertificateBoundAccessTokens(true)
+			.dPoPSigningAlgorithms(dPoPSigningAlgorithms());
 
 		this.authorizationServerMetadataCustomizer.accept(authorizationServerMetadata);
 
@@ -143,6 +145,20 @@ public final class OAuth2AuthorizationServerMetadataEndpointFilter extends OnceP
 			authenticationMethods.add(ClientAuthenticationMethod.PRIVATE_KEY_JWT.getValue());
 			authenticationMethods.add(ClientAuthenticationMethod.TLS_CLIENT_AUTH.getValue());
 			authenticationMethods.add(ClientAuthenticationMethod.SELF_SIGNED_TLS_CLIENT_AUTH.getValue());
+		};
+	}
+
+	private static Consumer<List<String>> dPoPSigningAlgorithms() {
+		return (algs) -> {
+			algs.add(JwsAlgorithms.RS256);
+			algs.add(JwsAlgorithms.RS384);
+			algs.add(JwsAlgorithms.RS512);
+			algs.add(JwsAlgorithms.PS256);
+			algs.add(JwsAlgorithms.PS384);
+			algs.add(JwsAlgorithms.PS512);
+			algs.add(JwsAlgorithms.ES256);
+			algs.add(JwsAlgorithms.ES384);
+			algs.add(JwsAlgorithms.ES512);
 		};
 	}
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 the original author or authors.
+ * Copyright 2020-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import java.net.URL;
 import java.util.List;
 
 import org.springframework.security.oauth2.core.ClaimAccessor;
+import org.springframework.security.oauth2.jose.jws.JwsAlgorithms;
 
 /**
  * A {@link ClaimAccessor} for the "claims" an Authorization Server describes about its
@@ -40,6 +41,9 @@ import org.springframework.security.oauth2.core.ClaimAccessor;
  * @see <a target="_blank" href=
  * "https://datatracker.ietf.org/doc/html/rfc8705#section-3.3">3.3 Mutual-TLS Client
  * Certificate-Bound Access Tokens Metadata</a>
+ * @see <a target="_blank" href=
+ * "https://datatracker.ietf.org/doc/html/rfc9449#section-5.1">5.1 OAuth 2.0 Demonstrating
+ * Proof of Possession (DPoP) Metadata</a>
  */
 public interface OAuth2AuthorizationServerMetadataClaimAccessor extends ClaimAccessor {
 
@@ -191,6 +195,17 @@ public interface OAuth2AuthorizationServerMetadataClaimAccessor extends ClaimAcc
 	default boolean isTlsClientCertificateBoundAccessTokens() {
 		return Boolean.TRUE.equals(getClaimAsBoolean(
 				OAuth2AuthorizationServerMetadataClaimNames.TLS_CLIENT_CERTIFICATE_BOUND_ACCESS_TOKENS));
+	}
+
+	/**
+	 * Returns the {@link JwsAlgorithms JSON Web Signature (JWS) algorithms} supported for
+	 * DPoP Proof JWTs {@code (dpop_signing_alg_values_supported)}.
+	 * @return the {@link JwsAlgorithms JSON Web Signature (JWS) algorithms} supported for
+	 * DPoP Proof JWTs
+	 * @since 1.5
+	 */
+	default List<String> getDPoPSigningAlgorithms() {
+		return getClaimAsStringList(OAuth2AuthorizationServerMetadataClaimNames.DPOP_SIGNING_ALG_VALUES_SUPPORTED);
 	}
 
 }

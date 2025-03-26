@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 the original author or authors.
+ * Copyright 2020-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
+import org.springframework.security.oauth2.jose.jws.JwsAlgorithms;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationServerMetadata.Builder;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -63,6 +64,8 @@ public class OAuth2AuthorizationServerMetadataTests {
 			.tokenIntrospectionEndpointAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue())
 			.codeChallengeMethod("S256")
 			.tlsClientCertificateBoundAccessTokens(true)
+			.dPoPSigningAlgorithm(JwsAlgorithms.RS256)
+			.dPoPSigningAlgorithm(JwsAlgorithms.ES256)
 			.claim("a-claim", "a-value")
 			.build();
 
@@ -87,6 +90,8 @@ public class OAuth2AuthorizationServerMetadataTests {
 			.containsExactly(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue());
 		assertThat(authorizationServerMetadata.getCodeChallengeMethods()).containsExactly("S256");
 		assertThat(authorizationServerMetadata.isTlsClientCertificateBoundAccessTokens()).isTrue();
+		assertThat(authorizationServerMetadata.getDPoPSigningAlgorithms()).containsExactly(JwsAlgorithms.RS256,
+				JwsAlgorithms.ES256);
 		assertThat(authorizationServerMetadata.getClaimAsString("a-claim")).isEqualTo("a-value");
 	}
 
@@ -113,6 +118,7 @@ public class OAuth2AuthorizationServerMetadataTests {
 		assertThat(authorizationServerMetadata.getTokenIntrospectionEndpoint()).isNull();
 		assertThat(authorizationServerMetadata.getTokenIntrospectionEndpointAuthenticationMethods()).isNull();
 		assertThat(authorizationServerMetadata.getCodeChallengeMethods()).isNull();
+		assertThat(authorizationServerMetadata.getDPoPSigningAlgorithms()).isNull();
 	}
 
 	@Test
@@ -152,6 +158,7 @@ public class OAuth2AuthorizationServerMetadataTests {
 			.isEqualTo(url("https://example.com/oauth2/introspect"));
 		assertThat(authorizationServerMetadata.getTokenIntrospectionEndpointAuthenticationMethods()).isNull();
 		assertThat(authorizationServerMetadata.getCodeChallengeMethods()).isNull();
+		assertThat(authorizationServerMetadata.getDPoPSigningAlgorithms()).isNull();
 		assertThat(authorizationServerMetadata.getClaimAsString("some-claim")).isEqualTo("some-value");
 	}
 
@@ -191,6 +198,7 @@ public class OAuth2AuthorizationServerMetadataTests {
 			.isEqualTo(url("https://example.com/oauth2/introspect"));
 		assertThat(authorizationServerMetadata.getTokenIntrospectionEndpointAuthenticationMethods()).isNull();
 		assertThat(authorizationServerMetadata.getCodeChallengeMethods()).isNull();
+		assertThat(authorizationServerMetadata.getDPoPSigningAlgorithms()).isNull();
 		assertThat(authorizationServerMetadata.getClaimAsString("some-claim")).isEqualTo("some-value");
 	}
 
@@ -534,6 +542,38 @@ public class OAuth2AuthorizationServerMetadataTests {
 			.build();
 
 		assertThat(authorizationServerMetadata.getCodeChallengeMethods()).containsExactly("some-authentication-method");
+	}
+
+	@Test
+	public void buildWhenDPoPSigningAlgorithmsNotListThenThrowIllegalArgumentException() {
+		Builder builder = this.minimalBuilder.claims((claims) -> claims
+			.put(OAuth2AuthorizationServerMetadataClaimNames.DPOP_SIGNING_ALG_VALUES_SUPPORTED, "not-a-list"));
+
+		assertThatIllegalArgumentException().isThrownBy(builder::build)
+			.withMessageStartingWith("dPoPSigningAlgorithms must be of type List");
+	}
+
+	@Test
+	public void buildWhenDPoPSigningAlgorithmsEmptyListThenThrowIllegalArgumentException() {
+		Builder builder = this.minimalBuilder.claims(
+				(claims) -> claims.put(OAuth2AuthorizationServerMetadataClaimNames.DPOP_SIGNING_ALG_VALUES_SUPPORTED,
+						Collections.emptyList()));
+
+		assertThatIllegalArgumentException().isThrownBy(builder::build)
+			.withMessage("dPoPSigningAlgorithms cannot be empty");
+	}
+
+	@Test
+	public void buildWhenDPoPSigningAlgorithmsAddingOrRemovingThenCorrectValues() {
+		OAuth2AuthorizationServerMetadata authorizationServerMetadata = this.minimalBuilder
+			.dPoPSigningAlgorithm(JwsAlgorithms.RS256)
+			.dPoPSigningAlgorithms((algs) -> {
+				algs.clear();
+				algs.add(JwsAlgorithms.ES256);
+			})
+			.build();
+
+		assertThat(authorizationServerMetadata.getDPoPSigningAlgorithms()).containsExactly(JwsAlgorithms.ES256);
 	}
 
 	@Test

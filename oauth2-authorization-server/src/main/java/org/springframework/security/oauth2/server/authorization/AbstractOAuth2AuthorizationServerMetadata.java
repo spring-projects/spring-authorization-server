@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 the original author or authors.
+ * Copyright 2020-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
+import org.springframework.security.oauth2.jose.jws.JwsAlgorithms;
 import org.springframework.security.oauth2.server.authorization.util.SpringAuthorizationServerVersion;
 import org.springframework.util.Assert;
 
@@ -48,6 +49,9 @@ import org.springframework.util.Assert;
  * @see <a target="_blank" href=
  * "https://datatracker.ietf.org/doc/html/rfc8705#section-3.3">3.3 Mutual-TLS Client
  * Certificate-Bound Access Tokens Metadata</a>
+ * @see <a target="_blank" href=
+ * "https://datatracker.ietf.org/doc/html/rfc9449#section-5.1">5.1 OAuth 2.0 Demonstrating
+ * Proof of Possession (DPoP) Metadata</a>
  */
 public abstract class AbstractOAuth2AuthorizationServerMetadata
 		implements OAuth2AuthorizationServerMetadataClaimAccessor, Serializable {
@@ -380,6 +384,37 @@ public abstract class AbstractOAuth2AuthorizationServerMetadata
 		}
 
 		/**
+		 * Add a {@link JwsAlgorithms JSON Web Signature (JWS) algorithm} to the
+		 * collection of {@code dpop_signing_alg_values_supported} in the resulting
+		 * {@link AbstractOAuth2AuthorizationServerMetadata}, OPTIONAL.
+		 * @param dPoPSigningAlgorithm the {@link JwsAlgorithms JSON Web Signature (JWS)
+		 * algorithm} supported for DPoP Proof JWTs
+		 * @return the {@link AbstractBuilder} for further configuration
+		 * @since 1.5
+		 */
+		public B dPoPSigningAlgorithm(String dPoPSigningAlgorithm) {
+			addClaimToClaimList(OAuth2AuthorizationServerMetadataClaimNames.DPOP_SIGNING_ALG_VALUES_SUPPORTED,
+					dPoPSigningAlgorithm);
+			return getThis();
+		}
+
+		/**
+		 * A {@code Consumer} of the {@link JwsAlgorithms JSON Web Signature (JWS)
+		 * algorithms} supported for DPoP Proof JWTs allowing the ability to add, replace,
+		 * or remove.
+		 * @param dPoPSigningAlgorithmsConsumer a {@code Consumer} of the
+		 * {@link JwsAlgorithms JSON Web Signature (JWS) algorithms} supported for DPoP
+		 * Proof JWTs
+		 * @return the {@link AbstractBuilder} for further configuration
+		 * @since 1.5
+		 */
+		public B dPoPSigningAlgorithms(Consumer<List<String>> dPoPSigningAlgorithmsConsumer) {
+			acceptClaimValues(OAuth2AuthorizationServerMetadataClaimNames.DPOP_SIGNING_ALG_VALUES_SUPPORTED,
+					dPoPSigningAlgorithmsConsumer);
+			return getThis();
+		}
+
+		/**
 		 * Use this claim in the resulting
 		 * {@link AbstractOAuth2AuthorizationServerMetadata}.
 		 * @param name the claim name
@@ -505,6 +540,16 @@ public abstract class AbstractOAuth2AuthorizationServerMetadata
 						(List<?>) getClaims()
 							.get(OAuth2AuthorizationServerMetadataClaimNames.CODE_CHALLENGE_METHODS_SUPPORTED),
 						"codeChallengeMethods cannot be empty");
+			}
+			if (getClaims()
+				.get(OAuth2AuthorizationServerMetadataClaimNames.DPOP_SIGNING_ALG_VALUES_SUPPORTED) != null) {
+				Assert.isInstanceOf(List.class,
+						getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.DPOP_SIGNING_ALG_VALUES_SUPPORTED),
+						"dPoPSigningAlgorithms must be of type List");
+				Assert.notEmpty(
+						(List<?>) getClaims()
+							.get(OAuth2AuthorizationServerMetadataClaimNames.DPOP_SIGNING_ALG_VALUES_SUPPORTED),
+						"dPoPSigningAlgorithms cannot be empty");
 			}
 		}
 

@@ -79,6 +79,7 @@ public class SpringJavadocApiPlugin implements Plugin<Project> {
 	public void setExcludes(String... excludes) {
 		if (excludes == null) {
 			this.excludes = Collections.emptySet();
+			return;
 		}
 		this.excludes = new HashSet<>(excludes.length);
 		for (String exclude : excludes) {

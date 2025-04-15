@@ -661,6 +661,36 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 	}
 
 	@Test
+	public void authenticateWhenAuthorizationCodeRequestWithRequestUriIssuedToAnotherClientThenThrowOAuth2AuthorizationCodeRequestAuthenticationException() {
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+		given(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
+			.willReturn(registeredClient);
+
+		RegisteredClient anotherRegisteredClient = TestRegisteredClients.registeredClient2().build();
+		given(this.registeredClientRepository.findByClientId(eq(anotherRegisteredClient.getClientId())))
+			.willReturn(anotherRegisteredClient);
+
+		OAuth2PushedAuthorizationRequestUri pushedAuthorizationRequestUri = OAuth2PushedAuthorizationRequestUri
+			.create();
+		Map<String, Object> additionalParameters = new HashMap<>();
+		additionalParameters.put("request_uri", pushedAuthorizationRequestUri.getRequestUri());
+		OAuth2Authorization authorization = TestOAuth2Authorizations
+			.authorization(registeredClient, additionalParameters)
+			.build();
+		given(this.authorizationService.findByToken(eq(pushedAuthorizationRequestUri.getState()), eq(STATE_TOKEN_TYPE)))
+			.willReturn(authorization);
+
+		OAuth2AuthorizationCodeRequestAuthenticationToken authentication = new OAuth2AuthorizationCodeRequestAuthenticationToken(
+				AUTHORIZATION_URI, anotherRegisteredClient.getClientId(), this.principal, null, null, null,
+				additionalParameters);
+
+		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
+			.isInstanceOf(OAuth2AuthorizationCodeRequestAuthenticationException.class)
+			.satisfies((ex) -> assertAuthenticationException((OAuth2AuthorizationCodeRequestAuthenticationException) ex,
+					OAuth2ErrorCodes.INVALID_REQUEST, "client_id", null));
+	}
+
+	@Test
 	public void authenticateWhenAuthorizationCodeNotGeneratedThenThrowOAuth2AuthorizationCodeRequestAuthenticationException() {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 		given(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))

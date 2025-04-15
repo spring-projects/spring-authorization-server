@@ -356,9 +356,13 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 		OAuth2AuthorizationRequest authorizationRequest = authorization
 			.getAttribute(OAuth2AuthorizationRequest.class.getName());
 
+		if (!authorizationCodeRequestAuthentication.getClientId().equals(authorizationRequest.getClientId())) {
+			throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.CLIENT_ID,
+					authorizationCodeRequestAuthentication, null);
+		}
+
 		return new OAuth2AuthorizationCodeRequestAuthenticationToken(
-				authorizationCodeRequestAuthentication.getAuthorizationUri(),
-				authorizationCodeRequestAuthentication.getClientId(),
+				authorizationCodeRequestAuthentication.getAuthorizationUri(), authorizationRequest.getClientId(),
 				(Authentication) authorizationCodeRequestAuthentication.getPrincipal(),
 				authorizationRequest.getRedirectUri(), authorizationRequest.getState(),
 				authorizationRequest.getScopes(), authorizationRequest.getAdditionalParameters());

@@ -37,6 +37,9 @@ import org.springframework.security.oauth2.jose.jws.JwsAlgorithms;
  * @see <a target="_blank" href=
  * "https://datatracker.ietf.org/doc/html/rfc9449#section-5.1">5.1 OAuth 2.0 Demonstrating
  * Proof of Possession (DPoP) Metadata</a>
+ * @see <a target="_blank" href=
+ * "https://datatracker.ietf.org/doc/html/rfc9126#name-authorization-server-metada">5.
+ * OAuth 2.0 Pushed Authorization Requests Metadata</a>
  */
 public class OAuth2AuthorizationServerMetadataClaimNames {
 
@@ -51,6 +54,13 @@ public class OAuth2AuthorizationServerMetadataClaimNames {
 	 * Endpoint
 	 */
 	public static final String AUTHORIZATION_ENDPOINT = "authorization_endpoint";
+
+	/**
+	 * {@code pushed_authorization_request_endpoint} - the {@code URL} of the OAuth 2.0
+	 * Pushed Authorization Request Endpoint
+	 * @since 1.5
+	 */
+	public static final String PUSHED_AUTHORIZATION_REQUEST_ENDPOINT = "pushed_authorization_request_endpoint";
 
 	/**
 	 * {@code device_authorization_endpoint} - the {@code URL} of the OAuth 2.0 Device

@@ -96,6 +96,7 @@ public class OidcProviderConfigurationEndpointFilterTests {
 	public void doFilterWhenConfigurationRequestThenConfigurationResponse() throws Exception {
 		String issuer = "https://example.com";
 		String authorizationEndpoint = "/oauth2/v1/authorize";
+		String pushedAuthorizationRequestEndpoint = "/oauth2/v1/par";
 		String tokenEndpoint = "/oauth2/v1/token";
 		String jwkSetEndpoint = "/oauth2/v1/jwks";
 		String userInfoEndpoint = "/userinfo";
@@ -106,6 +107,7 @@ public class OidcProviderConfigurationEndpointFilterTests {
 		AuthorizationServerSettings authorizationServerSettings = AuthorizationServerSettings.builder()
 			.issuer(issuer)
 			.authorizationEndpoint(authorizationEndpoint)
+			.pushedAuthorizationRequestEndpoint(pushedAuthorizationRequestEndpoint)
 			.tokenEndpoint(tokenEndpoint)
 			.jwkSetEndpoint(jwkSetEndpoint)
 			.oidcUserInfoEndpoint(userInfoEndpoint)
@@ -131,6 +133,8 @@ public class OidcProviderConfigurationEndpointFilterTests {
 		assertThat(providerConfigurationResponse).contains("\"issuer\":\"https://example.com\"");
 		assertThat(providerConfigurationResponse)
 			.contains("\"authorization_endpoint\":\"https://example.com/oauth2/v1/authorize\"");
+		assertThat(providerConfigurationResponse)
+			.contains("\"pushed_authorization_request_endpoint\":\"https://example.com/oauth2/v1/par\"");
 		assertThat(providerConfigurationResponse)
 			.contains("\"token_endpoint\":\"https://example.com/oauth2/v1/token\"");
 		assertThat(providerConfigurationResponse).contains("\"jwks_uri\":\"https://example.com/oauth2/v1/jwks\"");

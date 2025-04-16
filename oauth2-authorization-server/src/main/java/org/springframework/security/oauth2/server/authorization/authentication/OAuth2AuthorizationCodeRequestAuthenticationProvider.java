@@ -16,6 +16,7 @@
 package org.springframework.security.oauth2.server.authorization.authentication;
 
 import java.security.Principal;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
@@ -27,6 +28,7 @@ import java.util.function.Predicate;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.springframework.core.log.LogMessage;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
@@ -353,12 +355,26 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 			throwError(OAuth2ErrorCodes.INVALID_REQUEST, "request_uri", authorizationCodeRequestAuthentication, null);
 		}
 
+		if (this.logger.isTraceEnabled()) {
+			this.logger.trace("Retrieved authorization with pushed authorization request");
+		}
+
 		OAuth2AuthorizationRequest authorizationRequest = authorization
 			.getAttribute(OAuth2AuthorizationRequest.class.getName());
 
 		if (!authorizationCodeRequestAuthentication.getClientId().equals(authorizationRequest.getClientId())) {
 			throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.CLIENT_ID,
 					authorizationCodeRequestAuthentication, null);
+		}
+
+		if (Instant.now().isAfter(pushedAuthorizationRequestUri.getExpiresAt())) {
+			// Remove (effectively invalidating) the pushed authorization request
+			this.authorizationService.remove(authorization);
+			if (this.logger.isWarnEnabled()) {
+				this.logger.warn(LogMessage.format("Removed expired pushed authorization request for client id '%s'",
+						authorizationRequest.getClientId()));
+			}
+			throwError(OAuth2ErrorCodes.INVALID_REQUEST, "request_uri", authorizationCodeRequestAuthentication, null);
 		}
 
 		return new OAuth2AuthorizationCodeRequestAuthenticationToken(

@@ -633,6 +633,7 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 
 		assertAuthorizationCodeRequestWithAuthorizationCodeResult(registeredClient, authentication,
 				authenticationResult);
+		verify(this.authorizationService).remove(eq(authorization));
 	}
 
 	@Test

@@ -638,8 +638,6 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 	@Test
 	public void authenticateWhenAuthorizationCodeRequestWithInvalidRequestUriThenThrowOAuth2AuthorizationCodeRequestAuthenticationException() {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
-		given(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
-			.willReturn(registeredClient);
 
 		OAuth2PushedAuthorizationRequestUri pushedAuthorizationRequestUri = OAuth2PushedAuthorizationRequestUri
 			.create();
@@ -664,12 +662,7 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 	@Test
 	public void authenticateWhenAuthorizationCodeRequestWithRequestUriIssuedToAnotherClientThenThrowOAuth2AuthorizationCodeRequestAuthenticationException() {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
-		given(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
-			.willReturn(registeredClient);
-
 		RegisteredClient anotherRegisteredClient = TestRegisteredClients.registeredClient2().build();
-		given(this.registeredClientRepository.findByClientId(eq(anotherRegisteredClient.getClientId())))
-			.willReturn(anotherRegisteredClient);
 
 		OAuth2PushedAuthorizationRequestUri pushedAuthorizationRequestUri = OAuth2PushedAuthorizationRequestUri
 			.create();
@@ -688,7 +681,7 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 			.isInstanceOf(OAuth2AuthorizationCodeRequestAuthenticationException.class)
 			.satisfies((ex) -> assertAuthenticationException((OAuth2AuthorizationCodeRequestAuthenticationException) ex,
-					OAuth2ErrorCodes.INVALID_REQUEST, "client_id", null));
+					OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.CLIENT_ID, null));
 	}
 
 	@Test

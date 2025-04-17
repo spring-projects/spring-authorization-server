@@ -96,6 +96,7 @@ public class OAuth2AuthorizationServerMetadataEndpointFilterTests {
 	public void doFilterWhenAuthorizationServerMetadataRequestThenMetadataResponse() throws Exception {
 		String issuer = "https://example.com";
 		String authorizationEndpoint = "/oauth2/v1/authorize";
+		String pushedAuthorizationRequestEndpoint = "/oauth2/v1/par";
 		String tokenEndpoint = "/oauth2/v1/token";
 		String jwkSetEndpoint = "/oauth2/v1/jwks";
 		String tokenRevocationEndpoint = "/oauth2/v1/revoke";
@@ -104,6 +105,7 @@ public class OAuth2AuthorizationServerMetadataEndpointFilterTests {
 		AuthorizationServerSettings authorizationServerSettings = AuthorizationServerSettings.builder()
 			.issuer(issuer)
 			.authorizationEndpoint(authorizationEndpoint)
+			.pushedAuthorizationRequestEndpoint(pushedAuthorizationRequestEndpoint)
 			.tokenEndpoint(tokenEndpoint)
 			.jwkSetEndpoint(jwkSetEndpoint)
 			.tokenRevocationEndpoint(tokenRevocationEndpoint)
@@ -127,6 +129,8 @@ public class OAuth2AuthorizationServerMetadataEndpointFilterTests {
 		assertThat(authorizationServerMetadataResponse).contains("\"issuer\":\"https://example.com\"");
 		assertThat(authorizationServerMetadataResponse)
 			.contains("\"authorization_endpoint\":\"https://example.com/oauth2/v1/authorize\"");
+		assertThat(authorizationServerMetadataResponse)
+			.contains("\"pushed_authorization_request_endpoint\":\"https://example.com/oauth2/v1/par\"");
 		assertThat(authorizationServerMetadataResponse)
 			.contains("\"token_endpoint\":\"https://example.com/oauth2/v1/token\"");
 		assertThat(authorizationServerMetadataResponse).contains(

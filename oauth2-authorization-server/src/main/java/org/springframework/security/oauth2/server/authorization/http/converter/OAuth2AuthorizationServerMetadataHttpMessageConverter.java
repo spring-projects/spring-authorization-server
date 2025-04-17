@@ -148,6 +148,8 @@ public class OAuth2AuthorizationServerMetadataHttpMessageConverter
 			Map<String, Converter<Object, ?>> claimConverters = new HashMap<>();
 			claimConverters.put(OAuth2AuthorizationServerMetadataClaimNames.ISSUER, urlConverter);
 			claimConverters.put(OAuth2AuthorizationServerMetadataClaimNames.AUTHORIZATION_ENDPOINT, urlConverter);
+			claimConverters.put(OAuth2AuthorizationServerMetadataClaimNames.PUSHED_AUTHORIZATION_REQUEST_ENDPOINT,
+					urlConverter);
 			claimConverters.put(OAuth2AuthorizationServerMetadataClaimNames.DEVICE_AUTHORIZATION_ENDPOINT,
 					urlConverter);
 			claimConverters.put(OAuth2AuthorizationServerMetadataClaimNames.TOKEN_ENDPOINT, urlConverter);

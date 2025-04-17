@@ -51,6 +51,7 @@ public class OAuth2AuthorizationServerMetadataTests {
 		OAuth2AuthorizationServerMetadata authorizationServerMetadata = OAuth2AuthorizationServerMetadata.builder()
 			.issuer("https://example.com")
 			.authorizationEndpoint("https://example.com/oauth2/authorize")
+			.pushedAuthorizationRequestEndpoint("https://example.com/oauth2/par")
 			.tokenEndpoint("https://example.com/oauth2/token")
 			.tokenEndpointAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue())
 			.jwkSetUrl("https://example.com/oauth2/jwks")
@@ -72,6 +73,8 @@ public class OAuth2AuthorizationServerMetadataTests {
 		assertThat(authorizationServerMetadata.getIssuer()).isEqualTo(url("https://example.com"));
 		assertThat(authorizationServerMetadata.getAuthorizationEndpoint())
 			.isEqualTo(url("https://example.com/oauth2/authorize"));
+		assertThat(authorizationServerMetadata.getPushedAuthorizationRequestEndpoint())
+			.isEqualTo(url("https://example.com/oauth2/par"));
 		assertThat(authorizationServerMetadata.getTokenEndpoint()).isEqualTo(url("https://example.com/oauth2/token"));
 		assertThat(authorizationServerMetadata.getTokenEndpointAuthenticationMethods())
 			.containsExactly(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue());
@@ -107,6 +110,7 @@ public class OAuth2AuthorizationServerMetadataTests {
 		assertThat(authorizationServerMetadata.getIssuer()).isEqualTo(url("https://example.com"));
 		assertThat(authorizationServerMetadata.getAuthorizationEndpoint())
 			.isEqualTo(url("https://example.com/oauth2/authorize"));
+		assertThat(authorizationServerMetadata.getPushedAuthorizationRequestEndpoint()).isNull();
 		assertThat(authorizationServerMetadata.getTokenEndpoint()).isEqualTo(url("https://example.com/oauth2/token"));
 		assertThat(authorizationServerMetadata.getTokenEndpointAuthenticationMethods()).isNull();
 		assertThat(authorizationServerMetadata.getJwkSetUrl()).isNull();
@@ -127,6 +131,8 @@ public class OAuth2AuthorizationServerMetadataTests {
 		claims.put(OAuth2AuthorizationServerMetadataClaimNames.ISSUER, "https://example.com");
 		claims.put(OAuth2AuthorizationServerMetadataClaimNames.AUTHORIZATION_ENDPOINT,
 				"https://example.com/oauth2/authorize");
+		claims.put(OAuth2AuthorizationServerMetadataClaimNames.PUSHED_AUTHORIZATION_REQUEST_ENDPOINT,
+				"https://example.com/oauth2/par");
 		claims.put(OAuth2AuthorizationServerMetadataClaimNames.TOKEN_ENDPOINT, "https://example.com/oauth2/token");
 		claims.put(OAuth2AuthorizationServerMetadataClaimNames.JWKS_URI, "https://example.com/oauth2/jwks");
 		claims.put(OAuth2AuthorizationServerMetadataClaimNames.SCOPES_SUPPORTED, Collections.singletonList("openid"));
@@ -145,6 +151,8 @@ public class OAuth2AuthorizationServerMetadataTests {
 		assertThat(authorizationServerMetadata.getIssuer()).isEqualTo(url("https://example.com"));
 		assertThat(authorizationServerMetadata.getAuthorizationEndpoint())
 			.isEqualTo(url("https://example.com/oauth2/authorize"));
+		assertThat(authorizationServerMetadata.getPushedAuthorizationRequestEndpoint())
+			.isEqualTo(url("https://example.com/oauth2/par"));
 		assertThat(authorizationServerMetadata.getTokenEndpoint()).isEqualTo(url("https://example.com/oauth2/token"));
 		assertThat(authorizationServerMetadata.getTokenEndpointAuthenticationMethods()).isNull();
 		assertThat(authorizationServerMetadata.getJwkSetUrl()).isEqualTo(url("https://example.com/oauth2/jwks"));
@@ -168,6 +176,8 @@ public class OAuth2AuthorizationServerMetadataTests {
 		claims.put(OAuth2AuthorizationServerMetadataClaimNames.ISSUER, url("https://example.com"));
 		claims.put(OAuth2AuthorizationServerMetadataClaimNames.AUTHORIZATION_ENDPOINT,
 				url("https://example.com/oauth2/authorize"));
+		claims.put(OAuth2AuthorizationServerMetadataClaimNames.PUSHED_AUTHORIZATION_REQUEST_ENDPOINT,
+				url("https://example.com/oauth2/par"));
 		claims.put(OAuth2AuthorizationServerMetadataClaimNames.TOKEN_ENDPOINT, url("https://example.com/oauth2/token"));
 		claims.put(OAuth2AuthorizationServerMetadataClaimNames.JWKS_URI, url("https://example.com/oauth2/jwks"));
 		claims.put(OAuth2AuthorizationServerMetadataClaimNames.RESPONSE_TYPES_SUPPORTED,
@@ -185,6 +195,8 @@ public class OAuth2AuthorizationServerMetadataTests {
 		assertThat(authorizationServerMetadata.getIssuer()).isEqualTo(url("https://example.com"));
 		assertThat(authorizationServerMetadata.getAuthorizationEndpoint())
 			.isEqualTo(url("https://example.com/oauth2/authorize"));
+		assertThat(authorizationServerMetadata.getPushedAuthorizationRequestEndpoint())
+			.isEqualTo(url("https://example.com/oauth2/par"));
 		assertThat(authorizationServerMetadata.getTokenEndpoint()).isEqualTo(url("https://example.com/oauth2/token"));
 		assertThat(authorizationServerMetadata.getTokenEndpointAuthenticationMethods()).isNull();
 		assertThat(authorizationServerMetadata.getJwkSetUrl()).isEqualTo(url("https://example.com/oauth2/jwks"));
@@ -262,6 +274,15 @@ public class OAuth2AuthorizationServerMetadataTests {
 
 		assertThatIllegalArgumentException().isThrownBy(builder::build)
 			.withMessage("authorizationEndpoint must be a valid URL");
+	}
+
+	@Test
+	public void buildWhenPushedAuthorizationRequestEndpointNotUrlThenThrowIllegalArgumentException() {
+		Builder builder = this.minimalBuilder.claims((claims) -> claims
+			.put(OAuth2AuthorizationServerMetadataClaimNames.PUSHED_AUTHORIZATION_REQUEST_ENDPOINT, "not an url"));
+
+		assertThatIllegalArgumentException().isThrownBy(builder::build)
+			.withMessage("pushedAuthorizationRequestEndpoint must be a valid URL");
 	}
 
 	@Test

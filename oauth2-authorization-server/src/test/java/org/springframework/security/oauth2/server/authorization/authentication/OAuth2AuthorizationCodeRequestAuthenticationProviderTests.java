@@ -16,6 +16,7 @@
 package org.springframework.security.oauth2.server.authorization.authentication;
 
 import java.security.Principal;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -632,13 +633,12 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 
 		assertAuthorizationCodeRequestWithAuthorizationCodeResult(registeredClient, authentication,
 				authenticationResult);
+		verify(this.authorizationService).remove(eq(authorization));
 	}
 
 	@Test
 	public void authenticateWhenAuthorizationCodeRequestWithInvalidRequestUriThenThrowOAuth2AuthorizationCodeRequestAuthenticationException() {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
-		given(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
-			.willReturn(registeredClient);
 
 		OAuth2PushedAuthorizationRequestUri pushedAuthorizationRequestUri = OAuth2PushedAuthorizationRequestUri
 			.create();
@@ -663,12 +663,7 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 	@Test
 	public void authenticateWhenAuthorizationCodeRequestWithRequestUriIssuedToAnotherClientThenThrowOAuth2AuthorizationCodeRequestAuthenticationException() {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
-		given(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
-			.willReturn(registeredClient);
-
 		RegisteredClient anotherRegisteredClient = TestRegisteredClients.registeredClient2().build();
-		given(this.registeredClientRepository.findByClientId(eq(anotherRegisteredClient.getClientId())))
-			.willReturn(anotherRegisteredClient);
 
 		OAuth2PushedAuthorizationRequestUri pushedAuthorizationRequestUri = OAuth2PushedAuthorizationRequestUri
 			.create();
@@ -687,7 +682,32 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 			.isInstanceOf(OAuth2AuthorizationCodeRequestAuthenticationException.class)
 			.satisfies((ex) -> assertAuthenticationException((OAuth2AuthorizationCodeRequestAuthenticationException) ex,
-					OAuth2ErrorCodes.INVALID_REQUEST, "client_id", null));
+					OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.CLIENT_ID, null));
+	}
+
+	@Test
+	public void authenticateWhenAuthorizationCodeRequestWithExpiredRequestUriThenThrowOAuth2AuthorizationCodeRequestAuthenticationException() {
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+
+		OAuth2PushedAuthorizationRequestUri pushedAuthorizationRequestUri = OAuth2PushedAuthorizationRequestUri
+			.create(Instant.now().minusSeconds(5));
+		Map<String, Object> additionalParameters = new HashMap<>();
+		additionalParameters.put("request_uri", pushedAuthorizationRequestUri.getRequestUri());
+		OAuth2Authorization authorization = TestOAuth2Authorizations
+			.authorization(registeredClient, additionalParameters)
+			.build();
+		given(this.authorizationService.findByToken(eq(pushedAuthorizationRequestUri.getState()), eq(STATE_TOKEN_TYPE)))
+			.willReturn(authorization);
+
+		OAuth2AuthorizationCodeRequestAuthenticationToken authentication = new OAuth2AuthorizationCodeRequestAuthenticationToken(
+				AUTHORIZATION_URI, registeredClient.getClientId(), this.principal, null, null, null,
+				additionalParameters);
+
+		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
+			.isInstanceOf(OAuth2AuthorizationCodeRequestAuthenticationException.class)
+			.satisfies((ex) -> assertAuthenticationException((OAuth2AuthorizationCodeRequestAuthenticationException) ex,
+					OAuth2ErrorCodes.INVALID_REQUEST, "request_uri", null));
+		verify(this.authorizationService).remove(eq(authorization));
 	}
 
 	@Test

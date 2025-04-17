@@ -16,6 +16,7 @@
 package org.springframework.security.oauth2.server.authorization.authentication;
 
 import java.security.Principal;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
@@ -27,6 +28,7 @@ import java.util.function.Predicate;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.springframework.core.log.LogMessage;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
@@ -120,11 +122,55 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 	public Authentication authenticate(Authentication authentication) throws AuthenticationException {
 		OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthentication = (OAuth2AuthorizationCodeRequestAuthenticationToken) authentication;
 
+		OAuth2Authorization pushedAuthorization = null;
 		String requestUri = (String) authorizationCodeRequestAuthentication.getAdditionalParameters()
 			.get("request_uri");
 		if (StringUtils.hasText(requestUri)) {
-			authorizationCodeRequestAuthentication = fromPushedAuthorizationRequest(
-					authorizationCodeRequestAuthentication);
+			OAuth2PushedAuthorizationRequestUri pushedAuthorizationRequestUri = null;
+			try {
+				pushedAuthorizationRequestUri = OAuth2PushedAuthorizationRequestUri.parse(requestUri);
+			}
+			catch (Exception ex) {
+				throwError(OAuth2ErrorCodes.INVALID_REQUEST, "request_uri", authorizationCodeRequestAuthentication,
+						null);
+			}
+
+			pushedAuthorization = this.authorizationService.findByToken(pushedAuthorizationRequestUri.getState(),
+					STATE_TOKEN_TYPE);
+			if (pushedAuthorization == null) {
+				throwError(OAuth2ErrorCodes.INVALID_REQUEST, "request_uri", authorizationCodeRequestAuthentication,
+						null);
+			}
+
+			if (this.logger.isTraceEnabled()) {
+				this.logger.trace("Retrieved authorization with pushed authorization request");
+			}
+
+			OAuth2AuthorizationRequest authorizationRequest = pushedAuthorization
+				.getAttribute(OAuth2AuthorizationRequest.class.getName());
+
+			if (!authorizationCodeRequestAuthentication.getClientId().equals(authorizationRequest.getClientId())) {
+				throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.CLIENT_ID,
+						authorizationCodeRequestAuthentication, null);
+			}
+
+			if (Instant.now().isAfter(pushedAuthorizationRequestUri.getExpiresAt())) {
+				// Remove (effectively invalidating) the pushed authorization request
+				this.authorizationService.remove(pushedAuthorization);
+				if (this.logger.isWarnEnabled()) {
+					this.logger
+						.warn(LogMessage.format("Removed expired pushed authorization request for client id '%s'",
+								authorizationRequest.getClientId()));
+				}
+				throwError(OAuth2ErrorCodes.INVALID_REQUEST, "request_uri", authorizationCodeRequestAuthentication,
+						null);
+			}
+
+			authorizationCodeRequestAuthentication = new OAuth2AuthorizationCodeRequestAuthenticationToken(
+					authorizationCodeRequestAuthentication.getAuthorizationUri(), authorizationRequest.getClientId(),
+					(Authentication) authorizationCodeRequestAuthentication.getPrincipal(),
+					authorizationRequest.getRedirectUri(), authorizationRequest.getState(),
+					authorizationRequest.getScopes(), authorizationRequest.getAdditionalParameters());
 		}
 
 		RegisteredClient registeredClient = this.registeredClientRepository
@@ -221,12 +267,20 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 
 			this.authorizationService.save(authorization);
 
-			Set<String> currentAuthorizedScopes = (currentAuthorizationConsent != null)
-					? currentAuthorizationConsent.getScopes() : null;
-
 			if (this.logger.isTraceEnabled()) {
 				this.logger.trace("Saved authorization");
 			}
+
+			if (pushedAuthorization != null) {
+				// Enforce one-time use by removing the pushed authorization request
+				this.authorizationService.remove(pushedAuthorization);
+				if (this.logger.isTraceEnabled()) {
+					this.logger.trace("Removed authorization with pushed authorization request");
+				}
+			}
+
+			Set<String> currentAuthorizedScopes = (currentAuthorizationConsent != null)
+					? currentAuthorizationConsent.getScopes() : null;
 
 			return new OAuth2AuthorizationConsentAuthenticationToken(authorizationRequest.getAuthorizationUri(),
 					registeredClient.getClientId(), principal, state, currentAuthorizedScopes, null);
@@ -253,6 +307,14 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 
 		if (this.logger.isTraceEnabled()) {
 			this.logger.trace("Saved authorization");
+		}
+
+		if (pushedAuthorization != null) {
+			// Enforce one-time use by removing the pushed authorization request
+			this.authorizationService.remove(pushedAuthorization);
+			if (this.logger.isTraceEnabled()) {
+				this.logger.trace("Removed authorization with pushed authorization request");
+			}
 		}
 
 		String redirectUri = authorizationRequest.getRedirectUri();
@@ -331,41 +393,6 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 			Predicate<OAuth2AuthorizationCodeRequestAuthenticationContext> authorizationConsentRequired) {
 		Assert.notNull(authorizationConsentRequired, "authorizationConsentRequired cannot be null");
 		this.authorizationConsentRequired = authorizationConsentRequired;
-	}
-
-	private OAuth2AuthorizationCodeRequestAuthenticationToken fromPushedAuthorizationRequest(
-			OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthentication) {
-
-		String requestUri = (String) authorizationCodeRequestAuthentication.getAdditionalParameters()
-			.get("request_uri");
-
-		OAuth2PushedAuthorizationRequestUri pushedAuthorizationRequestUri = null;
-		try {
-			pushedAuthorizationRequestUri = OAuth2PushedAuthorizationRequestUri.parse(requestUri);
-		}
-		catch (Exception ex) {
-			throwError(OAuth2ErrorCodes.INVALID_REQUEST, "request_uri", authorizationCodeRequestAuthentication, null);
-		}
-
-		OAuth2Authorization authorization = this.authorizationService
-			.findByToken(pushedAuthorizationRequestUri.getState(), STATE_TOKEN_TYPE);
-		if (authorization == null) {
-			throwError(OAuth2ErrorCodes.INVALID_REQUEST, "request_uri", authorizationCodeRequestAuthentication, null);
-		}
-
-		OAuth2AuthorizationRequest authorizationRequest = authorization
-			.getAttribute(OAuth2AuthorizationRequest.class.getName());
-
-		if (!authorizationCodeRequestAuthentication.getClientId().equals(authorizationRequest.getClientId())) {
-			throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.CLIENT_ID,
-					authorizationCodeRequestAuthentication, null);
-		}
-
-		return new OAuth2AuthorizationCodeRequestAuthenticationToken(
-				authorizationCodeRequestAuthentication.getAuthorizationUri(), authorizationRequest.getClientId(),
-				(Authentication) authorizationCodeRequestAuthentication.getPrincipal(),
-				authorizationRequest.getRedirectUri(), authorizationRequest.getState(),
-				authorizationRequest.getScopes(), authorizationRequest.getAdditionalParameters());
 	}
 
 	private static boolean isAuthorizationConsentRequired(

@@ -52,6 +52,9 @@ import org.springframework.util.Assert;
  * @see <a target="_blank" href=
  * "https://datatracker.ietf.org/doc/html/rfc9449#section-5.1">5.1 OAuth 2.0 Demonstrating
  * Proof of Possession (DPoP) Metadata</a>
+ * @see <a target="_blank" href=
+ * "https://datatracker.ietf.org/doc/html/rfc9126#name-authorization-server-metada">5.
+ * OAuth 2.0 Pushed Authorization Requests Metadata</a>
  */
 public abstract class AbstractOAuth2AuthorizationServerMetadata
 		implements OAuth2AuthorizationServerMetadataClaimAccessor, Serializable {
@@ -117,6 +120,19 @@ public abstract class AbstractOAuth2AuthorizationServerMetadata
 		 */
 		public B authorizationEndpoint(String authorizationEndpoint) {
 			return claim(OAuth2AuthorizationServerMetadataClaimNames.AUTHORIZATION_ENDPOINT, authorizationEndpoint);
+		}
+
+		/**
+		 * Use this {@code pushed_authorization_request_endpoint} in the resulting
+		 * {@link AbstractOAuth2AuthorizationServerMetadata}, OPTIONAL.
+		 * @param pushedAuthorizationRequestEndpoint the {@code URL} of the OAuth 2.0
+		 * Pushed Authorization Request Endpoint
+		 * @return the {@link AbstractBuilder} for further configuration
+		 * @since 1.5
+		 */
+		public B pushedAuthorizationRequestEndpoint(String pushedAuthorizationRequestEndpoint) {
+			return claim(OAuth2AuthorizationServerMetadataClaimNames.PUSHED_AUTHORIZATION_REQUEST_ENDPOINT,
+					pushedAuthorizationRequestEndpoint);
 		}
 
 		/**
@@ -454,6 +470,13 @@ public abstract class AbstractOAuth2AuthorizationServerMetadata
 					"authorizationEndpoint cannot be null");
 			validateURL(getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.AUTHORIZATION_ENDPOINT),
 					"authorizationEndpoint must be a valid URL");
+			if (getClaims()
+				.get(OAuth2AuthorizationServerMetadataClaimNames.PUSHED_AUTHORIZATION_REQUEST_ENDPOINT) != null) {
+				validateURL(
+						getClaims()
+							.get(OAuth2AuthorizationServerMetadataClaimNames.PUSHED_AUTHORIZATION_REQUEST_ENDPOINT),
+						"pushedAuthorizationRequestEndpoint must be a valid URL");
+			}
 			if (getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.DEVICE_AUTHORIZATION_ENDPOINT) != null) {
 				validateURL(getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.DEVICE_AUTHORIZATION_ENDPOINT),
 						"deviceAuthorizationEndpoint must be a valid URL");

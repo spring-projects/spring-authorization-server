@@ -41,8 +41,11 @@ final class OAuth2PushedAuthorizationRequestUri {
 	private Instant expiresAt;
 
 	static OAuth2PushedAuthorizationRequestUri create() {
+		return create(Instant.now().plusSeconds(30));
+	}
+
+	static OAuth2PushedAuthorizationRequestUri create(Instant expiresAt) {
 		String state = DEFAULT_STATE_GENERATOR.generateKey();
-		Instant expiresAt = Instant.now().plusSeconds(30);
 		OAuth2PushedAuthorizationRequestUri pushedAuthorizationRequestUri = new OAuth2PushedAuthorizationRequestUri();
 		pushedAuthorizationRequestUri.requestUri = REQUEST_URI_PREFIX + state + REQUEST_URI_DELIMITER
 				+ expiresAt.toEpochMilli();

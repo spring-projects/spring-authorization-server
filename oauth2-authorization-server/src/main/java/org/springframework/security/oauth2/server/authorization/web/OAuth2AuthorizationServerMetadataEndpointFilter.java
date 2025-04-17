@@ -101,6 +101,8 @@ public final class OAuth2AuthorizationServerMetadataEndpointFilter extends OnceP
 			.builder()
 			.issuer(issuer)
 			.authorizationEndpoint(asUrl(issuer, authorizationServerSettings.getAuthorizationEndpoint()))
+			.pushedAuthorizationRequestEndpoint(
+					asUrl(issuer, authorizationServerSettings.getPushedAuthorizationRequestEndpoint()))
 			.deviceAuthorizationEndpoint(asUrl(issuer, authorizationServerSettings.getDeviceAuthorizationEndpoint()))
 			.tokenEndpoint(asUrl(issuer, authorizationServerSettings.getTokenEndpoint()))
 			.tokenEndpointAuthenticationMethods(clientAuthenticationMethods())

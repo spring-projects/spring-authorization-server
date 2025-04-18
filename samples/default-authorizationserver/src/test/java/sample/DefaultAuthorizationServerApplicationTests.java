@@ -15,8 +15,6 @@
  */
 package sample;
 
-import java.io.IOException;
-
 import org.htmlunit.Page;
 import org.htmlunit.WebClient;
 import org.htmlunit.WebResponse;
@@ -27,15 +25,23 @@ import org.htmlunit.html.HtmlPage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.io.IOException;
+import java.net.URL;
+
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
  * Integration tests for the sample Authorization Server.
@@ -59,12 +65,14 @@ public class DefaultAuthorizationServerApplicationTests {
 
 	@Autowired
 	private WebClient webClient;
+	@Autowired
+	private MockMvc mockMvc;
 
 	@BeforeEach
 	public void setUp() {
 		this.webClient.getOptions().setThrowExceptionOnFailingStatusCode(true);
 		this.webClient.getOptions().setRedirectEnabled(true);
-		this.webClient.getCookieManager().clearCookies();	// log out
+		this.webClient.getCookieManager().clearCookies();    // log out
 	}
 
 	@Test
@@ -75,7 +83,7 @@ public class DefaultAuthorizationServerApplicationTests {
 
 		this.webClient.getOptions().setThrowExceptionOnFailingStatusCode(false);
 		WebResponse signInResponse = signIn(page, "user1", "password").getWebResponse();
-		assertThat(signInResponse.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND.value());	// there is no "default" index page
+		assertThat(signInResponse.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND.value());    // there is no "default" index page
 	}
 
 	@Test
@@ -97,7 +105,7 @@ public class DefaultAuthorizationServerApplicationTests {
 	}
 
 	@Test
-	public void whenLoggingInAndRequestingTokenThenRedirectsToClientApplication() throws IOException {
+	public void whenLoggingInAndRequestingTokenThenRedirectsToClientApplication() throws Exception {
 		// Log in
 		this.webClient.getOptions().setThrowExceptionOnFailingStatusCode(false);
 		this.webClient.getOptions().setRedirectEnabled(false);
@@ -110,6 +118,37 @@ public class DefaultAuthorizationServerApplicationTests {
 		String location = response.getResponseHeaderValue("location");
 		assertThat(location).startsWith(REDIRECT_URI);
 		assertThat(location).contains("code=");
+
+
+		// ==============================================================================================
+		// The following token request should be performed by the client application,
+		// eg: a web application, a mobile app, etc.
+		// ==============================================================================================
+
+		// get code parameter value form location
+		String query = new URL(location).getQuery();
+		String[] kAndV = query.split("&");
+		String code = null;
+		for (String kv : kAndV) {
+			if (kv.startsWith("code=")) {
+				code = kv.replace("code=", "");
+				break;
+			}
+		}
+		assertThat(code).isNotNull();
+
+		// Request token with code
+		mockMvc.perform(post("/oauth2/token")
+						// for OAuth2AuthorizationCodeAuthenticationConverter
+						.formField("grant_type", "authorization_code")
+						.formField("client_id", "messaging-client")
+						.formField("code", code)
+						.formField("redirect_uri", REDIRECT_URI)
+						// for BasicAuthenticationFilter
+						.with(httpBasic("messaging-client","secret")))
+				.andDo(print())
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.access_token").exists());
 	}
 
 	private static <P extends Page> P signIn(HtmlPage page, String username, String password) throws IOException {

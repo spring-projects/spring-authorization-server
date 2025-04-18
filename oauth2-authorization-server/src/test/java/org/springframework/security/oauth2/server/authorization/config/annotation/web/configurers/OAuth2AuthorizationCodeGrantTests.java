@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 the original author or authors.
+ * Copyright 2020-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -538,7 +538,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 	}
 
 	@Test
-	public void requestWhenConfidentialClientWithPkceAndMissingCodeVerifierThenBadRequest() throws Exception {
+	public void requestWhenConfidentialClientWithPkceAndMissingCodeVerifierThenUnauthorized() throws Exception {
 		this.spring.register(AuthorizationServerConfiguration.class).autowire();
 
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
@@ -569,7 +569,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 				.params(getTokenRequestParameters(registeredClient, authorizationCodeAuthorization))
 				.param(OAuth2ParameterNames.CLIENT_ID, registeredClient.getClientId())
 				.header(HttpHeaders.AUTHORIZATION, getAuthorizationHeader(registeredClient)))
-			.andExpect(status().isBadRequest());
+			.andExpect(status().isUnauthorized());
 	}
 
 	// gh-1011
@@ -601,7 +601,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 	}
 
 	@Test
-	public void requestWhenConfidentialClientWithPkceAndMissingCodeChallengeButCodeVerifierProvidedThenBadRequest()
+	public void requestWhenConfidentialClientWithPkceAndMissingCodeChallengeButCodeVerifierProvidedThenUnauthorized()
 			throws Exception {
 		this.spring.register(AuthorizationServerConfiguration.class).autowire();
 
@@ -631,7 +631,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 				.params(getTokenRequestParameters(registeredClient, authorizationCodeAuthorization))
 				.param(PkceParameterNames.CODE_VERIFIER, S256_CODE_VERIFIER)
 				.header(HttpHeaders.AUTHORIZATION, getAuthorizationHeader(registeredClient)))
-			.andExpect(status().isBadRequest());
+			.andExpect(status().isUnauthorized());
 	}
 
 	@Test

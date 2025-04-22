@@ -208,7 +208,8 @@ public final class OAuth2PushedAuthorizationRequestEndpointFilter extends OncePe
 		OAuth2PushedAuthorizationRequestAuthenticationToken pushedAuthorizationRequestAuthentication = (OAuth2PushedAuthorizationRequestAuthenticationToken) authentication;
 
 		Map<String, Object> pushedAuthorizationResponse = new LinkedHashMap<>();
-		pushedAuthorizationResponse.put("request_uri", pushedAuthorizationRequestAuthentication.getRequestUri());
+		pushedAuthorizationResponse.put(OAuth2ParameterNames.REQUEST_URI,
+				pushedAuthorizationRequestAuthentication.getRequestUri());
 		long expiresIn = ChronoUnit.SECONDS.between(Instant.now(),
 				pushedAuthorizationRequestAuthentication.getRequestUriExpiresAt());
 		pushedAuthorizationResponse.put(OAuth2ParameterNames.EXPIRES_IN, expiresIn);

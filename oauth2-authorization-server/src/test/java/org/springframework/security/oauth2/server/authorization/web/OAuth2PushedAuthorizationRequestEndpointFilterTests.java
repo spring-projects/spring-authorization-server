@@ -170,8 +170,9 @@ public class OAuth2PushedAuthorizationRequestEndpointFilterTests {
 	@Test
 	public void doFilterWhenPushedAuthorizationRequestIncludesRequestUriThenInvalidRequestError() throws Exception {
 		doFilterWhenPushedAuthorizationRequestInvalidParameterThenError(
-				TestRegisteredClients.registeredClient().build(), "request_uri", OAuth2ErrorCodes.INVALID_REQUEST,
-				(request) -> request.addParameter("request_uri", "request_uri"));
+				TestRegisteredClients.registeredClient().build(), OAuth2ParameterNames.REQUEST_URI,
+				OAuth2ErrorCodes.INVALID_REQUEST,
+				(request) -> request.addParameter(OAuth2ParameterNames.REQUEST_URI, OAuth2ParameterNames.REQUEST_URI));
 	}
 
 	@Test
@@ -292,9 +293,9 @@ public class OAuth2PushedAuthorizationRequestEndpointFilterTests {
 	public void doFilterWhenCustomAuthenticationConverterThenUsed() throws Exception {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 		OAuth2PushedAuthorizationRequestAuthenticationToken pushedAuthorizationRequestAuthenticationResult = new OAuth2PushedAuthorizationRequestAuthenticationToken(
-				AUTHORIZATION_URI, registeredClient.getClientId(), this.clientPrincipal, "request_uri",
-				Instant.now().plusSeconds(30), registeredClient.getRedirectUris().iterator().next(), STATE,
-				registeredClient.getScopes());
+				AUTHORIZATION_URI, registeredClient.getClientId(), this.clientPrincipal,
+				OAuth2ParameterNames.REQUEST_URI, Instant.now().plusSeconds(30),
+				registeredClient.getRedirectUris().iterator().next(), STATE, registeredClient.getScopes());
 
 		AuthenticationConverter authenticationConverter = mock(AuthenticationConverter.class);
 		given(authenticationConverter.convert(any())).willReturn(pushedAuthorizationRequestAuthenticationResult);
@@ -317,9 +318,9 @@ public class OAuth2PushedAuthorizationRequestEndpointFilterTests {
 	public void doFilterWhenCustomAuthenticationSuccessHandlerThenUsed() throws Exception {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 		OAuth2PushedAuthorizationRequestAuthenticationToken pushedAuthorizationRequestAuthenticationResult = new OAuth2PushedAuthorizationRequestAuthenticationToken(
-				AUTHORIZATION_URI, registeredClient.getClientId(), this.clientPrincipal, "request_uri",
-				Instant.now().plusSeconds(30), registeredClient.getRedirectUris().iterator().next(), STATE,
-				registeredClient.getScopes());
+				AUTHORIZATION_URI, registeredClient.getClientId(), this.clientPrincipal,
+				OAuth2ParameterNames.REQUEST_URI, Instant.now().plusSeconds(30),
+				registeredClient.getRedirectUris().iterator().next(), STATE, registeredClient.getScopes());
 		given(this.authenticationManager.authenticate(any()))
 			.willReturn(pushedAuthorizationRequestAuthenticationResult);
 
@@ -371,9 +372,9 @@ public class OAuth2PushedAuthorizationRequestEndpointFilterTests {
 		this.filter.setAuthenticationDetailsSource(authenticationDetailsSource);
 
 		OAuth2PushedAuthorizationRequestAuthenticationToken pushedAuthorizationRequestAuthenticationResult = new OAuth2PushedAuthorizationRequestAuthenticationToken(
-				AUTHORIZATION_URI, registeredClient.getClientId(), this.clientPrincipal, "request_uri",
-				Instant.now().plusSeconds(30), registeredClient.getRedirectUris().iterator().next(), STATE,
-				registeredClient.getScopes());
+				AUTHORIZATION_URI, registeredClient.getClientId(), this.clientPrincipal,
+				OAuth2ParameterNames.REQUEST_URI, Instant.now().plusSeconds(30),
+				registeredClient.getRedirectUris().iterator().next(), STATE, registeredClient.getScopes());
 
 		given(this.authenticationManager.authenticate(any()))
 			.willReturn(pushedAuthorizationRequestAuthenticationResult);
@@ -390,7 +391,7 @@ public class OAuth2PushedAuthorizationRequestEndpointFilterTests {
 	@Test
 	public void doFilterWhenPushedAuthorizationRequestAuthenticatedThenPushedAuthorizationResponse() throws Exception {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
-		String requestUri = "request_uri";
+		String requestUri = OAuth2ParameterNames.REQUEST_URI;
 		Instant requestUriExpiresAt = Instant.now().plusSeconds(30);
 		OAuth2PushedAuthorizationRequestAuthenticationToken pushedAuthorizationRequestAuthenticationResult = new OAuth2PushedAuthorizationRequestAuthenticationToken(
 				AUTHORIZATION_URI, registeredClient.getClientId(), this.clientPrincipal, requestUri,
@@ -424,7 +425,7 @@ public class OAuth2PushedAuthorizationRequestEndpointFilterTests {
 			.isEqualTo(new String[] { "custom-value-1", "custom-value-2" });
 		assertThat(response.getStatus()).isEqualTo(HttpStatus.CREATED.value());
 		Map<String, Object> responseParameters = readPushedAuthorizationResponse(response);
-		assertThat(responseParameters.get("request_uri")).isEqualTo(requestUri);
+		assertThat(responseParameters.get(OAuth2ParameterNames.REQUEST_URI)).isEqualTo(requestUri);
 		Instant requestUriExpiry = Instant.now()
 			.plusSeconds(Long.parseLong(String.valueOf(responseParameters.get("expires_in"))));
 		assertThat(requestUriExpiry).isBetween(requestUriExpiresAt.minusSeconds(1), requestUriExpiresAt.plusSeconds(1));

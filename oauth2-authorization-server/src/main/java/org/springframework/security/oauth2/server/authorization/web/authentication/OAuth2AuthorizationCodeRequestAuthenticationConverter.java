@@ -89,14 +89,14 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationConverter impleme
 
 		// request_uri (OPTIONAL) - provided if an authorization request was previously
 		// pushed (RFC 9126 OAuth 2.0 Pushed Authorization Requests)
-		String requestUri = parameters.getFirst("request_uri");
+		String requestUri = parameters.getFirst(OAuth2ParameterNames.REQUEST_URI);
 		if (StringUtils.hasText(requestUri)) {
 			if (pushedAuthorizationRequest) {
-				throwError(OAuth2ErrorCodes.INVALID_REQUEST, "request_uri");
+				throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.REQUEST_URI);
 			}
-			else if (parameters.get("request_uri").size() != 1) {
+			else if (parameters.get(OAuth2ParameterNames.REQUEST_URI).size() != 1) {
 				// Authorization Request
-				throwError(OAuth2ErrorCodes.INVALID_REQUEST, "request_uri");
+				throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.REQUEST_URI);
 			}
 		}
 

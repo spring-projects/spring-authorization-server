@@ -190,9 +190,9 @@ public class OAuth2AuthorizationEndpointFilterTests {
 	@Test
 	public void doFilterWhenAuthorizationRequestMultipleRequestUriThenInvalidRequestError() throws Exception {
 		doFilterWhenAuthorizationRequestInvalidParameterThenError(TestRegisteredClients.registeredClient().build(),
-				"request_uri", OAuth2ErrorCodes.INVALID_REQUEST, (request) -> {
-					request.addParameter("request_uri", "request_uri");
-					request.addParameter("request_uri", "request_uri_2");
+				OAuth2ParameterNames.REQUEST_URI, OAuth2ErrorCodes.INVALID_REQUEST, (request) -> {
+					request.addParameter(OAuth2ParameterNames.REQUEST_URI, OAuth2ParameterNames.REQUEST_URI);
+					request.addParameter(OAuth2ParameterNames.REQUEST_URI, "request_uri_2");
 					updateQueryString(request);
 				});
 	}

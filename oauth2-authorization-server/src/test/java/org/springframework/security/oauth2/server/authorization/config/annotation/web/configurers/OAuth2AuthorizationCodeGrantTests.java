@@ -1037,7 +1037,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 		mvcResult = this.mvc
 			.perform(get(DEFAULT_AUTHORIZATION_ENDPOINT_URI)
 				.queryParam(OAuth2ParameterNames.CLIENT_ID, registeredClient.getClientId())
-				.queryParam("request_uri", requestUri)
+				.queryParam(OAuth2ParameterNames.REQUEST_URI, requestUri)
 				.with(user("user")))
 			.andExpect(status().is3xxRedirection())
 			.andReturn();

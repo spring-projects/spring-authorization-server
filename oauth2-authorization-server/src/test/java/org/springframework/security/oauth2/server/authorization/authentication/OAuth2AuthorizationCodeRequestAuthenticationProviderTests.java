@@ -617,7 +617,7 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 		OAuth2PushedAuthorizationRequestUri pushedAuthorizationRequestUri = OAuth2PushedAuthorizationRequestUri
 			.create();
 		Map<String, Object> additionalParameters = new HashMap<>();
-		additionalParameters.put("request_uri", pushedAuthorizationRequestUri.getRequestUri());
+		additionalParameters.put(OAuth2ParameterNames.REQUEST_URI, pushedAuthorizationRequestUri.getRequestUri());
 		OAuth2Authorization authorization = TestOAuth2Authorizations
 			.authorization(registeredClient, additionalParameters)
 			.build();
@@ -643,7 +643,7 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 		OAuth2PushedAuthorizationRequestUri pushedAuthorizationRequestUri = OAuth2PushedAuthorizationRequestUri
 			.create();
 		Map<String, Object> additionalParameters = new HashMap<>();
-		additionalParameters.put("request_uri", pushedAuthorizationRequestUri.getRequestUri());
+		additionalParameters.put(OAuth2ParameterNames.REQUEST_URI, pushedAuthorizationRequestUri.getRequestUri());
 		OAuth2Authorization authorization = TestOAuth2Authorizations
 			.authorization(registeredClient, additionalParameters)
 			.build();
@@ -652,12 +652,12 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 
 		OAuth2AuthorizationCodeRequestAuthenticationToken authentication = new OAuth2AuthorizationCodeRequestAuthenticationToken(
 				AUTHORIZATION_URI, registeredClient.getClientId(), this.principal, null, null, null,
-				Collections.singletonMap("request_uri", "invalid_request_uri"));
+				Collections.singletonMap(OAuth2ParameterNames.REQUEST_URI, "invalid_request_uri"));
 
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 			.isInstanceOf(OAuth2AuthorizationCodeRequestAuthenticationException.class)
 			.satisfies((ex) -> assertAuthenticationException((OAuth2AuthorizationCodeRequestAuthenticationException) ex,
-					OAuth2ErrorCodes.INVALID_REQUEST, "request_uri", null));
+					OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.REQUEST_URI, null));
 	}
 
 	@Test
@@ -668,7 +668,7 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 		OAuth2PushedAuthorizationRequestUri pushedAuthorizationRequestUri = OAuth2PushedAuthorizationRequestUri
 			.create();
 		Map<String, Object> additionalParameters = new HashMap<>();
-		additionalParameters.put("request_uri", pushedAuthorizationRequestUri.getRequestUri());
+		additionalParameters.put(OAuth2ParameterNames.REQUEST_URI, pushedAuthorizationRequestUri.getRequestUri());
 		OAuth2Authorization authorization = TestOAuth2Authorizations
 			.authorization(registeredClient, additionalParameters)
 			.build();
@@ -692,7 +692,7 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 		OAuth2PushedAuthorizationRequestUri pushedAuthorizationRequestUri = OAuth2PushedAuthorizationRequestUri
 			.create(Instant.now().minusSeconds(5));
 		Map<String, Object> additionalParameters = new HashMap<>();
-		additionalParameters.put("request_uri", pushedAuthorizationRequestUri.getRequestUri());
+		additionalParameters.put(OAuth2ParameterNames.REQUEST_URI, pushedAuthorizationRequestUri.getRequestUri());
 		OAuth2Authorization authorization = TestOAuth2Authorizations
 			.authorization(registeredClient, additionalParameters)
 			.build();
@@ -706,7 +706,7 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 			.isInstanceOf(OAuth2AuthorizationCodeRequestAuthenticationException.class)
 			.satisfies((ex) -> assertAuthenticationException((OAuth2AuthorizationCodeRequestAuthenticationException) ex,
-					OAuth2ErrorCodes.INVALID_REQUEST, "request_uri", null));
+					OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.REQUEST_URI, null));
 		verify(this.authorizationService).remove(eq(authorization));
 	}
 
@@ -774,7 +774,7 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 		assertThat(authorizationRequest.getAuthorizationUri()).isEqualTo(authentication.getAuthorizationUri());
 		assertThat(authorizationRequest.getClientId()).isEqualTo(registeredClient.getClientId());
 
-		String requestUri = (String) authentication.getAdditionalParameters().get("request_uri");
+		String requestUri = (String) authentication.getAdditionalParameters().get(OAuth2ParameterNames.REQUEST_URI);
 		if (!StringUtils.hasText(requestUri)) {
 			assertThat(authorizationRequest.getRedirectUri()).isEqualTo(authentication.getRedirectUri());
 			assertThat(authorizationRequest.getScopes()).isEqualTo(authentication.getScopes());

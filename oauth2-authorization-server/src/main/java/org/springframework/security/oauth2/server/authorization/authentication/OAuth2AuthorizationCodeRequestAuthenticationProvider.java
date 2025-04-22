@@ -124,22 +124,22 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 
 		OAuth2Authorization pushedAuthorization = null;
 		String requestUri = (String) authorizationCodeRequestAuthentication.getAdditionalParameters()
-			.get("request_uri");
+			.get(OAuth2ParameterNames.REQUEST_URI);
 		if (StringUtils.hasText(requestUri)) {
 			OAuth2PushedAuthorizationRequestUri pushedAuthorizationRequestUri = null;
 			try {
 				pushedAuthorizationRequestUri = OAuth2PushedAuthorizationRequestUri.parse(requestUri);
 			}
 			catch (Exception ex) {
-				throwError(OAuth2ErrorCodes.INVALID_REQUEST, "request_uri", authorizationCodeRequestAuthentication,
-						null);
+				throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.REQUEST_URI,
+						authorizationCodeRequestAuthentication, null);
 			}
 
 			pushedAuthorization = this.authorizationService.findByToken(pushedAuthorizationRequestUri.getState(),
 					STATE_TOKEN_TYPE);
 			if (pushedAuthorization == null) {
-				throwError(OAuth2ErrorCodes.INVALID_REQUEST, "request_uri", authorizationCodeRequestAuthentication,
-						null);
+				throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.REQUEST_URI,
+						authorizationCodeRequestAuthentication, null);
 			}
 
 			if (this.logger.isTraceEnabled()) {
@@ -162,8 +162,8 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 						.warn(LogMessage.format("Removed expired pushed authorization request for client id '%s'",
 								authorizationRequest.getClientId()));
 				}
-				throwError(OAuth2ErrorCodes.INVALID_REQUEST, "request_uri", authorizationCodeRequestAuthentication,
-						null);
+				throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.REQUEST_URI,
+						authorizationCodeRequestAuthentication, null);
 			}
 
 			authorizationCodeRequestAuthentication = new OAuth2AuthorizationCodeRequestAuthenticationToken(

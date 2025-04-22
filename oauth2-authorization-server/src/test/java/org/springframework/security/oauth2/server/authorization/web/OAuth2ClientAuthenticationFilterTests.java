@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2025 the original author or authors.
+ * Copyright 2020-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageConverter;
@@ -176,25 +175,26 @@ public class OAuth2ClientAuthenticationFilterTests {
 
 	// gh-889
 	@Test
-	public void doFilterWhenRequestMatchesAndClientIdContainsNonPrintableASCIIThenReturnChallenge() throws Exception {
+	public void doFilterWhenRequestMatchesAndClientIdContainsNonPrintableASCIIThenInvalidRequestError()
+			throws Exception {
 		// Hex 00 -> null
 		String clientId = new String(Hex.decode("00"), StandardCharsets.UTF_8);
-		assertWhenInvalidClientIdThenReturnChallenge(clientId);
+		assertWhenInvalidClientIdThenInvalidRequestError(clientId);
 
 		// Hex 0a61 -> line feed + a
 		clientId = new String(Hex.decode("0a61"), StandardCharsets.UTF_8);
-		assertWhenInvalidClientIdThenReturnChallenge(clientId);
+		assertWhenInvalidClientIdThenInvalidRequestError(clientId);
 
 		// Hex 1b -> escape
 		clientId = new String(Hex.decode("1b"), StandardCharsets.UTF_8);
-		assertWhenInvalidClientIdThenReturnChallenge(clientId);
+		assertWhenInvalidClientIdThenInvalidRequestError(clientId);
 
 		// Hex 1b61 -> escape + a
 		clientId = new String(Hex.decode("1b61"), StandardCharsets.UTF_8);
-		assertWhenInvalidClientIdThenReturnChallenge(clientId);
+		assertWhenInvalidClientIdThenInvalidRequestError(clientId);
 	}
 
-	private void assertWhenInvalidClientIdThenReturnChallenge(String clientId) throws Exception {
+	private void assertWhenInvalidClientIdThenInvalidRequestError(String clientId) throws Exception {
 		given(this.authenticationConverter.convert(any(HttpServletRequest.class)))
 			.willReturn(new OAuth2ClientAuthenticationToken(clientId, ClientAuthenticationMethod.CLIENT_SECRET_BASIC,
 					"secret", null));
@@ -210,12 +210,13 @@ public class OAuth2ClientAuthenticationFilterTests {
 		verifyNoInteractions(this.authenticationManager);
 
 		assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
-		assertThat(response.getStatus()).isEqualTo(HttpStatus.UNAUTHORIZED.value());
-		assertThat(response.getHeader(HttpHeaders.WWW_AUTHENTICATE)).isEqualTo("Basic realm=\"default\"");
+		assertThat(response.getStatus()).isEqualTo(HttpStatus.BAD_REQUEST.value());
+		OAuth2Error error = readError(response);
+		assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_REQUEST);
 	}
 
 	@Test
-	public void doFilterWhenRequestMatchesAndBadCredentialsThenReturnChallenge() throws Exception {
+	public void doFilterWhenRequestMatchesAndBadCredentialsThenInvalidClientError() throws Exception {
 		given(this.authenticationConverter.convert(any(HttpServletRequest.class)))
 			.willReturn(new OAuth2ClientAuthenticationToken("clientId", ClientAuthenticationMethod.CLIENT_SECRET_BASIC,
 					"invalid-secret", null));
@@ -234,7 +235,8 @@ public class OAuth2ClientAuthenticationFilterTests {
 
 		assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
 		assertThat(response.getStatus()).isEqualTo(HttpStatus.UNAUTHORIZED.value());
-		assertThat(response.getHeader(HttpHeaders.WWW_AUTHENTICATE)).isEqualTo("Basic realm=\"default\"");
+		OAuth2Error error = readError(response);
+		assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_CLIENT);
 	}
 
 	@Test

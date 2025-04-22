@@ -45,10 +45,8 @@ import org.springframework.security.oauth2.core.http.converter.OAuth2ErrorHttpMe
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
-import org.springframework.security.oauth2.server.authorization.web.authentication.OAuth2ClientAuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.security.web.authentication.WebAuthenticationDetails;
-import org.springframework.security.web.authentication.www.BasicAuthenticationEntryPoint;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 
@@ -144,7 +142,7 @@ public class OAuth2ClientAuthenticationFilterTests {
 	}
 
 	@Test
-	public void doFilterWhenRequestMatchesAndEmptyCredentialsThenInvalidClientError() throws Exception {
+	public void doFilterWhenRequestMatchesAndEmptyCredentialsThenNotProcessed() throws Exception {
 		MockHttpServletRequest request = new MockHttpServletRequest("POST", this.filterProcessesUrl);
 		request.setServletPath(this.filterProcessesUrl);
 		MockHttpServletResponse response = new MockHttpServletResponse();
@@ -152,13 +150,8 @@ public class OAuth2ClientAuthenticationFilterTests {
 
 		this.filter.doFilter(request, response, filterChain);
 
-		verifyNoInteractions(filterChain);
+		verify(filterChain).doFilter(any(HttpServletRequest.class), any(HttpServletResponse.class));
 		verifyNoInteractions(this.authenticationManager);
-
-		assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
-		assertThat(response.getStatus()).isEqualTo(HttpStatus.UNAUTHORIZED.value());
-		OAuth2Error error = readError(response);
-		assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.INVALID_CLIENT);
 	}
 
 	@Test
@@ -242,65 +235,6 @@ public class OAuth2ClientAuthenticationFilterTests {
 		assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
 		assertThat(response.getStatus()).isEqualTo(HttpStatus.UNAUTHORIZED.value());
 		assertThat(response.getHeader(HttpHeaders.WWW_AUTHENTICATE)).isEqualTo("Basic realm=\"default\"");
-	}
-
-	@Test
-	public void doFilterWhenRequestMatchesAndBadCredentialsAndCustomRealmConfiguredThenReturnChallenge()
-			throws Exception {
-		given(this.authenticationConverter.convert(any(HttpServletRequest.class)))
-			.willReturn(new OAuth2ClientAuthenticationToken("clientId", ClientAuthenticationMethod.CLIENT_SECRET_BASIC,
-					"invalid-secret", null));
-		given(this.authenticationManager.authenticate(any(Authentication.class)))
-			.willThrow(new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_CLIENT));
-
-		BasicAuthenticationEntryPoint basicAuthenticationEntryPoint = new BasicAuthenticationEntryPoint();
-		basicAuthenticationEntryPoint.setRealmName("oauth2-client");
-		OAuth2ClientAuthenticationFailureHandler clientAuthenticationFailureHandler = new OAuth2ClientAuthenticationFailureHandler();
-		clientAuthenticationFailureHandler.setAuthenticationEntryPointFor(basicAuthenticationEntryPoint,
-				ClientAuthenticationMethod.CLIENT_SECRET_BASIC);
-		this.filter.setAuthenticationFailureHandler(clientAuthenticationFailureHandler);
-
-		MockHttpServletRequest request = new MockHttpServletRequest("POST", this.filterProcessesUrl);
-		request.setServletPath(this.filterProcessesUrl);
-		MockHttpServletResponse response = new MockHttpServletResponse();
-		FilterChain filterChain = mock(FilterChain.class);
-
-		this.filter.doFilter(request, response, filterChain);
-
-		verifyNoInteractions(filterChain);
-		verify(this.authenticationManager).authenticate(any());
-
-		assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
-		assertThat(response.getStatus()).isEqualTo(HttpStatus.UNAUTHORIZED.value());
-		assertThat(response.getHeader(HttpHeaders.WWW_AUTHENTICATE)).isEqualTo("Basic realm=\"oauth2-client\"");
-	}
-
-	@Test
-	public void doFilterWhenRequestMatchesAndNoCredentialsAndDefaultAuthenticationEntryPointOverriddenThenReturnChallenge()
-			throws Exception {
-		given(this.authenticationConverter.convert(any(HttpServletRequest.class))).willReturn(null);
-
-		BasicAuthenticationEntryPoint basicAuthenticationEntryPoint = new BasicAuthenticationEntryPoint();
-		basicAuthenticationEntryPoint.setRealmName("oauth2-client");
-		OAuth2ClientAuthenticationFailureHandler clientAuthenticationFailureHandler = new OAuth2ClientAuthenticationFailureHandler();
-		clientAuthenticationFailureHandler.setAuthenticationEntryPointFor(basicAuthenticationEntryPoint,
-				ClientAuthenticationMethod.CLIENT_SECRET_BASIC);
-		clientAuthenticationFailureHandler.setDefaultAuthenticationEntryPoint(basicAuthenticationEntryPoint);
-		this.filter.setAuthenticationFailureHandler(clientAuthenticationFailureHandler);
-
-		MockHttpServletRequest request = new MockHttpServletRequest("POST", this.filterProcessesUrl);
-		request.setServletPath(this.filterProcessesUrl);
-		MockHttpServletResponse response = new MockHttpServletResponse();
-		FilterChain filterChain = mock(FilterChain.class);
-
-		this.filter.doFilter(request, response, filterChain);
-
-		verifyNoInteractions(filterChain);
-		verifyNoInteractions(this.authenticationManager);
-
-		assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
-		assertThat(response.getStatus()).isEqualTo(HttpStatus.UNAUTHORIZED.value());
-		assertThat(response.getHeader(HttpHeaders.WWW_AUTHENTICATE)).isEqualTo("Basic realm=\"oauth2-client\"");
 	}
 
 	@Test

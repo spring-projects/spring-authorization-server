@@ -30,13 +30,13 @@ jobs:
     with:
       test-args: --refresh-dependencies --stacktrace -PforceMavenRepositories=snapshot -PspringFrameworkVersion=6.2.+ -PspringSecurityVersion=6.4.+
     secrets: inherit
-#  deploy-artifacts:
-#    name: Deploy Artifacts
-#    needs: [build, test]
-#    uses: spring-io/spring-security-release-tools/.github/workflows/deploy-artifacts.yml@v1
-#    with:
-#      should-deploy-artifacts: ${{ needs.build.outputs.should-deploy-artifacts }}
-#    secrets: inherit
+  deploy-artifacts:
+    name: Deploy Artifacts
+    needs: [build, test]
+    uses: spring-io/spring-security-release-tools/.github/workflows/deploy-artifacts.yml@v1
+    with:
+      should-deploy-artifacts: ${{ needs.build.outputs.should-deploy-artifacts }}
+    secrets: inherit
   deploy-docs:
     name: Deploy Docs
     needs: [build, test]
@@ -46,11 +46,11 @@ jobs:
     secrets: inherit
   perform-release:
     name: Perform Release
-    needs: [deploy-docs]
+    needs: [deploy-artifacts, deploy-docs]
     uses: spring-io/spring-security-release-tools/.github/workflows/perform-release.yml@v1
     with:
-      should-perform-release: true
-      project-version: 1.4.3
+      should-perform-release: ${{ needs.deploy-artifacts.outputs.artifacts-deployed }}
+      project-version: ${{ needs.deploy-artifacts.outputs.project-version }}
       milestone-repo-url: https://repo.spring.io/artifactory/milestone
       release-repo-url: https://repo1.maven.org/maven2
       artifact-path: org/springframework/security/spring-security-oauth2-authorization-server

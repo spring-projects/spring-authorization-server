@@ -109,6 +109,21 @@ public final class OAuth2DeviceVerificationAuthenticationProvider implements Aut
 			this.logger.trace("Retrieved authorization with user code");
 		}
 
+		OAuth2Authorization.Token<OAuth2UserCode> userCode = authorization.getToken(OAuth2UserCode.class);
+		if (userCode.isInvalidated()) {
+			if (this.logger.isTraceEnabled()) {
+				this.logger.trace("User code is invalided");
+			}
+			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_GRANT);
+		}
+
+		if (userCode.isExpired()) {
+			if (this.logger.isTraceEnabled()) {
+				this.logger.trace("User code is expired");
+			}
+			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_GRANT);
+		}
+
 		Authentication principal = (Authentication) deviceVerificationAuthentication.getPrincipal();
 		if (!isPrincipalAuthenticated(principal)) {
 			if (this.logger.isTraceEnabled()) {
@@ -161,7 +176,6 @@ public final class OAuth2DeviceVerificationAuthenticationProvider implements Aut
 					requestedScopes, currentAuthorizedScopes);
 		}
 
-		OAuth2Authorization.Token<OAuth2UserCode> userCode = authorization.getToken(OAuth2UserCode.class);
 		// @formatter:off
 		authorization = OAuth2Authorization.from(authorization)
 				.principalName(principal.getName())

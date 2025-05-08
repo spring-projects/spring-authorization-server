@@ -15,6 +15,7 @@
  */
 package org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers;
 
+import java.time.Clock;
 import java.util.Map;
 
 import com.nimbusds.jose.jwk.source.JWKSource;
@@ -127,7 +128,7 @@ final class OAuth2ConfigurerUtils {
 		if (jwtGenerator == null) {
 			JwtEncoder jwtEncoder = getJwtEncoder(httpSecurity);
 			if (jwtEncoder != null) {
-				jwtGenerator = new JwtGenerator(jwtEncoder);
+				jwtGenerator = new JwtGenerator(jwtEncoder, Clock.systemUTC());
 				jwtGenerator.setJwtCustomizer(getJwtCustomizer(httpSecurity));
 				httpSecurity.setSharedObject(JwtGenerator.class, jwtGenerator);
 			}

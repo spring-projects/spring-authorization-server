@@ -19,6 +19,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
+import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -133,6 +134,7 @@ public class OAuth2AuthorizationCodeAuthenticationProviderTests {
 		this.jwtEncoder = mock(JwtEncoder.class);
 		this.jwtCustomizer = mock(OAuth2TokenCustomizer.class);
 		JwtGenerator jwtGenerator = new JwtGenerator(this.jwtEncoder);
+		jwtGenerator.setClock(Clock.systemUTC());
 		jwtGenerator.setJwtCustomizer(this.jwtCustomizer);
 		this.accessTokenCustomizer = mock(OAuth2TokenCustomizer.class);
 		OAuth2AccessTokenGenerator accessTokenGenerator = new OAuth2AccessTokenGenerator();

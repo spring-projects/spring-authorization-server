@@ -15,6 +15,7 @@
  */
 package org.springframework.security.oauth2.server.authorization.token;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.Collections;
@@ -52,6 +53,7 @@ public final class OAuth2AccessTokenGenerator implements OAuth2TokenGenerator<OA
 
 	private final StringKeyGenerator accessTokenGenerator = new Base64StringKeyGenerator(
 			Base64.getUrlEncoder().withoutPadding(), 96);
+	private Clock clock = Clock.systemUTC();
 
 	private OAuth2TokenCustomizer<OAuth2TokenClaimsContext> accessTokenCustomizer;
 
@@ -71,7 +73,7 @@ public final class OAuth2AccessTokenGenerator implements OAuth2TokenGenerator<OA
 		}
 		RegisteredClient registeredClient = context.getRegisteredClient();
 
-		Instant issuedAt = Instant.now();
+		Instant issuedAt = clock.instant();
 		Instant expiresAt = issuedAt.plus(registeredClient.getTokenSettings().getAccessTokenTimeToLive());
 
 		// @formatter:off
@@ -154,6 +156,21 @@ public final class OAuth2AccessTokenGenerator implements OAuth2TokenGenerator<OA
 			return this.claims;
 		}
 
+	}
+
+	/**
+	 * Sets the {@link Clock} to be used by this component.
+	 * <p>
+	 * The provided clock must not be {@code null}.
+	 * This allows injecting a custom clock for testing or
+	 * adjusting time-related behavior.
+	 *
+	 * @param clock the {@link Clock} instance to set, must not be {@code null}
+	 * @throws IllegalArgumentException if {@code clock} is {@code null}
+	 */
+	public void setClock(Clock clock) {
+		Assert.notNull(clock, "Clock must not be null");
+		this.clock = clock;
 	}
 
 }

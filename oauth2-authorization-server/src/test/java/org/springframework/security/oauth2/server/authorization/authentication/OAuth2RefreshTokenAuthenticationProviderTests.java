@@ -16,6 +16,7 @@
 package org.springframework.security.oauth2.server.authorization.authentication;
 
 import java.security.Principal;
+import java.time.Clock;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
@@ -120,6 +121,7 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 		given(this.jwtEncoder.encode(any())).willReturn(createJwt(Collections.singleton("scope1")));
 		this.jwtCustomizer = mock(OAuth2TokenCustomizer.class);
 		JwtGenerator jwtGenerator = new JwtGenerator(this.jwtEncoder);
+		jwtGenerator.setClock(Clock.systemUTC());
 		jwtGenerator.setJwtCustomizer(this.jwtCustomizer);
 		this.accessTokenCustomizer = mock(OAuth2TokenCustomizer.class);
 		OAuth2AccessTokenGenerator accessTokenGenerator = new OAuth2AccessTokenGenerator();

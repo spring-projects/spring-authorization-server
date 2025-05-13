@@ -1011,6 +1011,8 @@ public class OAuth2AuthorizationCodeGrantTests {
 		@SuppressWarnings("unchecked")
 		Map<String, Object> cnfClaims = (Map<String, Object>) authorization.getAccessToken().getClaims().get("cnf");
 		assertThat(cnfClaims).containsKey("jkt");
+		String jwkThumbprintClaim = (String) cnfClaims.get("jkt");
+		assertThat(jwkThumbprintClaim).isEqualTo(TestJwks.DEFAULT_EC_JWK.toPublicJWK().computeThumbprint().toString());
 	}
 
 	@Test

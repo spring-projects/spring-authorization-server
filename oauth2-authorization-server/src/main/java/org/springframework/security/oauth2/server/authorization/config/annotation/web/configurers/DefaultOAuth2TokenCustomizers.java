@@ -16,7 +16,6 @@
 package org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers;
 
 import java.security.MessageDigest;
-import java.security.PublicKey;
 import java.security.cert.X509Certificate;
 import java.util.Base64;
 import java.util.Collections;
@@ -24,7 +23,6 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import com.nimbusds.jose.jwk.AsymmetricJWK;
 import com.nimbusds.jose.jwk.JWK;
 
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
@@ -91,25 +89,22 @@ final class DefaultOAuth2TokenCustomizers {
 		// Add 'cnf' claim for OAuth 2.0 Demonstrating Proof of Possession (DPoP)
 		Jwt dPoPProofJwt = tokenContext.get(OAuth2TokenContext.DPOP_PROOF_KEY);
 		if (OAuth2TokenType.ACCESS_TOKEN.equals(tokenContext.getTokenType()) && dPoPProofJwt != null) {
-			PublicKey publicKey = null;
+			JWK jwk = null;
 			@SuppressWarnings("unchecked")
 			Map<String, Object> jwkJson = (Map<String, Object>) dPoPProofJwt.getHeaders().get("jwk");
 			try {
-				JWK jwk = JWK.parse(jwkJson);
-				if (jwk instanceof AsymmetricJWK asymmetricJWK) {
-					publicKey = asymmetricJWK.toPublicKey();
-				}
+				jwk = JWK.parse(jwkJson);
 			}
 			catch (Exception ignored) {
 			}
-			if (publicKey == null) {
+			if (jwk == null) {
 				OAuth2Error error = new OAuth2Error(OAuth2ErrorCodes.INVALID_DPOP_PROOF,
 						"jwk header is missing or invalid.", null);
 				throw new OAuth2AuthenticationException(error);
 			}
 
 			try {
-				String sha256Thumbprint = computeSHA256Thumbprint(publicKey);
+				String sha256Thumbprint = jwk.computeThumbprint().toString();
 				if (cnfClaims == null) {
 					cnfClaims = new HashMap<>();
 				}
@@ -146,12 +141,6 @@ final class DefaultOAuth2TokenCustomizers {
 	private static String computeSHA256Thumbprint(X509Certificate x509Certificate) throws Exception {
 		MessageDigest md = MessageDigest.getInstance("SHA-256");
 		byte[] digest = md.digest(x509Certificate.getEncoded());
-		return Base64.getUrlEncoder().withoutPadding().encodeToString(digest);
-	}
-
-	private static String computeSHA256Thumbprint(PublicKey publicKey) throws Exception {
-		MessageDigest md = MessageDigest.getInstance("SHA-256");
-		byte[] digest = md.digest(publicKey.getEncoded());
 		return Base64.getUrlEncoder().withoutPadding().encodeToString(digest);
 	}
 

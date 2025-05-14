@@ -295,9 +295,8 @@ public class OAuth2RefreshTokenGrantTests {
 		OAuth2AccessToken accessToken = new OAuth2AccessToken(OAuth2AccessToken.TokenType.DPOP,
 				"dpop-bound-access-token", Instant.now(), Instant.now().plusSeconds(300));
 		Map<String, Object> accessTokenClaims = new HashMap<>();
-		PublicKey publicKey = TestJwks.DEFAULT_EC_JWK.toPublicKey();
 		Map<String, Object> cnfClaim = new HashMap<>();
-		cnfClaim.put("jkt", computeSHA256(publicKey));
+		cnfClaim.put("jkt", TestJwks.DEFAULT_EC_JWK.toPublicJWK().computeThumbprint().toString());
 		accessTokenClaims.put("cnf", cnfClaim);
 		OAuth2Authorization authorization = TestOAuth2Authorizations
 			.authorization(registeredClient, accessToken, accessTokenClaims)

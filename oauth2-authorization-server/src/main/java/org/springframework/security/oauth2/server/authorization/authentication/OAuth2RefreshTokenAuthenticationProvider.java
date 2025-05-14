@@ -15,16 +15,12 @@
  */
 package org.springframework.security.oauth2.server.authorization.authentication;
 
-import java.security.MessageDigest;
 import java.security.Principal;
-import java.security.PublicKey;
-import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import com.nimbusds.jose.jwk.AsymmetricJWK;
 import com.nimbusds.jose.jwk.JWK;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -292,18 +288,15 @@ public final class OAuth2RefreshTokenAuthenticationProvider implements Authentic
 	}
 
 	private static void verifyDPoPProofPublicKey(Jwt dPoPProof, ClaimAccessor accessTokenClaims) {
-		PublicKey publicKey = null;
+		JWK jwk = null;
 		@SuppressWarnings("unchecked")
 		Map<String, Object> jwkJson = (Map<String, Object>) dPoPProof.getHeaders().get("jwk");
 		try {
-			JWK jwk = JWK.parse(jwkJson);
-			if (jwk instanceof AsymmetricJWK) {
-				publicKey = ((AsymmetricJWK) jwk).toPublicKey();
-			}
+			jwk = JWK.parse(jwkJson);
 		}
 		catch (Exception ignored) {
 		}
-		if (publicKey == null) {
+		if (jwk == null) {
 			OAuth2Error error = new OAuth2Error(OAuth2ErrorCodes.INVALID_DPOP_PROOF,
 					"jwk header is missing or invalid.", null);
 			throw new OAuth2AuthenticationException(error);
@@ -311,7 +304,7 @@ public final class OAuth2RefreshTokenAuthenticationProvider implements Authentic
 
 		String jwkThumbprint;
 		try {
-			jwkThumbprint = computeSHA256(publicKey);
+			jwkThumbprint = jwk.computeThumbprint().toString();
 		}
 		catch (Exception ex) {
 			OAuth2Error error = new OAuth2Error(OAuth2ErrorCodes.INVALID_DPOP_PROOF,
@@ -333,12 +326,6 @@ public final class OAuth2RefreshTokenAuthenticationProvider implements Authentic
 			OAuth2Error error = new OAuth2Error(OAuth2ErrorCodes.INVALID_DPOP_PROOF, "jwk header is invalid.", null);
 			throw new OAuth2AuthenticationException(error);
 		}
-	}
-
-	private static String computeSHA256(PublicKey publicKey) throws Exception {
-		MessageDigest md = MessageDigest.getInstance("SHA-256");
-		byte[] digest = md.digest(publicKey.getEncoded());
-		return Base64.getUrlEncoder().withoutPadding().encodeToString(digest);
 	}
 
 }

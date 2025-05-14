@@ -26,8 +26,13 @@ import org.springframework.security.oauth2.jwt.JwtDecoderFactory;
 import org.springframework.util.StringUtils;
 
 /**
+ * A verifier for DPoP Proof {@link Jwt}'s.
+ *
  * @author Joe Grandja
  * @since 1.5
+ * @see DPoPProofJwtDecoderFactory
+ * @see <a target="_blank" href="https://datatracker.ietf.org/doc/html/rfc9449">RFC 9449
+ * OAuth 2.0 Demonstrating Proof of Possession (DPoP)</a>
  */
 final class DPoPProofVerifier {
 

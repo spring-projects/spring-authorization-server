@@ -58,6 +58,12 @@ Spring Authorization Server supports the following features:
 * JSON Web Token (JWT) (https://tools.ietf.org/html/rfc7519[RFC 7519])
 * JSON Web Signature (JWS) (https://tools.ietf.org/html/rfc7515[RFC 7515])
 
+|Token Types
+|
+* xref:protocol-endpoints.adoc#oauth2-token-endpoint-dpop-bound-access-tokens[DPoP-bound Access Tokens]
+|
+* OAuth 2.0 Demonstrating Proof of Possession (DPoP) (https://datatracker.ietf.org/doc/html/rfc9449[RFC 9449])
+
 |xref:configuration-model.adoc#configuring-client-authentication[Client Authentication]
 |
 * `client_secret_basic`

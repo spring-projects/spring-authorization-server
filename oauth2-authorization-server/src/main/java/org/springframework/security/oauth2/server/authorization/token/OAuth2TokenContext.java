@@ -45,6 +45,7 @@ import org.springframework.util.Assert;
 public interface OAuth2TokenContext extends Context {
 
 	/**
+	 * The key used for the DPoP Proof {@link Jwt} (if available).
 	 * @since 1.5
 	 */
 	String DPOP_PROOF_KEY = Jwt.class.getName().concat(".DPOP_PROOF");

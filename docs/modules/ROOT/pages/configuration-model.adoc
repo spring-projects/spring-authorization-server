@@ -118,17 +118,18 @@ public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity h
 				.tokenGenerator(tokenGenerator)	<5>
 				.clientAuthentication(clientAuthentication -> { })	<6>
 				.authorizationEndpoint(authorizationEndpoint -> { })	<7>
-				.deviceAuthorizationEndpoint(deviceAuthorizationEndpoint -> { })	<8>
-				.deviceVerificationEndpoint(deviceVerificationEndpoint -> { })	<9>
-				.tokenEndpoint(tokenEndpoint -> { })	<10>
-				.tokenIntrospectionEndpoint(tokenIntrospectionEndpoint -> { })	<11>
-				.tokenRevocationEndpoint(tokenRevocationEndpoint -> { })	<12>
-				.authorizationServerMetadataEndpoint(authorizationServerMetadataEndpoint -> { })	<13>
+				.pushedAuthorizationRequestEndpoint(pushedAuthorizationRequestEndpoint -> { })  <8>
+				.deviceAuthorizationEndpoint(deviceAuthorizationEndpoint -> { })	<9>
+				.deviceVerificationEndpoint(deviceVerificationEndpoint -> { })	<10>
+				.tokenEndpoint(tokenEndpoint -> { })	<11>
+				.tokenIntrospectionEndpoint(tokenIntrospectionEndpoint -> { })	<12>
+				.tokenRevocationEndpoint(tokenRevocationEndpoint -> { })	<13>
+				.authorizationServerMetadataEndpoint(authorizationServerMetadataEndpoint -> { })	<14>
 				.oidc(oidc -> oidc
-					.providerConfigurationEndpoint(providerConfigurationEndpoint -> { })	<14>
-					.logoutEndpoint(logoutEndpoint -> { })	<15>
-					.userInfoEndpoint(userInfoEndpoint -> { })	<16>
-					.clientRegistrationEndpoint(clientRegistrationEndpoint -> { })	<17>
+					.providerConfigurationEndpoint(providerConfigurationEndpoint -> { })	<15>
+					.logoutEndpoint(logoutEndpoint -> { })	<16>
+					.userInfoEndpoint(userInfoEndpoint -> { })	<17>
+					.clientRegistrationEndpoint(clientRegistrationEndpoint -> { })	<18>
 				)
 		);
 
@@ -142,16 +143,17 @@ public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity h
 <5> `tokenGenerator()`: The xref:core-model-components.adoc#oauth2-token-generator[`OAuth2TokenGenerator`] for generating tokens supported by the OAuth2 authorization server.
 <6> `clientAuthentication()`: The configurer for xref:configuration-model.adoc#configuring-client-authentication[OAuth2 Client Authentication].
 <7> `authorizationEndpoint()`: The configurer for the xref:protocol-endpoints.adoc#oauth2-authorization-endpoint[OAuth2 Authorization endpoint].
-<8> `deviceAuthorizationEndpoint()`: The configurer for the xref:protocol-endpoints.adoc#oauth2-device-authorization-endpoint[OAuth2 Device Authorization endpoint].
-<9> `deviceVerificationEndpoint()`: The configurer for the xref:protocol-endpoints.adoc#oauth2-device-verification-endpoint[OAuth2 Device Verification endpoint].
-<10> `tokenEndpoint()`: The configurer for the xref:protocol-endpoints.adoc#oauth2-token-endpoint[OAuth2 Token endpoint].
-<11> `tokenIntrospectionEndpoint()`: The configurer for the xref:protocol-endpoints.adoc#oauth2-token-introspection-endpoint[OAuth2 Token Introspection endpoint].
-<12> `tokenRevocationEndpoint()`: The configurer for the xref:protocol-endpoints.adoc#oauth2-token-revocation-endpoint[OAuth2 Token Revocation endpoint].
-<13> `authorizationServerMetadataEndpoint()`: The configurer for the xref:protocol-endpoints.adoc#oauth2-authorization-server-metadata-endpoint[OAuth2 Authorization Server Metadata endpoint].
-<14> `providerConfigurationEndpoint()`: The configurer for the xref:protocol-endpoints.adoc#oidc-provider-configuration-endpoint[OpenID Connect 1.0 Provider Configuration endpoint].
-<15> `logoutEndpoint()`: The configurer for the xref:protocol-endpoints.adoc#oidc-logout-endpoint[OpenID Connect 1.0 Logout endpoint].
-<16> `userInfoEndpoint()`: The configurer for the xref:protocol-endpoints.adoc#oidc-user-info-endpoint[OpenID Connect 1.0 UserInfo endpoint].
-<17> `clientRegistrationEndpoint()`: The configurer for the xref:protocol-endpoints.adoc#oidc-client-registration-endpoint[OpenID Connect 1.0 Client Registration endpoint].
+<8> `pushedAuthorizationRequestEndpoint()`: The configurer for the xref:protocol-endpoints.adoc#oauth2-pushed-authorization-request-endpoint[OAuth2 Pushed Authorization Request endpoint].
+<9> `deviceAuthorizationEndpoint()`: The configurer for the xref:protocol-endpoints.adoc#oauth2-device-authorization-endpoint[OAuth2 Device Authorization endpoint].
+<10> `deviceVerificationEndpoint()`: The configurer for the xref:protocol-endpoints.adoc#oauth2-device-verification-endpoint[OAuth2 Device Verification endpoint].
+<11> `tokenEndpoint()`: The configurer for the xref:protocol-endpoints.adoc#oauth2-token-endpoint[OAuth2 Token endpoint].
+<12> `tokenIntrospectionEndpoint()`: The configurer for the xref:protocol-endpoints.adoc#oauth2-token-introspection-endpoint[OAuth2 Token Introspection endpoint].
+<13> `tokenRevocationEndpoint()`: The configurer for the xref:protocol-endpoints.adoc#oauth2-token-revocation-endpoint[OAuth2 Token Revocation endpoint].
+<14> `authorizationServerMetadataEndpoint()`: The configurer for the xref:protocol-endpoints.adoc#oauth2-authorization-server-metadata-endpoint[OAuth2 Authorization Server Metadata endpoint].
+<15> `providerConfigurationEndpoint()`: The configurer for the xref:protocol-endpoints.adoc#oidc-provider-configuration-endpoint[OpenID Connect 1.0 Provider Configuration endpoint].
+<16> `logoutEndpoint()`: The configurer for the xref:protocol-endpoints.adoc#oidc-logout-endpoint[OpenID Connect 1.0 Logout endpoint].
+<17> `userInfoEndpoint()`: The configurer for the xref:protocol-endpoints.adoc#oidc-user-info-endpoint[OpenID Connect 1.0 UserInfo endpoint].
+<18> `clientRegistrationEndpoint()`: The configurer for the xref:protocol-endpoints.adoc#oidc-client-registration-endpoint[OpenID Connect 1.0 Client Registration endpoint].
 
 [[configuring-authorization-server-settings]]
 == Configuring Authorization Server Settings
@@ -169,6 +171,7 @@ public final class AuthorizationServerSettings extends AbstractSettings {
 	public static Builder builder() {
 		return new Builder()
 			.authorizationEndpoint("/oauth2/authorize")
+			.pushedAuthorizationRequestEndpoint("/oauth2/par")
 			.deviceAuthorizationEndpoint("/oauth2/device_authorization")
 			.deviceVerificationEndpoint("/oauth2/device_verification")
 			.tokenEndpoint("/oauth2/token")
@@ -200,6 +203,7 @@ public AuthorizationServerSettings authorizationServerSettings() {
 	return AuthorizationServerSettings.builder()
 		.issuer("https://example.com")
 		.authorizationEndpoint("/oauth2/v1/authorize")
+		.pushedAuthorizationRequestEndpoint("/oauth2/v1/par")
 		.deviceAuthorizationEndpoint("/oauth2/v1/device_authorization")
 		.deviceVerificationEndpoint("/oauth2/v1/device_verification")
 		.tokenEndpoint("/oauth2/v1/token")

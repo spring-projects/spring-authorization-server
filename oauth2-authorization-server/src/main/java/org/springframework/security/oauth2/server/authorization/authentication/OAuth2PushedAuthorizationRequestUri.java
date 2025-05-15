@@ -22,6 +22,9 @@ import org.springframework.security.crypto.keygen.Base64StringKeyGenerator;
 import org.springframework.security.crypto.keygen.StringKeyGenerator;
 
 /**
+ * A representation of a {@code request_uri} used in OAuth 2.0 Pushed Authorization
+ * Requests.
+ *
  * @author Joe Grandja
  * @since 1.5
  */

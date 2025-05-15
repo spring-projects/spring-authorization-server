@@ -126,6 +126,129 @@ static class CustomRedirectUriValidator implements Consumer<OAuth2AuthorizationC
 }
 ----
 
+[[oauth2-pushed-authorization-request-endpoint]]
+== OAuth2 Pushed Authorization Request Endpoint
+
+`OAuth2PushedAuthorizationRequestEndpointConfigurer` provides the ability to customize the https://datatracker.ietf.org/doc/html/rfc9126#section-2[OAuth2 Pushed Authorization Request endpoint].
+It defines extension points that let you customize the pre-processing, main processing, and post-processing logic for https://datatracker.ietf.org/doc/html/rfc9126#section-2.1[OAuth2 Pushed Authorization requests].
+
+`OAuth2PushedAuthorizationRequestEndpointConfigurer` provides the following configuration options:
+
+[source,java]
+----
+@Bean
+public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
+	OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
+			OAuth2AuthorizationServerConfigurer.authorizationServer();
+
+	http
+		.securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
+		.with(authorizationServerConfigurer, (authorizationServer) ->
+			authorizationServer
+				.pushedAuthorizationRequestEndpoint(pushedAuthorizationRequestEndpoint ->
+					pushedAuthorizationRequestEndpoint
+        				.pushedAuthorizationRequestConverter(pushedAuthorizationRequestConverter)   <1>
+                        .pushedAuthorizationRequestConverters(pushedAuthorizationRequestConvertersConsumer) <2>
+                        .authenticationProvider(authenticationProvider) <3>
+                        .authenticationProviders(authenticationProvidersConsumer)   <4>
+                        .pushedAuthorizationResponseHandler(pushedAuthorizationResponseHandler) <5>
+                        .errorResponseHandler(errorResponseHandler) <6>
+				)
+		);
+
+	return http.build();
+}
+----
+<1> `pushedAuthorizationRequestConverter()`: Adds an `AuthenticationConverter` (_pre-processor_) used when attempting to extract an https://datatracker.ietf.org/doc/html/rfc9126#section-2.1[OAuth2 pushed authorization request] from `HttpServletRequest` to an instance of `OAuth2PushedAuthorizationRequestAuthenticationToken`.
+<2> `pushedAuthorizationRequestConverters()`: Sets the `Consumer` providing access to the `List` of default and (optionally) added ``AuthenticationConverter``'s allowing the ability to add, remove, or customize a specific `AuthenticationConverter`.
+<3> `authenticationProvider()`: Adds an `AuthenticationProvider` (_main processor_) used for authenticating the `OAuth2PushedAuthorizationRequestAuthenticationToken`.
+<4> `authenticationProviders()`: Sets the `Consumer` providing access to the `List` of default and (optionally) added ``AuthenticationProvider``'s allowing the ability to add, remove, or customize a specific `AuthenticationProvider`.
+<5> `pushedAuthorizationResponseHandler()`: The `AuthenticationSuccessHandler` (_post-processor_) used for handling an "`authenticated`" `OAuth2PushedAuthorizationRequestAuthenticationToken` and returning the https://datatracker.ietf.org/doc/html/rfc9126#section-2.2[OAuth2 pushed authorization response].
+<6> `errorResponseHandler()`: The `AuthenticationFailureHandler` (_post-processor_) used for handling an `OAuth2AuthenticationException` and returning the https://datatracker.ietf.org/doc/html/rfc9126#section-2.3[OAuth2Error response].
+
+`OAuth2PushedAuthorizationRequestEndpointConfigurer` configures the `OAuth2PushedAuthorizationRequestEndpointFilter` and registers it with the OAuth2 authorization server `SecurityFilterChain` `@Bean`.
+`OAuth2PushedAuthorizationRequestEndpointFilter` is the `Filter` that processes OAuth2 pushed authorization requests.
+
+`OAuth2PushedAuthorizationRequestEndpointFilter` is configured with the following defaults:
+
+* `*AuthenticationConverter*` -- A `DelegatingAuthenticationConverter` composed of `OAuth2AuthorizationCodeRequestAuthenticationConverter`.
+* `*AuthenticationManager*` -- An `AuthenticationManager` composed of `OAuth2PushedAuthorizationRequestAuthenticationProvider`.
+* `*AuthenticationSuccessHandler*` -- An internal implementation that handles an "`authenticated`" `OAuth2PushedAuthorizationRequestAuthenticationToken` and returns the OAuth2 pushed authorization response.
+* `*AuthenticationFailureHandler*` -- An `OAuth2ErrorAuthenticationFailureHandler`.
+
+[[oauth2-pushed-authorization-request-endpoint-customizing-authorization-request-validation]]
+=== Customizing Pushed Authorization Request Validation
+
+`OAuth2AuthorizationCodeRequestAuthenticationValidator` is the default validator used for validating specific OAuth2 pushed authorization request parameters used in the Authorization Code Grant.
+The default implementation validates the `redirect_uri` and `scope` parameters.
+If validation fails, an `OAuth2AuthorizationCodeRequestAuthenticationException` is thrown.
+
+`OAuth2PushedAuthorizationRequestAuthenticationProvider` provides the ability to override the default pushed authorization request validation by supplying a custom authentication validator of type `Consumer<OAuth2AuthorizationCodeRequestAuthenticationContext>` to `setAuthenticationValidator()`.
+
+[TIP]
+`OAuth2AuthorizationCodeRequestAuthenticationContext` holds the `OAuth2AuthorizationCodeRequestAuthenticationToken`, which contains the OAuth2 pushed authorization request parameters.
+
+[IMPORTANT]
+If validation fails, the authentication validator *MUST* throw `OAuth2AuthorizationCodeRequestAuthenticationException`.
+
+A common use case during the development life cycle phase is to allow for `localhost` in the `redirect_uri` parameter.
+
+The following example shows how to configure `OAuth2PushedAuthorizationRequestAuthenticationProvider` with a custom authentication validator that allows for `localhost` in the `redirect_uri` parameter:
+
+[source,java]
+----
+@Bean
+public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
+	OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
+			OAuth2AuthorizationServerConfigurer.authorizationServer();
+
+	http
+		.securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
+		.with(authorizationServerConfigurer, (authorizationServer) ->
+			authorizationServer
+				.pushedAuthorizationRequestEndpoint(pushedAuthorizationRequestEndpoint ->
+					pushedAuthorizationRequestEndpoint
+                        .authenticationProviders(configureAuthenticationValidator())
+				)
+		);
+
+	return http.build();
+}
+
+private Consumer<List<AuthenticationProvider>> configureAuthenticationValidator() {
+	return (authenticationProviders) ->
+		authenticationProviders.forEach((authenticationProvider) -> {
+			if (authenticationProvider instanceof OAuth2PushedAuthorizationRequestAuthenticationProvider) {
+				Consumer<OAuth2AuthorizationCodeRequestAuthenticationContext> authenticationValidator =
+					// Override default redirect_uri validator
+					new CustomRedirectUriValidator()
+						// Reuse default scope validator
+						.andThen(OAuth2AuthorizationCodeRequestAuthenticationValidator.DEFAULT_SCOPE_VALIDATOR);
+
+				((OAuth2PushedAuthorizationRequestAuthenticationProvider) authenticationProvider)
+					.setAuthenticationValidator(authenticationValidator);
+			}
+		});
+}
+
+static class CustomRedirectUriValidator implements Consumer<OAuth2AuthorizationCodeRequestAuthenticationContext> {
+
+	@Override
+	public void accept(OAuth2AuthorizationCodeRequestAuthenticationContext authenticationContext) {
+		OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthentication =
+			authenticationContext.getAuthentication();
+		RegisteredClient registeredClient = authenticationContext.getRegisteredClient();
+		String requestedRedirectUri = authorizationCodeRequestAuthentication.getRedirectUri();
+
+		// Use exact string matching when comparing client redirect URIs against pre-registered URIs
+		if (!registeredClient.getRedirectUris().contains(requestedRedirectUri)) {
+			OAuth2Error error = new OAuth2Error(OAuth2ErrorCodes.INVALID_REQUEST);
+			throw new OAuth2AuthorizationCodeRequestAuthenticationException(error, null);
+		}
+	}
+}
+----
+
 [[oauth2-device-authorization-endpoint]]
 == OAuth2 Device Authorization Endpoint
 

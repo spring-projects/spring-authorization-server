@@ -82,6 +82,7 @@ Spring Authorization Server supports the following features:
 |xref:protocol-endpoints.adoc[Protocol Endpoints]
 |
 * xref:protocol-endpoints.adoc#oauth2-authorization-endpoint[OAuth2 Authorization Endpoint]
+* xref:protocol-endpoints.adoc#oauth2-pushed-authorization-request-endpoint[OAuth2 Pushed Authorization Request Endpoint]
 * xref:protocol-endpoints.adoc#oauth2-device-authorization-endpoint[OAuth2 Device Authorization Endpoint]
 * xref:protocol-endpoints.adoc#oauth2-device-verification-endpoint[OAuth2 Device Verification Endpoint]
 * xref:protocol-endpoints.adoc#oauth2-token-endpoint[OAuth2 Token Endpoint]
@@ -97,6 +98,8 @@ Spring Authorization Server supports the following features:
 * The OAuth 2.1 Authorization Framework (https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-07[draft])
 ** https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-07#section-3.1[Authorization Endpoint]
 ** https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-07#section-3.2[Token Endpoint]
+* OAuth 2.0 Pushed Authorization Requests (https://datatracker.ietf.org/doc/html/rfc9126[RFC 9126])
+** https://datatracker.ietf.org/doc/html/rfc9126#section-2[Pushed Authorization Request Endpoint]
 * OAuth 2.0 Device Authorization Grant (https://tools.ietf.org/html/rfc8628[RFC 8628])
 ** https://tools.ietf.org/html/rfc8628#section-3.1[Device Authorization Endpoint]
 ** https://tools.ietf.org/html/rfc8628#section-3.3[Device Verification Endpoint]

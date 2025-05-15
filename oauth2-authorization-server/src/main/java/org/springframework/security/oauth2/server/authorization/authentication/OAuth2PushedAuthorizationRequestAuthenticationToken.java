@@ -63,9 +63,10 @@ public class OAuth2PushedAuthorizationRequestAuthenticationToken
 	 * @param authorizationUri the authorization URI
 	 * @param clientId the client identifier
 	 * @param principal the authenticated client principal
-	 * @param requestUri the request URI corresponding to the authorization request posted
+	 * @param requestUri the {@code request_uri} corresponding to the authorization
+	 * request posted
 	 * @param requestUriExpiresAt the expiration time on or after which the
-	 * {@code requestUri} MUST NOT be accepted
+	 * {@code request_uri} MUST NOT be accepted
 	 * @param redirectUri the redirect uri
 	 * @param state the state
 	 * @param scopes the authorized scope(s)
@@ -81,11 +82,21 @@ public class OAuth2PushedAuthorizationRequestAuthenticationToken
 		setAuthenticated(true);
 	}
 
+	/**
+	 * Returns the {@code request_uri} corresponding to the authorization request posted.
+	 * @return the {@code request_uri} corresponding to the authorization request posted
+	 */
 	@Nullable
 	public String getRequestUri() {
 		return this.requestUri;
 	}
 
+	/**
+	 * Returns the expiration time on or after which the {@code request_uri} MUST NOT be
+	 * accepted.
+	 * @return the expiration time on or after which the {@code request_uri} MUST NOT be
+	 * accepted
+	 */
 	@Nullable
 	public Instant getRequestUriExpiresAt() {
 		return this.requestUriExpiresAt;

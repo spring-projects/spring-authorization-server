@@ -15,6 +15,7 @@
  */
 package org.springframework.security.oauth2.server.authorization.token;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
@@ -61,6 +62,7 @@ import org.springframework.util.StringUtils;
 public final class JwtGenerator implements OAuth2TokenGenerator<Jwt> {
 
 	private final JwtEncoder jwtEncoder;
+	private final Clock clock;
 
 	private OAuth2TokenCustomizer<JwtEncodingContext> jwtCustomizer;
 
@@ -68,9 +70,11 @@ public final class JwtGenerator implements OAuth2TokenGenerator<Jwt> {
 	 * Constructs a {@code JwtGenerator} using the provided parameters.
 	 * @param jwtEncoder the jwt encoder
 	 */
-	public JwtGenerator(JwtEncoder jwtEncoder) {
+	public JwtGenerator(JwtEncoder jwtEncoder, Clock clock) {
 		Assert.notNull(jwtEncoder, "jwtEncoder cannot be null");
+		Assert.notNull(clock, "clock cannot be null");
 		this.jwtEncoder = jwtEncoder;
+		this.clock = clock;
 	}
 
 	@Nullable
@@ -94,7 +98,7 @@ public final class JwtGenerator implements OAuth2TokenGenerator<Jwt> {
 		}
 		RegisteredClient registeredClient = context.getRegisteredClient();
 
-		Instant issuedAt = Instant.now();
+		Instant issuedAt = clock.instant();
 		Instant expiresAt;
 		JwsAlgorithm jwsAlgorithm = SignatureAlgorithm.RS256;
 		if (OidcParameterNames.ID_TOKEN.equals(context.getTokenType().getValue())) {

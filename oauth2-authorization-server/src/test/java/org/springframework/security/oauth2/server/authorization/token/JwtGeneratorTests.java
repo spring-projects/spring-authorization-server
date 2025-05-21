@@ -16,6 +16,7 @@
 package org.springframework.security.oauth2.server.authorization.token;
 
 import java.security.Principal;
+import java.time.Clock;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
@@ -82,7 +83,7 @@ public class JwtGeneratorTests {
 	public void setUp() {
 		this.jwtEncoder = mock(JwtEncoder.class);
 		this.jwtCustomizer = mock(OAuth2TokenCustomizer.class);
-		this.jwtGenerator = new JwtGenerator(this.jwtEncoder);
+		this.jwtGenerator = new JwtGenerator(this.jwtEncoder, Clock.systemUTC());
 		this.jwtGenerator.setJwtCustomizer(this.jwtCustomizer);
 		AuthorizationServerSettings authorizationServerSettings = AuthorizationServerSettings.builder()
 			.issuer("https://provider.com")
@@ -92,8 +93,14 @@ public class JwtGeneratorTests {
 
 	@Test
 	public void constructorWhenJwtEncoderNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> new JwtGenerator(null)).isInstanceOf(IllegalArgumentException.class)
+		assertThatThrownBy(() -> new JwtGenerator(null, Clock.systemUTC())).isInstanceOf(IllegalArgumentException.class)
 			.hasMessage("jwtEncoder cannot be null");
+	}
+
+	@Test
+	public void constructorWhenClockNullThenThrowIllegalArgumentException() {
+		assertThatThrownBy(() -> new JwtGenerator(this.jwtEncoder, null)).isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("clock cannot be null");
 	}
 
 	@Test

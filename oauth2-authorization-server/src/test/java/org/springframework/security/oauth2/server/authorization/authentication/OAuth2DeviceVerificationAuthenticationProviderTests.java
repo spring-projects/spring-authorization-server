@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 the original author or authors.
+ * Copyright 2020-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -146,9 +147,78 @@ public class OAuth2DeviceVerificationAuthenticationProviderTests {
 	}
 
 	@Test
+	public void authenticateWhenUserCodeIsInvalidedThenThrowOAuth2AuthenticationException() {
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+		// @formatter:off
+		OAuth2Authorization authorization = TestOAuth2Authorizations
+				.authorization(registeredClient)
+				.token(createDeviceCode())
+				.token(createUserCode(), withInvalidated())
+				.attribute(OAuth2ParameterNames.SCOPE, registeredClient.getScopes())
+				.build();
+		// @formatter:on
+		given(this.authorizationService.findByToken(anyString(), any(OAuth2TokenType.class))).willReturn(authorization);
+		Authentication authentication = createAuthentication();
+		// @formatter:off
+		assertThatExceptionOfType(OAuth2AuthenticationException.class)
+				.isThrownBy(() -> this.authenticationProvider.authenticate(authentication))
+				.extracting(OAuth2AuthenticationException::getError)
+				.extracting(OAuth2Error::getErrorCode)
+				.isEqualTo(OAuth2ErrorCodes.INVALID_GRANT);
+		// @formatter:on
+
+		verify(this.authorizationService).findByToken(USER_CODE,
+				OAuth2DeviceVerificationAuthenticationProvider.USER_CODE_TOKEN_TYPE);
+		verifyNoMoreInteractions(this.authorizationService);
+		verifyNoInteractions(this.registeredClientRepository, this.authorizationConsentService);
+	}
+
+	@Test
+	public void authenticateWhenUserCodeIsExpiredButNotInvalidatedThenInvalidateUserCodeAndThrowOAuth2AuthenticationException() {
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+		// @formatter:off
+		OAuth2Authorization authorization = TestOAuth2Authorizations
+				.authorization(registeredClient)
+				// Device code would also be expired but not relevant for this test
+				.token(createDeviceCode())
+				.token(createExpiredUserCode())
+				.attribute(OAuth2ParameterNames.SCOPE, registeredClient.getScopes())
+				.build();
+		// @formatter:on
+		given(this.authorizationService.findByToken(anyString(), any(OAuth2TokenType.class))).willReturn(authorization);
+		Authentication authentication = createAuthentication();
+		// @formatter:off
+		assertThatExceptionOfType(OAuth2AuthenticationException.class)
+				.isThrownBy(() -> this.authenticationProvider.authenticate(authentication))
+				.extracting(OAuth2AuthenticationException::getError)
+				.extracting(OAuth2Error::getErrorCode)
+				.isEqualTo(OAuth2ErrorCodes.INVALID_GRANT);
+		// @formatter:on
+
+		ArgumentCaptor<OAuth2Authorization> authorizationCaptor = ArgumentCaptor.forClass(OAuth2Authorization.class);
+		verify(this.authorizationService).findByToken(USER_CODE,
+				OAuth2DeviceVerificationAuthenticationProvider.USER_CODE_TOKEN_TYPE);
+		verify(this.authorizationService).save(authorizationCaptor.capture());
+		verifyNoMoreInteractions(this.authorizationService);
+		verifyNoInteractions(this.registeredClientRepository, this.authorizationConsentService);
+
+		OAuth2Authorization updatedAuthorization = authorizationCaptor.getValue();
+		assertThat(updatedAuthorization.getToken(OAuth2UserCode.class))
+				.extracting(isInvalidated())
+				.isEqualTo(true);
+	}
+
+	@Test
 	public void authenticateWhenPrincipalNotAuthenticatedThenReturnUnauthenticated() {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
-		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();
+		// @formatter:off
+		OAuth2Authorization authorization = TestOAuth2Authorizations
+				.authorization(registeredClient)
+				.token(createDeviceCode())
+				.token(createUserCode())
+				.attribute(OAuth2ParameterNames.SCOPE, registeredClient.getScopes())
+				.build();
+		// @formatter:on
 		TestingAuthenticationToken principal = new TestingAuthenticationToken("user", null);
 		Authentication authentication = new OAuth2DeviceVerificationAuthenticationToken(principal, USER_CODE,
 				Collections.emptyMap());
@@ -329,6 +399,15 @@ public class OAuth2DeviceVerificationAuthenticationProviderTests {
 	private static OAuth2UserCode createUserCode() {
 		Instant issuedAt = Instant.now();
 		return new OAuth2UserCode(USER_CODE, issuedAt, issuedAt.plus(30, ChronoUnit.MINUTES));
+	}
+
+	private static OAuth2UserCode createExpiredUserCode() {
+		Instant issuedAt = Instant.now().minus(45, ChronoUnit.MINUTES);
+		return new OAuth2UserCode(USER_CODE, issuedAt, issuedAt.plus(30, ChronoUnit.MINUTES));
+	}
+
+	private static Consumer<Map<String, Object>> withInvalidated() {
+		return (metadata) -> metadata.put(OAuth2Authorization.Token.INVALIDATED_METADATA_NAME, true);
 	}
 
 	private static Function<OAuth2Authorization.Token<? extends OAuth2Token>, Boolean> isInvalidated() {

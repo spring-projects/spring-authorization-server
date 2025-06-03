@@ -22,6 +22,7 @@ import java.util.Set;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.springframework.core.log.LogMessage;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
@@ -114,6 +115,10 @@ public final class OAuth2DeviceVerificationAuthenticationProvider implements Aut
 			if (!userCode.isInvalidated()) {
 				authorization = OAuth2AuthenticationProviderUtils.invalidate(authorization, userCode.getToken());
 				this.authorizationService.save(authorization);
+				if (this.logger.isWarnEnabled()) {
+					this.logger.warn(LogMessage.format("Invalidated user code used by registered client '%s'",
+							authorization.getRegisteredClientId()));
+				}
 			}
 			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_GRANT);
 		}

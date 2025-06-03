@@ -56,6 +56,7 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -147,7 +148,7 @@ public class OAuth2DeviceVerificationAuthenticationProviderTests {
 	}
 
 	@Test
-	public void authenticateWhenUserCodeIsInvalidedThenThrowOAuth2AuthenticationException() {
+	public void authenticateWhenUserCodeIsInvalidatedThenThrowOAuth2AuthenticationException() {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 		// @formatter:off
 		OAuth2Authorization authorization = TestOAuth2Authorizations
@@ -157,7 +158,9 @@ public class OAuth2DeviceVerificationAuthenticationProviderTests {
 				.attribute(OAuth2ParameterNames.SCOPE, registeredClient.getScopes())
 				.build();
 		// @formatter:on
-		given(this.authorizationService.findByToken(anyString(), any(OAuth2TokenType.class))).willReturn(authorization);
+		given(this.authorizationService.findByToken(eq(USER_CODE),
+				eq(OAuth2DeviceVerificationAuthenticationProvider.USER_CODE_TOKEN_TYPE)))
+			.willReturn(authorization);
 		Authentication authentication = createAuthentication();
 		// @formatter:off
 		assertThatExceptionOfType(OAuth2AuthenticationException.class)
@@ -174,7 +177,7 @@ public class OAuth2DeviceVerificationAuthenticationProviderTests {
 	}
 
 	@Test
-	public void authenticateWhenUserCodeIsExpiredButNotInvalidatedThenInvalidateUserCodeAndThrowOAuth2AuthenticationException() {
+	public void authenticateWhenUserCodeIsExpiredAndNotInvalidatedThenThrowOAuth2AuthenticationException() {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 		// @formatter:off
 		OAuth2Authorization authorization = TestOAuth2Authorizations
@@ -185,7 +188,9 @@ public class OAuth2DeviceVerificationAuthenticationProviderTests {
 				.attribute(OAuth2ParameterNames.SCOPE, registeredClient.getScopes())
 				.build();
 		// @formatter:on
-		given(this.authorizationService.findByToken(anyString(), any(OAuth2TokenType.class))).willReturn(authorization);
+		given(this.authorizationService.findByToken(eq(USER_CODE),
+				eq(OAuth2DeviceVerificationAuthenticationProvider.USER_CODE_TOKEN_TYPE)))
+			.willReturn(authorization);
 		Authentication authentication = createAuthentication();
 		// @formatter:off
 		assertThatExceptionOfType(OAuth2AuthenticationException.class)
@@ -203,9 +208,7 @@ public class OAuth2DeviceVerificationAuthenticationProviderTests {
 		verifyNoInteractions(this.registeredClientRepository, this.authorizationConsentService);
 
 		OAuth2Authorization updatedAuthorization = authorizationCaptor.getValue();
-		assertThat(updatedAuthorization.getToken(OAuth2UserCode.class))
-				.extracting(isInvalidated())
-				.isEqualTo(true);
+		assertThat(updatedAuthorization.getToken(OAuth2UserCode.class)).extracting(isInvalidated()).isEqualTo(true);
 	}
 
 	@Test

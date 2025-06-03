@@ -5,7 +5,7 @@ com-fasterxml-jackson = "2.17.3"
 nimbus-jose-jwt = "9.39.3"
 org-bouncycastle = "1.78.1"
 com-squareup-okhttp3 = "4.12.0"
-io-spring-javaformat = "0.0.45"
+io-spring-javaformat = "0.0.46"
 io-spring-nohttp = "0.0.11"
 
 [libraries]

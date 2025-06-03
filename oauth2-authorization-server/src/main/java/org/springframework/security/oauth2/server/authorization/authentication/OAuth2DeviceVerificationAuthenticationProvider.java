@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 the original author or authors.
+ * Copyright 2020-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import java.util.Set;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.springframework.core.log.LogMessage;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
@@ -109,6 +110,19 @@ public final class OAuth2DeviceVerificationAuthenticationProvider implements Aut
 			this.logger.trace("Retrieved authorization with user code");
 		}
 
+		OAuth2Authorization.Token<OAuth2UserCode> userCode = authorization.getToken(OAuth2UserCode.class);
+		if (!userCode.isActive()) {
+			if (!userCode.isInvalidated()) {
+				authorization = OAuth2Authorization.from(authorization).invalidate(userCode.getToken()).build();
+				this.authorizationService.save(authorization);
+				if (this.logger.isWarnEnabled()) {
+					this.logger.warn(LogMessage.format("Invalidated user code used by registered client '%s'",
+							authorization.getRegisteredClientId()));
+				}
+			}
+			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_GRANT);
+		}
+
 		Authentication principal = (Authentication) deviceVerificationAuthentication.getPrincipal();
 		if (!isPrincipalAuthenticated(principal)) {
 			if (this.logger.isTraceEnabled()) {
@@ -161,7 +175,6 @@ public final class OAuth2DeviceVerificationAuthenticationProvider implements Aut
 					requestedScopes, currentAuthorizedScopes);
 		}
 
-		OAuth2Authorization.Token<OAuth2UserCode> userCode = authorization.getToken(OAuth2UserCode.class);
 		// @formatter:off
 		authorization = OAuth2Authorization.from(authorization)
 				.principalName(principal.getName())

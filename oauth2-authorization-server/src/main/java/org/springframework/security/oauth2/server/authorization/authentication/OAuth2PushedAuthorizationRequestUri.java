@@ -44,7 +44,7 @@ final class OAuth2PushedAuthorizationRequestUri {
 	private Instant expiresAt;
 
 	static OAuth2PushedAuthorizationRequestUri create() {
-		return create(Instant.now().plusSeconds(30));
+		return create(Instant.now().plusSeconds(300));
 	}
 
 	static OAuth2PushedAuthorizationRequestUri create(Instant expiresAt) {

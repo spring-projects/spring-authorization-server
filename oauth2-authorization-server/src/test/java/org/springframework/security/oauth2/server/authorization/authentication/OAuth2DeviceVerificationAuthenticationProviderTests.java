@@ -50,6 +50,7 @@ import org.springframework.security.oauth2.server.authorization.client.TestRegis
 import org.springframework.security.oauth2.server.authorization.context.AuthorizationServerContextHolder;
 import org.springframework.security.oauth2.server.authorization.context.TestAuthorizationServerContext;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
+import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
@@ -240,7 +241,9 @@ public class OAuth2DeviceVerificationAuthenticationProviderTests {
 
 	@Test
 	public void authenticateWhenAuthorizationConsentDoesNotExistThenReturnAuthorizationConsentWithState() {
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
+			.clientSettings(ClientSettings.builder().requireAuthorizationConsent(true).build())
+			.build();
 		// @formatter:off
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient)
 				.token(createDeviceCode())
@@ -335,7 +338,9 @@ public class OAuth2DeviceVerificationAuthenticationProviderTests {
 
 	@Test
 	public void authenticateWhenAuthorizationConsentExistsAndRequestedScopesDoNotMatchThenReturnAuthorizationConsentWithState() {
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
+			.clientSettings(ClientSettings.builder().requireAuthorizationConsent(true).build())
+			.build();
 		// @formatter:off
 		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient)
 				.authorizationGrantType(AuthorizationGrantType.DEVICE_CODE)
@@ -379,6 +384,31 @@ public class OAuth2DeviceVerificationAuthenticationProviderTests {
 		OAuth2Authorization updatedAuthorization = authorizationCaptor.getValue();
 		assertThat(updatedAuthorization.<String>getAttribute(OAuth2ParameterNames.STATE))
 			.isEqualTo(authenticationResult.getState());
+	}
+
+	@Test
+	public void authenticateWhenRequireAuthorizationConsentIsFalse_thenConsentPageSkipped() {
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
+			.clientSettings(ClientSettings.builder().requireAuthorizationConsent(false).build())
+			.build();
+
+		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient)
+			.token(createDeviceCode())
+			.token(createUserCode())
+			.attributes(Map::clear)
+			.attribute(OAuth2ParameterNames.SCOPE, registeredClient.getScopes())
+			.build();
+
+		Authentication authentication = createAuthentication();
+		given(this.registeredClientRepository.findById(anyString())).willReturn(registeredClient);
+		given(this.authorizationService.findByToken(anyString(), any(OAuth2TokenType.class))).willReturn(authorization);
+		given(this.authorizationConsentService.findById(anyString(), anyString())).willReturn(null);
+
+		Authentication result = this.authenticationProvider.authenticate(authentication);
+
+		assertThat(result).isInstanceOf(OAuth2DeviceVerificationAuthenticationToken.class)
+			.extracting(Authentication::isAuthenticated)
+			.isEqualTo(true);
 	}
 
 	private static void mockAuthorizationServerContext() {

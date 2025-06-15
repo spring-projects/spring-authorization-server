@@ -18,6 +18,7 @@ package org.springframework.security.oauth2.server.authorization.authentication;
 import java.security.Principal;
 import java.util.Base64;
 import java.util.Set;
+import java.util.function.Predicate;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -33,11 +34,8 @@ import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.OAuth2UserCode;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
-import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
-import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsent;
-import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsentService;
-import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
-import org.springframework.security.oauth2.server.authorization.OAuth2TokenType;
+import org.springframework.security.oauth2.core.oidc.OidcScopes;
+import org.springframework.security.oauth2.server.authorization.*;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.context.AuthorizationServerContextHolder;
@@ -77,6 +75,8 @@ public final class OAuth2DeviceVerificationAuthenticationProvider implements Aut
 	private final OAuth2AuthorizationService authorizationService;
 
 	private final OAuth2AuthorizationConsentService authorizationConsentService;
+
+	private Predicate<OAuth2DeviceVerificationAuthenticationContext> authorizationConsentRequired = this::defaultAuthorizationConsentRequired;
 
 	/**
 	 * Constructs an {@code OAuth2DeviceVerificationAuthenticationProvider} using the
@@ -145,7 +145,14 @@ public final class OAuth2DeviceVerificationAuthenticationProvider implements Aut
 		OAuth2AuthorizationConsent currentAuthorizationConsent = this.authorizationConsentService
 			.findById(registeredClient.getId(), principal.getName());
 
-		if (requiresAuthorizationConsent(requestedScopes, currentAuthorizationConsent)) {
+		OAuth2DeviceVerificationAuthenticationContext ctx = OAuth2DeviceVerificationAuthenticationContext
+			.with(deviceVerificationAuthentication)
+			.registeredClient(registeredClient)
+			.authorization(authorization)
+			.authorizationConsent(currentAuthorizationConsent)
+			.build();
+
+		if (this.authorizationConsentRequired.test(ctx)) {
 			String state = DEFAULT_STATE_GENERATOR.generateKey();
 			authorization = OAuth2Authorization.from(authorization)
 				.principalName(principal.getName())
@@ -199,6 +206,35 @@ public final class OAuth2DeviceVerificationAuthenticationProvider implements Aut
 	@Override
 	public boolean supports(Class<?> authentication) {
 		return OAuth2DeviceVerificationAuthenticationToken.class.isAssignableFrom(authentication);
+	}
+
+	public void setAuthorizationConsentRequired(
+			Predicate<OAuth2DeviceVerificationAuthenticationContext> authorizationConsentRequired) {
+		Assert.notNull(authorizationConsentRequired, "authorizationConsentRequired cannot be null");
+		this.authorizationConsentRequired = authorizationConsentRequired;
+	}
+
+	private boolean defaultAuthorizationConsentRequired(OAuth2DeviceVerificationAuthenticationContext ctx) {
+
+		RegisteredClient client = ctx.getRegisteredClient();
+
+		// (1) global switch on the client
+		if (!client.getClientSettings().isRequireAuthorizationConsent()) {
+			return false;
+		}
+
+		OAuth2Authorization authorization = ctx.getAuthorization();
+		Set<String> requested = authorization != null ? authorization.getAttribute(OAuth2ParameterNames.SCOPE) : null;
+		if (requested == null) {
+			requested = java.util.Collections.emptySet();
+		}
+
+		if (requested.size() == 1 && requested.contains(OidcScopes.OPENID)) {
+			return false; // skip for pure “openid” requests
+		}
+
+		OAuth2AuthorizationConsent priorConsent = ctx.getAuthorizationConsent();
+		return priorConsent == null || !priorConsent.getScopes().containsAll(requested);
 	}
 
 	private static boolean requiresAuthorizationConsent(Set<String> requestedScopes,

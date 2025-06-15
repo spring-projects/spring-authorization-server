@@ -79,6 +79,7 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
+import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
 import org.springframework.security.oauth2.server.authorization.test.SpringTestContext;
 import org.springframework.security.oauth2.server.authorization.test.SpringTestContextExtension;
 import org.springframework.test.web.servlet.MockMvc;
@@ -311,6 +312,7 @@ public class OAuth2DeviceCodeGrantTests {
 		// @formatter:off
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
 				.authorizationGrantType(AuthorizationGrantType.DEVICE_CODE)
+				.clientSettings(ClientSettings.builder().requireAuthorizationConsent(true).build())
 				.build();
 		// @formatter:on
 		this.registeredClientRepository.save(registeredClient);

@@ -89,12 +89,12 @@ public interface OAuth2AuthenticationContext extends Context {
 			return (V) getContext().get(key);
 		}
 
-		protected Map<Object, Object> getContext() {
+		public Map<Object, Object> getContext() {
 			return this.context;
 		}
 
 		@SuppressWarnings("unchecked")
-		protected final B getThis() {
+		protected B getThis() {
 			return (B) this;
 		}
 

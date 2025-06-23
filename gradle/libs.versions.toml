@@ -39,4 +39,4 @@ org-jfrog-buildinfo-build-info-extractor-gradle = "org.jfrog.buildinfo:build-inf
 org-sonarsource-scanner-gradle-sonarqube-gradle-plugin = "org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:2.8.0.1969"
 
 [plugins]
-org-gradle-wrapper-upgrade = "org.gradle.wrapper-upgrade:0.11.4"
+org-gradle-wrapper-upgrade = "org.gradle.wrapper-upgrade:0.12"

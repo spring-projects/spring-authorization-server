@@ -15,6 +15,7 @@
  */
 package org.springframework.security.oauth2.server.authorization.oidc.authentication;
 
+import java.time.Clock;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -107,7 +108,7 @@ public class OidcClientRegistrationAuthenticationProviderTests {
 		this.registeredClientRepository = mock(RegisteredClientRepository.class);
 		this.authorizationService = mock(OAuth2AuthorizationService.class);
 		this.jwtEncoder = mock(JwtEncoder.class);
-		JwtGenerator jwtGenerator = new JwtGenerator(this.jwtEncoder);
+		JwtGenerator jwtGenerator = new JwtGenerator(this.jwtEncoder, Clock.systemUTC());
 		this.tokenGenerator = spy(new OAuth2TokenGenerator<Jwt>() {
 			@Override
 			public Jwt generate(OAuth2TokenContext context) {

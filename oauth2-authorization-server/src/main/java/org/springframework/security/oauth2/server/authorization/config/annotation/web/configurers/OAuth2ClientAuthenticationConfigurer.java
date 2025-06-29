@@ -192,19 +192,23 @@ public final class OAuth2ClientAuthenticationConfigurer extends AbstractOAuth2Co
 				? OAuth2ConfigurerUtils
 					.withMultipleIssuersPattern(authorizationServerSettings.getTokenRevocationEndpoint())
 				: authorizationServerSettings.getTokenRevocationEndpoint();
-		String deviceAuthorizationEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed()
-				? OAuth2ConfigurerUtils
-					.withMultipleIssuersPattern(authorizationServerSettings.getDeviceAuthorizationEndpoint())
-				: authorizationServerSettings.getDeviceAuthorizationEndpoint();
 		String pushedAuthorizationRequestEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed()
 				? OAuth2ConfigurerUtils
-					.withMultipleIssuersPattern(authorizationServerSettings.getPushedAuthorizationRequestEndpoint())
+				.withMultipleIssuersPattern(authorizationServerSettings.getPushedAuthorizationRequestEndpoint())
 				: authorizationServerSettings.getPushedAuthorizationRequestEndpoint();
-		this.requestMatcher = new OrRequestMatcher(new AntPathRequestMatcher(tokenEndpointUri, HttpMethod.POST.name()),
-				new AntPathRequestMatcher(tokenIntrospectionEndpointUri, HttpMethod.POST.name()),
-				new AntPathRequestMatcher(tokenRevocationEndpointUri, HttpMethod.POST.name()),
-				new AntPathRequestMatcher(deviceAuthorizationEndpointUri, HttpMethod.POST.name()),
-				new AntPathRequestMatcher(pushedAuthorizationRequestEndpointUri, HttpMethod.POST.name()));
+		List<RequestMatcher> requestMatchers = new ArrayList<>();
+		requestMatchers.add(new AntPathRequestMatcher(tokenEndpointUri, HttpMethod.POST.name()));
+		requestMatchers.add(new AntPathRequestMatcher(tokenIntrospectionEndpointUri, HttpMethod.POST.name()));
+		requestMatchers.add(new AntPathRequestMatcher(tokenRevocationEndpointUri, HttpMethod.POST.name()));
+		if (authorizationServerSettings.isDeviceGrantEnabled()) {
+			String deviceAuthorizationEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed()
+					? OAuth2ConfigurerUtils
+					.withMultipleIssuersPattern(authorizationServerSettings.getDeviceAuthorizationEndpoint())
+					: authorizationServerSettings.getDeviceAuthorizationEndpoint();
+			requestMatchers.add(new AntPathRequestMatcher(deviceAuthorizationEndpointUri, HttpMethod.POST.name()));
+		}
+		requestMatchers.add(new AntPathRequestMatcher(pushedAuthorizationRequestEndpointUri, HttpMethod.POST.name()));
+		this.requestMatcher = new OrRequestMatcher(requestMatchers);
 		List<AuthenticationProvider> authenticationProviders = createDefaultAuthenticationProviders(httpSecurity);
 		if (!this.authenticationProviders.isEmpty()) {
 			authenticationProviders.addAll(0, this.authenticationProviders);

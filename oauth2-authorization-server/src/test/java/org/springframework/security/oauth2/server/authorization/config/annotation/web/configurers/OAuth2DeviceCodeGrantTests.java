@@ -176,8 +176,16 @@ public class OAuth2DeviceCodeGrantTests {
 	}
 
 	@Test
-	public void requestWhenDeviceAuthorizationRequestNotAuthenticatedThenUnauthorized() throws Exception {
+	public void requestWhenDeviceAuthorizationEndpointDisabledThenNotFound() throws Exception {
 		this.spring.register(AuthorizationServerConfiguration.class).autowire();
+
+		this.mvc.perform(post(DEFAULT_DEVICE_AUTHORIZATION_ENDPOINT_URI))
+				.andExpect(status().isNotFound());
+	}
+
+	@Test
+	public void requestWhenDeviceAuthorizationRequestNotAuthenticatedThenUnauthorized() throws Exception {
+		this.spring.register(AuthorizationServerConfigurationWithDeviceGrant.class).autowire();
 
 		// @formatter:off
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
@@ -200,7 +208,7 @@ public class OAuth2DeviceCodeGrantTests {
 
 	@Test
 	public void requestWhenRegisteredClientMissingThenUnauthorized() throws Exception {
-		this.spring.register(AuthorizationServerConfiguration.class).autowire();
+		this.spring.register(AuthorizationServerConfigurationWithDeviceGrant.class).autowire();
 
 		// @formatter:off
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
@@ -272,7 +280,7 @@ public class OAuth2DeviceCodeGrantTests {
 
 	@Test
 	public void requestWhenDeviceVerificationRequestUnauthenticatedThenUnauthorized() throws Exception {
-		this.spring.register(AuthorizationServerConfiguration.class).autowire();
+		this.spring.register(AuthorizationServerConfigurationWithDeviceGrant.class).autowire();
 
 		// @formatter:off
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
@@ -357,7 +365,7 @@ public class OAuth2DeviceCodeGrantTests {
 
 	@Test
 	public void requestWhenDeviceAuthorizationConsentRequestUnauthenticatedThenBadRequest() throws Exception {
-		this.spring.register(AuthorizationServerConfiguration.class).autowire();
+		this.spring.register(AuthorizationServerConfigurationWithDeviceGrant.class).autowire();
 
 		// @formatter:off
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
@@ -395,7 +403,7 @@ public class OAuth2DeviceCodeGrantTests {
 
 	@Test
 	public void requestWhenDeviceAuthorizationConsentRequestValidThenRedirectsToSuccessPage() throws Exception {
-		this.spring.register(AuthorizationServerConfiguration.class).autowire();
+		this.spring.register(AuthorizationServerConfigurationWithDeviceGrant.class).autowire();
 
 		// @formatter:off
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
@@ -445,7 +453,7 @@ public class OAuth2DeviceCodeGrantTests {
 
 	@Test
 	public void requestWhenAccessTokenRequestUnauthenticatedThenUnauthorized() throws Exception {
-		this.spring.register(AuthorizationServerConfiguration.class).autowire();
+		this.spring.register(AuthorizationServerConfigurationWithDeviceGrant.class).autowire();
 
 		// @formatter:off
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
@@ -481,7 +489,7 @@ public class OAuth2DeviceCodeGrantTests {
 
 	@Test
 	public void requestWhenAccessTokenRequestValidThenReturnAccessTokenResponse() throws Exception {
-		this.spring.register(AuthorizationServerConfiguration.class).autowire();
+		this.spring.register(AuthorizationServerConfigurationWithDeviceGrant.class).autowire();
 
 		// @formatter:off
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
@@ -553,7 +561,7 @@ public class OAuth2DeviceCodeGrantTests {
 
 	@Test
 	public void requestWhenAccessTokenRequestWithDPoPProofThenReturnDPoPBoundAccessToken() throws Exception {
-		this.spring.register(AuthorizationServerConfiguration.class).autowire();
+		this.spring.register(AuthorizationServerConfigurationWithDeviceGrant.class).autowire();
 
 		// @formatter:off
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
@@ -683,11 +691,24 @@ public class OAuth2DeviceCodeGrantTests {
 
 	@EnableWebSecurity
 	@Import(OAuth2AuthorizationServerConfiguration.class)
-	static class AuthorizationServerConfigurationWithMultipleIssuersAllowed extends AuthorizationServerConfiguration {
+	static class AuthorizationServerConfigurationWithDeviceGrant extends AuthorizationServerConfiguration {
 
 		@Bean
 		AuthorizationServerSettings authorizationServerSettings() {
-			return AuthorizationServerSettings.builder().multipleIssuersAllowed(true).build();
+			return AuthorizationServerSettings.builder().deviceGrantEnabled(true).build();
+		}
+
+	}
+
+	@EnableWebSecurity
+	@Import(OAuth2AuthorizationServerConfiguration.class)
+	static class AuthorizationServerConfigurationWithMultipleIssuersAllowed extends AuthorizationServerConfigurationWithDeviceGrant {
+
+		@Bean
+		AuthorizationServerSettings authorizationServerSettings() {
+			return AuthorizationServerSettings.builder().multipleIssuersAllowed(true)
+					.deviceGrantEnabled(true)
+					.build();
 		}
 
 	}

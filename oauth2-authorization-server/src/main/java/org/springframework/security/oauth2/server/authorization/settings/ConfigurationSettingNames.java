@@ -129,7 +129,15 @@ public final class ConfigurationSettingNames {
 		 * Set the OAuth 2.0 Device Verification endpoint.
 		 */
 		public static final String DEVICE_VERIFICATION_ENDPOINT = AUTHORIZATION_SERVER_SETTINGS_NAMESPACE
-			.concat("device-verification-endpoint");
+				.concat("device-verification-endpoint");
+
+		/**
+		 * Set to {@code true} if the OAuth 2.0 Device Authorization Grant is enabled.
+		 * The default is {@code false}.
+		 */
+		public static final String DEVICE_GRANT_ENABLED = AUTHORIZATION_SERVER_SETTINGS_NAMESPACE
+				.concat("device-grant-enabled");
+
 
 		/**
 		 * Set the OAuth 2.0 Token endpoint.

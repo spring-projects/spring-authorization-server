@@ -164,20 +164,30 @@ public final class AuthorizationServerSettings extends AbstractSettings {
 	}
 
 	/**
+	 * Returns {@code true} if the OAuth 2.0 Device Authorization Grant is enabled.
+	 * The default is {@code false}.
+	 * @return {@code true} if the Device Authorization Grant is enabled, {@code false} otherwise
+	 */
+	public boolean isDeviceGrantEnabled() {
+		return getSetting(ConfigurationSettingNames.AuthorizationServer.DEVICE_GRANT_ENABLED);
+	}
+
+	/**
 	 * Constructs a new {@link Builder} with the default settings.
 	 * @return the {@link Builder}
 	 */
 	public static Builder builder() {
 		return new Builder().multipleIssuersAllowed(false)
-			.authorizationEndpoint("/oauth2/authorize")
-			.pushedAuthorizationRequestEndpoint("/oauth2/par")
-			.deviceAuthorizationEndpoint("/oauth2/device_authorization")
-			.deviceVerificationEndpoint("/oauth2/device_verification")
-			.tokenEndpoint("/oauth2/token")
-			.jwkSetEndpoint("/oauth2/jwks")
-			.tokenRevocationEndpoint("/oauth2/revoke")
-			.tokenIntrospectionEndpoint("/oauth2/introspect")
-			.oidcClientRegistrationEndpoint("/connect/register")
+				.authorizationEndpoint("/oauth2/authorize")
+				.pushedAuthorizationRequestEndpoint("/oauth2/par")
+				.deviceAuthorizationEndpoint("/oauth2/device_authorization")
+				.deviceVerificationEndpoint("/oauth2/device_verification")
+				.deviceGrantEnabled(false)
+				.tokenEndpoint("/oauth2/token")
+				.jwkSetEndpoint("/oauth2/jwks")
+				.tokenRevocationEndpoint("/oauth2/revoke")
+				.tokenIntrospectionEndpoint("/oauth2/introspect")
+				.oidcClientRegistrationEndpoint("/connect/register")
 			.oidcUserInfoEndpoint("/userinfo")
 			.oidcLogoutEndpoint("/connect/logout");
 	}
@@ -279,6 +289,16 @@ public final class AuthorizationServerSettings extends AbstractSettings {
 		public Builder deviceVerificationEndpoint(String deviceVerificationEndpoint) {
 			return setting(ConfigurationSettingNames.AuthorizationServer.DEVICE_VERIFICATION_ENDPOINT,
 					deviceVerificationEndpoint);
+		}
+
+		/**
+		 * Enables the OAuth 2.0 Device Authorization Grant.
+		 * @param deviceGrantEnabled {@code true} to enable the Device Authorization Grant
+		 * @return the {@link Builder} for further configuration
+		 */
+		public Builder deviceGrantEnabled(boolean deviceGrantEnabled) {
+			return setting(ConfigurationSettingNames.AuthorizationServer.DEVICE_GRANT_ENABLED,
+					deviceGrantEnabled);
 		}
 
 		/**

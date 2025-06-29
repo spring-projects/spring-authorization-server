@@ -232,10 +232,13 @@ public final class OAuth2DeviceVerificationEndpointConfigurer extends AbstractOA
 	@Override
 	public void init(HttpSecurity builder) {
 		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils
-			.getAuthorizationServerSettings(builder);
+				.getAuthorizationServerSettings(builder);
+		if (!authorizationServerSettings.isDeviceGrantEnabled()) {
+			return;
+		}
 		String deviceVerificationEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed()
 				? OAuth2ConfigurerUtils
-					.withMultipleIssuersPattern(authorizationServerSettings.getDeviceVerificationEndpoint())
+				.withMultipleIssuersPattern(authorizationServerSettings.getDeviceVerificationEndpoint())
 				: authorizationServerSettings.getDeviceVerificationEndpoint();
 		this.requestMatcher = new OrRequestMatcher(
 				new AntPathRequestMatcher(deviceVerificationEndpointUri, HttpMethod.GET.name()),
@@ -254,7 +257,11 @@ public final class OAuth2DeviceVerificationEndpointConfigurer extends AbstractOA
 	public void configure(HttpSecurity builder) {
 		AuthenticationManager authenticationManager = builder.getSharedObject(AuthenticationManager.class);
 		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils
-			.getAuthorizationServerSettings(builder);
+				.getAuthorizationServerSettings(builder);
+
+		if (!authorizationServerSettings.isDeviceGrantEnabled()) {
+			return;
+		}
 
 		String deviceVerificationEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed()
 				? OAuth2ConfigurerUtils

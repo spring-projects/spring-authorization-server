@@ -365,7 +365,10 @@ public final class OAuth2AuthorizationServerConfigurer
 		List<RequestMatcher> requestMatchers = new ArrayList<>();
 		this.configurers.values().forEach((configurer) -> {
 			configurer.init(httpSecurity);
-			requestMatchers.add(configurer.getRequestMatcher());
+			RequestMatcher matcher = configurer.getRequestMatcher();
+			if (matcher != null) {
+				requestMatchers.add(matcher);
+			}
 		});
 		String jwkSetEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed()
 				? OAuth2ConfigurerUtils.withMultipleIssuersPattern(authorizationServerSettings.getJwkSetEndpoint())
@@ -380,7 +383,10 @@ public final class OAuth2AuthorizationServerConfigurer
 			preferredMatchers.add(getRequestMatcher(OAuth2TokenEndpointConfigurer.class));
 			preferredMatchers.add(getRequestMatcher(OAuth2TokenIntrospectionEndpointConfigurer.class));
 			preferredMatchers.add(getRequestMatcher(OAuth2TokenRevocationEndpointConfigurer.class));
-			preferredMatchers.add(getRequestMatcher(OAuth2DeviceAuthorizationEndpointConfigurer.class));
+			RequestMatcher deviceAuthMatcher = getRequestMatcher(OAuth2DeviceAuthorizationEndpointConfigurer.class);
+			if (deviceAuthMatcher != null) {
+				preferredMatchers.add(deviceAuthMatcher);
+			}
 			RequestMatcher preferredMatcher = getRequestMatcher(
 					OAuth2PushedAuthorizationRequestEndpointConfigurer.class);
 			if (preferredMatcher != null) {

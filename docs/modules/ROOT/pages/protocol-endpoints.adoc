@@ -153,6 +153,7 @@ public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity h
                         .authenticationProviders(authenticationProvidersConsumer)   <4>
                         .pushedAuthorizationResponseHandler(pushedAuthorizationResponseHandler) <5>
                         .errorResponseHandler(errorResponseHandler) <6>
+                        .requestUriTtl(requestUriTtl) <7>
 				)
 		);
 
@@ -165,6 +166,7 @@ public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity h
 <4> `authenticationProviders()`: Sets the `Consumer` providing access to the `List` of default and (optionally) added ``AuthenticationProvider``'s allowing the ability to add, remove, or customize a specific `AuthenticationProvider`.
 <5> `pushedAuthorizationResponseHandler()`: The `AuthenticationSuccessHandler` (_post-processor_) used for handling an "`authenticated`" `OAuth2PushedAuthorizationRequestAuthenticationToken` and returning the https://datatracker.ietf.org/doc/html/rfc9126#section-2.2[OAuth2 pushed authorization response].
 <6> `errorResponseHandler()`: The `AuthenticationFailureHandler` (_post-processor_) used for handling an `OAuth2AuthenticationException` and returning the https://datatracker.ietf.org/doc/html/rfc9126#section-2.3[OAuth2Error response].
+<7> `requestUriTtl()`: The lifespan, as a positive `Duration`, of the https://datatracker.ietf.org/doc/html/rfc9126#section-2.1[OAuth2 pushed authorization request]. Used to calculate the `expires_in` response parameter of the https://datatracker.ietf.org/doc/html/rfc9126#section-2.2[OAuth2 pushed authorization response].
 
 `OAuth2PushedAuthorizationRequestEndpointConfigurer` configures the `OAuth2PushedAuthorizationRequestEndpointFilter` and registers it with the OAuth2 authorization server `SecurityFilterChain` `@Bean`.
 `OAuth2PushedAuthorizationRequestEndpointFilter` is the `Filter` that processes OAuth2 pushed authorization requests.

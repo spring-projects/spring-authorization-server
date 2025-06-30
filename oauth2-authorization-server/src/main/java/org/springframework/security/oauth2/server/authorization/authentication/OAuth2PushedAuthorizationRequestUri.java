@@ -15,6 +15,7 @@
  */
 package org.springframework.security.oauth2.server.authorization.authentication;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Base64;
 
@@ -43,8 +44,8 @@ final class OAuth2PushedAuthorizationRequestUri {
 
 	private Instant expiresAt;
 
-	static OAuth2PushedAuthorizationRequestUri create() {
-		return create(Instant.now().plusSeconds(300));
+	static OAuth2PushedAuthorizationRequestUri create(Duration ttl) {
+		return create(Instant.now().plus(ttl));
 	}
 
 	static OAuth2PushedAuthorizationRequestUri create(Instant expiresAt) {

@@ -15,6 +15,7 @@
  */
 package org.springframework.security.oauth2.server.authorization.authentication;
 
+import java.time.Duration;
 import java.util.function.Consumer;
 
 import org.apache.commons.logging.Log;
@@ -54,16 +55,24 @@ public final class OAuth2PushedAuthorizationRequestAuthenticationProvider implem
 
 	private final OAuth2AuthorizationService authorizationService;
 
+	private final Duration requestUriTtl;
+
 	private Consumer<OAuth2AuthorizationCodeRequestAuthenticationContext> authenticationValidator = new OAuth2AuthorizationCodeRequestAuthenticationValidator();
 
 	/**
 	 * Constructs an {@code OAuth2PushedAuthorizationRequestAuthenticationProvider} using
 	 * the provided parameters.
 	 * @param authorizationService the authorization service
+	 * @param requestUriTtl the time-to-live applied to requests
 	 */
-	public OAuth2PushedAuthorizationRequestAuthenticationProvider(OAuth2AuthorizationService authorizationService) {
+	public OAuth2PushedAuthorizationRequestAuthenticationProvider(OAuth2AuthorizationService authorizationService,
+			Duration requestUriTtl) {
 		Assert.notNull(authorizationService, "authorizationService cannot be null");
+		Assert.notNull(requestUriTtl, "requestUriTtl cannot be null");
+		Assert.isTrue(!requestUriTtl.isZero() && !requestUriTtl.isNegative(),
+				"requestUriTtl cannot be zero or negative");
 		this.authorizationService = authorizationService;
+		this.requestUriTtl = requestUriTtl;
 	}
 
 	@Override
@@ -113,7 +122,7 @@ public final class OAuth2PushedAuthorizationRequestAuthenticationProvider implem
 		// @formatter:on
 
 		OAuth2PushedAuthorizationRequestUri pushedAuthorizationRequestUri = OAuth2PushedAuthorizationRequestUri
-			.create();
+			.create(this.requestUriTtl);
 
 		if (this.logger.isTraceEnabled()) {
 			this.logger.trace("Generated pushed authorization request uri");

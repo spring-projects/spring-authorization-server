@@ -15,6 +15,7 @@
  */
 package org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -54,6 +55,8 @@ import org.springframework.util.Assert;
  */
 public final class OAuth2PushedAuthorizationRequestEndpointConfigurer extends AbstractOAuth2Configurer {
 
+	private static final Duration DEFAULT_REQUEST_URI_TTL = Duration.ofMinutes(5L);
+
 	private RequestMatcher requestMatcher;
 
 	private final List<AuthenticationConverter> pushedAuthorizationRequestConverters = new ArrayList<>();
@@ -72,6 +75,8 @@ public final class OAuth2PushedAuthorizationRequestEndpointConfigurer extends Ab
 	private AuthenticationFailureHandler errorResponseHandler;
 
 	private Consumer<OAuth2AuthorizationCodeRequestAuthenticationContext> authorizationCodeRequestAuthenticationValidator;
+
+	private Duration requestUriTtl = DEFAULT_REQUEST_URI_TTL;
 
 	/**
 	 * Restrict for internal use only.
@@ -181,6 +186,20 @@ public final class OAuth2PushedAuthorizationRequestEndpointConfigurer extends Ab
 		return this;
 	}
 
+	/**
+	 * Sets the expiration delay of the generated <code>request_uri</code>.
+	 * @param requestUriTtl the positive duration of the request URI lifetime
+	 * @return the {@link OAuth2PushedAuthorizationRequestEndpointConfigurer} for further
+	 * configuration
+	 */
+	public OAuth2PushedAuthorizationRequestEndpointConfigurer requestUriTtl(Duration requestUriTtl) {
+		Assert.notNull(requestUriTtl, "requestUriTtl cannot be null");
+		Assert.isTrue(!requestUriTtl.isZero() && !requestUriTtl.isNegative(),
+				"requestUriTtl cannot be zero or negative");
+		this.requestUriTtl = requestUriTtl;
+		return this;
+	}
+
 	void addAuthorizationCodeRequestAuthenticationValidator(
 			Consumer<OAuth2AuthorizationCodeRequestAuthenticationContext> authenticationValidator) {
 		this.authorizationCodeRequestAuthenticationValidator = (this.authorizationCodeRequestAuthenticationValidator == null)
@@ -251,7 +270,7 @@ public final class OAuth2PushedAuthorizationRequestEndpointConfigurer extends Ab
 		List<AuthenticationProvider> authenticationProviders = new ArrayList<>();
 
 		OAuth2PushedAuthorizationRequestAuthenticationProvider pushedAuthorizationRequestAuthenticationProvider = new OAuth2PushedAuthorizationRequestAuthenticationProvider(
-				OAuth2ConfigurerUtils.getAuthorizationService(httpSecurity));
+				OAuth2ConfigurerUtils.getAuthorizationService(httpSecurity), this.requestUriTtl);
 		if (this.authorizationCodeRequestAuthenticationValidator != null) {
 			pushedAuthorizationRequestAuthenticationProvider
 				.setAuthenticationValidator(new OAuth2AuthorizationCodeRequestAuthenticationValidator()

@@ -15,6 +15,7 @@
  */
 package org.springframework.security.oauth2.server.authorization.authentication;
 
+import java.time.Duration;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -23,6 +24,8 @@ import java.util.function.Consumer;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
@@ -67,14 +70,33 @@ public class OAuth2PushedAuthorizationRequestAuthenticationProviderTests {
 	public void setUp() {
 		this.authorizationService = mock(OAuth2AuthorizationService.class);
 		this.authenticationProvider = new OAuth2PushedAuthorizationRequestAuthenticationProvider(
-				this.authorizationService);
+				this.authorizationService, Duration.ofSeconds(30L));
 	}
 
 	@Test
 	public void constructorWhenAuthorizationServiceNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> new OAuth2PushedAuthorizationRequestAuthenticationProvider(null))
+		assertThatThrownBy(() -> new OAuth2PushedAuthorizationRequestAuthenticationProvider(null, null))
 			.isInstanceOf(IllegalArgumentException.class)
 			.hasMessage("authorizationService cannot be null");
+	}
+
+	@Test
+	public void constructorWhenDurationNullThenThrowIllegalArgumentException() {
+		this.authorizationService = mock(OAuth2AuthorizationService.class);
+		assertThatThrownBy(
+				() -> new OAuth2PushedAuthorizationRequestAuthenticationProvider(this.authorizationService, null))
+			.isInstanceOf(IllegalArgumentException.class)
+			.hasMessage("requestUriTtl cannot be null");
+	}
+
+	@ParameterizedTest
+	@ValueSource(longs = { 0, -1 })
+	public void constructorWhenDurationZeroOrNegativeThenThrowIllegalArgumentException(final long millis) {
+		this.authorizationService = mock(OAuth2AuthorizationService.class);
+		assertThatThrownBy(() -> new OAuth2PushedAuthorizationRequestAuthenticationProvider(this.authorizationService,
+				Duration.ofMillis(millis)))
+			.isInstanceOf(IllegalArgumentException.class)
+			.hasMessage("requestUriTtl cannot be zero or negative");
 	}
 
 	@Test

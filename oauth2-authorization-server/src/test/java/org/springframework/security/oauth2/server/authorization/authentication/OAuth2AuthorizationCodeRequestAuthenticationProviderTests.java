@@ -16,6 +16,7 @@
 package org.springframework.security.oauth2.server.authorization.authentication;
 
 import java.security.Principal;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.HashMap;
@@ -615,7 +616,7 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 			.willReturn(registeredClient);
 
 		OAuth2PushedAuthorizationRequestUri pushedAuthorizationRequestUri = OAuth2PushedAuthorizationRequestUri
-			.create();
+			.create(Duration.ofMinutes(5));
 		Map<String, Object> additionalParameters = new HashMap<>();
 		additionalParameters.put(OAuth2ParameterNames.REQUEST_URI, pushedAuthorizationRequestUri.getRequestUri());
 		OAuth2Authorization authorization = TestOAuth2Authorizations
@@ -641,7 +642,7 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
 
 		OAuth2PushedAuthorizationRequestUri pushedAuthorizationRequestUri = OAuth2PushedAuthorizationRequestUri
-			.create();
+			.create(Duration.ofMinutes(5));
 		Map<String, Object> additionalParameters = new HashMap<>();
 		additionalParameters.put(OAuth2ParameterNames.REQUEST_URI, pushedAuthorizationRequestUri.getRequestUri());
 		OAuth2Authorization authorization = TestOAuth2Authorizations
@@ -666,7 +667,7 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 		RegisteredClient anotherRegisteredClient = TestRegisteredClients.registeredClient2().build();
 
 		OAuth2PushedAuthorizationRequestUri pushedAuthorizationRequestUri = OAuth2PushedAuthorizationRequestUri
-			.create();
+			.create(Duration.ofMinutes(5));
 		Map<String, Object> additionalParameters = new HashMap<>();
 		additionalParameters.put(OAuth2ParameterNames.REQUEST_URI, pushedAuthorizationRequestUri.getRequestUri());
 		OAuth2Authorization authorization = TestOAuth2Authorizations

@@ -2,7 +2,7 @@
 org-springframework = "6.2.8"
 org-springframework-security = "6.5.1"
 com-fasterxml-jackson = "2.18.4.1"
-nimbus-jose-jwt = "9.47"
+nimbus-jose-jwt = "10.3.1"
 org-bouncycastle = "1.79"
 com-squareup-okhttp3 = "4.12.0"
 io-spring-javaformat = "0.0.47"

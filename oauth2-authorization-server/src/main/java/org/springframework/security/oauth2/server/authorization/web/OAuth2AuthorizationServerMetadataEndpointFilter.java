@@ -36,7 +36,7 @@ import org.springframework.security.oauth2.server.authorization.context.Authoriz
 import org.springframework.security.oauth2.server.authorization.context.AuthorizationServerContextHolder;
 import org.springframework.security.oauth2.server.authorization.http.converter.OAuth2AuthorizationServerMetadataHttpMessageConverter;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.security.oauth2.server.authorization.web.util.matcher.RequestMatcherUtils;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -129,10 +129,10 @@ public final class OAuth2AuthorizationServerMetadataEndpointFilter extends OnceP
 	}
 
 	private static RequestMatcher createRequestMatcher() {
-		final RequestMatcher defaultRequestMatcher = new AntPathRequestMatcher(
-				DEFAULT_OAUTH2_AUTHORIZATION_SERVER_METADATA_ENDPOINT_URI, HttpMethod.GET.name());
-		final RequestMatcher multipleIssuersRequestMatcher = new AntPathRequestMatcher(
-				DEFAULT_OAUTH2_AUTHORIZATION_SERVER_METADATA_ENDPOINT_URI + "/**", HttpMethod.GET.name());
+		final RequestMatcher defaultRequestMatcher = RequestMatcherUtils
+			.matcher(DEFAULT_OAUTH2_AUTHORIZATION_SERVER_METADATA_ENDPOINT_URI, HttpMethod.GET);
+		final RequestMatcher multipleIssuersRequestMatcher = RequestMatcherUtils
+			.matcher(DEFAULT_OAUTH2_AUTHORIZATION_SERVER_METADATA_ENDPOINT_URI + "/**", HttpMethod.GET);
 		return (request) -> AuthorizationServerContextHolder.getContext()
 			.getAuthorizationServerSettings()
 			.isMultipleIssuersAllowed() ? multipleIssuersRequestMatcher.matches(request)

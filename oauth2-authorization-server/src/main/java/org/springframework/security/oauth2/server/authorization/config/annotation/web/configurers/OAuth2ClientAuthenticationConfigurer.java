@@ -43,12 +43,12 @@ import org.springframework.security.oauth2.server.authorization.web.authenticati
 import org.springframework.security.oauth2.server.authorization.web.authentication.JwtClientAssertionAuthenticationConverter;
 import org.springframework.security.oauth2.server.authorization.web.authentication.PublicClientAuthenticationConverter;
 import org.springframework.security.oauth2.server.authorization.web.authentication.X509ClientCertificateAuthenticationConverter;
+import org.springframework.security.oauth2.server.authorization.web.util.matcher.RequestMatcherUtils;
 import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.DelegatingAuthenticationConverter;
 import org.springframework.security.web.authentication.preauth.AbstractPreAuthenticatedProcessingFilter;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.OrRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
@@ -182,29 +182,29 @@ public final class OAuth2ClientAuthenticationConfigurer extends AbstractOAuth2Co
 		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils
 			.getAuthorizationServerSettings(httpSecurity);
 		String tokenEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed()
-				? OAuth2ConfigurerUtils.withMultipleIssuersPattern(authorizationServerSettings.getTokenEndpoint())
+				? RequestMatcherUtils.withMultipleIssuersPattern(authorizationServerSettings.getTokenEndpoint())
 				: authorizationServerSettings.getTokenEndpoint();
 		String tokenIntrospectionEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed()
-				? OAuth2ConfigurerUtils
+				? RequestMatcherUtils
 					.withMultipleIssuersPattern(authorizationServerSettings.getTokenIntrospectionEndpoint())
 				: authorizationServerSettings.getTokenIntrospectionEndpoint();
 		String tokenRevocationEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed()
-				? OAuth2ConfigurerUtils
+				? RequestMatcherUtils
 					.withMultipleIssuersPattern(authorizationServerSettings.getTokenRevocationEndpoint())
 				: authorizationServerSettings.getTokenRevocationEndpoint();
 		String deviceAuthorizationEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed()
-				? OAuth2ConfigurerUtils
+				? RequestMatcherUtils
 					.withMultipleIssuersPattern(authorizationServerSettings.getDeviceAuthorizationEndpoint())
 				: authorizationServerSettings.getDeviceAuthorizationEndpoint();
 		String pushedAuthorizationRequestEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed()
-				? OAuth2ConfigurerUtils
+				? RequestMatcherUtils
 					.withMultipleIssuersPattern(authorizationServerSettings.getPushedAuthorizationRequestEndpoint())
 				: authorizationServerSettings.getPushedAuthorizationRequestEndpoint();
-		this.requestMatcher = new OrRequestMatcher(new AntPathRequestMatcher(tokenEndpointUri, HttpMethod.POST.name()),
-				new AntPathRequestMatcher(tokenIntrospectionEndpointUri, HttpMethod.POST.name()),
-				new AntPathRequestMatcher(tokenRevocationEndpointUri, HttpMethod.POST.name()),
-				new AntPathRequestMatcher(deviceAuthorizationEndpointUri, HttpMethod.POST.name()),
-				new AntPathRequestMatcher(pushedAuthorizationRequestEndpointUri, HttpMethod.POST.name()));
+		this.requestMatcher = new OrRequestMatcher(RequestMatcherUtils.matcher(tokenEndpointUri, HttpMethod.POST),
+				RequestMatcherUtils.matcher(tokenIntrospectionEndpointUri, HttpMethod.POST),
+				RequestMatcherUtils.matcher(tokenRevocationEndpointUri, HttpMethod.POST),
+				RequestMatcherUtils.matcher(deviceAuthorizationEndpointUri, HttpMethod.POST),
+				RequestMatcherUtils.matcher(pushedAuthorizationRequestEndpointUri, HttpMethod.POST));
 		List<AuthenticationProvider> authenticationProviders = createDefaultAuthenticationProviders(httpSecurity);
 		if (!this.authenticationProviders.isEmpty()) {
 			authenticationProviders.addAll(0, this.authenticationProviders);

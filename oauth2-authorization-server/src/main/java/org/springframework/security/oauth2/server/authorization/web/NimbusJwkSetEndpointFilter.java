@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.security.oauth2.server.authorization.web.util.matcher.RequestMatcherUtils;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -77,7 +77,7 @@ public final class NimbusJwkSetEndpointFilter extends OncePerRequestFilter {
 		Assert.hasText(jwkSetEndpointUri, "jwkSetEndpointUri cannot be empty");
 		this.jwkSource = jwkSource;
 		this.jwkSelector = new JWKSelector(new JWKMatcher.Builder().build());
-		this.requestMatcher = new AntPathRequestMatcher(jwkSetEndpointUri, HttpMethod.GET.name());
+		this.requestMatcher = RequestMatcherUtils.matcher(jwkSetEndpointUri, HttpMethod.GET);
 	}
 
 	@Override

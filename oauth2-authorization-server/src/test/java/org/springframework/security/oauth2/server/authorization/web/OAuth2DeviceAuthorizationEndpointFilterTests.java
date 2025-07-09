@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 the original author or authors.
+ * Copyright 2020-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -253,6 +253,8 @@ public class OAuth2DeviceAuthorizationEndpointFilterTests {
 
 		MockHttpServletRequest request = createRequest();
 		request.setContextPath("/contextPath");
+		request.setRequestURI("/contextPath" + AUTHORIZATION_URI);
+
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		FilterChain filterChain = mock(FilterChain.class);
 		this.filter.doFilter(request, response, filterChain);

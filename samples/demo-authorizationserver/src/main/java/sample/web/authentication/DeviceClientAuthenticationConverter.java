@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 the original author or authors.
+ * Copyright 2020-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package sample.web.authentication;
 
 import jakarta.servlet.http.HttpServletRequest;
-
 import sample.authentication.DeviceClientAuthenticationToken;
 
 import org.springframework.http.HttpMethod;
@@ -27,9 +26,9 @@ import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
+import org.springframework.security.oauth2.server.authorization.web.util.matcher.RequestMatcherUtils;
 import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.security.web.util.matcher.AndRequestMatcher;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.StringUtils;
 
@@ -46,8 +45,7 @@ public final class DeviceClientAuthenticationConverter implements Authentication
 		RequestMatcher clientIdParameterMatcher = request ->
 				request.getParameter(OAuth2ParameterNames.CLIENT_ID) != null;
 		this.deviceAuthorizationRequestMatcher = new AndRequestMatcher(
-				new AntPathRequestMatcher(
-						deviceAuthorizationEndpointUri, HttpMethod.POST.name()),
+				RequestMatcherUtils.matcher(deviceAuthorizationEndpointUri, HttpMethod.POST),
 				clientIdParameterMatcher);
 		this.deviceAccessTokenRequestMatcher = request ->
 				AuthorizationGrantType.DEVICE_CODE.getValue().equals(request.getParameter(OAuth2ParameterNames.GRANT_TYPE)) &&

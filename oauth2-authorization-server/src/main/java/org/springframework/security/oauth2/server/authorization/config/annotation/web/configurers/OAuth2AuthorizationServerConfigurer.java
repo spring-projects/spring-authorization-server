@@ -50,10 +50,10 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenGenerator;
 import org.springframework.security.oauth2.server.authorization.web.NimbusJwkSetEndpointFilter;
+import org.springframework.security.oauth2.server.authorization.web.util.matcher.RequestMatcherUtils;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.preauth.AbstractPreAuthenticatedProcessingFilter;
 import org.springframework.security.web.context.SecurityContextHolderFilter;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.OrRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
@@ -368,9 +368,9 @@ public final class OAuth2AuthorizationServerConfigurer
 			requestMatchers.add(configurer.getRequestMatcher());
 		});
 		String jwkSetEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed()
-				? OAuth2ConfigurerUtils.withMultipleIssuersPattern(authorizationServerSettings.getJwkSetEndpoint())
+				? RequestMatcherUtils.withMultipleIssuersPattern(authorizationServerSettings.getJwkSetEndpoint())
 				: authorizationServerSettings.getJwkSetEndpoint();
-		requestMatchers.add(new AntPathRequestMatcher(jwkSetEndpointUri, HttpMethod.GET.name()));
+		requestMatchers.add(RequestMatcherUtils.matcher(jwkSetEndpointUri, HttpMethod.GET));
 		this.endpointsMatcher = new OrRequestMatcher(requestMatchers);
 
 		ExceptionHandlingConfigurer<HttpSecurity> exceptionHandling = httpSecurity
@@ -419,7 +419,7 @@ public final class OAuth2AuthorizationServerConfigurer
 		JWKSource<com.nimbusds.jose.proc.SecurityContext> jwkSource = OAuth2ConfigurerUtils.getJwkSource(httpSecurity);
 		if (jwkSource != null) {
 			String jwkSetEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed()
-					? OAuth2ConfigurerUtils.withMultipleIssuersPattern(authorizationServerSettings.getJwkSetEndpoint())
+					? RequestMatcherUtils.withMultipleIssuersPattern(authorizationServerSettings.getJwkSetEndpoint())
 					: authorizationServerSettings.getJwkSetEndpoint();
 			NimbusJwkSetEndpointFilter jwkSetEndpointFilter = new NimbusJwkSetEndpointFilter(jwkSource,
 					jwkSetEndpointUri);

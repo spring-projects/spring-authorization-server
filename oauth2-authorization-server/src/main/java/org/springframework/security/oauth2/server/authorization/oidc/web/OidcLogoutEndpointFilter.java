@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 the original author or authors.
+ * Copyright 2020-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,10 +35,10 @@ import org.springframework.security.oauth2.server.authorization.oidc.authenticat
 import org.springframework.security.oauth2.server.authorization.oidc.authentication.OidcLogoutAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.oidc.web.authentication.OidcLogoutAuthenticationConverter;
 import org.springframework.security.oauth2.server.authorization.oidc.web.authentication.OidcLogoutAuthenticationSuccessHandler;
+import org.springframework.security.oauth2.server.authorization.web.util.matcher.RequestMatcherUtils;
 import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.OrRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
@@ -92,8 +92,8 @@ public final class OidcLogoutEndpointFilter extends OncePerRequestFilter {
 		Assert.hasText(logoutEndpointUri, "logoutEndpointUri cannot be empty");
 		this.authenticationManager = authenticationManager;
 		this.logoutEndpointMatcher = new OrRequestMatcher(
-				new AntPathRequestMatcher(logoutEndpointUri, HttpMethod.GET.name()),
-				new AntPathRequestMatcher(logoutEndpointUri, HttpMethod.POST.name()));
+				RequestMatcherUtils.matcher(logoutEndpointUri, HttpMethod.GET),
+				RequestMatcherUtils.matcher(logoutEndpointUri, HttpMethod.POST));
 		this.authenticationConverter = new OidcLogoutAuthenticationConverter();
 	}
 

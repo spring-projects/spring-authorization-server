@@ -23,8 +23,8 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.oauth2.server.authorization.oidc.OidcProviderConfiguration;
 import org.springframework.security.oauth2.server.authorization.oidc.web.OidcProviderConfigurationEndpointFilter;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
+import org.springframework.security.oauth2.server.authorization.web.util.matcher.RequestMatcherUtils;
 import org.springframework.security.web.authentication.preauth.AbstractPreAuthenticatedProcessingFilter;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 
 /**
@@ -79,7 +79,7 @@ public final class OidcProviderConfigurationEndpointConfigurer extends AbstractO
 			.getAuthorizationServerSettings(httpSecurity);
 		String oidcProviderConfigurationEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed()
 				? "/**/.well-known/openid-configuration" : "/.well-known/openid-configuration";
-		this.requestMatcher = new AntPathRequestMatcher(oidcProviderConfigurationEndpointUri, HttpMethod.GET.name());
+		this.requestMatcher = RequestMatcherUtils.matcher(oidcProviderConfigurationEndpointUri, HttpMethod.GET);
 	}
 
 	@Override

@@ -35,12 +35,12 @@ import org.springframework.security.oauth2.server.authorization.authentication.O
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.web.OAuth2PushedAuthorizationRequestEndpointFilter;
 import org.springframework.security.oauth2.server.authorization.web.authentication.OAuth2AuthorizationCodeRequestAuthenticationConverter;
+import org.springframework.security.oauth2.server.authorization.web.util.matcher.RequestMatcherUtils;
 import org.springframework.security.web.access.intercept.AuthorizationFilter;
 import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.DelegatingAuthenticationConverter;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
 
@@ -193,10 +193,10 @@ public final class OAuth2PushedAuthorizationRequestEndpointConfigurer extends Ab
 		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils
 			.getAuthorizationServerSettings(httpSecurity);
 		String pushedAuthorizationRequestEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed()
-				? OAuth2ConfigurerUtils
+				? RequestMatcherUtils
 					.withMultipleIssuersPattern(authorizationServerSettings.getPushedAuthorizationRequestEndpoint())
 				: authorizationServerSettings.getPushedAuthorizationRequestEndpoint();
-		this.requestMatcher = new AntPathRequestMatcher(pushedAuthorizationRequestEndpointUri, HttpMethod.POST.name());
+		this.requestMatcher = RequestMatcherUtils.matcher(pushedAuthorizationRequestEndpointUri, HttpMethod.POST);
 		List<AuthenticationProvider> authenticationProviders = createDefaultAuthenticationProviders(httpSecurity);
 		if (!this.authenticationProviders.isEmpty()) {
 			authenticationProviders.addAll(0, this.authenticationProviders);
@@ -212,7 +212,7 @@ public final class OAuth2PushedAuthorizationRequestEndpointConfigurer extends Ab
 		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils
 			.getAuthorizationServerSettings(httpSecurity);
 		String pushedAuthorizationRequestEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed()
-				? OAuth2ConfigurerUtils
+				? RequestMatcherUtils
 					.withMultipleIssuersPattern(authorizationServerSettings.getPushedAuthorizationRequestEndpoint())
 				: authorizationServerSettings.getPushedAuthorizationRequestEndpoint();
 		OAuth2PushedAuthorizationRequestEndpointFilter pushedAuthorizationRequestEndpointFilter = new OAuth2PushedAuthorizationRequestEndpointFilter(

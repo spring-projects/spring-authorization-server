@@ -47,12 +47,12 @@ import org.springframework.security.oauth2.server.authorization.web.authenticati
 import org.springframework.security.oauth2.server.authorization.web.authentication.OAuth2DeviceCodeAuthenticationConverter;
 import org.springframework.security.oauth2.server.authorization.web.authentication.OAuth2RefreshTokenAuthenticationConverter;
 import org.springframework.security.oauth2.server.authorization.web.authentication.OAuth2TokenExchangeAuthenticationConverter;
+import org.springframework.security.oauth2.server.authorization.web.util.matcher.RequestMatcherUtils;
 import org.springframework.security.web.access.intercept.AuthorizationFilter;
 import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.DelegatingAuthenticationConverter;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
 
@@ -187,9 +187,9 @@ public final class OAuth2TokenEndpointConfigurer extends AbstractOAuth2Configure
 		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils
 			.getAuthorizationServerSettings(httpSecurity);
 		String tokenEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed()
-				? OAuth2ConfigurerUtils.withMultipleIssuersPattern(authorizationServerSettings.getTokenEndpoint())
+				? RequestMatcherUtils.withMultipleIssuersPattern(authorizationServerSettings.getTokenEndpoint())
 				: authorizationServerSettings.getTokenEndpoint();
-		this.requestMatcher = new AntPathRequestMatcher(tokenEndpointUri, HttpMethod.POST.name());
+		this.requestMatcher = RequestMatcherUtils.matcher(tokenEndpointUri, HttpMethod.POST);
 
 		List<AuthenticationProvider> authenticationProviders = createDefaultAuthenticationProviders(httpSecurity);
 		if (!this.authenticationProviders.isEmpty()) {
@@ -207,7 +207,7 @@ public final class OAuth2TokenEndpointConfigurer extends AbstractOAuth2Configure
 			.getAuthorizationServerSettings(httpSecurity);
 
 		String tokenEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed()
-				? OAuth2ConfigurerUtils.withMultipleIssuersPattern(authorizationServerSettings.getTokenEndpoint())
+				? RequestMatcherUtils.withMultipleIssuersPattern(authorizationServerSettings.getTokenEndpoint())
 				: authorizationServerSettings.getTokenEndpoint();
 		OAuth2TokenEndpointFilter tokenEndpointFilter = new OAuth2TokenEndpointFilter(authenticationManager,
 				tokenEndpointUri);

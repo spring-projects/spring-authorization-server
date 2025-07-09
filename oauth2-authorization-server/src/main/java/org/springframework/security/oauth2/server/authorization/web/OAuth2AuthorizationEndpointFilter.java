@@ -46,6 +46,7 @@ import org.springframework.security.oauth2.server.authorization.authentication.O
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationConsentAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.web.authentication.OAuth2AuthorizationCodeRequestAuthenticationConverter;
 import org.springframework.security.oauth2.server.authorization.web.authentication.OAuth2AuthorizationConsentAuthenticationConverter;
+import org.springframework.security.oauth2.server.authorization.web.util.matcher.RequestMatcherUtils;
 import org.springframework.security.web.DefaultRedirectStrategy;
 import org.springframework.security.web.RedirectStrategy;
 import org.springframework.security.web.authentication.AuthenticationConverter;
@@ -57,7 +58,6 @@ import org.springframework.security.web.authentication.session.SessionAuthentica
 import org.springframework.security.web.util.RedirectUrlBuilder;
 import org.springframework.security.web.util.UrlUtils;
 import org.springframework.security.web.util.matcher.AndRequestMatcher;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.NegatedRequestMatcher;
 import org.springframework.security.web.util.matcher.OrRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
@@ -146,10 +146,10 @@ public final class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilte
 	}
 
 	private static RequestMatcher createDefaultRequestMatcher(String authorizationEndpointUri) {
-		RequestMatcher authorizationRequestGetMatcher = new AntPathRequestMatcher(authorizationEndpointUri,
-				HttpMethod.GET.name());
-		RequestMatcher authorizationRequestPostMatcher = new AntPathRequestMatcher(authorizationEndpointUri,
-				HttpMethod.POST.name());
+		RequestMatcher authorizationRequestGetMatcher = RequestMatcherUtils.matcher(authorizationEndpointUri,
+				HttpMethod.GET);
+		RequestMatcher authorizationRequestPostMatcher = RequestMatcherUtils.matcher(authorizationEndpointUri,
+				HttpMethod.POST);
 
 		RequestMatcher responseTypeParameterMatcher = (
 				request) -> request.getParameter(OAuth2ParameterNames.RESPONSE_TYPE) != null;

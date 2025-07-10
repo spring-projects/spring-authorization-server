@@ -51,7 +51,7 @@ repositories {
 }
 
 dependencies {
-	implementation(platform("org.springframework.boot:spring-boot-dependencies:3.2.2")) {
+	implementation(platform("org.springframework.boot:spring-boot-dependencies:4.0.0-SNAPSHOT")) {
 		exclude group: "org.springframework.security", module: "spring-security-oauth2-authorization-server"
 	}
 	implementation platform("org.springframework.security:spring-security-bom:7.0.0-SNAPSHOT")
@@ -60,6 +60,7 @@ dependencies {
 	implementation "org.springframework.boot:spring-boot-starter-security"
 	implementation "org.springframework.boot:spring-boot-starter-oauth2-client"
 	implementation "org.springframework.boot:spring-boot-starter-oauth2-resource-server"
+	implementation "org.springframework.boot:spring-boot-starter-oauth2-authorization-server"
 	implementation "org.springframework.boot:spring-boot-starter-data-jpa"
 	implementation ("org.springframework.boot:spring-boot-starter-data-redis") {
 		exclude group: "io.lettuce", module: "lettuce-core"

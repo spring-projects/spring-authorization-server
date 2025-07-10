@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 the original author or authors.
+ * Copyright 2020-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package sample.config;
 
-import java.util.Arrays;
 import java.util.function.Supplier;
 
 import javax.net.ssl.KeyManagerFactory;
@@ -30,7 +29,6 @@ import sample.authorization.DeviceCodeOAuth2AuthorizedClientProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.ssl.SslBundle;
 import org.springframework.boot.ssl.SslBundles;
-import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.ClientHttpRequestFactory;
@@ -40,10 +38,9 @@ import org.springframework.http.converter.FormHttpMessageConverter;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientProvider;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientProviderBuilder;
-import org.springframework.security.oauth2.client.endpoint.DefaultClientCredentialsTokenResponseClient;
 import org.springframework.security.oauth2.client.endpoint.OAuth2AccessTokenResponseClient;
 import org.springframework.security.oauth2.client.endpoint.OAuth2ClientCredentialsGrantRequest;
-import org.springframework.security.oauth2.client.endpoint.OAuth2ClientCredentialsGrantRequestEntityConverter;
+import org.springframework.security.oauth2.client.endpoint.RestClientClientCredentialsTokenResponseClient;
 import org.springframework.security.oauth2.client.http.OAuth2ErrorResponseErrorHandler;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.client.web.DefaultOAuth2AuthorizedClientManager;
@@ -53,7 +50,7 @@ import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.http.converter.OAuth2AccessTokenResponseHttpMessageConverter;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.RestClient;
 import org.springframework.web.reactive.function.client.WebClient;
 
 /**
@@ -83,17 +80,18 @@ public class WebClientConfig {
 	public WebClient selfSignedDemoClientWebClient(
 			ClientRegistrationRepository clientRegistrationRepository,
 			OAuth2AuthorizedClientRepository authorizedClientRepository,
-			RestTemplateBuilder restTemplateBuilder,
 			@Qualifier("self-signed-demo-client-http-request-factory") Supplier<ClientHttpRequestFactory> clientHttpRequestFactory,
 			SslBundles sslBundles) throws Exception {
 
 		// @formatter:off
-		RestTemplate restTemplate = restTemplateBuilder
-				.requestFactory(clientHttpRequestFactory)
-				.messageConverters(Arrays.asList(
-						new FormHttpMessageConverter(),
-						new OAuth2AccessTokenResponseHttpMessageConverter()))
-				.errorHandler(new OAuth2ErrorResponseErrorHandler())
+		RestClient restClient = RestClient.builder()
+				.requestFactory(clientHttpRequestFactory.get())
+				.messageConverters((messageConverters) -> {
+					messageConverters.clear();
+					messageConverters.add(new FormHttpMessageConverter());
+					messageConverters.add(new OAuth2AccessTokenResponseHttpMessageConverter());
+				})
+				.defaultStatusHandler(new OAuth2ErrorResponseErrorHandler())
 				.build();
 		// @formatter:on
 
@@ -102,7 +100,7 @@ public class WebClientConfig {
 				OAuth2AuthorizedClientProviderBuilder.builder()
 						.clientCredentials(clientCredentials ->
 								clientCredentials.accessTokenResponseClient(
-										createClientCredentialsTokenResponseClient(restTemplate)))
+										createClientCredentialsTokenResponseClient(restClient)))
 						.build();
 		// @formatter:on
 
@@ -124,16 +122,17 @@ public class WebClientConfig {
 	public OAuth2AuthorizedClientManager authorizedClientManager(
 			ClientRegistrationRepository clientRegistrationRepository,
 			OAuth2AuthorizedClientRepository authorizedClientRepository,
-			RestTemplateBuilder restTemplateBuilder,
 			@Qualifier("default-client-http-request-factory") Supplier<ClientHttpRequestFactory> clientHttpRequestFactory) {
 
 		// @formatter:off
-		RestTemplate restTemplate = restTemplateBuilder
-				.requestFactory(clientHttpRequestFactory)
-				.messageConverters(Arrays.asList(
-						new FormHttpMessageConverter(),
-						new OAuth2AccessTokenResponseHttpMessageConverter()))
-				.errorHandler(new OAuth2ErrorResponseErrorHandler())
+		RestClient restClient = RestClient.builder()
+				.requestFactory(clientHttpRequestFactory.get())
+				.messageConverters((messageConverters) -> {
+					messageConverters.clear();
+					messageConverters.add(new FormHttpMessageConverter());
+					messageConverters.add(new OAuth2AccessTokenResponseHttpMessageConverter());
+				})
+				.defaultStatusHandler(new OAuth2ErrorResponseErrorHandler())
 				.build();
 		// @formatter:on
 
@@ -144,7 +143,7 @@ public class WebClientConfig {
 						.refreshToken()
 						.clientCredentials(clientCredentials ->
 								clientCredentials.accessTokenResponseClient(
-										createClientCredentialsTokenResponseClient(restTemplate)))
+										createClientCredentialsTokenResponseClient(restClient)))
 						.provider(new DeviceCodeOAuth2AuthorizedClientProvider())
 						.build();
 		// @formatter:on
@@ -177,20 +176,16 @@ public class WebClientConfig {
 	}
 
 	private static OAuth2AccessTokenResponseClient<OAuth2ClientCredentialsGrantRequest> createClientCredentialsTokenResponseClient(
-			RestTemplate restTemplate) {
-		DefaultClientCredentialsTokenResponseClient clientCredentialsTokenResponseClient =
-				new DefaultClientCredentialsTokenResponseClient();
-		clientCredentialsTokenResponseClient.setRestOperations(restTemplate);
-
-		OAuth2ClientCredentialsGrantRequestEntityConverter clientCredentialsGrantRequestEntityConverter =
-				new OAuth2ClientCredentialsGrantRequestEntityConverter();
-		clientCredentialsGrantRequestEntityConverter.addParametersConverter(authorizationGrantRequest -> {
+			RestClient restClient) {
+		RestClientClientCredentialsTokenResponseClient clientCredentialsTokenResponseClient =
+				new RestClientClientCredentialsTokenResponseClient();
+		clientCredentialsTokenResponseClient.addParametersConverter(authorizationGrantRequest -> {
 			MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
 			// client_id parameter is required for tls_client_auth method
 			parameters.add(OAuth2ParameterNames.CLIENT_ID, authorizationGrantRequest.getClientRegistration().getClientId());
 			return parameters;
 		});
-		clientCredentialsTokenResponseClient.setRequestEntityConverter(clientCredentialsGrantRequestEntityConverter);
+		clientCredentialsTokenResponseClient.setRestClient(restClient);
 
 		return clientCredentialsTokenResponseClient;
 	}

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 the original author or authors.
+ * Copyright 2020-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package sample.config;
 
 import org.apache.catalina.connector.Connector;
 
-import org.springframework.boot.web.embedded.tomcat.TomcatServletWebServerFactory;
+import org.springframework.boot.tomcat.servlet.TomcatServletWebServerFactory;
 import org.springframework.boot.web.server.WebServerFactoryCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -31,7 +31,7 @@ public class TomcatServerConfig {
 
 	@Bean
 	public WebServerFactoryCustomizer<TomcatServletWebServerFactory> connectorCustomizer() {
-		return (tomcat) -> tomcat.addAdditionalTomcatConnectors(createHttpConnector());
+		return (tomcat) -> tomcat.addAdditionalConnectors(createHttpConnector());
 	}
 
 	private Connector createHttpConnector() {

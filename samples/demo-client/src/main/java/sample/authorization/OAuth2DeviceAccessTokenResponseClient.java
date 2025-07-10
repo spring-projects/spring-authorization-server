@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 the original author or authors.
+ * Copyright 2020-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,7 @@
  */
 package sample.authorization;
 
-import java.util.Arrays;
-
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.RequestEntity;
 import org.springframework.http.converter.FormHttpMessageConverter;
 import org.springframework.security.oauth2.client.endpoint.OAuth2AccessTokenResponseClient;
 import org.springframework.security.oauth2.client.http.OAuth2ErrorResponseErrorHandler;
@@ -31,9 +28,8 @@ import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.http.converter.OAuth2AccessTokenResponseHttpMessageConverter;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
-import org.springframework.web.client.RestOperations;
-import org.springframework.web.client.RestTemplate;
 
 /**
  * @author Steve Riesenberg
@@ -41,24 +37,28 @@ import org.springframework.web.client.RestTemplate;
  */
 public final class OAuth2DeviceAccessTokenResponseClient implements OAuth2AccessTokenResponseClient<OAuth2DeviceGrantRequest> {
 
-	private RestOperations restOperations;
+	private RestClient restClient;
 
 	public OAuth2DeviceAccessTokenResponseClient() {
-		RestTemplate restTemplate = new RestTemplate(Arrays.asList(new FormHttpMessageConverter(),
-				new OAuth2AccessTokenResponseHttpMessageConverter()));
-		restTemplate.setErrorHandler(new OAuth2ErrorResponseErrorHandler());
-		this.restOperations = restTemplate;
+		this.restClient = RestClient.builder()
+				.messageConverters((messageConverters) -> {
+					messageConverters.clear();
+					messageConverters.add(new FormHttpMessageConverter());
+					messageConverters.add(new OAuth2AccessTokenResponseHttpMessageConverter());
+				})
+				.defaultStatusHandler(new OAuth2ErrorResponseErrorHandler())
+				.build();
 	}
 
-	public void setRestOperations(RestOperations restOperations) {
-		this.restOperations = restOperations;
+	public void setRestClient(RestClient restClient) {
+		this.restClient = restClient;
 	}
 
 	@Override
 	public OAuth2AccessTokenResponse getTokenResponse(OAuth2DeviceGrantRequest deviceGrantRequest) {
 		ClientRegistration clientRegistration = deviceGrantRequest.getClientRegistration();
 
-		HttpHeaders headers = new HttpHeaders();
+		HttpHeaders headerParameters = new HttpHeaders();
 		/*
 		 * This sample demonstrates the use of a public client that does not
 		 * store credentials or authenticate with the authorization server.
@@ -71,7 +71,7 @@ public final class OAuth2DeviceAccessTokenResponseClient implements OAuth2Access
 		 * OAuth 2.0 Token Request with a clientId/clientSecret.
 		 */
 		if (!clientRegistration.getClientAuthenticationMethod().equals(ClientAuthenticationMethod.NONE)) {
-			headers.setBasicAuth(clientRegistration.getClientId(), clientRegistration.getClientSecret());
+			headerParameters.setBasicAuth(clientRegistration.getClientId(), clientRegistration.getClientSecret());
 		}
 
 		MultiValueMap<String, Object> requestParameters = new LinkedMultiValueMap<>();
@@ -79,15 +79,15 @@ public final class OAuth2DeviceAccessTokenResponseClient implements OAuth2Access
 		requestParameters.add(OAuth2ParameterNames.CLIENT_ID, clientRegistration.getClientId());
 		requestParameters.add(OAuth2ParameterNames.DEVICE_CODE, deviceGrantRequest.getDeviceCode());
 
-		// @formatter:off
-		RequestEntity<MultiValueMap<String, Object>> requestEntity =
-				RequestEntity.post(deviceGrantRequest.getClientRegistration().getProviderDetails().getTokenUri())
-						.headers(headers)
-						.body(requestParameters);
-		// @formatter:on
-
 		try {
-			return this.restOperations.exchange(requestEntity, OAuth2AccessTokenResponse.class).getBody();
+			// @formatter:off
+			return this.restClient.post()
+					.uri(deviceGrantRequest.getClientRegistration().getProviderDetails().getTokenUri())
+					.headers((headers) -> headers.putAll(headerParameters))
+					.body(requestParameters)
+					.retrieve()
+					.body(OAuth2AccessTokenResponse.class);
+			// @formatter:on
 		} catch (RestClientException ex) {
 			OAuth2Error oauth2Error = new OAuth2Error("invalid_token_response",
 					"An error occurred while attempting to retrieve the OAuth 2.0 Access Token Response: "

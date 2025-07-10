@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 the original author or authors.
+ * Copyright 2020-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,6 @@ import jakarta.servlet.http.HttpServletRequest;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
-import org.springframework.security.oauth2.client.annotation.RegisteredOAuth2AuthorizedClient;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.stereotype.Controller;
@@ -28,11 +26,11 @@ import org.springframework.ui.Model;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
+import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientResponseException;
 
-import static org.springframework.security.oauth2.client.web.reactive.function.client.ServletOAuth2AuthorizedClientExchangeFilterFunction.clientRegistrationId;
-import static org.springframework.security.oauth2.client.web.reactive.function.client.ServletOAuth2AuthorizedClientExchangeFilterFunction.oauth2AuthorizedClient;
+import static org.springframework.security.oauth2.client.web.client.RequestAttributeClientRegistrationIdResolver.clientRegistrationId;
+
 
 /**
  * @author Joe Grandja
@@ -40,34 +38,30 @@ import static org.springframework.security.oauth2.client.web.reactive.function.c
  */
 @Controller
 public class AuthorizationController {
-	private final WebClient defaultClientWebClient;
-	private final WebClient selfSignedDemoClientWebClient;
+	private final RestClient defaultClientRestClient;
+	private final RestClient selfSignedDemoClientRestClient;
 	private final String messagesBaseUri;
 	private final String userMessagesBaseUri;
 
 	public AuthorizationController(
-			@Qualifier("default-client-web-client") WebClient defaultClientWebClient,
-			@Qualifier("self-signed-demo-client-web-client") WebClient selfSignedDemoClientWebClient,
+			@Qualifier("default-client-rest-client") RestClient defaultClientRestClient,
+			@Qualifier("self-signed-demo-client-rest-client") RestClient selfSignedDemoClientRestClient,
 			@Value("${messages.base-uri}") String messagesBaseUri,
 			@Value("${user-messages.base-uri}") String userMessagesBaseUri) {
-		this.defaultClientWebClient = defaultClientWebClient;
-		this.selfSignedDemoClientWebClient = selfSignedDemoClientWebClient;
+		this.defaultClientRestClient = defaultClientRestClient;
+		this.selfSignedDemoClientRestClient = selfSignedDemoClientRestClient;
 		this.messagesBaseUri = messagesBaseUri;
 		this.userMessagesBaseUri = userMessagesBaseUri;
 	}
 
 	@GetMapping(value = "/authorize", params = "grant_type=authorization_code")
-	public String authorizationCodeGrant(Model model,
-			@RegisteredOAuth2AuthorizedClient("messaging-client-authorization-code")
-					OAuth2AuthorizedClient authorizedClient) {
-
-		String[] messages = this.defaultClientWebClient
+	public String authorizationCodeGrant(Model model) {
+		String[] messages = this.defaultClientRestClient
 				.get()
 				.uri(this.messagesBaseUri)
-				.attributes(oauth2AuthorizedClient(authorizedClient))
+				.attributes(clientRegistrationId("messaging-client-authorization-code"))
 				.retrieve()
-				.bodyToMono(String[].class)
-				.block();
+				.body(String[].class);
 		model.addAttribute("messages", messages);
 
 		return "index";
@@ -91,14 +85,12 @@ public class AuthorizationController {
 
 	@GetMapping(value = "/authorize", params = {"grant_type=client_credentials", "client_auth=client_secret"})
 	public String clientCredentialsGrantUsingClientSecret(Model model) {
-
-		String[] messages = this.defaultClientWebClient
+		String[] messages = this.defaultClientRestClient
 				.get()
 				.uri(this.messagesBaseUri)
 				.attributes(clientRegistrationId("messaging-client-client-credentials"))
 				.retrieve()
-				.bodyToMono(String[].class)
-				.block();
+				.body(String[].class);
 		model.addAttribute("messages", messages);
 
 		return "index";
@@ -106,14 +98,12 @@ public class AuthorizationController {
 
 	@GetMapping(value = "/authorize", params = {"grant_type=client_credentials", "client_auth=mtls"})
 	public String clientCredentialsGrantUsingMutualTLS(Model model) {
-
-		String[] messages = this.defaultClientWebClient
+		String[] messages = this.defaultClientRestClient
 				.get()
 				.uri(this.messagesBaseUri)
 				.attributes(clientRegistrationId("mtls-demo-client-client-credentials"))
 				.retrieve()
-				.bodyToMono(String[].class)
-				.block();
+				.body(String[].class);
 		model.addAttribute("messages", messages);
 
 		return "index";
@@ -121,14 +111,12 @@ public class AuthorizationController {
 
 	@GetMapping(value = "/authorize", params = {"grant_type=client_credentials", "client_auth=self_signed_mtls"})
 	public String clientCredentialsGrantUsingSelfSignedMutualTLS(Model model) {
-
-		String[] messages = this.selfSignedDemoClientWebClient
+		String[] messages = this.selfSignedDemoClientRestClient
 				.get()
 				.uri(this.messagesBaseUri)
 				.attributes(clientRegistrationId("mtls-self-signed-demo-client-client-credentials"))
 				.retrieve()
-				.bodyToMono(String[].class)
-				.block();
+				.body(String[].class);
 		model.addAttribute("messages", messages);
 
 		return "index";
@@ -136,14 +124,12 @@ public class AuthorizationController {
 
 	@GetMapping(value = "/authorize", params = {"grant_type=token_exchange", "use_case=delegation"})
 	public String tokenExchangeGrantUsingDelegation(Model model) {
-
-		String[] messages = this.defaultClientWebClient
+		String[] messages = this.defaultClientRestClient
 				.get()
 				.uri(this.userMessagesBaseUri + "?use_case=delegation")
 				.attributes(clientRegistrationId("user-client-authorization-code"))
 				.retrieve()
-				.bodyToMono(String[].class)
-				.block();
+				.body(String[].class);
 		model.addAttribute("messages", messages);
 
 		return "index";
@@ -151,14 +137,12 @@ public class AuthorizationController {
 
 	@GetMapping(value = "/authorize", params = {"grant_type=token_exchange", "use_case=impersonation"})
 	public String tokenExchangeGrantUsingImpersonation(Model model) {
-
-		String[] messages = this.defaultClientWebClient
+		String[] messages = this.defaultClientRestClient
 				.get()
 				.uri(this.userMessagesBaseUri + "?use_case=impersonation")
 				.attributes(clientRegistrationId("user-client-authorization-code"))
 				.retrieve()
-				.bodyToMono(String[].class)
-				.block();
+				.body(String[].class);
 		model.addAttribute("messages", messages);
 
 		return "index";
@@ -169,8 +153,8 @@ public class AuthorizationController {
 		return "device-activate";
 	}
 
-	@ExceptionHandler(WebClientResponseException.class)
-	public String handleError(Model model, WebClientResponseException ex) {
+	@ExceptionHandler(RestClientResponseException.class)
+	public String handleError(Model model, RestClientResponseException ex) {
 		model.addAttribute("error", ex.getMessage());
 		return "index";
 	}

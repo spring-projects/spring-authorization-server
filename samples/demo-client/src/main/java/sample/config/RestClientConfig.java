@@ -28,13 +28,33 @@ import org.apache.hc.client5.http.ssl.NoopHostnameVerifier;
 import org.apache.hc.client5.http.ssl.SSLConnectionSocketFactory;
 import org.apache.hc.core5.http.config.Registry;
 import org.apache.hc.core5.http.config.RegistryBuilder;
+import sample.authorization.DeviceCodeOAuth2AuthorizedClientProvider;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.ssl.SslBundle;
 import org.springframework.boot.ssl.SslBundles;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
+import org.springframework.http.converter.FormHttpMessageConverter;
+import org.springframework.security.oauth2.client.OAuth2AuthorizationFailureHandler;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClientProvider;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClientProviderBuilder;
+import org.springframework.security.oauth2.client.endpoint.OAuth2AccessTokenResponseClient;
+import org.springframework.security.oauth2.client.endpoint.OAuth2ClientCredentialsGrantRequest;
+import org.springframework.security.oauth2.client.endpoint.RestClientClientCredentialsTokenResponseClient;
+import org.springframework.security.oauth2.client.http.OAuth2ErrorResponseErrorHandler;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import org.springframework.security.oauth2.client.web.DefaultOAuth2AuthorizedClientManager;
+import org.springframework.security.oauth2.client.web.OAuth2AuthorizedClientRepository;
+import org.springframework.security.oauth2.client.web.client.OAuth2ClientHttpRequestInterceptor;
+import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
+import org.springframework.security.oauth2.core.http.converter.OAuth2AccessTokenResponseHttpMessageConverter;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestClient;
 
 /**
  * @author Joe Grandja
@@ -42,6 +62,91 @@ import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
  */
 @Configuration(proxyBeanMethods = false)
 public class RestClientConfig {
+
+	@Bean("default-client-rest-client")
+	public RestClient defaultClientRestClient(
+			OAuth2AuthorizedClientRepository authorizedClientRepository,
+			OAuth2AuthorizedClientManager authorizedClientManager,
+			@Qualifier("default-client-http-request-factory") Supplier<ClientHttpRequestFactory> clientHttpRequestFactory) {
+
+		OAuth2ClientHttpRequestInterceptor requestInterceptor =
+				new OAuth2ClientHttpRequestInterceptor(authorizedClientManager);
+		OAuth2AuthorizationFailureHandler authorizationFailureHandler =
+				OAuth2ClientHttpRequestInterceptor.authorizationFailureHandler(authorizedClientRepository);
+		requestInterceptor.setAuthorizationFailureHandler(authorizationFailureHandler);
+		// @formatter:off
+		return RestClient.builder()
+				.requestFactory(clientHttpRequestFactory.get())
+				.requestInterceptor(requestInterceptor)
+				.build();
+		// @formatter:on
+	}
+
+	@Bean("self-signed-demo-client-rest-client")
+	public RestClient selfSignedDemoClientRestClient(
+			ClientRegistrationRepository clientRegistrationRepository,
+			OAuth2AuthorizedClientRepository authorizedClientRepository,
+			@Qualifier("self-signed-demo-client-http-request-factory") Supplier<ClientHttpRequestFactory> clientHttpRequestFactory) {
+
+		RestClient restClient = accessTokenRestClient(clientHttpRequestFactory);
+
+		// @formatter:off
+		OAuth2AuthorizedClientProvider authorizedClientProvider =
+				OAuth2AuthorizedClientProviderBuilder.builder()
+						.clientCredentials(clientCredentials ->
+								clientCredentials.accessTokenResponseClient(
+										createClientCredentialsTokenResponseClient(restClient)))
+						.build();
+		// @formatter:on
+
+		DefaultOAuth2AuthorizedClientManager authorizedClientManager = new DefaultOAuth2AuthorizedClientManager(
+				clientRegistrationRepository, authorizedClientRepository);
+		authorizedClientManager.setAuthorizedClientProvider(authorizedClientProvider);
+
+		OAuth2ClientHttpRequestInterceptor requestInterceptor =
+				new OAuth2ClientHttpRequestInterceptor(authorizedClientManager);
+		OAuth2AuthorizationFailureHandler authorizationFailureHandler =
+				OAuth2ClientHttpRequestInterceptor.authorizationFailureHandler(authorizedClientRepository);
+		requestInterceptor.setAuthorizationFailureHandler(authorizationFailureHandler);
+
+		// @formatter:off
+		return RestClient.builder()
+				.requestFactory(clientHttpRequestFactory.get())
+				.requestInterceptor(requestInterceptor)
+				.build();
+		// @formatter:on
+	}
+
+	@Bean
+	public OAuth2AuthorizedClientManager authorizedClientManager(
+			ClientRegistrationRepository clientRegistrationRepository,
+			OAuth2AuthorizedClientRepository authorizedClientRepository,
+			@Qualifier("default-client-http-request-factory") Supplier<ClientHttpRequestFactory> clientHttpRequestFactory) {
+
+		RestClient restClient = accessTokenRestClient(clientHttpRequestFactory);
+
+		// @formatter:off
+		OAuth2AuthorizedClientProvider authorizedClientProvider =
+				OAuth2AuthorizedClientProviderBuilder.builder()
+						.authorizationCode()
+						.refreshToken()
+						.clientCredentials(clientCredentials ->
+								clientCredentials.accessTokenResponseClient(
+										createClientCredentialsTokenResponseClient(restClient)))
+						.provider(new DeviceCodeOAuth2AuthorizedClientProvider())
+						.build();
+		// @formatter:on
+
+		DefaultOAuth2AuthorizedClientManager authorizedClientManager = new DefaultOAuth2AuthorizedClientManager(
+				clientRegistrationRepository, authorizedClientRepository);
+		authorizedClientManager.setAuthorizedClientProvider(authorizedClientProvider);
+
+		// Set a contextAttributesMapper to obtain device_code from the request
+		authorizedClientManager.setContextAttributesMapper(DeviceCodeOAuth2AuthorizedClientProvider
+				.deviceCodeContextAttributesMapper());
+
+		return authorizedClientManager;
+	}
 
 	@Bean("default-client-http-request-factory")
 	Supplier<ClientHttpRequestFactory> defaultClientHttpRequestFactory(SslBundles sslBundles) {
@@ -80,6 +185,36 @@ public class RestClientConfig {
 					.build();
 			return new HttpComponentsClientHttpRequestFactory(httpClient);
 		};
+	}
+
+	private static RestClient accessTokenRestClient(Supplier<ClientHttpRequestFactory> clientHttpRequestFactory) {
+		// @formatter:off
+		return RestClient.builder()
+				.requestFactory(clientHttpRequestFactory.get())
+				.messageConverters((messageConverters) -> {
+					messageConverters.clear();
+					messageConverters.add(new FormHttpMessageConverter());
+					messageConverters.add(new OAuth2AccessTokenResponseHttpMessageConverter());
+				})
+				.defaultStatusHandler(new OAuth2ErrorResponseErrorHandler())
+				.build();
+		// @formatter:on
+
+	}
+
+	private static OAuth2AccessTokenResponseClient<OAuth2ClientCredentialsGrantRequest> createClientCredentialsTokenResponseClient(
+			RestClient restClient) {
+		RestClientClientCredentialsTokenResponseClient clientCredentialsTokenResponseClient =
+				new RestClientClientCredentialsTokenResponseClient();
+		clientCredentialsTokenResponseClient.addParametersConverter(authorizationGrantRequest -> {
+			MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+			// client_id parameter is required for tls_client_auth method
+			parameters.add(OAuth2ParameterNames.CLIENT_ID, authorizationGrantRequest.getClientRegistration().getClientId());
+			return parameters;
+		});
+		clientCredentialsTokenResponseClient.setRestClient(restClient);
+
+		return clientCredentialsTokenResponseClient;
 	}
 
 }

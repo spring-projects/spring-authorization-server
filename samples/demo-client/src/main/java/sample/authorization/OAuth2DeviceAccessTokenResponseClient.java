@@ -40,6 +40,7 @@ public final class OAuth2DeviceAccessTokenResponseClient implements OAuth2Access
 	private RestClient restClient;
 
 	public OAuth2DeviceAccessTokenResponseClient() {
+		// @formatter:off
 		this.restClient = RestClient.builder()
 				.messageConverters((messageConverters) -> {
 					messageConverters.clear();
@@ -48,6 +49,7 @@ public final class OAuth2DeviceAccessTokenResponseClient implements OAuth2Access
 				})
 				.defaultStatusHandler(new OAuth2ErrorResponseErrorHandler())
 				.build();
+		// @formatter:on
 	}
 
 	public void setRestClient(RestClient restClient) {

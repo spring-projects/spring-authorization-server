@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 the original author or authors.
+ * Copyright 2020-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,10 +45,9 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.reactive.function.BodyInserters;
-import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.client.RestClient;
 
-import static org.springframework.security.oauth2.client.web.reactive.function.client.ServletOAuth2AuthorizedClientExchangeFilterFunction.oauth2AuthorizedClient;
+import static org.springframework.security.oauth2.client.web.client.RequestAttributeClientRegistrationIdResolver.clientRegistrationId;
 
 /**
  * @author Steve Riesenberg
@@ -69,17 +68,17 @@ public class DeviceController {
 
 	private final ClientRegistrationRepository clientRegistrationRepository;
 
-	private final WebClient webClient;
+	private final RestClient restClient;
 
 	private final String messagesBaseUri;
 
 	public DeviceController(
 			ClientRegistrationRepository clientRegistrationRepository,
-			@Qualifier("default-client-web-client") WebClient webClient,
+			@Qualifier("default-client-rest-client") RestClient restClient,
 			@Value("${messages.base-uri}") String messagesBaseUri) {
 
 		this.clientRegistrationRepository = clientRegistrationRepository;
-		this.webClient = webClient;
+		this.restClient = restClient;
 		this.messagesBaseUri = messagesBaseUri;
 	}
 
@@ -100,7 +99,7 @@ public class DeviceController {
 
 		// @formatter:off
 		Map<String, Object> responseParameters =
-				this.webClient.post()
+				this.restClient.post()
 						.uri(deviceAuthorizationUri)
 						.headers(headers -> {
 							/*
@@ -119,10 +118,9 @@ public class DeviceController {
 							}
 						})
 						.contentType(MediaType.APPLICATION_FORM_URLENCODED)
-						.body(BodyInserters.fromFormData(requestParameters))
+						.body(requestParameters)
 						.retrieve()
-						.bodyToMono(TYPE_REFERENCE)
-						.block();
+						.body(TYPE_REFERENCE);
 		// @formatter:on
 
 		Objects.requireNonNull(responseParameters, "Device Authorization Response cannot be null");
@@ -177,16 +175,12 @@ public class DeviceController {
 	}
 
 	@GetMapping("/device_authorized")
-	public String authorized(Model model,
-			@RegisteredOAuth2AuthorizedClient("messaging-client-device-code")
-					OAuth2AuthorizedClient authorizedClient) {
-
-		String[] messages = this.webClient.get()
+	public String authorized(Model model) {
+		String[] messages = this.restClient.get()
 				.uri(this.messagesBaseUri)
-				.attributes(oauth2AuthorizedClient(authorizedClient))
+				.attributes(clientRegistrationId("messaging-client-device-code"))
 				.retrieve()
-				.bodyToMono(String[].class)
-				.block();
+				.body(String[].class);
 		model.addAttribute("messages", messages);
 
 		return "index";

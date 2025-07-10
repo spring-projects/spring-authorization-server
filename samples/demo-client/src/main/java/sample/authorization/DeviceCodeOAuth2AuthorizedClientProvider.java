@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 the original author or authors.
+ * Copyright 2020-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,8 @@ import org.springframework.security.oauth2.core.OAuth2Token;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AccessTokenResponse;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.util.Assert;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 /**
  * @author Steve Riesenberg
@@ -107,7 +109,16 @@ public final class DeviceCodeOAuth2AuthorizedClientProvider implements OAuth2Aut
 	public static Function<OAuth2AuthorizeRequest, Map<String, Object>> deviceCodeContextAttributesMapper() {
 		return (authorizeRequest) -> {
 			HttpServletRequest request = authorizeRequest.getAttribute(HttpServletRequest.class.getName());
-			Assert.notNull(request, "request cannot be null");
+			if (request == null) {
+				ServletRequestAttributes requestAttributes = (ServletRequestAttributes) RequestContextHolder
+						.getRequestAttributes();
+				if (requestAttributes != null) {
+					request = requestAttributes.getRequest();
+				}
+			}
+			if (request == null) {
+				return Collections.emptyMap();
+			}
 
 			// Obtain device code from request
 			String deviceCode = request.getParameter(OAuth2ParameterNames.DEVICE_CODE);

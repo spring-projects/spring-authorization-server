@@ -69,6 +69,7 @@ dependencies {
 	implementation "org.springframework:spring-webflux"
 	implementation project(":spring-security-oauth2-authorization-server")
 	runtimeOnly "com.h2database:h2"
+	testRuntimeOnly "org.junit.platform:junit-platform-launcher"
 	testImplementation "org.springframework.boot:spring-boot-starter-test"
 	testImplementation "org.springframework.security:spring-security-test"
 	testImplementation "com.github.codemonstur:embedded-redis:1.4.3"

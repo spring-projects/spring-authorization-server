@@ -15,6 +15,7 @@
  */
 package sample.extgrant;
 
+import java.time.Clock;
 import java.util.UUID;
 
 import com.nimbusds.jose.jwk.source.JWKSource;
@@ -100,6 +101,7 @@ public class SecurityConfig {
 	@Bean
 	OAuth2TokenGenerator<?> tokenGenerator(JWKSource<SecurityContext> jwkSource) {
 		JwtGenerator jwtGenerator = new JwtGenerator(new NimbusJwtEncoder(jwkSource));
+		jwtGenerator.setClock(Clock.systemUTC());
 		OAuth2AccessTokenGenerator accessTokenGenerator = new OAuth2AccessTokenGenerator();
 		OAuth2RefreshTokenGenerator refreshTokenGenerator = new OAuth2RefreshTokenGenerator();
 		return new DelegatingOAuth2TokenGenerator(

@@ -28,7 +28,7 @@ jobs:
     name: Test Against Snapshots
     uses: spring-io/spring-security-release-tools/.github/workflows/test.yml@v1
     with:
-      test-args: --refresh-dependencies --stacktrace -PforceMavenRepositories=snapshot -PspringFrameworkVersion=6.2.+ -PspringSecurityVersion=6.4.+
+      test-args: --refresh-dependencies --stacktrace -PforceMavenRepositories=snapshot -PspringFrameworkVersion=7.+ -PspringSecurityVersion=7.+
     secrets: inherit
   deploy-artifacts:
     name: Deploy Artifacts

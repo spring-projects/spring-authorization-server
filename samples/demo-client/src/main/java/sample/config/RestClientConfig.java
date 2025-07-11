@@ -42,6 +42,7 @@ import org.springframework.security.oauth2.client.OAuth2AuthorizationFailureHand
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientProvider;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientProviderBuilder;
+import org.springframework.security.oauth2.client.endpoint.DefaultOAuth2TokenRequestParametersConverter;
 import org.springframework.security.oauth2.client.endpoint.OAuth2AccessTokenResponseClient;
 import org.springframework.security.oauth2.client.endpoint.OAuth2ClientCredentialsGrantRequest;
 import org.springframework.security.oauth2.client.endpoint.RestClientClientCredentialsTokenResponseClient;
@@ -50,10 +51,7 @@ import org.springframework.security.oauth2.client.registration.ClientRegistratio
 import org.springframework.security.oauth2.client.web.DefaultOAuth2AuthorizedClientManager;
 import org.springframework.security.oauth2.client.web.OAuth2AuthorizedClientRepository;
 import org.springframework.security.oauth2.client.web.client.OAuth2ClientHttpRequestInterceptor;
-import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.http.converter.OAuth2AccessTokenResponseHttpMessageConverter;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClient;
 
 /**
@@ -206,12 +204,7 @@ public class RestClientConfig {
 			RestClient restClient) {
 		RestClientClientCredentialsTokenResponseClient clientCredentialsTokenResponseClient =
 				new RestClientClientCredentialsTokenResponseClient();
-		clientCredentialsTokenResponseClient.addParametersConverter(authorizationGrantRequest -> {
-			MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
-			// client_id parameter is required for tls_client_auth method
-			parameters.add(OAuth2ParameterNames.CLIENT_ID, authorizationGrantRequest.getClientRegistration().getClientId());
-			return parameters;
-		});
+		clientCredentialsTokenResponseClient.setParametersConverter(new DefaultOAuth2TokenRequestParametersConverter<>());
 		clientCredentialsTokenResponseClient.setRestClient(restClient);
 
 		return clientCredentialsTokenResponseClient;

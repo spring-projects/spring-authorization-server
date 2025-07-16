@@ -36,7 +36,7 @@ org-asciidoctor-asciidoctor-gradle-jvm-pdf-plugin = "org.asciidoctor:asciidoctor
 org-jetbrains-kotlin-kotlin-gradle-plugin = "org.jetbrains.kotlin:kotlin-gradle-plugin:2.2.0"
 org-hidetake-gradle-ssh-plugin = "org.hidetake:gradle-ssh-plugin:2.10.1"
 org-jfrog-buildinfo-build-info-extractor-gradle = "org.jfrog.buildinfo:build-info-extractor-gradle:5.2.5"
-org-sonarsource-scanner-gradle-sonarqube-gradle-plugin = "org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:2.8.0.1969"
+org-sonarsource-scanner-gradle-sonarqube-gradle-plugin = "org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:3.3"
 
 [plugins]
 org-gradle-wrapper-upgrade = "org.gradle.wrapper-upgrade:0.12"

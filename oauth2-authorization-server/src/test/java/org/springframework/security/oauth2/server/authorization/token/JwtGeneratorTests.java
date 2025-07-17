@@ -16,6 +16,7 @@
 package org.springframework.security.oauth2.server.authorization.token;
 
 import java.security.Principal;
+import java.time.Clock;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
@@ -84,6 +85,7 @@ public class JwtGeneratorTests {
 		this.jwtCustomizer = mock(OAuth2TokenCustomizer.class);
 		this.jwtGenerator = new JwtGenerator(this.jwtEncoder);
 		this.jwtGenerator.setJwtCustomizer(this.jwtCustomizer);
+		this.jwtGenerator.setClock(Clock.systemUTC());
 		AuthorizationServerSettings authorizationServerSettings = AuthorizationServerSettings.builder()
 			.issuer("https://provider.com")
 			.build();

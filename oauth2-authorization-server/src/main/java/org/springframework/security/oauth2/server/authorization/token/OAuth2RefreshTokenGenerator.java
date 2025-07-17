@@ -15,6 +15,7 @@
  */
 package org.springframework.security.oauth2.server.authorization.token;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.util.Base64;
 
@@ -39,6 +40,7 @@ public final class OAuth2RefreshTokenGenerator implements OAuth2TokenGenerator<O
 
 	private final StringKeyGenerator refreshTokenGenerator = new Base64StringKeyGenerator(
 			Base64.getUrlEncoder().withoutPadding(), 96);
+	private Clock clock;
 
 	@Nullable
 	@Override
@@ -51,7 +53,8 @@ public final class OAuth2RefreshTokenGenerator implements OAuth2TokenGenerator<O
 			return null;
 		}
 
-		Instant issuedAt = Instant.now();
+		Instant issuedAt = (clock == null) ? Instant.now() : clock.instant();
+
 		Instant expiresAt = issuedAt.plus(context.getRegisteredClient().getTokenSettings().getRefreshTokenTimeToLive());
 		return new OAuth2RefreshToken(this.refreshTokenGenerator.generateKey(), issuedAt, expiresAt);
 	}
@@ -64,6 +67,10 @@ public final class OAuth2RefreshTokenGenerator implements OAuth2TokenGenerator<O
 		}
 		// @formatter:on
 		return false;
+	}
+
+	public void setClock(Clock clock) {
+		this.clock = clock;
 	}
 
 }

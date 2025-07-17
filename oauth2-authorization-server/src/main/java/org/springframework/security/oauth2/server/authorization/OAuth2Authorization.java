@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 the original author or authors.
+ * Copyright 2020-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.springframework.security.oauth2.server.authorization;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.Collections;
@@ -32,7 +33,6 @@ import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2RefreshToken;
 import org.springframework.security.oauth2.core.OAuth2Token;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
-import org.springframework.security.oauth2.server.authorization.util.SpringAuthorizationServerVersion;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
@@ -54,7 +54,8 @@ import org.springframework.util.StringUtils;
  */
 public class OAuth2Authorization implements Serializable {
 
-	private static final long serialVersionUID = SpringAuthorizationServerVersion.SERIAL_VERSION_UID;
+	@Serial
+	private static final long serialVersionUID = 880363144799377926L;
 
 	private String id;
 
@@ -246,7 +247,8 @@ public class OAuth2Authorization implements Serializable {
 	 */
 	public static class Token<T extends OAuth2Token> implements Serializable {
 
-		private static final long serialVersionUID = SpringAuthorizationServerVersion.SERIAL_VERSION_UID;
+		@Serial
+		private static final long serialVersionUID = -5931125502413497522L;
 
 		protected static final String TOKEN_METADATA_NAMESPACE = "metadata.token.";
 
@@ -377,9 +379,7 @@ public class OAuth2Authorization implements Serializable {
 	/**
 	 * A builder for {@link OAuth2Authorization}.
 	 */
-	public static class Builder implements Serializable {
-
-		private static final long serialVersionUID = SpringAuthorizationServerVersion.SERIAL_VERSION_UID;
+	public static class Builder {
 
 		private String id;
 

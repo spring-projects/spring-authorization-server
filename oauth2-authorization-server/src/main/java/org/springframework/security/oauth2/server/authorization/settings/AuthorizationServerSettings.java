@@ -15,6 +15,7 @@
  */
 package org.springframework.security.oauth2.server.authorization.settings;
 
+import java.io.Serial;
 import java.util.Map;
 
 import org.springframework.security.oauth2.server.authorization.context.AuthorizationServerContext;
@@ -30,6 +31,9 @@ import org.springframework.util.Assert;
  * @see ConfigurationSettingNames.AuthorizationServer
  */
 public final class AuthorizationServerSettings extends AbstractSettings {
+
+	@Serial
+	private static final long serialVersionUID = 2719834789442554660L;
 
 	private AuthorizationServerSettings(Map<String, Object> settings) {
 		super(settings);

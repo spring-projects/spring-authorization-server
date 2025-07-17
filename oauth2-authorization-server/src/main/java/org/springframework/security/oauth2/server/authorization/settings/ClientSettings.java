@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 the original author or authors.
+ * Copyright 2020-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.springframework.security.oauth2.server.authorization.settings;
 
+import java.io.Serial;
 import java.util.Map;
 
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
@@ -31,6 +32,9 @@ import org.springframework.util.Assert;
  * @see ConfigurationSettingNames.Client
  */
 public final class ClientSettings extends AbstractSettings {
+
+	@Serial
+	private static final long serialVersionUID = 9015034829752473931L;
 
 	private ClientSettings(Map<String, Object> settings) {
 		super(settings);

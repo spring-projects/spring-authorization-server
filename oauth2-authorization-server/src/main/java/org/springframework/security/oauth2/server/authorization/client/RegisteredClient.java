@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 the original author or authors.
+ * Copyright 2020-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.springframework.security.oauth2.server.authorization.client;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -30,7 +31,6 @@ import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
 import org.springframework.security.oauth2.server.authorization.settings.TokenSettings;
-import org.springframework.security.oauth2.server.authorization.util.SpringAuthorizationServerVersion;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
@@ -46,7 +46,8 @@ import org.springframework.util.StringUtils;
  */
 public class RegisteredClient implements Serializable {
 
-	private static final long serialVersionUID = SpringAuthorizationServerVersion.SERIAL_VERSION_UID;
+	@Serial
+	private static final long serialVersionUID = -717282636175335081L;
 
 	private String id;
 
@@ -258,9 +259,7 @@ public class RegisteredClient implements Serializable {
 	/**
 	 * A builder for {@link RegisteredClient}.
 	 */
-	public static class Builder implements Serializable {
-
-		private static final long serialVersionUID = SpringAuthorizationServerVersion.SERIAL_VERSION_UID;
+	public static class Builder {
 
 		private String id;
 

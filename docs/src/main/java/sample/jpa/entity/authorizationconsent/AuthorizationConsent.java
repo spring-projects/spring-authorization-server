@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package sample.jpa.entity.authorizationconsent;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Objects;
 
@@ -62,6 +63,10 @@ public class AuthorizationConsent {
 	// @fold:off
 
 	public static class AuthorizationConsentId implements Serializable {
+
+		@Serial
+		private static final long serialVersionUID = -8507564681220621744L;
+
 		private String registeredClientId;
 		private String principalName;
 

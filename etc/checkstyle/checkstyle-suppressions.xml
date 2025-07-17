@@ -4,7 +4,6 @@
 		"https://checkstyle.org/dtds/suppressions_1_2.dtd">
 <suppressions>
 	<suppress files=".*" checks="JavadocStyle" />
-	<suppress files="SpringAuthorizationServerVersion\.java" checks="HideUtilityClassConstructor"/>
 	<suppress files="[\\/]src[\\/]test[\\/]" checks="RegexpSinglelineJava" id="toLowerCaseWithoutLocale"/>
 	<suppress files="[\\/]src[\\/]test[\\/]" checks="RegexpSinglelineJava" id="toUpperCaseWithoutLocale"/>
 	<suppress files="AbstractOAuth2AuthorizationCodeRequestAuthenticationToken\.java" checks="SpringMethodVisibility"/>

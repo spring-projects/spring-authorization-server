@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.springframework.security.oauth2.server.authorization;
 
+import java.io.Serial;
 import java.util.Map;
 
 import org.springframework.util.Assert;
@@ -32,6 +33,9 @@ import org.springframework.util.Assert;
  * Authorization Server Metadata Response</a>
  */
 public final class OAuth2AuthorizationServerMetadata extends AbstractOAuth2AuthorizationServerMetadata {
+
+	@Serial
+	private static final long serialVersionUID = 3993358339217009284L;
 
 	private OAuth2AuthorizationServerMetadata(Map<String, Object> claims) {
 		super(claims);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 the original author or authors.
+ * Copyright 2020-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.config.Customizer;
-import org.springframework.security.config.annotation.SecurityConfigurerAdapter;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
@@ -63,28 +62,6 @@ public class OAuth2AuthorizationServerConfiguration {
 			);
 		// @formatter:on
 		return http.build();
-	}
-
-	/**
-	 * @param http the {@link HttpSecurity}
-	 * @throws Exception if {@link OAuth2AuthorizationServerConfigurer} could not be
-	 * applied
-	 * @deprecated For removal in 2.0. Use
-	 * {@link HttpSecurity#with(SecurityConfigurerAdapter, Customizer)} and pass in
-	 * {@link OAuth2AuthorizationServerConfigurer#authorizationServer()}.
-	 */
-	@Deprecated(since = "1.4", forRemoval = true)
-	public static void applyDefaultSecurity(HttpSecurity http) throws Exception {
-		// @formatter:off
-		OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
-				OAuth2AuthorizationServerConfigurer.authorizationServer();
-		http
-			.securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
-			.with(authorizationServerConfigurer, Customizer.withDefaults())
-			.authorizeHttpRequests((authorize) ->
-				authorize.anyRequest().authenticated()
-			);
-		// @formatter:on
 	}
 
 	public static JwtDecoder jwtDecoder(JWKSource<SecurityContext> jwkSource) {

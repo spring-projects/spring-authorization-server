@@ -12,11 +12,11 @@ io-spring-nohttp = "0.0.11"
 org-springframework-spring-framework-bom = { module = "org.springframework:spring-framework-bom", version.ref = "org-springframework" }
 org-springframework-security-spring-security-bom = { module = "org.springframework.security:spring-security-bom", version.ref = "org-springframework-security" }
 com-fasterxml-jackson-jackson-bom = { module = "com.fasterxml.jackson:jackson-bom", version.ref = "com-fasterxml-jackson" }
+org-junit-junit-bom = "org.junit:junit-bom:5.13.3"
 com-nimbusds-nimbus-jose-jwt = { module = "com.nimbusds:nimbus-jose-jwt", version.ref = "nimbus-jose-jwt" }
 jakarta-servlet-jakarta-servlet-api = "jakarta.servlet:jakarta.servlet-api:6.0.0"
 org-bouncycastle-bcpkix-jdk18on = { module = "org.bouncycastle:bcpkix-jdk18on", version.ref = "org-bouncycastle" }
 org-bouncycastle-bcprov-jdk18on = { module = "org.bouncycastle:bcprov-jdk18on", version.ref = "org-bouncycastle" }
-org-junit-jupiter-junit-jupiter = "org.junit.jupiter:junit-jupiter:5.11.4"
 org-assertj-assertj-core = "org.assertj:assertj-core:3.27.3"
 org-mockito-mockito-core = "org.mockito:mockito-core:5.18.0"
 com-squareup-okhttp3-mockwebserver = { module = "com.squareup.okhttp3:mockwebserver", version.ref = "com-squareup-okhttp3" }

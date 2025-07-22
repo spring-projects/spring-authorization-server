@@ -5,6 +5,9 @@ on:
     branches:
       - '**'
 
+permissions:
+  contents: read
+
 env:
   DEVELOCITY_ACCESS_KEY: ${{ secrets.GRADLE_ENTERPRISE_SECRET_ACCESS_KEY }}
 

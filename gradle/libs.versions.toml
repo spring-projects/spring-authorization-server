@@ -12,7 +12,7 @@ io-spring-nohttp = "0.0.11"
 org-springframework-spring-framework-bom = { module = "org.springframework:spring-framework-bom", version.ref = "org-springframework" }
 org-springframework-security-spring-security-bom = { module = "org.springframework.security:spring-security-bom", version.ref = "org-springframework-security" }
 com-fasterxml-jackson-jackson-bom = { module = "com.fasterxml.jackson:jackson-bom", version.ref = "com-fasterxml-jackson" }
-org-junit-junit-bom = "org.junit:junit-bom:5.13.3"
+org-junit-junit-bom = "org.junit:junit-bom:5.13.4"
 com-nimbusds-nimbus-jose-jwt = { module = "com.nimbusds:nimbus-jose-jwt", version.ref = "nimbus-jose-jwt" }
 jakarta-servlet-jakarta-servlet-api = "jakarta.servlet:jakarta.servlet-api:6.0.0"
 org-bouncycastle-bcpkix-jdk18on = { module = "org.bouncycastle:bcpkix-jdk18on", version.ref = "org-bouncycastle" }

@@ -215,7 +215,10 @@ public final class OAuth2RefreshTokenAuthenticationProvider implements Authentic
 		// ----- Refresh token -----
 		OAuth2RefreshToken currentRefreshToken = refreshToken.getToken();
 		if (!registeredClient.getTokenSettings().isReuseRefreshTokens()) {
-			tokenContext = tokenContextBuilder.tokenType(OAuth2TokenType.REFRESH_TOKEN).build();
+			tokenContext = tokenContextBuilder
+					.tokenType(OAuth2TokenType.REFRESH_TOKEN)
+					.authorization(authorizationBuilder.build()) // allows refresh token to retrieve access token
+					.build();
 			OAuth2Token generatedRefreshToken = this.tokenGenerator.generate(tokenContext);
 			if (!(generatedRefreshToken instanceof OAuth2RefreshToken)) {
 				OAuth2Error error = new OAuth2Error(OAuth2ErrorCodes.SERVER_ERROR,
@@ -253,8 +256,8 @@ public final class OAuth2RefreshTokenAuthenticationProvider implements Authentic
 
 			idToken = new OidcIdToken(generatedIdToken.getTokenValue(), generatedIdToken.getIssuedAt(),
 					generatedIdToken.getExpiresAt(), ((Jwt) generatedIdToken).getClaims());
-			authorizationBuilder.token(idToken,
-					(metadata) -> metadata.put(OAuth2Authorization.Token.CLAIMS_METADATA_NAME, idToken.getClaims()));
+			authorizationBuilder.token(idToken, metadata ->
+					metadata.put(OAuth2Authorization.Token.CLAIMS_METADATA_NAME, idToken.getClaims()));
 		}
 		else {
 			idToken = null;

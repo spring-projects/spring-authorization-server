@@ -22,6 +22,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -327,6 +328,14 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 
 		OAuth2AccessTokenAuthenticationToken accessTokenAuthentication = (OAuth2AccessTokenAuthenticationToken) this.authenticationProvider
 			.authenticate(authentication);
+
+		ArgumentCaptor<OAuth2TokenContext> oAuth2TokenContextCaptor = ArgumentCaptor.forClass(OAuth2TokenContext.class);
+		verify(this.tokenGenerator, times(2)).generate(oAuth2TokenContextCaptor.capture());
+		// tokenGenerator is first invoked for generating a new access token and then for generating the refresh token for this access token
+		List<OAuth2TokenContext> tokenContexts = oAuth2TokenContextCaptor.getAllValues();
+		assertThat(tokenContexts).hasSize(2);
+		assertThat(tokenContexts.get(0).getAuthorization().getAccessToken().getToken().getTokenValue()).isEqualTo("access-token");
+		assertThat(tokenContexts.get(1).getAuthorization().getAccessToken().getToken().getTokenValue()).isEqualTo("refreshed-access-token");
 
 		ArgumentCaptor<OAuth2Authorization> authorizationCaptor = ArgumentCaptor.forClass(OAuth2Authorization.class);
 		verify(this.authorizationService).save(authorizationCaptor.capture());

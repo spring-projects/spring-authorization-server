@@ -15,6 +15,7 @@
  */
 package org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
@@ -31,6 +32,7 @@ import com.nimbusds.jose.proc.SecurityContext;
 import jakarta.servlet.http.HttpServletResponse;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
+import org.assertj.core.data.TemporalUnitWithinOffset;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -508,6 +510,46 @@ public class OidcClientRegistrationTests {
 		assertThat(registeredClient.getClientSettings().<String>getSetting("non-registered-custom-metadata")).isNull();
 	}
 
+	/**
+	 * Scenario to validate that if there's a customization that sets client secret expiration date, then the date
+	 * is persisted and returned in the registration response
+	 */
+	@Test
+	public void requestWhenClientRegistersWithSecretExpirationThenClientRegistrationResponse() throws Exception {
+		this.spring.register(ClientSecretExpirationConfiguration.class).autowire();
+
+		// @formatter:off
+		OidcClientRegistration clientRegistration = OidcClientRegistration.builder()
+				.clientName("client-name")
+				.redirectUri("https://client.example.com")
+				.grantType(AuthorizationGrantType.AUTHORIZATION_CODE.getValue())
+				.grantType(AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
+				.scope("scope1")
+				.scope("scope2")
+				.build();
+		// @formatter:on
+
+		OidcClientRegistration clientRegistrationResponse = registerClient(clientRegistration);
+
+		var expectedSecretExpiryDate = Instant.now().plus(Duration.ofHours(24));
+		var allowedDelta = new TemporalUnitWithinOffset(1, ChronoUnit.MINUTES);
+
+		// Returned response contains expiration date
+		assertThat(clientRegistrationResponse.getClientSecretExpiresAt())
+				.isNotNull()
+				.isCloseTo(expectedSecretExpiryDate, allowedDelta);
+
+		RegisteredClient registeredClient = this.registeredClientRepository
+				.findByClientId(clientRegistrationResponse.getClientId());
+
+		// Persisted RegisteredClient contains expiration date
+		assertThat(registeredClient)
+				.isNotNull();
+		assertThat(registeredClient.getClientSecretExpiresAt())
+				.isNotNull()
+				.isCloseTo(expectedSecretExpiryDate, allowedDelta);
+	}
+
 	private OidcClientRegistration registerClient(OidcClientRegistration clientRegistration) throws Exception {
 		// ***** (1) Obtain the "initial" access token used for registering the client
 
@@ -643,8 +685,40 @@ public class OidcClientRegistrationTests {
 
 	@EnableWebSecurity
 	@Configuration(proxyBeanMethods = false)
-	static class CustomClientMetadataConfiguration extends AuthorizationServerConfiguration {
+	static class CustomClientMetadataConfiguration extends ClientRegistrationConvertersConfiguration {
 
+		private static final List<String> supportedCustomClientMetadata = List.of("custom-metadata-name-1", "custom-metadata-name-2");
+
+		@Override
+		protected Converter<OidcClientRegistration, RegisteredClient> registeredClientConverter() {
+			return new CustomRegisteredClientConverter(supportedCustomClientMetadata);
+		}
+
+		@Override
+		protected Converter<RegisteredClient, OidcClientRegistration> oidcClientRegistrationConverter() {
+			return new CustomClientRegistrationConverter(supportedCustomClientMetadata);
+		}
+
+	}
+
+	@EnableWebSecurity
+	@Configuration(proxyBeanMethods = false)
+	static class ClientSecretExpirationConfiguration extends ClientRegistrationConvertersConfiguration {
+
+		@Override
+		protected Converter<OidcClientRegistration, RegisteredClient> registeredClientConverter() {
+			return new ClientSecretExpirationRegisteredClientConverter();
+		}
+
+	}
+
+	/**
+	 * This test configuration allows to override {@code RegisteredClient} -> {@code OidcClientRegistration} and
+	 * {@code OidcClientRegistration} -> {@code RegisteredClient} converters
+	 */
+	@EnableWebSecurity
+	@Configuration(proxyBeanMethods = false)
+	static class ClientRegistrationConvertersConfiguration extends AuthorizationServerConfiguration {
 		// @formatter:off
 		@Bean
 		@Override
@@ -674,15 +748,27 @@ public class OidcClientRegistrationTests {
 			// @formatter:off
 			return (authenticationProviders) ->
 					authenticationProviders.forEach((authenticationProvider) -> {
-						List<String> supportedCustomClientMetadata = List.of("custom-metadata-name-1", "custom-metadata-name-2");
 						if (authenticationProvider instanceof OidcClientRegistrationAuthenticationProvider provider) {
-							provider.setRegisteredClientConverter(new CustomRegisteredClientConverter(supportedCustomClientMetadata));
-							provider.setClientRegistrationConverter(new CustomClientRegistrationConverter(supportedCustomClientMetadata));
+							var registeredClientConverter = registeredClientConverter();
+							if (registeredClientConverter != null) {
+								provider.setRegisteredClientConverter(registeredClientConverter);
+							}
+							var oidcClientRegistrationConverter = oidcClientRegistrationConverter();
+							if (oidcClientRegistrationConverter != null) {
+								provider.setClientRegistrationConverter(oidcClientRegistrationConverter);
+							}
 						}
 					});
 			// @formatter:on
 		}
 
+		protected Converter<OidcClientRegistration, RegisteredClient> registeredClientConverter() {
+			return null;
+		}
+
+		protected Converter<RegisteredClient, OidcClientRegistration> oidcClientRegistrationConverter() {
+			return null;
+		}
 	}
 
 	@EnableWebSecurity
@@ -812,6 +898,28 @@ public class OidcClientRegistrationTests {
 			return OidcClientRegistration.withClaims(clientMetadata).build();
 		}
 
+	}
+
+	/**
+	 * This customization adds client secret expiration time by setting {@code RegisteredClient.clientSecretExpiresAt}
+	 * during {@code OidcClientRegistration} -> {@code RegisteredClient} conversion
+	 */
+	private static final class ClientSecretExpirationRegisteredClientConverter
+			implements Converter<OidcClientRegistration, RegisteredClient> {
+
+		private static final OidcClientRegistrationRegisteredClientConverter delegate =
+				new OidcClientRegistrationRegisteredClientConverter();
+
+		@Override
+		public RegisteredClient convert(OidcClientRegistration clientRegistration) {
+			RegisteredClient registeredClient = delegate.convert(clientRegistration);
+			var registeredClientBuilder = RegisteredClient.from(registeredClient);
+
+			var clientSecretExpiresAt = Instant.now().plus(Duration.ofHours(24));
+			registeredClientBuilder.clientSecretExpiresAt(clientSecretExpiresAt);
+
+			return registeredClientBuilder.build();
+		}
 	}
 
 }

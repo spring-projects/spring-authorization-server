@@ -5,8 +5,7 @@ The Spring Authorization Server project, led by the https://spring.io/projects/s
 This project replaces the Authorization Server support provided by https://github.com/spring-attic/spring-security-oauth[Spring Security OAuth].
 
 == Feature Planning
-This project uses https://docs.github.com/en/issues/planning-and-tracking-with-projects/learning-about-projects/about-projects[GitHub Projects] to prioritize the feature roadmap and help organize the project plan.
-The project board can be accessed https://github.com/orgs/spring-projects/projects/8[here].
+This project uses https://github.com/spring-projects/spring-authorization-server/issues[GitHub Issues] to prioritize the feature roadmap.
 
 The feature list can be viewed in the https://docs.spring.io/spring-authorization-server/reference/overview.html#feature-list[reference documentation].
 

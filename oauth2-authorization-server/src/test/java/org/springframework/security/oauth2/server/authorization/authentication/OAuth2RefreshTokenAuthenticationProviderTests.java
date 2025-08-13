@@ -329,14 +329,6 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 		OAuth2AccessTokenAuthenticationToken accessTokenAuthentication = (OAuth2AccessTokenAuthenticationToken) this.authenticationProvider
 			.authenticate(authentication);
 
-		ArgumentCaptor<OAuth2TokenContext> oAuth2TokenContextCaptor = ArgumentCaptor.forClass(OAuth2TokenContext.class);
-		verify(this.tokenGenerator, times(2)).generate(oAuth2TokenContextCaptor.capture());
-		// tokenGenerator is first invoked for generating a new access token and then for generating the refresh token for this access token
-		List<OAuth2TokenContext> tokenContexts = oAuth2TokenContextCaptor.getAllValues();
-		assertThat(tokenContexts).hasSize(2);
-		assertThat(tokenContexts.get(0).getAuthorization().getAccessToken().getToken().getTokenValue()).isEqualTo("access-token");
-		assertThat(tokenContexts.get(1).getAuthorization().getAccessToken().getToken().getTokenValue()).isEqualTo("refreshed-access-token");
-
 		ArgumentCaptor<OAuth2Authorization> authorizationCaptor = ArgumentCaptor.forClass(OAuth2Authorization.class);
 		verify(this.authorizationService).save(authorizationCaptor.capture());
 		OAuth2Authorization updatedAuthorization = authorizationCaptor.getValue();
@@ -344,6 +336,17 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 		assertThat(accessTokenAuthentication.getRefreshToken())
 			.isEqualTo(updatedAuthorization.getRefreshToken().getToken());
 		assertThat(updatedAuthorization.getRefreshToken()).isNotEqualTo(authorization.getRefreshToken());
+
+		ArgumentCaptor<OAuth2TokenContext> tokenContextCaptor = ArgumentCaptor.forClass(OAuth2TokenContext.class);
+		verify(this.tokenGenerator, times(2)).generate(tokenContextCaptor.capture());
+		// tokenGenerator is first invoked for generating a new access token and then for
+		// generating the refresh token
+		List<OAuth2TokenContext> tokenContexts = tokenContextCaptor.getAllValues();
+		assertThat(tokenContexts).hasSize(2);
+		assertThat(tokenContexts.get(0).getAuthorization().getAccessToken().getToken().getTokenValue())
+			.isEqualTo("access-token");
+		assertThat(tokenContexts.get(1).getAuthorization().getAccessToken().getToken().getTokenValue())
+			.isEqualTo("refreshed-access-token");
 	}
 
 	@Test

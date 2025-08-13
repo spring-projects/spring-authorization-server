@@ -165,7 +165,7 @@ public final class OAuth2RefreshTokenAuthenticationProvider implements Authentic
 		Jwt dPoPProof = DPoPProofVerifier.verifyIfAvailable(refreshTokenAuthentication);
 
 		if (dPoPProof != null
-				& clientPrincipal.getClientAuthenticationMethod().equals(ClientAuthenticationMethod.NONE)) {
+				&& clientPrincipal.getClientAuthenticationMethod().equals(ClientAuthenticationMethod.NONE)) {
 			// For public clients, verify the DPoP Proof public key is same as (current)
 			// access token public key binding
 			Map<String, Object> accessTokenClaims = authorization.getAccessToken().getClaims();

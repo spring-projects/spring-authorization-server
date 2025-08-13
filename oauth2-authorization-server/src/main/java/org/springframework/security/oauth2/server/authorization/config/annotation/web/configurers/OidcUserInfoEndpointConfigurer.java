@@ -39,12 +39,12 @@ import org.springframework.security.oauth2.server.authorization.oidc.authenticat
 import org.springframework.security.oauth2.server.authorization.oidc.authentication.OidcUserInfoAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.oidc.web.OidcUserInfoEndpointFilter;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
-import org.springframework.security.oauth2.server.authorization.web.util.matcher.RequestMatcherUtils;
 import org.springframework.security.web.access.intercept.AuthorizationFilter;
 import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.DelegatingAuthenticationConverter;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.security.web.util.matcher.OrRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
@@ -210,10 +210,12 @@ public final class OidcUserInfoEndpointConfigurer extends AbstractOAuth2Configur
 		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils
 			.getAuthorizationServerSettings(httpSecurity);
 		String userInfoEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed()
-				? RequestMatcherUtils.withMultipleIssuersPattern(authorizationServerSettings.getOidcUserInfoEndpoint())
+				? OAuth2ConfigurerUtils
+					.withMultipleIssuersPattern(authorizationServerSettings.getOidcUserInfoEndpoint())
 				: authorizationServerSettings.getOidcUserInfoEndpoint();
-		this.requestMatcher = new OrRequestMatcher(RequestMatcherUtils.matcher(userInfoEndpointUri, HttpMethod.GET),
-				RequestMatcherUtils.matcher(userInfoEndpointUri, HttpMethod.POST));
+		this.requestMatcher = new OrRequestMatcher(
+				PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.GET, userInfoEndpointUri),
+				PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.POST, userInfoEndpointUri));
 
 		List<AuthenticationProvider> authenticationProviders = createDefaultAuthenticationProviders(httpSecurity);
 		if (!this.authenticationProviders.isEmpty()) {
@@ -231,7 +233,8 @@ public final class OidcUserInfoEndpointConfigurer extends AbstractOAuth2Configur
 			.getAuthorizationServerSettings(httpSecurity);
 
 		String userInfoEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed()
-				? RequestMatcherUtils.withMultipleIssuersPattern(authorizationServerSettings.getOidcUserInfoEndpoint())
+				? OAuth2ConfigurerUtils
+					.withMultipleIssuersPattern(authorizationServerSettings.getOidcUserInfoEndpoint())
 				: authorizationServerSettings.getOidcUserInfoEndpoint();
 		OidcUserInfoEndpointFilter oidcUserInfoEndpointFilter = new OidcUserInfoEndpointFilter(authenticationManager,
 				userInfoEndpointUri);

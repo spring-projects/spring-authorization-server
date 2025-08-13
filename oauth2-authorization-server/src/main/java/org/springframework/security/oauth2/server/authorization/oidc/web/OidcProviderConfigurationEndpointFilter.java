@@ -38,7 +38,7 @@ import org.springframework.security.oauth2.server.authorization.context.Authoriz
 import org.springframework.security.oauth2.server.authorization.oidc.OidcProviderConfiguration;
 import org.springframework.security.oauth2.server.authorization.oidc.http.converter.OidcProviderConfigurationHttpMessageConverter;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
-import org.springframework.security.oauth2.server.authorization.web.util.matcher.RequestMatcherUtils;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -134,11 +134,10 @@ public final class OidcProviderConfigurationEndpointFilter extends OncePerReques
 	}
 
 	private static RequestMatcher createRequestMatcher() {
-		final RequestMatcher defaultRequestMatcher = RequestMatcherUtils
-			.matcher(DEFAULT_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI, HttpMethod.GET);
-		final RequestMatcher multipleIssuersRequestMatcher = RequestMatcherUtils.matcher(
-				RequestMatcherUtils.withMultipleIssuersPattern(DEFAULT_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI),
-				HttpMethod.GET);
+		final RequestMatcher defaultRequestMatcher = PathPatternRequestMatcher.withDefaults()
+			.matcher(HttpMethod.GET, DEFAULT_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI);
+		final RequestMatcher multipleIssuersRequestMatcher = PathPatternRequestMatcher.withDefaults()
+			.matcher(HttpMethod.GET, "/**" + DEFAULT_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI);
 		return (request) -> AuthorizationServerContextHolder.getContext()
 			.getAuthorizationServerSettings()
 			.isMultipleIssuersAllowed() ? multipleIssuersRequestMatcher.matches(request)

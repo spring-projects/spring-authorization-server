@@ -42,10 +42,10 @@ import org.springframework.security.oauth2.server.authorization.oidc.authenticat
 import org.springframework.security.oauth2.server.authorization.oidc.authentication.OidcClientRegistrationAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.oidc.http.converter.OidcClientRegistrationHttpMessageConverter;
 import org.springframework.security.oauth2.server.authorization.oidc.web.authentication.OidcClientRegistrationAuthenticationConverter;
-import org.springframework.security.oauth2.server.authorization.web.util.matcher.RequestMatcherUtils;
 import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.security.web.util.matcher.AndRequestMatcher;
 import org.springframework.security.web.util.matcher.OrRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
@@ -115,13 +115,13 @@ public final class OidcClientRegistrationEndpointFilter extends OncePerRequestFi
 		Assert.hasText(clientRegistrationEndpointUri, "clientRegistrationEndpointUri cannot be empty");
 		this.authenticationManager = authenticationManager;
 		this.clientRegistrationEndpointMatcher = new OrRequestMatcher(
-				RequestMatcherUtils.matcher(clientRegistrationEndpointUri, HttpMethod.POST),
+				PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.POST, clientRegistrationEndpointUri),
 				createClientConfigurationMatcher(clientRegistrationEndpointUri));
 	}
 
 	private static RequestMatcher createClientConfigurationMatcher(String clientRegistrationEndpointUri) {
-		RequestMatcher clientConfigurationGetMatcher = RequestMatcherUtils.matcher(clientRegistrationEndpointUri,
-				HttpMethod.GET);
+		RequestMatcher clientConfigurationGetMatcher = PathPatternRequestMatcher.withDefaults()
+			.matcher(HttpMethod.GET, clientRegistrationEndpointUri);
 
 		RequestMatcher clientIdMatcher = (request) -> {
 			String clientId = request.getParameter(OAuth2ParameterNames.CLIENT_ID);

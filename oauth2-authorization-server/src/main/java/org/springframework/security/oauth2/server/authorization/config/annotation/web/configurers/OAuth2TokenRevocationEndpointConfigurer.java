@@ -33,12 +33,12 @@ import org.springframework.security.oauth2.server.authorization.authentication.O
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.web.OAuth2TokenRevocationEndpointFilter;
 import org.springframework.security.oauth2.server.authorization.web.authentication.OAuth2TokenRevocationAuthenticationConverter;
-import org.springframework.security.oauth2.server.authorization.web.util.matcher.RequestMatcherUtils;
 import org.springframework.security.web.access.intercept.AuthorizationFilter;
 import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.DelegatingAuthenticationConverter;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
 
@@ -181,10 +181,11 @@ public final class OAuth2TokenRevocationEndpointConfigurer extends AbstractOAuth
 		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils
 			.getAuthorizationServerSettings(httpSecurity);
 		String tokenRevocationEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed()
-				? RequestMatcherUtils
+				? OAuth2ConfigurerUtils
 					.withMultipleIssuersPattern(authorizationServerSettings.getTokenRevocationEndpoint())
 				: authorizationServerSettings.getTokenRevocationEndpoint();
-		this.requestMatcher = RequestMatcherUtils.matcher(tokenRevocationEndpointUri, HttpMethod.POST);
+		this.requestMatcher = PathPatternRequestMatcher.withDefaults()
+			.matcher(HttpMethod.POST, tokenRevocationEndpointUri);
 
 		List<AuthenticationProvider> authenticationProviders = createDefaultAuthenticationProviders(httpSecurity);
 		if (!this.authenticationProviders.isEmpty()) {
@@ -202,7 +203,7 @@ public final class OAuth2TokenRevocationEndpointConfigurer extends AbstractOAuth
 			.getAuthorizationServerSettings(httpSecurity);
 
 		String tokenRevocationEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed()
-				? RequestMatcherUtils
+				? OAuth2ConfigurerUtils
 					.withMultipleIssuersPattern(authorizationServerSettings.getTokenRevocationEndpoint())
 				: authorizationServerSettings.getTokenRevocationEndpoint();
 		OAuth2TokenRevocationEndpointFilter revocationEndpointFilter = new OAuth2TokenRevocationEndpointFilter(

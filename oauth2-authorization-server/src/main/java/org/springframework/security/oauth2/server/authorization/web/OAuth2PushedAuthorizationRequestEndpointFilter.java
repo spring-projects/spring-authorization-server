@@ -44,11 +44,11 @@ import org.springframework.security.oauth2.server.authorization.authentication.O
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2PushedAuthorizationRequestAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.web.authentication.OAuth2AuthorizationCodeRequestAuthenticationConverter;
 import org.springframework.security.oauth2.server.authorization.web.authentication.OAuth2ErrorAuthenticationFailureHandler;
-import org.springframework.security.oauth2.server.authorization.web.util.matcher.RequestMatcherUtils;
 import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -117,8 +117,8 @@ public final class OAuth2PushedAuthorizationRequestEndpointFilter extends OncePe
 		Assert.notNull(authenticationManager, "authenticationManager cannot be null");
 		Assert.hasText(pushedAuthorizationRequestEndpointUri, "pushedAuthorizationRequestEndpointUri cannot be empty");
 		this.authenticationManager = authenticationManager;
-		this.pushedAuthorizationRequestEndpointMatcher = RequestMatcherUtils
-			.matcher(pushedAuthorizationRequestEndpointUri, HttpMethod.POST);
+		this.pushedAuthorizationRequestEndpointMatcher = PathPatternRequestMatcher.withDefaults()
+			.matcher(HttpMethod.POST, pushedAuthorizationRequestEndpointUri);
 		this.authenticationConverter = new OAuth2AuthorizationCodeRequestAuthenticationConverter();
 	}
 

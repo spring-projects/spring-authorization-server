@@ -37,10 +37,10 @@ import org.springframework.security.oauth2.server.authorization.authentication.O
 import org.springframework.security.oauth2.server.authorization.http.converter.OAuth2TokenIntrospectionHttpMessageConverter;
 import org.springframework.security.oauth2.server.authorization.web.authentication.OAuth2ErrorAuthenticationFailureHandler;
 import org.springframework.security.oauth2.server.authorization.web.authentication.OAuth2TokenIntrospectionAuthenticationConverter;
-import org.springframework.security.oauth2.server.authorization.web.util.matcher.RequestMatcherUtils;
 import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -98,8 +98,8 @@ public final class OAuth2TokenIntrospectionEndpointFilter extends OncePerRequest
 		Assert.notNull(authenticationManager, "authenticationManager cannot be null");
 		Assert.hasText(tokenIntrospectionEndpointUri, "tokenIntrospectionEndpointUri cannot be empty");
 		this.authenticationManager = authenticationManager;
-		this.tokenIntrospectionEndpointMatcher = RequestMatcherUtils.matcher(tokenIntrospectionEndpointUri,
-				HttpMethod.POST);
+		this.tokenIntrospectionEndpointMatcher = PathPatternRequestMatcher.withDefaults()
+			.matcher(HttpMethod.POST, tokenIntrospectionEndpointUri);
 		this.authenticationConverter = new OAuth2TokenIntrospectionAuthenticationConverter();
 	}
 

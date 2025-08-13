@@ -30,7 +30,7 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
-import org.springframework.security.oauth2.server.authorization.web.util.matcher.RequestMatcherUtils;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -77,7 +77,7 @@ public final class NimbusJwkSetEndpointFilter extends OncePerRequestFilter {
 		Assert.hasText(jwkSetEndpointUri, "jwkSetEndpointUri cannot be empty");
 		this.jwkSource = jwkSource;
 		this.jwkSelector = new JWKSelector(new JWKMatcher.Builder().build());
-		this.requestMatcher = RequestMatcherUtils.matcher(jwkSetEndpointUri, HttpMethod.GET);
+		this.requestMatcher = PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.GET, jwkSetEndpointUri);
 	}
 
 	@Override

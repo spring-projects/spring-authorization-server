@@ -43,7 +43,6 @@ import org.springframework.security.oauth2.server.authorization.authentication.O
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2DeviceVerificationAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.web.authentication.OAuth2DeviceAuthorizationConsentAuthenticationConverter;
 import org.springframework.security.oauth2.server.authorization.web.authentication.OAuth2DeviceVerificationAuthenticationConverter;
-import org.springframework.security.oauth2.server.authorization.web.util.matcher.RequestMatcherUtils;
 import org.springframework.security.web.DefaultRedirectStrategy;
 import org.springframework.security.web.RedirectStrategy;
 import org.springframework.security.web.authentication.AuthenticationConverter;
@@ -52,6 +51,7 @@ import org.springframework.security.web.authentication.AuthenticationSuccessHand
 import org.springframework.security.web.authentication.DelegatingAuthenticationConverter;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.security.web.util.RedirectUrlBuilder;
 import org.springframework.security.web.util.UrlUtils;
 import org.springframework.security.web.util.matcher.AndRequestMatcher;
@@ -132,10 +132,10 @@ public final class OAuth2DeviceVerificationEndpointFilter extends OncePerRequest
 	}
 
 	private RequestMatcher createDefaultRequestMatcher(String deviceVerificationEndpointUri) {
-		RequestMatcher verificationRequestGetMatcher = RequestMatcherUtils.matcher(deviceVerificationEndpointUri,
-				HttpMethod.GET);
-		RequestMatcher verificationRequestPostMatcher = RequestMatcherUtils.matcher(deviceVerificationEndpointUri,
-				HttpMethod.POST);
+		RequestMatcher verificationRequestGetMatcher = PathPatternRequestMatcher.withDefaults()
+			.matcher(HttpMethod.GET, deviceVerificationEndpointUri);
+		RequestMatcher verificationRequestPostMatcher = PathPatternRequestMatcher.withDefaults()
+			.matcher(HttpMethod.POST, deviceVerificationEndpointUri);
 		RequestMatcher userCodeParameterMatcher = (
 				request) -> request.getParameter(OAuth2ParameterNames.USER_CODE) != null;
 

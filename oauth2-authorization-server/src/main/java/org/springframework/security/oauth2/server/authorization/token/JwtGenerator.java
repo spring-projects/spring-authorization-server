@@ -15,6 +15,7 @@
  */
 package org.springframework.security.oauth2.server.authorization.token;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
@@ -61,6 +62,7 @@ import org.springframework.util.StringUtils;
 public final class JwtGenerator implements OAuth2TokenGenerator<Jwt> {
 
 	private final JwtEncoder jwtEncoder;
+	private Clock clock = Clock.systemUTC();
 
 	private OAuth2TokenCustomizer<JwtEncodingContext> jwtCustomizer;
 
@@ -94,7 +96,7 @@ public final class JwtGenerator implements OAuth2TokenGenerator<Jwt> {
 		}
 		RegisteredClient registeredClient = context.getRegisteredClient();
 
-		Instant issuedAt = Instant.now();
+		Instant issuedAt = clock.instant();
 		Instant expiresAt;
 		JwsAlgorithm jwsAlgorithm = SignatureAlgorithm.RS256;
 		if (OidcParameterNames.ID_TOKEN.equals(context.getTokenType().getValue())) {
@@ -205,6 +207,21 @@ public final class JwtGenerator implements OAuth2TokenGenerator<Jwt> {
 	public void setJwtCustomizer(OAuth2TokenCustomizer<JwtEncodingContext> jwtCustomizer) {
 		Assert.notNull(jwtCustomizer, "jwtCustomizer cannot be null");
 		this.jwtCustomizer = jwtCustomizer;
+	}
+
+	/**
+	 * Sets the {@link Clock} to be used by this component.
+	 * <p>
+	 * The provided clock must not be {@code null}.
+	 * This allows injecting a custom clock for testing or
+	 * adjusting time-related behavior.
+	 *
+	 * @param clock the {@link Clock} instance to set, must not be {@code null}
+	 * @throws IllegalArgumentException if {@code clock} is {@code null}
+	 */
+	public void setClock(Clock clock) {
+		Assert.notNull(clock, "Clock must not be null");
+		this.clock = clock;
 	}
 
 }

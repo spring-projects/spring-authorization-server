@@ -33,7 +33,7 @@ io-spring-nohttp-nohttp-checkstyle = { module = "io.spring.nohttp:nohttp-checkst
 io-spring-nohttp-nohttp-gradle = { module = "io.spring.nohttp:nohttp-gradle", version.ref = "io-spring-nohttp" }
 org-asciidoctor-asciidoctor-gradle-jvm-plugin = "org.asciidoctor:asciidoctor-gradle-jvm:3.3.2"
 org-asciidoctor-asciidoctor-gradle-jvm-pdf-plugin = "org.asciidoctor:asciidoctor-gradle-jvm-pdf:3.3.2"
-org-jetbrains-kotlin-kotlin-gradle-plugin = "org.jetbrains.kotlin:kotlin-gradle-plugin:2.2.0"
+org-jetbrains-kotlin-kotlin-gradle-plugin = "org.jetbrains.kotlin:kotlin-gradle-plugin:2.2.10"
 org-hidetake-gradle-ssh-plugin = "org.hidetake:gradle-ssh-plugin:2.10.1"
 org-jfrog-buildinfo-build-info-extractor-gradle = "org.jfrog.buildinfo:build-info-extractor-gradle:6.0.0"
 org-sonarsource-scanner-gradle-sonarqube-gradle-plugin = "org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:3.3"

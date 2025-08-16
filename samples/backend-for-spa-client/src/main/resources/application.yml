@@ -34,7 +34,7 @@ spring:
             issuer-uri: http://localhost:9000
   cloud:
     gateway:
-      mvc:
+      server.webmvc:
         routes:
           - id: userinfo
             uri: http://localhost:9000

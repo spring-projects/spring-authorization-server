@@ -49,6 +49,10 @@ public final class RegisteredClientOidcClientRegistrationConverter
 			builder.clientSecret(registeredClient.getClientSecret());
 		}
 
+		if (registeredClient.getClientSecretExpiresAt() != null) {
+			builder.clientSecretExpiresAt(registeredClient.getClientSecretExpiresAt());
+		}
+
 		builder.redirectUris((redirectUris) ->
 				redirectUris.addAll(registeredClient.getRedirectUris()));
 

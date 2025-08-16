@@ -531,8 +531,8 @@ public class OidcClientRegistrationTests {
 
 		OidcClientRegistration clientRegistrationResponse = registerClient(clientRegistration);
 
-		var expectedSecretExpiryDate = Instant.now().plus(Duration.ofHours(24));
-		var allowedDelta = new TemporalUnitWithinOffset(1, ChronoUnit.MINUTES);
+		Instant expectedSecretExpiryDate = Instant.now().plus(Duration.ofHours(24));
+		TemporalUnitWithinOffset allowedDelta = new TemporalUnitWithinOffset(1, ChronoUnit.MINUTES);
 
 		// Returned response contains expiration date
 		assertThat(clientRegistrationResponse.getClientSecretExpiresAt())
@@ -685,40 +685,52 @@ public class OidcClientRegistrationTests {
 
 	@EnableWebSecurity
 	@Configuration(proxyBeanMethods = false)
-	static class CustomClientMetadataConfiguration extends ClientRegistrationConvertersConfiguration {
+	static class CustomClientMetadataConfiguration extends AuthorizationServerConfiguration {
 
-		private static final List<String> supportedCustomClientMetadata = List.of("custom-metadata-name-1", "custom-metadata-name-2");
-
+		// @formatter:off
+		@Bean
 		@Override
-		protected Converter<OidcClientRegistration, RegisteredClient> registeredClientConverter() {
-			return new CustomRegisteredClientConverter(supportedCustomClientMetadata);
+		public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
+			OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
+					OAuth2AuthorizationServerConfigurer.authorizationServer();
+			http
+					.securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
+					.with(authorizationServerConfigurer, (authorizationServer) ->
+							authorizationServer
+									.oidc((oidc) ->
+											oidc
+													.clientRegistrationEndpoint((clientRegistration) ->
+															clientRegistration
+																	.authenticationProviders(configureClientRegistrationConverters())
+													)
+									)
+					)
+					.authorizeHttpRequests((authorize) ->
+							authorize.anyRequest().authenticated()
+					);
+			return http.build();
 		}
+		// @formatter:on
 
-		@Override
-		protected Converter<RegisteredClient, OidcClientRegistration> oidcClientRegistrationConverter() {
-			return new CustomClientRegistrationConverter(supportedCustomClientMetadata);
+		private Consumer<List<AuthenticationProvider>> configureClientRegistrationConverters() {
+			// @formatter:off
+			return (authenticationProviders) ->
+					authenticationProviders.forEach((authenticationProvider) -> {
+						List<String> supportedCustomClientMetadata = List.of("custom-metadata-name-1", "custom-metadata-name-2");
+						if (authenticationProvider instanceof OidcClientRegistrationAuthenticationProvider provider) {
+							provider.setRegisteredClientConverter(new CustomRegisteredClientConverter(supportedCustomClientMetadata));
+							provider.setClientRegistrationConverter(new CustomClientRegistrationConverter(supportedCustomClientMetadata));
+						}
+					});
+			// @formatter:on
 		}
 
 	}
 
 	@EnableWebSecurity
 	@Configuration(proxyBeanMethods = false)
-	static class ClientSecretExpirationConfiguration extends ClientRegistrationConvertersConfiguration {
+	static class ClientSecretExpirationConfiguration extends AuthorizationServerConfiguration {
 
-		@Override
-		protected Converter<OidcClientRegistration, RegisteredClient> registeredClientConverter() {
-			return new ClientSecretExpirationRegisteredClientConverter();
-		}
-
-	}
-
-	/**
-	 * This test configuration allows to override {@code RegisteredClient} -> {@code OidcClientRegistration} and
-	 * {@code OidcClientRegistration} -> {@code RegisteredClient} converters
-	 */
-	@EnableWebSecurity
-	@Configuration(proxyBeanMethods = false)
-	static class ClientRegistrationConvertersConfiguration extends AuthorizationServerConfiguration {
 		// @formatter:off
 		@Bean
 		@Override
@@ -749,26 +761,12 @@ public class OidcClientRegistrationTests {
 			return (authenticationProviders) ->
 					authenticationProviders.forEach((authenticationProvider) -> {
 						if (authenticationProvider instanceof OidcClientRegistrationAuthenticationProvider provider) {
-							var registeredClientConverter = registeredClientConverter();
-							if (registeredClientConverter != null) {
-								provider.setRegisteredClientConverter(registeredClientConverter);
-							}
-							var oidcClientRegistrationConverter = oidcClientRegistrationConverter();
-							if (oidcClientRegistrationConverter != null) {
-								provider.setClientRegistrationConverter(oidcClientRegistrationConverter);
-							}
+							provider.setRegisteredClientConverter(new ClientSecretExpirationRegisteredClientConverter());
 						}
 					});
 			// @formatter:on
 		}
 
-		protected Converter<OidcClientRegistration, RegisteredClient> registeredClientConverter() {
-			return null;
-		}
-
-		protected Converter<RegisteredClient, OidcClientRegistration> oidcClientRegistrationConverter() {
-			return null;
-		}
 	}
 
 	@EnableWebSecurity
@@ -921,5 +919,4 @@ public class OidcClientRegistrationTests {
 			return registeredClientBuilder.build();
 		}
 	}
-
 }

@@ -34,20 +34,21 @@ spring:
             issuer-uri: http://localhost:9000
   cloud:
     gateway:
-      mvc:
-        routes:
-          - id: userinfo
-            uri: http://localhost:9000
-            predicates:
-              - Path=/userinfo
-            filters:
-              - TokenRelay=
-          - id: messages
-            uri: http://localhost:8090
-            predicates:
-              - Path=/messages
-            filters:
-              - RelayTokenIfExists=messaging-client-authorization-code
+      server:
+        webmvc:
+          routes:
+            - id: userinfo
+              uri: http://localhost:9000
+              predicates:
+                - Path=/userinfo
+              filters:
+                - TokenRelay=
+            - id: messages
+              uri: http://localhost:8090
+              predicates:
+                - Path=/messages
+              filters:
+                - RelayTokenIfExists=messaging-client-authorization-code
 
 app:
   base-uri: http://127.0.0.1:4200

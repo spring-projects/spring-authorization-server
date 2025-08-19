@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 the original author or authors.
+ * Copyright 2020-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -510,10 +510,7 @@ public class OidcClientRegistrationTests {
 		assertThat(registeredClient.getClientSettings().<String>getSetting("non-registered-custom-metadata")).isNull();
 	}
 
-	/**
-	 * Scenario to validate that if there's a customization that sets client secret expiration date, then the date
-	 * is persisted and returned in the registration response
-	 */
+	// gh-2111
 	@Test
 	public void requestWhenClientRegistersWithSecretExpirationThenClientRegistrationResponse() throws Exception {
 		this.spring.register(ClientSecretExpirationConfiguration.class).autowire();
@@ -535,19 +532,16 @@ public class OidcClientRegistrationTests {
 		TemporalUnitWithinOffset allowedDelta = new TemporalUnitWithinOffset(1, ChronoUnit.MINUTES);
 
 		// Returned response contains expiration date
-		assertThat(clientRegistrationResponse.getClientSecretExpiresAt())
-				.isNotNull()
-				.isCloseTo(expectedSecretExpiryDate, allowedDelta);
+		assertThat(clientRegistrationResponse.getClientSecretExpiresAt()).isNotNull()
+			.isCloseTo(expectedSecretExpiryDate, allowedDelta);
 
 		RegisteredClient registeredClient = this.registeredClientRepository
-				.findByClientId(clientRegistrationResponse.getClientId());
+			.findByClientId(clientRegistrationResponse.getClientId());
 
 		// Persisted RegisteredClient contains expiration date
-		assertThat(registeredClient)
-				.isNotNull();
-		assertThat(registeredClient.getClientSecretExpiresAt())
-				.isNotNull()
-				.isCloseTo(expectedSecretExpiryDate, allowedDelta);
+		assertThat(registeredClient).isNotNull();
+		assertThat(registeredClient.getClientSecretExpiresAt()).isNotNull()
+			.isCloseTo(expectedSecretExpiryDate, allowedDelta);
 	}
 
 	private OidcClientRegistration registerClient(OidcClientRegistration clientRegistration) throws Exception {
@@ -899,24 +893,26 @@ public class OidcClientRegistrationTests {
 	}
 
 	/**
-	 * This customization adds client secret expiration time by setting {@code RegisteredClient.clientSecretExpiresAt}
-	 * during {@code OidcClientRegistration} -> {@code RegisteredClient} conversion
+	 * This customization adds client secret expiration time by setting
+	 * {@code RegisteredClient.clientSecretExpiresAt} during
+	 * {@code OidcClientRegistration} -> {@code RegisteredClient} conversion
 	 */
 	private static final class ClientSecretExpirationRegisteredClientConverter
 			implements Converter<OidcClientRegistration, RegisteredClient> {
 
-		private static final OidcClientRegistrationRegisteredClientConverter delegate =
-				new OidcClientRegistrationRegisteredClientConverter();
+		private static final OidcClientRegistrationRegisteredClientConverter delegate = new OidcClientRegistrationRegisteredClientConverter();
 
 		@Override
 		public RegisteredClient convert(OidcClientRegistration clientRegistration) {
 			RegisteredClient registeredClient = delegate.convert(clientRegistration);
-			var registeredClientBuilder = RegisteredClient.from(registeredClient);
+			RegisteredClient.Builder registeredClientBuilder = RegisteredClient.from(registeredClient);
 
-			var clientSecretExpiresAt = Instant.now().plus(Duration.ofHours(24));
+			Instant clientSecretExpiresAt = Instant.now().plus(Duration.ofHours(24));
 			registeredClientBuilder.clientSecretExpiresAt(clientSecretExpiresAt);
 
 			return registeredClientBuilder.build();
 		}
+
 	}
+
 }

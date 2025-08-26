@@ -215,7 +215,7 @@ public final class OAuth2RefreshTokenAuthenticationProvider implements Authentic
 
 		// ----- ID token -----
 		OidcIdToken idToken;
-		if (authorizedScopes.contains(OidcScopes.OPENID)) {
+		if (authorizedScopes.contains(OidcScopes.OPENID) && authorization.getToken(OidcIdToken.class) != null) {
 			// @formatter:off
 			tokenContext = tokenContextBuilder
 					.tokenType(ID_TOKEN_TOKEN_TYPE)

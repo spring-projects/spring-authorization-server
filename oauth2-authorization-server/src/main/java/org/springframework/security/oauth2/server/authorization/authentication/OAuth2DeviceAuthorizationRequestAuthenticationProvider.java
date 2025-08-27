@@ -123,7 +123,7 @@ public final class OAuth2DeviceAuthorizationRequestAuthenticationProvider implem
 			}
 		}
 
-		if(requestedScopes.contains(OidcScopes.OPENID)) {
+		if (requestedScopes.contains(OidcScopes.OPENID)) {
 			throwError(OAuth2ErrorCodes.INVALID_SCOPE, OAuth2ParameterNames.SCOPE);
 		}
 

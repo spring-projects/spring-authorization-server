@@ -22,6 +22,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -50,10 +51,12 @@ import org.springframework.security.oauth2.server.authorization.client.TestRegis
 import org.springframework.security.oauth2.server.authorization.context.AuthorizationServerContextHolder;
 import org.springframework.security.oauth2.server.authorization.context.TestAuthorizationServerContext;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
+import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -122,6 +125,13 @@ public class OAuth2DeviceVerificationAuthenticationProviderTests {
 						this.registeredClientRepository, this.authorizationService, null))
 				.withMessage("authorizationConsentService cannot be null");
 		// @formatter:on
+	}
+
+	@Test
+	public void setAuthorizationConsentRequiredWhenNullThenThrowIllegalArgumentException() {
+		assertThatThrownBy(() -> this.authenticationProvider.setAuthorizationConsentRequired(null))
+			.isInstanceOf(IllegalArgumentException.class)
+			.hasMessage("authorizationConsentRequired cannot be null");
 	}
 
 	@Test
@@ -379,6 +389,81 @@ public class OAuth2DeviceVerificationAuthenticationProviderTests {
 		OAuth2Authorization updatedAuthorization = authorizationCaptor.getValue();
 		assertThat(updatedAuthorization.<String>getAttribute(OAuth2ParameterNames.STATE))
 			.isEqualTo(authenticationResult.getState());
+	}
+
+	@Test
+	void authenticateWhenPredicateTrueThenReturnsConsentToken() {
+		@SuppressWarnings("unchecked")
+		Predicate<OAuth2DeviceVerificationAuthenticationContext> consentPredicate = mock(Predicate.class);
+		given(consentPredicate.test(any())).willReturn(true);
+		authenticationProvider.setAuthorizationConsentRequired(consentPredicate);
+
+		RegisteredClient client = TestRegisteredClients.registeredClient().build();
+		given(registeredClientRepository.findById(client.getId())).willReturn(client);
+
+		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(client)
+			.token(createDeviceCode())
+			.token(createUserCode())
+			.attribute(OAuth2ParameterNames.SCOPE, client.getScopes())
+			.build();
+
+		TestingAuthenticationToken principal = new TestingAuthenticationToken("user", "password");
+		principal.setAuthenticated(true);
+
+		OAuth2DeviceVerificationAuthenticationToken authRequest = new OAuth2DeviceVerificationAuthenticationToken(
+				principal, USER_CODE, Collections.emptyMap());
+
+		given(authorizationService.findByToken(USER_CODE,
+				OAuth2DeviceVerificationAuthenticationProvider.USER_CODE_TOKEN_TYPE))
+			.willReturn(authorization);
+		given(authorizationConsentService.findById(client.getId(), principal.getName())).willReturn(null);
+
+		Authentication result = authenticationProvider.authenticate(authRequest);
+
+		assertThat(result).isInstanceOf(OAuth2DeviceAuthorizationConsentAuthenticationToken.class);
+		OAuth2DeviceAuthorizationConsentAuthenticationToken consentToken = (OAuth2DeviceAuthorizationConsentAuthenticationToken) result;
+
+		assertThat(consentToken.isAuthenticated()).isTrue();
+		assertThat(consentToken.getClientId()).isEqualTo(client.getClientId());
+		assertThat(consentToken.getPrincipal()).isEqualTo(authRequest.getPrincipal());
+		assertThat(consentToken.getUserCode()).isEqualTo(authRequest.getUserCode());
+		assertThat(consentToken.getRequestedScopes()).containsExactlyInAnyOrderElementsOf(client.getScopes());
+		assertThat(consentToken.getState()).isNotNull();
+
+		verify(consentPredicate).test(any());
+	}
+
+	@Test
+	void authenticateWhenPredicateFalseThenSkipsConsentPage() {
+		RegisteredClient client = TestRegisteredClients.registeredClient()
+			.clientSettings(ClientSettings.builder().requireAuthorizationConsent(false).build())
+			.build();
+
+		authenticationProvider.setAuthorizationConsentRequired(
+				ctx -> ctx.getRegisteredClient().getClientSettings().isRequireAuthorizationConsent());
+
+		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(client)
+			.token(createDeviceCode())
+			.token(createUserCode())
+			.attribute(OAuth2ParameterNames.SCOPE, client.getScopes())
+			.build();
+
+		TestingAuthenticationToken principal = new TestingAuthenticationToken("user", "password");
+		principal.setAuthenticated(true);
+
+		OAuth2DeviceVerificationAuthenticationToken authRequest = new OAuth2DeviceVerificationAuthenticationToken(
+				principal, USER_CODE, Collections.emptyMap());
+
+		given(registeredClientRepository.findById(client.getId())).willReturn(client);
+		given(authorizationService.findByToken(USER_CODE,
+				OAuth2DeviceVerificationAuthenticationProvider.USER_CODE_TOKEN_TYPE))
+			.willReturn(authorization);
+		given(authorizationConsentService.findById(client.getId(), principal.getName())).willReturn(null);
+
+		Authentication result = authenticationProvider.authenticate(authRequest);
+
+		assertThat(result).isInstanceOf(OAuth2DeviceVerificationAuthenticationToken.class);
+		assertThat(result.isAuthenticated()).isTrue();
 	}
 
 	private static void mockAuthorizationServerContext() {

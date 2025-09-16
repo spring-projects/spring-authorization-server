@@ -393,6 +393,7 @@ The following example shows how to register an `OAuth2TokenGenerator` `@Bean`:
 public OAuth2TokenGenerator<?> tokenGenerator() {
 	JwtEncoder jwtEncoder = ...
 	JwtGenerator jwtGenerator = new JwtGenerator(jwtEncoder);
+	jwtGenerator.setClock(Clock.systemUTC());
 	OAuth2AccessTokenGenerator accessTokenGenerator = new OAuth2AccessTokenGenerator();
 	OAuth2RefreshTokenGenerator refreshTokenGenerator = new OAuth2RefreshTokenGenerator();
 	return new DelegatingOAuth2TokenGenerator(
@@ -441,6 +442,7 @@ The following example shows how to implement an `OAuth2TokenCustomizer<OAuth2Tok
 public OAuth2TokenGenerator<?> tokenGenerator() {
 	JwtEncoder jwtEncoder = ...
 	JwtGenerator jwtGenerator = new JwtGenerator(jwtEncoder);
+	jwtGenerator.setClock(Clock.systemUTC());
 	OAuth2AccessTokenGenerator accessTokenGenerator = new OAuth2AccessTokenGenerator();
 	accessTokenGenerator.setAccessTokenCustomizer(accessTokenCustomizer());
 	OAuth2RefreshTokenGenerator refreshTokenGenerator = new OAuth2RefreshTokenGenerator();

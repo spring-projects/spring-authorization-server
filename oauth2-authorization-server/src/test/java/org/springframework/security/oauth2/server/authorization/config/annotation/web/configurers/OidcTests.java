@@ -20,6 +20,7 @@ import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.security.Principal;
+import java.time.Clock;
 import java.util.Base64;
 import java.util.HashSet;
 import java.util.List;
@@ -720,6 +721,7 @@ public class OidcTests {
 		@Bean
 		OAuth2TokenGenerator<?> tokenGenerator() {
 			JwtGenerator jwtGenerator = new JwtGenerator(new NimbusJwtEncoder(jwkSource()));
+			jwtGenerator.setClock(Clock.systemUTC());
 			jwtGenerator.setJwtCustomizer(jwtCustomizer());
 			OAuth2RefreshTokenGenerator refreshTokenGenerator = new OAuth2RefreshTokenGenerator();
 			OAuth2TokenGenerator<OAuth2Token> delegatingTokenGenerator = new DelegatingOAuth2TokenGenerator(
@@ -761,6 +763,7 @@ public class OidcTests {
 		@Bean
 		OAuth2TokenGenerator<?> tokenGenerator() {
 			JwtGenerator jwtGenerator = new JwtGenerator(new NimbusJwtEncoder(jwkSource()));
+			jwtGenerator.setClock(Clock.systemUTC());
 			jwtGenerator.setJwtCustomizer(jwtCustomizer());
 			OAuth2TokenGenerator<OAuth2RefreshToken> refreshTokenGenerator = new CustomRefreshTokenGenerator();
 			return new DelegatingOAuth2TokenGenerator(jwtGenerator, refreshTokenGenerator);

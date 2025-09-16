@@ -21,6 +21,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.security.Principal;
 import java.text.MessageFormat;
+import java.time.Clock;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
@@ -1236,6 +1237,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 		@Bean
 		OAuth2TokenGenerator<?> tokenGenerator() {
 			JwtGenerator jwtGenerator = new JwtGenerator(jwtEncoder());
+			jwtGenerator.setClock(Clock.systemUTC());
 			jwtGenerator.setJwtCustomizer(jwtCustomizer());
 			OAuth2TokenGenerator<OAuth2RefreshToken> refreshTokenGenerator = new CustomRefreshTokenGenerator();
 			return new DelegatingOAuth2TokenGenerator(jwtGenerator, refreshTokenGenerator);
@@ -1298,6 +1300,7 @@ public class OAuth2AuthorizationCodeGrantTests {
 		@Bean
 		OAuth2TokenGenerator<?> tokenGenerator() {
 			JwtGenerator jwtGenerator = new JwtGenerator(jwtEncoder());
+			jwtGenerator.setClock(Clock.systemUTC());
 			jwtGenerator.setJwtCustomizer(jwtCustomizer());
 			OAuth2RefreshTokenGenerator refreshTokenGenerator = new OAuth2RefreshTokenGenerator();
 			OAuth2TokenGenerator<OAuth2Token> delegatingTokenGenerator = new DelegatingOAuth2TokenGenerator(

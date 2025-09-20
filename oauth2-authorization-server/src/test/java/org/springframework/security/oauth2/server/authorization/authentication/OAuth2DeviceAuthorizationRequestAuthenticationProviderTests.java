@@ -169,9 +169,9 @@ public class OAuth2DeviceAuthorizationRequestAuthenticationProviderTests {
 	@Test
 	public void authenticateWhenOpenIdScopeThenThrowOAuth2AuthenticationException() {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient()
-				.authorizationGrantType(AuthorizationGrantType.DEVICE_CODE)
-				.scope(OidcScopes.OPENID)
-				.build();
+			.authorizationGrantType(AuthorizationGrantType.DEVICE_CODE)
+			.scope(OidcScopes.OPENID)
+			.build();
 		Authentication authentication = createAuthentication(registeredClient);
 		// @formatter:off
 		assertThatExceptionOfType(OAuth2AuthenticationException.class)

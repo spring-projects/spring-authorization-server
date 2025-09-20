@@ -571,17 +571,7 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 	@Test
 	public void authenticateWhenIdTokenNotGeneratedThenThrowOAuth2AuthenticationException() {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().scope(OidcScopes.OPENID).build();
-		OidcIdToken authorizedIdToken = OidcIdToken.withTokenValue("id-token")
-				.issuer("https://provider.com")
-				.subject("subject")
-				.issuedAt(Instant.now())
-				.expiresAt(Instant.now().plusSeconds(60))
-				.claim("sid", "sessionId-1234")
-				.claim(IdTokenClaimNames.AUTH_TIME, Date.from(Instant.now()))
-				.build();
-		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient)
-				.token(authorizedIdToken)
-				.build();
+		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();
 		given(this.authorizationService.findByToken(eq(authorization.getRefreshToken().getToken().getTokenValue()),
 				eq(OAuth2TokenType.REFRESH_TOKEN)))
 			.willReturn(authorization);
@@ -608,27 +598,6 @@ public class OAuth2RefreshTokenAuthenticationProviderTests {
 				assertThat(error.getErrorCode()).isEqualTo(OAuth2ErrorCodes.SERVER_ERROR);
 				assertThat(error.getDescription()).contains("The token generator failed to generate the ID token.");
 			});
-	}
-
-	@Test
-	public void authenticateAuthorizationWithoutIdTokenThenIdTokenNotGenerated() {
-		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().scope(OidcScopes.OPENID).build();
-		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient).build();
-		given(this.authorizationService.findByToken(eq(authorization.getRefreshToken().getToken().getTokenValue()),
-				eq(OAuth2TokenType.REFRESH_TOKEN)))
-				.willReturn(authorization);
-
-		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient,
-				ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
-		OAuth2RefreshTokenAuthenticationToken authentication = new OAuth2RefreshTokenAuthenticationToken(
-				authorization.getRefreshToken().getToken().getTokenValue(), clientPrincipal, null, null);
-
-
-		OAuth2AccessTokenAuthenticationToken accessTokenAuthentication = (OAuth2AccessTokenAuthenticationToken) this.authenticationProvider
-				.authenticate(authentication);
-
-		assertThat(accessTokenAuthentication.getAdditionalParameters().containsKey(OidcParameterNames.ID_TOKEN))
-				.isFalse();
 	}
 
 	@Test

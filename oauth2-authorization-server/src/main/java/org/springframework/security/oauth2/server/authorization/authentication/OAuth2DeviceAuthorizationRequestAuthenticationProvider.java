@@ -121,10 +121,9 @@ public final class OAuth2DeviceAuthorizationRequestAuthenticationProvider implem
 					throwError(OAuth2ErrorCodes.INVALID_SCOPE, OAuth2ParameterNames.SCOPE);
 				}
 			}
-		}
-
-		if (requestedScopes.contains(OidcScopes.OPENID)) {
-			throwError(OAuth2ErrorCodes.INVALID_SCOPE, OAuth2ParameterNames.SCOPE);
+			if (requestedScopes.contains(OidcScopes.OPENID)) {
+				throwError(OAuth2ErrorCodes.INVALID_SCOPE, OAuth2ParameterNames.SCOPE);
+			}
 		}
 
 		if (this.logger.isTraceEnabled()) {

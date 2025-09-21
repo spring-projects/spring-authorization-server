@@ -165,7 +165,7 @@ public final class OAuth2RefreshTokenAuthenticationProvider implements Authentic
 		Jwt dPoPProof = DPoPProofVerifier.verifyIfAvailable(refreshTokenAuthentication);
 
 		if (dPoPProof != null
-				& clientPrincipal.getClientAuthenticationMethod().equals(ClientAuthenticationMethod.NONE)) {
+				&& clientPrincipal.getClientAuthenticationMethod().equals(ClientAuthenticationMethod.NONE)) {
 			// For public clients, verify the DPoP Proof public key is same as (current)
 			// access token public key binding
 			Map<String, Object> accessTokenClaims = authorization.getAccessToken().getClaims();
@@ -215,7 +215,12 @@ public final class OAuth2RefreshTokenAuthenticationProvider implements Authentic
 		// ----- Refresh token -----
 		OAuth2RefreshToken currentRefreshToken = refreshToken.getToken();
 		if (!registeredClient.getTokenSettings().isReuseRefreshTokens()) {
-			tokenContext = tokenContextBuilder.tokenType(OAuth2TokenType.REFRESH_TOKEN).build();
+			// @formatter:off
+			tokenContext = tokenContextBuilder
+					.tokenType(OAuth2TokenType.REFRESH_TOKEN)
+					.authorization(authorizationBuilder.build())	// Refresh token generator/customizer may need access to the access token
+					.build();
+			// @formatter:on
 			OAuth2Token generatedRefreshToken = this.tokenGenerator.generate(tokenContext);
 			if (!(generatedRefreshToken instanceof OAuth2RefreshToken)) {
 				OAuth2Error error = new OAuth2Error(OAuth2ErrorCodes.SERVER_ERROR,

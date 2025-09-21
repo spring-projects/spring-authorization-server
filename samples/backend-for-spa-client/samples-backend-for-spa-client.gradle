@@ -1,5 +1,5 @@
 plugins {
-	id "org.springframework.boot" version "3.2.2"
+	id "org.springframework.boot" version "4.0.0-M2"
 	id "io.spring.dependency-management" version "1.1.0"
 	id "java"
 }
@@ -18,7 +18,7 @@ repositories {
 }
 
 ext {
-	set("springCloudVersion", "2023.0.2")
+	set("springCloudVersion", "2025.1.0-SNAPSHOT")
 }
 
 dependencyManagement {
@@ -31,5 +31,5 @@ dependencies {
 	implementation "org.springframework.boot:spring-boot-starter-web"
 	implementation "org.springframework.boot:spring-boot-starter-security"
 	implementation "org.springframework.boot:spring-boot-starter-oauth2-client"
-	implementation "org.springframework.cloud:spring-cloud-starter-gateway-mvc"
+	implementation "org.springframework.cloud:spring-cloud-starter-gateway-server-webmvc"
 }

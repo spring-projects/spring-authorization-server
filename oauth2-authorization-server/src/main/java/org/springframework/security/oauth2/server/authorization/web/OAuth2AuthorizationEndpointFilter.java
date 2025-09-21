@@ -54,10 +54,10 @@ import org.springframework.security.web.authentication.AuthenticationSuccessHand
 import org.springframework.security.web.authentication.DelegatingAuthenticationConverter;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.security.web.authentication.session.SessionAuthenticationStrategy;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.security.web.util.RedirectUrlBuilder;
 import org.springframework.security.web.util.UrlUtils;
 import org.springframework.security.web.util.matcher.AndRequestMatcher;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.NegatedRequestMatcher;
 import org.springframework.security.web.util.matcher.OrRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
@@ -146,10 +146,10 @@ public final class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilte
 	}
 
 	private static RequestMatcher createDefaultRequestMatcher(String authorizationEndpointUri) {
-		RequestMatcher authorizationRequestGetMatcher = new AntPathRequestMatcher(authorizationEndpointUri,
-				HttpMethod.GET.name());
-		RequestMatcher authorizationRequestPostMatcher = new AntPathRequestMatcher(authorizationEndpointUri,
-				HttpMethod.POST.name());
+		RequestMatcher authorizationRequestGetMatcher = PathPatternRequestMatcher.withDefaults()
+			.matcher(HttpMethod.GET, authorizationEndpointUri);
+		RequestMatcher authorizationRequestPostMatcher = PathPatternRequestMatcher.withDefaults()
+			.matcher(HttpMethod.POST, authorizationEndpointUri);
 
 		RequestMatcher responseTypeParameterMatcher = (
 				request) -> request.getParameter(OAuth2ParameterNames.RESPONSE_TYPE) != null;

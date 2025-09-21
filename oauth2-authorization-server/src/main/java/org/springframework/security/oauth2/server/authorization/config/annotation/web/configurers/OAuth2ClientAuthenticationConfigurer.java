@@ -24,7 +24,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
-import org.springframework.security.config.annotation.ObjectPostProcessor;
+import org.springframework.security.config.ObjectPostProcessor;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -48,7 +48,7 @@ import org.springframework.security.web.authentication.AuthenticationFailureHand
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.DelegatingAuthenticationConverter;
 import org.springframework.security.web.authentication.preauth.AbstractPreAuthenticatedProcessingFilter;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.security.web.util.matcher.OrRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
@@ -200,11 +200,13 @@ public final class OAuth2ClientAuthenticationConfigurer extends AbstractOAuth2Co
 				? OAuth2ConfigurerUtils
 					.withMultipleIssuersPattern(authorizationServerSettings.getPushedAuthorizationRequestEndpoint())
 				: authorizationServerSettings.getPushedAuthorizationRequestEndpoint();
-		this.requestMatcher = new OrRequestMatcher(new AntPathRequestMatcher(tokenEndpointUri, HttpMethod.POST.name()),
-				new AntPathRequestMatcher(tokenIntrospectionEndpointUri, HttpMethod.POST.name()),
-				new AntPathRequestMatcher(tokenRevocationEndpointUri, HttpMethod.POST.name()),
-				new AntPathRequestMatcher(deviceAuthorizationEndpointUri, HttpMethod.POST.name()),
-				new AntPathRequestMatcher(pushedAuthorizationRequestEndpointUri, HttpMethod.POST.name()));
+		this.requestMatcher = new OrRequestMatcher(
+				PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.POST, tokenEndpointUri),
+				PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.POST, tokenIntrospectionEndpointUri),
+				PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.POST, tokenRevocationEndpointUri),
+				PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.POST, deviceAuthorizationEndpointUri),
+				PathPatternRequestMatcher.withDefaults()
+					.matcher(HttpMethod.POST, pushedAuthorizationRequestEndpointUri));
 		List<AuthenticationProvider> authenticationProviders = createDefaultAuthenticationProviders(httpSecurity);
 		if (!this.authenticationProviders.isEmpty()) {
 			authenticationProviders.addAll(0, this.authenticationProviders);

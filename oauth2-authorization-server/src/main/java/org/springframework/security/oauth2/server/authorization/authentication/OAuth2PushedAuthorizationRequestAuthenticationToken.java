@@ -15,6 +15,7 @@
  */
 package org.springframework.security.oauth2.server.authorization.authentication;
 
+import java.io.Serial;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Set;
@@ -33,6 +34,9 @@ import org.springframework.util.Assert;
  */
 public class OAuth2PushedAuthorizationRequestAuthenticationToken
 		extends AbstractOAuth2AuthorizationCodeRequestAuthenticationToken {
+
+	@Serial
+	private static final long serialVersionUID = 7330534287786569644L;
 
 	private final String requestUri;
 

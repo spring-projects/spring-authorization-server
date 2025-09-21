@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 the original author or authors.
+ * Copyright 2020-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.springframework.security.oauth2.server.authorization.settings;
 
+import java.io.Serial;
 import java.time.Duration;
 import java.util.Map;
 
@@ -31,6 +32,9 @@ import org.springframework.util.Assert;
  * @see ConfigurationSettingNames.Token
  */
 public final class TokenSettings extends AbstractSettings {
+
+	@Serial
+	private static final long serialVersionUID = -2551292126445781141L;
 
 	private TokenSettings(Map<String, Object> settings) {
 		super(settings);

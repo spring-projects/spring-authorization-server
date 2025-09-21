@@ -46,9 +46,9 @@ import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.security.web.util.RedirectUrlBuilder;
 import org.springframework.security.web.util.UrlUtils;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -113,8 +113,8 @@ public final class OAuth2DeviceAuthorizationEndpointFilter extends OncePerReques
 		Assert.notNull(authenticationManager, "authenticationManager cannot be null");
 		Assert.hasText(deviceAuthorizationEndpointUri, "deviceAuthorizationEndpointUri cannot be empty");
 		this.authenticationManager = authenticationManager;
-		this.deviceAuthorizationEndpointMatcher = new AntPathRequestMatcher(deviceAuthorizationEndpointUri,
-				HttpMethod.POST.name());
+		this.deviceAuthorizationEndpointMatcher = PathPatternRequestMatcher.withDefaults()
+			.matcher(HttpMethod.POST, deviceAuthorizationEndpointUri);
 		this.authenticationConverter = new OAuth2DeviceAuthorizationRequestAuthenticationConverter();
 	}
 

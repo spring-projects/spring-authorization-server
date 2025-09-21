@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 the original author or authors.
+ * Copyright 2020-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.springframework.security.oauth2.server.authorization.oidc;
 
+import java.io.Serial;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -42,6 +43,9 @@ import org.springframework.util.Assert;
  */
 public final class OidcProviderConfiguration extends AbstractOAuth2AuthorizationServerMetadata
 		implements OidcProviderMetadataClaimAccessor {
+
+	@Serial
+	private static final long serialVersionUID = -2130128410911549024L;
 
 	private OidcProviderConfiguration(Map<String, Object> claims) {
 		super(claims);

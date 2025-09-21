@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 the original author or authors.
+ * Copyright 2020-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
-import org.springframework.security.config.annotation.ObjectPostProcessor;
+import org.springframework.security.config.ObjectPostProcessor;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
@@ -39,7 +39,7 @@ import org.springframework.security.web.authentication.AuthenticationFailureHand
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.DelegatingAuthenticationConverter;
 import org.springframework.security.web.authentication.logout.LogoutFilter;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.security.web.util.matcher.OrRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
@@ -169,8 +169,9 @@ public final class OidcLogoutEndpointConfigurer extends AbstractOAuth2Configurer
 		String logoutEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed()
 				? OAuth2ConfigurerUtils.withMultipleIssuersPattern(authorizationServerSettings.getOidcLogoutEndpoint())
 				: authorizationServerSettings.getOidcLogoutEndpoint();
-		this.requestMatcher = new OrRequestMatcher(new AntPathRequestMatcher(logoutEndpointUri, HttpMethod.GET.name()),
-				new AntPathRequestMatcher(logoutEndpointUri, HttpMethod.POST.name()));
+		this.requestMatcher = new OrRequestMatcher(
+				PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.GET, logoutEndpointUri),
+				PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.POST, logoutEndpointUri));
 
 		List<AuthenticationProvider> authenticationProviders = createDefaultAuthenticationProviders(httpSecurity);
 		if (!this.authenticationProviders.isEmpty()) {

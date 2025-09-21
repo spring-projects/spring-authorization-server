@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 the original author or authors.
+ * Copyright 2020-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.springframework.security.oauth2.server.authorization.authentication;
 
+import java.io.Serial;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -22,7 +23,6 @@ import java.util.Map;
 import org.springframework.lang.Nullable;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.oauth2.server.authorization.util.SpringAuthorizationServerVersion;
 import org.springframework.util.Assert;
 
 /**
@@ -36,7 +36,8 @@ import org.springframework.util.Assert;
  */
 public class OAuth2DeviceVerificationAuthenticationToken extends AbstractAuthenticationToken {
 
-	private static final long serialVersionUID = SpringAuthorizationServerVersion.SERIAL_VERSION_UID;
+	@Serial
+	private static final long serialVersionUID = -2164261941629756913L;
 
 	private final Authentication principal;
 

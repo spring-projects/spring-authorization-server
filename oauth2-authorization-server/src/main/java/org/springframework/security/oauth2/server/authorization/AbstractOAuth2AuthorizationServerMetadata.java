@@ -15,6 +15,7 @@
  */
 package org.springframework.security.oauth2.server.authorization;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.net.URI;
 import java.net.URL;
@@ -26,7 +27,6 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 import org.springframework.security.oauth2.jose.jws.JwsAlgorithms;
-import org.springframework.security.oauth2.server.authorization.util.SpringAuthorizationServerVersion;
 import org.springframework.util.Assert;
 
 /**
@@ -59,7 +59,8 @@ import org.springframework.util.Assert;
 public abstract class AbstractOAuth2AuthorizationServerMetadata
 		implements OAuth2AuthorizationServerMetadataClaimAccessor, Serializable {
 
-	private static final long serialVersionUID = SpringAuthorizationServerVersion.SERIAL_VERSION_UID;
+	@Serial
+	private static final long serialVersionUID = -8817963285912690443L;
 
 	private final Map<String, Object> claims;
 

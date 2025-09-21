@@ -51,15 +51,16 @@ repositories {
 }
 
 dependencies {
-	implementation(platform("org.springframework.boot:spring-boot-dependencies:3.2.2")) {
+	implementation(platform("org.springframework.boot:spring-boot-dependencies:4.0.0-M2")) {
 		exclude group: "org.springframework.security", module: "spring-security-oauth2-authorization-server"
 	}
-	implementation platform("org.springframework.security:spring-security-bom:6.5.0-M2")
+	implementation platform("org.springframework.security:spring-security-bom:7.0.0-M2")
 	implementation "org.springframework.boot:spring-boot-starter-web"
 	implementation "org.springframework.boot:spring-boot-starter-thymeleaf"
 	implementation "org.springframework.boot:spring-boot-starter-security"
 	implementation "org.springframework.boot:spring-boot-starter-oauth2-client"
 	implementation "org.springframework.boot:spring-boot-starter-oauth2-resource-server"
+	implementation "org.springframework.boot:spring-boot-starter-oauth2-authorization-server"
 	implementation "org.springframework.boot:spring-boot-starter-data-jpa"
 	implementation ("org.springframework.boot:spring-boot-starter-data-redis") {
 		exclude group: "io.lettuce", module: "lettuce-core"
@@ -68,7 +69,9 @@ dependencies {
 	implementation "org.springframework:spring-webflux"
 	implementation project(":spring-security-oauth2-authorization-server")
 	runtimeOnly "com.h2database:h2"
+	testRuntimeOnly "org.junit.platform:junit-platform-launcher"
 	testImplementation "org.springframework.boot:spring-boot-starter-test"
+	testImplementation "org.springframework.boot:spring-boot-starter-webclient"
 	testImplementation "org.springframework.security:spring-security-test"
 	testImplementation "com.github.codemonstur:embedded-redis:1.4.3"
 }

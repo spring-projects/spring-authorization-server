@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 the original author or authors.
+ * Copyright 2020-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,13 @@ package org.springframework.security.oauth2.server.authorization.config.annotati
 import java.util.function.Consumer;
 
 import org.springframework.http.HttpMethod;
-import org.springframework.security.config.annotation.ObjectPostProcessor;
+import org.springframework.security.config.ObjectPostProcessor;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationServerMetadata;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.web.OAuth2AuthorizationServerMetadataEndpointFilter;
 import org.springframework.security.web.authentication.preauth.AbstractPreAuthenticatedProcessingFilter;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 
 /**
@@ -79,7 +79,8 @@ public final class OAuth2AuthorizationServerMetadataEndpointConfigurer extends A
 			.getAuthorizationServerSettings(httpSecurity);
 		String authorizationServerMetadataEndpointUri = authorizationServerSettings.isMultipleIssuersAllowed()
 				? "/.well-known/oauth-authorization-server/**" : "/.well-known/oauth-authorization-server";
-		this.requestMatcher = new AntPathRequestMatcher(authorizationServerMetadataEndpointUri, HttpMethod.GET.name());
+		this.requestMatcher = PathPatternRequestMatcher.withDefaults()
+			.matcher(HttpMethod.GET, authorizationServerMetadataEndpointUri);
 	}
 
 	@Override

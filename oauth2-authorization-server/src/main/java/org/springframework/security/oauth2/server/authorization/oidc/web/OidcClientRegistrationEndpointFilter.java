@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 the original author or authors.
+ * Copyright 2020-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,8 +45,8 @@ import org.springframework.security.oauth2.server.authorization.oidc.web.authent
 import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.security.web.util.matcher.AndRequestMatcher;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.OrRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
@@ -115,13 +115,13 @@ public final class OidcClientRegistrationEndpointFilter extends OncePerRequestFi
 		Assert.hasText(clientRegistrationEndpointUri, "clientRegistrationEndpointUri cannot be empty");
 		this.authenticationManager = authenticationManager;
 		this.clientRegistrationEndpointMatcher = new OrRequestMatcher(
-				new AntPathRequestMatcher(clientRegistrationEndpointUri, HttpMethod.POST.name()),
+				PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.POST, clientRegistrationEndpointUri),
 				createClientConfigurationMatcher(clientRegistrationEndpointUri));
 	}
 
 	private static RequestMatcher createClientConfigurationMatcher(String clientRegistrationEndpointUri) {
-		RequestMatcher clientConfigurationGetMatcher = new AntPathRequestMatcher(clientRegistrationEndpointUri,
-				HttpMethod.GET.name());
+		RequestMatcher clientConfigurationGetMatcher = PathPatternRequestMatcher.withDefaults()
+			.matcher(HttpMethod.GET, clientRegistrationEndpointUri);
 
 		RequestMatcher clientIdMatcher = (request) -> {
 			String clientId = request.getParameter(OAuth2ParameterNames.CLIENT_ID);

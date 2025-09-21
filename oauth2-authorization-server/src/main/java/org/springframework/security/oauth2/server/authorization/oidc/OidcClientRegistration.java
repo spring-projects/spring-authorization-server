@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 the original author or authors.
+ * Copyright 2020-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.springframework.security.oauth2.server.authorization.oidc;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.net.URI;
 import java.net.URL;
@@ -31,7 +32,6 @@ import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.security.oauth2.jose.jws.JwsAlgorithm;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.security.oauth2.server.authorization.util.SpringAuthorizationServerVersion;
 import org.springframework.util.Assert;
 
 /**
@@ -56,7 +56,8 @@ import org.springframework.util.Assert;
  */
 public final class OidcClientRegistration implements OidcClientMetadataClaimAccessor, Serializable {
 
-	private static final long serialVersionUID = SpringAuthorizationServerVersion.SERIAL_VERSION_UID;
+	@Serial
+	private static final long serialVersionUID = 6518710174552040014L;
 
 	private final Map<String, Object> claims;
 

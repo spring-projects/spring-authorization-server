@@ -1,12 +1,19 @@
 = Spring Authorization Server image:https://badges.gitter.im/Join%20Chat.svg[Gitter,link=https://gitter.im/spring-projects/spring-security?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge] image:https://github.com/spring-projects/spring-authorization-server/actions/workflows/continuous-integration-workflow.yml/badge.svg["Build Status", link="https://github.com/spring-projects/spring-authorization-server/actions/workflows/continuous-integration-workflow.yml"] image:https://img.shields.io/badge/Revved%20up%20by-Develocity-06A0CE?logo=Gradle&labelColor=02303A["Revved up by Develocity", link="https://ge.spring.io/scans?&search.rootProjectNames=spring-authorization-server"]
 
+== NOTICE:
+
+Spring Authorization Server has https://spring.io/blog/2025/09/11/spring-authorization-server-moving-to-spring-security-7-0[moved to Spring Security 7.0].
+
+This repository will become inactive after https://spring.io/projects/spring-authorization-server#support[OSS Support] ends for the *1.5.x* branch in June 2026.
+
+'''
+
 The Spring Authorization Server project, led by the https://spring.io/projects/spring-security/[Spring Security] team, is focused on delivering https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-07#section-1.1[OAuth 2.1 Authorization Server] support to the Spring community.
 
 This project replaces the Authorization Server support provided by https://github.com/spring-attic/spring-security-oauth[Spring Security OAuth].
 
 == Feature Planning
-This project uses https://docs.github.com/en/issues/planning-and-tracking-with-projects/learning-about-projects/about-projects[GitHub Projects] to prioritize the feature roadmap and help organize the project plan.
-The project board can be accessed https://github.com/orgs/spring-projects/projects/8[here].
+This project uses https://github.com/spring-projects/spring-authorization-server/issues[GitHub Issues] to prioritize the feature roadmap.
 
 The feature list can be viewed in the https://docs.spring.io/spring-authorization-server/reference/overview.html#feature-list[reference documentation].
 

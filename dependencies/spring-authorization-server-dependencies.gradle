@@ -10,12 +10,12 @@ dependencies {
 	api platform(libs.org.springframework.spring.framework.bom)
 	api platform(libs.org.springframework.security.spring.security.bom)
 	api platform(libs.com.fasterxml.jackson.jackson.bom)
+	api platform(libs.org.junit.junit.bom)
 	constraints {
 		api libs.com.nimbusds.nimbus.jose.jwt
 		api libs.jakarta.servlet.jakarta.servlet.api
 		api libs.org.bouncycastle.bcpkix.jdk18on
 		api libs.org.bouncycastle.bcprov.jdk18on
-		api libs.org.junit.jupiter.junit.jupiter
 		api libs.org.assertj.assertj.core
 		api libs.org.mockito.mockito.core
 		api libs.com.squareup.okhttp3.mockwebserver

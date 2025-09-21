@@ -40,7 +40,7 @@ import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -98,8 +98,8 @@ public final class OAuth2TokenRevocationEndpointFilter extends OncePerRequestFil
 		Assert.notNull(authenticationManager, "authenticationManager cannot be null");
 		Assert.hasText(tokenRevocationEndpointUri, "tokenRevocationEndpointUri cannot be empty");
 		this.authenticationManager = authenticationManager;
-		this.tokenRevocationEndpointMatcher = new AntPathRequestMatcher(tokenRevocationEndpointUri,
-				HttpMethod.POST.name());
+		this.tokenRevocationEndpointMatcher = PathPatternRequestMatcher.withDefaults()
+			.matcher(HttpMethod.POST, tokenRevocationEndpointUri);
 		this.authenticationConverter = new OAuth2TokenRevocationAuthenticationConverter();
 	}
 

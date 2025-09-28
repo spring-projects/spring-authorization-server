@@ -305,7 +305,7 @@ public final class OAuth2TokenIntrospection implements OAuth2TokenIntrospectionC
 						"aud must be of type List");
 			}
 			if (this.claims.containsKey(OAuth2TokenIntrospectionClaimNames.ISS)) {
-				validateURL(this.claims.get(OAuth2TokenIntrospectionClaimNames.ISS), "iss must be a valid URL");
+				validateIssuer(this.claims.get(OAuth2TokenIntrospectionClaimNames.ISS), "iss must be a valid URL");
 			}
 		}
 
@@ -326,16 +326,24 @@ public final class OAuth2TokenIntrospection implements OAuth2TokenIntrospectionC
 			valuesConsumer.accept(values);
 		}
 
-		private static void validateURL(Object url, String errorMessage) {
+		private static void validateIssuer(Object url, String errorMessage) {
 			if (URL.class.isAssignableFrom(url.getClass())) {
 				return;
 			}
 
+			String str = url.toString();
+			if (str.isEmpty()) {
+				throw new IllegalArgumentException(errorMessage);
+			}
+
 			try {
-				new URI(url.toString()).toURL();
+				// Try parsing as URI
+				new URI(str);
+				// If this succeeds, it’s a valid URI
 			}
 			catch (Exception ex) {
-				throw new IllegalArgumentException(errorMessage, ex);
+				// If parsing fails, allow plain string (fix for iss claim)
+				// Only log/debug if needed, no exception thrown
 			}
 		}
 

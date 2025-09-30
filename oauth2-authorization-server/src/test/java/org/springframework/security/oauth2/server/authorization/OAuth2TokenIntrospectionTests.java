@@ -5,13 +5,17 @@ import org.springframework.security.oauth2.core.OAuth2TokenIntrospectionClaimNam
 
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
 public class OAuth2TokenIntrospectionTests {
 
 	@Test
 	void buildWhenIssuerIsNonUriStringThenDoesNotThrow() {
 		String issuer = "client-id-123"; // plain string, not a URI
 
-		org.assertj.core.api.Assertions.assertThatCode(() -> {
+		assertThatCode(() -> {
 			OAuth2TokenIntrospection token =
 					OAuth2TokenIntrospection.builder(true)
 							.issuer(issuer)
@@ -19,10 +23,10 @@ public class OAuth2TokenIntrospectionTests {
 							.build();
 
 			Object issClaim = token.getClaim(OAuth2TokenIntrospectionClaimNames.ISS);
-			org.assertj.core.api.Assertions.assertThat(issClaim).isEqualTo(issuer);
+			assertThat(issClaim).isEqualTo(issuer);
 
 			Object activeClaim = token.getClaim(OAuth2TokenIntrospectionClaimNames.ACTIVE);
-			org.assertj.core.api.Assertions.assertThat(activeClaim).isEqualTo(true);
+			assertThat(activeClaim).isEqualTo(true);
 		}).doesNotThrowAnyException();
 	}
 
@@ -37,10 +41,10 @@ public class OAuth2TokenIntrospectionTests {
 						.build();
 
 		Object issClaim = token.getClaim(OAuth2TokenIntrospectionClaimNames.ISS);
-		org.assertj.core.api.Assertions.assertThat(issClaim).isEqualTo(issuer);
+		assertThat(issClaim).isEqualTo(issuer);
 
 		Object activeClaim = token.getClaim(OAuth2TokenIntrospectionClaimNames.ACTIVE);
-		org.assertj.core.api.Assertions.assertThat(activeClaim).isEqualTo(true);
+		assertThat(activeClaim).isEqualTo(true);
 	}
 
 	@Test
@@ -52,6 +56,18 @@ public class OAuth2TokenIntrospectionTests {
 						.build();
 
 		List<String> scopes = (List<String>) token.getClaim(OAuth2TokenIntrospectionClaimNames.SCOPE);
-		org.assertj.core.api.Assertions.assertThat(scopes).containsExactly("read", "write");
+		assertThat(scopes).containsExactly("read", "write");
+	}
+
+	@Test
+	void buildWhenIssuerIsBlankThenThrowsException() {
+		String issuer = "   "; // blank string
+
+		assertThatThrownBy(() ->
+				OAuth2TokenIntrospection.builder(true)
+						.issuer(issuer)
+						.subject("user-123")
+						.build()
+		).isInstanceOf(IllegalArgumentException.class);
 	}
 }

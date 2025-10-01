@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 the original author or authors.
+ * Copyright 2020-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import java.util.Set;
 
 import org.springframework.lang.Nullable;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsent;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
@@ -34,7 +35,7 @@ import org.springframework.util.Assert;
  * determining if authorization consent is required.
  *
  * @author Dinesh Gupta
- * @since 2.0.0
+ * @since 2.0
  * @see OAuth2AuthenticationContext
  * @see OAuth2DeviceVerificationAuthenticationToken
  * @see OAuth2DeviceVerificationAuthenticationProvider#setAuthorizationConsentRequired(java.util.function.Predicate)
@@ -45,13 +46,6 @@ public final class OAuth2DeviceVerificationAuthenticationContext implements OAut
 
 	private OAuth2DeviceVerificationAuthenticationContext(Map<Object, Object> context) {
 		this.context = Collections.unmodifiableMap(new HashMap<>(context));
-	}
-
-	@SuppressWarnings("unchecked")
-	@Nullable
-	@Override
-	public <T extends Authentication> T getAuthentication() {
-		return (T) get(OAuth2DeviceVerificationAuthenticationToken.class);
 	}
 
 	@Override
@@ -79,7 +73,6 @@ public final class OAuth2DeviceVerificationAuthenticationContext implements OAut
 	 * Returns the {@link OAuth2Authorization authorization}.
 	 * @return the {@link OAuth2Authorization}, or {@code null} if not available
 	 */
-	@Nullable
 	public OAuth2Authorization getAuthorization() {
 		return get(OAuth2Authorization.class);
 	}
@@ -100,8 +93,11 @@ public final class OAuth2DeviceVerificationAuthenticationContext implements OAut
 	 */
 	@SuppressWarnings("unchecked")
 	public Set<String> getRequestedScopes() {
-		Set<String> scopes = get(Set.class);
-		return scopes != null ? scopes : Collections.emptySet();
+		OAuth2Authorization authorization = getAuthorization();
+		Set<String> scopes = authorization != null
+				? authorization.getAttribute( OAuth2ParameterNames.SCOPE)
+				: null;
+		return scopes != null ? scopes : java.util.Collections.emptySet();
 	}
 
 	/**
@@ -117,13 +113,16 @@ public final class OAuth2DeviceVerificationAuthenticationContext implements OAut
 	/**
 	 * A builder for {@link OAuth2DeviceVerificationAuthenticationContext}.
 	 */
-	public static final class Builder {
+	public static final class Builder
+			extends AbstractBuilder<OAuth2DeviceVerificationAuthenticationContext, Builder> {
 
-		private final Map<Object, Object> context = new HashMap<>();
-
+		/**
+		 * Constructs a new {@link Builder} with the provided
+		 * {@link OAuth2DeviceVerificationAuthenticationToken}.
+		 * @param authentication the {@link OAuth2DeviceVerificationAuthenticationToken}
+		 */
 		private Builder(OAuth2DeviceVerificationAuthenticationToken authentication) {
-			Assert.notNull(authentication, "authentication cannot be null");
-			context.put(OAuth2DeviceVerificationAuthenticationToken.class, authentication);
+			super(authentication);
 		}
 
 		/**
@@ -132,8 +131,7 @@ public final class OAuth2DeviceVerificationAuthenticationContext implements OAut
 		 * @return the {@link Builder} for further configuration
 		 */
 		public Builder registeredClient(RegisteredClient registeredClient) {
-			context.put(RegisteredClient.class, registeredClient);
-			return this;
+			return put(RegisteredClient.class, registeredClient);
 		}
 
 		/**
@@ -141,11 +139,8 @@ public final class OAuth2DeviceVerificationAuthenticationContext implements OAut
 		 * @param authorization the {@link OAuth2Authorization}
 		 * @return the {@link Builder} for further configuration
 		 */
-		public Builder authorization(@Nullable OAuth2Authorization authorization) {
-			if (authorization != null) {
-				context.put(OAuth2Authorization.class, authorization);
-			}
-			return this;
+		public Builder authorization(OAuth2Authorization authorization) {
+			return put(OAuth2Authorization.class, authorization);
 		}
 
 		/**
@@ -153,33 +148,31 @@ public final class OAuth2DeviceVerificationAuthenticationContext implements OAut
 		 * @param authorizationConsent the {@link OAuth2AuthorizationConsent}
 		 * @return the {@link Builder} for further configuration
 		 */
-		public Builder authorizationConsent(@Nullable OAuth2AuthorizationConsent authorizationConsent) {
+		public Builder authorizationConsent(OAuth2AuthorizationConsent authorizationConsent) {
 			if (authorizationConsent != null) {
-				context.put(OAuth2AuthorizationConsent.class, authorizationConsent);
+				return put(OAuth2AuthorizationConsent.class, authorizationConsent);
 			}
 			return this;
 		}
 
 		/**
-		 * Sets the requested scopes. Never {@code null}; always a {@link Set} (possibly
-		 * empty).
+		 * Sets the requested scopes. Never {@code null}; always a {@link Set} (possibly empty).
 		 * @param requestedScopes the requested scopes
 		 * @return the {@link Builder} for further configuration
 		 */
-		public Builder requestedScopes(@Nullable Set<String> requestedScopes) {
-			context.put(Set.class, requestedScopes != null ? requestedScopes : Collections.emptySet());
-			return this;
+		public Builder requestedScopes(Set<String> requestedScopes) {
+			return put(Set.class, requestedScopes != null ? requestedScopes : Collections.emptySet());
 		}
 
 		/**
 		 * Builds a new {@link OAuth2DeviceVerificationAuthenticationContext}.
 		 * @return the {@link OAuth2DeviceVerificationAuthenticationContext}
 		 */
+		@Override
 		public OAuth2DeviceVerificationAuthenticationContext build() {
-			Assert.notNull(context.get(RegisteredClient.class), "registeredClient cannot be null");
-			return new OAuth2DeviceVerificationAuthenticationContext(context);
+			Assert.notNull(get(RegisteredClient.class), "registeredClient cannot be null");
+			return new OAuth2DeviceVerificationAuthenticationContext(getContext());
 		}
-
 	}
 
 }

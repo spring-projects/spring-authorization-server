@@ -149,7 +149,6 @@ public final class OAuth2DeviceVerificationAuthenticationProvider implements Aut
 			.authorization(authorization);
 
 		Set<String> requestedScopes = authorization.getAttribute(OAuth2ParameterNames.SCOPE);
-		authenticationContextBuilder.requestedScopes(requestedScopes);
 
 		OAuth2AuthorizationConsent currentAuthorizationConsent = this.authorizationConsentService
 			.findById(registeredClient.getId(), principal.getName());
@@ -227,7 +226,7 @@ public final class OAuth2DeviceVerificationAuthenticationProvider implements Aut
 	 * </p>
 	 * @param authorizationConsentRequired the {@code Predicate} used to determine if
 	 * authorization consent is required for device verification
-	 * @since 2.0.0
+	 * @since 2.0
 	 */
 	public void setAuthorizationConsentRequired(
 			Predicate<OAuth2DeviceVerificationAuthenticationContext> authorizationConsentRequired) {
@@ -239,8 +238,8 @@ public final class OAuth2DeviceVerificationAuthenticationProvider implements Aut
 			OAuth2DeviceVerificationAuthenticationContext authenticationContext) {
 
 		if (authenticationContext.getAuthorizationConsent() != null && authenticationContext.getAuthorizationConsent()
-			.getScopes()
-			.containsAll(authenticationContext.getRequestedScopes())) {
+				.getScopes()
+				.containsAll(authenticationContext.getRequestedScopes())) {
 			return false;
 		}
 		return true;

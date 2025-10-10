@@ -23,8 +23,10 @@ import java.security.Principal;
 import java.text.MessageFormat;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -1113,7 +1115,9 @@ public class OAuth2AuthorizationCodeGrantTests {
 		parameters.set(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.AUTHORIZATION_CODE.getValue());
 		parameters.set(OAuth2ParameterNames.CODE,
 				authorization.getToken(OAuth2AuthorizationCode.class).getToken().getTokenValue());
-		parameters.set(OAuth2ParameterNames.REDIRECT_URI, registeredClient.getRedirectUris().iterator().next());
+		List<String> sortedRedirectUris = new ArrayList<>(registeredClient.getRedirectUris());
+		Collections.sort(sortedRedirectUris);
+		parameters.set(OAuth2ParameterNames.REDIRECT_URI, sortedRedirectUris.get(0));
 		return parameters;
 	}
 

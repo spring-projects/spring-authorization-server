@@ -18,9 +18,13 @@ package org.springframework.security.oauth2.server.authorization;
 import java.security.Principal;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
@@ -76,11 +80,17 @@ public final class TestOAuth2Authorizations {
 	private static OAuth2Authorization.Builder authorization(RegisteredClient registeredClient,
 			OAuth2AuthorizationCode authorizationCode, OAuth2AccessToken accessToken,
 			Map<String, Object> accessTokenClaims, Map<String, Object> authorizationRequestAdditionalParameters) {
+
+		List<String> sortedRedirectUris = new ArrayList<>(registeredClient.getRedirectUris());
+    	Collections.sort(sortedRedirectUris);
+
+    	Set<String> sortedScopes = new TreeSet<>(registeredClient.getScopes());
+
 		OAuth2AuthorizationRequest authorizationRequest = OAuth2AuthorizationRequest.authorizationCode()
 			.authorizationUri("https://provider.com/oauth2/authorize")
 			.clientId(registeredClient.getClientId())
-			.redirectUri(registeredClient.getRedirectUris().iterator().next())
-			.scopes(registeredClient.getScopes())
+			.redirectUri(sortedRedirectUris.get(0))
+			.scopes(sortedScopes)
 			.additionalParameters(authorizationRequestAdditionalParameters)
 			.state("state")
 			.build();

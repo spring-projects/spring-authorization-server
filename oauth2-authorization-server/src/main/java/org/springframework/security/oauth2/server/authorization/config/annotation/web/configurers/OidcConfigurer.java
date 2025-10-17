@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 the original author or authors.
+ * Copyright 2020-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -145,6 +145,28 @@ public final class OidcConfigurer extends AbstractOAuth2Configurer {
 					.toUriString();
 
 				builder.clientRegistrationEndpoint(clientRegistrationEndpoint);
+			});
+		}
+
+		OAuth2PushedAuthorizationRequestEndpointConfigurer pushedAuthorizationRequestEndpointConfigurer = httpSecurity
+			.getConfigurer(OAuth2AuthorizationServerConfigurer.class)
+			.getConfigurer(OAuth2PushedAuthorizationRequestEndpointConfigurer.class);
+		if (pushedAuthorizationRequestEndpointConfigurer != null) {
+			OidcProviderConfigurationEndpointConfigurer providerConfigurationEndpointConfigurer = getConfigurer(
+					OidcProviderConfigurationEndpointConfigurer.class);
+
+			providerConfigurationEndpointConfigurer.addDefaultProviderConfigurationCustomizer((builder) -> {
+				AuthorizationServerContext authorizationServerContext = AuthorizationServerContextHolder.getContext();
+				String issuer = authorizationServerContext.getIssuer();
+				AuthorizationServerSettings authorizationServerSettings = authorizationServerContext
+					.getAuthorizationServerSettings();
+
+				String pushedAuthorizationRequestEndpoint = UriComponentsBuilder.fromUriString(issuer)
+					.path(authorizationServerSettings.getPushedAuthorizationRequestEndpoint())
+					.build()
+					.toUriString();
+
+				builder.pushedAuthorizationRequestEndpoint(pushedAuthorizationRequestEndpoint);
 			});
 		}
 

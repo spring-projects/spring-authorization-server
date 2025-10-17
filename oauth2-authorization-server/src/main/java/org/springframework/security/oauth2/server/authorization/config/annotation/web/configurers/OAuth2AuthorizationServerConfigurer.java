@@ -47,6 +47,8 @@ import org.springframework.security.oauth2.server.authorization.authentication.O
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeRequestAuthenticationException;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeRequestAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
+import org.springframework.security.oauth2.server.authorization.context.AuthorizationServerContext;
+import org.springframework.security.oauth2.server.authorization.context.AuthorizationServerContextHolder;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenGenerator;
 import org.springframework.security.oauth2.server.authorization.web.NimbusJwkSetEndpointFilter;
@@ -57,6 +59,7 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.OrRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
+import org.springframework.web.util.UriComponentsBuilder;
 
 /**
  * An {@link AbstractHttpConfigurer} for OAuth 2.0 Authorization Server support.
@@ -407,6 +410,27 @@ public final class OAuth2AuthorizationServerConfigurer
 
 	@Override
 	public void configure(HttpSecurity httpSecurity) {
+		OAuth2PushedAuthorizationRequestEndpointConfigurer pushedAuthorizationRequestEndpointConfigurer = getConfigurer(
+				OAuth2PushedAuthorizationRequestEndpointConfigurer.class);
+		if (pushedAuthorizationRequestEndpointConfigurer != null) {
+			OAuth2AuthorizationServerMetadataEndpointConfigurer authorizationServerMetadataEndpointConfigurer = getConfigurer(
+					OAuth2AuthorizationServerMetadataEndpointConfigurer.class);
+
+			authorizationServerMetadataEndpointConfigurer.addDefaultAuthorizationServerMetadataCustomizer((builder) -> {
+				AuthorizationServerContext authorizationServerContext = AuthorizationServerContextHolder.getContext();
+				String issuer = authorizationServerContext.getIssuer();
+				AuthorizationServerSettings authorizationServerSettings = authorizationServerContext
+					.getAuthorizationServerSettings();
+
+				String pushedAuthorizationRequestEndpoint = UriComponentsBuilder.fromUriString(issuer)
+					.path(authorizationServerSettings.getPushedAuthorizationRequestEndpoint())
+					.build()
+					.toUriString();
+
+				builder.pushedAuthorizationRequestEndpoint(pushedAuthorizationRequestEndpoint);
+			});
+		}
+
 		this.configurers.values().forEach((configurer) -> configurer.configure(httpSecurity));
 
 		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils
@@ -453,7 +477,7 @@ public final class OAuth2AuthorizationServerConfigurer
 	}
 
 	@SuppressWarnings("unchecked")
-	private <T> T getConfigurer(Class<T> type) {
+	<T> T getConfigurer(Class<T> type) {
 		return (T) this.configurers.get(type);
 	}
 

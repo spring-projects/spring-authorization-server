@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 the original author or authors.
+ * Copyright 2020-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -142,6 +142,18 @@ public class OidcProviderConfigurationTests {
 			.andExpectAll(defaultConfigurationMatchers(ISSUER))
 			.andExpect(jsonPath("$.registration_endpoint")
 				.value(ISSUER.concat(this.authorizationServerSettings.getOidcClientRegistrationEndpoint())));
+	}
+
+	@Test
+	public void requestWhenConfigurationRequestAndPushedAuthorizationRequestEnabledThenConfigurationResponseIncludesPushedAuthorizationRequestEndpoint()
+			throws Exception {
+		this.spring.register(AuthorizationServerConfigurationWithPushedAuthorizationRequestEnabled.class).autowire();
+
+		this.mvc.perform(get(ISSUER.concat(DEFAULT_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI)))
+			.andExpect(status().is2xxSuccessful())
+			.andExpectAll(defaultConfigurationMatchers(ISSUER))
+			.andExpect(jsonPath("$.pushed_authorization_request_endpoint")
+				.value(ISSUER.concat(this.authorizationServerSettings.getPushedAuthorizationRequestEndpoint())));
 	}
 
 	private ResultMatcher[] defaultConfigurationMatchers(String issuer) {
@@ -404,6 +416,32 @@ public class OidcProviderConfigurationTests {
 		AuthorizationServerSettings authorizationServerSettings() {
 			return AuthorizationServerSettings.builder().issuer(ISSUER + "#").build();
 		}
+
+	}
+
+	@EnableWebSecurity
+	@Configuration(proxyBeanMethods = false)
+	static class AuthorizationServerConfigurationWithPushedAuthorizationRequestEnabled
+			extends AuthorizationServerConfiguration {
+
+		// @formatter:off
+		@Bean
+		SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
+			OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
+					OAuth2AuthorizationServerConfigurer.authorizationServer();
+			http
+					.securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
+					.with(authorizationServerConfigurer, (authorizationServer) ->
+							authorizationServer
+									.pushedAuthorizationRequestEndpoint(Customizer.withDefaults())
+									.oidc(Customizer.withDefaults())
+					)
+					.authorizeHttpRequests((authorize) ->
+							authorize.anyRequest().authenticated()
+					);
+			return http.build();
+		}
+		// @formatter:on
 
 	}
 

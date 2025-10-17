@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 the original author or authors.
+ * Copyright 2020-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabase;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseBuilder;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.oauth2.jose.TestJwks;
@@ -79,6 +80,9 @@ public class OAuth2AuthorizationServerMetadataTests {
 
 	@Autowired
 	private JdbcOperations jdbcOperations;
+
+	@Autowired
+	private AuthorizationServerSettings authorizationServerSettings;
 
 	@BeforeAll
 	public static void setupClass() {
@@ -155,6 +159,17 @@ public class OAuth2AuthorizationServerMetadataTests {
 					hasItems("scope1", "scope2")));
 	}
 
+	@Test
+	public void requestWhenAuthorizationServerMetadataRequestAndPushedAuthorizationRequestEnabledThenMetadataResponseIncludesPushedAuthorizationRequestEndpoint()
+			throws Exception {
+		this.spring.register(AuthorizationServerConfigurationWithPushedAuthorizationRequestEnabled.class).autowire();
+
+		this.mvc.perform(get(ISSUER.concat(DEFAULT_OAUTH2_AUTHORIZATION_SERVER_METADATA_ENDPOINT_URI)))
+			.andExpect(status().is2xxSuccessful())
+			.andExpect(jsonPath("$.pushed_authorization_request_endpoint")
+				.value(ISSUER.concat(this.authorizationServerSettings.getPushedAuthorizationRequestEndpoint())));
+	}
+
 	@EnableWebSecurity
 	@Import(OAuth2AuthorizationServerConfiguration.class)
 	static class AuthorizationServerConfiguration {
@@ -223,6 +238,31 @@ public class OAuth2AuthorizationServerMetadataTests {
 		AuthorizationServerSettings authorizationServerSettings() {
 			return AuthorizationServerSettings.builder().multipleIssuersAllowed(true).build();
 		}
+
+	}
+
+	@EnableWebSecurity
+	@Configuration(proxyBeanMethods = false)
+	static class AuthorizationServerConfigurationWithPushedAuthorizationRequestEnabled
+			extends AuthorizationServerConfiguration {
+
+		// @formatter:off
+		@Bean
+		SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
+			OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
+					OAuth2AuthorizationServerConfigurer.authorizationServer();
+			http
+					.securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
+					.with(authorizationServerConfigurer, (authorizationServer) ->
+							authorizationServer
+									.pushedAuthorizationRequestEndpoint(Customizer.withDefaults())
+					)
+					.authorizeHttpRequests((authorize) ->
+							authorize.anyRequest().authenticated()
+					);
+			return http.build();
+		}
+		// @formatter:on
 
 	}
 

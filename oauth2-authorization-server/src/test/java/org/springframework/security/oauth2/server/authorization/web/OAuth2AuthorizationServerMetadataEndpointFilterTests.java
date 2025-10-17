@@ -129,8 +129,7 @@ public class OAuth2AuthorizationServerMetadataEndpointFilterTests {
 		assertThat(authorizationServerMetadataResponse).contains("\"issuer\":\"https://example.com\"");
 		assertThat(authorizationServerMetadataResponse)
 			.contains("\"authorization_endpoint\":\"https://example.com/oauth2/v1/authorize\"");
-		assertThat(authorizationServerMetadataResponse)
-			.contains("\"pushed_authorization_request_endpoint\":\"https://example.com/oauth2/v1/par\"");
+		assertThat(authorizationServerMetadataResponse).doesNotContain("\"pushed_authorization_request_endpoint\"");
 		assertThat(authorizationServerMetadataResponse)
 			.contains("\"token_endpoint\":\"https://example.com/oauth2/v1/token\"");
 		assertThat(authorizationServerMetadataResponse).contains(

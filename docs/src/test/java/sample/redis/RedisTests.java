@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 the original author or authors.
+ * Copyright 2020-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,6 +62,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 @AutoConfigureMockMvc
 public class RedisTests {
 	private static final RegisteredClient TEST_MESSAGING_CLIENT = RegisteredClients.messagingClient();
+
+	private static final RegisteredClient TEST_DEVICE_MESSAGING_CLIENT = RegisteredClients.deviceMessagingClient();
 
 	@Autowired
 	private MockMvc mockMvc;
@@ -126,7 +128,7 @@ public class RedisTests {
 		assertThat(this.authorizationService).isInstanceOf(RedisOAuth2AuthorizationService.class);
 		assertThat(this.authorizationConsentService).isInstanceOf(RedisOAuth2AuthorizationConsentService.class);
 
-		RegisteredClient registeredClient = TEST_MESSAGING_CLIENT;
+		RegisteredClient registeredClient = TEST_DEVICE_MESSAGING_CLIENT;
 
 		DeviceAuthorizationGrantFlow deviceAuthorizationGrantFlow = new DeviceAuthorizationGrantFlow(this.mockMvc);
 		deviceAuthorizationGrantFlow.setUsername("user");
@@ -194,6 +196,7 @@ public class RedisTests {
 		void postConstruct() throws IOException {
 			this.redisServer.start();
 			this.registeredClientRepository.save(TEST_MESSAGING_CLIENT);
+			this.registeredClientRepository.save(TEST_DEVICE_MESSAGING_CLIENT);
 		}
 
 		@PreDestroy

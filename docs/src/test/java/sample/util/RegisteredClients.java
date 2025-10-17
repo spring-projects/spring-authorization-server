@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 the original author or authors.
+ * Copyright 2020-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,4 +46,20 @@ public class RegisteredClients {
 				.build();
 	}
 	// @formatter:on
+
+	// @formatter:off
+	public static RegisteredClient deviceMessagingClient() {
+		return RegisteredClient.withId(UUID.randomUUID().toString())
+				.clientId("device-messaging-client")
+				.clientSecret("{noop}secret")
+				.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
+				.authorizationGrantType(AuthorizationGrantType.DEVICE_CODE)
+				.authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
+				.scope("message.read")
+				.scope("message.write")
+				.clientSettings(ClientSettings.builder().requireAuthorizationConsent(true).build())
+				.build();
+	}
+	// @formatter:on
+
 }

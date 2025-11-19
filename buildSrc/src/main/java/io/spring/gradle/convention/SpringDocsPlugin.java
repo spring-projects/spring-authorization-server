@@ -50,8 +50,6 @@ public class SpringDocsPlugin implements Plugin<Project> {
 		pluginManager.apply(SpringManagementConfigurationPlugin.class);
 		pluginManager.apply(SpringRepositoryPlugin.class);
 		pluginManager.apply(SpringAsciidoctorPlugin.class);
-		// Note: Applying plugin via id since it requires groovy compilation
-		pluginManager.apply("org.springframework.gradle.deploy-docs");
 		pluginManager.apply(SpringJavadocApiPlugin.class);
 		pluginManager.apply(SpringJavadocOptionsPlugin.class);
 

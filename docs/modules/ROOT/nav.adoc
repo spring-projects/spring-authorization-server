@@ -1,6 +1,7 @@
 * xref:overview.adoc[]
 * xref:getting-help.adoc[]
 * xref:getting-started.adoc[]
+* xref:attachment$api/java/index.html[Javadoc]
 * xref:configuration-model.adoc[]
 * xref:core-model-components.adoc[]
 * xref:protocol-endpoints.adoc[]

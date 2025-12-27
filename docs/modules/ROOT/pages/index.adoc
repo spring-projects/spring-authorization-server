@@ -2,6 +2,13 @@
 [[top]]
 = Spring Authorization Server Reference
 
+[IMPORTANT]
+====
+Spring Authorization Server has https://spring.io/blog/2025/09/11/spring-authorization-server-moving-to-spring-security-7-0[moved to Spring Security 7.0] and this documentation is no longer updated for Spring Boot 4.
+If you are on Spring Boot 4 (or migrating), use the Spring Security Authorization Server documentation:
+https://docs.spring.io/spring-security/reference/servlet/oauth2/authorization-server/index.html[Spring Security Authorization Server Reference].
+====
+
 [horizontal]
 xref:overview.adoc[Overview] :: Introduction, use cases and feature list
 xref:getting-help.adoc[Getting Help] :: Links to samples, questions and issues

@@ -1,8 +1,10 @@
 = Spring Authorization Server image:https://badges.gitter.im/Join%20Chat.svg[Gitter,link=https://gitter.im/spring-projects/spring-security?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge] image:https://github.com/spring-projects/spring-authorization-server/actions/workflows/continuous-integration-workflow.yml/badge.svg["Build Status", link="https://github.com/spring-projects/spring-authorization-server/actions/workflows/continuous-integration-workflow.yml"] image:https://img.shields.io/badge/Revved%20up%20by-Develocity-06A0CE?logo=Gradle&labelColor=02303A["Revved up by Develocity", link="https://ge.spring.io/scans?&search.rootProjectNames=spring-authorization-server"]
 
-== NOTICE:
-
+[IMPORTANT]
+====
 Spring Authorization Server has https://spring.io/blog/2025/09/11/spring-authorization-server-moving-to-spring-security-7-0[moved to Spring Security 7.0].
+All ongoing development now happens in Spring Security: https://github.com/spring-projects/spring-security/tree/main/oauth2[github.com/spring-projects/spring-security/tree/main/oauth2].
+====
 
 The *1.5.x* branch is the last generation of Spring Authorization Server. See the OSS and Enterprise https://spring.io/projects/spring-authorization-server#support[support timelines].
 

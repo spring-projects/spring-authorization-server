@@ -2,6 +2,13 @@
 [[getting-started]]
 = Getting Started
 
+[IMPORTANT]
+====
+Spring Authorization Server has https://spring.io/blog/2025/09/11/spring-authorization-server-moving-to-spring-security-7-0[moved to Spring Security 7.0] and this documentation is no longer updated for Spring Boot 4.
+If you are on Spring Boot 4 (or migrating), use the Spring Security Authorization Server documentation:
+https://docs.spring.io/spring-security/reference/servlet/oauth2/authorization-server/index.html[Spring Security Authorization Server Reference].
+====
+
 If you are just getting started with Spring Authorization Server, the following sections walk you through creating your first application.
 
 [[system-requirements]]

@@ -1,5 +1,10 @@
 server:
   port: 8080
+  # Cookie を `JSESSIONID` から `JSESSIONID-C` に変更
+  servlet:
+    session:
+      cookie:
+        name: JSESSIONID-C
 
 logging:
   level:
@@ -47,7 +52,7 @@ spring:
             client-id: messaging-client
             client-secret: secret
             authorization-grant-type: authorization_code
-            redirect-uri: "http://127.0.0.1:8080/login/oauth2/code/{registrationId}"
+            redirect-uri: "http://localhost:8080/login/oauth2/code/{registrationId}"
             scope: openid, profile
             client-name: messaging-client-oidc
           messaging-client-authorization-code:
@@ -55,7 +60,7 @@ spring:
             client-id: messaging-client
             client-secret: secret
             authorization-grant-type: authorization_code
-            redirect-uri: "http://127.0.0.1:8080/authorized"
+            redirect-uri: "http://localhost:8080/authorized"
             scope: message.read,message.write
             client-name: messaging-client-authorization-code
           messaging-client-client-credentials:
@@ -70,7 +75,7 @@ spring:
             client-id: messaging-client
             client-secret: secret
             authorization-grant-type: authorization_code
-            redirect-uri: "http://127.0.0.1:8080/authorized"
+            redirect-uri: "http://localhost:8080/authorized"
             scope: user.read
             client-name: user-client-authorization-code
           messaging-client-device-code:
@@ -101,7 +106,7 @@ spring:
             token-uri: https://localhost:9443/oauth2/token
 
 messages:
-  base-uri: https://127.0.0.1:8443/messages
+  base-uri: https://localhost:8443/messages
 
 user-messages:
-  base-uri: http://127.0.0.1:8091/user/messages
+  base-uri: http://localhost:8091/user/messages

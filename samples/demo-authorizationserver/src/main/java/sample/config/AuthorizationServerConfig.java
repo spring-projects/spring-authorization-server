@@ -144,9 +144,9 @@ public class AuthorizationServerConfig {
 				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
 				.authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
 				.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
-				.redirectUri("http://127.0.0.1:8080/login/oauth2/code/messaging-client-oidc")
-				.redirectUri("http://127.0.0.1:8080/authorized")
-				.postLogoutRedirectUri("http://127.0.0.1:8080/logged-out")
+				.redirectUri("http://localhost:8080/login/oauth2/code/messaging-client-oidc")
+				.redirectUri("http://localhost:8080/authorized")
+				.postLogoutRedirectUri("http://localhost:8080/logged-out")
 				.scope(OidcScopes.OPENID)
 				.scope(OidcScopes.PROFILE)
 				.scope("message.read")
@@ -183,7 +183,7 @@ public class AuthorizationServerConfig {
 				.clientSettings(
 						ClientSettings.builder()
 								.x509CertificateSubjectDN("CN=demo-client-sample,OU=Spring Samples,O=Spring,C=US")
-								.jwkSetUrl("http://127.0.0.1:8080/jwks")
+								.jwkSetUrl("http://localhost:8080/jwks")
 								.build()
 				)
 				.tokenSettings(

@@ -5,6 +5,15 @@ server:
     client-auth: want
 
 spring:
+  datasource:
+    url: jdbc:h2:./test
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  h2:
+    console:
+      enabled: true
+
   ssl:
     bundle:
       jks:

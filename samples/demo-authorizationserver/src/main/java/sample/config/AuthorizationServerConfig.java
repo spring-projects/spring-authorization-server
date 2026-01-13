@@ -70,23 +70,6 @@ public class AuthorizationServerConfig {
 			HttpSecurity http, RegisteredClientRepository registeredClientRepository,
 			AuthorizationServerSettings authorizationServerSettings) throws Exception {
 
-		/*
-		 * This sample demonstrates the use of a public client that does not
-		 * store credentials or authenticate with the authorization server.
-		 *
-		 * The following components show how to customize the authorization
-		 * server to allow for device clients to perform requests to the
-		 * OAuth 2.0 Device Authorization Endpoint and Token Endpoint without
-		 * a clientId/clientSecret.
-		 *
-		 * CAUTION: These endpoints will not require any authentication, and can
-		 * be accessed by any client that has a valid clientId.
-		 *
-		 * It is therefore RECOMMENDED to carefully monitor the use of these
-		 * endpoints and employ any additional protections as needed, which is
-		 * outside the scope of this sample.
-		 */
-
 		OAuth2AuthorizationServerConfigurer authorizationServerConfigurer = authorizationServer();
 
 		// @formatter:off
@@ -116,88 +99,30 @@ public class AuthorizationServerConfig {
 	// @formatter:off
 	@Bean
 	public JdbcRegisteredClientRepository registeredClientRepository(JdbcTemplate jdbcTemplate) {
-		RegisteredClient messagingClient = RegisteredClient.withId(UUID.randomUUID().toString())
-				.clientId("messaging-client")
-				.clientSecret("{noop}secret")
-				.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
-				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-				.authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
-				.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
-				.redirectUri("http://localhost:8080/login/oauth2/code/messaging-client-oidc")
-				.redirectUri("http://localhost:8080/authorized")
-				.postLogoutRedirectUri("http://localhost:8080/logged-out")
-				.scope(OidcScopes.OPENID)
-				.scope(OidcScopes.PROFILE)
-				.scope("message.read")
-				.scope("message.write")
-				.scope("user.read")
-				.clientSettings(ClientSettings.builder().requireAuthorizationConsent(true).build())
-				.build();
-
-		RegisteredClient deviceClient = RegisteredClient.withId(UUID.randomUUID().toString())
-				.clientId("device-messaging-client")
-				.clientAuthenticationMethod(ClientAuthenticationMethod.NONE)
-				.authorizationGrantType(AuthorizationGrantType.DEVICE_CODE)
-				.authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
-				.scope("message.read")
-				.scope("message.write")
-				.build();
-
-		RegisteredClient tokenExchangeClient = RegisteredClient.withId(UUID.randomUUID().toString())
-				.clientId("token-client")
-				.clientSecret("{noop}token")
-				.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
-				.authorizationGrantType(new AuthorizationGrantType("urn:ietf:params:oauth:grant-type:token-exchange"))
-				.scope("message.read")
-				.scope("message.write")
-				.build();
-
-		RegisteredClient mtlsDemoClient = RegisteredClient.withId(UUID.randomUUID().toString())
-				.clientId("mtls-demo-client")
-				.clientAuthenticationMethod(ClientAuthenticationMethod.TLS_CLIENT_AUTH)
-				.clientAuthenticationMethod(ClientAuthenticationMethod.SELF_SIGNED_TLS_CLIENT_AUTH)
-				.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
-				.scope("message.read")
-				.scope("message.write")
-				.clientSettings(
-						ClientSettings.builder()
-								.x509CertificateSubjectDN("CN=demo-client-sample,OU=Spring Samples,O=Spring,C=US")
-								.jwkSetUrl("http://localhost:8080/jwks")
-								.build()
-				)
-				.tokenSettings(
-						TokenSettings.builder()
-								.x509CertificateBoundAccessTokens(true)
-								.build()
-				)
-				.build();
-
-		// Save registered client's in db as if in-memory
-		JdbcRegisteredClientRepository registeredClientRepository = new JdbcRegisteredClientRepository(jdbcTemplate);
-//		registeredClientRepository.save(messagingClient);
-//		registeredClientRepository.save(deviceClient);
-//		registeredClientRepository.save(tokenExchangeClient);
-//		registeredClientRepository.save(mtlsDemoClient);
-
-		return registeredClientRepository;
+		return new JdbcRegisteredClientRepository(jdbcTemplate);
 	}
 	// @formatter:on
 
 	@Bean
-	public JdbcOAuth2AuthorizationService authorizationService(JdbcTemplate jdbcTemplate,
-			RegisteredClientRepository registeredClientRepository) {
+	public JdbcOAuth2AuthorizationService authorizationService(
+			JdbcTemplate jdbcTemplate,
+			RegisteredClientRepository registeredClientRepository
+	) {
 		return new JdbcOAuth2AuthorizationService(jdbcTemplate, registeredClientRepository);
 	}
 
 	@Bean
-	public JdbcOAuth2AuthorizationConsentService authorizationConsentService(JdbcTemplate jdbcTemplate,
-			RegisteredClientRepository registeredClientRepository) {
+	public JdbcOAuth2AuthorizationConsentService authorizationConsentService(
+			JdbcTemplate jdbcTemplate,
+			RegisteredClientRepository registeredClientRepository
+	) {
 		// Will be used by the ConsentController
 		return new JdbcOAuth2AuthorizationConsentService(jdbcTemplate, registeredClientRepository);
 	}
 
 	@Bean
 	public JWKSource<SecurityContext> jwkSource() {
+		// TODO これDBにおく
 		RSAKey rsaKey = Jwks.generateRsa();
 		JWKSet jwkSet = new JWKSet(rsaKey);
 		return (jwkSelector, securityContext) -> jwkSelector.select(jwkSet);
@@ -212,19 +137,5 @@ public class AuthorizationServerConfig {
 	public AuthorizationServerSettings authorizationServerSettings() {
 		return AuthorizationServerSettings.builder().build();
 	}
-
-//	@Bean
-//	public EmbeddedDatabase embeddedDatabase() {
-//		// @formatter:off
-//		return new EmbeddedDatabaseBuilder()
-//				.generateUniqueName(true)
-//				.setType(EmbeddedDatabaseType.H2)
-//				.setScriptEncoding("UTF-8")
-//				.addScript("org/springframework/security/oauth2/server/authorization/oauth2-authorization-schema.sql")
-//				.addScript("org/springframework/security/oauth2/server/authorization/oauth2-authorization-consent-schema.sql")
-//				.addScript("org/springframework/security/oauth2/server/authorization/client/oauth2-registered-client-schema.sql")
-//				.build();
-//		// @formatter:on
-//	}
 
 }

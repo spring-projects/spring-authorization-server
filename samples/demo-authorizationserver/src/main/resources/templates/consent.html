@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:th="https://www.thymeleaf.org">
+<html lang="ja" xmlns="http://www.w3.org/1999/xhtml" xmlns:th="https://www.thymeleaf.org">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Custom consent page - Consent required</title>
+    <title>同意確認ページ - 同意が必要です</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
     <script>
         function cancelConsent() {
@@ -15,32 +15,33 @@
 <body>
 <div class="container">
     <div class="row py-5">
-        <h1 class="text-center text-primary">App permissions</h1>
+        <h1 class="text-center text-primary">アプリケーションの権限</h1>
     </div>
     <div class="row">
         <div class="col text-center">
             <p>
-                The application
+                アプリケーション
                 <span class="fw-bold text-primary" th:text="${clientId}"></span>
-                wants to access your account
+                があなたのアカウント
                 <span class="fw-bold" th:text="${principalName}"></span>
+                へのアクセスを要求しています
             </p>
         </div>
     </div>
     <div th:if="${userCode}" class="row">
         <div class="col text-center">
             <p class="alert alert-warning">
-                You have provided the code
-                <span class="fw-bold" th:text="${userCode}"></span>.
-                Verify that this code matches what is shown on your device.
+                コード
+                <span class="fw-bold" th:text="${userCode}"></span>
+                が入力されました。このコードがお使いのデバイスに表示されているものと一致することを確認してください。
             </p>
         </div>
     </div>
     <div class="row pb-3">
         <div class="col text-center">
             <p>
-                The following permissions are requested by the above app.<br/>
-                Please review these and consent if you approve.
+                上記のアプリケーションから以下の権限が要求されています。<br/>
+                内容を確認の上、承認する場合は同意してください。
             </p>
         </div>
     </div>
@@ -63,7 +64,7 @@
                 </div>
 
                 <p th:if="${not #lists.isEmpty(previouslyApprovedScopes)}">
-                    You have already granted the following permissions to the above app:
+                    上記のアプリケーションに対して、以下の権限はすでに許可されています：
                 </p>
                 <div th:each="scope: ${previouslyApprovedScopes}" class="form-check py-1">
                     <input class="form-check-input"
@@ -78,12 +79,12 @@
 
                 <div class="pt-3">
                     <button class="btn btn-primary btn-lg" type="submit" id="submit-consent">
-                        Submit Consent
+                        同意する
                     </button>
                 </div>
                 <div class="pt-3">
                     <button class="btn btn-link regular" type="button" id="cancel-consent" onclick="cancelConsent();">
-                        Cancel
+                        キャンセル
                     </button>
                 </div>
             </form>
@@ -93,8 +94,8 @@
         <div class="col text-center">
             <p>
                 <small>
-                    Your consent to provide access is required.<br/>
-                    If you do not approve, click Cancel, in which case no information will be shared with the app.
+                    アクセス許可への同意が必要です。<br/>
+                    承認しない場合は「キャンセル」をクリックしてください。この場合、アプリケーションに情報は共有されません。
                 </small>
             </p>
         </div>

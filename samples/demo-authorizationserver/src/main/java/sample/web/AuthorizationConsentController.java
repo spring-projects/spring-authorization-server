@@ -108,19 +108,19 @@ public class AuthorizationConsentController {
 		static {
 			scopeDescriptions.put(
 					OidcScopes.PROFILE,
-					"This application will be able to read your profile information."
+					"このアプリケーションは、あなたのプロフィール情報を読み取ることができます。"
 			);
 			scopeDescriptions.put(
 					"message.read",
-					"This application will be able to read your message."
+					"このアプリケーションはあなたのメッセージを読み取ることができます。"
 			);
 			scopeDescriptions.put(
 					"message.write",
-					"This application will be able to add new messages. It will also be able to edit and delete existing messages."
+					"このアプリケーションでは、新しいメッセージを追加できます。また、既存のメッセージを編集および削除することもできます。"
 			);
 			scopeDescriptions.put(
 					"user.read",
-					"This application will be able to read your user information."
+					"このアプリケーションは、あなたのユーザー情報を読み取ることができます。"
 			);
 			scopeDescriptions.put(
 					"other.scope",

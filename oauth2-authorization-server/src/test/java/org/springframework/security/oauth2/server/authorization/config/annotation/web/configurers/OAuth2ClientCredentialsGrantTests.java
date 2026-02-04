@@ -44,6 +44,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Primary;
 import org.springframework.http.HttpHeaders;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -159,6 +160,8 @@ public class OAuth2ClientCredentialsGrantTests {
 
 	private static AuthenticationFailureHandler authenticationFailureHandler;
 
+	private static PasswordEncoder passwordEncoder;
+
 	public final SpringTestContext spring = new SpringTestContext();
 
 	@Autowired
@@ -184,6 +187,9 @@ public class OAuth2ClientCredentialsGrantTests {
 		authenticationProvidersConsumer = mock(Consumer.class);
 		authenticationSuccessHandler = mock(AuthenticationSuccessHandler.class);
 		authenticationFailureHandler = mock(AuthenticationFailureHandler.class);
+		passwordEncoder = mock(PasswordEncoder.class);
+		given(passwordEncoder.matches(any(), any())).willReturn(true);
+		given(passwordEncoder.upgradeEncoding(any())).willReturn(false);
 		db = new EmbeddedDatabaseBuilder().generateUniqueName(true)
 			.setType(EmbeddedDatabaseType.HSQL)
 			.setScriptEncoding("UTF-8")
@@ -495,6 +501,26 @@ public class OAuth2ClientCredentialsGrantTests {
 			.andExpect(jsonPath("$.token_type").value(OAuth2AccessToken.TokenType.DPOP.getValue()));
 	}
 
+	@Test
+	public void requestWhenTokenRequestWithMultiplePasswordEncodersThenPrimaryPasswordEncoderUsed() throws Exception {
+		this.spring.register(AuthorizationServerConfigurationWithMultiplePasswordEncoders.class).autowire();
+
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient2().build();
+		this.registeredClientRepository.save(registeredClient);
+
+		this.mvc
+			.perform(post(DEFAULT_TOKEN_ENDPOINT_URI)
+				.param(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
+				.param(OAuth2ParameterNames.SCOPE, "scope1 scope2")
+				.header(HttpHeaders.AUTHORIZATION,
+						"Basic " + encodeBasicAuth(registeredClient.getClientId(), registeredClient.getClientSecret())))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.access_token").isNotEmpty())
+			.andExpect(jsonPath("$.scope").value("scope1 scope2"));
+
+		verify(passwordEncoder).matches(any(), any());
+	}
+
 	private static String generateDPoPProof(String tokenEndpointUri) {
 		// @formatter:off
 		Map<String, Object> publicJwk = TestJwks.DEFAULT_EC_JWK
@@ -681,6 +707,18 @@ public class OAuth2ClientCredentialsGrantTests {
 		@Bean
 		AuthorizationServerSettings authorizationServerSettings() {
 			return AuthorizationServerSettings.builder().multipleIssuersAllowed(true).build();
+		}
+
+	}
+
+	@EnableWebSecurity
+	@Configuration(proxyBeanMethods = false)
+	static class AuthorizationServerConfigurationWithMultiplePasswordEncoders extends AuthorizationServerConfiguration {
+
+		@Primary
+		@Bean
+		PasswordEncoder primaryPasswordEncoder() {
+			return passwordEncoder;
 		}
 
 	}

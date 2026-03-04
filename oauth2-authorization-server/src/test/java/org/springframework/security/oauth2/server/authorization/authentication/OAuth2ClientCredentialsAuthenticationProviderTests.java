@@ -166,6 +166,38 @@ public class OAuth2ClientCredentialsAuthenticationProviderTests {
 	}
 
 	@Test
+	public void setAuthorizationCustomizerWhenNullThenThrowIllegalArgumentException() {
+		assertThatThrownBy(() -> this.authenticationProvider.setAuthorizationCustomizer(null))
+			.isInstanceOf(IllegalArgumentException.class)
+			.hasMessage("authorizationCustomizer cannot be null");
+	}
+
+	@Test
+	public void authenticateWhenCustomAuthorizationCustomizerThenUsed() {
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient2().build();
+		OAuth2ClientAuthenticationToken clientPrincipal = new OAuth2ClientAuthenticationToken(registeredClient,
+				ClientAuthenticationMethod.CLIENT_SECRET_BASIC, registeredClient.getClientSecret());
+		Set<String> requestedScopes = registeredClient.getScopes();
+		OAuth2ClientCredentialsAuthenticationToken authentication = new OAuth2ClientCredentialsAuthenticationToken(
+				clientPrincipal, requestedScopes, null);
+
+		Set<String> mappedScopes = Collections.singleton("scope1");
+		this.authenticationProvider.setAuthorizationCustomizer((context) -> {
+			OAuth2Authorization.Builder builder = context.getAuthorizationBuilder();
+			builder.authorizedScopes(mappedScopes);
+		});
+
+		given(this.jwtEncoder.encode(any())).willReturn(createJwt(mappedScopes));
+
+		this.authenticationProvider.authenticate(authentication);
+
+		ArgumentCaptor<OAuth2Authorization> authorizationCaptor = ArgumentCaptor.forClass(OAuth2Authorization.class);
+		verify(this.authorizationService).save(authorizationCaptor.capture());
+		OAuth2Authorization authorization = authorizationCaptor.getValue();
+		assertThat(authorization.getAuthorizedScopes()).isEqualTo(mappedScopes);
+	}
+
+	@Test
 	public void authenticateWhenClientPrincipalNotOAuth2ClientAuthenticationTokenThenThrowOAuth2AuthenticationException() {
 		RegisteredClient registeredClient = TestRegisteredClients.registeredClient2().build();
 		TestingAuthenticationToken clientPrincipal = new TestingAuthenticationToken(registeredClient.getClientId(),

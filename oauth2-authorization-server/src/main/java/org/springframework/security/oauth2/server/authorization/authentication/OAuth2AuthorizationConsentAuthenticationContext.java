@@ -87,6 +87,15 @@ public final class OAuth2AuthorizationConsentAuthenticationContext implements OA
 	}
 
 	/**
+	 * Returns the {@link OAuth2Authorization.Builder authorization builder}.
+	 * @return the {@link OAuth2Authorization.Builder}
+	 */
+	@Nullable
+	public OAuth2Authorization.Builder getAuthorizationBuilder() {
+		return get(OAuth2Authorization.Builder.class);
+	}
+
+	/**
 	 * Returns the {@link OAuth2AuthorizationRequest authorization request}.
 	 * @return the {@link OAuth2AuthorizationRequest}
 	 */
@@ -140,6 +149,15 @@ public final class OAuth2AuthorizationConsentAuthenticationContext implements OA
 		 */
 		public Builder authorization(OAuth2Authorization authorization) {
 			return put(OAuth2Authorization.class, authorization);
+		}
+
+		/**
+		 * Sets the {@link OAuth2Authorization.Builder authorization builder}.
+		 * @param authorizationBuilder the {@link OAuth2Authorization.Builder}
+		 * @return the {@link Builder} for further configuration
+		 */
+		public Builder authorizationBuilder(OAuth2Authorization.Builder authorizationBuilder) {
+			return put(OAuth2Authorization.Builder.class, authorizationBuilder);
 		}
 
 		/**

@@ -73,6 +73,9 @@ public final class OAuth2ClientCredentialsAuthenticationProvider implements Auth
 
 	private Consumer<OAuth2ClientCredentialsAuthenticationContext> authenticationValidator = new OAuth2ClientCredentialsAuthenticationValidator();
 
+	private Consumer<OAuth2ClientCredentialsAuthenticationContext> authorizationCustomizer = (context) -> {
+	};
+
 	/**
 	 * Constructs an {@code OAuth2ClientCredentialsAuthenticationProvider} using the
 	 * provided parameters.
@@ -160,6 +163,13 @@ public final class OAuth2ClientCredentialsAuthenticationProvider implements Auth
 		OAuth2AccessToken accessToken = OAuth2AuthenticationProviderUtils.accessToken(authorizationBuilder,
 				generatedAccessToken, tokenContext);
 
+		authenticationContext = OAuth2ClientCredentialsAuthenticationContext
+				.with(clientCredentialsAuthentication)
+				.registeredClient(registeredClient)
+				.authorizationBuilder(authorizationBuilder)
+				.build();
+		this.authorizationCustomizer.accept(authenticationContext);
+
 		OAuth2Authorization authorization = authorizationBuilder.build();
 
 		this.authorizationService.save(authorization);
@@ -197,6 +207,27 @@ public final class OAuth2ClientCredentialsAuthenticationProvider implements Auth
 			Consumer<OAuth2ClientCredentialsAuthenticationContext> authenticationValidator) {
 		Assert.notNull(authenticationValidator, "authenticationValidator cannot be null");
 		this.authenticationValidator = authenticationValidator;
+	}
+
+	/**
+	 * Sets the {@code Consumer} providing access to the
+	 * {@link OAuth2ClientCredentialsAuthenticationContext} and is responsible for
+	 * customizing the {@link OAuth2Authorization.Builder} prior to building.
+	 * <p>
+	 * The following context attributes are available:
+	 * <ul>
+	 * <li>The {@link RegisteredClient} associated with the authentication.</li>
+	 * <li>The {@link OAuth2Authorization.Builder} to be customized.</li>
+	 * </ul>
+	 * @param authorizationCustomizer the {@code Consumer} providing access to the
+	 * {@link OAuth2ClientCredentialsAuthenticationContext} and is responsible for
+	 * customizing the {@link OAuth2Authorization.Builder} prior to building
+	 * @since 1.5
+	 */
+	public void setAuthorizationCustomizer(
+			Consumer<OAuth2ClientCredentialsAuthenticationContext> authorizationCustomizer) {
+		Assert.notNull(authorizationCustomizer, "authorizationCustomizer cannot be null");
+		this.authorizationCustomizer = authorizationCustomizer;
 	}
 
 }

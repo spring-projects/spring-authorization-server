@@ -17,13 +17,15 @@ package org.springframework.security.oauth2.server.authorization.token;
 
 import java.time.Instant;
 import java.util.Base64;
+import java.util.Optional;
 
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.springframework.security.crypto.keygen.Base64StringKeyGenerator;
 import org.springframework.security.crypto.keygen.StringKeyGenerator;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.OAuth2RefreshToken;
+import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenType;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientAuthenticationToken;
 
@@ -50,9 +52,16 @@ public final class OAuth2RefreshTokenGenerator implements OAuth2TokenGenerator<O
 			// Do not issue refresh token to public client
 			return null;
 		}
-
+		var refreshToken = Optional.ofNullable(context.getAuthorization())
+				.map(OAuth2Authorization::getRefreshToken)
+				.orElse(null);
 		Instant issuedAt = Instant.now();
-		Instant expiresAt = issuedAt.plus(context.getRegisteredClient().getTokenSettings().getRefreshTokenTimeToLive());
+		Instant expiresAt;
+		if (refreshToken == null) {
+			expiresAt = issuedAt.plus(context.getRegisteredClient().getTokenSettings().getRefreshTokenTimeToLive());
+		}  else {
+			expiresAt = refreshToken.getToken().getExpiresAt();
+		}
 		return new OAuth2RefreshToken(this.refreshTokenGenerator.generateKey(), issuedAt, expiresAt);
 	}
 

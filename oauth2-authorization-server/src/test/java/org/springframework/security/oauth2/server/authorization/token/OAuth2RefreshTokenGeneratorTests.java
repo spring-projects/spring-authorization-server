@@ -19,7 +19,9 @@ import java.time.Instant;
 
 import org.junit.jupiter.api.Test;
 
+import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.OAuth2RefreshToken;
+import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenType;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.TestRegisteredClients;
@@ -65,6 +67,34 @@ public class OAuth2RefreshTokenGeneratorTests {
 			.plus(tokenContext.getRegisteredClient().getTokenSettings().getRefreshTokenTimeToLive());
 		assertThat(refreshToken.getIssuedAt()).isBetween(issuedAt.minusSeconds(1), issuedAt.plusSeconds(1));
 		assertThat(refreshToken.getExpiresAt()).isBetween(expiresAt.minusSeconds(1), expiresAt.plusSeconds(1));
+	}
+
+	@Test
+	public void generateWhenAuthorizationContainsRefreshTokenThenReuseExistingExpiresAt() {
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+
+		Instant existingIssuedAt = Instant.now().minusSeconds(60);
+		Instant existingExpiresAt = Instant.now().plusSeconds(3600);
+		OAuth2RefreshToken existingRefreshToken = new OAuth2RefreshToken("existing-token", existingIssuedAt, existingExpiresAt);
+
+		OAuth2Authorization authorization = OAuth2Authorization.withRegisteredClient(registeredClient)
+				.principalName("principal")
+				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+				.token(existingRefreshToken)
+				.build();
+
+		OAuth2TokenContext tokenContext = DefaultOAuth2TokenContext.builder()
+				.registeredClient(registeredClient)
+				.authorization(authorization)
+				.tokenType(OAuth2TokenType.REFRESH_TOKEN)
+				.build();
+
+		OAuth2RefreshToken generatedRefreshToken = this.tokenGenerator.generate(tokenContext);
+		assertThat(generatedRefreshToken).isNotNull();
+		assertThat(generatedRefreshToken.getExpiresAt()).isEqualTo(existingExpiresAt);
+
+		Instant issuedAt = Instant.now();
+		assertThat(generatedRefreshToken.getIssuedAt()).isBetween(issuedAt.minusSeconds(1), issuedAt.plusSeconds(1));
 	}
 
 }

@@ -23,6 +23,7 @@ import java.util.function.Predicate;
 
 import org.springframework.lang.Nullable;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
+import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsent;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.util.Assert;
@@ -90,6 +91,15 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationContext implement
 	}
 
 	/**
+	 * Returns the {@link OAuth2Authorization.Builder authorization builder}.
+	 * @return the {@link OAuth2Authorization.Builder}
+	 */
+	@Nullable
+	public OAuth2Authorization.Builder getAuthorizationBuilder() {
+		return get(OAuth2Authorization.Builder.class);
+	}
+
+	/**
 	 * Constructs a new {@link Builder} with the provided
 	 * {@link OAuth2AuthorizationCodeRequestAuthenticationToken}.
 	 * @param authentication the {@link OAuth2AuthorizationCodeRequestAuthenticationToken}
@@ -136,6 +146,15 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationContext implement
 		 */
 		public Builder authorizationConsent(OAuth2AuthorizationConsent authorizationConsent) {
 			return put(OAuth2AuthorizationConsent.class, authorizationConsent);
+		}
+
+		/**
+		 * Sets the {@link OAuth2Authorization.Builder authorization builder}.
+		 * @param authorizationBuilder the {@link OAuth2Authorization.Builder}
+		 * @return the {@link Builder} for further configuration
+		 */
+		public Builder authorizationBuilder(OAuth2Authorization.Builder authorizationBuilder) {
+			return put(OAuth2Authorization.Builder.class, authorizationBuilder);
 		}
 
 		/**

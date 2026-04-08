@@ -533,4 +533,55 @@ public class OAuth2AuthorizationConsentAuthenticationProviderTests {
 		assertThat(authorizationCodeRequestAuthentication.getRedirectUri()).isEqualTo(redirectUri);
 	}
 
+	@Test
+	public void setAuthorizationCustomizerWhenNullThenThrowIllegalArgumentException() {
+		assertThatThrownBy(() -> this.authenticationProvider.setAuthorizationCustomizer(null))
+			.isInstanceOf(IllegalArgumentException.class)
+			.hasMessage("authorizationCustomizer cannot be null");
+	}
+
+	@Test
+	public void authenticateWhenCustomAuthorizationCustomizerThenUsed() {
+		RegisteredClient registeredClient = TestRegisteredClients.registeredClient().build();
+		given(this.registeredClientRepository.findByClientId(eq(registeredClient.getClientId())))
+			.willReturn(registeredClient);
+
+		Set<String> requestedScopes = registeredClient.getScopes();
+		OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthentication = OAuth2AuthorizationCodeRequestAuthenticationToken
+			.with(AUTHORIZATION_URI, registeredClient.getClientId(), this.principal, requestedScopes, STATE)
+			.build();
+
+		OAuth2Authorization authorization = TestOAuth2Authorizations.authorization(registeredClient,
+				this.principal, authorizationCodeRequestAuthentication).build();
+		given(this.authorizationService.findByToken(eq(authorizationCodeRequestAuthentication.getState()), eq(STATE_TOKEN_TYPE)))
+			.willReturn(authorization);
+
+		OAuth2AuthorizationCodeRequestAuthenticationToken authentication = OAuth2AuthorizationConsentAuthenticationToken
+			.with(AUTHORIZATION_URI, registeredClient.getClientId(), this.principal, requestedScopes, STATE)
+			.build();
+
+		Set<String> filteredScopes = Collections.singleton("scope1");
+		this.authenticationProvider.setAuthorizationCustomizer((context) -> {
+			OAuth2Authorization.Builder builder = context.getAuthorizationBuilder();
+			if (builder != null) {
+				builder.authorizedScopes(filteredScopes);
+			}
+		});
+
+		given(this.authorizationConsentService.findById(eq(registeredClient.getId()), eq(this.principal.getName())))
+			.willReturn(null);
+		given(this.authorizationConsentService.save(any())).willAnswer((invocation) -> invocation.getArgument(0));
+		OAuth2AuthorizationCode authorizationCode = createAuthorizationCode();
+		given(this.authorizationService.save(any())).willAnswer((invocation) -> invocation.getArgument(0));
+
+		OAuth2AuthorizationCodeRequestAuthenticationToken authenticationResult = (OAuth2AuthorizationCodeRequestAuthenticationToken) this.authenticationProvider
+			.authenticate(authentication);
+
+		ArgumentCaptor<OAuth2Authorization> authorizationCaptor = ArgumentCaptor.forClass(OAuth2Authorization.class);
+		verify(this.authorizationService).save(authorizationCaptor.capture());
+		OAuth2Authorization savedAuthorization = authorizationCaptor.getValue();
+		assertThat(savedAuthorization.getAuthorizedScopes()).isEqualTo(filteredScopes);
+		assertThat(authenticationResult.getScopes()).isEqualTo(filteredScopes);
+	}
+
 }

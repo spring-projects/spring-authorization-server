@@ -80,6 +80,9 @@ public final class OAuth2AuthorizationConsentAuthenticationProvider implements A
 
 	private Consumer<OAuth2AuthorizationConsentAuthenticationContext> authorizationConsentCustomizer;
 
+	private Consumer<OAuth2AuthorizationConsentAuthenticationContext> authorizationCustomizer = (context) -> {
+	};
+
 	/**
 	 * Constructs an {@code OAuth2AuthorizationConsentAuthenticationProvider} using the
 	 * provided parameters.
@@ -239,11 +242,22 @@ public final class OAuth2AuthorizationConsentAuthenticationProvider implements A
 			this.logger.trace("Generated authorization code");
 		}
 
-		OAuth2Authorization updatedAuthorization = OAuth2Authorization.from(authorization)
+		OAuth2Authorization.Builder authorizationBuilder = OAuth2Authorization.from(authorization)
 			.authorizedScopes(authorizedScopes)
 			.token(authorizationCode)
-			.attributes((attrs) -> attrs.remove(OAuth2ParameterNames.STATE))
-			.build();
+			.attributes((attrs) -> attrs.remove(OAuth2ParameterNames.STATE));
+
+		OAuth2AuthorizationConsentAuthenticationContext authorizationConsentAuthenticationContext =
+				OAuth2AuthorizationConsentAuthenticationContext.with(authorizationConsentAuthentication)
+						.authorizationConsent(authorizationConsentBuilder)
+						.registeredClient(registeredClient)
+						.authorization(authorization)
+						.authorizationBuilder(authorizationBuilder)
+						.authorizationRequest(authorizationRequest)
+						.build();
+		this.authorizationCustomizer.accept(authorizationConsentAuthenticationContext);
+
+		OAuth2Authorization updatedAuthorization = authorizationBuilder.build();
 		this.authorizationService.save(updatedAuthorization);
 
 		if (this.logger.isTraceEnabled()) {
@@ -308,6 +322,28 @@ public final class OAuth2AuthorizationConsentAuthenticationProvider implements A
 			Consumer<OAuth2AuthorizationConsentAuthenticationContext> authorizationConsentCustomizer) {
 		Assert.notNull(authorizationConsentCustomizer, "authorizationConsentCustomizer cannot be null");
 		this.authorizationConsentCustomizer = authorizationConsentCustomizer;
+	}
+
+	/**
+	 * Sets the {@code Consumer} providing access to the
+	 * {@link OAuth2AuthorizationConsentAuthenticationContext} and is responsible for
+	 * customizing the {@link OAuth2Authorization.Builder} prior to building.
+	 * <p>
+	 * The following context attributes are available:
+	 * <ul>
+	 * <li>The {@link RegisteredClient} associated with the authorization request.</li>
+	 * <li>The {@link OAuth2Authorization} associated with the state token.</li>
+	 * <li>The {@link OAuth2Authorization.Builder} to be customized.</li>
+	 * </ul>
+	 * @param authorizationCustomizer the {@code Consumer} providing access to the
+	 * {@link OAuth2AuthorizationConsentAuthenticationContext} and is responsible for
+	 * customizing the {@link OAuth2Authorization.Builder} prior to building
+	 * @since 1.4
+	 */
+	public void setAuthorizationCustomizer(
+			Consumer<OAuth2AuthorizationConsentAuthenticationContext> authorizationCustomizer) {
+		Assert.notNull(authorizationCustomizer, "authorizationCustomizer cannot be null");
+		this.authorizationCustomizer = authorizationCustomizer;
 	}
 
 	private static OAuth2TokenContext createAuthorizationCodeTokenContext(

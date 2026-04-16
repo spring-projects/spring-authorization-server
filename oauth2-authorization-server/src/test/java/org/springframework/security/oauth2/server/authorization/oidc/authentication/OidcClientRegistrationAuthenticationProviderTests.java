@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 the original author or authors.
+ * Copyright 2020-2026 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -131,6 +131,11 @@ public class OidcClientRegistrationAuthenticationProviderTests {
 		this.authenticationProvider = new OidcClientRegistrationAuthenticationProvider(this.registeredClientRepository,
 				this.authorizationService, this.tokenGenerator);
 		this.authenticationProvider.setPasswordEncoder(this.passwordEncoder);
+		this.authenticationProvider
+			.setAuthenticationValidator(OidcClientRegistrationAuthenticationValidator.DEFAULT_REDIRECT_URI_VALIDATOR
+				.andThen(OidcClientRegistrationAuthenticationValidator.DEFAULT_POST_LOGOUT_REDIRECT_URI_VALIDATOR)
+				.andThen(OidcClientRegistrationAuthenticationValidator.DEFAULT_JWK_SET_URI_VALIDATOR)
+				.andThen(OidcClientRegistrationAuthenticationValidator.SIMPLE_SCOPE_VALIDATOR));
 	}
 
 	@AfterEach

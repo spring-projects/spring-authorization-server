@@ -15,11 +15,17 @@
  */
 package sample.registration;
 
+import java.util.List;
+import java.util.function.Consumer;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
+import org.springframework.security.oauth2.server.authorization.oidc.authentication.OidcClientRegistrationAuthenticationProvider;
+import org.springframework.security.oauth2.server.authorization.oidc.authentication.OidcClientRegistrationAuthenticationValidator;
 import org.springframework.security.web.SecurityFilterChain;
 
 import static sample.registration.CustomClientMetadataConfig.configureCustomClientMetadataConverters;
@@ -41,7 +47,7 @@ public class SecurityConfig {
 					.oidc((oidc) ->
 						oidc.clientRegistrationEndpoint((clientRegistrationEndpoint) ->	// <1>
 							clientRegistrationEndpoint
-								.authenticationProviders(configureCustomClientMetadataConverters())	// <2>
+								.authenticationProviders(scopePermissiveValidatorCustomizer().andThen(configureCustomClientMetadataConverters()))	// <2>
 						)
 					)
 			)
@@ -52,6 +58,18 @@ public class SecurityConfig {
 		// @formatter:on
 
 		return http.build();
+	}
+
+	private static Consumer<List<AuthenticationProvider>> scopePermissiveValidatorCustomizer() {
+		return (authenticationProviders) -> authenticationProviders.forEach((authenticationProvider) -> {
+			if (authenticationProvider instanceof OidcClientRegistrationAuthenticationProvider provider) {
+				provider.setAuthenticationValidator(
+						OidcClientRegistrationAuthenticationValidator.DEFAULT_REDIRECT_URI_VALIDATOR.andThen(
+										OidcClientRegistrationAuthenticationValidator.DEFAULT_POST_LOGOUT_REDIRECT_URI_VALIDATOR)
+								.andThen(OidcClientRegistrationAuthenticationValidator.DEFAULT_JWK_SET_URI_VALIDATOR)
+								.andThen(OidcClientRegistrationAuthenticationValidator.SIMPLE_SCOPE_VALIDATOR));
+			}
+		});
 	}
 
 }

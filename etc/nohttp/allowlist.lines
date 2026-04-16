@@ -7,3 +7,4 @@
 ^http://www.w3.org/2000/09/xmldsig.*
 ^http://www.gnu.org/.*
 ^http://www.gradle.org
+^http://169.254.169.254/keys

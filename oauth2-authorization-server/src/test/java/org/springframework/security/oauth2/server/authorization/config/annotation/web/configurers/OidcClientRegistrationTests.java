@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2025 the original author or authors.
+ * Copyright 2020-2026 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -94,6 +94,7 @@ import org.springframework.security.oauth2.server.authorization.oidc.OidcClientR
 import org.springframework.security.oauth2.server.authorization.oidc.authentication.OidcClientConfigurationAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.oidc.authentication.OidcClientRegistrationAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.oidc.authentication.OidcClientRegistrationAuthenticationToken;
+import org.springframework.security.oauth2.server.authorization.oidc.authentication.OidcClientRegistrationAuthenticationValidator;
 import org.springframework.security.oauth2.server.authorization.oidc.converter.OidcClientRegistrationRegisteredClientConverter;
 import org.springframework.security.oauth2.server.authorization.oidc.converter.RegisteredClientOidcClientRegistrationConverter;
 import org.springframework.security.oauth2.server.authorization.oidc.http.converter.OidcClientRegistrationHttpMessageConverter;
@@ -544,6 +545,78 @@ public class OidcClientRegistrationTests {
 			.isCloseTo(expectedSecretExpiryDate, allowedDelta);
 	}
 
+	@Test
+	public void requestWhenDefaultValidatorAndScopeProvidedThenBadRequest() throws Exception {
+		this.spring.register(DefaultValidatorConfiguration.class).autowire();
+
+		String accessToken = obtainClientCreateAccessToken();
+
+		// @formatter:off
+		OidcClientRegistration clientRegistration = OidcClientRegistration.builder()
+				.redirectUri("https://client.example.com")
+				.scope("read")
+				.scope("write")
+				.build();
+		// @formatter:on
+
+		HttpHeaders httpHeaders = new HttpHeaders();
+		httpHeaders.setBearerAuth(accessToken);
+
+		this.mvc
+			.perform(post(ISSUER.concat(DEFAULT_OIDC_CLIENT_REGISTRATION_ENDPOINT_URI)).headers(httpHeaders)
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(getClientRegistrationRequestContent(clientRegistration)))
+			.andExpect(status().isBadRequest())
+			.andExpect(jsonPath("$.error").value("invalid_scope"));
+	}
+
+	@Test
+	public void requestWhenDefaultValidatorAndJwksUriHttpThenBadRequest() throws Exception {
+		this.spring.register(DefaultValidatorConfiguration.class).autowire();
+
+		String accessToken = obtainClientCreateAccessToken();
+
+		// @formatter:off
+		OidcClientRegistration clientRegistration = OidcClientRegistration.builder()
+				.redirectUri("https://client.example.com")
+				.jwkSetUrl("http://169.254.169.254/keys")
+				.build();
+		// @formatter:on
+
+		HttpHeaders httpHeaders = new HttpHeaders();
+		httpHeaders.setBearerAuth(accessToken);
+
+		this.mvc
+			.perform(post(ISSUER.concat(DEFAULT_OIDC_CLIENT_REGISTRATION_ENDPOINT_URI)).headers(httpHeaders)
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(getClientRegistrationRequestContent(clientRegistration)))
+			.andExpect(status().isBadRequest())
+			.andExpect(jsonPath("$.error").value("invalid_client_metadata"));
+	}
+
+	@Test
+	public void requestWhenDefaultValidatorAndRedirectUriContainsFragmentThenBadRequest() throws Exception {
+		this.spring.register(DefaultValidatorConfiguration.class).autowire();
+
+		String accessToken = obtainClientCreateAccessToken();
+
+		// @formatter:off
+		OidcClientRegistration clientRegistration = OidcClientRegistration.builder()
+				.redirectUri("https://client.example.com#fragment")
+				.build();
+		// @formatter:on
+
+		HttpHeaders httpHeaders = new HttpHeaders();
+		httpHeaders.setBearerAuth(accessToken);
+
+		this.mvc
+			.perform(post(ISSUER.concat(DEFAULT_OIDC_CLIENT_REGISTRATION_ENDPOINT_URI)).headers(httpHeaders)
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(getClientRegistrationRequestContent(clientRegistration)))
+			.andExpect(status().isBadRequest())
+			.andExpect(jsonPath("$.error").value("invalid_redirect_uri"));
+	}
+
 	private OidcClientRegistration registerClient(OidcClientRegistration clientRegistration) throws Exception {
 		// ***** (1) Obtain the "initial" access token used for registering the client
 
@@ -605,6 +678,44 @@ public class OidcClientRegistrationTests {
 		return readClientRegistrationResponse(mvcResult.getResponse());
 	}
 
+	private String obtainClientCreateAccessToken() throws Exception {
+		String clientRegistrationScope = "client.create";
+		// @formatter:off
+		RegisteredClient clientRegistrar = RegisteredClient.withId("client-registrar-1")
+				.clientId("client-registrar-1")
+				.clientAuthenticationMethod(ClientAuthenticationMethod.PRIVATE_KEY_JWT)
+				.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
+				.scope(clientRegistrationScope)
+				.clientSettings(
+						ClientSettings.builder()
+								.jwkSetUrl(this.clientJwkSetUrl)
+								.tokenEndpointAuthenticationSigningAlgorithm(SignatureAlgorithm.RS256)
+								.build()
+				)
+				.build();
+		// @formatter:on
+		this.registeredClientRepository.save(clientRegistrar);
+
+		// @formatter:off
+		JwsHeader jwsHeader = JwsHeader.with(SignatureAlgorithm.RS256).build();
+		JwtClaimsSet jwtClaimsSet = jwtClientAssertionClaims(clientRegistrar).build();
+		// @formatter:on
+		Jwt jwtAssertion = jwtClientAssertionEncoder.encode(JwtEncoderParameters.from(jwsHeader, jwtClaimsSet));
+
+		MvcResult mvcResult = this.mvc
+			.perform(post(ISSUER.concat(DEFAULT_TOKEN_ENDPOINT_URI))
+				.param(OAuth2ParameterNames.GRANT_TYPE, AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
+				.param(OAuth2ParameterNames.SCOPE, clientRegistrationScope)
+				.param(OAuth2ParameterNames.CLIENT_ASSERTION_TYPE,
+						"urn:ietf:params:oauth:client-assertion-type:jwt-bearer")
+				.param(OAuth2ParameterNames.CLIENT_ASSERTION, jwtAssertion.getTokenValue())
+				.param(OAuth2ParameterNames.CLIENT_ID, clientRegistrar.getClientId()))
+			.andExpect(status().isOk())
+			.andReturn();
+
+		return readAccessTokenResponse(mvcResult.getResponse()).getAccessToken().getTokenValue();
+	}
+
 	private JwtClaimsSet.Builder jwtClientAssertionClaims(RegisteredClient registeredClient) {
 		Instant issuedAt = Instant.now();
 		Instant expiresAt = issuedAt.plus(1, ChronoUnit.HOURS);
@@ -641,6 +752,18 @@ public class OidcClientRegistrationTests {
 		return clientRegistrationHttpMessageConverter.read(OidcClientRegistration.class, httpResponse);
 	}
 
+	private static Consumer<List<AuthenticationProvider>> scopePermissiveValidatorCustomizer() {
+		return (authenticationProviders) -> authenticationProviders.forEach((authenticationProvider) -> {
+			if (authenticationProvider instanceof OidcClientRegistrationAuthenticationProvider provider) {
+				provider.setAuthenticationValidator(
+						OidcClientRegistrationAuthenticationValidator.DEFAULT_REDIRECT_URI_VALIDATOR.andThen(
+								OidcClientRegistrationAuthenticationValidator.DEFAULT_POST_LOGOUT_REDIRECT_URI_VALIDATOR)
+							.andThen(OidcClientRegistrationAuthenticationValidator.DEFAULT_JWK_SET_URI_VALIDATOR)
+							.andThen(OidcClientRegistrationAuthenticationValidator.SIMPLE_SCOPE_VALIDATOR));
+			}
+		});
+	}
+
 	@EnableWebSecurity
 	@Configuration(proxyBeanMethods = false)
 	static class CustomClientRegistrationConfiguration extends AuthorizationServerConfiguration {
@@ -662,7 +785,7 @@ public class OidcClientRegistrationTests {
 																	.clientRegistrationRequestConverter(authenticationConverter)
 																	.clientRegistrationRequestConverters(authenticationConvertersConsumer)
 																	.authenticationProvider(authenticationProvider)
-																	.authenticationProviders(authenticationProvidersConsumer)
+																	.authenticationProviders(scopePermissiveValidatorCustomizer().andThen(authenticationProvidersConsumer))
 																	.clientRegistrationResponseHandler(authenticationSuccessHandler)
 																	.errorResponseHandler(authenticationFailureHandler)
 													)
@@ -695,7 +818,7 @@ public class OidcClientRegistrationTests {
 											oidc
 													.clientRegistrationEndpoint((clientRegistration) ->
 															clientRegistration
-																	.authenticationProviders(configureClientRegistrationConverters())
+																	.authenticationProviders(scopePermissiveValidatorCustomizer().andThen(configureClientRegistrationConverters()))
 													)
 									)
 					)
@@ -739,7 +862,7 @@ public class OidcClientRegistrationTests {
 											oidc
 													.clientRegistrationEndpoint((clientRegistration) ->
 															clientRegistration
-																	.authenticationProviders(configureClientRegistrationConverters())
+																	.authenticationProviders(scopePermissiveValidatorCustomizer().andThen(configureClientRegistrationConverters()))
 													)
 									)
 					)
@@ -765,6 +888,35 @@ public class OidcClientRegistrationTests {
 
 	@EnableWebSecurity
 	@Configuration(proxyBeanMethods = false)
+	static class DefaultValidatorConfiguration extends AuthorizationServerConfiguration {
+
+		// Override with Customizer.withDefaults() so the default (strict)
+		// OidcClientRegistrationAuthenticationValidator is in effect.
+		// @formatter:off
+		@Bean
+		@Override
+		SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
+			OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
+					OAuth2AuthorizationServerConfigurer.authorizationServer();
+			http
+					.securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
+					.with(authorizationServerConfigurer, (authorizationServer) ->
+							authorizationServer
+									.oidc((oidc) ->
+											oidc.clientRegistrationEndpoint(Customizer.withDefaults())
+									)
+					)
+					.authorizeHttpRequests((authorize) ->
+							authorize.anyRequest().authenticated()
+					);
+			return http.build();
+		}
+		// @formatter:on
+
+	}
+
+	@EnableWebSecurity
+	@Configuration(proxyBeanMethods = false)
 	static class AuthorizationServerConfiguration {
 
 		// @formatter:off
@@ -778,7 +930,10 @@ public class OidcClientRegistrationTests {
 							authorizationServer
 									.oidc((oidc) ->
 											oidc
-													.clientRegistrationEndpoint(Customizer.withDefaults())
+													.clientRegistrationEndpoint((clientRegistration) ->
+															clientRegistration
+																	.authenticationProviders(scopePermissiveValidatorCustomizer())
+													)
 									)
 					)
 					.authorizeHttpRequests((authorize) ->

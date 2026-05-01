@@ -123,8 +123,7 @@ public class OAuth2PushedAuthorizationRequestAuthenticationProviderTests {
 		assertThatThrownBy(() -> this.authenticationProvider.authenticate(authentication))
 			.isInstanceOf(OAuth2AuthorizationCodeRequestAuthenticationException.class)
 			.satisfies((ex) -> assertAuthenticationException((OAuth2AuthorizationCodeRequestAuthenticationException) ex,
-					OAuth2ErrorCodes.UNAUTHORIZED_CLIENT, OAuth2ParameterNames.CLIENT_ID,
-					authentication.getRedirectUri()));
+					OAuth2ErrorCodes.UNAUTHORIZED_CLIENT, OAuth2ParameterNames.CLIENT_ID, null));
 	}
 
 	@Test

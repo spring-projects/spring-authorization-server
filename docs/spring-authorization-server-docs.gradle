@@ -16,6 +16,10 @@ compileJava {
 	options.compilerArgs << '-parameters'
 }
 
+node {
+    version = "24.15.0"
+}
+
 antora {
 	options = [clean: true, fetch: !project.gradle.startParameter.offline, stacktrace: true]
 	environment = [

@@ -82,6 +82,8 @@ public class JdbcOAuth2AuthorizationServiceTests {
 
 	private static final String OAUTH2_AUTHORIZATION_SCHEMA_CLOB_DATA_TYPE_SQL_RESOURCE = "org/springframework/security/oauth2/server/authorization/custom-oauth2-authorization-schema-clob-data-type.sql";
 
+	private static final String OAUTH2_AUTHORIZATION_SCHEMA_BINARY_DATA_TYPE_SQL_RESOURCE = "org/springframework/security/oauth2/server/authorization/custom-oauth2-authorization-schema-binary-data-type.sql";
+
 	private static final OAuth2TokenType AUTHORIZATION_CODE_TOKEN_TYPE = new OAuth2TokenType(OAuth2ParameterNames.CODE);
 
 	private static final OAuth2TokenType STATE_TOKEN_TYPE = new OAuth2TokenType(OAuth2ParameterNames.STATE);
@@ -496,6 +498,35 @@ public class JdbcOAuth2AuthorizationServiceTests {
 		given(this.registeredClientRepository.findById(eq(REGISTERED_CLIENT.getId()))).willReturn(REGISTERED_CLIENT);
 
 		EmbeddedDatabase db = createDb(OAUTH2_AUTHORIZATION_SCHEMA_CLOB_DATA_TYPE_SQL_RESOURCE);
+		OAuth2AuthorizationService authorizationService = new JdbcOAuth2AuthorizationService(new JdbcTemplate(db),
+				this.registeredClientRepository);
+		OAuth2Authorization originalAuthorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)
+			.id(ID)
+			.principalName(PRINCIPAL_NAME)
+			.authorizationGrantType(AUTHORIZATION_GRANT_TYPE)
+			.token(AUTHORIZATION_CODE)
+			.build();
+		authorizationService.save(originalAuthorization);
+
+		OAuth2Authorization authorization = authorizationService.findById(originalAuthorization.getId());
+		assertThat(authorization).isEqualTo(originalAuthorization);
+
+		OAuth2Authorization updatedAuthorization = OAuth2Authorization.from(authorization)
+			.attribute("custom-name-1", "custom-value-1")
+			.build();
+		authorizationService.save(updatedAuthorization);
+
+		authorization = authorizationService.findById(updatedAuthorization.getId());
+		assertThat(authorization).isEqualTo(updatedAuthorization);
+		assertThat(authorization).isNotEqualTo(originalAuthorization);
+		db.shutdown();
+	}
+
+	@Test
+	public void tableDefinitionWhenBinarySqlTypeThenAuthorizationUpdated() {
+		given(this.registeredClientRepository.findById(eq(REGISTERED_CLIENT.getId()))).willReturn(REGISTERED_CLIENT);
+
+		EmbeddedDatabase db = createDb(OAUTH2_AUTHORIZATION_SCHEMA_BINARY_DATA_TYPE_SQL_RESOURCE);
 		OAuth2AuthorizationService authorizationService = new JdbcOAuth2AuthorizationService(new JdbcTemplate(db),
 				this.registeredClientRepository);
 		OAuth2Authorization originalAuthorization = OAuth2Authorization.withRegisteredClient(REGISTERED_CLIENT)

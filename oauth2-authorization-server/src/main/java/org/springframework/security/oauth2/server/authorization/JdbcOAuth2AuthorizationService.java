@@ -453,9 +453,11 @@ public class JdbcOAuth2AuthorizationService implements OAuth2AuthorizationServic
 
 	private static SqlParameterValue mapToSqlParameter(String columnName, String value) {
 		ColumnMetadata columnMetadata = columnMetadataMap.get(columnName);
-		return (Types.BLOB == columnMetadata.getDataType() && StringUtils.hasText(value))
-				? new SqlParameterValue(Types.BLOB, value.getBytes(StandardCharsets.UTF_8))
-				: new SqlParameterValue(columnMetadata.getDataType(), value);
+		if ((Types.BLOB == columnMetadata.getDataType() || Types.BINARY == columnMetadata.getDataType())
+				&& StringUtils.hasText(value)) {
+			return new SqlParameterValue(columnMetadata.getDataType(), value.getBytes(StandardCharsets.UTF_8));
+		}
+		return new SqlParameterValue(columnMetadata.getDataType(), value);
 	}
 
 	/**
@@ -606,6 +608,19 @@ public class JdbcOAuth2AuthorizationService implements OAuth2AuthorizationServic
 				byte[] columnValueBytes = this.lobHandler.getBlobAsBytes(rs, columnName);
 				if (columnValueBytes != null) {
 					columnValue = new String(columnValueBytes, StandardCharsets.UTF_8);
+				}
+			}
+			else if (Types.BINARY == columnMetadata.getDataType()) {
+				byte[] columnValueBytes = this.lobHandler.getBlobAsBytes(rs, columnName);
+				if (columnValueBytes != null) {
+					// Trim trailing null bytes that may be present with fixed-length BINARY columns
+					int length = columnValueBytes.length;
+					while (length > 0 && columnValueBytes[length - 1] == 0) {
+						length--;
+					}
+					if (length > 0) {
+						columnValue = new String(columnValueBytes, 0, length, StandardCharsets.UTF_8);
+					}
 				}
 			}
 			else if (Types.CLOB == columnMetadata.getDataType()) {
@@ -800,6 +815,20 @@ public class JdbcOAuth2AuthorizationService implements OAuth2AuthorizationServic
 								"Value of blob parameter must be byte[]");
 					}
 					byte[] valueBytes = (byte[]) paramValue.getValue();
+					this.lobCreator.setBlobAsBytes(ps, parameterPosition, valueBytes);
+					return;
+				}
+				if (paramValue.getSqlType() == Types.BINARY) {
+					byte[] valueBytes = null;
+					if (paramValue.getValue() != null) {
+						Object value = paramValue.getValue();
+						if (value instanceof byte[] byteArray) {
+							valueBytes = byteArray;
+						}
+						else if (value instanceof String stringValue) {
+							valueBytes = stringValue.getBytes(StandardCharsets.UTF_8);
+						}
+					}
 					this.lobCreator.setBlobAsBytes(ps, parameterPosition, valueBytes);
 					return;
 				}

@@ -59,7 +59,7 @@ final class OAuth2PushedAuthorizationRequestUri {
 
 	static OAuth2PushedAuthorizationRequestUri parse(String requestUri) {
 		int stateStartIndex = REQUEST_URI_PREFIX.length();
-		int expiresAtStartIndex = requestUri.indexOf(REQUEST_URI_DELIMITER) + REQUEST_URI_DELIMITER.length();
+		int expiresAtStartIndex = requestUri.lastIndexOf(REQUEST_URI_DELIMITER) + REQUEST_URI_DELIMITER.length();
 		OAuth2PushedAuthorizationRequestUri pushedAuthorizationRequestUri = new OAuth2PushedAuthorizationRequestUri();
 		pushedAuthorizationRequestUri.requestUri = requestUri;
 		pushedAuthorizationRequestUri.state = requestUri.substring(stateStartIndex);

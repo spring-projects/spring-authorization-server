@@ -532,3 +532,18 @@ public HttpSessionEventPublisher httpSessionEventPublisher() {
 	return new HttpSessionEventPublisher();
 }
 ----
+
+In a clustered environment, the `SessionRegistry` must also be shared across application instances.
+For example, when using https://docs.spring.io/spring-session/reference/index.html[Spring Session] to back HTTP sessions, register a `SpringSessionBackedSessionRegistry` instead of `SessionRegistryImpl`:
+
+[source,java]
+----
+@Bean
+public SessionRegistry sessionRegistry(
+		FindByIndexNameSessionRepository<? extends Session> sessionRepository) {
+	return new SpringSessionBackedSessionRegistry<>(sessionRepository);
+}
+----
+
+When backing Spring Session with Redis, make sure an indexed session repository is configured, for example with `@EnableRedisIndexedHttpSession`, so that a `FindByIndexNameSessionRepository` is available.
+This allows the OpenID Connect 1.0 Logout Endpoint to validate the `sid` claim even when the logout request is handled by a different application instance than the original login request.

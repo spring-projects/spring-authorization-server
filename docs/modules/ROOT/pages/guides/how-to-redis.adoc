@@ -223,3 +223,8 @@ include::{examples-dir}/main/java/sample/redis/config/RedisConfig.java[]
 <4> Register the `RedisRegisteredClientRepository` with the activated `OAuth2RegisteredClientRepository`.
 <5> Register the `RedisOAuth2AuthorizationService` with the activated `OAuth2AuthorizationGrantAuthorizationRepository`.
 <6> Register the `RedisOAuth2AuthorizationConsentService` with the activated `OAuth2UserConsentRepository`.
+
+[NOTE]
+This guide configures Redis-backed implementations for the core services that store authorization server data.
+If OpenID Connect 1.0 is enabled and the authorization server runs in a cluster, HTTP sessions must also be shared across application instances.
+For Redis-backed HTTP sessions, configure Spring Session with an indexed session repository and register a `SpringSessionBackedSessionRegistry` as described in xref:core-model-components.adoc#session-registry[SessionRegistry].

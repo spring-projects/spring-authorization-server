@@ -140,7 +140,15 @@ public final class OAuth2AuthorizationConsentAuthenticationProvider implements A
 		}
 
 		OAuth2AuthorizationRequest authorizationRequest = authorization
-			.getAttribute(OAuth2AuthorizationRequest.class.getName());
+		        .getAttribute(OAuth2AuthorizationRequest.class.getName());
+		
+		if (authorizationRequest == null) {
+		    throwError(OAuth2ErrorCodes.INVALID_REQUEST,
+			OAuth2ParameterNames.STATE,
+			authorizationConsentAuthentication,
+			registeredClient,
+			null);
+		}
 		Set<String> requestedScopes = authorizationRequest.getScopes();
 		Set<String> authorizedScopes = new HashSet<>(authorizationConsentAuthentication.getScopes());
 		if (!requestedScopes.containsAll(authorizedScopes)) {

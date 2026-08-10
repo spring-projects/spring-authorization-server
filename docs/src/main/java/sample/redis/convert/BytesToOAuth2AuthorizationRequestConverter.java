@@ -15,26 +15,25 @@
  */
 package sample.redis.convert;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.convert.ReadingConverter;
-import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
-import org.springframework.security.jackson2.SecurityJackson2Modules;
+import org.springframework.data.redis.serializer.JacksonJsonRedisSerializer;
+import org.springframework.security.jackson.SecurityJacksonModules;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
-import org.springframework.security.oauth2.server.authorization.jackson2.OAuth2AuthorizationServerJackson2Module;
+import org.springframework.security.oauth2.server.authorization.jackson.OAuth2AuthorizationServerJacksonModule;
+import tools.jackson.databind.json.JsonMapper;
 
 @ReadingConverter
 public class BytesToOAuth2AuthorizationRequestConverter implements Converter<byte[], OAuth2AuthorizationRequest> {
 
-	private final Jackson2JsonRedisSerializer<OAuth2AuthorizationRequest> serializer;
+	private final JacksonJsonRedisSerializer<OAuth2AuthorizationRequest> serializer;
 
 	public BytesToOAuth2AuthorizationRequestConverter() {
-		ObjectMapper objectMapper = new ObjectMapper();
-		objectMapper.registerModules(
-				SecurityJackson2Modules.getModules(BytesToOAuth2AuthorizationRequestConverter.class.getClassLoader()));
-		objectMapper.registerModule(new OAuth2AuthorizationServerJackson2Module());
-		this.serializer = new Jackson2JsonRedisSerializer<>(objectMapper, OAuth2AuthorizationRequest.class);
+		JsonMapper objectMapper = JsonMapper.builder()
+				.addModules(SecurityJacksonModules.getModules(BytesToOAuth2AuthorizationRequestConverter.class.getClassLoader()))
+				.addModule(new OAuth2AuthorizationServerJacksonModule())
+				.build();
+		this.serializer = new JacksonJsonRedisSerializer<>(objectMapper, OAuth2AuthorizationRequest.class);
 	}
 
 	@Override

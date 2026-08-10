@@ -22,6 +22,8 @@ import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import org.assertj.core.api.ObjectAssert;
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.data.jpa.autoconfigure.DataJpaRepositoriesAutoConfiguration;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import redis.embedded.RedisServer;
 import sample.AuthorizationCodeGrantFlow;
 import sample.DeviceAuthorizationGrantFlow;
@@ -32,9 +34,7 @@ import sample.util.RegisteredClients;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.data.jpa.autoconfigure.JpaRepositoriesAutoConfiguration;
 import org.springframework.boot.hibernate.autoconfigure.HibernateJpaAutoConfiguration;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.ComponentScan;
@@ -174,7 +174,7 @@ public class RedisTests {
 	}
 
 	@EnableWebSecurity
-	@EnableAutoConfiguration(exclude = {JpaRepositoriesAutoConfiguration.class, HibernateJpaAutoConfiguration.class})
+	@EnableAutoConfiguration(exclude = {DataJpaRepositoriesAutoConfiguration.class, HibernateJpaAutoConfiguration.class})
 	@ComponentScan
 	static class AuthorizationServerConfig {
 	}

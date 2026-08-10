@@ -29,8 +29,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -46,22 +47,26 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {"spring.profiles.include=test"})
 @AutoConfigureMockMvc
 public class DemoAuthorizationServerApplicationTests {
-	private static final String REDIRECT_URI = "http://127.0.0.1:8080/login/oauth2/code/messaging-client-oidc";
+	private static final String REDIRECT_URI = "http://127.0.0.1:%d/login/oauth2/code/messaging-client-oidc";
 
-	private static final String AUTHORIZATION_REQUEST = UriComponentsBuilder
-			.fromPath("/oauth2/authorize")
-			.queryParam("response_type", "code")
-			.queryParam("client_id", "messaging-client")
-			.queryParam("scope", "openid")
-			.queryParam("state", "some-state")
-			.queryParam("redirect_uri", REDIRECT_URI)
-			.toUriString();
+	private String AUTHORIZATION_REQUEST;
+
+	@LocalServerPort
+	private int port;
 
 	@Autowired
 	private WebClient webClient;
 
 	@BeforeEach
 	public void setUp() {
+		this.AUTHORIZATION_REQUEST = UriComponentsBuilder
+				.fromPath("/oauth2/authorize")
+				.queryParam("response_type", "code")
+				.queryParam("client_id", "messaging-client")
+				.queryParam("scope", "openid")
+				.queryParam("state", "some-state")
+				.queryParam("redirect_uri", String.format(REDIRECT_URI, port))
+				.toUriString();
 		this.webClient.getOptions().setThrowExceptionOnFailingStatusCode(true);
 		this.webClient.getOptions().setRedirectEnabled(true);
 		this.webClient.getCookieManager().clearCookies();	// log out

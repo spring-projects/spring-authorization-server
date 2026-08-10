@@ -20,6 +20,7 @@ import java.util.Map;
 import org.assertj.core.api.ObjectAssert;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.security.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
 import sample.AuthorizationCodeGrantFlow;
 import sample.test.SpringTestContext;
 import sample.test.SpringTestContextExtension;
@@ -43,7 +44,6 @@ import org.springframework.security.oauth2.server.authorization.OAuth2TokenType;
 import org.springframework.security.oauth2.server.authorization.client.InMemoryRegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
-import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.util.StringUtils;
 

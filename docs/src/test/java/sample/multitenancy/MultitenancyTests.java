@@ -19,9 +19,9 @@ import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.data.jpa.autoconfigure.JpaRepositoriesAutoConfiguration;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.data.jpa.autoconfigure.DataJpaRepositoriesAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.http.MediaType;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -96,7 +96,7 @@ public class MultitenancyTests {
 		// @formatter:on
 	}
 
-	@EnableAutoConfiguration(exclude = JpaRepositoriesAutoConfiguration.class)
+	@EnableAutoConfiguration(exclude = DataJpaRepositoriesAutoConfiguration.class)
 	@EnableWebSecurity
 	@ComponentScan
 	static class AuthorizationServerConfig {

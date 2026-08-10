@@ -23,9 +23,6 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
@@ -40,6 +37,8 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
 import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.json.JsonMapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -208,7 +207,7 @@ public class AuthorizationCodeGrantFlow {
 				.andReturn();
 		// @formatter:on
 
-		ObjectMapper objectMapper = new ObjectMapper();
+		JsonMapper objectMapper = JsonMapper.builder().build();
 		String responseJson = mvcResult.getResponse().getContentAsString();
 		return objectMapper.readValue(responseJson, TOKEN_RESPONSE_TYPE_REFERENCE);
 	}

@@ -1,6 +1,6 @@
 plugins {
-	id "org.springframework.boot" version "4.0.0-M2"
-	id "io.spring.dependency-management" version "1.1.0"
+	id "org.springframework.boot" version "4.1.0"
+	id "io.spring.dependency-management" version "1.1.7"
 	id "java"
 }
 
@@ -23,11 +23,12 @@ dependencies {
 	implementation "org.springframework.boot:spring-boot-starter-security"
 	implementation "org.springframework.boot:spring-boot-starter-oauth2-client"
 	implementation "org.springframework.boot:spring-boot-starter-jdbc"
-	implementation project(":spring-security-oauth2-authorization-server")
+	implementation "org.springframework.security:spring-security-oauth2-authorization-server"
 	runtimeOnly "com.h2database:h2"
 
 	testRuntimeOnly "org.junit.platform:junit-platform-launcher"
 	testImplementation "org.springframework.boot:spring-boot-starter-test"
+	testImplementation "org.springframework.boot:spring-boot-webmvc-test"
 	testImplementation "org.springframework.security:spring-security-test"
 	testImplementation "org.junit.jupiter:junit-jupiter"
 	testImplementation "org.htmlunit:htmlunit"

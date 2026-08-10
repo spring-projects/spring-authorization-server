@@ -47,7 +47,7 @@ public class DemoAuthorizationServerApplication {
 							TypeReference.of(AuthorizationConsentController.ScopeWithDescription.class),
 							TypeReference.of(Lists.class)
 					), builder ->
-							builder.withMembers(MemberCategory.DECLARED_FIELDS,
+							builder.withMembers(MemberCategory.ACCESS_DECLARED_FIELDS,
 									MemberCategory.INVOKE_DECLARED_CONSTRUCTORS, MemberCategory.INVOKE_DECLARED_METHODS)
 			);
 		}

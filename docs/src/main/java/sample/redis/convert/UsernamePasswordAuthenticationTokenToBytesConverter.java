@@ -15,25 +15,24 @@
  */
 package sample.redis.convert;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.convert.WritingConverter;
-import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
+import org.springframework.data.redis.serializer.JacksonJsonRedisSerializer;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.jackson2.SecurityJackson2Modules;
+import org.springframework.security.jackson.SecurityJacksonModules;
+import tools.jackson.databind.json.JsonMapper;
 
 @WritingConverter
 public class UsernamePasswordAuthenticationTokenToBytesConverter
 		implements Converter<UsernamePasswordAuthenticationToken, byte[]> {
 
-	private final Jackson2JsonRedisSerializer<UsernamePasswordAuthenticationToken> serializer;
+	private final JacksonJsonRedisSerializer<UsernamePasswordAuthenticationToken> serializer;
 
 	public UsernamePasswordAuthenticationTokenToBytesConverter() {
-		ObjectMapper objectMapper = new ObjectMapper();
-		objectMapper.registerModules(SecurityJackson2Modules
-			.getModules(BytesToUsernamePasswordAuthenticationTokenConverter.class.getClassLoader()));
-		this.serializer = new Jackson2JsonRedisSerializer<>(objectMapper, UsernamePasswordAuthenticationToken.class);
+		JsonMapper objectMapper = JsonMapper.builder()
+				.addModules(SecurityJacksonModules.getModules(BytesToUsernamePasswordAuthenticationTokenConverter.class.getClassLoader()))
+				.build();
+		this.serializer = new JacksonJsonRedisSerializer<>(objectMapper, UsernamePasswordAuthenticationToken.class);
 	}
 
 	@Override

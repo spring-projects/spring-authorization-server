@@ -21,9 +21,6 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
@@ -34,6 +31,8 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.json.JsonMapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -101,7 +100,7 @@ public class DeviceAuthorizationGrantFlow {
 				.andExpect(jsonPath("$.expires_in").isNotEmpty())
 				.andReturn();
 
-		ObjectMapper objectMapper = new ObjectMapper();
+		JsonMapper objectMapper = new JsonMapper();
 		String responseJson = mvcResult.getResponse().getContentAsString();
 		return objectMapper.readValue(responseJson, JSON_RESPONSE_TYPE_REFERENCE);
 	}
@@ -181,7 +180,7 @@ public class DeviceAuthorizationGrantFlow {
 				.andExpect(jsonPath("$.expires_in").isNotEmpty())
 				.andReturn();
 
-		ObjectMapper objectMapper = new ObjectMapper();
+		JsonMapper objectMapper = new JsonMapper();
 		String responseJson = mvcResult.getResponse().getContentAsString();
 		return objectMapper.readValue(responseJson, JSON_RESPONSE_TYPE_REFERENCE);
 	}

@@ -29,8 +29,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsentService;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -55,22 +56,26 @@ public class DemoAuthorizationServerConsentTests {
 	@Autowired
 	private WebClient webClient;
 
+	@LocalServerPort
+	private int port;
+
 	@MockitoBean
 	private OAuth2AuthorizationConsentService authorizationConsentService;
 
-	private final String redirectUri = "http://127.0.0.1/login/oauth2/code/messaging-client-oidc";
+	private final String redirectUri = "http://127.0.0.1:%d/login/oauth2/code/messaging-client-oidc";
 
-	private final String authorizationRequestUri = UriComponentsBuilder
-			.fromPath("/oauth2/authorize")
-			.queryParam("response_type", "code")
-			.queryParam("client_id", "messaging-client")
-			.queryParam("scope", "openid message.read message.write")
-			.queryParam("state", "state")
-			.queryParam("redirect_uri", this.redirectUri)
-			.toUriString();
+	private String authorizationRequestUri;
 
 	@BeforeEach
 	public void setUp() {
+		authorizationRequestUri = UriComponentsBuilder
+				.fromPath("/oauth2/authorize")
+				.queryParam("response_type", "code")
+				.queryParam("client_id", "messaging-client")
+				.queryParam("scope", "openid message.read message.write")
+				.queryParam("state", "state")
+				.queryParam("redirect_uri", String.format(this.redirectUri, port))
+				.toUriString();
 		this.webClient.getOptions().setThrowExceptionOnFailingStatusCode(false);
 		this.webClient.getOptions().setRedirectEnabled(true);
 		this.webClient.getCookieManager().clearCookies();
